@@ -151,6 +151,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          granted_at: string
+          granted_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       geography_columns: {
@@ -653,6 +677,10 @@ export type Database = {
         Args: { "": number }
         Returns: string
       }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       gettransactionid: {
         Args: Record<PropertyKey, never>
         Returns: unknown
@@ -680,6 +708,10 @@ export type Database = {
       halfvec_typmod_in: {
         Args: { "": unknown[] }
         Returns: number
+      }
+      has_role: {
+        Args: { _role: string; _user_id: string }
+        Returns: boolean
       }
       hnsw_bit_support: {
         Args: { "": unknown }
@@ -2044,7 +2076,14 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "admin"
+        | "moderator"
+        | "business_owner"
+        | "rider"
+        | "breeder"
+        | "owner"
+        | "guest"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -2179,6 +2218,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "admin",
+        "moderator",
+        "business_owner",
+        "rider",
+        "breeder",
+        "owner",
+        "guest",
+      ],
+    },
   },
 } as const

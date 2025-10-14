@@ -8,6 +8,11 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { Session } from './types';
 import type { Role } from './rbac';
 import { mockAuthAdapter } from './adapters/mock';
+import { supabaseAuthAdapter } from './adapters/supabase';
+
+// Toggle between mock and real auth via env var
+const USE_REAL_AUTH = import.meta.env.VITE_AUTH_BACKEND === 'supabase';
+const defaultAdapter = USE_REAL_AUTH ? supabaseAuthAdapter : mockAuthAdapter;
 
 type AuthContextValue = {
   session: Session;
@@ -20,7 +25,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({
   children,
-  adapter = mockAuthAdapter,
+  adapter = defaultAdapter,
 }: {
   children: React.ReactNode;
   adapter?: {
