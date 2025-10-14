@@ -11,5 +11,3 @@ export type Session = {
   email: string;
   role: Role;
 } | null;
-
-export type AuthChangeCallback = (session: Session) => void;
