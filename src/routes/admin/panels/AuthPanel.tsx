@@ -16,7 +16,7 @@ import { User, LogOut, Shield } from 'lucide-react';
 
 const roles: Role[] = ['admin', 'moderator', 'business_owner', 'rider', 'breeder', 'owner', 'guest'];
 
-export function AuthPanel() {
+function AuthPanel() {
   const { session, signIn, signOut } = useSession();
   const [selectedRole, setSelectedRole] = useState<Role>('guest');
 
@@ -105,3 +105,5 @@ export function AuthPanel() {
     </Card>
   );
 }
+
+export default AuthPanel;

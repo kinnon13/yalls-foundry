@@ -23,7 +23,7 @@ import { syntheticResultsToRows } from '@/lib/synthetics/serialize';
 import { takeCodeSnapshot } from '@/lib/export/codeSnapshot';
 import { parseSpec, comparePaths } from '@/lib/export/specCompare';
 import { exportArchitecture, routesToMermaid } from '@/lib/export/architecture';
-import { AuthPanel } from '@/routes/admin/panels/AuthPanel';
+import AuthPanel from '@/routes/admin/panels/AuthPanel';
 import { Activity, List, Flag, Database, Zap, Info, Download, Code, FileCheck, Map } from 'lucide-react';
 
 export default function ControlRoom() {
