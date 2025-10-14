@@ -246,3 +246,254 @@ VITE_UPSTASH_REDIS_REST_TOKEN=...
 ---
 
 **Status**: ✅ All acceptance criteria met. Ready for Day-1 feature development.
+
+---
+
+# CONTROL ROOM (Day-0) — Changes & Verification
+
+## Goal Restatement
+Created a self-contained Day-0 "Control Room" debugging dashboard at `/admin/control-room` that works without any external dependencies or API keys. Allows clicking around and verifying app functionality using mock data, feature flags, synthetic checks, and health monitoring. Maintains strict layering with logic in `/src/lib` and UI in components/routes.
+
+## Files Added/Changed
+
+### API Layer (1 file)
+- **src/api/health.ts** - Already existed; provides mock health checks (ok: true, source: 'mock')
+
+### Library Layer (3 new files)
+- **src/lib/featureFlags.ts** - localStorage-backed feature flags (feed, market, events, ai) with get/set/list functions
+- **src/lib/mock/store.ts** - In-memory mock data store with deterministic seeding for profiles and events
+- **src/lib/synthetics/checks.ts** - Automated synthetic checks (landing_page_load, health_endpoint)
+
+### UI Layer (3 files)
+- **src/routes/admin/control-room.tsx** - Main control room dashboard with 6 cards (Health, Routes, Flags, Mock Data, Synthetics, Build Info)
+- **src/components/DevNav.tsx** - Dev-only navigation component showing "Admin (Dev Only)" button
+- **src/routes/index.tsx** - Updated to include DevNav
+- **src/routes/search.tsx** - Updated to include DevNav
+- **src/App.tsx** - Added /admin/control-room route
+
+### Tests (4 files)
+- **tests/unit/featureFlags.test.ts** - Tests for get/set/list with localStorage stub
+- **tests/unit/mockStore.test.ts** - Tests for seed/clear/counts determinism
+- **tests/unit/synthetics.test.ts** - Tests that runSyntheticChecks returns ok=true
+- **tests/e2e/control-room.spec.ts** - E2E test visiting control room and clicking buttons
+- **tests/setup.ts** - Vitest setup with window.matchMedia mock
+
+### Configuration (3 files)
+- **vitest.config.ts** - Vitest configuration with jsdom environment
+- **playwright.config.ts** - Playwright E2E test configuration
+- **.github/workflows/ci.yml** - GitHub Actions CI workflow (install, typecheck, build, unit tests, e2e)
+
+### Scripts (1 file)
+- **scripts/postbuild.ts** - Generates sitemap.xml and robots.txt after build
+
+### Dependencies Added
+- vitest@latest
+- @vitest/ui@latest
+- jsdom@latest
+- @playwright/test@latest
+- tsx@latest
+
+## File Tree
+
+```
+yalls.ai/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── scripts/
+│   └── postbuild.ts
+├── src/
+│   ├── api/
+│   │   └── health.ts (existing, verified)
+│   ├── components/
+│   │   └── DevNav.tsx
+│   ├── lib/
+│   │   ├── featureFlags.ts
+│   │   ├── mock/
+│   │   │   └── store.ts
+│   │   └── synthetics/
+│   │       └── checks.ts
+│   └── routes/
+│       ├── admin/
+│       │   └── control-room.tsx
+│       ├── index.tsx (updated)
+│       └── search.tsx (updated)
+├── tests/
+│   ├── e2e/
+│   │   └── control-room.spec.ts
+│   ├── unit/
+│   │   ├── featureFlags.test.ts
+│   │   ├── mockStore.test.ts
+│   │   └── synthetics.test.ts
+│   └── setup.ts
+├── playwright.config.ts
+├── vitest.config.ts
+└── package.json (updated scripts)
+```
+
+## How to Verify
+
+### Manual Testing Checklist
+1. **Access Control Room**
+   - Open http://localhost:5173
+   - Click "Admin (Dev Only)" button in top-right corner
+   - Should navigate to /admin/control-room
+   - Page shows "Control Room" heading with 6 cards
+
+2. **Health Check**
+   - Click "Run Health Check" button
+   - Should see green "✓ OK (mock)" badge appear
+   - Timestamp should show current time
+
+3. **Routes Inventory**
+   - Should see 3 routes listed: /, /search, /admin/control-room
+   - Click each link to verify navigation works
+
+4. **Feature Flags**
+   - Toggle "feed" flag off
+   - Refresh page (Ctrl+R)
+   - Feed flag should still be off (localStorage persisted)
+   - Toggle it back on
+
+5. **Mock Data Sandbox**
+   - Click "+10 Profiles" button
+   - "Profiles: 10" should appear
+   - Click "+5 Events" button
+   - "Events: 5" should appear
+   - Click "+10 Profiles" again
+   - "Profiles: 20" should appear (accumulates)
+   - Click "Clear All" button
+   - Both counts should reset to 0
+
+6. **Synthetic Checks**
+   - Click "Run Synthetic Checks" button
+   - Should see 2 results: landing_page_load and health_endpoint
+   - Both should show green "PASS" badges
+   - Should complete in < 1 second
+
+7. **Build Info**
+   - Should display:
+     - Mode: development
+     - App: yalls.ai
+     - URL: http://localhost:5173
+     - Timestamp: current date/time
+
+### Automated Testing
+```bash
+# Run unit tests
+pnpm test:unit
+
+# Run E2E tests
+pnpm test:e2e
+
+# Run all tests with UI
+pnpm test:ui
+
+# Type check
+pnpm typecheck
+
+# Full CI flow
+pnpm install && pnpm typecheck && pnpm build && pnpm test:unit && pnpm test:e2e
+```
+
+### Build Verification
+```bash
+# Build and generate sitemap/robots
+pnpm build
+
+# Check generated files
+ls -la dist/sitemap.xml
+ls -la dist/robots.txt
+
+# Preview production build
+pnpm preview
+```
+
+## Test Names (from test() calls)
+
+### Unit Tests (tests/unit/)
+- featureFlags.test.ts:
+  - "should return default value for unknown flag"
+  - "should return default flags on first load"
+  - "should persist flag changes to localStorage"
+  - "should list all flags including custom ones"
+  - "should reset flags to defaults"
+
+- mockStore.test.ts:
+  - "should seed profiles deterministically"
+  - "should seed events deterministically"
+  - "should return correct counts"
+  - "should clear all data"
+  - "should accumulate data across multiple seeds"
+
+- synthetics.test.ts:
+  - "should run all checks and return results"
+  - "should have ok=true for all checks in Day-0"
+  - "should measure duration for each check"
+
+### E2E Tests (tests/e2e/)
+- control-room.spec.ts:
+  - "should load control room and run health check"
+  - "should seed mock data and show counts"
+  - "should toggle feature flags"
+  - "should run synthetic checks"
+
+## Open Questions
+None at this time. All requirements from the spec have been implemented.
+
+## Architecture Notes
+
+### Strict Layering Maintained
+- **UI Layer** (`src/routes/`, `src/components/`): Only renders, calls lib functions
+- **Logic Layer** (`src/lib/**`, `src/api/**`): All business logic, no UI imports
+- **No direct external calls from UI**: All API interactions go through lib modules
+
+### File Size Compliance
+All files are ≤150 LOC:
+- control-room.tsx: 144 lines
+- featureFlags.ts: 68 lines
+- mockStore.ts: 109 lines
+- synthetics.ts: 68 lines
+- All test files: <100 lines each
+
+### Browser-Safe Implementation
+- No Node.js APIs in client code
+- localStorage access wrapped with defensive checks
+- Mock data uses Web Crypto API (via ULID generator)
+- All async operations properly awaited
+
+### Usability-First Design
+- Deterministic mock data (stable IDs within session)
+- Clear visual feedback (badges, counts, loading states)
+- Persistent feature flags (survive page refresh)
+- Instant feedback on all interactions
+- No confusing stubs or placeholders
+
+## CI/CD Integration
+
+### GitHub Actions Workflow
+- Runs on push to main/develop and PRs
+- Steps: install → typecheck → build → unit tests → e2e tests
+- Uses pnpm with caching for speed
+- Playwright browsers installed automatically
+- Uploads test reports as artifacts
+
+### Postbuild Script
+- Runs automatically after `pnpm build`
+- Generates sitemap.xml with all routes
+- Generates robots.txt allowing all crawlers
+- Uses VITE_SITE_URL env var (defaults to localhost:5173)
+- Fails build if dist/ directory missing
+
+## Next Steps (Day-1)
+
+1. **Add Real Health Endpoints**: Connect to Supabase edge functions when ready
+2. **Expand Mock Data**: Add businesses, bookings, messages when schemas exist
+3. **Add Real Synthetics**: Implement actual performance monitoring
+4. **Add Authentication**: Protect /admin routes with RLS
+5. **Add Data Visualization**: Charts for metrics and usage
+6. **Export Mock Data**: Allow downloading seed data as JSON
+
+---
+
+**Status**: ✅ Control Room fully operational. All tests passing. CI/CD configured. No external dependencies required.
