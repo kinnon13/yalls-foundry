@@ -870,6 +870,62 @@ specs/day1-auth-rbac-profiles.json
 
 ---
 
+## Control Room v3 — Architecture Export
+
+**New Card Added:**
+- Card #11: **Architecture Export** - Comprehensive route mapping, file organization, and architectural views
+
+**Files Added:**
+- `src/lib/export/architecture.ts` — Route extraction, file tree builder, Mermaid diagram generator (140 LOC)
+
+**Files Updated:**
+- `src/routes/admin/control-room.tsx` — Added Architecture Export card with JSON export and Mermaid route map
+
+**What's Exported:**
+1. **Routes** — All route paths with protection status and guard types (RequireAuth, WithRole, Can)
+2. **File Tree** — Hierarchical file structure organized by directories
+3. **Layer Organization** — Files categorized by layer (ui/components, lib, routes, tests)
+4. **Mermaid Diagram** — Visual route map showing protected routes and their guards
+
+**How to Use:**
+1. **Export Full Architecture JSON** — Downloads complete architectural snapshot including:
+   - Route definitions with guard information
+   - Nested file tree structure
+   - Layer categorization (ui, lib, routes, tests)
+2. **Copy Route Map (Mermaid)** — Generates and copies Mermaid diagram showing:
+   - All routes and their hierarchy
+   - Protected routes (with double brackets `{{}}`)
+   - Guard annotations showing which guards protect each route
+   - Paste into any Mermaid viewer or use with Control Room Mermaid renderer
+
+**Example Output:**
+```json
+{
+  "generated_at": "2025-10-14T...",
+  "routes": [
+    { "path": "/", "file": "src/routes/index.tsx", "protected": false },
+    { "path": "/login", "file": "src/routes/login.tsx", "protected": false },
+    { "path": "/admin/control-room", "file": "src/routes/admin/control-room.tsx", 
+      "protected": true, "guards": ["RequireAuth"] }
+  ],
+  "fileTree": [...],
+  "layers": {
+    "ui": ["src/components/..."],
+    "lib": ["src/lib/..."],
+    "routes": ["src/routes/..."],
+    "tests": ["tests/..."]
+  }
+}
+```
+
+**Why This Matters:**
+- **Onboarding** — New devs can instantly see the full route map and project structure
+- **Documentation** — Auto-generated architectural views stay in sync with code
+- **Planning** — Visual route maps help plan new features and identify gaps
+- **Spec Validation** — Compare expected vs actual file organization at a glance
+
+---
+
 ## Final Checklist (All Items Completed)
 
 ✅ **A) Package Scripts** - Documented in EXECUTION.md (package.json is read-only)  

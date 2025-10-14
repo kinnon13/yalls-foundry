@@ -22,8 +22,9 @@ import { downloadJSON, downloadCSV, copy } from '@/lib/export/download';
 import { syntheticResultsToRows } from '@/lib/synthetics/serialize';
 import { takeCodeSnapshot } from '@/lib/export/codeSnapshot';
 import { parseSpec, comparePaths } from '@/lib/export/specCompare';
+import { exportArchitecture, routesToMermaid } from '@/lib/export/architecture';
 import { AuthPanel } from '@/routes/admin/panels/AuthPanel';
-import { Activity, List, Flag, Database, Zap, Info, Download, Code, FileCheck } from 'lucide-react';
+import { Activity, List, Flag, Database, Zap, Info, Download, Code, FileCheck, Map } from 'lucide-react';
 
 export default function ControlRoom() {
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; source: string; ts: string } | null>(null);
@@ -33,6 +34,7 @@ export default function ControlRoom() {
   const [loading, setLoading] = useState<string | null>(null);
   const [specText, setSpecText] = useState('');
   const [specResult, setSpecResult] = useState<{ missing: string[]; extra: string[] } | null>(null);
+  const [archMermaid, setArchMermaid] = useState('');
 
   const routes = [
     { path: '/', name: 'Home' },
@@ -180,6 +182,34 @@ export default function ControlRoom() {
       setSpecResult(result);
     } catch (error) {
       console.error('Spec compare failed:', error);
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  // Architecture export handlers
+  const handleArchExport = async () => {
+    setLoading('arch-export');
+    try {
+      const arch = await exportArchitecture();
+      downloadJSON(`architecture-${Date.now()}.json`, arch);
+    } catch (error) {
+      console.error('Architecture export failed:', error);
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleArchMermaid = async () => {
+    setLoading('arch-mermaid');
+    try {
+      const arch = await exportArchitecture();
+      const mermaid = routesToMermaid(arch.routes);
+      setArchMermaid(mermaid);
+      await copy(mermaid);
+      console.info('Mermaid diagram copied to clipboard');
+    } catch (error) {
+      console.error('Mermaid generation failed:', error);
     } finally {
       setLoading(null);
     }
@@ -491,6 +521,51 @@ export default function ControlRoom() {
 
             {/* 10. Auth Session */}
             <AuthPanel />
+
+            {/* 11. Architecture Export */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Map className="h-5 w-5" />
+                  Architecture
+                </CardTitle>
+                <CardDescription>Routes, flow, and file organization</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button 
+                  onClick={handleArchExport}
+                  disabled={loading === 'arch-export'}
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                >
+                  {loading === 'arch-export' ? 'Exporting...' : 'Export Full Architecture JSON'}
+                </Button>
+                <Button 
+                  onClick={handleArchMermaid}
+                  disabled={loading === 'arch-mermaid'}
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                >
+                  {loading === 'arch-mermaid' ? 'Generating...' : 'Copy Route Map (Mermaid)'}
+                </Button>
+                {archMermaid && (
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-green-600 mb-2">✓ Copied to clipboard! Paste in Mermaid viewer</p>
+                    <Textarea
+                      value={archMermaid}
+                      readOnly
+                      rows={8}
+                      className="text-xs font-mono"
+                    />
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground pt-2">
+                  JSON includes: routes (+ guards), file tree, and layer organization
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
