@@ -5,7 +5,7 @@
  * without external dependencies or API keys.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '@/lib/seo/helmet';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,8 @@ export default function ControlRoom() {
   const [loading, setLoading] = useState<string | null>(null);
   const [specText, setSpecText] = useState('');
   const [specResult, setSpecResult] = useState<{ missing: string[]; extra: string[] } | null>(null);
+  const [actualPaths, setActualPaths] = useState<string[]>([]);
+  const [loadingPaths, setLoadingPaths] = useState(true);
   const [archMermaid, setArchMermaid] = useState('');
 
   const routes = [
@@ -77,6 +79,31 @@ export default function ControlRoom() {
     setSyntheticResults(results);
     setLoading(null);
   };
+
+  // Load actual project files once on mount
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      setLoadingPaths(true);
+      try {
+        const snap = await takeCodeSnapshot({
+          routes: true,
+          components: true,
+          lib: true,
+          sql: true,
+          public: false,
+          maxBytesPerFile: 1, // only need paths, minimal load
+        });
+        if (!alive) return;
+        setActualPaths(snap.files.map(f => f.path));
+      } catch (error) {
+        console.error('Failed to load project paths:', error);
+      } finally {
+        if (alive) setLoadingPaths(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
 
   const buildInfo = {
     nodeEnv: import.meta.env.MODE || 'development',
@@ -212,21 +239,11 @@ export default function ControlRoom() {
   };
 
   // Spec compare handler
-  const handleCompareSpec = async () => {
+  const handleCompareSpec = () => {
     setLoading('spec-compare');
     try {
-      const snapshot = await takeCodeSnapshot({
-        routes: true,
-        components: true,
-        lib: true,
-        sql: true,
-        public: false,
-      });
-      
-      const actualPaths = snapshot.files.map(f => f.path);
       const expectedPaths = parseSpec(specText);
       const result = comparePaths(expectedPaths, actualPaths);
-      
       setSpecResult(result);
     } catch (error) {
       console.error('Spec compare failed:', error);
@@ -601,11 +618,11 @@ export default function ControlRoom() {
                 />
                 <Button 
                   onClick={handleCompareSpec}
-                  disabled={loading === 'spec-compare' || !specText.trim()}
+                  disabled={loading === 'spec-compare' || !specText.trim() || loadingPaths}
                   size="sm"
                   className="w-full"
                 >
-                  {loading === 'spec-compare' ? 'Comparing...' : 'Compare Paths'}
+                  {loadingPaths ? 'Loading paths...' : loading === 'spec-compare' ? 'Comparing...' : 'Compare Paths'}
                 </Button>
                 {specResult && (
                   <div className="space-y-2 pt-2 border-t">
