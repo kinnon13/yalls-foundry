@@ -677,6 +677,16 @@ export type Database = {
         Args: { "": number }
         Returns: string
       }
+      get_tables_rls_status: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          policies: Json
+          risk_level: string
+          rls_enabled: boolean
+          schema: string
+          table: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: string
