@@ -11,6 +11,9 @@ import Search from "./routes/search";
 import Login from "./routes/login";
 import Profile from "./routes/profile";
 import ControlRoom from "./routes/admin/control-room";
+import HorsesIndex from "./routes/horses/index";
+import HorseDetail from "./routes/horses/[id]";
+import CreateHorse from "./routes/horses/create";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +30,9 @@ const App = () => (
               <Route path="/search" element={<Search />} />
               <Route path="/login" element={<Login />} />
               <Route path="/profile/:id" element={<Profile />} />
+              <Route path="/horses" element={<HorsesIndex />} />
+              <Route path="/horses/create" element={<CreateHorse />} />
+              <Route path="/horses/:id" element={<HorseDetail />} />
               <Route path="/admin/control-room" element={<ControlRoom />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
