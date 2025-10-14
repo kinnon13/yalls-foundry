@@ -91,7 +91,6 @@ export default function ControlRoom() {
           components: true,
           lib: true,
           sql: true,
-          public: false,
           maxBytesPerFile: 1, // only need paths, minimal load
         });
         if (!alive) return;
@@ -169,7 +168,6 @@ export default function ControlRoom() {
         components: true,
         lib: true,
         sql: true,
-        public: false,
       });
       downloadJSON(`code-snapshot-${Date.now()}.json`, snapshot);
     } catch (error) {
@@ -187,7 +185,6 @@ export default function ControlRoom() {
         components: true,
         lib: true,
         sql: true,
-        public: false,
       });
       const json = JSON.stringify(snapshot, null, 2);
       const sizeMB = (new Blob([json]).size / 1024 / 1024).toFixed(2);
@@ -212,7 +209,6 @@ export default function ControlRoom() {
         components: true,
         lib: true,
         sql: true,
-        public: false,
       });
       const text = snapshot.files.map(f => f.path).join('\n');
       await copy(text);
@@ -605,6 +601,11 @@ export default function ControlRoom() {
                 <CardTitle className="flex items-center gap-2">
                   <FileCheck className="h-5 w-5" />
                   Spec Compare
+                  {!loadingPaths && (
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      {actualPaths.length} files detected
+                    </Badge>
+                  )}
                 </CardTitle>
                 <CardDescription>Compare against expected layout</CardDescription>
               </CardHeader>

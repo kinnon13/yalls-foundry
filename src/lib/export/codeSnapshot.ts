@@ -10,7 +10,6 @@ export type SnapshotOptions = {
   components?: boolean;
   lib?: boolean;
   sql?: boolean;
-  public?: boolean;
   maxBytesPerFile?: number;
 };
 
@@ -56,38 +55,27 @@ export async function takeCodeSnapshot(opts: SnapshotOptions = {}): Promise<Snap
     components = true,
     lib = true,
     sql = true,
-    public: includePublic = false,
     maxBytesPerFile = 200_000,
   } = opts;
 
-  // Use glob patterns without leading slash for better compatibility
-  const loaders = import.meta.glob(
-    [
-      '../routes/**/*.{ts,tsx}',
-      '../components/**/*.{ts,tsx}',
-      '../lib/**/*.{ts,tsx}',
-      '../../supabase/migrations/**/*.sql',
-      '../../supabase/functions/**/index.ts',
-      '../../public/**/*.{json,md,txt,css}',
-    ],
-    { as: 'raw', eager: false }
-  );
+  // Build patterns dynamically based on options
+  const patterns: string[] = [];
+  if (routes) patterns.push('/src/routes/**/*.{ts,tsx}');
+  if (components) patterns.push('/src/components/**/*.{ts,tsx}');
+  if (lib) patterns.push('/src/lib/**/*.{ts,tsx}');
+  if (sql) {
+    patterns.push('/supabase/migrations/**/*.sql');
+    patterns.push('/supabase/functions/**/index.ts');
+  }
+  // NOTE: /public is not in Vite's module graph, so we skip it
+
+  const loaders = import.meta.glob(patterns, { as: 'raw', eager: false });
 
   const files: FileRecord[] = [];
   let totalBytes = 0;
 
   for (const [path, loader] of Object.entries(loaders)) {
     const p = normalizePath(path);
-    
-    // Match relative paths from the lib/export directory
-    const include =
-      (routes && (p.includes('/routes/') || p.startsWith('../routes/'))) ||
-      (components && (p.includes('/components/') || p.startsWith('../components/'))) ||
-      (lib && (p.includes('/lib/') || p.startsWith('../lib/'))) ||
-      (sql && (p.includes('/supabase/migrations/') || p.includes('/supabase/functions/'))) ||
-      (includePublic && (p.includes('/public/') || p.startsWith('../../public/')));
-    
-    if (!include) continue;
 
     try {
       const content = String(await (loader as () => Promise<string>)());
@@ -101,11 +89,8 @@ export async function takeCodeSnapshot(opts: SnapshotOptions = {}): Promise<Snap
         truncated = true;
       }
       
-      // Clean up path for display (remove ../ and leading slashes)
-      const displayPath = p.replace(/^\.\.\//, 'src/').replace(/^\.\.\/\.\.\//, '');
-      
       files.push({
-        path: displayPath,
+        path: p,
         size_bytes: size,
         lines,
         sha256: await sha256(final),
