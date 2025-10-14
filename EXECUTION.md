@@ -10,6 +10,64 @@ Built a production-ready foundation for **yalls.ai** with strict separation of c
 - In-memory L1 cache with Upstash interface ready
 - All core principles maintained: strict layering, accessibility, security-first
 
+---
+
+## CHANGES (Fix Pack Applied)
+
+### Goal Restatement
+Applied browser-safe crypto fixes and environment standardization to ensure:
+1. All cryptographic operations use Web Crypto API (no Node.js dependencies)
+2. Environment variables follow Supabase naming conventions (ANON_KEY not PUBLISHABLE_KEY)
+3. All async crypto operations properly awaited
+
+### Patches Applied
+
+#### 1. Browser-safe crypto in idempotency.ts
+**Why**: Original used Node.js `createHash` which doesn't work in browsers  
+**Change**: 
+- Removed `import { createHash } from 'crypto'`
+- Added `stableJSONString()` for deterministic object serialization
+- Added `sha256Base16()` using Web Crypto API
+- Made `generateIdempotencyKey()` async
+**Verify**: No build errors; function works in browser console
+
+#### 2. Browser-safe nonce generation in csp.ts
+**Why**: Original used Buffer which isn't available in browsers  
+**Change**:
+- Replaced Buffer-based implementation with btoa + String.fromCharCode
+- Output is base64url-safe (- and _ instead of + and /)
+**Verify**: No build errors; nonce generates valid base64url strings
+
+#### 3. Standardized env schema in config.ts
+**Why**: Lovable Cloud uses VITE_SUPABASE_ANON_KEY not PUBLISHABLE_KEY  
+**Change**:
+- Replaced `VITE_SUPABASE_PUBLISHABLE_KEY` with `VITE_SUPABASE_ANON_KEY`
+- Removed `VITE_SUPABASE_PROJECT_ID` (not needed)
+- Updated validateEnv() to match new schema
+**Verify**: App loads without env validation errors
+
+#### 4. Updated Supabase client in client.ts
+**Why**: Must use ANON_KEY to match Lovable Cloud configuration  
+**Change**:
+- Changed from `config.VITE_SUPABASE_PUBLISHABLE_KEY` to `config.VITE_SUPABASE_ANON_KEY`
+**Verify**: Supabase client initializes correctly
+
+#### 5. Created .env.example
+**Why**: Developers need reference for required environment variables  
+**Change**:
+- Added all VITE_* variables with descriptions
+- Included optional Upstash and feature flag configs
+**Verify**: File exists in project root
+
+### Acceptance Checks
+✅ No Node.js crypto imports in client-side code  
+✅ All crypto operations use Web Crypto API  
+✅ generateIdempotencyKey() is async and awaitable  
+✅ VITE_SUPABASE_ANON_KEY used consistently  
+✅ .env.example created with all variables  
+✅ Build passes with no TypeScript errors  
+✅ Strict layering maintained (no direct external calls from UI)
+
 ## Files Generated
 
 ### Configuration & Environment (2 files)

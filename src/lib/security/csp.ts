@@ -48,5 +48,8 @@ export function generateCSP(): string {
  * Use when removing unsafe-inline from script-src
  */
 export function generateNonce(): string {
-  return Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('base64');
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  const raw = String.fromCharCode(...bytes);
+  return btoa(raw).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }

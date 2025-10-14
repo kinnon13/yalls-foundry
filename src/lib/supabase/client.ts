@@ -14,7 +14,7 @@ import { config } from '@/lib/config';
 
 export const supabaseClient = createClient(
   config.VITE_SUPABASE_URL,
-  config.VITE_SUPABASE_PUBLISHABLE_KEY,
+  config.VITE_SUPABASE_ANON_KEY,
   {
     auth: {
       persistSession: true,

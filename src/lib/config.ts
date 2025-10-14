@@ -17,8 +17,7 @@ const envSchema = z.object({
   VITE_APP_NAME: z.string().default('yalls.ai'),
   VITE_SITE_URL: z.string().url().optional(),
   VITE_SUPABASE_URL: z.string().url(),
-  VITE_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
-  VITE_SUPABASE_PROJECT_ID: z.string().min(1),
+  VITE_SUPABASE_ANON_KEY: z.string().min(1),
   
   // Optional: Upstash Redis configuration for L2 cache
   VITE_USE_UPSTASH: z.enum(['true', 'false']).transform(v => v === 'true').default('false'),
@@ -36,8 +35,7 @@ function validateEnv(): Env {
       VITE_APP_NAME: import.meta.env.VITE_APP_NAME || 'yalls.ai',
       VITE_SITE_URL: import.meta.env.VITE_SITE_URL,
       VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
-      VITE_SUPABASE_PUBLISHABLE_KEY: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-      VITE_SUPABASE_PROJECT_ID: import.meta.env.VITE_SUPABASE_PROJECT_ID,
+      VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
       VITE_USE_UPSTASH: import.meta.env.VITE_USE_UPSTASH || 'false',
       VITE_UPSTASH_REDIS_REST_URL: import.meta.env.VITE_UPSTASH_REDIS_REST_URL,
       VITE_UPSTASH_REDIS_REST_TOKEN: import.meta.env.VITE_UPSTASH_REDIS_REST_TOKEN,

@@ -7,18 +7,36 @@
  * 
  * Usage:
  *   import { generateIdempotencyKey, trackIdempotency } from '@/lib/availability/idempotency';
- *   const key = generateIdempotencyKey({ userId, action: 'create_business' });
+ *   const key = await generateIdempotencyKey({ userId, action: 'create_business' });
  *   const result = await trackIdempotency(key, () => createBusiness());
  */
 
-import { createHash } from 'crypto';
+/**
+ * Stable JSON stringification (recursive key sorting)
+ */
+function stableJSONString(data: Record<string, unknown>): string {
+  const sort = (v: any): any =>
+    Array.isArray(v) ? v.map(sort)
+    : v && typeof v === 'object'
+    ? Object.keys(v).sort().reduce((a, k) => (a[k] = sort(v[k]), a), {} as any)
+    : v;
+  return JSON.stringify(sort(data));
+}
 
 /**
- * Generate idempotency key from request data
+ * SHA-256 hash using Web Crypto API
  */
-export function generateIdempotencyKey(data: Record<string, any>): string {
-  const normalized = JSON.stringify(data, Object.keys(data).sort());
-  return createHash('sha256').update(normalized).digest('hex');
+async function sha256Base16(input: string): Promise<string> {
+  const bytes = new TextEncoder().encode(input);
+  const hash = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+/**
+ * Generate idempotency key from request data (async)
+ */
+export async function generateIdempotencyKey(data: Record<string, unknown>): Promise<string> {
+  return sha256Base16(stableJSONString(data));
 }
 
 /**
