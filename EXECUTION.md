@@ -716,6 +716,55 @@ Compare actual file layout against an expected specification:
 
 ---
 
+## Day-1 — Auth/RBAC + Unified Profile Base + Tests
+
+**Files Added:**
+- `src/lib/auth/types.ts` - Session and callback types
+- `src/lib/auth/adapter.ts` - AuthAdapter interface
+- `src/lib/auth/adapters/mock.ts` - Mock auth with localStorage persistence
+- `src/lib/auth/context.tsx` - AuthProvider + useSession hook
+- `src/lib/auth/rbac.ts` - Permission matrix (7 roles × 3 subjects × 5 actions)
+- `src/lib/auth/guards.tsx` - RequireAuth, WithRole, Can components
+- `src/lib/profiles/types.ts` - Unified profile types (horse, farm, business, etc.)
+- `src/lib/profiles/registry.ts` - Type-specific field definitions
+- `src/lib/profiles/service.mock.ts` - In-memory CRUD with seeded data
+- `src/components/profile/ProfileHeader.tsx` - Profile name + badges
+- `src/components/profile/ProfileFields.tsx` - Dynamic field rendering
+- `src/components/profile/ClaimBanner.tsx` - Claim button with RBAC
+- `src/components/profile/ProfileActions.tsx` - Edit/delete with RBAC
+- `src/routes/login.tsx` - Mock login form (email + role picker)
+- `src/routes/profile.tsx` - Unified profile view route
+- `src/routes/admin/panels/AuthPanel.tsx` - Session display + impersonation
+- `tests/unit/auth.rbac.test.ts` - RBAC matrix truth table (15 tests)
+- `tests/unit/auth.guards.test.tsx` - Guard component behavior (6 tests)
+- `tests/unit/profiles.service.test.ts` - CRUD operations (11 tests)
+- `tests/integration/routes.protected.test.tsx` - Protected route behavior (4 tests)
+- `specs/day1-auth-rbac-profiles.json` - Spec Compare reference
+
+**Files Updated:**
+- `src/App.tsx` - Added AuthProvider wrapper + /login and /profile/:id routes
+- `src/routes/admin/control-room.tsx` - Added AuthPanel as card #10
+
+**Verification:**
+1. `pnpm typecheck` → 0 errors (strict TypeScript)
+2. `pnpm test:unit` → 36 tests pass (RBAC, guards, profile service)
+3. Visit `/login` → pick role → session appears in Control Room Auth panel
+4. Visit `/profile/horse_1` → see unified profile with claim banner (if not admin)
+5. Spec Compare → paste paths from `specs/day1-auth-rbac-profiles.json` → Missing: 0
+
+**Features:**
+- ✅ Mock auth with 7 roles (admin to guest)
+- ✅ RBAC with permission matrix
+- ✅ 3 guard components (RequireAuth, WithRole, Can)
+- ✅ Unified profile system for 7 entity types
+- ✅ Type-specific fields via registry
+- ✅ Claim flow with RBAC enforcement
+- ✅ Auth panel in Control Room with impersonation
+
+**Ready for Supabase Swap:** All services use adapter pattern; swap mock→Supabase without touching UI.
+
+---
+
 ## Control Room v2 — Export/Share, Code Snapshot, Spec Compare
 
 **Files Added:**

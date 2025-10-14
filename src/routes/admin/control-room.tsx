@@ -22,6 +22,7 @@ import { downloadJSON, downloadCSV, copy } from '@/lib/export/download';
 import { syntheticResultsToRows } from '@/lib/synthetics/serialize';
 import { takeCodeSnapshot } from '@/lib/export/codeSnapshot';
 import { parseSpec, comparePaths } from '@/lib/export/specCompare';
+import { AuthPanel } from '@/routes/admin/panels/AuthPanel';
 import { Activity, List, Flag, Database, Zap, Info, Download, Code, FileCheck } from 'lucide-react';
 
 export default function ControlRoom() {
@@ -487,6 +488,9 @@ export default function ControlRoom() {
                 )}
               </CardContent>
             </Card>
+
+            {/* 10. Auth Session */}
+            <AuthPanel />
           </div>
         </div>
       </div>

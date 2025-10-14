@@ -1,0 +1,28 @@
+{
+  "spec": "Day-1 — Auth/RBAC + Unified Profile Base + Tests",
+  "version": "1.0.0",
+  "generated_at": "2025-10-14",
+  "paths": [
+    "src/lib/auth/types.ts",
+    "src/lib/auth/adapter.ts",
+    "src/lib/auth/adapters/mock.ts",
+    "src/lib/auth/context.tsx",
+    "src/lib/auth/rbac.ts",
+    "src/lib/auth/guards.tsx",
+    "src/lib/profiles/types.ts",
+    "src/lib/profiles/registry.ts",
+    "src/lib/profiles/service.mock.ts",
+    "src/components/profile/ProfileHeader.tsx",
+    "src/components/profile/ProfileFields.tsx",
+    "src/components/profile/ClaimBanner.tsx",
+    "src/components/profile/ProfileActions.tsx",
+    "src/routes/login.tsx",
+    "src/routes/profile.tsx",
+    "src/routes/admin/panels/AuthPanel.tsx",
+    "tests/unit/auth.rbac.test.ts",
+    "tests/unit/auth.guards.test.tsx",
+    "tests/unit/profiles.service.test.ts",
+    "tests/integration/routes.protected.test.tsx",
+    "specs/day1-auth-rbac-profiles.json"
+  ]
+}
