@@ -716,6 +716,51 @@ Compare actual file layout against an expected specification:
 
 ---
 
+## Control Room v2 — Export/Share, Code Snapshot, Spec Compare
+
+**Files Added:**
+- `src/lib/export/download.ts` — JSON/CSV download + clipboard (strict types, \r\n escaping)
+- `src/lib/export/codeSnapshot.ts` — Vite glob scan + SHA-256 + truncation + over_150_loc flag
+- `src/lib/export/specCompare.ts` — parse/normalize + compare
+- `src/lib/synthetics/serialize.ts` — flatten synthetics → CSV rows
+- `tests/unit/specCompare.test.ts` — Spec parsing and path comparison tests
+
+**Files Updated:**
+- `src/routes/admin/control-room.tsx` — Added cards #7 (Export/Share), #8 (Code & Layout), #9 (Spec Compare) + handlers
+- `tests/unit/export.test.ts` — CSV conversion + escaping tests (quotes, commas, newlines with \n and \r)
+
+**How to Verify:**
+1. `/admin/control-room` → Export JSON/CSV; CSV opens cleanly in Sheets (quotes/newlines escaped)
+2. Export Snapshot → file contains `path`, `size_bytes`, `lines`, `sha256`, `content`, and `over_150_loc: true` for files >150 lines
+3. Spec Compare → Paste checklist below, should show **Missing = 0**:
+   ```
+   src/lib/export/download.ts
+   src/lib/export/codeSnapshot.ts
+   src/lib/export/specCompare.ts
+   src/lib/synthetics/serialize.ts
+   src/routes/admin/control-room.tsx
+   tests/unit/export.test.ts
+   tests/unit/specCompare.test.ts
+   ```
+4. `pnpm typecheck && pnpm test` → all green (0 TS errors, all tests pass)
+
+**Acceptance Gate:**
+✅ TypeScript strict mode - 0 errors  
+✅ Unit tests - CSV escaping (quotes, commas, \n, \r\n), spec parsing, path comparison  
+✅ Export/Share - JSON download, CSV download, clipboard copy  
+✅ Code Snapshot - Full file tree with metadata + SHA-256 hashing  
+✅ Spec Compare - Missing/extra file detection  
+✅ Line budget enforcement - `over_150_loc` flag for files >150 lines  
+
+**Technical Details:**
+- Pure browser APIs (Web Crypto for SHA-256, Blob for downloads)
+- Vite's `import.meta.glob` with dynamic loading (non-eager)
+- Files ≤150 LOC each (download: 86, serialize: 31, specCompare: 29, codeSnapshot: 135)
+- Strict TypeScript types: `Array<Record<string, unknown>>`, `Promise<void>`, explicit return types
+- No external dependencies
+
+---
+
 ## Final Checklist (All Items Completed)
 
 ✅ **A) Package Scripts** - Documented in EXECUTION.md (package.json is read-only)  
