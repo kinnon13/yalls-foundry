@@ -14,18 +14,14 @@ import ControlRoom from "./routes/admin/control-room";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
-
 const FEEDBACK_ENABLED = import.meta.env.VITE_FEEDBACK_WIDGET === 'on';
 
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          {FEEDBACK_ENABLED && <FeedbackWidget />}
-          <BrowserRouter>
+      <TooltipProvider>
+        <BrowserRouter>
+          <AuthProvider>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/search" element={<Search />} />
@@ -34,9 +30,13 @@ const App = () => (
               <Route path="/admin/control-room" element={<ControlRoom />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
+
+            {FEEDBACK_ENABLED && <FeedbackWidget />}
+            <Toaster />
+            <Sonner />
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   </HelmetProvider>
 );
