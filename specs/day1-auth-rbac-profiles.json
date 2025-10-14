@@ -1,6 +1,6 @@
 {
   "spec": "Day-1 — Auth/RBAC + Unified Profile Base + Feedback + Export/Control",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "generated_at": "2025-10-14",
   "paths": [
     "src/lib/auth/adapter.ts",
@@ -21,12 +21,14 @@
     "src/routes/admin/control-room.tsx",
     "src/lib/export/download.ts",
     "src/lib/export/codeSnapshot.ts",
+    "src/lib/export/codeSearch.ts",
     "src/lib/export/specCompare.ts",
     "src/lib/synthetics/serialize.ts",
     "src/lib/feedback/types.ts",
     "src/lib/feedback/store.ts",
     "src/components/feedback/FeedbackWidget.tsx",
     "src/routes/admin/panels/FeedbackInbox.tsx",
+    "src/routes/admin/panels/CodeSearchPanel.tsx",
     "tests/setup.ts",
     "tests/unit/auth.rbac.test.ts",
     "tests/unit/auth.guards.test.tsx",

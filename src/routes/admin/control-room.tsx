@@ -25,6 +25,7 @@ import { parseSpec, comparePaths } from '@/lib/export/specCompare';
 import { exportArchitecture, routesToMermaid } from '@/lib/export/architecture';
 import AuthPanel from '@/routes/admin/panels/AuthPanel';
 import FeedbackInbox from '@/routes/admin/panels/FeedbackInbox';
+import CodeSearchPanel from '@/routes/admin/panels/CodeSearchPanel';
 import { Activity, List, Flag, Database, Zap, Info, Download, Code, FileCheck, Map } from 'lucide-react';
 
 export default function ControlRoom() {
@@ -696,6 +697,9 @@ export default function ControlRoom() {
 
             {/* 12. Feedback Inbox */}
             <FeedbackInbox />
+
+            {/* 13. Code Search & Export */}
+            <CodeSearchPanel />
           </div>
         </div>
       </div>
