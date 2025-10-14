@@ -24,6 +24,7 @@ import { takeCodeSnapshot } from '@/lib/export/codeSnapshot';
 import { parseSpec, comparePaths } from '@/lib/export/specCompare';
 import { exportArchitecture, routesToMermaid } from '@/lib/export/architecture';
 import AuthPanel from '@/routes/admin/panels/AuthPanel';
+import FeedbackInbox from '@/routes/admin/panels/FeedbackInbox';
 import { Activity, List, Flag, Database, Zap, Info, Download, Code, FileCheck, Map } from 'lucide-react';
 
 export default function ControlRoom() {
@@ -660,6 +661,9 @@ export default function ControlRoom() {
                 </p>
               </CardContent>
             </Card>
+
+            {/* 12. Feedback Inbox */}
+            <FeedbackInbox />
           </div>
         </div>
       </div>

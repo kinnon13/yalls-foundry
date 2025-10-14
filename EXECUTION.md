@@ -926,6 +926,64 @@ specs/day1-auth-rbac-profiles.json
 
 ---
 
+## Day-1.5 — Feedback System
+
+**New Feature: Universal Feedback Widget**
+- Users can report bugs, confusion, ideas from any page
+- Keyboard shortcut: **Alt+F** to open from anywhere
+- Floating button (bottom-right) on all pages
+
+**Files Added:**
+- `src/lib/feedback/types.ts` — Feedback types (severity, status)
+- `src/lib/feedback/store.ts` — localStorage persistence + export JSON/CSV (110 LOC)
+- `src/components/feedback/FeedbackWidget.tsx` — Floating button + pop-up form (130 LOC)
+- `src/routes/admin/panels/FeedbackInbox.tsx` — Control Room inbox panel (90 LOC)
+- `tests/unit/feedback.store.test.ts` — Store tests (add, list, mark status, clear)
+
+**Files Updated:**
+- `src/App.tsx` — Mounted `<FeedbackWidget />` globally
+- `src/routes/admin/control-room.tsx` — Added Feedback Inbox card (#12)
+
+**How to Use:**
+1. **Submit Feedback** — Click "💬 Feedback" button (bottom-right) or press **Alt+F**
+   - Choose severity: Bug / Confusing / Idea / Other
+   - Enter message (up to 1000 chars)
+   - Optional: Add email for follow-up
+2. **View in Control Room** — Card #12 "Feedback Inbox" shows all submissions
+   - Sorted by timestamp (newest first)
+   - Shows: path, severity, role, email, user agent
+   - Update status: new → triaged → closed
+3. **Export** — Export JSON or CSV for analysis
+4. **Clear** — Remove all feedback items
+
+**Data Captured:**
+- Message (user input)
+- Page path (window.location.pathname)
+- Severity (bug/confusing/idea/other)
+- User role (from auth session if logged in)
+- Email (optional)
+- User agent (browser/device info)
+- Timestamp (ISO format)
+
+**Verification:**
+1. Visit any page → Click Feedback button → Submit a test message
+2. Go to `/admin/control-room` → See Feedback Inbox card with your message
+3. Try Alt+F hotkey from any page
+4. Export JSON/CSV and verify data format
+5. `pnpm test` → feedback.store tests pass
+
+**Architecture:**
+✅ **Strict TS** — All types defined, no `any`  
+✅ **Files ≤150 LOC** — store: 110, widget: 130, inbox: 90  
+✅ **Logic in /src/lib** — UI never calls localStorage directly  
+✅ **Tests** — Full store coverage (add, list, status, clear)  
+✅ **Reactive** — Subscribe API for real-time UI updates  
+
+**Future Enhancement:**
+Can add webhook adapter to send feedback to Discord/Slack/email, following same pattern as auth adapters (mock → webhook).
+
+---
+
 ## Final Checklist (All Items Completed)
 
 ✅ **A) Package Scripts** - Documented in EXECUTION.md (package.json is read-only)  
