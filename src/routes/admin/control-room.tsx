@@ -188,7 +188,20 @@ export default function ControlRoom() {
       });
       const text = snapshot.files.map(f => f.path).join('\n');
       await copy(text);
-      alert(`✓ File list copied (paths only)\\nCount: ${snapshot.files.length}`);
+      
+      // Show copyable textarea as fallback
+      const pre = document.createElement('pre');
+      pre.textContent = text;
+      pre.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:white;border:2px solid black;padding:20px;max-height:80vh;overflow:auto;';
+      document.body.appendChild(pre);
+      
+      const btn = document.createElement('button');
+      btn.textContent = 'Close';
+      btn.style.cssText = 'position:absolute;top:10px;right:10px;';
+      btn.onclick = () => document.body.removeChild(pre);
+      pre.appendChild(btn);
+      
+      alert(`✓ File list ready!\nCount: ${snapshot.files.length}\n\nIf Ctrl+V doesn't work, select & copy from the popup window that just appeared.`);
     } catch (error) {
       console.error('Snapshot file list copy failed:', error);
       alert('✗ Failed to copy file list.');

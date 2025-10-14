@@ -68,22 +68,44 @@ export function downloadCSV(filename: string, rows: Array<Record<string, unknown
  * Falls back to textarea method if clipboard API unavailable
  */
 export async function copy(text: string): Promise<void> {
+  // Try modern clipboard API first
   if (navigator.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(text);
       return;
-    } catch {
+    } catch (err) {
+      console.warn('Clipboard API failed, trying fallback:', err);
       // Fall through to fallback
     }
   }
   
+  // Fallback: textarea method (works in more contexts)
   const ta = document.createElement('textarea');
   ta.value = text;
   ta.style.position = 'fixed';
-  ta.style.left = '-9999px';
+  ta.style.top = '0';
+  ta.style.left = '0';
+  ta.style.width = '2em';
+  ta.style.height = '2em';
+  ta.style.padding = '0';
+  ta.style.border = 'none';
+  ta.style.outline = 'none';
+  ta.style.boxShadow = 'none';
+  ta.style.background = 'transparent';
   document.body.appendChild(ta);
+  ta.focus();
   ta.select();
-  document.execCommand('copy');
-  document.body.removeChild(ta);
+  
+  try {
+    const successful = document.execCommand('copy');
+    if (!successful) {
+      throw new Error('execCommand failed');
+    }
+  } catch (err) {
+    console.error('All copy methods failed:', err);
+    throw new Error('Failed to copy to clipboard');
+  } finally {
+    document.body.removeChild(ta);
+  }
 }
 
