@@ -50,6 +50,14 @@
     "tests/e2e/profile-claim.spec.ts",
     "tests/unit/export.test.ts",
     "tests/unit/specCompare.test.ts",
-    "tests/unit/feedback.store.test.ts"
+    "tests/unit/feedback.store.test.ts",
+    "src/entities/business.ts",
+    "src/lib/business/service.supabase.ts",
+    "src/routes/business/[bizId]/hub.tsx",
+    "src/routes/business/[bizId]/settings/profile.tsx",
+    "src/routes/business/[bizId]/settings/payments.tsx",
+    "src/routes/business/[bizId]/crm/contacts.tsx",
+    "src/routes/business/[bizId]/crm/leads.tsx",
+    "tests/e2e/business-crm.spec.ts"
   ]
 }

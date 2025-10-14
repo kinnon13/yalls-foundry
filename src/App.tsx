@@ -14,6 +14,11 @@ import ControlRoom from "./routes/admin/control-room";
 import HorsesIndex from "./routes/horses/index";
 import HorseDetail from "./routes/horses/[id]";
 import CreateHorse from "./routes/horses/create";
+import BusinessHub from "./routes/business/[bizId]/hub";
+import BusinessProfileSettings from "./routes/business/[bizId]/settings/profile";
+import BusinessPaymentsSettings from "./routes/business/[bizId]/settings/payments";
+import BusinessCRMContacts from "./routes/business/[bizId]/crm/contacts";
+import BusinessCRMLeads from "./routes/business/[bizId]/crm/leads";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +38,11 @@ const App = () => (
               <Route path="/horses" element={<HorsesIndex />} />
               <Route path="/horses/create" element={<CreateHorse />} />
               <Route path="/horses/:id" element={<HorseDetail />} />
+              <Route path="/business/:bizId/hub" element={<BusinessHub />} />
+              <Route path="/business/:bizId/settings/profile" element={<BusinessProfileSettings />} />
+              <Route path="/business/:bizId/settings/payments" element={<BusinessPaymentsSettings />} />
+              <Route path="/business/:bizId/crm/contacts" element={<BusinessCRMContacts />} />
+              <Route path="/business/:bizId/crm/leads" element={<BusinessCRMLeads />} />
               <Route path="/admin/control-room" element={<ControlRoom />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
