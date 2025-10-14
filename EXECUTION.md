@@ -77,6 +77,15 @@ Applied browser-safe crypto fixes and environment standardization to ensure:
 - Falls back to mock gracefully if edge function unavailable
 **Verify**: Function returns health object; works with or without backend
 
+#### 8. Fixed env validation for Day-0 (no external dependencies)
+**Why**: Control Room should work without Supabase configured  
+**Change**:
+- Made `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` optional in config schema
+- Updated Supabase client to only initialize if env vars are present
+- Added `requireSupabase()` helper that throws helpful error when needed
+- CSP connectSrc only includes Supabase URL if configured
+**Verify**: App loads without Supabase env vars; Control Room works
+
 ### QUESTIONS (awaiting clarification)
 
 The instruction stated "Now complete B–E below" but only item B (SPA Health Checks) was provided. Please clarify:

@@ -8,15 +8,20 @@
  *   import { getCurrentUserId, isAuthenticated } from '@/lib/supabase/rls';
  */
 
-import { supabaseClient } from './client';
+import { requireSupabase } from './client';
 
 /**
  * Get current authenticated user ID
- * Returns null if not authenticated
+ * Returns null if not authenticated or Supabase not configured
  */
 export async function getCurrentUserId(): Promise<string | null> {
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  return user?.id ?? null;
+  try {
+    const supabase = requireSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**

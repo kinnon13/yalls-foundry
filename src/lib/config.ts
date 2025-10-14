@@ -16,8 +16,10 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   VITE_APP_NAME: z.string().default('yalls.ai'),
   VITE_SITE_URL: z.string().url().optional(),
-  VITE_SUPABASE_URL: z.string().url(),
-  VITE_SUPABASE_ANON_KEY: z.string().min(1),
+  
+  // Supabase configuration (optional for Day-0, required when using backend features)
+  VITE_SUPABASE_URL: z.string().url().optional(),
+  VITE_SUPABASE_ANON_KEY: z.string().optional(),
   
   // Optional: Upstash Redis configuration for L2 cache
   VITE_USE_UPSTASH: z.enum(['true', 'false']).transform(v => v === 'true').default('false'),
@@ -83,7 +85,7 @@ export const cspDirectives = {
   imgSrc: ["'self'", 'data:', 'https:'],
   connectSrc: [
     "'self'",
-    config.VITE_SUPABASE_URL,
+    ...(config.VITE_SUPABASE_URL ? [config.VITE_SUPABASE_URL] : []),
     "https://*.supabase.co",
     "https://*.supabase.net",
     ...(import.meta.env.DEV ? ["ws:", "wss:", "http:", "http://localhost:*"] : []),
