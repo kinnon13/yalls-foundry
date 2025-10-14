@@ -60,14 +60,15 @@ export async function takeCodeSnapshot(opts: SnapshotOptions = {}): Promise<Snap
     maxBytesPerFile = 200_000,
   } = opts;
 
+  // Use glob patterns without leading slash for better compatibility
   const loaders = import.meta.glob(
     [
-      '/src/routes/**/*.{ts,tsx}',
-      '/src/components/**/*.{ts,tsx}',
-      '/src/lib/**/*.{ts,tsx}',
-      '/supabase/migrations/**/*.sql',
-      '/supabase/functions/**/index.ts',
-      '/public/**/*.{json,md,txt,css}',
+      '../routes/**/*.{ts,tsx}',
+      '../components/**/*.{ts,tsx}',
+      '../lib/**/*.{ts,tsx}',
+      '../../supabase/migrations/**/*.sql',
+      '../../supabase/functions/**/index.ts',
+      '../../public/**/*.{json,md,txt,css}',
     ],
     { as: 'raw', eager: false }
   );
@@ -78,12 +79,13 @@ export async function takeCodeSnapshot(opts: SnapshotOptions = {}): Promise<Snap
   for (const [path, loader] of Object.entries(loaders)) {
     const p = normalizePath(path);
     
+    // Match relative paths from the lib/export directory
     const include =
-      (routes && p.startsWith('src/routes/')) ||
-      (components && p.startsWith('src/components/')) ||
-      (lib && p.startsWith('src/lib/')) ||
-      (sql && (p.startsWith('supabase/migrations/') || p.startsWith('supabase/functions/'))) ||
-      (includePublic && p.startsWith('public/'));
+      (routes && (p.includes('/routes/') || p.startsWith('../routes/'))) ||
+      (components && (p.includes('/components/') || p.startsWith('../components/'))) ||
+      (lib && (p.includes('/lib/') || p.startsWith('../lib/'))) ||
+      (sql && (p.includes('/supabase/migrations/') || p.includes('/supabase/functions/'))) ||
+      (includePublic && (p.includes('/public/') || p.startsWith('../../public/')));
     
     if (!include) continue;
 
@@ -99,8 +101,11 @@ export async function takeCodeSnapshot(opts: SnapshotOptions = {}): Promise<Snap
         truncated = true;
       }
       
+      // Clean up path for display (remove ../ and leading slashes)
+      const displayPath = p.replace(/^\.\.\//, 'src/').replace(/^\.\.\/\.\.\//, '');
+      
       files.push({
-        path: p,
+        path: displayPath,
         size_bytes: size,
         lines,
         sha256: await sha256(final),
@@ -111,8 +116,7 @@ export async function takeCodeSnapshot(opts: SnapshotOptions = {}): Promise<Snap
       
       totalBytes += size;
     } catch (e) {
-      // Ignore unreadable files
-      // console.warn('Snapshot skip', p, e);
+      console.error('Failed to load file:', p, e);
     }
   }
 
