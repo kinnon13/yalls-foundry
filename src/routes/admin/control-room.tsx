@@ -447,6 +447,22 @@ export default function ControlRoom() {
                 >
                   Copy JSON to Clipboard
                 </Button>
+                
+                {/* Quick clipboard test */}
+                <div className="pt-2 border-t">
+                  <Button 
+                    onClick={async () => {
+                      const testMsg = `✓ Clipboard working!\nTime: ${new Date().toLocaleTimeString()}\nCard: Export/Share`;
+                      await copy(testMsg);
+                      alert('Test message copied! Paste it anywhere to verify.');
+                    }}
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full text-xs"
+                  >
+                    🧪 Test Clipboard
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
@@ -591,6 +607,23 @@ export default function ControlRoom() {
                     />
                   </div>
                 )}
+                
+                {/* Quick clipboard test */}
+                <div className="pt-2 border-t">
+                  <Button 
+                    onClick={async () => {
+                      const testMsg = `✓ Clipboard working!\nTime: ${new Date().toLocaleTimeString()}\nCard: Architecture`;
+                      await copy(testMsg);
+                      alert('Test message copied! Paste it anywhere to verify.');
+                    }}
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full text-xs"
+                  >
+                    🧪 Test Clipboard
+                  </Button>
+                </div>
+                
                 <p className="text-xs text-muted-foreground pt-2">
                   JSON includes: routes (+ guards), file tree, and layer organization
                 </p>
