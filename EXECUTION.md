@@ -68,6 +68,24 @@ Applied browser-safe crypto fixes and environment standardization to ensure:
 - Ensures Vite HMR and Supabase WebSocket connections work
 **Verify**: No CSP violations in console; Realtime connections work
 
+#### 7. SPA Health Checks in api/health.ts
+**Why**: Allow frontend to check system health without requiring backend initially  
+**Change**:
+- Created `/src/api/health.ts` with `checkHealth()` function
+- Returns mock health status by default (ok: true, source: 'mock')
+- If `VITE_FUNCTION_HEALTH_URL` is set, attempts to call edge function
+- Falls back to mock gracefully if edge function unavailable
+**Verify**: Function returns health object; works with or without backend
+
+### QUESTIONS (awaiting clarification)
+
+The instruction stated "Now complete B–E below" but only item B (SPA Health Checks) was provided. Please clarify:
+- **C)** What should be implemented?
+- **D)** What should be implemented?
+- **E)** What should be implemented?
+
+I have completed item B. Awaiting instructions for C–E before proceeding.
+
 ### Acceptance Checks
 ✅ No Node.js crypto imports in client-side code  
 ✅ All crypto operations use Web Crypto API  
