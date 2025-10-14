@@ -5,55 +5,52 @@
  * using Vite's import.meta.glob for dynamic loading.
  */
 
-export interface SnapshotOptions {
+export type SnapshotOptions = {
   routes?: boolean;
   components?: boolean;
   lib?: boolean;
   sql?: boolean;
   public?: boolean;
   maxBytesPerFile?: number;
-}
+};
 
-export interface FileRecord {
+export type FileRecord = {
   path: string;
   size_bytes: number;
   lines: number;
   sha256: string;
   content: string;
   truncated?: boolean;
-}
+  over_150_loc?: boolean;
+};
 
-export interface CodeSnapshot {
+export type Snapshot = {
   generated_at: string;
   totals: {
     files: number;
     bytes: number;
   };
   files: FileRecord[];
-}
+};
 
 /**
  * Compute SHA-256 hash of text using Web Crypto API
  */
 async function sha256(text: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const data = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 /**
  * Normalize file path (forward slashes, remove leading /)
  */
-function normalizePath(path: string): string {
-  return path.replace(/\\/g, '/').replace(/^\//, '');
-}
+const normalizePath = (p: string) => p.replace(/\\/g, '/').replace(/^\//, '');
 
 /**
  * Take a snapshot of selected code files
  */
-export async function takeCodeSnapshot(opts: SnapshotOptions = {}): Promise<CodeSnapshot> {
+export async function takeCodeSnapshot(opts: SnapshotOptions = {}): Promise<Snapshot> {
   const {
     routes = true,
     components = true,
@@ -63,26 +60,6 @@ export async function takeCodeSnapshot(opts: SnapshotOptions = {}): Promise<Code
     maxBytesPerFile = 200_000,
   } = opts;
 
-  // Define glob patterns based on options
-  const patterns: string[] = [];
-  if (routes) patterns.push('/src/routes/**/*.{ts,tsx}');
-  if (components) patterns.push('/src/components/**/*.{ts,tsx}');
-  if (lib) patterns.push('/src/lib/**/*.{ts,tsx}');
-  if (sql) {
-    patterns.push('/supabase/migrations/**/*.sql');
-    patterns.push('/supabase/functions/**/index.ts');
-  }
-  if (includePublic) patterns.push('/public/**/*.{json,md,txt,css}');
-
-  if (patterns.length === 0) {
-    return {
-      generated_at: new Date().toISOString(),
-      totals: { files: 0, bytes: 0 },
-      files: [],
-    };
-  }
-
-  // Load files dynamically using Vite's glob
   const loaders = import.meta.glob(
     [
       '/src/routes/**/*.{ts,tsx}',
@@ -95,65 +72,59 @@ export async function takeCodeSnapshot(opts: SnapshotOptions = {}): Promise<Code
     { as: 'raw', eager: false }
   );
 
-  const fileRecords: FileRecord[] = [];
+  const files: FileRecord[] = [];
   let totalBytes = 0;
 
-  // Process each matching file
-  for (const [filePath, loader] of Object.entries(loaders)) {
-    const normalizedPath = normalizePath(filePath);
+  for (const [path, loader] of Object.entries(loaders)) {
+    const p = normalizePath(path);
     
-    // Filter by enabled options
-    const shouldInclude =
-      (routes && normalizedPath.startsWith('src/routes/')) ||
-      (components && normalizedPath.startsWith('src/components/')) ||
-      (lib && normalizedPath.startsWith('src/lib/')) ||
-      (sql && (normalizedPath.startsWith('supabase/migrations/') || normalizedPath.startsWith('supabase/functions/'))) ||
-      (includePublic && normalizedPath.startsWith('public/'));
-
-    if (!shouldInclude) continue;
+    const include =
+      (routes && p.startsWith('src/routes/')) ||
+      (components && p.startsWith('src/components/')) ||
+      (lib && p.startsWith('src/lib/')) ||
+      (sql && (p.startsWith('supabase/migrations/') || p.startsWith('supabase/functions/'))) ||
+      (includePublic && p.startsWith('public/'));
+    
+    if (!include) continue;
 
     try {
-      // Load file content dynamically
-      const content = (await loader()) as string;
-      const sizeBytes = new Blob([content]).size;
-      const lines = content.split('\n').length;
+      const content = String(await (loader as () => Promise<string>)());
+      const size = new Blob([content]).size;
+      const lines = content.replace(/\r\n/g, '\n').split('\n').length;
       
-      // Truncate if too large
-      let finalContent = content;
+      let final = content;
       let truncated = false;
-      if (sizeBytes > maxBytesPerFile) {
-        finalContent = content.substring(0, maxBytesPerFile);
+      if (size > maxBytesPerFile) {
+        final = content.slice(0, maxBytesPerFile);
         truncated = true;
       }
       
-      // Compute hash
-      const hash = await sha256(finalContent);
-      
-      fileRecords.push({
-        path: normalizedPath,
-        size_bytes: sizeBytes,
+      files.push({
+        path: p,
+        size_bytes: size,
         lines,
-        sha256: hash,
-        content: finalContent,
-        ...(truncated && { truncated }),
+        sha256: await sha256(final),
+        content: final,
+        ...(truncated ? { truncated: true } : {}),
+        ...(lines > 150 ? { over_150_loc: true } : {}),
       });
       
-      totalBytes += sizeBytes;
-    } catch (error) {
-      // Skip files that can't be loaded
-      console.warn(`Failed to load ${filePath}:`, error);
+      totalBytes += size;
+    } catch (e) {
+      // Ignore unreadable files
+      // console.warn('Snapshot skip', p, e);
     }
   }
 
-  // Sort by path for consistency
-  fileRecords.sort((a, b) => a.path.localeCompare(b.path));
-
+  files.sort((a, b) => a.path.localeCompare(b.path));
+  
   return {
     generated_at: new Date().toISOString(),
     totals: {
-      files: fileRecords.length,
+      files: files.length,
       bytes: totalBytes,
     },
-    files: fileRecords,
+    files,
   };
 }
+

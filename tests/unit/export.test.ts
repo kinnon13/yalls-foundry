@@ -11,7 +11,7 @@ describe('toCSV', () => {
   });
 
   it('should create header with union of all keys', () => {
-    const rows = [
+    const rows: Array<Record<string, unknown>> = [
       { name: 'test1', value: 10 },
       { name: 'test2', other: 'data' },
     ];
@@ -26,7 +26,7 @@ describe('toCSV', () => {
   });
 
   it('should generate correct number of lines', () => {
-    const rows = [
+    const rows: Array<Record<string, unknown>> = [
       { a: 1, b: 2 },
       { a: 3, b: 4 },
     ];
@@ -39,7 +39,7 @@ describe('toCSV', () => {
   });
 
   it('should escape values with commas', () => {
-    const rows = [
+    const rows: Array<Record<string, unknown>> = [
       { text: 'hello, world' },
     ];
     
@@ -50,7 +50,7 @@ describe('toCSV', () => {
   });
 
   it('should escape values with quotes', () => {
-    const rows = [
+    const rows: Array<Record<string, unknown>> = [
       { text: 'say "hello"' },
     ];
     
@@ -60,8 +60,21 @@ describe('toCSV', () => {
     expect(csv).toContain('""hello""');
   });
 
+  it('should escape values with newlines (\\n and \\r)', () => {
+    const rows: Array<Record<string, unknown>> = [
+      { text: 'line1\nline2' },
+      { text: 'line1\r\nline2' },
+    ];
+    
+    const csv = toCSV(rows);
+    
+    // Values with newlines should be wrapped in quotes
+    expect(csv).toContain('"line1\nline2"');
+    expect(csv).toContain('"line1\r\nline2"');
+  });
+
   it('should handle null and undefined values', () => {
-    const rows = [
+    const rows: Array<Record<string, unknown>> = [
       { a: null, b: undefined, c: 'ok' },
     ];
     
@@ -75,8 +88,8 @@ describe('toCSV', () => {
     expect(lines[1]).toContain(',,ok');
   });
 
-  it('should handle rows with different keys', () => {
-    const rows = [
+  it('should handle rows with different keys (union of keys)', () => {
+    const rows: Array<Record<string, unknown>> = [
       { kind: 'health', name: 'test1', ok: true },
       { kind: 'synthetic', name: 'test2', ok: false, duration_ms: 100 },
     ];

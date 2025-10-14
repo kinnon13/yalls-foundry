@@ -645,11 +645,13 @@ Exports a complete snapshot of app code files for review:
 - SQL migration files and edge function code
 - File metadata: size, line count, SHA-256 hash
 - Full content (truncated if file > 200KB)
+- **Line budget flag**: Files with >150 LOC marked as `over_150_loc: true`
 
 **How to Use:**
 1. Click "Export Snapshot JSON" to download
 2. Or "Copy Snapshot to Clipboard" to paste into chat
 3. Snapshot includes file tree structure + content
+4. Review `over_150_loc` flags to identify files needing refactoring
 
 ### Spec Compare
 
@@ -666,6 +668,47 @@ Compare actual file layout against an expected specification:
 - Verify project structure matches requirements
 - Find missing required files before deployment
 - Identify unexpected files that shouldn't be there
+
+**Verification Steps:**
+
+1. **Run Type Check:**
+   ```bash
+   pnpm typecheck
+   ```
+   Should show 0 errors (strict TypeScript compliance)
+
+2. **Run Tests:**
+   ```bash
+   pnpm test:unit
+   ```
+   All tests in `export.test.ts` and `specCompare.test.ts` should pass
+
+3. **Test Export/Share:**
+   - Go to `/admin/control-room`
+   - Run health checks and synthetics
+   - Click "Export JSON" → verify file downloads
+   - Click "Export CSV" → open in spreadsheet, verify headers/data
+   - Click "Copy JSON" → paste and verify clipboard content
+
+4. **Test Code Snapshot:**
+   - Click "Export Snapshot JSON" → open file
+   - Verify each file has: `path`, `size_bytes`, `lines`, `sha256`, `content`
+   - Check for `over_150_loc: true` on files with >150 lines
+   - Verify `truncated: true` on files >200KB
+
+5. **Test Spec Compare:**
+   - Paste this spec:
+     ```
+     src/lib/export/download.ts
+     src/lib/export/codeSnapshot.ts
+     src/lib/export/specCompare.ts
+     src/lib/synthetics/serialize.ts
+     src/routes/admin/control-room.tsx
+     tests/unit/export.test.ts
+     tests/unit/specCompare.test.ts
+     ```
+   - Click "Compare Paths"
+   - Should show `Missing: 0` and some `Extra` (other app files)
 
 ---
 
