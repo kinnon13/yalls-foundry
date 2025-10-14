@@ -174,6 +174,28 @@ export default function ControlRoom() {
     }
   };
 
+  // Copy only the file list (smaller, safe to paste in chat tools)
+  const handleCopySnapshotFileList = async () => {
+    setLoading('snapshot-files');
+    try {
+      const snapshot = await takeCodeSnapshot({
+        routes: true,
+        components: true,
+        lib: true,
+        sql: true,
+        public: false,
+      });
+      const text = snapshot.files.map(f => f.path).join('\n');
+      await copy(text);
+      alert(`✓ File list copied (paths only)\\nCount: ${snapshot.files.length}`);
+    } catch (error) {
+      console.error('Snapshot file list copy failed:', error);
+      alert('✗ Failed to copy file list.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
   // Spec compare handler
   const handleCompareSpec = async () => {
     setLoading('spec-compare');
@@ -493,6 +515,15 @@ export default function ControlRoom() {
                   className="w-full"
                 >
                   {loading === 'snapshot-copy' ? 'Copying...' : 'Copy Snapshot to Clipboard'}
+                </Button>
+                <Button 
+                  onClick={handleCopySnapshotFileList}
+                  disabled={loading === 'snapshot-files'}
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                >
+                  {loading === 'snapshot-files' ? 'Copying...' : 'Copy File List (paths)'}
                 </Button>
                 
                 {/* Quick clipboard test */}
