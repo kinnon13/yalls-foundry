@@ -232,6 +232,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          deleted_at: string | null
           display_name: string | null
           id: string
           updated_at: string
@@ -241,6 +242,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          deleted_at?: string | null
           display_name?: string | null
           id?: string
           updated_at?: string
@@ -250,6 +252,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          deleted_at?: string | null
           display_name?: string | null
           id?: string
           updated_at?: string
@@ -547,6 +550,10 @@ export type Database = {
       bytea: {
         Args: { "": unknown } | { "": unknown }
         Returns: string
+      }
+      delete_account_prepare: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       disablelongtransactions: {
         Args: Record<PropertyKey, never>
