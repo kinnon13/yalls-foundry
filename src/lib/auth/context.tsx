@@ -4,22 +4,28 @@
  * React context for managing authentication state across the app.
  */
 
-import { createContext, useContext, useState, useEffect, PropsWithChildren } from 'react';
-import type { AuthAdapter } from './adapter';
+import { createContext, useContext, useState, useEffect } from 'react';
 import type { Session } from './types';
+import type { Role } from './rbac';
 import { mockAuthAdapter } from './adapters/mock';
 
 interface AuthContextValue {
   session: Session;
   loading: boolean;
-  signIn: AuthAdapter['signIn'];
-  signOut: AuthAdapter['signOut'];
+  signIn: (email: string, role?: Role) => Promise<Session>;
+  signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const AuthContext = createContext<AuthContextValue | null>(null);
 
-interface AuthProviderProps extends PropsWithChildren {
-  adapter?: AuthAdapter;
+interface AuthProviderProps {
+  children: React.ReactNode;
+  adapter?: {
+    signIn: (email: string, role?: Role) => Promise<Session>;
+    signOut: () => Promise<void>;
+    getSession: () => Promise<Session>;
+    onAuthStateChange: (cb: (s: Session) => void) => () => void;
+  };
 }
 
 export function AuthProvider({ children, adapter = mockAuthAdapter }: AuthProviderProps) {
@@ -27,26 +33,24 @@ export function AuthProvider({ children, adapter = mockAuthAdapter }: AuthProvid
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    // Subscribe to auth changes
     const unsubscribe = adapter.onAuthStateChange((newSession) => {
       setSession(newSession);
       setLoading(false);
     });
     
-    // Load initial session
     adapter.getSession().then((initialSession) => {
       setSession(initialSession);
       setLoading(false);
     });
     
-    return unsubscribe;
+    return () => unsubscribe();
   }, [adapter]);
   
   const value: AuthContextValue = {
     session,
     loading,
-    signIn: adapter.signIn.bind(adapter),
-    signOut: adapter.signOut.bind(adapter),
+    signIn: (email, role) => adapter.signIn(email, role),
+    signOut: () => adapter.signOut(),
   };
   
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

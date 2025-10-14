@@ -2,7 +2,9 @@
  * Vitest Setup
  */
 
-import { beforeAll, afterEach, afterAll } from 'vitest';
+import '@testing-library/jest-dom/vitest';
+import { beforeAll, afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
 
 // Mock window.matchMedia
 beforeAll(() => {
@@ -19,4 +21,9 @@ beforeAll(() => {
       dispatchEvent: () => true,
     }),
   });
+});
+
+// Cleanup after each test
+afterEach(() => {
+  cleanup();
 });

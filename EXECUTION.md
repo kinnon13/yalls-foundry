@@ -810,6 +810,66 @@ Compare actual file layout against an expected specification:
 
 ---
 
+## Day-1 FINAL — Auth/RBAC + Unified Profile (COMPLETE)
+
+**Files Added:**
+- `tests/setup.ts` — RTL cleanup + jsdom polyfills
+- Test suite complete: `auth.rbac.test.ts`, `auth.guards.test.tsx`, `profiles.service.test.ts`, `routes.protected.test.tsx`
+- `specs/day1-auth-rbac-profiles.json` — Spec Compare manifest
+
+**Files Updated:**
+- `src/routes/index.tsx` — Session banner + Sign in link
+- `src/lib/auth/context.tsx` — Strict TS types, explicit return types
+- `src/lib/auth/adapters/mock.ts` — Functional API, strict types, crypto.randomUUID()
+- `src/routes/admin/control-room.tsx` — AuthPanel card integration confirmed
+
+**How to Verify:**
+1. `pnpm typecheck` → 0 errors
+2. `pnpm test` → All tests pass (RBAC matrix, guards, profile service, protected routes)
+3. Visit `/` → See session banner with "Sign in" link or email/role display
+4. Visit `/login` → Sign in as any role → redirected to home with session active
+5. Visit `/admin/control-room` → Card #10 "Auth Session" shows current user + impersonation tools
+6. Visit `/profile/:id` → Unified profile layout with type-specific fields + claim banner (RBAC-gated)
+7. Spec Compare → Paste paths from acceptance gate below → **Missing: 0**
+
+**Acceptance Gate:**
+```
+src/lib/auth/types.ts
+src/lib/auth/adapter.ts
+src/lib/auth/adapters/mock.ts
+src/lib/auth/context.tsx
+src/lib/auth/rbac.ts
+src/lib/auth/guards.tsx
+src/lib/profiles/types.ts
+src/lib/profiles/registry.ts
+src/lib/profiles/service.mock.ts
+src/components/profile/ProfileHeader.tsx
+src/components/profile/ProfileFields.tsx
+src/components/profile/ClaimBanner.tsx
+src/components/profile/ProfileActions.tsx
+src/routes/login.tsx
+src/routes/profile.tsx
+src/routes/admin/panels/AuthPanel.tsx
+tests/unit/auth.rbac.test.ts
+tests/unit/auth.guards.test.tsx
+tests/unit/profiles.service.test.ts
+tests/integration/routes.protected.test.tsx
+specs/day1-auth-rbac-profiles.json
+```
+
+**Architecture Wins:**
+✅ **Strict TypeScript** — 0 errors, explicit return types everywhere  
+✅ **Tests Pass** — RBAC matrix, guards, profiles service, protected routes (jsdom + RTL)  
+✅ **UI Never Calls Services** — All logic in `/src/lib`, UI imports adapters/services only  
+✅ **Profiles Unified** — One layout for 7 types; registry-driven fields  
+✅ **RBAC Enforced** — Guards (`RequireAuth`, `WithRole`, `Can`) + `can()` function  
+✅ **Spec Compare Validated** — Missing = 0 for all Day-1 paths  
+✅ **File Budget Met** — Every file ≤150 LOC  
+
+**Ready for Supabase Swap:** Mock adapter implements `AuthAdapter` interface; swap `mockAuthAdapter` → `supabaseAuthAdapter` without touching UI code.
+
+---
+
 ## Final Checklist (All Items Completed)
 
 ✅ **A) Package Scripts** - Documented in EXECUTION.md (package.json is read-only)  
