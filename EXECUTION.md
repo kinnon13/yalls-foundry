@@ -19,6 +19,7 @@ Applied browser-safe crypto fixes and environment standardization to ensure:
 1. All cryptographic operations use Web Crypto API (no Node.js dependencies)
 2. Environment variables follow Supabase naming conventions (ANON_KEY not PUBLISHABLE_KEY)
 3. All async crypto operations properly awaited
+4. CSP connectSrc allows Supabase Realtime + dev HMR
 
 ### Patches Applied
 
@@ -59,12 +60,21 @@ Applied browser-safe crypto fixes and environment standardization to ensure:
 - Included optional Upstash and feature flag configs
 **Verify**: File exists in project root
 
+#### 6. CSP connectSrc for Realtime + HMR in config.ts
+**Why**: Supabase Realtime needs WebSocket connections; dev needs HMR  
+**Change**:
+- Added `https://*.supabase.co` and `https://*.supabase.net` for Realtime
+- Added `ws:`, `wss:`, `http:`, `http://localhost:*` in development mode only
+- Ensures Vite HMR and Supabase WebSocket connections work
+**Verify**: No CSP violations in console; Realtime connections work
+
 ### Acceptance Checks
 ✅ No Node.js crypto imports in client-side code  
 ✅ All crypto operations use Web Crypto API  
 ✅ generateIdempotencyKey() is async and awaitable  
 ✅ VITE_SUPABASE_ANON_KEY used consistently  
 ✅ .env.example created with all variables  
+✅ CSP connectSrc allows Supabase Realtime + dev HMR  
 ✅ Build passes with no TypeScript errors  
 ✅ Strict layering maintained (no direct external calls from UI)
 

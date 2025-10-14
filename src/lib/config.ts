@@ -81,7 +81,13 @@ export const cspDirectives = {
   scriptSrc: ["'self'", "'unsafe-inline'"], // Vite dev requires unsafe-inline
   styleSrc: ["'self'", "'unsafe-inline'"],
   imgSrc: ["'self'", 'data:', 'https:'],
-  connectSrc: ["'self'", config.VITE_SUPABASE_URL],
+  connectSrc: [
+    "'self'",
+    config.VITE_SUPABASE_URL,
+    "https://*.supabase.co",
+    "https://*.supabase.net",
+    ...(import.meta.env.DEV ? ["ws:", "wss:", "http:", "http://localhost:*"] : []),
+  ],
   fontSrc: ["'self'", 'data:'],
   objectSrc: ["'none'"],
   mediaSrc: ["'self'"],
