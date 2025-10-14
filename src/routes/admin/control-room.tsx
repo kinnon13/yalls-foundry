@@ -253,9 +253,28 @@ export default function ControlRoom() {
       const arch = await exportArchitecture();
       const mermaid = routesToMermaid(arch.routes);
       setArchMermaid(mermaid);
-      await copy(mermaid);
-      alert(`✓ Mermaid diagram copied to clipboard\n\nRoutes: ${arch.routes.length}\nPaste into mermaid.live or any Mermaid viewer`);
-      console.info('Mermaid diagram copied to clipboard');
+      
+      // Try to copy
+      try {
+        await copy(mermaid);
+        alert(`✓ Mermaid diagram copied!\n\nRoutes: ${arch.routes.length}\nPaste into mermaid.live or any Mermaid viewer`);
+      } catch (copyErr) {
+        // Fallback: show in popup for manual copy
+        const pre = document.createElement('pre');
+        pre.textContent = mermaid;
+        pre.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:white;border:2px solid black;padding:20px;max-height:80vh;overflow:auto;width:80%;max-width:600px;font-family:monospace;font-size:12px;';
+        document.body.appendChild(pre);
+        
+        const btn = document.createElement('button');
+        btn.textContent = '✕ Close';
+        btn.style.cssText = 'position:absolute;top:10px;right:10px;padding:5px 10px;border:1px solid black;background:white;cursor:pointer;';
+        btn.onclick = () => document.body.removeChild(pre);
+        pre.appendChild(btn);
+        
+        alert(`Clipboard blocked. Select & copy from the popup window.\n\nRoutes: ${arch.routes.length}`);
+      }
+      
+      console.info('Mermaid diagram generated');
     } catch (error) {
       console.error('Mermaid generation failed:', error);
       alert(`✗ Failed to generate Mermaid: ${error instanceof Error ? error.message : 'Unknown error'}`);
