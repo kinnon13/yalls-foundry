@@ -2,13 +2,12 @@
  * Unit Tests: Feedback Store
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { addFeedback, listFeedback, clearFeedback, markStatus } from '@/lib/feedback/store';
 
 describe('Feedback Store', () => {
-  beforeEach(() => {
-    clearFeedback();
-  });
+  beforeEach(() => { vi.useFakeTimers(); clearFeedback(); });
+  afterEach(() => { vi.useRealTimers(); });
 
   describe('addFeedback()', () => {
     it('should add and list feedback', () => {
@@ -98,15 +97,14 @@ describe('Feedback Store', () => {
 
   describe('listFeedback()', () => {
     it('should return items sorted by timestamp descending', () => {
+      vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
       addFeedback({ path: '/', message: 'First', severity: 'bug' });
-      // Small delay to ensure different timestamps
-      setTimeout(() => {
-        addFeedback({ path: '/', message: 'Second', severity: 'idea' });
-      }, 10);
-
+      vi.setSystemTime(new Date('2024-01-01T00:00:01Z'));
+      addFeedback({ path: '/', message: 'Second', severity: 'idea' });
+      
       const items = listFeedback();
-      // Most recent should be first
-      expect(items[0].ts >= items[1].ts).toBe(true);
+      expect(items[0].message).toBe('Second');
+      expect(items[1].message).toBe('First');
     });
   });
 });
