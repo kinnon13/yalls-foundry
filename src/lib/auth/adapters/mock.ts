@@ -33,6 +33,13 @@ export const mockAuthAdapter: AuthAdapter = {
   },
   onAuthStateChange(cb: (s: Session) => void): () => void {
     listeners.add(cb);
+    // Immediately deliver current session to new listener
+    try {
+      const raw = localStorage.getItem(KEY);
+      cb(raw ? (JSON.parse(raw) as Session) : null);
+    } catch {
+      cb(null);
+    }
     return () => { listeners.delete(cb); };
   },
 };
