@@ -13,11 +13,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { checkHealth } from '@/api/health';
 import { listFlags, setFlag } from '@/lib/featureFlags';
 import { seedProfiles, seedEvents, clearAll, counts } from '@/lib/mock/store';
 import { runSyntheticChecks, SyntheticResult } from '@/lib/synthetics/checks';
-import { Activity, List, Flag, Database, Zap, Info } from 'lucide-react';
+import { downloadJSON, downloadCSV, copy } from '@/lib/export/download';
+import { syntheticResultsToRows } from '@/lib/synthetics/serialize';
+import { takeCodeSnapshot } from '@/lib/export/codeSnapshot';
+import { parseSpec, comparePaths } from '@/lib/export/specCompare';
+import { Activity, List, Flag, Database, Zap, Info, Download, Code, FileCheck } from 'lucide-react';
 
 export default function ControlRoom() {
   const [healthStatus, setHealthStatus] = useState<{ ok: boolean; source: string; ts: string } | null>(null);
@@ -25,6 +30,8 @@ export default function ControlRoom() {
   const [flags, setFlags] = useState(listFlags());
   const [syntheticResults, setSyntheticResults] = useState<SyntheticResult[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
+  const [specText, setSpecText] = useState('');
+  const [specResult, setSpecResult] = useState<{ missing: string[]; extra: string[] } | null>(null);
 
   const routes = [
     { path: '/', name: 'Home' },
@@ -71,6 +78,110 @@ export default function ControlRoom() {
     appName: import.meta.env.VITE_APP_NAME || 'yalls.ai',
     siteUrl: import.meta.env.VITE_SITE_URL || 'http://localhost:5173',
     timestamp: new Date().toISOString(),
+  };
+
+  // Export/Share handlers
+  const buildReport = () => ({
+    meta: {
+      generated_at: new Date().toISOString(),
+      app: buildInfo.appName,
+      url: buildInfo.siteUrl,
+      mode: buildInfo.nodeEnv,
+      version: import.meta.env.VITE_GIT_SHA ?? 'dev',
+    },
+    health: healthStatus ?? { ok: null, source: null, ts: null },
+    featureFlags: flags,
+    mockCounts,
+    routes,
+    synthetics: syntheticResults,
+  });
+
+  const handleExportJSON = () => {
+    const report = buildReport();
+    downloadJSON(`control-room-report-${Date.now()}.json`, report);
+  };
+
+  const handleExportCSV = () => {
+    const rows: Record<string, any>[] = [
+      // health row
+      {
+        kind: 'health',
+        name: 'health_endpoint',
+        ok: healthStatus?.ok ?? null,
+        duration_ms: null,
+        message: healthStatus ? `source=${healthStatus.source}` : 'not-run',
+      },
+      // synthetic rows
+      ...syntheticResultsToRows(syntheticResults, 'synthetic'),
+    ];
+    downloadCSV(`control-room-report-${Date.now()}.csv`, rows);
+  };
+
+  const handleCopyJSON = async () => {
+    await copy(JSON.stringify(buildReport(), null, 2));
+    console.info('Report JSON copied to clipboard');
+  };
+
+  // Code snapshot handlers
+  const handleCodeSnapshot = async () => {
+    setLoading('snapshot');
+    try {
+      const snapshot = await takeCodeSnapshot({
+        routes: true,
+        components: true,
+        lib: true,
+        sql: true,
+        public: false,
+      });
+      downloadJSON(`code-snapshot-${Date.now()}.json`, snapshot);
+    } catch (error) {
+      console.error('Snapshot failed:', error);
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleCopyCodeSnapshot = async () => {
+    setLoading('snapshot-copy');
+    try {
+      const snapshot = await takeCodeSnapshot({
+        routes: true,
+        components: true,
+        lib: true,
+        sql: true,
+        public: false,
+      });
+      await copy(JSON.stringify(snapshot, null, 2));
+      console.info('Code snapshot copied to clipboard');
+    } catch (error) {
+      console.error('Snapshot copy failed:', error);
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  // Spec compare handler
+  const handleCompareSpec = async () => {
+    setLoading('spec-compare');
+    try {
+      const snapshot = await takeCodeSnapshot({
+        routes: true,
+        components: true,
+        lib: true,
+        sql: true,
+        public: false,
+      });
+      
+      const actualPaths = snapshot.files.map(f => f.path);
+      const expectedPaths = parseSpec(specText);
+      const result = comparePaths(expectedPaths, actualPaths);
+      
+      setSpecResult(result);
+    } catch (error) {
+      console.error('Spec compare failed:', error);
+    } finally {
+      setLoading(null);
+    }
   };
 
   return (
@@ -255,6 +366,125 @@ export default function ControlRoom() {
                   <span className="text-muted-foreground">Timestamp:</span>{' '}
                   <strong className="text-xs">{new Date(buildInfo.timestamp).toLocaleString()}</strong>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* 7. Export / Share */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="h-5 w-5" />
+                  Export / Share
+                </CardTitle>
+                <CardDescription>Download or copy report</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button 
+                  onClick={handleExportJSON} 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                >
+                  Export JSON
+                </Button>
+                <Button 
+                  onClick={handleExportCSV} 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                >
+                  Export CSV
+                </Button>
+                <Button 
+                  onClick={handleCopyJSON} 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                >
+                  Copy JSON to Clipboard
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* 8. Code & Layout Snapshot */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Code className="h-5 w-5" />
+                  Code & Layout
+                </CardTitle>
+                <CardDescription>Export file tree + code</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button 
+                  onClick={handleCodeSnapshot}
+                  disabled={loading === 'snapshot'}
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                >
+                  {loading === 'snapshot' ? 'Exporting...' : 'Export Snapshot JSON'}
+                </Button>
+                <Button 
+                  onClick={handleCopyCodeSnapshot}
+                  disabled={loading === 'snapshot-copy'}
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                >
+                  {loading === 'snapshot-copy' ? 'Copying...' : 'Copy Snapshot to Clipboard'}
+                </Button>
+                <p className="text-xs text-muted-foreground pt-2">
+                  Includes routes, components, lib files, and SQL migrations
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* 9. Spec Compare */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileCheck className="h-5 w-5" />
+                  Spec Compare
+                </CardTitle>
+                <CardDescription>Compare against expected layout</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Textarea
+                  placeholder="Paste expected file paths (one per line)..."
+                  value={specText}
+                  onChange={(e) => setSpecText(e.target.value)}
+                  rows={4}
+                  className="text-xs font-mono"
+                />
+                <Button 
+                  onClick={handleCompareSpec}
+                  disabled={loading === 'spec-compare' || !specText.trim()}
+                  size="sm"
+                  className="w-full"
+                >
+                  {loading === 'spec-compare' ? 'Comparing...' : 'Compare Paths'}
+                </Button>
+                {specResult && (
+                  <div className="space-y-2 pt-2 border-t">
+                    <div className="text-xs">
+                      <strong className="text-red-600">Missing ({specResult.missing.length}):</strong>
+                      {specResult.missing.length === 0 ? ' None' : (
+                        <div className="text-red-600 pl-2 max-h-20 overflow-auto font-mono">
+                          {specResult.missing.map(p => <div key={p}>{p}</div>)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-xs">
+                      <strong className="text-yellow-600">Extra ({specResult.extra.length}):</strong>
+                      {specResult.extra.length === 0 ? ' None' : (
+                        <div className="text-yellow-600 pl-2 max-h-20 overflow-auto font-mono">
+                          {specResult.extra.map(p => <div key={p}>{p}</div>)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

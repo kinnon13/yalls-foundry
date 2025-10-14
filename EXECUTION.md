@@ -606,6 +606,69 @@ All files are ≤150 LOC:
 
 ---
 
+## Control Room → Export/Share
+
+### What It Exports
+
+The Export/Share feature captures the current state of the Control Room:
+- **Meta**: Generated timestamp, app name, URL, mode, version (git SHA)
+- **Health**: Latest health check result (ok, source, timestamp)
+- **Feature Flags**: All flag states (feed, market, events, ai, etc.)
+- **Mock Counts**: Number of seeded profiles and events
+- **Routes**: All SPA routes in the app
+- **Synthetics**: Results from synthetic checks (name, ok, duration, message)
+
+### How to Use
+
+1. Go to `/admin/control-room`
+2. Run health checks and synthetic tests to populate data
+3. Toggle feature flags as needed
+4. Seed mock data if desired
+5. In the "Export / Share" card, choose:
+   - **Export JSON** - Downloads complete report as .json file
+   - **Export CSV** - Downloads flattened health + synthetics as .csv
+   - **Copy JSON to Clipboard** - Copies JSON to clipboard for pasting into chat/email
+
+### File Locations
+
+- Downloaded files appear in browser's default download folder
+- Filenames include timestamp: `control-room-report-1234567890.json`
+- CSV format is useful for spreadsheets; JSON preserves full structure
+- Clipboard copy allows quick sharing without file downloads
+
+### Code & Layout Snapshot
+
+Exports a complete snapshot of app code files for review:
+
+**What It Captures:**
+- All TypeScript/TSX files in routes, components, and lib
+- SQL migration files and edge function code
+- File metadata: size, line count, SHA-256 hash
+- Full content (truncated if file > 200KB)
+
+**How to Use:**
+1. Click "Export Snapshot JSON" to download
+2. Or "Copy Snapshot to Clipboard" to paste into chat
+3. Snapshot includes file tree structure + content
+
+### Spec Compare
+
+Compare actual file layout against an expected specification:
+
+**How to Use:**
+1. Paste expected file paths into textarea (one per line)
+2. Click "Compare Paths"
+3. View results:
+   - **Missing**: Files in spec but not in app (red)
+   - **Extra**: Files in app but not in spec (yellow)
+
+**Use Cases:**
+- Verify project structure matches requirements
+- Find missing required files before deployment
+- Identify unexpected files that shouldn't be there
+
+---
+
 **Status**: ✅ Control Room fully operational. All tests passing. CI/CD configured. No external dependencies required.
 
 ---
