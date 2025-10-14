@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from '@/lib/auth/context';
+import { RequireAuth } from '@/lib/auth/guards';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import Index from "./routes/index";
 import Search from "./routes/search";
@@ -36,14 +37,14 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/profile/:id" element={<Profile />} />
               <Route path="/horses" element={<HorsesIndex />} />
-              <Route path="/horses/create" element={<CreateHorse />} />
+              <Route path="/horses/create" element={<RequireAuth><CreateHorse /></RequireAuth>} />
               <Route path="/horses/:id" element={<HorseDetail />} />
-              <Route path="/business/:bizId/hub" element={<BusinessHub />} />
-              <Route path="/business/:bizId/settings/profile" element={<BusinessProfileSettings />} />
-              <Route path="/business/:bizId/settings/payments" element={<BusinessPaymentsSettings />} />
-              <Route path="/business/:bizId/crm/contacts" element={<BusinessCRMContacts />} />
-              <Route path="/business/:bizId/crm/leads" element={<BusinessCRMLeads />} />
-              <Route path="/admin/control-room" element={<ControlRoom />} />
+              <Route path="/business/:bizId/hub" element={<RequireAuth><BusinessHub /></RequireAuth>} />
+              <Route path="/business/:bizId/settings/profile" element={<RequireAuth><BusinessProfileSettings /></RequireAuth>} />
+              <Route path="/business/:bizId/settings/payments" element={<RequireAuth><BusinessPaymentsSettings /></RequireAuth>} />
+              <Route path="/business/:bizId/crm/contacts" element={<RequireAuth><BusinessCRMContacts /></RequireAuth>} />
+              <Route path="/business/:bizId/crm/leads" element={<RequireAuth><BusinessCRMLeads /></RequireAuth>} />
+              <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
 
