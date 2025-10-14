@@ -59,26 +59,28 @@ export function DeleteAccountDialog() {
             </Alert>
 
             <div className="space-y-2 text-sm">
-              <p><strong>What happens:</strong></p>
+              <p><strong>What happens immediately:</strong></p>
               <ul className="list-disc pl-5 space-y-1">
-                <li>Your login credentials will be removed</li>
-                <li>Your profile will be anonymized</li>
-                <li>You'll be removed from all team memberships</li>
+                <li>Your profile will be anonymized (PII removed)</li>
+                <li>Your claimed horses/entities become <strong>unclaimed</strong></li>
+                <li>You'll be removed from all business teams</li>
+                <li>You'll be signed out</li>
               </ul>
             </div>
 
             <div className="space-y-2 text-sm">
               <p><strong>What's preserved:</strong></p>
               <ul className="list-disc pl-5 space-y-1">
-                <li>Horse records and breeder data remain intact</li>
-                <li>Business records stay accessible to other admins</li>
-                <li>Historical ledger entries are kept for compliance</li>
+                <li>Horse/breeder records remain visible (as unclaimed)</li>
+                <li>Businesses you own stay active if other admins exist</li>
+                <li>Ledger entries preserved for compliance</li>
               </ul>
             </div>
 
-            <Alert>
+            <Alert variant="destructive">
+              <Shield className="h-4 w-4" />
               <AlertDescription>
-                <strong>Note:</strong> If you're the sole admin of any business, you must transfer admin rights before deleting your account.
+                <strong>Sole Admin Block:</strong> If you're the sole admin of any business, you MUST transfer admin rights first or the deletion will be blocked.
               </AlertDescription>
             </Alert>
 

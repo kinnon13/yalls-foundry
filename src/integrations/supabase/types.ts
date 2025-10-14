@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       business_team: {
         Row: {
           business_id: string
@@ -52,6 +76,8 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          frozen: boolean
+          frozen_reason: string | null
           id: string
           name: string
           owner_id: string
@@ -63,6 +89,8 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          frozen?: boolean
+          frozen_reason?: string | null
           id?: string
           name: string
           owner_id: string
@@ -74,6 +102,8 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          frozen?: boolean
+          frozen_reason?: string | null
           id?: string
           name?: string
           owner_id?: string
