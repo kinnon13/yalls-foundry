@@ -1,285 +1,257 @@
 /**
  * Create Horse Page
  * 
- * Form to create new horse profile with Zod validation.
+ * Form to create a new horse entity profile
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { SEOHelmet } from '@/lib/seo/helmet';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { Textarea } from '@/components/ui/textarea';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { entityProfileService } from '@/lib/profiles/entity-service';
-import { CreateHorseSchema, type CreateHorseInput } from '@/entities/horse';
-import { useSession } from '@/lib/auth/context';
-import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
+import { Zap, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-export default function CreateHorse() {
+const horseSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  slug: z.string().min(2, 'Slug must be at least 2 characters').regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
+  description: z.string().optional(),
+  breed: z.string().optional(),
+  dateOfBirth: z.string().optional(),
+  color: z.string().optional(),
+  sire: z.string().optional(),
+  dam: z.string().optional(),
+});
+
+type HorseFormData = z.infer<typeof horseSchema>;
+
+export default function CreateHorsePage() {
   const navigate = useNavigate();
-  const { session } = useSession();
-  const { toast } = useToast();
-  const [submitting, setSubmitting] = useState(false);
 
-  const form = useForm<CreateHorseInput>({
-    resolver: zodResolver(CreateHorseSchema),
+  const form = useForm<HorseFormData>({
+    resolver: zodResolver(horseSchema),
     defaultValues: {
-      type: 'horse',
       name: '',
-      custom_fields: {
-        status: 'active',
-      },
-      claimed_by: session?.userId,
+      slug: '',
+      description: '',
+      breed: '',
+      dateOfBirth: '',
+      color: '',
+      sire: '',
+      dam: '',
     },
   });
 
-  const onSubmit = async (values: CreateHorseInput) => {
-    if (!session) {
-      toast({
-        variant: 'destructive',
-        title: 'Not authenticated',
-        description: 'Please log in to create a horse profile',
-      });
-      return;
-    }
+  const createMutation = useMutation({
+    mutationFn: async (data: HorseFormData) => {
+      const { name, slug, description, breed, dateOfBirth, color, sire, dam } = data;
+      
+      const customFields: Record<string, any> = {};
+      if (breed) customFields.breed = breed;
+      if (dateOfBirth) customFields.date_of_birth = dateOfBirth;
+      if (color) customFields.color = color;
+      if (sire) customFields.sire = sire;
+      if (dam) customFields.dam = dam;
 
-    setSubmitting(true);
-    try {
-      const horse = await entityProfileService.create({
-        type: 'horse',
-        name: values.name,
-        custom_fields: values.custom_fields,
-        claimed_by: session.userId,
-        tenant_id: values.tenant_id,
+      return entityProfileService.create({
+        entity_type: 'horse',
+        name,
+        slug,
+        description,
+        custom_fields: customFields,
       });
-
-      toast({
-        title: 'Horse created',
-        description: `${horse.name} has been added to the registry`,
-      });
-
-      navigate(`/horses/${horse.id}`);
-    } catch (error) {
+    },
+    onSuccess: (horse) => {
+      if (horse) {
+        toast.success('Horse created successfully');
+        navigate(`/horses/${horse.id}`);
+      } else {
+        toast.error('Failed to create horse');
+      }
+    },
+    onError: (error) => {
       console.error('Create horse error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Failed to create horse',
-        description: error instanceof Error ? error.message : 'Unknown error',
-      });
-    } finally {
-      setSubmitting(false);
+      toast.error('Failed to create horse');
+    },
+  });
+
+  const onSubmit = (data: HorseFormData) => {
+    createMutation.mutate(data);
+  };
+
+  // Auto-generate slug from name
+  const handleNameChange = (name: string) => {
+    form.setValue('name', name);
+    if (!form.formState.dirtyFields.slug) {
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      form.setValue('slug', slug);
     }
   };
 
   return (
-    <>
-      <SEOHelmet
-        title="Create Horse Profile"
-        description="Add a new horse to the registry with breed, pedigree, and discipline information"
-      />
-      <div className="min-h-screen bg-background p-6">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <div className="flex items-center gap-3">
-            <Sparkles className="h-8 w-8" />
-            <div>
-              <h1 className="text-3xl font-bold">Create Horse Profile</h1>
-              <p className="text-muted-foreground">
-                Add a new horse to the registry
-              </p>
-            </div>
-          </div>
+    <div className="container mx-auto py-8 max-w-2xl">
+      <Link to="/horses">
+        <Button variant="ghost" className="gap-2 mb-4">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Horses
+        </Button>
+      </Link>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
-              <CardDescription>
-                Enter the horse's details. Required fields are marked with *
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  {/* Name */}
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Horse name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-6 w-6" />
+            Create Horse Profile
+          </CardTitle>
+          <CardDescription>
+            Add a new horse to the database
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., Thunder Strike" 
+                        {...field}
+                        onChange={(e) => handleNameChange(e.target.value)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                  {/* Breed */}
-                  <FormField
-                    control={form.control}
-                    name="custom_fields.breed"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Breed</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Thoroughbred, Quarter Horse" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <FormField
+                control={form.control}
+                name="slug"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Slug *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="thunder-strike" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      URL-friendly identifier (auto-generated from name)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                  {/* Sex */}
-                  <FormField
-                    control={form.control}
-                    name="custom_fields.sex"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Sex</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select sex" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="M">Stallion</SelectItem>
-                            <SelectItem value="F">Mare</SelectItem>
-                            <SelectItem value="Gelding">Gelding</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Brief description of the horse..."
+                        rows={3}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                  {/* Date of Birth */}
-                  <FormField
-                    control={form.control}
-                    name="custom_fields.dob"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Date of Birth</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  'w-full pl-3 text-left font-normal',
-                                  !field.value && 'text-muted-foreground'
-                                )}
-                              >
-                                {field.value ? (
-                                  format(new Date(field.value), 'PPP')
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value ? new Date(field.value) : undefined}
-                              onSelect={(date) => field.onChange(date?.toISOString().split('T')[0])}
-                              disabled={(date) =>
-                                date > new Date() || date < new Date('1900-01-01')
-                              }
-                              initialFocus
-                              className={cn('p-3 pointer-events-auto')}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormDescription>
-                          Used to calculate the horse's age
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="breed"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Breed</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Thoroughbred" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  {/* Color */}
-                  <FormField
-                    control={form.control}
-                    name="custom_fields.color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Color</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Bay, Chestnut, Black" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <FormField
+                  control={form.control}
+                  name="dateOfBirth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date of Birth</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                  {/* Height */}
-                  <FormField
-                    control={form.control}
-                    name="custom_fields.height"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Height (hands)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.1"
-                            placeholder="e.g., 16.2"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Height measured in hands (1 hand = 4 inches)
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <FormField
+                control={form.control}
+                name="color"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Color</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Bay" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                  <div className="flex gap-4 pt-4">
-                    <Button type="submit" disabled={submitting} className="flex-1">
-                      {submitting ? 'Creating...' : 'Create Horse'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => navigate('/horses')}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="sire"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sire (Father)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Lightning Bolt" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="dam"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dam (Mother)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Wind Runner" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <Button type="submit" className="w-full" disabled={createMutation.isPending}>
+                {createMutation.isPending ? 'Creating...' : 'Create Horse'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

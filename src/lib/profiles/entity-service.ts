@@ -1,228 +1,272 @@
 /**
- * Entity Profile Service
+ * Entity Profile Service (Supabase)
  * 
- * Real Supabase CRUD for entity_profiles table (billion-scale ready).
- * Handles claim flow, realtime updates, and vector search.
+ * Polymorphic entity system: profiles, horses, businesses, etc.
+ * Supports partitioning, HNSW search, and claim flow.
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import type { BaseProfile, ProfileType, CreateProfileInput, UpdateProfileInput } from '@/entities/profile';
-import { handleDbError } from '@/lib/utils/db';
+import type { Database } from '@/integrations/supabase/types';
 
-export class EntityProfileService {
+type EntityType = Database['public']['Enums']['entity_type'];
+type EntityProfile = Database['public']['Tables']['entity_profiles']['Row'];
+type EntityProfileInsert = Database['public']['Tables']['entity_profiles']['Insert'];
+type EntityProfileUpdate = Database['public']['Tables']['entity_profiles']['Update'];
+
+export interface CreateEntityInput {
+  entity_type: EntityType;
+  slug: string;
+  name: string;
+  description?: string;
+  custom_fields?: Record<string, any>;
+}
+
+export interface ClaimResult {
+  success: boolean;
+  error?: string;
+  message?: string;
+  id?: string;
+  claimed_by?: string;
+  claimed_at?: string;
+}
+
+class EntityProfileService {
   /**
-   * Get entity profile by ID
+   * Get entity by ID
    */
-  async getById(id: string): Promise<BaseProfile | null> {
-    try {
-      const { data, error } = await (supabase as any)
-        .from('entity_profiles')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
+  async getById(id: string): Promise<EntityProfile | null> {
+    const { data, error } = await supabase
+      .from('entity_profiles')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-      if (error) throw error;
-      return data as BaseProfile;
-    } catch (error) {
-      handleDbError(error);
+    if (error) {
+      console.error('[EntityProfileService] getById error:', error);
+      return null;
     }
+
+    return data;
   }
 
   /**
-   * List entity profiles with optional filters
+   * List entities with filters
    */
   async list(options?: {
-    type?: ProfileType;
-    claimed?: boolean;
-    tenant_id?: string;
+    entity_type?: EntityType;
+    owner_id?: string;
+    is_claimed?: boolean;
     limit?: number;
-  }): Promise<BaseProfile[]> {
-    try {
-      let query = (supabase as any)
-        .from('entity_profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+    offset?: number;
+  }): Promise<EntityProfile[]> {
+    let query = supabase
+      .from('entity_profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-      if (options?.type) {
-        query = query.eq('type', options.type);
-      }
-
-      if (options?.claimed !== undefined) {
-        query = query.eq('is_claimed', options.claimed);
-      }
-
-      if (options?.tenant_id) {
-        query = query.eq('tenant_id', options.tenant_id);
-      }
-
-      if (options?.limit) {
-        query = query.limit(options.limit);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return (data as BaseProfile[]) || [];
-    } catch (error) {
-      handleDbError(error);
+    if (options?.entity_type) {
+      query = query.eq('entity_type', options.entity_type);
     }
-  }
 
-  /**
-   * Create new entity profile
-   */
-  async create(input: CreateProfileInput): Promise<BaseProfile> {
-    try {
-      const { data, error } = await (supabase as any)
-        .from('entity_profiles')
-        .insert({
-          type: input.type,
-          name: input.name,
-          custom_fields: input.custom_fields || {},
-          claimed_by: input.claimed_by || null,
-          tenant_id: input.tenant_id || null,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as BaseProfile;
-    } catch (error) {
-      handleDbError(error);
+    if (options?.owner_id) {
+      query = query.eq('owner_id', options.owner_id);
     }
-  }
 
-  /**
-   * Update entity profile
-   */
-  async update(id: string, updates: Partial<UpdateProfileInput>): Promise<BaseProfile> {
-    try {
-      const { data, error } = await (supabase as any)
-        .from('entity_profiles')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as BaseProfile;
-    } catch (error) {
-      handleDbError(error);
+    if (options?.is_claimed !== undefined) {
+      query = query.eq('is_claimed', options.is_claimed);
     }
-  }
 
-  /**
-   * Claim entity profile (real implementation)
-   */
-  async claim(profileId: string, userId: string): Promise<BaseProfile> {
-    try {
-      // Check if user has permission to claim
-      const canClaim = await this.canClaim(userId);
-      if (!canClaim) {
-        throw new Error('User does not have permission to claim profiles');
-      }
-
-      // Update profile to mark as claimed
-      const { data, error } = await (supabase as any)
-        .from('entity_profiles')
-        .update({
-          is_claimed: true,
-          claimed_by: userId,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', profileId)
-        .eq('is_claimed', false) // Only claim if not already claimed
-        .select()
-        .single();
-
-      if (error) throw error;
-      if (!data) throw new Error('Profile is already claimed or not found');
-
-      return data as BaseProfile;
-    } catch (error) {
-      handleDbError(error);
+    if (options?.limit) {
+      query = query.limit(options.limit);
     }
-  }
 
-  /**
-   * Check if user can claim profiles
-   */
-  async canClaim(userId: string): Promise<boolean> {
-    try {
-      const { data, error } = await supabase.rpc('has_role', {
-        _user_id: userId,
-        _role: 'business_owner',
-      });
-
-      if (error) {
-        console.error('canClaim check error:', error);
-        return false;
-      }
-
-      return !!data;
-    } catch (error) {
-      console.error('canClaim error:', error);
-      return false;
+    if (options?.offset) {
+      query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
     }
-  }
 
-  /**
-   * Delete entity profile (soft delete by setting claimed_by to null)
-   */
-  async delete(id: string): Promise<boolean> {
-    try {
-      const { error } = await (supabase as any)
-        .from('entity_profiles')
-        .delete()
-        .eq('id', id);
+    const { data, error } = await query;
 
-      if (error) throw error;
-      return true;
-    } catch (error) {
-      console.error('Delete error:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Search entities by keyword
-   */
-  async search(query: string, type?: ProfileType, limit = 20): Promise<BaseProfile[]> {
-    try {
-      const { data, error } = await (supabase as any).rpc('search_entities', {
-        query_text: query,
-        entity_type: type || null,
-        similarity_threshold: 0.7,
-        max_results: limit,
-      });
-
-      if (error) throw error;
-      return (data as BaseProfile[]) || [];
-    } catch (error) {
-      console.error('Search error:', error);
+    if (error) {
+      console.error('[EntityProfileService] list error:', error);
       return [];
     }
+
+    return data || [];
   }
 
   /**
-   * Subscribe to realtime updates for entity profiles
+   * Create entity
    */
-  subscribeToChanges(
-    callback: (payload: { eventType: string; new: BaseProfile; old: BaseProfile }) => void
-  ): () => void {
+  async create(input: CreateEntityInput): Promise<EntityProfile | null> {
+    // Get current user's profile
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('[EntityProfileService] No authenticated user');
+      return null;
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!profile) {
+      console.error('[EntityProfileService] No profile found for user');
+      return null;
+    }
+
+    const insertData: EntityProfileInsert = {
+      entity_type: input.entity_type,
+      slug: input.slug,
+      name: input.name,
+      description: input.description,
+      owner_id: profile.id,
+      custom_fields: input.custom_fields || {},
+    };
+
+    const { data, error } = await supabase
+      .from('entity_profiles')
+      .insert(insertData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[EntityProfileService] create error:', error);
+      return null;
+    }
+
+    return data;
+  }
+
+  /**
+   * Update entity
+   */
+  async update(id: string, updates: Partial<CreateEntityInput>): Promise<EntityProfile | null> {
+    const updateData: EntityProfileUpdate = {
+      ...(updates.name && { name: updates.name }),
+      ...(updates.description !== undefined && { description: updates.description }),
+      ...(updates.custom_fields && { custom_fields: updates.custom_fields }),
+    };
+
+    const { data, error } = await supabase
+      .from('entity_profiles')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[EntityProfileService] update error:', error);
+      return null;
+    }
+
+    return data;
+  }
+
+  /**
+   * Delete entity
+   */
+  async delete(id: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('entity_profiles')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('[EntityProfileService] delete error:', error);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Check if entity can be claimed
+   */
+  async canClaim(entityId: string): Promise<boolean> {
+    const { data, error } = await supabase.rpc('can_claim_entity', {
+      entity_id: entityId,
+    });
+
+    if (error) {
+      console.error('[EntityProfileService] canClaim error:', error);
+      return false;
+    }
+
+    return data || false;
+  }
+
+  /**
+   * Claim entity (atomic)
+   */
+  async claim(entityId: string): Promise<ClaimResult> {
+    const { data, error } = await supabase.rpc('claim_entity', {
+      entity_id: entityId,
+    });
+
+    if (error) {
+      console.error('[EntityProfileService] claim error:', error);
+      return {
+        success: false,
+        error: 'rpc_error',
+        message: error.message,
+      };
+    }
+
+    return (data || { success: false }) as unknown as ClaimResult;
+  }
+
+  /**
+   * Search entities (full-text + trigram)
+   */
+  async search(searchTerm: string, options?: {
+    entity_type?: EntityType;
+    limit?: number;
+  }): Promise<EntityProfile[]> {
+    // Use textSearch for tsvector search
+    let query = supabase
+      .from('entity_profiles')
+      .select('*')
+      .textSearch('search_vector', searchTerm, {
+        type: 'websearch',
+        config: 'english',
+      })
+      .order('created_at', { ascending: false });
+
+    if (options?.entity_type) {
+      query = query.eq('entity_type', options.entity_type);
+    }
+
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('[EntityProfileService] search error:', error);
+      return [];
+    }
+
+    return data || [];
+  }
+
+  /**
+   * Subscribe to entity changes (realtime)
+   */
+  subscribeToEntity(entityId: string, callback: (payload: any) => void) {
     const channel = supabase
-      .channel('entity_profiles_changes')
+      .channel(`entity-${entityId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'entity_profiles',
+          filter: `id=eq.${entityId}`,
         },
-        (payload: any) => callback(payload)
+        callback
       )
       .subscribe();
 

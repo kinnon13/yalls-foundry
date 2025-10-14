@@ -177,6 +177,206 @@ export type Database = {
           },
         ]
       }
+      entity_profiles: {
+        Row: {
+          claimed_by: string | null
+          created_at: string
+          custom_fields: Json
+          description: string | null
+          embedding: string | null
+          entity_type: Database["public"]["Enums"]["entity_type"]
+          id: string
+          is_claimed: boolean
+          name: string
+          owner_id: string
+          search_vector: unknown | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          claimed_by?: string | null
+          created_at?: string
+          custom_fields?: Json
+          description?: string | null
+          embedding?: string | null
+          entity_type: Database["public"]["Enums"]["entity_type"]
+          id?: string
+          is_claimed?: boolean
+          name: string
+          owner_id: string
+          search_vector?: unknown | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          claimed_by?: string | null
+          created_at?: string
+          custom_fields?: Json
+          description?: string | null
+          embedding?: string | null
+          entity_type?: Database["public"]["Enums"]["entity_type"]
+          id?: string
+          is_claimed?: boolean
+          name?: string
+          owner_id?: string
+          search_vector?: unknown | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_profiles_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entity_profiles_2025_01: {
+        Row: {
+          claimed_by: string | null
+          created_at: string
+          custom_fields: Json
+          description: string | null
+          embedding: string | null
+          entity_type: Database["public"]["Enums"]["entity_type"]
+          id: string
+          is_claimed: boolean
+          name: string
+          owner_id: string
+          search_vector: unknown | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          claimed_by?: string | null
+          created_at?: string
+          custom_fields?: Json
+          description?: string | null
+          embedding?: string | null
+          entity_type: Database["public"]["Enums"]["entity_type"]
+          id?: string
+          is_claimed?: boolean
+          name: string
+          owner_id: string
+          search_vector?: unknown | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          claimed_by?: string | null
+          created_at?: string
+          custom_fields?: Json
+          description?: string | null
+          embedding?: string | null
+          entity_type?: Database["public"]["Enums"]["entity_type"]
+          id?: string
+          is_claimed?: boolean
+          name?: string
+          owner_id?: string
+          search_vector?: unknown | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      entity_profiles_2025_02: {
+        Row: {
+          claimed_by: string | null
+          created_at: string
+          custom_fields: Json
+          description: string | null
+          embedding: string | null
+          entity_type: Database["public"]["Enums"]["entity_type"]
+          id: string
+          is_claimed: boolean
+          name: string
+          owner_id: string
+          search_vector: unknown | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          claimed_by?: string | null
+          created_at?: string
+          custom_fields?: Json
+          description?: string | null
+          embedding?: string | null
+          entity_type: Database["public"]["Enums"]["entity_type"]
+          id?: string
+          is_claimed?: boolean
+          name: string
+          owner_id: string
+          search_vector?: unknown | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          claimed_by?: string | null
+          created_at?: string
+          custom_fields?: Json
+          description?: string | null
+          embedding?: string | null
+          entity_type?: Database["public"]["Enums"]["entity_type"]
+          id?: string
+          is_claimed?: boolean
+          name?: string
+          owner_id?: string
+          search_vector?: unknown | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      entity_profiles_2025_03: {
+        Row: {
+          claimed_by: string | null
+          created_at: string
+          custom_fields: Json
+          description: string | null
+          embedding: string | null
+          entity_type: Database["public"]["Enums"]["entity_type"]
+          id: string
+          is_claimed: boolean
+          name: string
+          owner_id: string
+          search_vector: unknown | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          claimed_by?: string | null
+          created_at?: string
+          custom_fields?: Json
+          description?: string | null
+          embedding?: string | null
+          entity_type: Database["public"]["Enums"]["entity_type"]
+          id?: string
+          is_claimed?: boolean
+          name: string
+          owner_id: string
+          search_vector?: unknown | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          claimed_by?: string | null
+          created_at?: string
+          custom_fields?: Json
+          description?: string | null
+          embedding?: string | null
+          entity_type?: Database["public"]["Enums"]["entity_type"]
+          id?: string
+          is_claimed?: boolean
+          name?: string
+          owner_id?: string
+          search_vector?: unknown | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           business_id: string | null
@@ -550,6 +750,14 @@ export type Database = {
       bytea: {
         Args: { "": unknown } | { "": unknown }
         Returns: string
+      }
+      can_claim_entity: {
+        Args: { entity_id: string }
+        Returns: boolean
+      }
+      claim_entity: {
+        Args: { entity_id: string }
+        Returns: Json
       }
       delete_account_prepare: {
         Args: Record<PropertyKey, never>
@@ -2271,6 +2479,15 @@ export type Database = {
         | "breeder"
         | "owner"
         | "guest"
+      entity_type:
+        | "profile"
+        | "horse"
+        | "business"
+        | "breeder"
+        | "owner"
+        | "rider"
+        | "stable"
+        | "event"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -2414,6 +2631,16 @@ export const Constants = {
         "breeder",
         "owner",
         "guest",
+      ],
+      entity_type: [
+        "profile",
+        "horse",
+        "business",
+        "breeder",
+        "owner",
+        "rider",
+        "stable",
+        "event",
       ],
     },
   },

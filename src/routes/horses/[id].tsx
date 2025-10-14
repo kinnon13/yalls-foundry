@@ -1,259 +1,195 @@
 /**
  * Horse Detail Page
  * 
- * View horse profile with claim action and AI insights stub.
+ * View and claim horse profile
  */
 
-import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { SEOHelmet } from '@/lib/seo/helmet';
-import { Button } from '@/components/ui/button';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { entityProfileService } from '@/lib/profiles/entity-service';
-import type { BaseProfile } from '@/entities/profile';
-import type { HorseFields } from '@/entities/horse';
-import { parseHorseFields, calculateAge } from '@/entities/horse';
-import { useSession } from '@/lib/auth/context';
-import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Info, Sparkles, Star } from 'lucide-react';
+import { toast } from 'sonner';
+import { Zap, ArrowLeft, Check, AlertTriangle } from 'lucide-react';
+import { useEffect } from 'react';
 
-export default function HorseDetail() {
+export default function HorseDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { session } = useSession();
-  const { toast } = useToast();
-  const [horse, setHorse] = useState<BaseProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [claiming, setClaiming] = useState(false);
+  const queryClient = useQueryClient();
 
+  const { data: horse, isLoading } = useQuery({
+    queryKey: ['horse', id],
+    queryFn: () => entityProfileService.getById(id!),
+    enabled: !!id,
+  });
+
+  const { data: canClaim } = useQuery({
+    queryKey: ['horse', id, 'canClaim'],
+    queryFn: () => entityProfileService.canClaim(id!),
+    enabled: !!id && !!horse && !horse.is_claimed,
+  });
+
+  const claimMutation = useMutation({
+    mutationFn: () => entityProfileService.claim(id!),
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success('Horse claimed successfully!', {
+          description: 'You are now the owner of this horse.',
+        });
+        queryClient.invalidateQueries({ queryKey: ['horse', id] });
+        queryClient.invalidateQueries({ queryKey: ['horse', id, 'canClaim'] });
+      } else {
+        toast.error('Failed to claim horse', {
+          description: result.message || 'This horse may already be claimed.',
+        });
+      }
+    },
+    onError: (error) => {
+      console.error('Claim error:', error);
+      toast.error('Failed to claim horse');
+    },
+  });
+
+  // Subscribe to realtime updates
   useEffect(() => {
-    if (id) {
-      loadHorse(id);
-    }
-  }, [id]);
+    if (!id) return;
 
-  const loadHorse = async (horseId: string) => {
-    setLoading(true);
-    try {
-      const result = await entityProfileService.getById(horseId);
-      setHorse(result);
-    } catch (error) {
-      console.error('Failed to load horse:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Failed to load horse',
-        description: error instanceof Error ? error.message : 'Unknown error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    const unsubscribe = entityProfileService.subscribeToEntity(id, (payload) => {
+      console.log('[HorseDetail] Realtime update:', payload);
+      queryClient.invalidateQueries({ queryKey: ['horse', id] });
+      
+      if (payload.eventType === 'UPDATE' && payload.new.is_claimed && !payload.old.is_claimed) {
+        toast.info('This horse was just claimed!');
+      }
+    });
 
-  const handleClaim = async () => {
-    if (!session || !id) return;
+    return unsubscribe;
+  }, [id, queryClient]);
 
-    setClaiming(true);
-    try {
-      const claimed = await entityProfileService.claim(id, session.userId);
-      setHorse(claimed);
-      toast({
-        title: 'Profile claimed',
-        description: `You now own ${claimed.name}'s profile`,
-      });
-    } catch (error) {
-      console.error('Claim failed:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Failed to claim profile',
-        description: error instanceof Error ? error.message : 'Unknown error',
-      });
-    } finally {
-      setClaiming(false);
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
-        <p className="text-muted-foreground">Loading horse profile...</p>
+      <div className="container mx-auto py-8">
+        <div className="text-center py-12 text-muted-foreground">
+          Loading horse details...
+        </div>
       </div>
     );
   }
 
   if (!horse) {
     return (
-      <div className="min-h-screen bg-background p-6">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Card>
-            <CardContent className="p-12 text-center">
-              <p className="text-muted-foreground">Horse not found</p>
-              <Link to="/horses">
-                <Button variant="link" className="mt-4">
-                  Back to Horses
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="container mx-auto py-8">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Horse not found. It may have been deleted.
+          </AlertDescription>
+        </Alert>
+        <Link to="/horses">
+          <Button variant="ghost" className="gap-2 mt-4">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Horses
+          </Button>
+        </Link>
       </div>
     );
   }
 
-  const fields = parseHorseFields(horse.custom_fields);
-  const age = fields?.dob ? calculateAge(fields.dob) : null;
-
   return (
-    <>
-      <SEOHelmet
-        title={horse.name}
-        description={`View ${horse.name} - ${fields?.breed || 'Horse'} profile with pedigree and performance information`}
-      />
-      <div className="min-h-screen bg-background p-6">
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Back Button */}
-          <Link to="/horses">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Horses
-            </Button>
-          </Link>
+    <div className="container mx-auto py-8 max-w-4xl space-y-6">
+      <Link to="/horses">
+        <Button variant="ghost" className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Horses
+        </Button>
+      </Link>
 
-          {/* Claim Banner */}
-          {!horse.is_claimed && session && (
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-3xl">
+                <Zap className="h-8 w-8" />
+                {horse.name}
+              </CardTitle>
+              <CardDescription className="text-base mt-2">
+                {horse.description || 'No description provided'}
+              </CardDescription>
+            </div>
+            <div className="flex flex-col gap-2">
+              {horse.is_claimed ? (
+                <Badge variant="secondary" className="gap-1">
+                  <Check className="h-3 w-3" />
+                  Claimed
+                </Badge>
+              ) : (
+                <Badge variant="outline">Unclaimed</Badge>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Claim Button */}
+          {!horse.is_claimed && canClaim && (
             <Alert>
-              <Info className="h-4 w-4" />
               <AlertDescription className="flex items-center justify-between">
-                <span>This profile is unclaimed. Claim it to manage it.</span>
-                <Button onClick={handleClaim} disabled={claiming} size="sm">
-                  {claiming ? 'Claiming...' : 'Claim Profile'}
+                <span>This horse is available to claim</span>
+                <Button 
+                  onClick={() => claimMutation.mutate()}
+                  disabled={claimMutation.isPending}
+                  className="gap-2"
+                >
+                  <Check className="h-4 w-4" />
+                  {claimMutation.isPending ? 'Claiming...' : 'Claim Horse'}
                 </Button>
               </AlertDescription>
             </Alert>
           )}
 
-          {/* Header */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-3xl flex items-center gap-3">
-                    <Star className="h-8 w-8" />
-                    {horse.name}
-                  </CardTitle>
-                  {fields?.breed && (
-                    <CardDescription className="text-lg mt-2">
-                      {fields.breed}
-                    </CardDescription>
-                  )}
+          {/* Horse Details */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <h3 className="font-semibold mb-2">Basic Information</h3>
+              <dl className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Slug:</dt>
+                  <dd className="font-mono">{horse.slug}</dd>
                 </div>
-                {!horse.is_claimed && (
-                  <Badge variant="outline">Unclaimed</Badge>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {fields?.sex && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Sex</p>
-                    <p className="font-medium">{fields.sex}</p>
-                  </div>
-                )}
-                {age !== null && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Age</p>
-                    <p className="font-medium">{age} years</p>
-                  </div>
-                )}
-                {fields?.color && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Color</p>
-                    <p className="font-medium">{fields.color}</p>
-                  </div>
-                )}
-                {fields?.height && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Height</p>
-                    <p className="font-medium">{fields.height} hands</p>
-                  </div>
-                )}
-              </div>
-
-              {fields?.discipline && fields.discipline.length > 0 && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">Disciplines</p>
-                  <div className="flex flex-wrap gap-2">
-                    {fields.discipline.map((d) => (
-                      <Badge key={d} variant="secondary">
-                        {d}
-                      </Badge>
-                    ))}
-                  </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Entity Type:</dt>
+                  <dd className="capitalize">{horse.entity_type}</dd>
                 </div>
-              )}
-
-              {fields?.location && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Location</p>
-                  <p className="font-medium">{fields.location}</p>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Created:</dt>
+                  <dd>{new Date(horse.created_at).toLocaleDateString()}</dd>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Last Updated:</dt>
+                  <dd>{new Date(horse.updated_at).toLocaleDateString()}</dd>
+                </div>
+              </dl>
+            </div>
 
-          {/* AI Insights Stub */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5" />
-                AI Insights
-              </CardTitle>
-              <CardDescription>
-                Coming soon: AI-powered analysis, pedigree insights, and performance predictions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Alert>
-                <AlertDescription>
-                  AI insights will be available in a future update. This will include:
-                  <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>Pedigree analysis and genetic strengths</li>
-                    <li>Discipline suitability predictions</li>
-                    <li>Performance trend analysis</li>
-                    <li>Breeding compatibility suggestions</li>
-                  </ul>
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-
-          {/* Pedigree */}
-          {fields?.pedigree && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Pedigree</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  {fields.pedigree.sire && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Sire</p>
-                      <p className="font-medium">{fields.pedigree.sire}</p>
+            {horse.custom_fields && Object.keys(horse.custom_fields).length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-2">Additional Details</h3>
+                <dl className="space-y-2 text-sm">
+                  {Object.entries(horse.custom_fields).map(([key, value]) => (
+                    <div key={key} className="flex justify-between">
+                      <dt className="text-muted-foreground capitalize">
+                        {key.replace(/_/g, ' ')}:
+                      </dt>
+                      <dd>{String(value)}</dd>
                     </div>
-                  )}
-                  {fields.pedigree.dam && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Dam</p>
-                      <p className="font-medium">{fields.pedigree.dam}</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-    </>
+                  ))}
+                </dl>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
