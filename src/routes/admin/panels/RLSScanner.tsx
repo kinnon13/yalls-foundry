@@ -14,15 +14,10 @@ import { downloadJSON, downloadCSV } from '@/lib/export/download';
 import { Shield, AlertTriangle, CheckCircle, Download } from 'lucide-react';
 
 type RLSStatus = {
-  table: string;
-  schema: string;
+  table_name: string;
+  table_schema: string;
   rls_enabled: boolean;
-  policies: Array<{
-    name: string;
-    command: string;
-    permissive: boolean;
-    roles: string[];
-  }>;
+  policies: any[];
   risk_level: 'safe' | 'warning' | 'critical';
 };
 
@@ -34,35 +29,26 @@ export default function RLSScanner() {
   const scanRLS = async () => {
     setScanning(true);
     setError(null);
+    setResults([]); // Clear previous results
 
     try {
-      // Get all tables in public schema
-      const { data: tables, error: tablesError } = await supabase.rpc('get_tables_rls_status' as any);
+      // Call RPC function to get RLS status
+      const { data: tables, error: tablesError } = await supabase.rpc('get_tables_rls_status');
 
       if (tablesError) {
-        // Fallback: query pg_tables directly
-        const { data: fallbackTables, error: fallbackError } = await supabase
-          .from('pg_tables' as any)
-          .select('schemaname, tablename, rowsecurity')
-          .eq('schemaname', 'public');
-
-        if (fallbackError) throw fallbackError;
-
-        const rlsResults: RLSStatus[] = (fallbackTables || []).map((t: any) => ({
-          table: t.tablename,
-          schema: t.schemaname,
-          rls_enabled: t.rowsecurity,
-          policies: [],
-          risk_level: t.rowsecurity ? 'safe' : 'critical',
-        }));
-
-        setResults(rlsResults);
-      } else {
-        setResults(tables || []);
+        console.error('RLS scan RPC error:', tablesError);
+        throw new Error(`RLS scan failed: ${tablesError.message || JSON.stringify(tablesError)}`);
       }
+
+      if (!tables || tables.length === 0) {
+        throw new Error('No tables found in public schema');
+      }
+
+      setResults(tables as RLSStatus[]);
     } catch (err) {
       console.error('RLS scan failed:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      setError(`Scan error: ${errorMsg}`);
     } finally {
       setScanning(false);
     }
@@ -82,8 +68,8 @@ export default function RLSScanner() {
 
   const handleExportCSV = () => {
     const rows = results.map((r) => ({
-      schema: r.schema,
-      table: r.table,
+      schema: r.table_schema,
+      table: r.table_name,
       rls_enabled: r.rls_enabled,
       policies_count: r.policies.length,
       risk_level: r.risk_level,
@@ -124,7 +110,14 @@ export default function RLSScanner() {
 
         {error && (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <div className="font-semibold">RLS Scan Failed</div>
+              <div className="text-xs mt-1">{error}</div>
+              <div className="text-xs mt-2 opacity-75">
+                Check console logs for details or contact support
+              </div>
+            </AlertDescription>
           </Alert>
         )}
 
@@ -152,11 +145,14 @@ export default function RLSScanner() {
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {results.map((result) => (
                 <div
-                  key={`${result.schema}.${result.table}`}
+                  key={`${result.table_schema}.${result.table_name}`}
                   className="p-3 border rounded space-y-2"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-sm">{result.table}</span>
+                    <div>
+                      <span className="font-mono text-sm font-semibold">{result.table_name}</span>
+                      <span className="text-xs text-muted-foreground ml-2">({result.table_schema})</span>
+                    </div>
                     {result.rls_enabled ? (
                       <Badge variant="outline" className="gap-1">
                         <CheckCircle className="h-3 w-3" />
@@ -169,10 +165,17 @@ export default function RLSScanner() {
                       </Badge>
                     )}
                   </div>
-                  {result.policies.length > 0 && (
-                    <div className="text-xs text-muted-foreground">
-                      {result.policies.length} policies configured
+                  {result.policies.length > 0 ? (
+                    <div className="text-xs space-y-1">
+                      <div className="font-medium">{result.policies.length} policies:</div>
+                      {result.policies.map((p: any, i: number) => (
+                        <div key={i} className="pl-2 text-muted-foreground">
+                          • {p.name} ({p.command})
+                        </div>
+                      ))}
                     </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground">No policies configured</div>
                   )}
                   {!result.rls_enabled && (
                     <Alert variant="destructive" className="py-2">

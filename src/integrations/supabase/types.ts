@@ -813,8 +813,8 @@ export type Database = {
           policies: Json
           risk_level: string
           rls_enabled: boolean
-          schema: string
-          table: string
+          table_name: string
+          table_schema: string
         }[]
       }
       get_user_role: {
