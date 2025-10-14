@@ -15,6 +15,8 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const FEEDBACK_ENABLED = import.meta.env.VITE_FEEDBACK_WIDGET === 'on';
+
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
@@ -22,7 +24,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <FeedbackWidget />
+          {FEEDBACK_ENABLED && <FeedbackWidget />}
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />

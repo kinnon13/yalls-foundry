@@ -1,14 +1,14 @@
 {
-  "spec": "Day-1 — Auth/RBAC + Unified Profile Base + Tests",
-  "version": "1.0.0",
+  "spec": "Day-1 — Auth/RBAC + Unified Profile Base + Feedback + Export/Control",
+  "version": "1.1.0",
   "generated_at": "2025-10-14",
   "paths": [
-    "src/lib/auth/types.ts",
     "src/lib/auth/adapter.ts",
     "src/lib/auth/adapters/mock.ts",
     "src/lib/auth/context.tsx",
     "src/lib/auth/rbac.ts",
     "src/lib/auth/guards.tsx",
+    "src/lib/auth/types.ts",
     "src/lib/profiles/types.ts",
     "src/lib/profiles/registry.ts",
     "src/lib/profiles/service.mock.ts",
@@ -18,11 +18,22 @@
     "src/components/profile/ProfileActions.tsx",
     "src/routes/login.tsx",
     "src/routes/profile.tsx",
-    "src/routes/admin/panels/AuthPanel.tsx",
+    "src/routes/admin/control-room.tsx",
+    "src/lib/export/download.ts",
+    "src/lib/export/codeSnapshot.ts",
+    "src/lib/export/specCompare.ts",
+    "src/lib/synthetics/serialize.ts",
+    "src/lib/feedback/types.ts",
+    "src/lib/feedback/store.ts",
+    "src/components/feedback/FeedbackWidget.tsx",
+    "src/routes/admin/panels/FeedbackInbox.tsx",
+    "tests/setup.ts",
     "tests/unit/auth.rbac.test.ts",
     "tests/unit/auth.guards.test.tsx",
     "tests/unit/profiles.service.test.ts",
     "tests/integration/routes.protected.test.tsx",
-    "specs/day1-auth-rbac-profiles.json"
+    "tests/unit/export.test.ts",
+    "tests/unit/specCompare.test.ts",
+    "tests/unit/feedback.store.test.ts"
   ]
 }

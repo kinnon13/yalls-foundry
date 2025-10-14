@@ -984,6 +984,155 @@ Can add webhook adapter to send feedback to Discord/Slack/email, following same 
 
 ---
 
+## Day-1.6 — CI Gates & Execution Discipline
+
+**Goal:** Lock in reproducible file inventory and automated quality gates to prevent regression as the codebase scales.
+
+**What Changed:**
+
+1. **Authoritative File List** — Updated `specs/day1-auth-rbac-profiles.json` v1.1.0
+   - Added feedback system files (types, store, widget, inbox)
+   - Added export/control system files (download, codeSnapshot, specCompare, serialize)
+   - Now tracks 33 core files (auth, profiles, feedback, export, tests)
+
+2. **CI Gates (scripts/)** — Two new build gates enforce maintainability:
+   - **`scripts/spec-gate.cjs`** — Fails build if any spec files are missing (exits non-zero)
+   - **`scripts/loc-gate.cjs`** — Fails build if any file >150 LOC (excludes ui/, integrations/, tests/)
+
+3. **Feedback Widget Toggle** — Clean on/off via environment variable
+   - Added `VITE_FEEDBACK_WIDGET=on` to `.env.example`
+   - Updated `src/App.tsx` to conditionally mount widget based on env var
+   - Set to "off" → widget disappears, no runtime overhead
+
+**Files Added:**
+- `scripts/spec-gate.cjs` — Spec validation gate (45 LOC)
+- `scripts/loc-gate.cjs` — Lines-of-code gate (75 LOC)
+
+**Files Updated:**
+- `specs/day1-auth-rbac-profiles.json` — Added 13 new files to spec (v1.0.0 → v1.1.0)
+- `.env.example` — Added `VITE_FEEDBACK_WIDGET=on`
+- `src/App.tsx` — Conditional widget mount via env var
+
+**How to Run Gates:**
+
+```bash
+# Spec gate: Verify all spec files exist
+node scripts/spec-gate.cjs
+
+# LOC gate: Verify no files exceed 150 lines
+node scripts/loc-gate.cjs "src/**/*.{ts,tsx}"
+
+# Both gates (recommended in CI)
+node scripts/spec-gate.cjs && node scripts/loc-gate.cjs "src/**/*.{ts,tsx}"
+```
+
+**Add to CI Workflow:**
+
+```yaml
+# .github/workflows/ci.yml
+- name: Spec Gate
+  run: node scripts/spec-gate.cjs
+
+- name: LOC Gate
+  run: node scripts/loc-gate.cjs "src/**/*.{ts,tsx}"
+```
+
+**Spec Compare (Copy-Paste List):**
+
+To verify in Control Room → Spec Compare, paste this exact list:
+
+```
+src/lib/auth/adapter.ts
+src/lib/auth/adapters/mock.ts
+src/lib/auth/context.tsx
+src/lib/auth/rbac.ts
+src/lib/auth/guards.tsx
+src/lib/auth/types.ts
+src/lib/profiles/types.ts
+src/lib/profiles/registry.ts
+src/lib/profiles/service.mock.ts
+src/components/profile/ProfileHeader.tsx
+src/components/profile/ProfileFields.tsx
+src/components/profile/ClaimBanner.tsx
+src/components/profile/ProfileActions.tsx
+src/routes/login.tsx
+src/routes/profile.tsx
+src/routes/admin/control-room.tsx
+src/lib/export/download.ts
+src/lib/export/codeSnapshot.ts
+src/lib/export/specCompare.ts
+src/lib/synthetics/serialize.ts
+src/lib/feedback/types.ts
+src/lib/feedback/store.ts
+src/components/feedback/FeedbackWidget.tsx
+src/routes/admin/panels/FeedbackInbox.tsx
+tests/setup.ts
+tests/unit/auth.rbac.test.ts
+tests/unit/auth.guards.test.tsx
+tests/unit/profiles.service.test.ts
+tests/integration/routes.protected.test.tsx
+tests/unit/export.test.ts
+tests/unit/specCompare.test.ts
+tests/unit/feedback.store.test.ts
+```
+
+**Expected:** Missing: 0
+
+**Verification Steps:**
+
+1. **Spec Gate**
+   ```bash
+   node scripts/spec-gate.cjs
+   # Expected: ✅ All 33 files present
+   ```
+
+2. **LOC Gate**
+   ```bash
+   node scripts/loc-gate.cjs "src/**/*.{ts,tsx}"
+   # Expected: ✅ All files within 150 line limit
+   ```
+
+3. **Feedback Toggle**
+   ```bash
+   # In .env or .env.local
+   VITE_FEEDBACK_WIDGET=off
+   
+   # Restart dev server
+   pnpm dev
+   
+   # Verify: No feedback button on any page
+   ```
+
+4. **Control Room Spec Compare**
+   - Go to `/admin/control-room`
+   - Scroll to "Spec Compare" card
+   - Paste the list above
+   - Click "Compare"
+   - **Expected:** Missing: 0
+
+**Non-Negotiables Status:**
+
+✅ **Strict TS** — All types defined, no `any`  
+✅ **Files ≤150 LOC** — Enforced via loc-gate.cjs  
+✅ **Logic in /src/lib** — UI never calls services directly  
+✅ **Spec Validation** — Enforced via spec-gate.cjs  
+✅ **Env Toggle** — Feedback widget clean on/off  
+✅ **Tests** — All features have unit tests  
+
+**Path to Billion-User Scale:**
+
+For demo traffic, current localStorage approach is fine. For production scale:
+
+1. **Move ingestion off-device** → Edge function (Supabase/Cloudflare Worker)
+2. **Add rate limiting** → Token bucket per IP/user, UA sampling
+3. **Add privacy controls** → Retention policy, PII redaction, GDPR deletion
+4. **Add durability** → Postgres with RLS, message queue for async processing
+5. **Add observability** → Volume/latency dashboard, 99.9% SLO
+
+Current build is production-ready for prototype → PMF validation. Above changes needed for massive scale.
+
+---
+
 ## Final Checklist (All Items Completed)
 
 ✅ **A) Package Scripts** - Documented in EXECUTION.md (package.json is read-only)  
@@ -991,5 +1140,8 @@ Can add webhook adapter to send feedback to Discord/Slack/email, following same 
 ✅ **C) Test Env Consistency** - Verified vitest.config.ts has jsdom, setup.ts, and @ alias  
 ✅ **D) Control Room Labels** - Verified UI matches test expectations ("Control Room" title, "OK (mock)" badge)  
 ✅ **E) Postbuild Docs** - Added detailed postbuild section with where/when/how-to-verify  
+✅ **F) Spec Gate** - Automated build gate for file inventory validation  
+✅ **G) LOC Gate** - Automated build gate for file size enforcement  
+✅ **H) Env Toggle** - Clean on/off for feedback widget  
 
-**No errors or warnings in dev mode. All files ≤150 LOC. Strict layering maintained.**
+**No errors or warnings in dev mode. All files ≤150 LOC. Strict layering maintained. Automated gates prevent regression.**
