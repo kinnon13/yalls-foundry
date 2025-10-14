@@ -478,6 +478,23 @@ export default function ControlRoom() {
                 >
                   {loading === 'snapshot-copy' ? 'Copying...' : 'Copy Snapshot to Clipboard'}
                 </Button>
+                
+                {/* Quick clipboard test */}
+                <div className="pt-2 border-t">
+                  <Button 
+                    onClick={async () => {
+                      const testMsg = `✓ Clipboard working!\nTime: ${new Date().toLocaleTimeString()}\nProject: yalls.ai Day-1`;
+                      await copy(testMsg);
+                      alert('Test message copied! Paste it anywhere (Grok, notepad, etc.) to verify.');
+                    }}
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full text-xs"
+                  >
+                    🧪 Test Clipboard (paste anywhere)
+                  </Button>
+                </div>
+                
                 <p className="text-xs text-muted-foreground pt-2">
                   Includes routes, components, lib files, and SQL migrations
                 </p>
