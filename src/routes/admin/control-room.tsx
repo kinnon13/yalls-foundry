@@ -121,8 +121,14 @@ export default function ControlRoom() {
   };
 
   const handleCopyJSON = async () => {
-    await copy(JSON.stringify(buildReport(), null, 2));
-    console.info('Report JSON copied to clipboard');
+    try {
+      const report = buildReport();
+      await copy(JSON.stringify(report, null, 2));
+      alert('✓ Report JSON copied to clipboard');
+      console.info('Report JSON copied to clipboard');
+    } catch (error) {
+      alert(`✗ Failed to copy: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   // Code snapshot handlers
@@ -154,10 +160,15 @@ export default function ControlRoom() {
         sql: true,
         public: false,
       });
-      await copy(JSON.stringify(snapshot, null, 2));
+      const json = JSON.stringify(snapshot, null, 2);
+      const sizeMB = (new Blob([json]).size / 1024 / 1024).toFixed(2);
+      
+      await copy(json);
+      alert(`✓ Snapshot copied to clipboard (${sizeMB} MB)\n\nFiles: ${snapshot.files.length}\nTotal size: ${(snapshot.totals.bytes / 1024).toFixed(0)} KB`);
       console.info('Code snapshot copied to clipboard');
     } catch (error) {
       console.error('Snapshot copy failed:', error);
+      alert(`✗ Failed to copy snapshot to clipboard\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}\n\nTry using "Export Snapshot JSON" button instead.`);
     } finally {
       setLoading(null);
     }
@@ -207,9 +218,11 @@ export default function ControlRoom() {
       const mermaid = routesToMermaid(arch.routes);
       setArchMermaid(mermaid);
       await copy(mermaid);
+      alert(`✓ Mermaid diagram copied to clipboard\n\nRoutes: ${arch.routes.length}\nPaste into mermaid.live or any Mermaid viewer`);
       console.info('Mermaid diagram copied to clipboard');
     } catch (error) {
       console.error('Mermaid generation failed:', error);
+      alert(`✗ Failed to generate Mermaid: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(null);
     }
