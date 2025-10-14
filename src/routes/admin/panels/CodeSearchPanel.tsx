@@ -29,7 +29,7 @@ const SEARCH_PRESETS = [
 
 // File type filters
 const FILE_TYPE_FILTERS = [
-  { label: 'All Files', value: '', pattern: '' },
+  { label: 'All Files', value: 'all', pattern: '' },
   { label: 'React Components (.tsx)', value: 'tsx', pattern: '\\.tsx$' },
   { label: 'TypeScript (.ts)', value: 'ts', pattern: '\\.ts$' },
   { label: 'Routes/Pages', value: 'routes', pattern: 'src/routes/|src/pages/' },
@@ -47,7 +47,7 @@ export default function CodeSearchPanel() {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [searching, setSearching] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState('');
-  const [selectedFileType, setSelectedFileType] = useState('');
+  const [selectedFileType, setSelectedFileType] = useState('all');
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -66,7 +66,7 @@ export default function CodeSearchPanel() {
       
       // Filter results by file type if needed
       let filteredMatches = result.matches;
-      if (fileTypeFilter && fileTypeFilter.pattern) {
+      if (fileTypeFilter && fileTypeFilter.pattern && selectedFileType !== 'all') {
         const filePattern = new RegExp(fileTypeFilter.pattern);
         filteredMatches = filteredMatches.filter(m => filePattern.test(m.file));
       }
