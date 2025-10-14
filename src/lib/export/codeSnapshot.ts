@@ -58,24 +58,32 @@ export async function takeCodeSnapshot(opts: SnapshotOptions = {}): Promise<Snap
     maxBytesPerFile = 200_000,
   } = opts;
 
-  // Build patterns dynamically based on options
-  const patterns: string[] = [];
-  if (routes) patterns.push('/src/routes/**/*.{ts,tsx}');
-  if (components) patterns.push('/src/components/**/*.{ts,tsx}');
-  if (lib) patterns.push('/src/lib/**/*.{ts,tsx}');
-  if (sql) {
-    patterns.push('/supabase/migrations/**/*.sql');
-    patterns.push('/supabase/functions/**/index.ts');
-  }
-  // NOTE: /public is not in Vite's module graph, so we skip it
-
-  const loaders = import.meta.glob(patterns, { as: 'raw', eager: false });
+  // MUST use literal array for Vite's static analysis
+  const loaders = import.meta.glob(
+    [
+      '/src/routes/**/*.{ts,tsx}',
+      '/src/components/**/*.{ts,tsx}',
+      '/src/lib/**/*.{ts,tsx}',
+      '/supabase/migrations/**/*.sql',
+      '/supabase/functions/**/index.ts',
+    ],
+    { as: 'raw', eager: false }
+  );
 
   const files: FileRecord[] = [];
   let totalBytes = 0;
 
   for (const [path, loader] of Object.entries(loaders)) {
     const p = normalizePath(path);
+    
+    // Filter based on options
+    const include =
+      (routes && p.startsWith('src/routes/')) ||
+      (components && p.startsWith('src/components/')) ||
+      (lib && p.startsWith('src/lib/')) ||
+      (sql && (p.startsWith('supabase/migrations/') || p.startsWith('supabase/functions/')));
+    
+    if (!include) continue;
 
     try {
       const content = String(await (loader as () => Promise<string>)());
