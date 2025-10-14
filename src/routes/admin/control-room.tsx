@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { checkHealth } from '@/api/health';
-import { listFlags, setFlag } from '@/lib/featureFlags';
+import { listFlags, setFlag } from '@/lib/flags';
 import { seedProfiles, seedEvents, clearAll, counts } from '@/lib/mock/store';
 import { runSyntheticChecks, SyntheticResult } from '@/lib/synthetics/checks';
 import { downloadJSON, downloadCSV, copy } from '@/lib/export/download';
@@ -69,7 +69,7 @@ export default function ControlRoom() {
   };
 
   const handleToggleFlag = (key: string, value: boolean) => {
-    setFlag(key, value);
+    setFlag(key as any, value);
     setFlags(listFlags());
   };
 

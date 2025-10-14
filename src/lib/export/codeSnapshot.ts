@@ -70,6 +70,10 @@ export async function takeCodeSnapshot(opts: SnapshotOptions = {}): Promise<Snap
     { as: 'raw', eager: false }
   );
 
+  if (import.meta.env.DEV && Object.keys(loaders).length === 0) {
+    console.warn('[Snapshot] 0 files matched; check Vite root & leading slashes');
+  }
+
   const files: FileRecord[] = [];
   let totalBytes = 0;
 

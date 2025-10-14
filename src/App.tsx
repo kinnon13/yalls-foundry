@@ -14,7 +14,7 @@ import ControlRoom from "./routes/admin/control-room";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
-const FEEDBACK_ENABLED = import.meta.env.VITE_FEEDBACK_WIDGET === 'on';
+const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on';
 
 const App = () => (
   <HelmetProvider>

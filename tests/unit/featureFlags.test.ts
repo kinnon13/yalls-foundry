@@ -2,8 +2,8 @@
  * Unit Tests: Feature Flags
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { getFlag, setFlag, listFlags, resetFlags } from '@/lib/featureFlags';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { getFlag, setFlag, allFlags } from '@/lib/flags';
 
 describe('featureFlags', () => {
   // Mock localStorage
@@ -22,17 +22,18 @@ describe('featureFlags', () => {
     Object.defineProperty(global, 'localStorage', { value: localStorageMock, writable: true });
   });
 
-  it('should return default value for unknown flag', () => {
-    expect(getFlag('unknown_flag', true)).toBe(true);
-    expect(getFlag('unknown_flag', false)).toBe(false);
+  it('should return env default for known flag', () => {
+    expect(getFlag('feedback')).toBe(true); // env default
+    expect(getFlag('ai')).toBe(true);
   });
 
   it('should return default flags on first load', () => {
-    const flags = listFlags();
+    const flags = allFlags();
     expect(flags.feed).toBe(true);
     expect(flags.market).toBe(true);
     expect(flags.events).toBe(true);
     expect(flags.ai).toBe(true);
+    expect(flags.feedback).toBe(true);
   });
 
   it('should persist flag changes to localStorage', () => {
@@ -40,23 +41,22 @@ describe('featureFlags', () => {
     expect(getFlag('feed')).toBe(false);
     
     // Verify it's in localStorage
-    const stored = localStorageMock.getItem('yalls_feature_flags');
+    const stored = localStorageMock.getItem('yalls_flags');
     expect(stored).toContain('"feed":false');
   });
 
-  it('should list all flags including custom ones', () => {
-    setFlag('custom_feature', true);
-    const flags = listFlags();
-    expect(flags.custom_feature).toBe(true);
+  it('should list all known flags', () => {
+    const flags = allFlags();
+    expect(flags.feedback).toBeDefined();
+    expect(flags.ai).toBeDefined();
+    expect(flags.feed).toBeDefined();
   });
 
-  it('should reset flags to defaults', () => {
+  it('should allow overriding env defaults', () => {
     setFlag('feed', false);
     setFlag('market', false);
-    resetFlags();
     
-    const flags = listFlags();
-    expect(flags.feed).toBe(true);
-    expect(flags.market).toBe(true);
+    expect(getFlag('feed')).toBe(false);
+    expect(getFlag('market')).toBe(false);
   });
 });
