@@ -1,8 +1,10 @@
 /**
  * Code Search Utility
  * 
- * Search for code patterns across files and export matching snippets.
+ * Search through code snapshot for patterns and export matching snippets.
  */
+
+import { takeCodeSnapshot } from './codeSnapshot';
 
 export type SearchMatch = {
   file: string;
@@ -19,7 +21,7 @@ export type SearchResult = {
 };
 
 /**
- * Search files for pattern (regex or plain text)
+ * Search code snapshot for pattern (regex or plain text)
  */
 export async function searchCode(
   pattern: string,
@@ -36,47 +38,38 @@ export async function searchCode(
   } = options;
 
   const matches: SearchMatch[] = [];
-  const checkedFiles = new Set<string>();
+  
+  // Get code snapshot
+  const snapshot = await takeCodeSnapshot();
+  
+  // Build regex
+  const regex = isRegex
+    ? new RegExp(pattern, caseSensitive ? 'g' : 'gi')
+    : new RegExp(escapeRegex(pattern), caseSensitive ? 'g' : 'gi');
 
-  // Get all TS/TSX files from src/
-  const fileList = await getSourceFiles();
-
-  for (const filePath of fileList) {
-    checkedFiles.add(filePath);
+  // Search through all files in snapshot
+  snapshot.files.forEach((fileRecord) => {
+    const lines = fileRecord.content.split('\n');
     
-    try {
-      const response = await fetch(`/${filePath}`);
-      if (!response.ok) continue;
-      
-      const content = await response.text();
-      const lines = content.split('\n');
-      
-      const regex = isRegex
-        ? new RegExp(pattern, caseSensitive ? 'g' : 'gi')
-        : new RegExp(escapeRegex(pattern), caseSensitive ? 'g' : 'gi');
-
-      lines.forEach((line, idx) => {
-        if (regex.test(line)) {
-          const start = Math.max(0, idx - contextLines);
-          const end = Math.min(lines.length, idx + contextLines + 1);
-          
-          matches.push({
-            file: filePath,
-            line: idx + 1,
-            match: line.trim(),
-            context: lines.slice(start, end),
-          });
-        }
-      });
-    } catch (err) {
-      console.warn(`Failed to search ${filePath}:`, err);
-    }
-  }
+    lines.forEach((line, idx) => {
+      if (regex.test(line)) {
+        const start = Math.max(0, idx - contextLines);
+        const end = Math.min(lines.length, idx + contextLines + 1);
+        
+        matches.push({
+          file: fileRecord.path,
+          line: idx + 1,
+          match: line.trim(),
+          context: lines.slice(start, end),
+        });
+      }
+    });
+  });
 
   return {
     query: pattern,
     matches,
-    totalFiles: checkedFiles.size,
+    totalFiles: snapshot.files.length,
     timestamp: new Date().toISOString(),
   };
 }
@@ -140,20 +133,6 @@ export function exportMatchesText(matches: SearchMatch[], filename: string): voi
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-}
-
-// Helper: Get list of source files
-async function getSourceFiles(): Promise<string[]> {
-  // Static list of common paths - in real app, this would scan dynamically
-  return [
-    'src/App.tsx',
-    'src/main.tsx',
-    'src/routes/index.tsx',
-    'src/routes/search.tsx',
-    'src/routes/login.tsx',
-    'src/routes/profile.tsx',
-    'src/routes/admin/control-room.tsx',
-  ];
 }
 
 // Helper: Escape regex special chars
