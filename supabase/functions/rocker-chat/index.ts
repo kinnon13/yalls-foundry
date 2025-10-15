@@ -68,6 +68,19 @@ serve(async (req) => {
         .eq('user_id', user.id)
         .maybeSingle();
 
+      // Fetch user roles
+      const { data: userRoles } = await supabaseClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+
+      const roles = (userRoles || []).map((r: any) => r.role);
+      
+      // Add roles to context
+      if (roles.length > 0) {
+        userContext += `\n- Roles: ${roles.join(', ')}`;
+      }
+
       const { data: memoryData } = await supabaseClient.functions.invoke('rocker-memory', {
         body: {
           action: 'search_memory',
