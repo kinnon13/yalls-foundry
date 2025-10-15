@@ -38,6 +38,184 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_admin_private_memory: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          super_admin_id: string
+          tags: string[] | null
+          tenant_id: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          super_admin_id: string
+          tags?: string[] | null
+          tenant_id: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          super_admin_id?: string
+          tags?: string[] | null
+          tenant_id?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      ai_blocklist: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          pattern: string
+          target: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          pattern: string
+          target: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          pattern?: string
+          target?: string
+          tenant_id?: string
+        }
+        Relationships: []
+      }
+      ai_change_approvals: {
+        Row: {
+          approver_id: string
+          approver_role: string
+          created_at: string | null
+          decision: string
+          id: string
+          proposal_id: string | null
+          reason: string | null
+        }
+        Insert: {
+          approver_id: string
+          approver_role: string
+          created_at?: string | null
+          decision: string
+          id?: string
+          proposal_id?: string | null
+          reason?: string | null
+        }
+        Update: {
+          approver_id?: string
+          approver_role?: string
+          created_at?: string | null
+          decision?: string
+          id?: string
+          proposal_id?: string | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_change_approvals_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "ai_change_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_change_proposals: {
+        Row: {
+          approvals_collected: number | null
+          approvals_required: number | null
+          approver_policy: Json
+          change: Json
+          created_at: string | null
+          id: string
+          requested_by: string
+          status: string | null
+          target_ref: string
+          target_scope: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          approvals_collected?: number | null
+          approvals_required?: number | null
+          approver_policy: Json
+          change: Json
+          created_at?: string | null
+          id?: string
+          requested_by: string
+          status?: string | null
+          target_ref: string
+          target_scope: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          approvals_collected?: number | null
+          approvals_required?: number | null
+          approver_policy?: Json
+          change?: Json
+          created_at?: string | null
+          id?: string
+          requested_by?: string
+          status?: string | null
+          target_ref?: string
+          target_scope?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ai_feedback: {
+        Row: {
+          created_at: string | null
+          id: string
+          kind: string | null
+          payload: Json
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          kind?: string | null
+          payload: Json
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          kind?: string | null
+          payload?: Json
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_feedback_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "ai_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_global_knowledge: {
         Row: {
           confidence: number | null
@@ -86,6 +264,293 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_hypotheses: {
+        Row: {
+          confidence: number
+          created_at: string | null
+          evidence: Json | null
+          id: string
+          key: string
+          status: string | null
+          tenant_id: string
+          updated_at: string | null
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          confidence: number
+          created_at?: string | null
+          evidence?: Json | null
+          id?: string
+          key: string
+          status?: string | null
+          tenant_id: string
+          updated_at?: string | null
+          user_id: string
+          value: Json
+        }
+        Update: {
+          confidence?: number
+          created_at?: string | null
+          evidence?: Json | null
+          id?: string
+          key?: string
+          status?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      ai_model_registry: {
+        Row: {
+          created_at: string | null
+          default_params: Json | null
+          enabled: boolean | null
+          id: string
+          model_id: string
+          name: string
+          provider: string
+          traffic_pct: number | null
+          version: string
+        }
+        Insert: {
+          created_at?: string | null
+          default_params?: Json | null
+          enabled?: boolean | null
+          id?: string
+          model_id: string
+          name: string
+          provider: string
+          traffic_pct?: number | null
+          version: string
+        }
+        Update: {
+          created_at?: string | null
+          default_params?: Json | null
+          enabled?: boolean | null
+          id?: string
+          model_id?: string
+          name?: string
+          provider?: string
+          traffic_pct?: number | null
+          version?: string
+        }
+        Relationships: []
+      }
+      ai_policy_rules: {
+        Row: {
+          action: string
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          matcher: Json
+          name: string
+          priority: number | null
+          scope: string
+          tenant_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          matcher: Json
+          name: string
+          priority?: number | null
+          scope: string
+          tenant_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          matcher?: Json
+          name?: string
+          priority?: number | null
+          scope?: string
+          tenant_id?: string
+        }
+        Relationships: []
+      }
+      ai_proactive_log: {
+        Row: {
+          channel: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          proposal_id: string | null
+          result: string | null
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          proposal_id?: string | null
+          result?: string | null
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          proposal_id?: string | null
+          result?: string | null
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_proactive_log_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "ai_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_proposals: {
+        Row: {
+          created_at: string | null
+          due_at: string
+          id: string
+          payload: Json
+          sent_at: string | null
+          status: string | null
+          tenant_id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          due_at: string
+          id?: string
+          payload: Json
+          sent_at?: string | null
+          status?: string | null
+          tenant_id: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          due_at?: string
+          id?: string
+          payload?: Json
+          sent_at?: string | null
+          status?: string | null
+          tenant_id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_sessions: {
+        Row: {
+          actor_role: string
+          ended_at: string | null
+          id: string
+          model_id: string
+          params: Json | null
+          started_at: string | null
+          tenant_id: string
+          user_id: string | null
+        }
+        Insert: {
+          actor_role: string
+          ended_at?: string | null
+          id?: string
+          model_id: string
+          params?: Json | null
+          started_at?: string | null
+          tenant_id: string
+          user_id?: string | null
+        }
+        Update: {
+          actor_role?: string
+          ended_at?: string | null
+          id?: string
+          model_id?: string
+          params?: Json | null
+          started_at?: string | null
+          tenant_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ai_triggers: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          kind: string
+          matcher: Json
+          name: string
+          priority: number | null
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          kind: string
+          matcher: Json
+          name: string
+          priority?: number | null
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          kind?: string
+          matcher?: Json
+          name?: string
+          priority?: number | null
+          tenant_id?: string
+        }
+        Relationships: []
+      }
+      ai_user_consent: {
+        Row: {
+          cadence: string | null
+          id: string
+          proactive_enabled: boolean | null
+          quiet_hours: unknown | null
+          scopes: string[] | null
+          tenant_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cadence?: string | null
+          id?: string
+          proactive_enabled?: boolean | null
+          quiet_hours?: unknown | null
+          scopes?: string[] | null
+          tenant_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cadence?: string | null
+          id?: string
+          proactive_enabled?: boolean | null
+          quiet_hours?: unknown | null
+          scopes?: string[] | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_user_memory: {
         Row: {
           confidence: number | null
@@ -94,6 +559,7 @@ export type Database = {
           expires_at: string | null
           id: string
           key: string
+          provenance: Json | null
           source: string
           tags: string[] | null
           tenant_id: string
@@ -109,6 +575,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           key: string
+          provenance?: Json | null
           source?: string
           tags?: string[] | null
           tenant_id: string
@@ -124,6 +591,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           key?: string
+          provenance?: Json | null
           source?: string
           tags?: string[] | null
           tenant_id?: string

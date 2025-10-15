@@ -38,3 +38,6 @@ verify_jwt = true
 
 [functions.rocker-chat]
 verify_jwt = true
+
+[functions.rocker-proposals]
+verify_jwt = true
