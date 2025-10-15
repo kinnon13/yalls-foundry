@@ -393,6 +393,25 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Fallback: enable on first user interaction (browser autoplay/mic policies)
+  useEffect(() => {
+    if (isAlwaysListening || voiceStatus !== 'disconnected') return;
+    const handler = () => {
+      if (!isAlwaysListening && voiceStatus === 'disconnected' && !initializingRef.current) {
+        initializingRef.current = true;
+        toggleAlwaysListening().finally(() => { initializingRef.current = false; });
+      }
+      window.removeEventListener('pointerdown', handler);
+      window.removeEventListener('keydown', handler);
+    };
+    window.addEventListener('pointerdown', handler, { once: true });
+    window.addEventListener('keydown', handler, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', handler);
+      window.removeEventListener('keydown', handler);
+    };
+  }, [isAlwaysListening, voiceStatus, toggleAlwaysListening]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
