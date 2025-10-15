@@ -71,86 +71,23 @@ export function useRocker(mode: 'user' | 'admin' | 'super_admin' = 'user') {
         throw new Error(`Request failed: ${response.statusText}`);
       }
 
-      // Stream response
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No response stream');
-
-      const decoder = new TextDecoder();
-      let assistantContent = '';
-
-      // Create placeholder for assistant message
-      const assistantMessage: RockerMessage = {
-        role: 'assistant',
-        content: '',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, assistantMessage]);
-
-      let buffer = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-
-        // Process complete lines
-        let newlineIndex;
-        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-          const line = buffer.slice(0, newlineIndex).trim();
-          buffer = buffer.slice(newlineIndex + 1);
-
-          if (!line || line.startsWith(':') || !line.startsWith('data: ')) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') break;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantContent += content;
-              setMessages(prev => {
-                const newMessages = [...prev];
-                const lastMessage = newMessages[newMessages.length - 1];
-                if (lastMessage.role === 'assistant') {
-                  lastMessage.content = assistantContent;
-                }
-                return newMessages;
-              });
-            }
-          } catch (e) {
-            // Incomplete JSON, wait for more data
-            buffer = line + '\n' + buffer;
-            break;
-          }
-        }
+      // Handle JSON response (non-streaming with tool execution)
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error);
       }
-
-      // Flush remaining buffer
-      if (buffer.trim()) {
-        const lines = buffer.split('\n');
-        for (const line of lines) {
-          if (!line.trim() || line.startsWith(':') || !line.startsWith('data: ')) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantContent += content;
-              setMessages(prev => {
-                const newMessages = [...prev];
-                const lastMessage = newMessages[newMessages.length - 1];
-                if (lastMessage.role === 'assistant') {
-                  lastMessage.content = assistantContent;
-                }
-                return newMessages;
-              });
-            }
-          } catch {
-            // Ignore parse errors on final flush
-          }
-        }
+      
+      if (result.content) {
+        const assistantMessage: RockerMessage = {
+          role: 'assistant',
+          content: result.content,
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, assistantMessage]);
+      } else {
+        throw new Error('No response from assistant');
       }
 
     } catch (err: any) {
