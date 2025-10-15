@@ -174,7 +174,7 @@ export function RockerChat() {
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center gap-3">
           <img 
-            src={new URL('@/assets/rocker-avatar.jpeg', import.meta.url).href} 
+            src={new URL('@/assets/rocker-cowboy.jpeg', import.meta.url).href} 
             alt="Rocker" 
             className="h-10 w-10 rounded-full object-cover"
           />
@@ -247,7 +247,7 @@ export function RockerChat() {
               voiceStatus === 'connected' && "scale-110 animate-pulse"
             )}>
               <img 
-                src={new URL('@/assets/rocker-avatar.jpeg', import.meta.url).href}
+                src={new URL('@/assets/rocker-cowboy.jpeg', import.meta.url).href}
                 alt="Rocker listening"
                 className="h-24 w-24 rounded-full object-cover"
               />
@@ -270,7 +270,7 @@ export function RockerChat() {
           <div className="flex flex-col h-full">
             <div className="flex flex-col items-center justify-center flex-1 text-center text-muted-foreground">
               <img 
-                src={new URL('@/assets/rocker-avatar.jpeg', import.meta.url).href}
+                src={new URL('@/assets/rocker-cowboy.jpeg', import.meta.url).href}
                 alt="Rocker"
                 className="h-20 w-20 rounded-full mb-4 object-cover"
               />
@@ -292,7 +292,7 @@ export function RockerChat() {
               >
                 {message.role === 'assistant' && (
                   <Avatar className="w-8 h-8 flex-shrink-0">
-                    <AvatarImage src={new URL('@/assets/rocker-avatar.jpeg', import.meta.url).href} alt="Rocker" />
+                    <AvatarImage src={new URL('@/assets/rocker-cowboy.jpeg', import.meta.url).href} alt="Rocker" />
                     <AvatarFallback>AI</AvatarFallback>
                   </Avatar>
                 )}
