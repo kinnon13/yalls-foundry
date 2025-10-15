@@ -33,37 +33,60 @@ export function ProfileChatHistory() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from('rocker_conversations')
-        .select('session_id, content, created_at')
+      // Prefer reading from conversation_sessions which has clear RLS
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('conversation_sessions')
+        .select('session_id, title, summary, updated_at, created_at')
         .eq('user_id', user.id)
-        .eq('role', 'user')
-        .order('created_at', { ascending: false });
+        .order('updated_at', { ascending: false })
+        .limit(20);
 
-      if (error) throw error;
+      if (sessionsError) throw sessionsError;
 
-      // Group by session
-      const sessionMap = new Map<string, ConversationSession>();
-      data?.forEach((msg: any) => {
-        if (!sessionMap.has(msg.session_id)) {
-          sessionMap.set(msg.session_id, {
-            session_id: msg.session_id,
-            first_message: msg.content,
-            last_updated: msg.created_at,
-            message_count: 1
-          });
-        } else {
-          const session = sessionMap.get(msg.session_id)!;
-          session.message_count++;
-          if (new Date(msg.created_at) > new Date(session.last_updated)) {
-            session.last_updated = msg.created_at;
+      let items: ConversationSession[] = [];
+      if (sessionsData && sessionsData.length > 0) {
+        items = sessionsData.map((row: any) => ({
+          session_id: row.session_id,
+          first_message: row.title || row.summary || 'Conversation',
+          last_updated: row.updated_at || row.created_at,
+          message_count: 0,
+        }));
+      } else {
+        // Fallback: derive from rocker_conversations (user messages)
+        const { data, error } = await supabase
+          .from('rocker_conversations')
+          .select('session_id, content, created_at')
+          .eq('user_id', user.id)
+          .eq('role', 'user')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const sessionMap = new Map<string, ConversationSession>();
+        data?.forEach((msg: any) => {
+          if (!sessionMap.has(msg.session_id)) {
+            sessionMap.set(msg.session_id, {
+              session_id: msg.session_id,
+              first_message: msg.content,
+              last_updated: msg.created_at,
+              message_count: 1
+            });
+          } else {
+            const session = sessionMap.get(msg.session_id)!;
+            session.message_count++;
+            if (new Date(msg.created_at) > new Date(session.last_updated)) {
+              session.last_updated = msg.created_at;
+            }
           }
-        }
-      });
+        });
 
-      setSessions(Array.from(sessionMap.values()));
+        items = Array.from(sessionMap.values());
+      }
+
+      setSessions(items);
     } catch (error) {
       console.error('Failed to load chat history:', error);
+      toast.error('Failed to load chat history');
     } finally {
       setLoading(false);
     }
@@ -77,13 +100,23 @@ export function ProfileChatHistory() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
+      // Delete chat messages for this session
+      const { error: msgsError } = await supabase
         .from('rocker_conversations')
         .delete()
         .eq('session_id', sessionId)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (msgsError) throw msgsError;
+
+      // Also delete the session metadata
+      const { error: sessError } = await supabase
+        .from('conversation_sessions')
+        .delete()
+        .eq('session_id', sessionId)
+        .eq('user_id', user.id);
+
+      if (sessError) throw sessError;
 
       setSessions(prev => prev.filter(s => s.session_id !== sessionId));
       toast.success('Conversation deleted');
