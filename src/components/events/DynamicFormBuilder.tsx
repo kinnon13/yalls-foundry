@@ -72,7 +72,7 @@ export function DynamicFormBuilder({ eventId, formType, initialSchema }: Dynamic
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('event_form_configs')
         .upsert({
           event_id: eventId,

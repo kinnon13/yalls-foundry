@@ -38,7 +38,7 @@ export function ResultFlagDialog({ eventId, entryData }: ResultFlagDialogProps) 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('result_flags')
         .insert({
           event_id: eventId,

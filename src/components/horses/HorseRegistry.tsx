@@ -45,7 +45,7 @@ export function HorseRegistry({ horseId, platformRegNo, entries, onUpdate }: Hor
 
   const handleAddEntry = async () => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('registry_entries')
         .insert({
           horse_id: horseId,
