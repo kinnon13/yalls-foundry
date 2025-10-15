@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { RockerQuickActions } from './RockerQuickActions';
 import { GoogleDriveButton } from './GoogleDriveButton';
+import { RockerMessageActions } from './RockerMessageActions';
 import { cn } from '@/lib/utils';
 import { useRockerGlobal } from '@/lib/ai/rocker/context';
 import { useState } from 'react';
@@ -244,7 +245,7 @@ export function RockerChatUI() {
               <div
                 key={index}
                 className={cn(
-                  'flex gap-3',
+                  'flex gap-3 group',
                   message.role === 'user' ? 'justify-end' : 
                   message.role === 'system' ? 'justify-center' : 'justify-start'
                 )}
@@ -263,30 +264,39 @@ export function RockerChatUI() {
                     </p>
                   </div>
                 ) : (
-                  <div
-                    className={cn(
-                      'max-w-[85%] rounded-lg px-4 py-2',
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    )}
-                  >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
+                    <div
+                      className={cn(
+                        'max-w-[85%] rounded-lg px-4 py-2',
+                        message.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      )}
+                    >
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      
+                      {message.metadata?.url && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="mt-2"
+                          onClick={() => window.location.href = message.metadata!.url!}
+                        >
+                          View →
+                        </Button>
+                      )}
+                      
+                      <span className="text-xs opacity-70 mt-1 block">
+                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
                     
-                    {message.metadata?.url && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="mt-2"
-                        onClick={() => window.location.href = message.metadata!.url!}
-                      >
-                        View →
-                      </Button>
+                    {message.role === 'assistant' && (
+                      <RockerMessageActions 
+                        messageIndex={index}
+                        messageContent={message.content}
+                      />
                     )}
-                    
-                    <span className="text-xs opacity-70 mt-1 block">
-                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
                   </div>
                 )}
                 

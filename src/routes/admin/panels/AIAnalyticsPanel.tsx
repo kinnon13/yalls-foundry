@@ -54,10 +54,18 @@ export default function AIAnalyticsPanel() {
         .eq('is_active', true)
         .order('confidence_score', { ascending: false });
 
+      // Get user feedback/corrections
+      const { data: feedback } = await supabase
+        .from('ai_feedback')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
       // Calculate stats
       const total = interactions?.length || 0;
       const successful = interactions?.filter(i => i.result_status === 'success').length || 0;
-      const failed = interactions?.filter(i => i.result_status === 'failure').length || 0;
+      const failed = interactions?.filter(i => i.result_status === 'failed').length || 0;
+      const userCorrections = interactions?.filter(i => i.user_correction).length || 0;
       const toolUsage = interactions?.reduce((acc: any, i) => {
         const tool = i.tool_called || 'none';
         acc[tool] = (acc[tool] || 0) + 1;
@@ -88,10 +96,12 @@ export default function AIAnalyticsPanel() {
         total,
         successful,
         failed,
+        userCorrections,
         successRate: total > 0 ? (successful / total * 100).toFixed(1) : '0',
         toolUsage,
         visualCorrections: visual?.length || 0,
-        knownTerms: terms?.length || 0
+        knownTerms: terms?.length || 0,
+        feedbackCount: feedback?.length || 0
       });
       setRecentInteractions(interactions || []);
       setVisualLearning(visual || []);
@@ -177,7 +187,7 @@ export default function AIAnalyticsPanel() {
       </div>
 
       {/* Key Metrics - Compact Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-2">
             <Activity className="h-4 w-4 text-primary" />
@@ -196,10 +206,18 @@ export default function AIAnalyticsPanel() {
 
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Eye className="h-4 w-4 text-purple-600" />
-            <span className="text-xs font-medium text-muted-foreground">Visual</span>
+            <XCircle className="h-4 w-4 text-red-600" />
+            <span className="text-xs font-medium text-muted-foreground">Failed</span>
           </div>
-          <div className="text-2xl font-bold">{stats?.visualCorrections || 0}</div>
+          <div className="text-2xl font-bold">{stats?.failed || 0}</div>
+        </Card>
+
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <MessageSquare className="h-4 w-4 text-blue-600" />
+            <span className="text-xs font-medium text-muted-foreground">Corrections</span>
+          </div>
+          <div className="text-2xl font-bold">{stats?.userCorrections || 0}</div>
         </Card>
 
         <Card className="p-4">
@@ -238,7 +256,7 @@ export default function AIAnalyticsPanel() {
                         {interaction.result_status === 'success' && (
                           <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
                         )}
-                        {interaction.result_status === 'failure' && (
+                        {interaction.result_status === 'failed' && (
                           <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
                         )}
                         {interaction.result_status === 'partial' && (
