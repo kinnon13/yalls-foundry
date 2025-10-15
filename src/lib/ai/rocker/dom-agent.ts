@@ -38,12 +38,26 @@ export function findElement(targetName: string): HTMLElement | null {
   el = buttons.find(btn => btn.textContent?.toLowerCase().includes(normalized)) as HTMLElement;
   if (el) return el;
   
+  // Try by role-based buttons and tabs
+  const roleButtons = Array.from(document.querySelectorAll('[role="button"], [role="tab"]')) as HTMLElement[];
+  el = roleButtons.find(node => node.textContent?.toLowerCase().includes(normalized) || node.getAttribute('aria-label')?.toLowerCase().includes(normalized)) as HTMLElement;
+  if (el) return el;
+  
   // Try by input name/id
   el = document.querySelector(`input[name*="${normalized}" i], input[id*="${normalized}" i]`) as HTMLElement;
   if (el) return el;
   
   // Try by textarea
   el = document.querySelector(`textarea[name*="${normalized}" i], textarea[placeholder*="${normalized}" i]`) as HTMLElement;
+  if (el) return el;
+  
+  // Try by generic elements with matching data-rocker (partial)
+  el = document.querySelector(`[data-rocker*="${normalized}"]`) as HTMLElement;
+  if (el) return el;
+  
+  // Try Radix Select options by text
+  const options = Array.from(document.querySelectorAll('[role="option"], [data-radix-select-item]')) as HTMLElement[];
+  el = options.find(node => node.textContent?.toLowerCase().includes(normalized)) as HTMLElement;
   if (el) return el;
   
   return null;

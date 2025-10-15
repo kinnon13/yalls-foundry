@@ -272,10 +272,10 @@ export function CalendarSidebar({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="personal">Personal</SelectItem>
-                          <SelectItem value="business">Business</SelectItem>
-                          <SelectItem value="horse">Horse</SelectItem>
-                          <SelectItem value="shared">Shared</SelectItem>
+                          <SelectItem value="personal" data-rocker="calendar type personal">Personal</SelectItem>
+                          <SelectItem value="business" data-rocker="calendar type business">Business</SelectItem>
+                          <SelectItem value="horse" data-rocker="calendar type horse">Horse</SelectItem>
+                          <SelectItem value="shared" data-rocker="calendar type shared">Shared</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -285,6 +285,9 @@ export function CalendarSidebar({
                         type="color"
                         value={newCalColor}
                         onChange={(e) => setNewCalColor(e.target.value)}
+                        aria-label="calendar color"
+                        name="calendar-color"
+                        data-rocker="calendar color"
                       />
                     </div>
                       <Button onClick={createCalendar} className="w-full" data-rocker="create calendar submit" aria-label="save calendar">
