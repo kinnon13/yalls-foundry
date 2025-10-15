@@ -1,11 +1,11 @@
 /**
- * Event Tracking API - CRM Intake Endpoint
+ * CRM Event Intake (Phase 2 Kickoff)
  * 
- * Minimal event ingestion with identity resolution hints.
- * Rate-limited and tenant-isolated.
+ * Rate-limited, tenant-isolated event ingestion for CRM workflows.
+ * Future: Identity resolution, automation triggers, segment updates.
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { withRateLimit, RateLimits } from '../_shared/rate-limit-wrapper.ts';
 
 const corsHeaders = {
@@ -13,7 +13,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface EventPayload {
+interface TrackEventPayload {
   type: string;
   anonymousId?: string;
   contact?: {
@@ -21,89 +21,80 @@ interface EventPayload {
     email?: string;
     phone?: string;
   };
-  props?: Record<string, any>;
+  props?: Record<string, unknown>;
 }
 
-async function handler(req: Request): Promise<Response> {
+Deno.serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Apply rate limiting
+  const limited = await withRateLimit(req, 'crm-track', RateLimits.standard);
+  if (limited) return limited;
+
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
     );
 
-    // Get user from auth header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    // Parse and validate payload
+    const payload: TrackEventPayload = await req.json();
     
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Parse request body
-    const body: EventPayload = await req.json();
-    
-    // Validate required fields
-    if (!body.type || typeof body.type !== 'string' || body.type.length === 0) {
+    if (!payload.type || typeof payload.type !== 'string') {
       return new Response(
         JSON.stringify({ error: 'Invalid event type' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Store event (tenant_id comes from JWT via RLS)
-    const { error } = await supabase
+    // Store event (tenant_id auto-injected via RLS)
+    const { error: insertError } = await supabase
       .from('crm_events')
       .insert({
-        type: body.type,
-        props: body.props ?? {},
-        anonymous_id: body.anonymousId ?? null,
-        contact_hint: body.contact ?? null,
+        type: payload.type,
+        props: payload.props || {},
+        anonymous_id: payload.anonymousId || null,
+        contact_hint: payload.contact || null,
+        ts: new Date().toISOString(),
         source: 'web',
-        ts: new Date().toISOString()
       });
 
-    if (error) {
-      console.error('[Track] Insert error:', error);
+    if (insertError) {
+      console.error('Failed to insert event:', insertError);
       return new Response(
-        JSON.stringify({ error: 'Failed to store event' }),
+        JSON.stringify({ error: 'Failed to track event' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`[Track] Event ingested: ${body.type} for user ${user.id.substring(0, 8)}`);
+    console.log('Event tracked:', { type: payload.type, userId: user.id });
 
-    // TODO Phase 2: Trigger automation.evaluate worker
-    
     return new Response(
       JSON.stringify({ ok: true }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('[Track] Handler error:', error);
+    console.error('CRM track error:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
-}
-
-Deno.serve(async (req) => {
-  const limited = await withRateLimit(req, 'crm-track', RateLimits.standard);
-  if (limited) return limited;
-  return handler(req);
 });

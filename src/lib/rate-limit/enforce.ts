@@ -30,8 +30,11 @@ export interface RateLimitResult {
  */
 export async function checkRateLimit(
   key: string,
-  config: RateLimitConfig
+  config: RateLimitConfig,
+  tenantId?: string
 ): Promise<RateLimitResult> {
+  // Format: tenant:user:ip for better distribution
+  const bucketKey = tenantId ? `${tenantId}:${key}` : key;
   // L0: Per-second burst check (fast, in-memory)
   const burstAllowed = burstLimiter.check(key, config.burst);
   if (!burstAllowed) {
@@ -42,7 +45,7 @@ export async function checkRateLimit(
   }
 
   // L1: Per-minute sustained check (distributed)
-  const minuteKey = `ratelimit:${key}:${Math.floor(Date.now() / 60000)}`;
+  const minuteKey = `ratelimit:${bucketKey}:${Math.floor(Date.now() / 60000)}`;
   
   try {
     const count = await cacheProvider.get<number>(minuteKey) || 0;

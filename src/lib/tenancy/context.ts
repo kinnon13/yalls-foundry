@@ -34,7 +34,12 @@ export async function resolveTenantId(userId?: string): Promise<string> {
   //   .single();
   // return data?.workspace_id;
 
-  // Current: User-level tenancy
+  // Current: User-level tenancy (user_id = tenant_id)
+  // Production: Will come from JWT claims via app.current_tenant_id()
+  if (process.env.NODE_ENV === 'production' && !userId) {
+    throw new Error('FATAL: No tenant_id in production. Check JWT claims.');
+  }
+  
   return userId;
 }
 
