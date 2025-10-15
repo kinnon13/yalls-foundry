@@ -530,15 +530,36 @@ export class RealtimeVoice {
   }
 
   private async saveMessage(role: 'user' | 'assistant', content: string) {
-    if (!this.sessionId || !content.trim()) return;
+    console.log(`[Rocker Voice ${this.instanceId}] 💾 Attempting to save ${role} message:`, content.slice(0, 50));
+    
+    if (!this.sessionId) {
+      console.error(`[Rocker Voice ${this.instanceId}] ❌ No sessionId available`);
+      return;
+    }
+    
+    if (!content.trim()) {
+      console.warn(`[Rocker Voice ${this.instanceId}] ⚠️ Empty content, skipping save`);
+      return;
+    }
     
     try {
       const { supabase } = await import('@/integrations/supabase/client');
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error(`[Rocker Voice ${this.instanceId}] ❌ Auth error:`, authError);
+        return;
+      }
+      
+      if (!user) {
+        console.error(`[Rocker Voice ${this.instanceId}] ❌ No authenticated user`);
+        return;
+      }
+
+      console.log(`[Rocker Voice ${this.instanceId}] 👤 User authenticated:`, user.id);
 
       // Save message
-      await supabase.from('rocker_conversations').insert({
+      const { error: insertError } = await supabase.from('rocker_conversations').insert({
         user_id: user.id,
         session_id: this.sessionId,
         role,
@@ -546,25 +567,46 @@ export class RealtimeVoice {
         metadata: { source: 'voice', timestamp: new Date().toISOString() }
       });
 
+      if (insertError) {
+        console.error(`[Rocker Voice ${this.instanceId}] ❌ Failed to insert message:`, insertError);
+        return;
+      }
+
+      console.log(`[Rocker Voice ${this.instanceId}] ✅ Message saved successfully`);
+
       // Create/update session metadata on first message
       if (role === 'user') {
-        const { data: existingSession } = await supabase
+        const { data: existingSession, error: sessionCheckError } = await supabase
           .from('conversation_sessions')
           .select('id')
           .eq('session_id', this.sessionId)
           .maybeSingle();
 
+        if (sessionCheckError) {
+          console.error(`[Rocker Voice ${this.instanceId}] ❌ Error checking session:`, sessionCheckError);
+          return;
+        }
+
         if (!existingSession) {
-          await supabase.from('conversation_sessions').insert({
+          console.log(`[Rocker Voice ${this.instanceId}] 📝 Creating new session`);
+          const { error: sessionError } = await supabase.from('conversation_sessions').insert({
             user_id: user.id,
             session_id: this.sessionId,
             title: content.slice(0, 60) + (content.length > 60 ? '...' : ''),
             summary: 'Voice conversation'
           });
+
+          if (sessionError) {
+            console.error(`[Rocker Voice ${this.instanceId}] ❌ Failed to create session:`, sessionError);
+          } else {
+            console.log(`[Rocker Voice ${this.instanceId}] ✅ Session created successfully`);
+          }
+        } else {
+          console.log(`[Rocker Voice ${this.instanceId}] ℹ️ Session already exists`);
         }
       }
     } catch (error) {
-      console.error(`[Rocker Voice ${this.instanceId}] Failed to save message:`, error);
+      console.error(`[Rocker Voice ${this.instanceId}] ❌ Unexpected error saving message:`, error);
     }
   }
 
