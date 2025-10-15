@@ -13,7 +13,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { searchCode, exportMatchesJSON, exportMatchesText, SearchMatch } from '@/lib/export/codeSearch';
-import { Search, Download, FileText, FileCode, Filter } from 'lucide-react';
+import { takeCodeSnapshot } from '@/lib/export/codeSnapshot';
+import { downloadJSON } from '@/lib/export/download';
+import { Search, Download, FileText, FileCode, Filter, Package } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 // Preset search patterns for non-technical users
 const SEARCH_PRESETS = [
@@ -40,6 +43,7 @@ const FILE_TYPE_FILTERS = [
 ];
 
 export default function CodeSearchPanel() {
+  const { toast } = useToast();
   const [query, setQuery] = useState('');
   const [isRegex, setIsRegex] = useState(false);
   const [caseSensitive, setCaseSensitive] = useState(false);
@@ -48,6 +52,7 @@ export default function CodeSearchPanel() {
   const [searching, setSearching] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState('');
   const [selectedFileType, setSelectedFileType] = useState('all');
+  const [exporting, setExporting] = useState(false);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -125,14 +130,55 @@ export default function CodeSearchPanel() {
     }
   };
 
+  const exportFullCode = async () => {
+    setExporting(true);
+    try {
+      toast({
+        title: "Generating snapshot...",
+        description: "This may take a moment for large codebases",
+      });
+      
+      const snapshot = await takeCodeSnapshot();
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      downloadJSON(`yalls-codebase-${timestamp}.json`, snapshot);
+      
+      toast({
+        title: "Export complete!",
+        description: `Exported ${snapshot.files.length} files (${(snapshot.totals.bytes / 1024).toFixed(1)} KB)`,
+      });
+    } catch (err) {
+      console.error('Export failed:', err);
+      toast({
+        title: "Export failed",
+        description: "Could not generate code snapshot",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Search className="h-5 w-5" />
-          Code Search & Export
-        </CardTitle>
-        <CardDescription>Find code patterns and export matching snippets</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              Code Search & Export
+            </CardTitle>
+            <CardDescription>Find code patterns and export matching snippets</CardDescription>
+          </div>
+          <Button 
+            onClick={exportFullCode} 
+            disabled={exporting}
+            variant="default"
+            className="gap-2"
+          >
+            <Package className="h-4 w-4" />
+            {exporting ? 'Exporting...' : 'Export Full Code'}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Quick Filters */}
