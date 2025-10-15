@@ -643,22 +643,22 @@ export const rockerTools = [
   {
     type: "function",
     name: "create_calendar_event",
-    description: "Create an event in a calendar. Use this for scheduling vet visits, farrier appointments, shows, training sessions, meetings, etc.",
+    description: "Create an event in a calendar. For timed notifications like 'notify me in X minutes', create an event starting at that future time with reminder_minutes: 0. For scheduled events, use appropriate reminder_minutes (e.g., 5 for 5 minutes before).",
     parameters: {
       type: "object",
       properties: {
-        calendar_id: { type: "string", description: "Calendar to add event to" },
-        created_by: { type: "string", description: "Profile ID creating the event" },
+        calendar_id: { type: "string", description: "Calendar to add event to (optional, will use personal calendar if not provided)" },
         title: { type: "string", description: "Event title" },
         description: { type: "string", description: "Event description" },
         location: { type: "string", description: "Event location" },
-        starts_at: { type: "string", description: "Start date/time (ISO 8601)" },
-        ends_at: { type: "string", description: "End date/time (ISO 8601)" },
+        starts_at: { type: "string", description: "Start date/time (ISO 8601). For 'notify me in X minutes', this should be X minutes from now." },
+        ends_at: { type: "string", description: "End date/time (ISO 8601, optional)" },
         all_day: { type: "boolean", description: "Is this an all-day event?" },
         visibility: { type: "string", enum: ["public", "private", "busy"], description: "Event visibility" },
-        event_type: { type: "string", description: "Type of event: vet, farrier, show, training, meeting, etc." }
+        event_type: { type: "string", description: "Type of event: notification, vet, farrier, show, training, meeting, etc." },
+        reminder_minutes: { type: "number", description: "Minutes before event to send reminder. Use 0 for notification at event time." }
       },
-      required: ["calendar_id", "created_by", "title", "starts_at", "ends_at"]
+      required: ["title", "starts_at"]
     }
   },
   {

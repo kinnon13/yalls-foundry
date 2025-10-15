@@ -591,10 +591,85 @@ export function RockerProvider({ children }: { children: ReactNode }) {
           
           else if (tc.name === 'create_calendar_event') {
             console.log('[Rocker] Creating calendar event:', args.title);
-            toast({
-              title: '📆 Event created',
-              description: `${args.title} added to calendar`,
-            });
+            
+            try {
+              // Get user session
+              const { data: { user } } = await supabase.auth.getUser();
+              if (!user) throw new Error('Not authenticated');
+              
+              // Get or create personal calendar if no calendar_id
+              let targetCalendarId = args.calendar_id;
+              if (!targetCalendarId) {
+                const { data: existingCalendar } = await (supabase as any)
+                  .from('calendars')
+                  .select('id')
+                  .eq('owner_profile_id', user.id)
+                  .eq('calendar_type', 'personal')
+                  .single();
+                
+                if (existingCalendar) {
+                  targetCalendarId = existingCalendar.id;
+                } else {
+                  const { data: newCalendar } = await supabase.functions.invoke('calendar-ops', {
+                    body: {
+                      action: 'create_calendar',
+                      owner_profile_id: user.id,
+                      name: 'My Calendar',
+                      calendar_type: 'personal',
+                    },
+                  });
+                  targetCalendarId = newCalendar?.calendar?.id;
+                }
+              }
+              
+              // Create the event
+              const { data, error } = await supabase.functions.invoke('calendar-ops', {
+                body: {
+                  action: 'create_event',
+                  calendar_id: targetCalendarId,
+                  created_by: user.id,
+                  title: args.title,
+                  description: args.description,
+                  location: args.location,
+                  starts_at: args.starts_at,
+                  ends_at: args.ends_at || args.starts_at,
+                  all_day: args.all_day,
+                  visibility: args.visibility || 'private',
+                  event_type: args.event_type || 'meeting',
+                  reminder_minutes: args.reminder_minutes ?? 0,
+                },
+              });
+              
+              if (error) throw error;
+              
+              // Calculate timing for notification
+              const eventTime = new Date(args.starts_at);
+              const now = new Date();
+              const minutesUntil = Math.round((eventTime.getTime() - now.getTime()) / 60000);
+              
+              toast({
+                title: '📆 Event created',
+                description: minutesUntil > 0 
+                  ? `"${args.title}" scheduled for ${minutesUntil} minute${minutesUntil !== 1 ? 's' : ''} from now`
+                  : `Added "${args.title}" to your calendar`,
+              });
+              
+              // If this is a near-future event/notification, schedule reminder processing
+              if (minutesUntil <= 5 && minutesUntil >= 0) {
+                console.log(`[Rocker] Scheduling reminder to fire in ${minutesUntil} minutes`);
+                setTimeout(() => {
+                  console.log('[Rocker] Triggering reminder processor');
+                  supabase.functions.invoke('process-calendar-reminders');
+                }, Math.max(0, minutesUntil * 60 * 1000));
+              }
+            } catch (error) {
+              console.error('[Rocker] Failed to create calendar event:', error);
+              toast({
+                title: '❌ Failed to create event',
+                description: error instanceof Error ? error.message : 'Unknown error',
+                variant: 'destructive',
+              });
+            }
           }
           
           else if (tc.name === 'share_calendar') {

@@ -77,15 +77,19 @@ PROFILES & CLAIMS:
 - edit_profile(display_name?, bio?, avatar_url?) - Edit profile
 - claim_entity(entity_id, entity_type) - Claim entity
 
-SEARCH & DISCOVERY:
-- search(query, type?) - Search for content
+CALENDAR MANAGEMENT:
+- create_calendar(name, calendar_type, description?, color?) - Create new calendars
+- create_calendar_event(title, starts_at, calendar_id?, description?, reminder_minutes?) - Add events. For "notify me in X minutes", set starts_at to X minutes from now and reminder_minutes: 0.
+- share_calendar(calendar_id, profile_id, role) - Share calendar access
+- create_calendar_collection(name, calendar_ids) - Create master calendars
+- list_calendars() - View available calendars
+- get_calendar_events(calendar_id?, start_date?, end_date?) - Get calendar events
 
-EXPORTS & DATA:
-- export_data(data_type, format, filters?) - Export data
-
-FEEDBACK:
-- request_category(category_name, reason) - Request new category
-- submit_feedback(type, content) - Submit feedback/bug/feature
+**TIMED NOTIFICATIONS:** When user says "notify me in X minutes", use create_calendar_event with:
+- starts_at: current time + X minutes (ISO format)
+- reminder_minutes: 0 (notification fires at event time)
+- title: the notification message
+Example: "notify me goodnight in 5 minutes" → starts_at: now+5min, reminder_minutes: 0, title: "Goodnight message"
 
 **IMPORTANT RULES:**
 - When user says "go to", "open", "show me" → Use navigate tool IMMEDIATELY
