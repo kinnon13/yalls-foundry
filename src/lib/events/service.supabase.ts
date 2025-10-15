@@ -16,7 +16,7 @@ export async function getAllEvents(filters?: {
   upcoming?: boolean;
   limit?: number;
 }): Promise<Event[]> {
-  let query = supabase
+  let query = (supabase as any)
     .from('events')
     .select('*')
     .order('starts_at', { ascending: filters?.upcoming ?? true });
@@ -42,7 +42,7 @@ export async function getAllEvents(filters?: {
  * Fetch single event by ID
  */
 export async function getEventById(id: string): Promise<Event | null> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('events')
     .select('*')
     .eq('id', id)
@@ -56,7 +56,7 @@ export async function getEventById(id: string): Promise<Event | null> {
  * Fetch event by slug
  */
 export async function getEventBySlug(slug: string): Promise<Event | null> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('events')
     .select('*')
     .eq('slug', slug)
@@ -73,7 +73,7 @@ export async function createEvent(input: CreateEventInput): Promise<Event> {
   const { data: session } = await supabase.auth.getSession();
   if (!session.session) throw new Error('Not authenticated');
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('events')
     .insert({
       ...input,
@@ -92,7 +92,7 @@ export async function createEvent(input: CreateEventInput): Promise<Event> {
  * Update event
  */
 export async function updateEvent(id: string, updates: Partial<CreateEventInput>): Promise<Event> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('events')
     .update({
       ...updates,
@@ -110,7 +110,7 @@ export async function updateEvent(id: string, updates: Partial<CreateEventInput>
  * Delete event
  */
 export async function deleteEvent(id: string): Promise<void> {
-  const { error } = await supabase.from('events').delete().eq('id', id);
+  const { error } = await (supabase as any).from('events').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
 
@@ -125,7 +125,7 @@ export async function uploadResults(
   const { data: session } = await supabase.auth.getSession();
   if (!session.session) throw new Error('Not authenticated');
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('event_results_raw')
     .insert({
       event_id: eventId,
@@ -147,7 +147,7 @@ export async function uploadResults(
  * Request AI audit of results (via RPC)
  */
 export async function requestResultsAudit(eventId: string): Promise<{ success: boolean; audited_count: number }> {
-  const { data, error } = await supabase.rpc('request_results_audit', {
+  const { data, error } = await (supabase as any).rpc('request_results_audit', {
     p_event_id: eventId,
   });
 
@@ -159,7 +159,7 @@ export async function requestResultsAudit(eventId: string): Promise<{ success: b
  * Approve results (publish to public view)
  */
 export async function approveResults(eventId: string): Promise<{ success: boolean; approved_count: number }> {
-  const { data, error } = await supabase.rpc('approve_results', {
+  const { data, error } = await (supabase as any).rpc('approve_results', {
     p_event_id: eventId,
   });
 
@@ -176,7 +176,7 @@ export async function calculatePayouts(eventId: string): Promise<{
   total_cents: number;
   message: string;
 }> {
-  const { data, error } = await supabase.rpc('calc_payouts', {
+  const { data, error } = await (supabase as any).rpc('calc_payouts', {
     p_event_id: eventId,
   });
 
@@ -188,7 +188,7 @@ export async function calculatePayouts(eventId: string): Promise<{
  * Fetch approved results for event (public view)
  */
 export async function getApprovedResults(eventId: string): Promise<EventResult[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('event_results')
     .select('*')
     .eq('event_id', eventId)
@@ -202,7 +202,7 @@ export async function getApprovedResults(eventId: string): Promise<EventResult[]
  * Subscribe to event updates (realtime)
  */
 export function subscribeToEvent(eventId: string, callback: (event: Event) => void) {
-  const channel = supabase
+  const channel = (supabase as any)
     .channel(`event:${eventId}`)
     .on(
       'postgres_changes',
@@ -212,7 +212,7 @@ export function subscribeToEvent(eventId: string, callback: (event: Event) => vo
         table: 'events',
         filter: `id=eq.${eventId}`,
       },
-      (payload) => {
+      (payload: any) => {
         callback(payload.new as Event);
       }
     )
