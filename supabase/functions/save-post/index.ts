@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { withRateLimit, getTenantFromJWT } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,6 +9,12 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  const log = createLogger('save-post');
+  log.startTimer();
+  
+  // Rate limiting for standard function
+  const limited = await withRateLimit(req, 'save-post', { burst: 10, perMin: 100 });
+  if (limited) return limited;
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -53,6 +61,9 @@ serve(async (req) => {
       });
     }
 
+    const tenantId = getTenantFromJWT(req) || user.id;
+    log.info('Saving post', { post_id, user_id: user.id, tenant_id: tenantId });
+
     // Save the post
     const { data, error } = await supabaseClient
       .from('post_saves')
@@ -61,13 +72,13 @@ serve(async (req) => {
         post_id,
         collection,
         note,
-        tenant_id: '00000000-0000-0000-0000-000000000000',
+        tenant_id: tenantId,
       })
       .select()
       .single();
 
     if (error) {
-      console.error('Error saving post:', error);
+      log.error('Error saving post', error);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -78,7 +89,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in save-post:', error);
+    log.error('Save post failed', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,

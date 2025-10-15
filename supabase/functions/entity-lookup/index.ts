@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { withRateLimit, getTenantFromJWT } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,6 +9,12 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  const log = createLogger('entity-lookup');
+  log.startTimer();
+  
+  // Rate limiting for standard function
+  const limited = await withRateLimit(req, 'entity-lookup', { burst: 10, perMin: 100 });
+  if (limited) return limited;
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -45,17 +53,18 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Entity lookup for query: "${query}" by user: ${user.id}`);
+    const tenantId = getTenantFromJWT(req) || user.id;
+    log.info('Entity lookup', { query, user_id: user.id, tenant_id: tenantId });
 
     // Search entities using the RPC
     const { data: results, error: searchError } = await supabase.rpc('search_entities', {
       p_query: query,
-      p_tenant_id: '00000000-0000-0000-0000-000000000000',
+      p_tenant_id: tenantId,
       p_limit: 5
     });
 
     if (searchError) {
-      console.error('Search error:', searchError);
+      log.error('Search failed', searchError);
       return new Response(JSON.stringify({ error: searchError.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -66,7 +75,7 @@ serve(async (req) => {
     await supabase.rpc('audit_write', {
       p_actor: user.id,
       p_role: 'user',
-      p_tenant: '00000000-0000-0000-0000-000000000000',
+      p_tenant: tenantId,
       p_action: 'entity.search',
       p_scope: 'system',
       p_targets: results?.map((r: any) => r.entity_id) || [],
@@ -82,7 +91,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in entity-lookup:', error);
+    log.error('Entity lookup failed', error);
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : 'Unknown error' 
     }), {

@@ -1,10 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { withRateLimit } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const GLOBAL_TENANT = '00000000-0000-0000-0000-000000000000';
 
 /**
  * Aggregate Learnings Function
@@ -13,6 +17,12 @@ const corsHeaders = {
  * and calculates analytics for all users
  */
 serve(async (req) => {
+  const log = createLogger('aggregate-learnings');
+  log.startTimer();
+  
+  // Rate limiting for admin function
+  const limited = await withRateLimit(req, 'aggregate-learnings', { burst: 50, perMin: 500 });
+  if (limited) return limited;
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -23,15 +33,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    console.log('[Aggregate] Starting aggregation job...');
+    log.info('Starting aggregation job');
 
     // 1. Aggregate all user patterns into global patterns
     const { error: aggError } = await supabaseClient.rpc('aggregate_user_patterns');
     if (aggError) {
-      console.error('[Aggregate] Error aggregating patterns:', aggError);
+      log.error('Error aggregating patterns', aggError);
       throw aggError;
     }
-    console.log('[Aggregate] Patterns aggregated successfully');
+    log.info('Patterns aggregated successfully');
 
     // 2. Get all active users (who have interacted in last 30 days)
     const { data: activeUsers, error: usersError } = await supabaseClient
@@ -40,12 +50,12 @@ serve(async (req) => {
       .gte('updated_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
     if (usersError) {
-      console.error('[Aggregate] Error fetching users:', usersError);
+      log.error('Error fetching users', usersError);
       throw usersError;
     }
 
     const uniqueUserIds = [...new Set(activeUsers?.map(u => u.user_id) || [])];
-    console.log(`[Aggregate] Calculating analytics for ${uniqueUserIds.length} users`);
+    log.info('Calculating analytics', { user_count: uniqueUserIds.length });
 
     // 3. Calculate analytics for each user
     let successCount = 0;
@@ -58,12 +68,12 @@ serve(async (req) => {
         });
         successCount++;
       } catch (err) {
-        console.error(`[Aggregate] Error for user ${userId}:`, err);
+        log.error('Error calculating user analytics', err, { user_id: userId });
         errorCount++;
       }
     }
 
-    console.log(`[Aggregate] Completed: ${successCount} success, ${errorCount} errors`);
+    log.info('Analytics calculation complete', { success: successCount, errors: errorCount });
 
     // 4. Promote high-confidence user patterns to global knowledge
     const { data: highConfidencePatterns } = await supabaseClient
@@ -73,7 +83,7 @@ serve(async (req) => {
       .gte('success_rate', 0.8);
 
     if (highConfidencePatterns && highConfidencePatterns.length > 0) {
-      console.log(`[Aggregate] Found ${highConfidencePatterns.length} patterns to promote to global knowledge`);
+      log.info('Promoting high-confidence patterns', { count: highConfidencePatterns.length });
       
       for (const pattern of highConfidencePatterns) {
         // Check if already in global knowledge
@@ -85,7 +95,7 @@ serve(async (req) => {
 
         if (!existing) {
           await supabaseClient.from('ai_global_knowledge').insert({
-            tenant_id: '00000000-0000-0000-0000-000000000000',
+            tenant_id: GLOBAL_TENANT,
             key: pattern.pattern_key,
             type: pattern.pattern_type,
             value: {
@@ -98,7 +108,7 @@ serve(async (req) => {
             source: 'aggregation',
             tags: ['cross_user', 'promoted', pattern.pattern_type]
           });
-          console.log(`[Aggregate] Promoted pattern to global knowledge: ${pattern.pattern_key}`);
+          log.info('Pattern promoted to global knowledge', { pattern_key: pattern.pattern_key });
         }
       }
     }
@@ -119,7 +129,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in aggregate-learnings:', error);
+    log.error('Aggregation failed', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,

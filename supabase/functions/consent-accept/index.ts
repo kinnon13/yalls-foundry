@@ -1,12 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { withRateLimit, getTenantFromJWT } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const GLOBAL_TENANT = '00000000-0000-0000-0000-000000000000';
+
 serve(async (req) => {
+  const log = createLogger('consent-accept');
+  log.startTimer();
+  
+  // Rate limiting for auth function
+  const limited = await withRateLimit(req, 'consent-accept', { burst: 10, perMin: 100 });
+  if (limited) return limited;
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -38,9 +48,11 @@ serve(async (req) => {
       scopes = []
     } = await req.json();
 
-    const tenantId = '00000000-0000-0000-0000-000000000000';
+    const tenantId = getTenantFromJWT(req) || user.id;
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip');
     const userAgent = req.headers.get('user-agent');
+
+    log.info('Accepting consent', { user_id: user.id, tenant_id: tenantId });
 
     // Upsert consent
     const { error: consentError } = await supabaseClient
@@ -86,7 +98,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Consent accept error:', error);
+    log.error('Consent accept failed', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       {

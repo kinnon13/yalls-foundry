@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { rateLimit } from "../_shared/rate-limit.ts";
+import { withRateLimit, getTenantFromJWT } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,6 +9,12 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  const log = createLogger('upload-media');
+  log.startTimer();
+  
+  // Rate limiting for expensive function
+  const limited = await withRateLimit(req, 'upload-media', { burst: 5, perMin: 30 });
+  if (limited) return limited;
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -38,17 +45,6 @@ serve(async (req) => {
       });
     }
 
-    // Apply rate limiting (5 uploads per minute per user)
-    const rateLimitResult = await rateLimit(req, user.id, {
-      limit: 5,
-      windowSec: 60,
-      prefix: 'ratelimit:upload-media'
-    });
-
-    if (rateLimitResult instanceof Response) {
-      return rateLimitResult;
-    }
-
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const caption = formData.get('caption') as string || '';
@@ -62,12 +58,14 @@ serve(async (req) => {
       });
     }
 
+    const tenantId = getTenantFromJWT(req) || user.id;
+    
     // Determine file type
     const fileType = file.type.startsWith('image/') ? 'image' 
                    : file.type.startsWith('video/') ? 'video'
                    : 'document';
 
-    console.log(`Processing ${fileType} upload for user: ${user.id}`);
+    log.info('Processing upload', { file_type: fileType, user_id: user.id, tenant_id: tenantId });
 
     // Upload to Supabase Storage
     const fileExt = file.name.split('.').pop();
@@ -80,7 +78,7 @@ serve(async (req) => {
       });
 
     if (uploadError) {
-      console.error('Upload error:', uploadError);
+      log.error('Upload failed', uploadError);
       return new Response(JSON.stringify({ error: uploadError.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -92,7 +90,7 @@ serve(async (req) => {
       .from('media')
       .getPublicUrl(fileName);
 
-    console.log(`File uploaded to: ${publicUrl}`);
+    log.info('File uploaded', { url: publicUrl });
 
     // Create media record
     const { data: mediaRecord, error: mediaError } = await supabase
@@ -111,20 +109,20 @@ serve(async (req) => {
       .single();
 
     if (mediaError) {
-      console.error('Media record error:', mediaError);
+      log.error('Media record creation failed', mediaError);
       return new Response(JSON.stringify({ error: mediaError.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log(`Media record created: ${mediaRecord.id}`);
+    log.info('Media record created', { media_id: mediaRecord.id });
 
     // If it's an image or video, analyze with AI
     let aiAnalysis = null;
     if (fileType === 'image' || fileType === 'video') {
       try {
-        console.log('Starting AI analysis...');
+        log.info('Starting AI analysis');
         
         // Use Lovable AI vision model
         const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -167,7 +165,7 @@ Respond in JSON format with: { "entities": [{"type": "horse"|"person"|"location"
 
         if (!aiResponse.ok) {
           const errorText = await aiResponse.text();
-          console.error('AI analysis failed:', aiResponse.status, errorText);
+          log.warn('AI analysis failed', { status: aiResponse.status, error: errorText });
         } else {
           const aiResult = await aiResponse.json();
           const content = aiResult.choices?.[0]?.message?.content;
@@ -175,7 +173,7 @@ Respond in JSON format with: { "entities": [{"type": "horse"|"person"|"location"
           if (content) {
             try {
               aiAnalysis = JSON.parse(content);
-              console.log('AI analysis completed:', aiAnalysis);
+              log.info('AI analysis completed', { entities: aiAnalysis.entities?.length || 0 });
 
               // Update media record with AI analysis
               await supabase
@@ -190,13 +188,13 @@ Respond in JSON format with: { "entities": [{"type": "horse"|"person"|"location"
                     // Search for matching entities
                     const { data: matches } = await supabase.rpc('search_entities', {
                       p_query: entity.name,
-                      p_tenant_id: '00000000-0000-0000-0000-000000000000',
+                      p_tenant_id: tenantId,
                       p_limit: 1
                     });
 
                     if (matches && matches.length > 0) {
                       const match = matches[0];
-                      console.log(`Found entity match: ${match.name} (${match.entity_type})`);
+                      log.info('Entity match found', { entity: match.name, type: match.entity_type });
                       
                       // Create entity link
                       await supabase
@@ -212,12 +210,12 @@ Respond in JSON format with: { "entities": [{"type": "horse"|"person"|"location"
                 }
               }
             } catch (e) {
-              console.error('Failed to parse AI analysis:', e);
+              log.error('Failed to parse AI analysis', e);
             }
           }
         }
       } catch (aiError) {
-        console.error('AI analysis error:', aiError);
+        log.error('AI analysis error', aiError);
         // Don't fail the upload if AI analysis fails
       }
     }
@@ -226,7 +224,7 @@ Respond in JSON format with: { "entities": [{"type": "horse"|"person"|"location"
     await supabase.rpc('audit_write', {
       p_actor: user.id,
       p_role: 'user',
-      p_tenant: '00000000-0000-0000-0000-000000000000',
+      p_tenant: tenantId,
       p_action: 'media.upload',
       p_scope: 'system',
       p_targets: [mediaRecord.id],
@@ -248,7 +246,7 @@ Respond in JSON format with: { "entities": [{"type": "horse"|"person"|"location"
     });
 
   } catch (error) {
-    console.error('Error in upload-media:', error);
+    log.error('Upload failed', error);
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : 'Unknown error' 
     }), {
