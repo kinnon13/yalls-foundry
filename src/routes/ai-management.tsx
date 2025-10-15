@@ -20,11 +20,22 @@ import { ConnectedAccountsPanel } from '@/components/ai/ConnectedAccountsPanel';
 import { PrivacyPanel } from '@/components/ai/PrivacyPanel';
 import { SettingsPanel } from '@/components/ai/SettingsPanel';
 import { SharedMemoriesPanel } from '@/components/ai/SharedMemoriesPanel';
+import { ConnectedEntitiesPanel } from '@/components/ai/ConnectedEntitiesPanel';
+import { AccountDeletionFlow } from '@/components/account/AccountDeletionFlow';
+import { useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-type Section = 'home' | 'chat' | 'know' | 'memories' | 'unknowns' | 'learning' | 'accounts' | 'privacy' | 'settings' | 'shared';
+type Section = 'home' | 'chat' | 'know' | 'memories' | 'unknowns' | 'learning' | 'accounts' | 'privacy' | 'settings' | 'shared' | 'entities' | 'account-delete';
 
 export default function AIManagement() {
   const [activeSection, setActiveSection] = useState<Section>('home');
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id || null);
+    });
+  }, []);
 
   const navigation = [
     { id: 'home' as Section, label: 'Home', icon: Home },
@@ -32,6 +43,7 @@ export default function AIManagement() {
     { id: 'know' as Section, label: 'What I Know', icon: Search },
     { id: 'memories' as Section, label: 'Memories', icon: Brain },
     { id: 'shared' as Section, label: 'Shared', icon: Share2 },
+    { id: 'entities' as Section, label: 'Connected Entities', icon: Link2 },
     { id: 'unknowns' as Section, label: 'Unknowns', icon: AlertCircle },
     { id: 'learning' as Section, label: 'Learning', icon: TrendingUp },
     { id: 'accounts' as Section, label: 'Accounts', icon: Link2 },
@@ -79,11 +91,22 @@ export default function AIManagement() {
             {activeSection === 'know' && <WhatIKnowPanel />}
             {activeSection === 'memories' && <MemoriesPanel />}
             {activeSection === 'shared' && <SharedMemoriesPanel />}
+            {activeSection === 'entities' && <ConnectedEntitiesPanel />}
             {activeSection === 'unknowns' && <UnknownsPanel />}
             {activeSection === 'learning' && <LearningPanel />}
             {activeSection === 'accounts' && <ConnectedAccountsPanel />}
             {activeSection === 'privacy' && <PrivacyPanel />}
-            {activeSection === 'settings' && <SettingsPanel />}
+            {activeSection === 'settings' && (
+              <div className="space-y-6">
+                <SettingsPanel />
+                {userId && (
+                  <>
+                    <div className="border-t my-8" />
+                    <AccountDeletionFlow userId={userId} />
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
