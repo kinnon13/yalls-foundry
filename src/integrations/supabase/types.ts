@@ -1498,6 +1498,39 @@ export type Database = {
           },
         ]
       }
+      entity_ingest_log: {
+        Row: {
+          action: string | null
+          by_user_id: string | null
+          created_at: string | null
+          entity_id: string | null
+          id: string
+          metadata: Json | null
+          reason: string | null
+          unknown_memory_id: string | null
+        }
+        Insert: {
+          action?: string | null
+          by_user_id?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          unknown_memory_id?: string | null
+        }
+        Update: {
+          action?: string | null
+          by_user_id?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          unknown_memory_id?: string | null
+        }
+        Relationships: []
+      }
       entity_profiles: {
         Row: {
           claimed_by: string | null
@@ -1510,6 +1543,7 @@ export type Database = {
           id: string
           is_claimed: boolean
           name: string
+          normalized_name: string | null
           owner_id: string | null
           search_vector: unknown | null
           slug: string
@@ -1526,6 +1560,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name: string
+          normalized_name?: string | null
           owner_id?: string | null
           search_vector?: unknown | null
           slug: string
@@ -1542,6 +1577,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name?: string
+          normalized_name?: string | null
           owner_id?: string | null
           search_vector?: unknown | null
           slug?: string
@@ -1569,6 +1605,7 @@ export type Database = {
           id: string
           is_claimed: boolean
           name: string
+          normalized_name: string | null
           owner_id: string | null
           search_vector: unknown | null
           slug: string
@@ -1585,6 +1622,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name: string
+          normalized_name?: string | null
           owner_id?: string | null
           search_vector?: unknown | null
           slug: string
@@ -1601,6 +1639,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name?: string
+          normalized_name?: string | null
           owner_id?: string | null
           search_vector?: unknown | null
           slug?: string
@@ -1620,6 +1659,7 @@ export type Database = {
           id: string
           is_claimed: boolean
           name: string
+          normalized_name: string | null
           owner_id: string | null
           search_vector: unknown | null
           slug: string
@@ -1636,6 +1676,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name: string
+          normalized_name?: string | null
           owner_id?: string | null
           search_vector?: unknown | null
           slug: string
@@ -1652,6 +1693,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name?: string
+          normalized_name?: string | null
           owner_id?: string | null
           search_vector?: unknown | null
           slug?: string
@@ -1671,6 +1713,7 @@ export type Database = {
           id: string
           is_claimed: boolean
           name: string
+          normalized_name: string | null
           owner_id: string | null
           search_vector: unknown | null
           slug: string
@@ -1687,6 +1730,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name: string
+          normalized_name?: string | null
           owner_id?: string | null
           search_vector?: unknown | null
           slug: string
@@ -1703,6 +1747,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name?: string
+          normalized_name?: string | null
           owner_id?: string | null
           search_vector?: unknown | null
           slug?: string

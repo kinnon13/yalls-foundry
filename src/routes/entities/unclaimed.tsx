@@ -76,9 +76,18 @@ const ENTITY_CONFIGS: EntityConfig[] = [
 export default function UnclaimedEntitiesPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
+
+  // Debounce search input (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Handle sync unknowns to entities
   const handleSync = async () => {
@@ -113,7 +122,7 @@ export default function UnclaimedEntitiesPage() {
   // Dynamic entity fetcher with infinite scroll
   const useEntityQuery = (config: EntityConfig) => {
     return useInfiniteQuery({
-      queryKey: ['entities', 'unclaimed', config.type, searchTerm],
+      queryKey: ['entities', 'unclaimed', config.type, debouncedSearch],
       queryFn: async ({ pageParam = 0 }) => {
         let query = supabase
           .from(config.table as any)
@@ -131,8 +140,8 @@ export default function UnclaimedEntitiesPage() {
         });
 
         // Apply search filter if present
-        if (searchTerm) {
-          query = query.ilike(config.nameField, `%${searchTerm}%`);
+        if (debouncedSearch) {
+          query = query.ilike(config.nameField, `%${debouncedSearch}%`);
         }
 
         const { data, error, count } = await query;
@@ -232,14 +241,17 @@ export default function UnclaimedEntitiesPage() {
     );
   };
 
-  // Infinite scroll trigger for active tab
+  // Infinite scroll trigger for active tab (debounced)
   const { ref: loadMoreRef, inView } = useInView();
   const activeEntity = entities.find(e => e.config.type === activeTab);
   
   useEffect(() => {
-    if (inView && activeEntity?.hasNextPage && !activeEntity?.isFetchingNextPage) {
-      activeEntity.fetchNextPage();
-    }
+    const timer = setTimeout(() => {
+      if (inView && activeEntity?.hasNextPage && !activeEntity?.isFetchingNextPage) {
+        activeEntity.fetchNextPage();
+      }
+    }, 100);
+    return () => clearTimeout(timer);
   }, [inView, activeEntity?.hasNextPage, activeEntity?.isFetchingNextPage]);
 
   if (isAnyLoading && entities.every(e => e.items.length === 0)) {

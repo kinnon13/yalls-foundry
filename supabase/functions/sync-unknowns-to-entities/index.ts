@@ -33,26 +33,28 @@ serve(async (req) => {
 
     for (const unknown of unknowns || []) {
       try {
-        // Parse the unknown to determine entity type
-        const value = typeof unknown.value === 'string' ? JSON.parse(unknown.value) : unknown.value;
+        // Parse the unknown to determine entity type (with size guard)
+        let value;
+        try {
+          const rawValue = typeof unknown.value === 'string' ? unknown.value : JSON.stringify(unknown.value);
+          if (rawValue.length > 50000) {
+            throw new Error('Value too large');
+          }
+          value = typeof unknown.value === 'string' ? JSON.parse(unknown.value) : unknown.value;
+        } catch (parseError) {
+          skipped.push({ unknown: unknown.id, reason: 'json_parse_error' });
+          continue;
+        }
+
         const entityName = unknown.key || value.name || value.title;
         
-        if (!entityName) {
-          skipped.push({ unknown: unknown.id, reason: 'no_name' });
+        if (!entityName || entityName.length > 500) {
+          skipped.push({ unknown: unknown.id, reason: 'invalid_name' });
           continue;
         }
 
-        // Check if entity already exists
-        const { data: existing } = await supabase
-          .from('entity_profiles')
-          .select('id')
-          .eq('name', entityName)
-          .maybeSingle();
-
-        if (existing) {
-          skipped.push({ unknown: unknown.id, reason: 'already_exists', entity_id: existing.id });
-          continue;
-        }
+        // Normalize name for deduplication
+        const normalizedName = entityName.trim().toLowerCase().replace(/\s+/g, ' ');
 
         // Determine entity type from tags or content
         let entityType = 'person'; // default
@@ -67,12 +69,37 @@ serve(async (req) => {
           entityType = 'product';
         }
 
-        // Create entity profile
+        // Check for existing entity (application-level deduplication)
+        const { data: existingEntity } = await supabase
+          .from('entity_profiles')
+          .select('id')
+          .eq('entity_type', entityType)
+          .eq('normalized_name', normalizedName)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (existingEntity) {
+          skipped.push({ unknown: unknown.id, reason: 'duplicate', entity_id: existingEntity.id });
+          
+          // Log audit
+          await supabase.from('entity_ingest_log').insert({
+            unknown_memory_id: unknown.id,
+            entity_id: existingEntity.id,
+            action: 'duplicate',
+            reason: 'Entity already exists',
+            by_user_id: unknown.user_id,
+          });
+          continue;
+        }
+
+        // Create new entity profile
         const { data: newEntity, error: createError } = await supabase
           .from('entity_profiles')
           .insert({
             name: entityName,
-            slug: entityName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+            normalized_name: normalizedName,
+            slug: normalizedName.replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
             entity_type: entityType,
             claimed_by: null,
             is_claimed: false,
@@ -102,6 +129,15 @@ serve(async (req) => {
             namespace: `entity:${newEntity.id}`,
           })
           .eq('id', unknown.id);
+
+        // Log audit
+        await supabase.from('entity_ingest_log').insert({
+          unknown_memory_id: unknown.id,
+          entity_id: newEntity.id,
+          action: 'created',
+          reason: 'Auto-created from AI unknown',
+          by_user_id: unknown.user_id,
+        });
 
         created.push({
           unknown_id: unknown.id,
