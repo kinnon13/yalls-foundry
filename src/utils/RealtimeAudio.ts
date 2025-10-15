@@ -202,7 +202,7 @@ export class RealtimeVoice {
   private onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void;
   private onTranscript?: (text: string, isFinal: boolean) => void;
   private onCommand?: (cmd: { 
-    type: 'navigate' | 'click_element' | 'fill_field' | 'create_post' | 'scroll_page' | 'create_horse'; 
+    type: 'navigate' | 'click_element' | 'fill_field' | 'create_post' | 'scroll_page' | 'create_horse' | 'create_business' | 'create_listing' | 'create_crm_contact'; 
     path?: string;
     element_name?: string;
     field_name?: string;
@@ -214,6 +214,12 @@ export class RealtimeVoice {
     breed?: string;
     color?: string;
     description?: string;
+    title?: string;
+    price?: number;
+    category?: string;
+    business_id?: string;
+    email?: string;
+    phone?: string;
   }) => void;
   private lastTranscript: string = '';
   private instanceId: string;
@@ -222,7 +228,7 @@ export class RealtimeVoice {
     onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void,
     onTranscript?: (text: string, isFinal: boolean) => void,
     onCommand?: (cmd: { 
-      type: 'navigate' | 'click_element' | 'fill_field' | 'create_post' | 'scroll_page' | 'create_horse';
+      type: 'navigate' | 'click_element' | 'fill_field' | 'create_post' | 'scroll_page' | 'create_horse' | 'create_business' | 'create_listing' | 'create_crm_contact';
       path?: string;
       element_name?: string;
       field_name?: string;

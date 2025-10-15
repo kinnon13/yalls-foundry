@@ -14,7 +14,7 @@ export const rockerTools = [
       properties: {
         path: {
           type: "string",
-          description: "The path to navigate to (e.g., /dashboard, /horses, /marketplace, /events, /profile)",
+          description: "The path to navigate to (e.g., /dashboard, /horses, /marketplace, /events, /profile, /business/:id/hub, /mlm/dashboard)",
         }
       },
       required: ["path"]
@@ -71,32 +71,163 @@ export const rockerTools = [
   },
   {
     type: "function",
-    name: "comment",
-    description: "Add a comment to the current item (post, horse profile, event, etc.). Use when user asks to comment or leave a message.",
+    name: "create_horse",
+    description: "Create a new horse profile. Use when user asks to add a horse, create a horse profile, or register a horse.",
     parameters: {
       type: "object",
       properties: {
-        content: {
+        name: {
           type: "string",
-          description: "The comment text",
+          description: "The horse's name",
+        },
+        breed: {
+          type: "string",
+          description: "The horse's breed (optional)",
+        },
+        color: {
+          type: "string",
+          description: "The horse's color (optional)",
+        },
+        description: {
+          type: "string",
+          description: "Description of the horse (optional)",
         }
       },
-      required: ["content"]
+      required: ["name"]
     }
   },
   {
     type: "function",
-    name: "save_post",
-    description: "Save/bookmark a post for later. Use when user asks to save, bookmark, or remember a post.",
+    name: "create_business",
+    description: "Create a new business profile. Use when user wants to create a business, register a company, or start a business account.",
     parameters: {
       type: "object",
       properties: {
-        post_id: {
+        name: {
           type: "string",
-          description: "The ID of the post to save (if known), or 'current' for the currently viewed post",
+          description: "The business name",
+        },
+        description: {
+          type: "string",
+          description: "Description of the business (optional)",
         }
       },
-      required: ["post_id"]
+      required: ["name"]
+    }
+  },
+  {
+    type: "function",
+    name: "create_listing",
+    description: "Create a marketplace listing. Use when user wants to sell something, create a listing, or post an item for sale.",
+    parameters: {
+      type: "object",
+      properties: {
+        title: {
+          type: "string",
+          description: "Title of the listing",
+        },
+        description: {
+          type: "string",
+          description: "Description of the item",
+        },
+        price: {
+          type: "number",
+          description: "Price in dollars",
+        },
+        category: {
+          type: "string",
+          description: "Category (e.g., 'tack', 'equipment', 'services')",
+        }
+      },
+      required: ["title", "price", "category"]
+    }
+  },
+  {
+    type: "function",
+    name: "add_to_cart",
+    description: "Add an item to the shopping cart. Use when user wants to buy something or add to cart.",
+    parameters: {
+      type: "object",
+      properties: {
+        listing_id: {
+          type: "string",
+          description: "The ID of the listing to add (if known), or 'current' for currently viewed item",
+        }
+      },
+      required: ["listing_id"]
+    }
+  },
+  {
+    type: "function",
+    name: "create_crm_contact",
+    description: "Create a new CRM contact for a business. Use when user wants to add a contact, create a lead, or add someone to CRM.",
+    parameters: {
+      type: "object",
+      properties: {
+        business_id: {
+          type: "string",
+          description: "The business ID",
+        },
+        name: {
+          type: "string",
+          description: "Contact's name",
+        },
+        email: {
+          type: "string",
+          description: "Contact's email (optional)",
+        },
+        phone: {
+          type: "string",
+          description: "Contact's phone (optional)",
+        },
+        notes: {
+          type: "string",
+          description: "Notes about the contact (optional)",
+        }
+      },
+      required: ["business_id", "name"]
+    }
+  },
+  {
+    type: "function",
+    name: "edit_profile",
+    description: "Edit user profile information. Use when user wants to update their profile, change bio, or edit profile details.",
+    parameters: {
+      type: "object",
+      properties: {
+        display_name: {
+          type: "string",
+          description: "Display name (optional)",
+        },
+        bio: {
+          type: "string",
+          description: "Biography text (optional)",
+        },
+        avatar_url: {
+          type: "string",
+          description: "Avatar URL (optional)",
+        }
+      },
+      required: []
+    }
+  },
+  {
+    type: "function",
+    name: "claim_entity",
+    description: "Claim ownership of a horse, business, or other entity profile. Use when user wants to claim a profile.",
+    parameters: {
+      type: "object",
+      properties: {
+        entity_id: {
+          type: "string",
+          description: "The entity ID to claim, or 'current' for currently viewed entity",
+        },
+        entity_type: {
+          type: "string",
+          description: "Type of entity (horse, business, event)",
+        }
+      },
+      required: ["entity_id", "entity_type"]
     }
   },
   {
@@ -117,6 +248,21 @@ export const rockerTools = [
         }
       },
       required: ["query"]
+    }
+  },
+  {
+    type: "function",
+    name: "save_post",
+    description: "Save/bookmark a post for later. Use when user asks to save, bookmark, or remember a post.",
+    parameters: {
+      type: "object",
+      properties: {
+        post_id: {
+          type: "string",
+          description: "The ID of the post to save (if known), or 'current' for the currently viewed post",
+        }
+      },
+      required: ["post_id"]
     }
   },
   {

@@ -369,6 +369,184 @@ async function executeTool(toolName: string, args: any, supabaseClient: any, use
         }
       }
 
+      case 'create_business': {
+        console.log('[Tool: create_business] Creating business:', args.name);
+        try {
+          const slug = args.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+          const { data, error } = await supabaseClient
+            .from('businesses')
+            .insert({
+              name: args.name,
+              slug,
+              description: args.description || `${args.name}`,
+              owner_id: userId,
+              created_by: userId
+            })
+            .select()
+            .single();
+
+          if (error) {
+            console.error('[Tool: create_business] Error:', error);
+            throw error;
+          }
+
+          console.log('[Tool: create_business] Success:', data.id);
+          return {
+            success: true,
+            message: `Created business "${args.name}"!`,
+            businessId: data.id,
+            slug: slug,
+            action: 'business_created'
+          };
+        } catch (error) {
+          console.error('[Tool: create_business] Failed:', error);
+          return {
+            success: false,
+            message: 'Failed to create business: ' + (error instanceof Error ? error.message : 'Unknown error')
+          };
+        }
+      }
+
+      case 'create_listing': {
+        console.log('[Tool: create_listing] Creating listing:', args.title);
+        try {
+          const { data, error } = await supabaseClient
+            .from('marketplace_listings')
+            .insert({
+              seller_id: userId,
+              title: args.title,
+              description: args.description || '',
+              price_cents: Math.round(args.price * 100),
+              category: args.category,
+              status: 'active'
+            })
+            .select()
+            .single();
+
+          if (error) {
+            console.error('[Tool: create_listing] Error:', error);
+            throw error;
+          }
+
+          console.log('[Tool: create_listing] Success:', data.id);
+          return {
+            success: true,
+            message: `Created listing "${args.title}"!`,
+            listingId: data.id,
+            action: 'listing_created'
+          };
+        } catch (error) {
+          console.error('[Tool: create_listing] Failed:', error);
+          return {
+            success: false,
+            message: 'Failed to create listing: ' + (error instanceof Error ? error.message : 'Unknown error')
+          };
+        }
+      }
+
+      case 'create_crm_contact': {
+        console.log('[Tool: create_crm_contact] Creating contact:', args.name);
+        try {
+          const { data, error } = await supabaseClient
+            .from('crm_contacts')
+            .insert({
+              business_id: args.business_id,
+              name: args.name,
+              email: args.email || null,
+              phone: args.phone || null,
+              notes: args.notes || null,
+              status: 'lead'
+            })
+            .select()
+            .single();
+
+          if (error) {
+            console.error('[Tool: create_crm_contact] Error:', error);
+            throw error;
+          }
+
+          console.log('[Tool: create_crm_contact] Success:', data.id);
+          return {
+            success: true,
+            message: `Added ${args.name} to CRM!`,
+            contactId: data.id,
+            action: 'contact_created'
+          };
+        } catch (error) {
+          console.error('[Tool: create_crm_contact] Failed:', error);
+          return {
+            success: false,
+            message: 'Failed to create contact: ' + (error instanceof Error ? error.message : 'Unknown error')
+          };
+        }
+      }
+
+      case 'edit_profile': {
+        console.log('[Tool: edit_profile] Updating profile');
+        try {
+          const updates: Record<string, any> = {};
+          if (args.display_name) updates.display_name = args.display_name;
+          if (args.bio) updates.bio = args.bio;
+          if (args.avatar_url) updates.avatar_url = args.avatar_url;
+
+          const { error } = await supabaseClient
+            .from('profiles')
+            .update(updates)
+            .eq('user_id', userId);
+
+          if (error) {
+            console.error('[Tool: edit_profile] Error:', error);
+            throw error;
+          }
+
+          console.log('[Tool: edit_profile] Success');
+          return {
+            success: true,
+            message: 'Profile updated!',
+            action: 'profile_updated'
+          };
+        } catch (error) {
+          console.error('[Tool: edit_profile] Failed:', error);
+          return {
+            success: false,
+            message: 'Failed to update profile: ' + (error instanceof Error ? error.message : 'Unknown error')
+          };
+        }
+      }
+
+      case 'claim_entity': {
+        console.log('[Tool: claim_entity] Claiming entity:', args.entity_type);
+        try {
+          const { error } = await supabaseClient
+            .from('entity_profiles')
+            .update({
+              claimed_by: userId,
+              is_claimed: true
+            })
+            .eq('id', args.entity_id)
+            .eq('entity_type', args.entity_type);
+
+          if (error) {
+            console.error('[Tool: claim_entity] Error:', error);
+            throw error;
+          }
+
+          console.log('[Tool: claim_entity] Success');
+          return {
+            success: true,
+            message: `Claimed ${args.entity_type}!`,
+            action: 'entity_claimed'
+          };
+        } catch (error) {
+          console.error('[Tool: claim_entity] Failed:', error);
+          return {
+            success: false,
+            message: 'Failed to claim entity: ' + (error instanceof Error ? error.message : 'Unknown error')
+          };
+        }
+      }
+
       default:
         return { success: false, error: 'Unknown tool: ' + toolName };
     }

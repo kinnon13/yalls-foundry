@@ -173,6 +173,49 @@ When users speak a command, you MUST use your tools immediately:
           },
           required: ["name"]
         }
+      },
+      {
+        type: "function" as const,
+        name: "create_business",
+        description: "Create a business profile.",
+        parameters: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Business name" },
+            description: { type: "string", description: "Business description" }
+          },
+          required: ["name"]
+        }
+      },
+      {
+        type: "function" as const,
+        name: "create_listing",
+        description: "Create a marketplace listing.",
+        parameters: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            description: { type: "string" },
+            price: { type: "number" },
+            category: { type: "string" }
+          },
+          required: ["title", "price", "category"]
+        }
+      },
+      {
+        type: "function" as const,
+        name: "create_crm_contact",
+        description: "Add a CRM contact.",
+        parameters: {
+          type: "object",
+          properties: {
+            business_id: { type: "string" },
+            name: { type: "string" },
+            email: { type: "string" },
+            phone: { type: "string" }
+          },
+          required: ["business_id", "name"]
+        }
       }
     ];
 
