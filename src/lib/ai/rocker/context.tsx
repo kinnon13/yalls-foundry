@@ -100,14 +100,26 @@ export function RockerProvider({ children }: { children: ReactNode }) {
 
   // Initialize voice with navigation handler
   const createVoiceConnection = useCallback(async (alwaysListening: boolean) => {
+    console.log('[Rocker] 🔧 createVoiceConnection called with alwaysListening:', alwaysListening);
     setVoiceStatus('connecting');
     
+    console.log('[Rocker] 📡 Invoking rocker-voice-session edge function...');
     const { data, error } = await supabase.functions.invoke('rocker-voice-session', {
       body: { alwaysListening }
     });
     
-    if (error) throw error;
-    if (!data.client_secret?.value) throw new Error('No ephemeral token received');
+    console.log('[Rocker] Response received:', { data, error });
+    
+    if (error) {
+      console.error('[Rocker] ❌ Edge function error:', error);
+      throw error;
+    }
+    if (!data.client_secret?.value) {
+      console.error('[Rocker] ❌ No ephemeral token in response');
+      throw new Error('No ephemeral token received');
+    }
+    
+    console.log('[Rocker] ✓ Ephemeral token received, creating RealtimeVoice instance');
 
     const voice = new RealtimeVoice(
       (status) => setVoiceStatus(status),
@@ -370,9 +382,10 @@ export function RockerProvider({ children }: { children: ReactNode }) {
 
   // Auto-start always listening on mount (persists across pages)
   useEffect(() => {
-    console.log('[Rocker] Provider mounted', { 
+    console.log('[Rocker] 🚀 Provider mounted', { 
       isAlwaysListening, 
       voiceStatus, 
+      isVoiceMode,
       initializing: initializingRef.current 
     });
     
@@ -390,10 +403,16 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     if (!isAlwaysListening && voiceStatus === 'disconnected') {
       initializingRef.current = true;
       console.log('[Rocker] 🎤 Starting always listening mode - say "Hey Rocker" to activate');
-      toggleAlwaysListening().finally(() => {
-        initializingRef.current = false;
-        console.log('[Rocker] ✓ Always listening active - microphone is ready');
-      });
+      toggleAlwaysListening()
+        .then(() => {
+          console.log('[Rocker] ✓ Always listening active - microphone is ready');
+        })
+        .catch((error) => {
+          console.error('[Rocker] ❌ Failed to start always listening:', error);
+        })
+        .finally(() => {
+          initializingRef.current = false;
+        });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
