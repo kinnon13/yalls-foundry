@@ -33,11 +33,34 @@ export async function extractLearningsFromConversation(
 
     // Detect preferences, interests, and important facts from user messages
     const learningPatterns = [
-      { pattern: /I (prefer|like|love|want|need|always|usually)/i, type: 'preference' },
-      { pattern: /my (name is|birthday is|favorite|goal is)/i, type: 'personal_info' },
-      { pattern: /(never|don't|won't|hate|dislike) (.+)/i, type: 'preference', negative: true },
-      { pattern: /remind me|notification|alert me/i, type: 'notification_preference' },
-      { pattern: /I'm (working on|building|creating|interested in)/i, type: 'interest' },
+      // Preferences
+      { pattern: /I (prefer|like|love|want|need|always|usually|enjoy|favor)/i, type: 'preference' },
+      { pattern: /(never|don't|won't|hate|dislike|avoid|can't stand) (.+)/i, type: 'preference', negative: true },
+      
+      // Personal information
+      { pattern: /my (name is|birthday is|favorite|goal is|age is|location is|job is|occupation is)/i, type: 'personal_info' },
+      { pattern: /I (am|work as|live in|study|am studying)/i, type: 'personal_info' },
+      
+      // Interests & hobbies
+      { pattern: /I'm (working on|building|creating|interested in|learning|studying)/i, type: 'interest' },
+      { pattern: /I (enjoy|love to|like to) (play|read|watch|listen to|code|write)/i, type: 'hobby' },
+      
+      // Notification preferences
+      { pattern: /remind me|notification|alert me|let me know|notify me/i, type: 'notification_preference' },
+      
+      // Goals & plans
+      { pattern: /I (want to|plan to|hope to|aim to|need to|will)/i, type: 'goal' },
+      { pattern: /my (goal|plan|dream|aspiration) (is|was)/i, type: 'goal' },
+      
+      // Context about projects/work
+      { pattern: /I'm (developing|designing|managing|running|building) (a|an|the)/i, type: 'project_context' },
+      
+      // Relationships & contacts
+      { pattern: /my (friend|colleague|partner|boss|team|family)/i, type: 'relationship' },
+      
+      // Skills & expertise
+      { pattern: /I (know|understand|am good at|am experienced in|specialize in)/i, type: 'skill' },
+      { pattern: /I (don't know|need help with|struggle with)/i, type: 'skill', negative: true },
     ];
 
     for (const { pattern, type, negative } of learningPatterns) {

@@ -69,7 +69,7 @@ serve(async (req) => {
       const { data: memoryData } = await supabaseClient.functions.invoke('rocker-memory', {
         body: {
           action: 'search_memory',
-          limit: 10
+          limit: 25  // Increased from 10 to give AI more context about the user
         }
       });
 

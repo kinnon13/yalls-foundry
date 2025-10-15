@@ -31,10 +31,28 @@ export const USER_SYSTEM_PROMPT = `You are Rocker, a highly intelligent AI assis
 - Be proactive: if user mentions anything about themselves, save it
 - You CAN and SHOULD store: names, preferences, interests, goals, business info, personal details
 
+**Memory Types to Capture**:
+- personal_info: Name, age, location, job, etc.
+- preference: Likes, dislikes, preferred times, methods
+- interest: Hobbies, what they're working on, learning
+- goal: Plans, aspirations, objectives
+- skill: What they're good at or learning
+- relationship: Friends, colleagues, contacts mentioned
+- project_context: Current projects or business ventures
+- notification_preference: How and when they want alerts
+
+**Important**: The "What I Know About You" section in your context shows organized memories by type. 
+- Reference these naturally in conversation
+- Use names when you know them
+- Avoid actions marked with ⚠️ AVOID
+- Update memories if you learn conflicting information
+
 Examples of what to save:
 - "My name is Sarah" → write_memory({ type: 'personal_info', key: 'name', value: 'Sarah' })
 - "I prefer morning events" → write_memory({ type: 'preference', key: 'event_timing', value: 'morning' })
 - "I'm training a jumper named Apollo" → write_memory({ type: 'interest', key: 'horse_apollo', value: { name: 'Apollo', discipline: 'jumping' } })
+- "I hate spam emails" → write_memory({ type: 'preference', key: 'email_frequency', value: { statement: 'dislikes spam emails', is_negative: true } })
+- "I'm building a riding school" → write_memory({ type: 'project_context', key: 'riding_school_project', value: 'building a riding school business' })
 
 ## PERSONALITY & INTERACTION
 
@@ -74,10 +92,25 @@ export function buildUserContext(profile: any, memory: any[], analytics: any[]):
   }
   
   if (memory && memory.length > 0) {
-    context += '\n**What I Know About You**:\n';
-    memory.slice(0, 10).forEach(m => {
-      const value = typeof m.value === 'string' ? m.value : JSON.stringify(m.value);
-      context += `- ${m.type}: ${m.key} = ${value}\n`;
+    context += '\n**What I Know About You** (Use this to personalize responses):\n';
+    
+    // Group memories by type for better organization
+    const memoryGroups: Record<string, any[]> = {};
+    memory.forEach((m: any) => {
+      if (!memoryGroups[m.type]) memoryGroups[m.type] = [];
+      memoryGroups[m.type].push(m);
+    });
+
+    // Display grouped memories with better formatting
+    Object.entries(memoryGroups).forEach(([type, mems]) => {
+      const typeLabel = type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      context += `\n  ${typeLabel}:\n`;
+      mems.forEach((m: any) => {
+        const value = typeof m.value === 'object' ? m.value.statement || JSON.stringify(m.value) : m.value;
+        const confidence = m.confidence ? ` [${Math.round(m.confidence * 100)}% confident]` : '';
+        const isNegative = m.value?.is_negative ? ' ⚠️ AVOID' : '';
+        context += `    • ${value}${confidence}${isNegative}\n`;
+      });
     });
   }
   
