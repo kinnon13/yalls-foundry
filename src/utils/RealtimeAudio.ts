@@ -224,6 +224,7 @@ export class RealtimeVoice {
   private lastTranscript: string = '';
   private instanceId: string;
   private sessionId: string;
+  private sessionConfigured = false;
 
   constructor(
     onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void,
@@ -366,26 +367,8 @@ export class RealtimeVoice {
       console.log(`[Rocker Voice ${this.instanceId}] WebSocket connected`);
       this.onStatusChange?.('connected');
       
-      // Send session configuration after connection
-      this.ws!.send(JSON.stringify({
-        type: 'session.update',
-        session: {
-          modalities: ['text', 'audio'],
-          input_audio_format: 'pcm16',
-          output_audio_format: 'pcm16',
-          voice: 'alloy',
-          input_audio_transcription: {
-            model: 'whisper-1'
-          },
-          turn_detection: {
-            type: 'server_vad',
-            threshold: 0.5,
-            prefix_padding_ms: 300,
-            silence_duration_ms: 1000
-          },
-          temperature: 0.8
-        }
-      }));
+      // Defer session.update until after session.created (see onmessage handler)
+
 
       // Ensure a session exists immediately on connect so it shows in history
       this.createSessionIfMissing().catch((e) => console.error(`[Rocker Voice ${this.instanceId}] Session ensure failed:`, e));
@@ -395,6 +378,29 @@ export class RealtimeVoice {
 
     this.ws.onmessage = async (event) => {
       const message = JSON.parse(event.data);
+
+      // Apply session configuration only after session is created
+      if (message.type === 'session.created' && !this.sessionConfigured) {
+        this.ws!.send(JSON.stringify({
+          type: 'session.update',
+          session: {
+            modalities: ['text', 'audio'],
+            input_audio_format: 'pcm16',
+            output_audio_format: 'pcm16',
+            voice: 'alloy',
+            input_audio_transcription: { model: 'whisper-1' },
+            turn_detection: {
+              type: 'server_vad',
+              threshold: 0.5,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 1000
+            },
+            temperature: 0.8
+          }
+        }));
+        this.sessionConfigured = true;
+        return; // wait for next events
+      }
       
       // Handle tool calls from OpenAI
       if (message.type === 'response.function_call_arguments.done') {
