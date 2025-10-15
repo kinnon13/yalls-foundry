@@ -192,6 +192,9 @@ const playAudioData = async (audioContext: AudioContext, audioData: Uint8Array) 
   await audioQueueInstance.addToQueue(audioData);
 };
 
+// Singleton to prevent multiple voice instances
+let globalVoiceInstance: RealtimeVoice | null = null;
+
 export class RealtimeVoice {
   private ws: WebSocket | null = null;
   private audioContext: AudioContext | null = null;
@@ -200,56 +203,103 @@ export class RealtimeVoice {
   private onTranscript?: (text: string, isFinal: boolean) => void;
   private onCommand?: (cmd: { type: 'navigate'; path: string }) => void;
   private lastTranscript: string = '';
+  private instanceId: string;
 
   constructor(
     onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void,
     onTranscript?: (text: string, isFinal: boolean) => void,
     onCommand?: (cmd: { type: 'navigate'; path: string }) => void
   ) {
+    this.instanceId = Math.random().toString(36).substring(7);
+    console.log(`[Rocker Voice ${this.instanceId}] Creating new instance`);
+    
+    // If there's already a global instance, disconnect it first
+    if (globalVoiceInstance && globalVoiceInstance !== this) {
+      console.log(`[Rocker Voice ${this.instanceId}] Disconnecting old instance`);
+      globalVoiceInstance.disconnect();
+    }
+    
     this.onStatusChange = onStatusChange;
     this.onTranscript = onTranscript;
     this.onCommand = onCommand;
+    globalVoiceInstance = this;
   }
 
   private detectNavigationPath(transcript: string): string | 'back' | null {
     const t = transcript.toLowerCase();
+    console.log(`[Rocker Voice ${this.instanceId}] Detecting navigation from: "${t}"`);
 
     // Basic wake word stripping
     const cleaned = t.replace(/^\s*(hey\s+rocker|ok\s+rocker|rocker)[,\s:]*/i, '').trim();
+    console.log(`[Rocker Voice ${this.instanceId}] Cleaned transcript: "${cleaned}"`);
 
     // Go back
-    if (/(go|navigate|take) back|previous page|backwards/.test(cleaned)) return 'back';
+    if (/(go|navigate|take) back|previous page|backwards/.test(cleaned)) {
+      console.log(`[Rocker Voice ${this.instanceId}] ✓ Matched: back`);
+      return 'back';
+    }
 
     // Dashboard
-    if (/(dashboard|home\s*dashboard|open my dashboard)/.test(cleaned)) return '/dashboard';
+    if (/(dashboard|home\s*dashboard|open my dashboard)/.test(cleaned)) {
+      console.log(`[Rocker Voice ${this.instanceId}] ✓ Matched: /dashboard`);
+      return '/dashboard';
+    }
 
     // Home
-    if (/(home|homepage|go home)$/.test(cleaned)) return '/';
+    if (/(home|homepage|go home)$/.test(cleaned)) {
+      console.log(`[Rocker Voice ${this.instanceId}] ✓ Matched: / (home)`);
+      return '/';
+    }
 
-    // Horses
-    if (/(horses|open horses|browse horses)/.test(cleaned)) return '/horses';
+    // Horses - expanded patterns
+    if (/(horses?|open horses?|browse horses?|horse page|horse list|find horses?)/.test(cleaned)) {
+      console.log(`[Rocker Voice ${this.instanceId}] ✓ Matched: /horses`);
+      return '/horses';
+    }
 
-    // Marketplace / Shop
-    if (/(marketplace|shop|store)/.test(cleaned)) return '/marketplace';
+    // Marketplace / Shop - expanded patterns
+    if (/(marketplace|market place|shop|store|browse marketplace|open marketplace|open shop)/.test(cleaned)) {
+      console.log(`[Rocker Voice ${this.instanceId}] ✓ Matched: /marketplace`);
+      return '/marketplace';
+    }
 
     // Events
-    if (/(events|open events|browse events)/.test(cleaned)) return '/events';
+    if (/(events?|open events?|browse events?|event page)/.test(cleaned)) {
+      console.log(`[Rocker Voice ${this.instanceId}] ✓ Matched: /events`);
+      return '/events';
+    }
 
     // Profile
-    if (/(my profile|profile page|open profile)/.test(cleaned)) return '/profile';
+    if (/(my profile|profile page|open profile|view profile)/.test(cleaned)) {
+      console.log(`[Rocker Voice ${this.instanceId}] ✓ Matched: /profile`);
+      return '/profile';
+    }
 
     // Saved posts
-    if (/(saved posts|bookmarks|open saved)/.test(cleaned)) return '/posts/saved';
+    if (/(saved posts?|bookmarks?|open saved|my saved)/.test(cleaned)) {
+      console.log(`[Rocker Voice ${this.instanceId}] ✓ Matched: /posts/saved`);
+      return '/posts/saved';
+    }
 
     // Business hub -> route to dashboard businesses tab
-    if (/(business|business hub|my businesses|company)/.test(cleaned)) return '/dashboard?tab=businesses';
+    if (/(business|business hub|my businesses|company)/.test(cleaned)) {
+      console.log(`[Rocker Voice ${this.instanceId}] ✓ Matched: /dashboard?tab=businesses`);
+      return '/dashboard?tab=businesses';
+    }
 
     // Admin control room
-    if (/(control room|admin|admin panel)/.test(cleaned)) return '/dashboard?tab=control';
+    if (/(control room|admin|admin panel)/.test(cleaned)) {
+      console.log(`[Rocker Voice ${this.instanceId}] ✓ Matched: /dashboard?tab=control`);
+      return '/dashboard?tab=control';
+    }
 
     // Search requests → open search page (we let the user refine there)
-    if (/^search\b|find\b/.test(cleaned)) return '/search';
+    if (/^search\b|find\b/.test(cleaned)) {
+      console.log(`[Rocker Voice ${this.instanceId}] ✓ Matched: /search`);
+      return '/search';
+    }
 
+    console.log(`[Rocker Voice ${this.instanceId}] ✗ No navigation match found`);
     return null;
   }
   stopPlayback() {
@@ -265,6 +315,7 @@ export class RealtimeVoice {
   }
 
   async connect(ephemeralToken: string) {
+    console.log(`[Rocker Voice ${this.instanceId}] Connecting...`);
     this.onStatusChange?.('connecting');
     this.audioContext = new AudioContext({ sampleRate: 24000 });
 
@@ -278,7 +329,7 @@ export class RealtimeVoice {
     ]);
 
     this.ws.onopen = () => {
-      console.log('WebSocket connected');
+      console.log(`[Rocker Voice ${this.instanceId}] WebSocket connected`);
       this.onStatusChange?.('connected');
       
       // Send session configuration after connection
@@ -317,31 +368,33 @@ export class RealtimeVoice {
       } else if (message.type === 'response.audio_transcript.done') {
         this.onTranscript?.(message.transcript, true);
       } else if (message.type === 'input_audio_buffer.speech_started') {
-        console.log('User started speaking');
+        console.log(`[Rocker Voice ${this.instanceId}] User started speaking`);
       } else if (message.type === 'input_audio_buffer.speech_stopped') {
-        console.log('User stopped speaking');
+        console.log(`[Rocker Voice ${this.instanceId}] User stopped speaking`);
       } else if (message.type === 'conversation.item.input_audio_transcription.completed') {
         // Check for voice commands like navigation
         const transcript = message.transcript?.toLowerCase() || '';
         this.lastTranscript = transcript;
+        console.log(`[Rocker Voice ${this.instanceId}] Transcript:`, transcript);
+        
         if (transcript.includes('stop')) {
-          console.log('Stop command detected');
+          console.log(`[Rocker Voice ${this.instanceId}] Stop command detected`);
           this.stopPlayback();
         }
         const path = this.detectNavigationPath(transcript);
         if (path) {
-          console.log('[Rocker Voice] Navigation command detected:', path);
+          console.log(`[Rocker Voice ${this.instanceId}] Navigation command detected:`, path);
           this.onCommand?.({ type: 'navigate', path });
         }
       }
     };
 
     this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error(`[Rocker Voice ${this.instanceId}] WebSocket error:`, error);
     };
 
     this.ws.onclose = () => {
-      console.log('WebSocket closed');
+      console.log(`[Rocker Voice ${this.instanceId}] WebSocket closed`);
       this.onStatusChange?.('disconnected');
       this.cleanup();
     };
@@ -365,11 +418,16 @@ export class RealtimeVoice {
   }
 
   disconnect() {
+    console.log(`[Rocker Voice ${this.instanceId}] Disconnecting...`);
     this.cleanup();
     this.ws?.close();
+    if (globalVoiceInstance === this) {
+      globalVoiceInstance = null;
+    }
   }
 
   private cleanup() {
+    console.log(`[Rocker Voice ${this.instanceId}] Cleaning up...`);
     this.recorder?.stop();
     this.recorder = null;
     this.audioContext?.close();

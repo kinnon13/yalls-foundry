@@ -59,6 +59,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
   const [voiceStatus, setVoiceStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const voiceRef = useRef<RealtimeVoice | null>(null);
+  const initializingRef = useRef(false);
   
   // UI state
   const [isOpen, setIsOpen] = useState(false);
@@ -143,11 +144,24 @@ export function RockerProvider({ children }: { children: ReactNode }) {
 
   // Toggle always listening
   const toggleAlwaysListening = useCallback(async () => {
+    console.log('[Rocker] toggleAlwaysListening called', { 
+      current: isAlwaysListening,
+      voiceRef: !!voiceRef.current,
+      initializing: initializingRef.current 
+    });
+    
+    // Prevent concurrent toggles
+    if (initializingRef.current) {
+      console.log('[Rocker] Already initializing, ignoring toggle');
+      return;
+    }
+    
     const newAlwaysListening = !isAlwaysListening;
     setIsAlwaysListening(newAlwaysListening);
     
     // Stop existing connection
     if (voiceRef.current) {
+      console.log('[Rocker] Disconnecting existing voice connection');
       voiceRef.current.disconnect();
       voiceRef.current = null;
       setIsVoiceMode(false);
@@ -156,7 +170,9 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     }
     
     if (newAlwaysListening) {
+      initializingRef.current = true;
       try {
+        console.log('[Rocker] Creating new voice connection in always listening mode');
         const voice = await createVoiceConnection(true);
         voiceRef.current = voice;
         setIsVoiceMode(true);
@@ -166,7 +182,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
           description: "Say 'Hey Rocker' to start a conversation anywhere on the site",
         });
       } catch (error) {
-        console.error('Error starting wake word mode:', error);
+        console.error('[Rocker] Error starting wake word mode:', error);
         toast({
           title: "Wake word failed",
           description: error instanceof Error ? error.message : 'Failed to start wake word mode',
@@ -175,6 +191,8 @@ export function RockerProvider({ children }: { children: ReactNode }) {
         setVoiceStatus('disconnected');
         setIsVoiceMode(false);
         setIsAlwaysListening(false);
+      } finally {
+        initializingRef.current = false;
       }
     } else {
       toast({
@@ -304,8 +322,24 @@ export function RockerProvider({ children }: { children: ReactNode }) {
 
   // Auto-start always listening on mount (persists across pages)
   useEffect(() => {
+    console.log('[Rocker] Provider mounted', { 
+      isAlwaysListening, 
+      voiceStatus, 
+      initializing: initializingRef.current 
+    });
+    
+    // Prevent duplicate initialization
+    if (initializingRef.current) {
+      console.log('[Rocker] Already initializing, skipping');
+      return;
+    }
+    
     if (!isAlwaysListening && voiceStatus === 'disconnected') {
-      toggleAlwaysListening();
+      initializingRef.current = true;
+      console.log('[Rocker] Starting always listening mode');
+      toggleAlwaysListening().finally(() => {
+        initializingRef.current = false;
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
