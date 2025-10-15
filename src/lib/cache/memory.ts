@@ -1,13 +1,15 @@
 /**
- * L1 In-Memory Cache
+ * L1 In-Memory Cache (Legacy - Single Instance Only)
  * 
- * Fast in-memory cache for frequently accessed data.
- * TTL-based expiration with tag-based invalidation support.
+ * ⚠️ WARNING: Not horizontally scalable - use cacheProvider for production
+ * This cache is per-process and does NOT sync across multiple instances.
  * 
- * Usage:
+ * For horizontally scalable caching, use:
+ *   import { cacheProvider } from '@/lib/cache/provider';
+ * 
+ * Usage (single-instance only):
  *   import { memCache } from '@/lib/cache/memory';
  *   await memCache.set('key', value, { ttl: 60 });
- *   const val = await memCache.get('key');
  */
 
 interface CacheEntry<T> {
@@ -101,3 +103,6 @@ export const memCache = new MemoryCache();
 if (typeof window !== 'undefined') {
   setInterval(() => memCache.cleanup(), 60000);
 }
+
+// Migration helper: Use distributed cache for horizontal scalability
+export { cacheProvider as distributedCache } from './provider';

@@ -86,8 +86,12 @@ export const RATE_LIMITS = {
   chat: 10,     // per minute per user
 };
 
-// Tenant Config
-export const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+// Tenant Config - Dynamic resolution (multi-tenant ready)
+export async function getTenantId(userId?: string): Promise<string> {
+  // Future: Resolve from user's organization/workspace
+  // For now, use user_id as tenant_id for user-level tenancy
+  return userId || '00000000-0000-0000-0000-000000000000';
+}
 
 /**
  * TODO: User customization schema
