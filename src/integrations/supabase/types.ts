@@ -1844,6 +1844,45 @@ export type Database = {
           },
         ]
       }
+      crm_events_v2: {
+        Row: {
+          anonymous_id: string | null
+          contact_hint: Json | null
+          contact_id: string | null
+          created_at: string
+          id: string
+          props: Json
+          source: string
+          tenant_id: string
+          ts: string
+          type: string
+        }
+        Insert: {
+          anonymous_id?: string | null
+          contact_hint?: Json | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id: string
+          ts?: string
+          type: string
+        }
+        Update: {
+          anonymous_id?: string | null
+          contact_hint?: Json | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id?: string
+          ts?: string
+          type?: string
+        }
+        Relationships: []
+      }
       dynamic_categories: {
         Row: {
           created_at: string
