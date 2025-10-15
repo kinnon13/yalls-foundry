@@ -1,9 +1,9 @@
 /**
  * Outbox Drain Worker
  * 
- * Polls the outbox table and processes undelivered events.
+ * Claims a batch of undelivered events via SQL RPC to prevent double delivery.
+ * Marks events as delivered after processing (future: publish to Kafka/Redpanda).
  * Schedule: Run every minute via cron.
- * Future: Publish to Kafka/Redpanda instead of just marking delivered.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
@@ -32,18 +32,22 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Pull a small batch per run (100 events max)
-    const { data: rows, error } = await supabase
-      .from('outbox')
-      .select('id, tenant_id, topic, payload, attempts')
-      .is('delivered_at', null)
-      .order('created_at', { ascending: true })
-      .limit(100);
+    // Generate unique claim token
+    const token = crypto.randomUUID();
 
-    if (error) {
-      log('error', 'outbox_fetch_failed', { code: error.code, msg: error.message });
+    // Claim a batch of undelivered events atomically
+    const { data: batch, error: claimError } = await supabase.rpc('app.outbox_claim', {
+      p_limit: 100,
+      p_token: token,
+    });
+
+    if (claimError) {
+      log('error', 'outbox_claim_failed', { 
+        code: claimError.code, 
+        msg: claimError.message 
+      });
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch outbox' }),
+        JSON.stringify({ error: 'Failed to claim outbox batch' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -51,20 +55,21 @@ Deno.serve(async (req) => {
     let processed = 0;
     let failed = 0;
 
-    for (const r of rows ?? []) {
+    for (const r of (batch ?? []) as any[]) {
       try {
         // TODO: Future - send to Kafka/Redpanda
         // await kafkaProduce(r.topic, r.payload)
         
-        // For now, just mark as delivered
+        // Mark as delivered only if we still hold the claim
         const { error: upErr } = await supabase
           .from('outbox')
           .update({ 
             delivered_at: new Date().toISOString(), 
-            attempts: r.attempts + 1 
+            attempts: (r.attempts ?? 0) + 1,
+            processing_token: null
           })
           .eq('id', r.id)
-          .eq('tenant_id', r.tenant_id);
+          .eq('processing_token', token);
 
         if (upErr) throw upErr;
         processed++;
@@ -73,27 +78,34 @@ Deno.serve(async (req) => {
         log('error', 'outbox_delivery_failed', { 
           id: r.id, 
           topic: r.topic, 
-          attempts: r.attempts + 1,
+          attempts: (r.attempts ?? 0) + 1,
           msg: err instanceof Error ? err.message : 'unknown'
         });
 
-        // Increment attempts count
+        // Release claim but increment attempts
         await supabase
           .from('outbox')
-          .update({ attempts: r.attempts + 1 })
+          .update({ 
+            attempts: (r.attempts ?? 0) + 1,
+            processing_token: null
+          })
           .eq('id', r.id)
-          .eq('tenant_id', r.tenant_id);
+          .eq('processing_token', token);
       }
     }
 
-    log('info', 'outbox_drain_complete', { processed, failed, total: rows?.length ?? 0 });
+    log('info', 'outbox_drain_complete', { 
+      processed, 
+      failed, 
+      total: (batch ?? []).length 
+    });
 
     return new Response(
       JSON.stringify({ 
         ok: true, 
         processed, 
         failed,
-        total: rows?.length ?? 0 
+        total: (batch ?? []).length 
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -2264,6 +2264,7 @@ export type Database = {
           delivered_at: string | null
           id: string
           payload: Json
+          processing_token: string | null
           tenant_id: string
           topic: string
         }
@@ -2273,6 +2274,7 @@ export type Database = {
           delivered_at?: string | null
           id?: string
           payload: Json
+          processing_token?: string | null
           tenant_id?: string
           topic: string
         }
@@ -2282,6 +2284,7 @@ export type Database = {
           delivered_at?: string | null
           id?: string
           payload?: Json
+          processing_token?: string | null
           tenant_id?: string
           topic?: string
         }

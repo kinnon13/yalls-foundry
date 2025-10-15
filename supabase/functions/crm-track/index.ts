@@ -293,12 +293,13 @@ Deno.serve(async (req) => {
 
     const businessId = requestedBusinessId;
 
-    // Use atomic contact resolution (prevents race conditions)
+    // Normalize identities for atomic resolution
     const wantedEmail = normEmail(payload.contact?.email);
     const wantedPhone = normPhone(payload.contact?.phone);
     const wantedExt = normExtId(payload.contact?.externalId);
 
-    const { data: contactId, error: resolveError } = await supabase.rpc('app.resolve_contact', {
+    // Atomic contact resolution via RPC (advisory locks prevent races)
+    const { data: rpc, error: resolveError } = await supabase.rpc('app.resolve_contact', {
       p_business: businessId,
       p_email: wantedEmail ?? null,
       p_phone: wantedPhone ?? null,
@@ -316,6 +317,9 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const contactId = (rpc as any)?.contact_id as string | null;
+    const changed = Boolean((rpc as any)?.changed);
 
     // Write event with contact_id
     const eventProps = { 
@@ -346,28 +350,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Emit contact.updated event (RPC always mutates or confirms existence)
-    if (contactId) {
+    // Emit contact.updated.v1 to outbox if contact was created/modified
+    if (changed && contactId) {
       const evt = {
         type: "contact.updated.v1",
         occurred_at: new Date().toISOString(),
-        data: { contact_id: contactId, sources: payload.contact }
+        data: { contact_id: contactId, sources: payload.contact, business_id: businessId }
       };
       
-      // Write to crm_events
-      await supabase.from('crm_events').insert({
-        type: 'contact.updated',
-        props: { 
-          reason: 'resolved_from_hint', 
-          contact_id: contactId, 
-          sources: payload.contact 
-        },
-        contact_id: contactId,
-        source: 'system',
-      });
-      
       // Enqueue for publish (Kafka/Redpanda later)
-      await writeOutbox(supabase, "contact.updated.v1", evt);
+      const { error: outErr } = await supabase
+        .from('outbox')
+        .insert({ topic: 'contact.updated.v1', payload: evt });
+      
+      if (outErr) {
+        log('error', 'outbox_enqueue_failed', { 
+          code: outErr.code, 
+          msg: outErr.message 
+        });
+      }
     }
 
     log('info', 'event_tracked', { 
