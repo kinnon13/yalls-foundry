@@ -10,13 +10,18 @@ export interface KnowledgeItem {
   id: string;
   uri: string;
   scope: 'global' | 'site' | 'user';
+  tenant_id?: string;
   category: string;
   subcategory?: string;
   title: string;
   summary?: string;
-  tags: string[];
+  tags?: string[];
   content_excerpt?: string;
-  knowledge_chunks?: KnowledgeChunk[];
+  chunks?: KnowledgeChunk[];
+  version?: number;
+  created_at?: string;
+  updated_at?: string;
+  source_bucket_path?: string;
 }
 
 export interface KnowledgeChunk {
@@ -37,7 +42,8 @@ export interface Playbook {
 }
 
 export interface SearchOptions {
-  q: string;
+  q?: string;
+  query?: string;
   scope?: 'global' | 'site' | 'user';
   category?: string;
   subcategory?: string;
@@ -50,8 +56,14 @@ export interface SearchOptions {
  * Search knowledge base
  */
 export async function searchKnowledge(options: SearchOptions) {
+  // Support both 'q' and 'query' for search text
+  const body = {
+    ...options,
+    q: options.q || options.query || ''
+  };
+  
   const { data, error } = await supabase.functions.invoke('kb-search', {
-    body: options,
+    body,
   });
 
   if (error) {
@@ -59,7 +71,7 @@ export async function searchKnowledge(options: SearchOptions) {
     throw error;
   }
 
-  return data;
+  return data?.results || [];
 }
 
 /**
