@@ -266,7 +266,7 @@ export function CalendarSidebar({
                     <div>
                       <Label>Type</Label>
                       <Select value={newCalType} onValueChange={(v: any) => setNewCalType(v)}>
-                        <SelectTrigger>
+                        <SelectTrigger data-rocker="calendar type">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
