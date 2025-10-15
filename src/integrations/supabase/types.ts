@@ -1331,6 +1331,38 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_identities: {
+        Row: {
+          contact_id: string
+          created_at: string
+          tenant_id: string
+          type: string
+          value: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          tenant_id?: string
+          type: string
+          value: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          tenant_id?: string
+          type?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_identities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_flags: {
         Row: {
           content_id: string
@@ -1462,6 +1494,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           status: string
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1474,6 +1507,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           status?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1486,6 +1520,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           status?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
