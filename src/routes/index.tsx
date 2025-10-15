@@ -6,9 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Search, Settings, ShoppingBag, Bookmark, Building2 } from 'lucide-react';
 import { PostFeed } from '@/components/posts/PostFeed';
+import { CreatePost } from '@/components/posts/CreatePost';
+import { useState } from 'react';
 
 export default function Index() {
   const { session } = useSession();
+  const [refreshKey, setRefreshKey] = useState(0);
 
   return (
     <>
@@ -172,9 +175,10 @@ export default function Index() {
 
           {/* Community Feed */}
           {session && (
-            <div className="mt-8">
-              <h2 className="text-2xl font-bold mb-4">Community Feed</h2>
-              <PostFeed />
+            <div className="mt-8 space-y-6">
+              <h2 className="text-2xl font-bold">Community Feed</h2>
+              <CreatePost onPostCreated={() => setRefreshKey(prev => prev + 1)} />
+              <PostFeed key={refreshKey} />
             </div>
           )}
         </div>
