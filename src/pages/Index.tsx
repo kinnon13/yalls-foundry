@@ -1,11 +1,64 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useRockerGreeting } from '@/hooks/useRockerGreeting';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+      setLoading(false);
+      
+      // Redirect if already logged in
+      if (session) {
+        navigate('/dashboard');
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+      if (session) {
+        navigate('/dashboard');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  // Trigger greeting for non-logged-in users
+  useRockerGreeting(!isLoggedIn && !loading);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-xl text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+      <div className="text-center space-y-6">
+        <h1 className="mb-4 text-4xl font-bold">Welcome to Yalls.ai</h1>
+        <p className="text-xl text-muted-foreground">Your AI-powered equestrian community</p>
+        
+        <div className="flex gap-4 justify-center mt-8">
+          <Button onClick={() => navigate('/signup')} size="lg">
+            Create Account
+          </Button>
+          <Button onClick={() => navigate('/login')} variant="outline" size="lg">
+            Sign In
+          </Button>
+        </div>
       </div>
     </div>
   );

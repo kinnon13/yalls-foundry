@@ -83,3 +83,6 @@ verify_jwt = false
 
 [functions.rocker-voice-session]
 verify_jwt = true
+
+[functions.text-to-speech]
+verify_jwt = false

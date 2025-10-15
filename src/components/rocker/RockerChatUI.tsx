@@ -39,18 +39,30 @@ export function RockerChatUI() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load persistent always listening preference
+  // Load persistent always listening preference and check one-time voice authorization
   useEffect(() => {
     const savedPreference = localStorage.getItem('rocker-always-listening');
+    const voiceAuthorized = localStorage.getItem('rocker-voice-authorized');
+    
     if (savedPreference === 'true' && !isAlwaysListening) {
       toggleAlwaysListening();
     }
+    
+    // Auto-enable voice if previously authorized and user wants always listening
+    if (voiceAuthorized === 'true' && savedPreference === 'true' && !isVoiceMode) {
+      toggleVoiceMode();
+    }
   }, []);
 
-  // Save always listening preference
+  // Save always listening preference and voice authorization
   useEffect(() => {
     localStorage.setItem('rocker-always-listening', isAlwaysListening.toString());
-  }, [isAlwaysListening]);
+    
+    // Mark voice as authorized once user enables it
+    if (isVoiceMode) {
+      localStorage.setItem('rocker-voice-authorized', 'true');
+    }
+  }, [isAlwaysListening, isVoiceMode]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
