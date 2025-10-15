@@ -353,6 +353,114 @@ export async function executeTool(
         };
       }
 
+      case 'create_or_find_profile': {
+        const slug = args.name.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '')
+          .slice(0, 50);
+
+        // Search for existing profile
+        const { data: existingProfiles } = await supabaseClient
+          .from('entity_profiles')
+          .select('*')
+          .eq('entity_type', args.entity_type)
+          .ilike('name', `%${args.name}%`)
+          .limit(5);
+
+        // If exact match found, return it
+        const exactMatch = existingProfiles?.find(
+          (p: any) => p.name.toLowerCase() === args.name.toLowerCase()
+        );
+
+        if (exactMatch) {
+          // Store relationship in memory if provided
+          if (args.relationship) {
+            await supabaseClient.functions.invoke('rocker-memory', {
+              body: {
+                action: 'write_memory',
+                entry: {
+                  tenant_id: '00000000-0000-0000-0000-000000000000',
+                  user_id: userId,
+                  key: `relationship.${args.entity_type}.${slug}`,
+                  value: {
+                    name: args.name,
+                    relationship: args.relationship,
+                    profile_id: exactMatch.id
+                  },
+                  type: 'fact',
+                  tags: ['relationship', args.entity_type]
+                }
+              }
+            });
+          }
+
+          return {
+            success: true,
+            found: true,
+            profile: exactMatch,
+            message: `Found existing profile for ${args.name}${exactMatch.is_claimed ? ' (claimed)' : ' (unclaimed)'}`,
+            action: exactMatch.is_claimed ? 'connect' : 'invite'
+          };
+        }
+
+        // Create unclaimed profile
+        const newProfile = {
+          entity_type: args.entity_type,
+          name: args.name,
+          slug,
+          is_claimed: false,
+          owner_id: null,
+          created_by: userId,
+          description: `Profile for ${args.name}`,
+          custom_fields: {
+            contact_info: args.contact_info || {},
+            created_via: 'rocker_mention',
+            mentioned_by: userId
+          }
+        };
+
+        const { data: profile, error: createError } = await supabaseClient
+          .from('entity_profiles')
+          .insert(newProfile)
+          .select()
+          .single();
+
+        if (createError) throw createError;
+
+        // Store relationship in memory
+        if (args.relationship) {
+          await supabaseClient.functions.invoke('rocker-memory', {
+            body: {
+              action: 'write_memory',
+              entry: {
+                tenant_id: '00000000-0000-0000-0000-000000000000',
+                user_id: userId,
+                key: `relationship.${args.entity_type}.${slug}`,
+                value: {
+                  name: args.name,
+                  relationship: args.relationship,
+                  profile_id: profile.id
+                },
+                type: 'fact',
+                tags: ['relationship', args.entity_type]
+              }
+            }
+          });
+        }
+
+        return {
+          success: true,
+          created: true,
+          profile,
+          message: `Created unclaimed profile for ${args.name}`,
+          suggestions: [
+            `I can help ${args.name} create an account and claim this profile`,
+            `Would you like to send them an invitation?`,
+            args.contact_info?.email ? `I have their email: ${args.contact_info.email}` : 'If you share their contact info, I can send an invite'
+          ]
+        };
+      }
+
       // ========== FILE OPERATIONS (DEVELOPER TOOLS) ==========
       case 'read_file':
       case 'edit_file':

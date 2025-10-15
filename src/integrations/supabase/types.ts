@@ -1476,6 +1476,7 @@ export type Database = {
         Row: {
           claimed_by: string | null
           created_at: string
+          created_by: string | null
           custom_fields: Json
           description: string | null
           embedding: string | null
@@ -1483,7 +1484,7 @@ export type Database = {
           id: string
           is_claimed: boolean
           name: string
-          owner_id: string
+          owner_id: string | null
           search_vector: unknown | null
           slug: string
           updated_at: string
@@ -1491,6 +1492,7 @@ export type Database = {
         Insert: {
           claimed_by?: string | null
           created_at?: string
+          created_by?: string | null
           custom_fields?: Json
           description?: string | null
           embedding?: string | null
@@ -1498,7 +1500,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name: string
-          owner_id: string
+          owner_id?: string | null
           search_vector?: unknown | null
           slug: string
           updated_at?: string
@@ -1506,6 +1508,7 @@ export type Database = {
         Update: {
           claimed_by?: string | null
           created_at?: string
+          created_by?: string | null
           custom_fields?: Json
           description?: string | null
           embedding?: string | null
@@ -1513,7 +1516,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name?: string
-          owner_id?: string
+          owner_id?: string | null
           search_vector?: unknown | null
           slug?: string
           updated_at?: string
@@ -1532,6 +1535,7 @@ export type Database = {
         Row: {
           claimed_by: string | null
           created_at: string
+          created_by: string | null
           custom_fields: Json
           description: string | null
           embedding: string | null
@@ -1539,7 +1543,7 @@ export type Database = {
           id: string
           is_claimed: boolean
           name: string
-          owner_id: string
+          owner_id: string | null
           search_vector: unknown | null
           slug: string
           updated_at: string
@@ -1547,6 +1551,7 @@ export type Database = {
         Insert: {
           claimed_by?: string | null
           created_at?: string
+          created_by?: string | null
           custom_fields?: Json
           description?: string | null
           embedding?: string | null
@@ -1554,7 +1559,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name: string
-          owner_id: string
+          owner_id?: string | null
           search_vector?: unknown | null
           slug: string
           updated_at?: string
@@ -1562,6 +1567,7 @@ export type Database = {
         Update: {
           claimed_by?: string | null
           created_at?: string
+          created_by?: string | null
           custom_fields?: Json
           description?: string | null
           embedding?: string | null
@@ -1569,7 +1575,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name?: string
-          owner_id?: string
+          owner_id?: string | null
           search_vector?: unknown | null
           slug?: string
           updated_at?: string
@@ -1580,6 +1586,7 @@ export type Database = {
         Row: {
           claimed_by: string | null
           created_at: string
+          created_by: string | null
           custom_fields: Json
           description: string | null
           embedding: string | null
@@ -1587,7 +1594,7 @@ export type Database = {
           id: string
           is_claimed: boolean
           name: string
-          owner_id: string
+          owner_id: string | null
           search_vector: unknown | null
           slug: string
           updated_at: string
@@ -1595,6 +1602,7 @@ export type Database = {
         Insert: {
           claimed_by?: string | null
           created_at?: string
+          created_by?: string | null
           custom_fields?: Json
           description?: string | null
           embedding?: string | null
@@ -1602,7 +1610,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name: string
-          owner_id: string
+          owner_id?: string | null
           search_vector?: unknown | null
           slug: string
           updated_at?: string
@@ -1610,6 +1618,7 @@ export type Database = {
         Update: {
           claimed_by?: string | null
           created_at?: string
+          created_by?: string | null
           custom_fields?: Json
           description?: string | null
           embedding?: string | null
@@ -1617,7 +1626,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name?: string
-          owner_id?: string
+          owner_id?: string | null
           search_vector?: unknown | null
           slug?: string
           updated_at?: string
@@ -1628,6 +1637,7 @@ export type Database = {
         Row: {
           claimed_by: string | null
           created_at: string
+          created_by: string | null
           custom_fields: Json
           description: string | null
           embedding: string | null
@@ -1635,7 +1645,7 @@ export type Database = {
           id: string
           is_claimed: boolean
           name: string
-          owner_id: string
+          owner_id: string | null
           search_vector: unknown | null
           slug: string
           updated_at: string
@@ -1643,6 +1653,7 @@ export type Database = {
         Insert: {
           claimed_by?: string | null
           created_at?: string
+          created_by?: string | null
           custom_fields?: Json
           description?: string | null
           embedding?: string | null
@@ -1650,7 +1661,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name: string
-          owner_id: string
+          owner_id?: string | null
           search_vector?: unknown | null
           slug: string
           updated_at?: string
@@ -1658,6 +1669,7 @@ export type Database = {
         Update: {
           claimed_by?: string | null
           created_at?: string
+          created_by?: string | null
           custom_fields?: Json
           description?: string | null
           embedding?: string | null
@@ -1665,7 +1677,7 @@ export type Database = {
           id?: string
           is_claimed?: boolean
           name?: string
-          owner_id?: string
+          owner_id?: string | null
           search_vector?: unknown | null
           slug?: string
           updated_at?: string

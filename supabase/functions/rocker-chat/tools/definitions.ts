@@ -263,5 +263,39 @@ export const TOOL_DEFINITIONS = [
         }
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_or_find_profile",
+      description: "Create or find a profile for a person, horse, or business. Creates unclaimed profiles for people mentioned who don't have accounts yet. Use this proactively when users mention people in conversation.",
+      parameters: {
+        type: "object",
+        required: ["name", "entity_type"],
+        properties: {
+          name: {
+            type: "string",
+            description: "Name of the person, horse, or business"
+          },
+          entity_type: {
+            type: "string",
+            enum: ["user", "horse", "business"],
+            description: "Type of entity"
+          },
+          relationship: {
+            type: "string",
+            description: "How this entity relates to the user (e.g., 'mother', 'trainer', 'owns this horse')"
+          },
+          contact_info: {
+            type: "object",
+            properties: {
+              email: { type: "string" },
+              phone: { type: "string" }
+            },
+            description: "Optional contact information if provided"
+          }
+        }
+      }
+    }
   }
 ];
