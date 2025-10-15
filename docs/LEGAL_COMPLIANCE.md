@@ -75,10 +75,17 @@ The following features REQUIRE user consent and are NOT enabled by default:
 - Storage of learned patterns and facts
 - Personalization data
 
+**How Data is Used:**
+- All learned patterns stored confidentially
+- Used ONLY for platform training and improvement
+- Personal identifiers (names, emails) are NEVER used in AI training data
+- Helps improve platform for all users without sharing personal details
+
 **User Control:**
 - Users must opt-in via `ai_user_consent.site_opt_in`
 - Can be revoked at any time
 - Data can be deleted on request
+- Full transparency via Knowledge Browser
 
 ### 2. Cross-User Analytics (`ai_user_analytics`, `ai_global_patterns`)
 - Comparison metrics against other users

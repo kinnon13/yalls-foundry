@@ -441,18 +441,23 @@ export default function KnowledgeBrowserPanel() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
                       <AlertTriangle className="h-4 w-4" />
-                      <span>Disabled - Rocker cannot save information about you</span>
+                      <span>Consent Required - Enable to use personalization features</span>
                     </div>
                     <Button 
                       onClick={enableConsent} 
                       size="sm"
                       className="w-full"
                     >
-                      Enable Learning
+                      Enable Learning & Personalization
                     </Button>
                     <div className="text-xs text-muted-foreground">
-                      This allows Rocker to save your preferences, learn from conversations, 
-                      and provide personalized insights. No personal information is shared publicly.
+                      <strong>How your data is used:</strong>
+                      <ul className="list-disc pl-4 mt-1 space-y-1">
+                        <li>Learn your preferences for personalized recommendations</li>
+                        <li>Improve platform training (anonymized patterns only)</li>
+                        <li>No personal identifiers used in AI training data</li>
+                        <li>All data kept confidential and never shared publicly</li>
+                      </ul>
                     </div>
                   </div>
                 )}
