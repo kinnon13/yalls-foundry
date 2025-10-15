@@ -50,28 +50,6 @@ const ENTITY_CONFIGS: EntityConfig[] = [
     routeTemplate: '/business/:id/hub',
     pageSize: 20,
   },
-  {
-    type: 'horses',
-    label: 'Horses',
-    icon: Heart,
-    table: 'horses',
-    nameField: 'name',
-    descriptionField: (item: any) => [item.sex, item.foal_year].filter(Boolean).join(' • '),
-    unclaimedFilter: { is_claimed: false },
-    routeTemplate: '/horses/:id',
-    pageSize: 20,
-  },
-  {
-    type: 'products',
-    label: 'Products',
-    icon: Package,
-    table: 'marketplace_items',
-    nameField: 'title',
-    descriptionField: (item: any) => `$${(item.price / 100).toFixed(2)}`,
-    unclaimedFilter: { business_id: null },
-    routeTemplate: '/marketplace/:id',
-    pageSize: 20,
-  },
 ];
 
 export default function UnclaimedEntitiesPage() {
