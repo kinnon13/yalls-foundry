@@ -12,6 +12,8 @@ interface ProfileHeaderProps {
 }
 
 export function ProfileHeader({ profile }: ProfileHeaderProps) {
+  const isTombstone = (profile as any).tombstone;
+  
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-3">
@@ -21,6 +23,9 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
         </Badge>
         {profile.is_claimed && (
           <Badge variant="default">Claimed</Badge>
+        )}
+        {isTombstone && (
+          <Badge variant="destructive">Profile Closed</Badge>
         )}
       </div>
       <p className="text-sm text-muted-foreground">

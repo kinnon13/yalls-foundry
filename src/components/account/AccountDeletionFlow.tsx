@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
   AlertDialog,
@@ -26,6 +27,7 @@ interface AccountDeletionFlowProps {
 export function AccountDeletionFlow({ userId }: AccountDeletionFlowProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
   const [understood, setUnderstood] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -57,9 +59,17 @@ export function AccountDeletionFlow({ userId }: AccountDeletionFlowProps) {
         description: 'Your private data has been erased. Public records remain for historical accuracy.',
       });
 
-      // Sign out
+      // Clear all cached data
+      queryClient.clear();
+
+      // Sign out and redirect
       await supabase.auth.signOut();
-      navigate('/');
+      
+      // Clear local storage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      navigate('/login');
     } catch (error: any) {
       console.error('Error closing account:', error);
       toast({
