@@ -14,6 +14,7 @@ import { MessageSquare, Clock, Trash2, User, Brain, Settings } from 'lucide-reac
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { MemoriesPanel } from '@/components/ai/MemoriesPanel';
 
 interface ConversationSession {
   session_id: string;
@@ -426,48 +427,7 @@ export default function AIManagement() {
             </TabsContent>
 
             <TabsContent value="memories" className="mt-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>AI Memories</CardTitle>
-                    <CardDescription>What Rocker remembers about you</CardDescription>
-                  </div>
-                  <Button size="sm" variant="outline" onClick={loadMemories} disabled={loadingMemories}>
-                    {loadingMemories ? 'Refreshing...' : 'Refresh'}
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  {loadingMemories ? (
-                    <p className="text-sm text-muted-foreground">Loading memories...</p>
-                  ) : memories.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No memories yet.</p>
-                  ) : (
-                    <ScrollArea className="h-[600px]">
-                      <div className="space-y-3 pr-4">
-                        {memories.map((m) => (
-                          <div key={m.id} className="p-3 rounded-lg border">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs uppercase tracking-wide text-muted-foreground">{m.type}</span>
-                              <span className="text-xs text-muted-foreground">{formatDate(m.created_at)}</span>
-                            </div>
-                            <p className="font-medium text-sm">{m.key}</p>
-                            <pre className="mt-1 text-xs whitespace-pre-wrap">
-                              {typeof m.value === 'string' ? m.value : JSON.stringify(m.value, null, 2)}
-                            </pre>
-                            {Array.isArray(m.tags) && m.tags.length > 0 && (
-                              <div className="mt-2 flex flex-wrap gap-1">
-                                {m.tags.map((t: string, i: number) => (
-                                  <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-muted">{t}</span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  )}
-                </CardContent>
-              </Card>
+              <MemoriesPanel />
             </TabsContent>
 
             <TabsContent value="settings" className="mt-6">
