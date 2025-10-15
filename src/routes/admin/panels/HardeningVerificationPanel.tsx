@@ -248,11 +248,20 @@ pnpm -w lint --fix && pnpm -w format`;
               <CardTitle className="text-base">Auto-Fix Edge Functions</CardTitle>
             </div>
             <CardDescription>
-              Run these commands in your terminal to automatically apply rate limiting, structured logging, and tenant cleanup to all edge functions
+              Open your terminal/command line on your computer, navigate to your project folder, then run these commands
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
+              <div className="rounded-md bg-amber-500/10 border border-amber-500/20 p-3 text-sm">
+                <p className="font-medium text-amber-600 dark:text-amber-400 mb-1">📍 How to run:</p>
+                <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                  <li>Open Terminal (Mac/Linux) or Command Prompt (Windows)</li>
+                  <li>Navigate to your project: <code className="bg-muted px-1 rounded">cd path/to/your/project</code></li>
+                  <li>Copy and paste the commands below</li>
+                </ol>
+              </div>
+              
               <div className="relative rounded-md bg-muted p-4 font-mono text-sm">
                 <pre className="whitespace-pre-wrap">{fixerCommands}</pre>
                 <Button
@@ -264,8 +273,9 @@ pnpm -w lint --fix && pnpm -w format`;
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
+              
               <p className="text-sm text-muted-foreground">
-                After running, return here and click "Run Verification" to confirm all checks pass.
+                ✅ After running successfully, click "Run Verification" above to confirm all checks pass.
               </p>
             </div>
           </CardContent>
