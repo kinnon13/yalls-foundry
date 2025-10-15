@@ -9,6 +9,18 @@ import { supabase } from '@/integrations/supabase/client';
 import type { AuthAdapter } from '../adapter';
 import type { Session } from '../types';
 import type { Role } from '../rbac';
+import { z } from 'zod';
+
+/**
+ * Validation schemas
+ */
+export const emailSchema = z.string().email('Invalid email address');
+export const passwordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+  .regex(/[0-9]/, 'Password must contain at least one number');
 
 /**
  * Get user's primary role from user_roles table
@@ -121,13 +133,17 @@ export async function signInWithPassword(
 }
 
 /**
- * Sign up with email/password
+ * Sign up with email/password (validated)
  */
 export async function signUpWithPassword(
   email: string,
   password: string
 ): Promise<{ session: Session | null; error: Error | null }> {
   try {
+    // Validate inputs
+    emailSchema.parse(email);
+    passwordSchema.parse(password);
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -142,6 +158,58 @@ export async function signUpWithPassword(
     const session = data.session ? await buildSession(data.session) : null;
     return { session, error: null };
   } catch (err) {
+    if (err instanceof z.ZodError) {
+      return { session: null, error: new Error(err.errors[0].message) };
+    }
     return { session: null, error: err as Error };
+  }
+}
+
+/**
+ * Enable MFA for current user (stub)
+ */
+export async function enableMFA(): Promise<{
+  success: boolean;
+  secret?: string;
+  qrUri?: string;
+  error?: string;
+}> {
+  try {
+    const { data, error } = await (supabase as any).rpc('enable_mfa');
+    if (error) return { success: false, error: error.message };
+    return { success: true, ...data };
+  } catch (err) {
+    return { success: false, error: (err as Error).message };
+  }
+}
+
+/**
+ * Revoke sessions (admin or self)
+ */
+export async function revokeSessions(
+  targetUserId?: string
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const { data, error } = await (supabase as any).rpc('revoke_sessions', {
+      target_user_id: targetUserId || null,
+    });
+    if (error) return { success: false, error: error.message };
+    return { success: true, message: data.message };
+  } catch (err) {
+    return { success: false, error: (err as Error).message };
+  }
+}
+
+/**
+ * Check if action requires step-up auth
+ */
+export async function requiresStepUp(actionName: string): Promise<boolean> {
+  try {
+    const { data } = await (supabase as any).rpc('requires_step_up', {
+      action_name: actionName,
+    });
+    return data ?? false;
+  } catch {
+    return false;
   }
 }

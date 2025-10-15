@@ -151,14 +151,112 @@ describe('Supabase Auth Adapter', () => {
 
       const { signUpWithPassword } = await import('@/lib/auth/adapters/supabase');
 
-      const result = await signUpWithPassword('new@test.com', 'password123');
+      const result = await signUpWithPassword('new@test.com', 'SecurePass123');
 
       expect(result.error).toBeNull();
       expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
         email: 'new@test.com',
-        password: 'password123',
+        password: 'SecurePass123',
         options: { emailRedirectTo: expect.any(String) },
       });
+    });
+
+    it('should validate email format', async () => {
+      const { signUpWithPassword } = await import('@/lib/auth/adapters/supabase');
+
+      const result = await signUpWithPassword('invalid-email', 'SecurePass123');
+
+      expect(result.error?.message).toContain('Invalid email');
+      expect(result.session).toBeNull();
+    });
+
+    it('should validate password strength', async () => {
+      const { signUpWithPassword } = await import('@/lib/auth/adapters/supabase');
+
+      const result = await signUpWithPassword('test@test.com', 'weak');
+
+      expect(result.error?.message).toContain('Password must');
+      expect(result.session).toBeNull();
+    });
+  });
+
+  describe('MFA', () => {
+    it('should call enable_mfa RPC and return secret', async () => {
+      mockSupabase.rpc.mockResolvedValue({
+        data: { success: true, secret: 'JBSWY3DPEHPK3PXP', qr_uri: 'otpauth://...' },
+        error: null,
+      });
+
+      const { enableMFA } = await import('@/lib/auth/adapters/supabase');
+
+      const result = await enableMFA();
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('enable_mfa');
+      expect(result.success).toBe(true);
+      expect(result.secret).toBe('JBSWY3DPEHPK3PXP');
+      expect(result.qrUri).toContain('otpauth://');
+    });
+
+    it('should handle MFA setup errors', async () => {
+      mockSupabase.rpc.mockResolvedValue({
+        data: null,
+        error: { message: 'RPC failed' },
+      });
+
+      const { enableMFA } = await import('@/lib/auth/adapters/supabase');
+
+      const result = await enableMFA();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeTruthy();
+    });
+  });
+
+  describe('Session Revoke', () => {
+    it('should call revoke_sessions RPC for current user', async () => {
+      mockSupabase.rpc.mockResolvedValue({
+        data: { success: true, message: 'Sessions revoked' },
+        error: null,
+      });
+
+      const { revokeSessions } = await import('@/lib/auth/adapters/supabase');
+
+      const result = await revokeSessions();
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('revoke_sessions', {
+        target_user_id: null,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should revoke sessions for target user (admin)', async () => {
+      mockSupabase.rpc.mockResolvedValue({
+        data: { success: true, message: 'Sessions revoked for user-123' },
+        error: null,
+      });
+
+      const { revokeSessions } = await import('@/lib/auth/adapters/supabase');
+
+      const result = await revokeSessions('user-123');
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('revoke_sessions', {
+        target_user_id: 'user-123',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should handle permission errors', async () => {
+      mockSupabase.rpc.mockResolvedValue({
+        data: null,
+        error: { message: 'Permission denied' },
+      });
+
+      const { revokeSessions } = await import('@/lib/auth/adapters/supabase');
+
+      const result = await revokeSessions('other-user');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Permission denied');
     });
   });
 

@@ -63,3 +63,20 @@ export function useRole() {
   const { session } = useSession();
   return session?.role ?? 'guest';
 }
+
+/**
+ * Hook: Require authentication (redirect to /login if not authenticated)
+ */
+export function useRequireAuth() {
+  const { session, loading } = useSession();
+  const navigate = (window as any).navigate; // Stub for router navigation
+
+  useEffect(() => {
+    if (!loading && !session) {
+      // Redirect to login if not authenticated
+      window.location.href = '/login';
+    }
+  }, [session, loading]);
+
+  return { session, loading };
+}

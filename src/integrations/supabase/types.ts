@@ -816,6 +816,10 @@ export type Database = {
           | { table_name: string }
         Returns: string
       }
+      enable_mfa: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       enablelongtransactions: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1363,6 +1367,14 @@ export type Database = {
       postgis_wagyu_version: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      requires_step_up: {
+        Args: { action_name: string }
+        Returns: boolean
+      }
+      revoke_sessions: {
+        Args: { target_user_id?: string }
+        Returns: Json
       }
       set_limit: {
         Args: { "": number }
