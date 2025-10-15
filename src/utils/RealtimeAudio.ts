@@ -384,6 +384,9 @@ export class RealtimeVoice {
         }
       }));
 
+      // Ensure a session exists immediately on connect so it shows in history
+      this.createSessionIfMissing().catch((e) => console.error(`[Rocker Voice ${this.instanceId}] Session ensure failed:`, e));
+
       this.startRecording();
     };
 
@@ -610,6 +613,40 @@ export class RealtimeVoice {
     }
   }
 
+  private async createSessionIfMissing() {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: existingSession, error: sessionCheckError } = await supabase
+        .from('conversation_sessions')
+        .select('id')
+        .eq('session_id', this.sessionId)
+        .maybeSingle();
+
+      if (sessionCheckError) {
+        console.error(`[Rocker Voice ${this.instanceId}] ❌ Error checking session:`, sessionCheckError);
+        return;
+      }
+
+      if (!existingSession) {
+        console.log(`[Rocker Voice ${this.instanceId}] 📝 Creating session on connect`);
+        const { error: sessionError } = await supabase.from('conversation_sessions').insert({
+          user_id: user.id,
+          session_id: this.sessionId,
+          title: 'Voice Conversation',
+          summary: 'Voice conversation'
+        });
+        if (sessionError) {
+          console.error(`[Rocker Voice ${this.instanceId}] ❌ Failed to create session on connect:`, sessionError);
+        }
+      }
+    } catch (e) {
+      console.error(`[Rocker Voice ${this.instanceId}] ❌ Unexpected error ensuring session:`, e);
+    }
+  }
+
   private cleanup() {
     console.log(`[Rocker Voice ${this.instanceId}] Cleaning up...`);
     this.recorder?.stop();
@@ -619,3 +656,4 @@ export class RealtimeVoice {
     audioQueueInstance = null;
   }
 }
+
