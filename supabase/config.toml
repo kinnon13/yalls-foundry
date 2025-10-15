@@ -77,3 +77,6 @@ verify_jwt = true
 
 [functions.rocker-health]
 verify_jwt = false
+
+[functions.rocker-voice-session]
+verify_jwt = true

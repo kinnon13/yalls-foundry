@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Send, X, Loader2, Trash2 } from 'lucide-react';
+import { MessageCircle, Send, X, Loader2, Trash2, Mic, MicOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useRocker } from '@/hooks/useRocker';
 import { RockerQuickActions } from './RockerQuickActions';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { RealtimeVoice } from '@/utils/RealtimeAudio';
+import { useToast } from '@/hooks/use-toast';
 
 export function RockerChat() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,6 +16,11 @@ export function RockerChat() {
   const { messages, isLoading, error, sendMessage, cancelRequest, clearMessages } = useRocker();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+  const voiceRef = useRef<RealtimeVoice | null>(null);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const { toast } = useToast();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -48,6 +56,64 @@ export function RockerChat() {
     textareaRef.current?.focus();
   };
 
+  const toggleVoiceMode = async () => {
+    if (isVoiceMode) {
+      // Stop voice mode
+      voiceRef.current?.disconnect();
+      voiceRef.current = null;
+      setIsVoiceMode(false);
+      setVoiceStatus('disconnected');
+      setVoiceTranscript('');
+    } else {
+      // Start voice mode
+      try {
+        setVoiceStatus('connecting');
+        
+        // Get ephemeral token
+        const { data, error } = await supabase.functions.invoke('rocker-voice-session');
+        
+        if (error) throw error;
+        if (!data.client_secret?.value) throw new Error('No ephemeral token received');
+
+        // Initialize voice connection
+        const voice = new RealtimeVoice(
+          (status) => setVoiceStatus(status),
+          (text, isFinal) => {
+            if (isFinal) {
+              setVoiceTranscript('');
+            } else {
+              setVoiceTranscript(text);
+            }
+          }
+        );
+
+        await voice.connect(data.client_secret.value);
+        voiceRef.current = voice;
+        setIsVoiceMode(true);
+        
+        toast({
+          title: "Voice mode active",
+          description: "Start speaking to Rocker!",
+        });
+      } catch (error) {
+        console.error('Error starting voice mode:', error);
+        toast({
+          title: "Voice mode failed",
+          description: error instanceof Error ? error.message : 'Failed to start voice mode',
+          variant: "destructive",
+        });
+        setVoiceStatus('disconnected');
+        setIsVoiceMode(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      voiceRef.current?.disconnect();
+    };
+  }, []);
+
   if (!isOpen) {
     return (
       <Button
@@ -68,9 +134,28 @@ export function RockerChat() {
         <div className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5 text-primary" />
           <h3 className="font-semibold">Rocker AI</h3>
+          {isVoiceMode && (
+            <span className={cn(
+              "text-xs px-2 py-1 rounded-full",
+              voiceStatus === 'connected' && "bg-green-500/20 text-green-700 dark:text-green-400",
+              voiceStatus === 'connecting' && "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400",
+              voiceStatus === 'disconnected' && "bg-gray-500/20 text-gray-700 dark:text-gray-400"
+            )}>
+              {voiceStatus === 'connected' ? '🎤 Listening' : voiceStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1">
-          {messages.length > 0 && (
+          <Button
+            variant={isVoiceMode ? "default" : "ghost"}
+            size="icon"
+            onClick={toggleVoiceMode}
+            disabled={isLoading}
+            title={isVoiceMode ? "Stop voice mode" : "Start voice mode"}
+          >
+            {isVoiceMode ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </Button>
+          {messages.length > 0 && !isVoiceMode && (
             <Button
               variant="ghost"
               size="icon"
@@ -93,7 +178,27 @@ export function RockerChat() {
 
       {/* Messages */}
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-        {messages.length === 0 ? (
+        {isVoiceMode ? (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className={cn(
+              "mb-4 transition-all",
+              voiceStatus === 'connected' && "scale-110"
+            )}>
+              <Mic className="h-16 w-16 text-primary" />
+            </div>
+            <p className="text-sm font-semibold mb-2">
+              {voiceStatus === 'connected' ? 'Listening...' : 'Connecting...'}
+            </p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Speak naturally to Rocker
+            </p>
+            {voiceTranscript && (
+              <div className="bg-muted rounded-lg p-3 max-w-[80%]">
+                <p className="text-sm text-muted-foreground italic">"{voiceTranscript}"</p>
+              </div>
+            )}
+          </div>
+        ) : messages.length === 0 ? (
           <div className="flex flex-col h-full">
             <div className="flex flex-col items-center justify-center flex-1 text-center text-muted-foreground">
               <MessageCircle className="h-12 w-12 mb-4 opacity-50" />
@@ -146,34 +251,36 @@ export function RockerChat() {
       )}
 
       {/* Input */}
-      <div className="p-4 border-t border-border">
-        <div className="flex gap-2">
-          <Textarea
-            ref={textareaRef}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask Rocker anything..."
-            className="min-h-[60px] max-h-[120px] resize-none"
-            disabled={isLoading}
-          />
-          <Button
-            onClick={isLoading ? cancelRequest : handleSend}
-            disabled={!inputValue.trim() && !isLoading}
-            size="icon"
-            className="h-[60px] w-[60px]"
-          >
-            {isLoading ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Send className="h-5 w-5" />
-            )}
-          </Button>
+      {!isVoiceMode && (
+        <div className="p-4 border-t border-border">
+          <div className="flex gap-2">
+            <Textarea
+              ref={textareaRef}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask Rocker anything..."
+              className="min-h-[60px] max-h-[120px] resize-none"
+              disabled={isLoading}
+            />
+            <Button
+              onClick={isLoading ? cancelRequest : handleSend}
+              disabled={!inputValue.trim() && !isLoading}
+              size="icon"
+              className="h-[60px] w-[60px]"
+            >
+              {isLoading ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Send className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Press Enter to send, Shift+Enter for new line
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Press Enter to send, Shift+Enter for new line
-        </p>
-      </div>
+      )}
     </div>
   );
 }
