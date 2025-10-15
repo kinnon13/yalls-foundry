@@ -15,6 +15,57 @@ export interface DOMAction {
   targetName?: string; // e.g., "post button", "comment field"
 }
 
+/** Helper functions for fuzzy matching and labeling */
+function getElementLabel(el: HTMLElement): string {
+  const text = el.textContent || '';
+  const aria = el.getAttribute('aria-label') || '';
+  const rocker = el.getAttribute('data-rocker') || '';
+  const placeholder = (el as HTMLElement).getAttribute?.('placeholder') || '';
+  return [text, aria, rocker, placeholder].join(' ').toLowerCase().trim();
+}
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return dp[m][n];
+}
+
+function fuzzyFind(candidates: HTMLElement[], target: string): HTMLElement | null {
+  const t = target.toLowerCase().trim();
+  const tTokens = t.split(/\s+/);
+  let best: { el: HTMLElement; score: number } | null = null;
+  for (const el of candidates) {
+    const label = getElementLabel(el);
+    if (!label) continue;
+    if (label.includes(t)) return el;
+    let min = Infinity;
+    const tokens = label.split(/[^a-z0-9]+/);
+    for (const tok of tokens) {
+      if (!tok) continue;
+      for (const q of tTokens) {
+        const d = levenshtein(tok, q);
+        if (d < min) min = d;
+        if (d <= 1) return el; // fast path near-match
+      }
+    }
+    if (!best || min < best.score) best = { el, score: min };
+  }
+  if (best && best.score <= 2) return best.el;
+  return null;
+}
+
 /**
  * Find element by various strategies
  */
