@@ -202,12 +202,14 @@ export class RealtimeVoice {
   private onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void;
   private onTranscript?: (text: string, isFinal: boolean) => void;
   private onCommand?: (cmd: { 
-    type: 'navigate' | 'click_element' | 'fill_field' | 'create_post'; 
+    type: 'navigate' | 'click_element' | 'fill_field' | 'create_post' | 'scroll_page'; 
     path?: string;
     element_name?: string;
     field_name?: string;
     value?: string;
     content?: string;
+    direction?: string;
+    amount?: string;
   }) => void;
   private lastTranscript: string = '';
   private instanceId: string;
@@ -216,12 +218,14 @@ export class RealtimeVoice {
     onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void,
     onTranscript?: (text: string, isFinal: boolean) => void,
     onCommand?: (cmd: { 
-      type: 'navigate' | 'click_element' | 'fill_field' | 'create_post';
+      type: 'navigate' | 'click_element' | 'fill_field' | 'create_post' | 'scroll_page';
       path?: string;
       element_name?: string;
       field_name?: string;
       value?: string;
       content?: string;
+      direction?: string;
+      amount?: string;
     }) => void
   ) {
     this.instanceId = Math.random().toString(36).substring(7);
@@ -400,7 +404,13 @@ export class RealtimeVoice {
           // Handle create post
           else if (message.name === 'create_post') {
             console.log(`[Rocker Voice ${this.instanceId}] 🔥 CREATE_POST TOOL CALLED:`, args);
-            this.onCommand?.({ type: 'create_post' as any, content: args.content } as any);
+            this.onCommand?.({ type: 'create_post', content: args.content });
+          }
+          
+          // Handle scroll
+          else if (message.name === 'scroll_page') {
+            console.log(`[Rocker Voice ${this.instanceId}] 🔥 SCROLL TOOL CALLED:`, args);
+            this.onCommand?.({ type: 'scroll_page', direction: args.direction, amount: args.amount });
           }
         } catch (err) {
           console.error(`[Rocker Voice ${this.instanceId}] Error parsing tool arguments:`, err);

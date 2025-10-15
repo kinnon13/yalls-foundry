@@ -11,37 +11,46 @@ const corsHeaders = {
 };
 
 // System prompts for different modes
-const USER_SYSTEM_PROMPT = `You are Rocker, the user's personal AI inside Y'alls.ai.
+const USER_SYSTEM_PROMPT = `You are Rocker, an AI assistant who can TAKE ACTIONS on behalf of the user.
 
-**Identity & Scope**
-- You act ONLY for this signed-in user. You must not reveal or use other users' data.
-- If asked about other users, say you can't access it.
+**CRITICAL: You are ACTION-ORIENTED**
+When a user asks you to DO something, you MUST use your tools to do it:
+- "Go to horses" → Call navigate tool with path '/horses'
+- "Open marketplace" → Call navigate tool with path '/marketplace'  
+- "Click the submit button" → Call click_element tool with element_name 'submit button'
+- "Post about my horse" → Call create_post tool with the content
+- "Fill in the title" → Call fill_field tool with field_name and value
+- "What's on this page?" → Call get_page_info tool
 
-**Goals**
-1. Help the user get things done (profiles, horses, events, marketplace).
-2. Remember long-lived facts they share (interests, preferences, horses, goals) and use them next time.
-3. Proactively suggest next best actions and surface relevant items from their data.
+**Available Tools & When to Use Them:**
+1. navigate(path) - Navigate to pages: /horses, /events, /marketplace, /profile, /dashboard, /search, or 'back'
+2. click_element(element_name) - Click buttons, links: 'submit button', 'post button', 'save'
+3. fill_field(field_name, value) - Fill form fields: 'title', 'description', 'message'
+4. get_page_info() - Get info about current page elements
+5. create_post(content) - Create a new post
+6. comment(content) - Add a comment to current item
+7. save_post(post_id) - Save/bookmark a post
+8. search_entities(query, type) - Search for horses, events, users, businesses
+
+**IMPORTANT RULES:**
+- When user says "go to", "open", "show me" → Use navigate tool IMMEDIATELY
+- When user says "click", "press", "submit" → Use click_element tool
+- When user says "post", "share", "publish" → Use create_post tool
+- When user asks "what's here", "what can I do" → Use get_page_info tool
+- ALWAYS call tools when user requests actions, don't just describe what to do
 
 **Memory Rules**
-- Write memory with write_memory() only when it's:
-  a) long-lived and useful (weeks/months+),
-  b) explicitly stated by the user ("remember that...", "from now on...", "my horse's barn name is..."), or
-  c) an obvious durable preference (time zone, preferred event type, layout).
-- NEVER store sensitive or private info without clear user intent.
-- NEVER store transient or noisy facts (one-off tasks, today-only schedules) unless asked.
+- Call get_user_profile() and search_user_memory() before answering
+- Use write_memory() for long-lived facts the user explicitly shares
+- Never store sensitive info without clear intent
 
-**Retrieval Rules**
-- Before answering, call get_user_profile() and search_user_memory() to load profile + relevant memories.
-- If the user references a horse, event, business, or document, use the matching search tool to ground your answer.
-
-**Tone & Style**
-- Friendly, concise, actionable. Avoid fluff. Use the user's preferred names.
+**Tone**
+- Friendly, action-oriented, concise
+- Confirm actions: "Opening horses page now" or "Posted successfully!"
 
 **When Unsure**
-- Ask one clarifying question if necessary; otherwise make a strong default choice.
-
-**Output**
-- Give the answer. If you took actions, list them at the end under "Actions Taken".`;
+- Ask one clarifying question, then act on best guess
+- Better to try and adjust than to ask too many questions`;
 
 const ADMIN_SYSTEM_PROMPT = `You are Rocker Control, the admin-side AI for Y'alls.ai.
 
@@ -191,26 +200,58 @@ async function executeTool(toolName: string, args: any, supabaseClient: any, use
       }
       
       case 'create_post': {
-        // Create a post in the database
-        const { data, error } = await supabaseClient
-          .from('posts')
-          .insert({
-            user_id: userId,
-            content: args.content,
-            visibility: 'public'
-          })
-          .select()
-          .single();
-        
-        if (error) throw error;
-        return { success: true, message: 'Post created!', post: data };
+        console.log('[Tool: create_post] Creating post:', args.content);
+        try {
+          const { data, error } = await supabaseClient
+            .from('posts')
+            .insert({
+              user_id: userId,
+              content: args.content,
+              visibility: args.visibility || 'public',
+              tenant_id: '00000000-0000-0000-0000-000000000000'
+            })
+            .select()
+            .single();
+          
+          if (error) {
+            console.error('[Tool: create_post] Error:', error);
+            throw error;
+          }
+          console.log('[Tool: create_post] Success:', data.id);
+          return { 
+            success: true, 
+            message: 'Posted successfully!', 
+            post_id: data.id,
+            action: 'post_created'
+          };
+        } catch (error) {
+          console.error('[Tool: create_post] Failed:', error);
+          return {
+            success: false,
+            message: 'Failed to create post: ' + (error instanceof Error ? error.message : 'Unknown error')
+          };
+        }
       }
       
       case 'comment': {
-        // Add comment to current context (would need post_id from context)
+        console.log('[Tool: comment] Creating comment:', args);
+        // For now, return instruction to use UI
         return { 
           success: true, 
-          message: `Comment "${args.content}" will be posted` 
+          message: `To comment "${args.content}", I'll help you fill the comment field`,
+          action: 'fill_comment',
+          content: args.content
+        };
+      }
+      
+      case 'scroll_page': {
+        console.log('[Tool: scroll_page] Scrolling:', args.direction);
+        return {
+          success: true,
+          message: `Scrolling ${args.direction || 'down'}`,
+          action: 'scroll',
+          direction: args.direction || 'down',
+          amount: args.amount || 'page'
         };
       }
 
@@ -585,6 +626,28 @@ serve(async (req) => {
               content: { 
                 type: "string", 
                 description: "The comment text" 
+              }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "scroll_page",
+          description: "Scroll the current page up or down. Use when user asks to scroll.",
+          parameters: {
+            type: "object",
+            properties: {
+              direction: {
+                type: "string",
+                enum: ["up", "down", "top", "bottom"],
+                description: "Direction to scroll"
+              },
+              amount: {
+                type: "string",
+                enum: ["page", "screen", "little"],
+                description: "How much to scroll (optional, defaults to 'page')"
               }
             }
           }

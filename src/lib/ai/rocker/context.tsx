@@ -88,12 +88,14 @@ export function RockerProvider({ children }: { children: ReactNode }) {
 
   // Voice command handler
   const handleVoiceCommand = useCallback((cmd: { 
-    type: 'navigate' | 'click_element' | 'fill_field' | 'create_post';
+    type: 'navigate' | 'click_element' | 'fill_field' | 'create_post' | 'scroll_page';
     path?: string;
     element_name?: string;
     field_name?: string;
     value?: string;
     content?: string;
+    direction?: string;
+    amount?: string;
   }) => {
     console.log('[Rocker Context] Voice command received:', cmd);
     
@@ -101,6 +103,10 @@ export function RockerProvider({ children }: { children: ReactNode }) {
       console.log('[Rocker Context] Processing navigation command:', cmd.path);
       setTimeout(() => {
         handleNavigation(cmd.path!);
+        toast({
+          title: '🧭 Navigating',
+          description: `Opening ${cmd.path}`,
+        });
       }, 100);
     } 
     else if (cmd.type === 'click_element' && cmd.element_name) {
@@ -110,7 +116,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
         targetName: cmd.element_name
       });
       toast({
-        title: result.success ? 'Clicked' : 'Click failed',
+        title: result.success ? '✅ Clicked' : '❌ Click failed',
         description: result.message,
         variant: result.success ? 'default' : 'destructive',
       });
@@ -123,17 +129,16 @@ export function RockerProvider({ children }: { children: ReactNode }) {
         value: cmd.value
       });
       toast({
-        title: result.success ? 'Filled field' : 'Fill failed',
+        title: result.success ? '✍️ Filled field' : '❌ Fill failed',
         description: result.message,
         variant: result.success ? 'default' : 'destructive',
       });
     }
     else if (cmd.type === 'create_post' && cmd.content) {
       console.log('[Rocker Context] Processing create post command');
-      // Navigate to home and trigger post creation
+      // For voice, we fill the post field instead of direct DB insert
       handleNavigation('/');
       setTimeout(() => {
-        // Fill the post field
         const result = executeDOMAction({
           type: 'fill',
           targetName: 'post',
@@ -141,11 +146,37 @@ export function RockerProvider({ children }: { children: ReactNode }) {
         });
         if (result.success) {
           toast({
-            title: 'Post ready',
-            description: 'Your post has been filled in. Click to submit!',
+            title: '📝 Post ready',
+            description: 'Your post is filled in. Say "click post button" to submit!',
+          });
+        } else {
+          toast({
+            title: '❌ Failed',
+            description: 'Could not find post field',
+            variant: 'destructive',
           });
         }
       }, 500);
+    }
+    else if (cmd.type === 'scroll_page') {
+      console.log('[Rocker Context] Processing scroll command:', cmd.direction);
+      const direction = cmd.direction || 'down';
+      const amount = cmd.amount === 'little' ? 100 : cmd.amount === 'screen' ? window.innerHeight : window.innerHeight * 0.8;
+      
+      if (direction === 'top') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (direction === 'bottom') {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      } else if (direction === 'up') {
+        window.scrollBy({ top: -amount, behavior: 'smooth' });
+      } else {
+        window.scrollBy({ top: amount, behavior: 'smooth' });
+      }
+      
+      toast({
+        title: '📜 Scrolled',
+        description: `Scrolling ${direction}`,
+      });
     }
   }, [handleNavigation, toast]);
 
@@ -362,7 +393,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
             console.log('[Rocker] Navigation tool called:', args.path);
             handleNavigation(args.path);
             toast({
-              title: 'Navigating',
+              title: '🧭 Navigating',
               description: `Opening ${args.path}`,
             });
           }
@@ -375,7 +406,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
             });
             console.log('[Rocker] Click result:', domResult);
             toast({
-              title: domResult.success ? 'Clicked' : 'Click failed',
+              title: domResult.success ? '✅ Clicked' : '❌ Click failed',
               description: domResult.message,
               variant: domResult.success ? 'default' : 'destructive',
             });
@@ -389,7 +420,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
             });
             console.log('[Rocker] Fill result:', domResult);
             toast({
-              title: domResult.success ? 'Filled field' : 'Fill failed',
+              title: domResult.success ? '✍️ Filled field' : '❌ Fill failed',
               description: domResult.message,
               variant: domResult.success ? 'default' : 'destructive',
             });
@@ -398,6 +429,34 @@ export function RockerProvider({ children }: { children: ReactNode }) {
           else if (tc.name === 'get_page_info') {
             const domResult = executeDOMAction({ type: 'read' });
             console.log('[Rocker] Page info:', domResult);
+          }
+          
+          else if (tc.name === 'create_post') {
+            console.log('[Rocker] Post created via tool');
+            toast({
+              title: '📝 Posted!',
+              description: 'Your post has been created successfully',
+            });
+          }
+          
+          else if (tc.name === 'scroll_page') {
+            const direction = args.direction || 'down';
+            const amount = args.amount === 'little' ? 100 : args.amount === 'screen' ? window.innerHeight : window.innerHeight * 0.8;
+            
+            if (direction === 'top') {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (direction === 'bottom') {
+              window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            } else if (direction === 'up') {
+              window.scrollBy({ top: -amount, behavior: 'smooth' });
+            } else {
+              window.scrollBy({ top: amount, behavior: 'smooth' });
+            }
+            
+            toast({
+              title: '📜 Scrolled',
+              description: `Scrolling ${direction}`,
+            });
           }
         }
         
