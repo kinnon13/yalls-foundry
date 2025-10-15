@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { withRateLimit, RateLimits } from '../_shared/rate-limit-wrapper.ts';
+import { createLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +21,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const log = createLogger('delete-account');
+  log.startTimer();
 
   // Apply rate limiting
   const limited = await withRateLimit(req, 'delete-account', RateLimits.auth);
@@ -49,14 +53,14 @@ Deno.serve(async (req) => {
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      console.error('Auth error:', userError);
+      log.error('Auth error', userError);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`[delete-account] Starting deletion for user ${user.id}`);
+    log.info('Starting deletion', { user_id: user.id });
 
     // Step 1: Call prepare function (anonymizes profile, checks sole-admin)
     const { data: prepareResult, error: prepareError } = await supabase.rpc(
@@ -64,7 +68,7 @@ Deno.serve(async (req) => {
     );
 
     if (prepareError) {
-      console.error('[delete-account] Prepare RPC error:', prepareError);
+      log.error('Prepare RPC error', prepareError);
       return new Response(
         JSON.stringify({
           error: 'prepare_failed',
@@ -78,7 +82,7 @@ Deno.serve(async (req) => {
 
     // If prepare blocked deletion (sole admin), return early
     if (!result.success) {
-      console.log('[delete-account] Blocked:', result.message);
+      log.info('Blocked', { message: result.message });
       return new Response(
         JSON.stringify({
           error: result.error,
@@ -105,7 +109,7 @@ Deno.serve(async (req) => {
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
 
     if (deleteError) {
-      console.error('[delete-account] Auth delete error:', deleteError);
+      log.error('Auth delete error', deleteError);
       return new Response(
         JSON.stringify({
           error: 'auth_delete_failed',
@@ -115,7 +119,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[delete-account] Success: user ${user.id} deleted, profile ${result.profile_id} anonymized`);
+    log.info('Success', { user_id: user.id, profile_id: result.profile_id });
 
     return new Response(
       JSON.stringify({
@@ -127,7 +131,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('[delete-account] Unexpected error:', error);
+    log.error('Unexpected error', error);
     return new Response(
       JSON.stringify({
         error: 'internal_error',

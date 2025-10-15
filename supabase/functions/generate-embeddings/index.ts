@@ -8,6 +8,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { createLogger } from "../_shared/logger.ts";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,6 +29,13 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const log = createLogger('generate-embeddings');
+  log.startTimer();
+
+  // Apply rate limiting
+  const limited = await withRateLimit(req, 'generate-embeddings', RateLimits.expensive);
+  if (limited) return limited;
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -39,7 +48,7 @@ serve(async (req) => {
       throw new Error("No chunks provided");
     }
 
-    console.log(`Generating embeddings for ${chunks.length} chunks`);
+    log.info('Generating embeddings', { chunks_count: chunks.length });
 
     const openAIKey = Deno.env.get("OPENAI_API_KEY");
     if (!openAIKey) {
@@ -68,7 +77,7 @@ serve(async (req) => {
 
       if (!embeddingResponse.ok) {
         const error = await embeddingResponse.text();
-        console.error("OpenAI API error:", error);
+        log.error('OpenAI API error', { error });
         throw new Error(`OpenAI API error: ${error}`);
       }
 
@@ -94,14 +103,14 @@ serve(async (req) => {
           });
 
         if (error) {
-          console.error("Error inserting chunk:", error);
+          log.error('Error inserting chunk', error);
           results.push({ success: false, error: error.message, chunk_id: chunk.source_id });
         } else {
           results.push({ success: true, chunk_id: chunk.source_id });
         }
       }
 
-      console.log(`Processed batch ${i / batchSize + 1} of ${Math.ceil(chunks.length / batchSize)}`);
+      log.info('Processed batch', { batch: i / batchSize + 1, total_batches: Math.ceil(chunks.length / batchSize) });
     }
 
     const successCount = results.filter(r => r.success).length;
@@ -121,7 +130,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Error in generate-embeddings:", error);
+    log.error('Error in generate-embeddings', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),

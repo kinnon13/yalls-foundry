@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-import { rateLimit } from '../_shared/rate-limit.ts';
+import { withRateLimit, RateLimits } from '../_shared/rate-limit-wrapper.ts';
+import { createLogger } from '../_shared/logger.ts';
 import { withIdempotency, buildKey, hashObject } from '../_shared/idempotency.ts';
 
 const corsHeaders = {
@@ -12,6 +13,13 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const log = createLogger('create-checkout-session');
+  log.startTimer();
+
+  // Apply rate limiting
+  const limited = await withRateLimit(req, 'create-checkout-session', RateLimits.auth);
+  if (limited) return limited;
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -31,17 +39,6 @@ serve(async (req) => {
 
     if (authError || !user) {
       throw new Error('Not authenticated');
-    }
-
-    // Apply rate limiting (3 checkouts per minute per user)
-    const rateLimitResult = await rateLimit(req, user.id, {
-      limit: 3,
-      windowSec: 60,
-      prefix: 'ratelimit:checkout'
-    });
-
-    if (rateLimitResult instanceof Response) {
-      return rateLimitResult;
     }
 
     const { cartItems } = await req.json();
@@ -84,7 +81,7 @@ serve(async (req) => {
 
     if (!stripeResponse.ok) {
       const errorText = await stripeResponse.text();
-      console.error('Stripe error:', errorText);
+      log.error('Stripe error', { errorText });
       throw new Error('Failed to create payment intent');
     }
 
@@ -104,7 +101,7 @@ serve(async (req) => {
       .single();
 
     if (orderError) {
-      console.error('Order creation error:', orderError);
+      log.error('Order creation error', orderError);
       throw new Error('Failed to create order');
     }
 
@@ -122,7 +119,7 @@ serve(async (req) => {
       .insert(lineItems);
 
     if (lineItemsError) {
-      console.error('Line items error:', lineItemsError);
+      log.error('Line items error', lineItemsError);
     }
 
         return {
@@ -139,7 +136,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Checkout error:', error);
+    log.error('Checkout error', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       {
