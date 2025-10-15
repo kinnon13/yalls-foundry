@@ -98,6 +98,7 @@ const App = () => (
             }
           />
               <Route path="/profile/:id" element={<Profile />} />
+              <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
               <Route path="/horses" element={<HorsesIndex />} />
               <Route path="/horses/create" element={<RequireAuth><CreateHorse /></RequireAuth>} />
               <Route path="/horses/:id" element={<HorseDetail />} />

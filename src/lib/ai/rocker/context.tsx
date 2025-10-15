@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { RealtimeVoice } from '@/utils/RealtimeAudio';
 import { useToast } from '@/hooks/use-toast';
 import type { RockerMessage } from '@/hooks/useRocker';
+import { executeDOMAction } from './dom-agent';
 
 interface RockerContextValue {
   // Chat state
@@ -277,6 +278,38 @@ export function RockerProvider({ children }: { children: ReactNode }) {
       
       // Add tool execution feedback if present
       if (result.tool_calls && result.tool_calls.length > 0) {
+        for (const tc of result.tool_calls) {
+          // Execute DOM actions if needed
+          if (tc.name === 'click_element' || tc.name === 'fill_field' || tc.name === 'get_page_info') {
+            const args = typeof tc.arguments === 'string' ? JSON.parse(tc.arguments) : tc.arguments;
+            
+            let domResult;
+            if (tc.name === 'click_element') {
+              domResult = executeDOMAction({
+                type: 'click',
+                targetName: args.element_name
+              });
+            } else if (tc.name === 'fill_field') {
+              domResult = executeDOMAction({
+                type: 'fill',
+                targetName: args.field_name,
+                value: args.value
+              });
+            } else if (tc.name === 'get_page_info') {
+              domResult = executeDOMAction({ type: 'read' });
+            }
+            
+            // Show feedback if result exists
+            if (domResult) {
+              toast({
+                title: domResult.success ? 'Action completed' : 'Action failed',
+                description: domResult.message,
+                variant: domResult.success ? 'default' : 'destructive',
+              });
+            }
+          }
+        }
+        
         const toolMessages: RockerMessage[] = result.tool_calls.map((tc: any) => ({
           role: 'system' as const,
           content: `🔧 ${tc.name}`,
@@ -341,6 +374,11 @@ export function RockerProvider({ children }: { children: ReactNode }) {
       isAlwaysListening, 
       voiceStatus, 
       initializing: initializingRef.current 
+    });
+    
+    // Initialize DOM agent
+    import('./dom-agent').then(() => {
+      console.log('[Rocker] DOM agent initialized');
     });
     
     // Prevent duplicate initialization

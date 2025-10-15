@@ -165,6 +165,17 @@ async function executeTool(toolName: string, args: any, supabaseClient: any, use
           path: args.path 
         };
       }
+      
+      case 'click_element':
+      case 'fill_field':
+      case 'get_page_info': {
+        // These execute on client side via DOM agent
+        return { 
+          success: true, 
+          message: `DOM action '${toolName}' will be executed on client`,
+          clientAction: { type: toolName, ...args }
+        };
+      }
 
       case 'read_file': {
         // Read file via Supabase Storage or return simulated file content
@@ -456,6 +467,55 @@ serve(async (req) => {
                 description: "Path to navigate to. Use 'back' for going back, or paths like '/', '/horses', '/marketplace', '/events', '/search', '/profile', '/business/{id}/hub', '/mlm/dashboard', '/admin/control-room'" 
               }
             }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "click_element",
+          description: "Click a button, link, or interactive element on the current page. Use when user asks to click, press, submit, or activate something.",
+          parameters: {
+            type: "object",
+            required: ["element_name"],
+            properties: {
+              element_name: { 
+                type: "string", 
+                description: "Natural description of what to click (e.g., 'submit button', 'post button', 'save', 'create event', 'like button')" 
+              }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "fill_field",
+          description: "Fill a form field with text. Use when user provides content to enter (e.g., 'type this in the title', 'set description to...')",
+          parameters: {
+            type: "object",
+            required: ["field_name", "value"],
+            properties: {
+              field_name: { 
+                type: "string", 
+                description: "Natural description of the field (e.g., 'title', 'description', 'comment', 'message', 'name')" 
+              },
+              value: {
+                type: "string",
+                description: "The text to enter into the field"
+              }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "get_page_info",
+          description: "Get information about what's on the current page - available buttons, fields, and actions. Use when user asks what they can do or what's available.",
+          parameters: {
+            type: "object",
+            properties: {}
           }
         }
       },
