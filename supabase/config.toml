@@ -1,5 +1,12 @@
 project_id = "xuxfuonzsfvrirdwzddt"
 
+# Automatic entity discovery - runs every hour
+[functions.auto-sync-entities]
+verify_jwt = false
+
+[functions.auto-sync-entities.cron]
+schedule = "0 * * * *"  # Every hour at minute 0
+
 [functions.create-checkout-session]
 verify_jwt = true
 
