@@ -245,7 +245,12 @@ export function CalendarSidebar({
               </h3>
               <Dialog open={createCalOpen} onOpenChange={setCreateCalOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" data-rocker="new calendar button" aria-label="New Calendar Button">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    data-rocker="new calendar button calendar plus open create calendar"
+                    aria-label="New Calendar Button"
+                  >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>

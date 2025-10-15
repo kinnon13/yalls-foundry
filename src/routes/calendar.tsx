@@ -137,8 +137,8 @@ export default function CalendarPage() {
             <CreateEventDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={loadEvents} />
             <Tabs defaultValue="calendar" className="space-y-4">
               <TabsList>
-                <TabsTrigger value="calendar">Calendar</TabsTrigger>
-                <TabsTrigger value="privacy">
+                <TabsTrigger value="calendar" data-rocker="calendar tab">Calendar</TabsTrigger>
+                <TabsTrigger value="privacy" data-rocker="privacy settings tab" aria-label="Privacy Settings Tab">
                   <SettingsIcon className="h-4 w-4 mr-2" />
                   Privacy Settings
                 </TabsTrigger>
