@@ -26,6 +26,7 @@ import CreateHorse from "./routes/horses/create";
 import EventsIndex from "./routes/events/index";
 import CreateEvent from "./routes/events/create";
 import EventDetail from "./routes/events/[id]";
+import SavedPosts from "./routes/posts/saved";
 import BusinessHub from "./routes/business/[bizId]/hub";
 import BusinessProfileSettings from "./routes/business/[bizId]/settings/profile";
 import BusinessPaymentsSettings from "./routes/business/[bizId]/settings/payments";
@@ -84,6 +85,7 @@ const App = () => (
               <Route path="/horses" element={<HorsesIndex />} />
               <Route path="/horses/create" element={<RequireAuth><CreateHorse /></RequireAuth>} />
               <Route path="/horses/:id" element={<HorseDetail />} />
+              <Route path="/posts/saved" element={<RequireAuth><SavedPosts /></RequireAuth>} />
               <Route path="/events" element={<EventsIndex />} />
               <Route path="/events/create" element={<RequireAuth><CreateEvent /></RequireAuth>} />
               <Route path="/events/:id" element={<EventDetail />} />

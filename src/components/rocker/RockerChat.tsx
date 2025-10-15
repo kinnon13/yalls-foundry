@@ -131,9 +131,16 @@ export function RockerChat() {
     <div className="fixed bottom-6 right-6 z-50 flex flex-col w-96 h-[600px] bg-background border border-border rounded-lg shadow-2xl">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
-        <div className="flex items-center gap-2">
-          <MessageCircle className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Rocker AI</h3>
+        <div className="flex items-center gap-3">
+          <img 
+            src={new URL('@/assets/rocker-avatar.jpeg', import.meta.url).href} 
+            alt="Rocker" 
+            className="h-10 w-10 rounded-full object-cover"
+          />
+          <div>
+            <h3 className="font-semibold">Rocker</h3>
+            <p className="text-xs text-muted-foreground">Your AI sidekick</p>
+          </div>
           {isVoiceMode && (
             <span className={cn(
               "text-xs px-2 py-1 rounded-full",
@@ -182,9 +189,13 @@ export function RockerChat() {
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className={cn(
               "mb-4 transition-all",
-              voiceStatus === 'connected' && "scale-110"
+              voiceStatus === 'connected' && "scale-110 animate-pulse"
             )}>
-              <Mic className="h-16 w-16 text-primary" />
+              <img 
+                src={new URL('@/assets/rocker-avatar.jpeg', import.meta.url).href}
+                alt="Rocker listening"
+                className="h-24 w-24 rounded-full object-cover"
+              />
             </div>
             <p className="text-sm font-semibold mb-2">
               {voiceStatus === 'connected' ? 'Listening...' : 'Connecting...'}
@@ -201,8 +212,12 @@ export function RockerChat() {
         ) : messages.length === 0 ? (
           <div className="flex flex-col h-full">
             <div className="flex flex-col items-center justify-center flex-1 text-center text-muted-foreground">
-              <MessageCircle className="h-12 w-12 mb-4 opacity-50" />
-              <p className="text-sm font-semibold">Hey there! I'm Rocker, your AI assistant.</p>
+              <img 
+                src={new URL('@/assets/rocker-avatar.jpeg', import.meta.url).href}
+                alt="Rocker"
+                className="h-20 w-20 rounded-full mb-4 object-cover"
+              />
+              <p className="text-sm font-semibold">Hey there! I'm Rocker, your AI sidekick.</p>
               <p className="text-xs mt-2">I can help you save posts, find content, create events, and more!</p>
             </div>
             <RockerQuickActions onSelectPrompt={handleQuickAction} />

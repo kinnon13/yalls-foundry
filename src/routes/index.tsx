@@ -4,7 +4,8 @@ import { DevNav } from '@/components/DevNav';
 import { useSession } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Search, Settings, ShoppingBag } from 'lucide-react';
+import { Sparkles, Search, Settings, ShoppingBag, Bookmark } from 'lucide-react';
+import { PostFeed } from '@/components/posts/PostFeed';
 
 export default function Index() {
   const { session } = useSession();
@@ -41,6 +42,27 @@ export default function Index() {
 
           {/* Quick Navigation */}
           <div className="grid gap-6 md:grid-cols-3">
+            {session && (
+              <Link to="/posts/saved">
+                <Card className="hover:border-primary transition-colors h-full cursor-pointer">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bookmark className="h-5 w-5" />
+                      Saved Posts
+                    </CardTitle>
+                    <CardDescription>
+                      View your bookmarked content
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button variant="outline" className="w-full">
+                      View Saved
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Link>
+            )}
+
             <Link to="/horses">
               <Card className="hover:border-primary transition-colors h-full cursor-pointer">
                 <CardHeader>
@@ -167,6 +189,14 @@ export default function Index() {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Community Feed */}
+          {session && (
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold mb-4">Community Feed</h2>
+              <PostFeed />
+            </div>
           )}
         </div>
       </main>
