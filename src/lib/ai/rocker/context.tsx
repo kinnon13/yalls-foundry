@@ -12,6 +12,8 @@ import { RealtimeVoice } from '@/utils/RealtimeAudio';
 import { useToast } from '@/hooks/use-toast';
 import type { RockerMessage } from '@/hooks/useRocker';
 import { executeDOMAction } from './dom-agent';
+import { Button } from '@/components/ui/button';
+import { Mic } from 'lucide-react';
 
 interface RockerContextValue {
   // Chat state
@@ -463,6 +465,53 @@ export function RockerProvider({ children }: { children: ReactNode }) {
   return (
     <RockerContext.Provider value={value}>
       {children}
+      
+      {/* Microphone activation banner */}
+      {voiceStatus === 'disconnected' && !initializingRef.current && !isAlwaysListening && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-card border border-primary/20 rounded-lg shadow-lg p-4 max-w-md flex items-center gap-3 z-50 animate-in slide-in-from-bottom">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+            <Mic className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium">Activate voice mode</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Click to enable "Hey Rocker" wake word
+            </p>
+          </div>
+          <Button 
+            variant="default" 
+            size="sm"
+            className="shrink-0"
+            onClick={async () => {
+              console.log('[Rocker] User clicked activate - triggering permission request');
+              try {
+                await toggleAlwaysListening();
+                toast({
+                  title: "Voice activated!",
+                  description: "Say 'Hey Rocker' to start a conversation",
+                });
+              } catch (error: any) {
+                console.error('[Rocker] Activation failed:', error);
+                if (error?.name === 'NotAllowedError') {
+                  toast({
+                    title: "Microphone blocked",
+                    description: "Please allow microphone access in your browser settings",
+                    variant: "destructive",
+                  });
+                } else {
+                  toast({
+                    title: "Activation failed",
+                    description: error?.message || "Please try again",
+                    variant: "destructive",
+                  });
+                }
+              }
+            }}
+          >
+            Activate
+          </Button>
+        </div>
+      )}
     </RockerContext.Provider>
   );
 }
