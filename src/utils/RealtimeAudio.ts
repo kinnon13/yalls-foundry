@@ -453,6 +453,10 @@ export class RealtimeVoice {
         this.onTranscript?.(message.delta, false);
       } else if (message.type === 'response.audio_transcript.done') {
         this.onTranscript?.(message.transcript, true);
+        // Persist assistant transcript when available
+        if (message.transcript && message.transcript.trim()) {
+          await this.saveMessage('assistant', message.transcript);
+        }
       } else if (message.type === 'input_audio_buffer.speech_started') {
         console.log(`[Rocker Voice ${this.instanceId}] User started speaking`);
       } else if (message.type === 'input_audio_buffer.speech_stopped') {
