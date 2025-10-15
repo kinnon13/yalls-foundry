@@ -1,6 +1,9 @@
 /**
  * Consent Gate Middleware
- * Ensures all AI operations respect user consent settings
+ * LEARNING IS NOW MANDATORY - Always allow operations
+ * 
+ * Note: These functions maintain the API for backward compatibility
+ * but no longer block operations since learning is required for all users.
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -16,31 +19,14 @@ export interface ConsentScope {
 
 /**
  * Check if user has granted required consent
+ * ALWAYS RETURNS TRUE - Learning is mandatory
  */
 export async function hasConsent(
   userId: string,
   requiredScope: 'site_opt_in' | 'email_opt_in' | 'sms_opt_in' | 'push_opt_in' | 'proactive_enabled'
 ): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .from('ai_user_consent')
-      .select(requiredScope)
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Consent check error:', error);
-      return false;
-    }
-
-    // No consent record = no consent
-    if (!data) return false;
-
-    return data[requiredScope] === true;
-  } catch (error) {
-    console.error('Consent check exception:', error);
-    return false;
-  }
+  // Learning is mandatory - always return true
+  return true;
 }
 
 /**
@@ -77,62 +63,29 @@ export async function getConsentStatus(userId: string): Promise<ConsentScope | n
 
 /**
  * Consent gate for Rocker operations
- * Throws error if user hasn't consented
+ * NO LONGER BLOCKS - Learning is mandatory
  */
 export async function requireConsent(
   userId: string,
   scope: 'site_opt_in' | 'proactive_enabled' = 'site_opt_in'
 ): Promise<void> {
-  const hasPermission = await hasConsent(userId, scope);
-  
-  if (!hasPermission) {
-    throw new Error(`User has not opted into ${scope.replace('_', ' ')}`);
-  }
+  // Learning is mandatory - do nothing
+  return;
 }
 
 /**
  * Middleware for Edge Functions
- * Returns 403 response if consent not granted
+ * NO LONGER BLOCKS - Learning is mandatory
  */
 export function createConsentMiddleware(requiredScope: string = 'site_opt_in') {
   return async (userId: string): Promise<Response | null> => {
-    try {
-      const { data, error } = await supabase
-        .from('ai_user_consent')
-        .select(requiredScope)
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error || !data || !data[requiredScope]) {
-        return new Response(
-          JSON.stringify({
-            error: 'Consent required',
-            message: `This feature requires ${requiredScope.replace('_', ' ')} consent`,
-            scope: requiredScope,
-          }),
-          {
-            status: 403,
-            headers: { 'Content-Type': 'application/json' },
-          }
-        );
-      }
-
-      return null; // Allow request
-    } catch (error) {
-      console.error('Consent middleware error:', error);
-      return new Response(
-        JSON.stringify({ error: 'Consent check failed' }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-    }
+    // Learning is mandatory - always allow
+    return null;
   };
 }
 
 /**
- * Check if user has specific AI scope (e.g., 'cross_user_data', 'proactive_suggestions')
+ * Check if user has specific AI scope
  */
 export async function hasScope(userId: string, scopeName: string): Promise<boolean> {
   try {

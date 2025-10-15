@@ -35,10 +35,7 @@ export function useConsent() {
 
       setStatus(data);
       
-      // Redirect to consent page if needed and not already there
-      if (data.needs_consent && window.location.pathname !== '/consent') {
-        navigate('/consent');
-      }
+      // Consent is now mandatory and auto-enabled - no redirect needed
     } catch (error) {
       console.error('Error checking consent:', error);
     } finally {
