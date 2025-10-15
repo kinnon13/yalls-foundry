@@ -33,6 +33,8 @@ export function RockerChatUI() {
     toggleAlwaysListening,
     isOpen,
     setIsOpen,
+    loadConversation,
+    createNewConversation,
   } = useRockerGlobal();
 
   const [inputValue, setInputValue] = useState('');
@@ -59,19 +61,21 @@ export function RockerChatUI() {
 
   // Listen for session load events from profile or sidebar
   useEffect(() => {
-    const handleOpenSession = (e: CustomEvent) => {
+    const handleOpenSession = async (e: CustomEvent) => {
       const sessionId = e.detail?.sessionId;
       if (sessionId) {
         setCurrentSessionId(sessionId);
         setIsOpen(true);
+        await loadConversation(sessionId);
         localStorage.removeItem('rocker-load-session');
       }
     };
 
-    const handleLoadSession = (e: CustomEvent) => {
+    const handleLoadSession = async (e: CustomEvent) => {
       const sessionId = e.detail?.sessionId;
       if (sessionId) {
         setCurrentSessionId(sessionId);
+        await loadConversation(sessionId);
       }
     };
 

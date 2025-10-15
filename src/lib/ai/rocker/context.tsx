@@ -25,6 +25,8 @@ interface RockerContextValue {
   error: string | null;
   sendMessage: (content: string, sessionId?: string) => Promise<{ sessionId?: string }>;
   clearMessages: () => void;
+  loadConversation: (sessionId: string) => Promise<void>;
+  createNewConversation: () => Promise<string | undefined>;
   
   // Voice state
   isVoiceMode: boolean;
@@ -444,6 +446,66 @@ export function RockerProvider({ children }: { children: ReactNode }) {
       });
     }
   }, [isAlwaysListening, createVoiceConnection, toast]);
+
+  // Load an existing conversation into UI
+  const loadConversation = useCallback(async (sessionId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('rocker_conversations')
+        .select('role, content, created_at')
+        .eq('user_id', user.id)
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const loaded = (data || []).map((m: any) => ({
+        role: m.role,
+        content: m.content,
+        timestamp: new Date(m.created_at)
+      })) as RockerMessage[];
+
+      setMessages(loaded);
+      setError(null);
+    } catch (err) {
+      console.error('[Rocker] Failed to load conversation', err);
+      setError('Failed to load conversation');
+    }
+  }, []);
+
+  const createNewConversation = useCallback(async (): Promise<string | undefined> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const newId = crypto.randomUUID();
+      const { error } = await supabase
+        .from('conversation_sessions')
+        .insert({
+          user_id: user.id,
+          session_id: newId,
+          title: 'New chat',
+          summary: null
+        });
+
+      if (error) throw error;
+
+      setMessages([]);
+      setIsOpen(true);
+      return newId;
+    } catch (err) {
+      console.error('[Rocker] Failed to create conversation', err);
+      toast({
+        title: 'Could not start new chat',
+        description: 'Please try again.',
+        variant: 'destructive'
+      });
+      return undefined;
+    }
+  }, [setIsOpen, toast]);
 
   // Send message to Rocker
   const sendMessage = useCallback(async (content: string, sessionId?: string) => {
@@ -1077,6 +1139,8 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     error,
     sendMessage,
     clearMessages,
+    loadConversation,
+    createNewConversation,
     isVoiceMode,
     isAlwaysListening,
     voiceStatus,
