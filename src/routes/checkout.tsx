@@ -5,7 +5,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { getMyCart, createCheckoutSession } from '@/lib/marketplace/service.supabase';
+import { getMyCart } from '@/lib/marketplace/service.supabase';
+import { createCheckoutIdempotent } from '@/lib/marketplace/service.rated';
+import { generateULID } from '@/lib/utils/ulid';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,11 +34,15 @@ export default function Checkout() {
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: () => createCheckoutSession(cartItems),
+    mutationFn: () => {
+      // Generate idempotency key for retry-safe checkout
+      const idempotencyKey = `checkout:${generateULID()}`;
+      return createCheckoutIdempotent(idempotencyKey, cartItems);
+    },
     onSuccess: (data) => {
-      toast.success('Redirecting to payment...');
-      // In production, redirect to Stripe Checkout
-      console.log('Checkout session created:', data);
+      toast.success('Order created successfully!');
+      console.log('Order created:', data);
+      // TODO: Integrate with Stripe payment
       // window.location.href = data.checkoutUrl;
     },
     onError: (error: Error) => {
