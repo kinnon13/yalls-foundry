@@ -36,21 +36,61 @@ export function CategoryFilter({ selectedCategory, onCategoryChange }: CategoryF
 
   const loadCategories = async () => {
     try {
+      // Try cache first (60 second TTL)
+      const cacheKey = 'marketplace:categories:all';
+      
+      // Check if we can use Cache API
+      if ('caches' in window) {
+        const cache = await caches.open('marketplace');
+        const cached = await cache.match(cacheKey);
+        
+        if (cached) {
+          const data = await cached.json();
+          setCategories(data as Category[]);
+          
+          // Auto-expand parent categories
+          const parents = data
+            .filter((c: Category) => c.parent_category_id === null)
+            .map((c: Category) => c.id);
+          setExpandedParents(new Set(parents));
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Fetch from database
       const { data, error } = await (supabase as any)
         .from('dynamic_categories')
         .select('*')
         .order('name');
 
       if (error) throw error;
-      setCategories((data || []) as Category[]);
+      
+      const categories = (data || []) as Category[];
+      setCategories(categories);
+
+      // Cache the result
+      if ('caches' in window) {
+        const cache = await caches.open('marketplace');
+        const response = new Response(JSON.stringify(categories), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'max-age=60',
+          },
+        });
+        await cache.put(cacheKey, response);
+      }
 
       // Auto-expand parent categories
-      const parents = (data || [])
+      const parents = categories
         .filter((c: Category) => c.parent_category_id === null)
         .map((c: Category) => c.id);
       setExpandedParents(new Set(parents));
     } catch (error) {
-      console.error('Error loading categories:', error);
+      // Use structured logging in production
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error loading categories:', error);
+      }
     } finally {
       setLoading(false);
     }
