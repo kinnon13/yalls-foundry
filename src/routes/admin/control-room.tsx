@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Shield, TestTube, Code, FileCheck, Activity, 
-  MessageSquare, Settings, Home, Gauge, Search, Upload, Flag, AlertTriangle
+  MessageSquare, Settings, Home, Gauge, Search, Upload, Flag, AlertTriangle, TrendingUp
 } from 'lucide-react';
 
 // Import panel components
@@ -20,6 +20,7 @@ import RLSScanner from '@/routes/admin/panels/RLSScanner';
 import TestRunner from '@/routes/admin/panels/TestRunner';
 import CodeSearchPanel from '@/routes/admin/panels/CodeSearchPanel';
 import CodeAuditPanel from '@/routes/admin/panels/CodeAuditPanel';
+import ScalingReadinessPanel from '@/routes/admin/panels/ScalingReadinessPanel';
 import AuthPanel from '@/routes/admin/panels/AuthPanel';
 import FeedbackInbox from '@/routes/admin/panels/FeedbackInbox';
 import { SuggestionsPanel } from '@/routes/admin/panels/SuggestionsPanel';
@@ -32,7 +33,7 @@ import AIAnalyticsPanel from '@/routes/admin/panels/AIAnalyticsPanel';
 import KnowledgeBrowserPanel from '@/routes/admin/panels/KnowledgeBrowserPanel';
 
 export default function ControlRoom() {
-  const [activeTab, setActiveTab] = useState('ai-analytics');
+  const [activeTab, setActiveTab] = useState('scaling');
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   return (
@@ -73,7 +74,11 @@ export default function ControlRoom() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Tab Navigation */}
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-13 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-14 lg:w-auto">
+              <TabsTrigger value="scaling" className="gap-2">
+                <TrendingUp className="h-4 w-4" />
+                <span className="hidden sm:inline">1B Scale</span>
+              </TabsTrigger>
               <TabsTrigger value="audit" className="gap-2">
                 <AlertTriangle className="h-4 w-4" />
                 <span className="hidden sm:inline">Audit</span>
@@ -127,6 +132,11 @@ export default function ControlRoom() {
                 <span className="hidden sm:inline">Scale</span>
               </TabsTrigger>
             </TabsList>
+
+            {/* Scaling Readiness Tab */}
+            <TabsContent value="scaling" className="space-y-6">
+              <ScalingReadinessPanel />
+            </TabsContent>
 
             {/* Code Audit Tab */}
             <TabsContent value="audit" className="space-y-6">
@@ -216,20 +226,20 @@ export default function ControlRoom() {
           <div className="mt-12 pt-6 border-t">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div className="p-4 border rounded">
-                <div className="text-2xl font-bold">13</div>
-                <div className="text-xs text-muted-foreground">Panels</div>
+                <div className="text-2xl font-bold">14</div>
+                <div className="text-xs text-muted-foreground">Admin Panels</div>
               </div>
               <div className="p-4 border rounded">
-                <div className="text-2xl font-bold text-destructive">4</div>
-                <div className="text-xs text-muted-foreground">Critical Issues</div>
+                <div className="text-2xl font-bold text-warning">65%</div>
+                <div className="text-xs text-muted-foreground">Phase 1 Ready</div>
               </div>
               <div className="p-4 border rounded">
-                <div className="text-2xl font-bold">✓</div>
-                <div className="text-xs text-muted-foreground">Code Audit</div>
+                <div className="text-2xl font-bold">~100K</div>
+                <div className="text-xs text-muted-foreground">Max Users (Current)</div>
               </div>
-              <div className="p-4 border rounded">
-                <div className="text-2xl font-bold">✓</div>
-                <div className="text-xs text-muted-foreground">Scale Ready</div>
+              <div className="p-4 border rounded bg-primary/5">
+                <div className="text-2xl font-bold text-primary">1B</div>
+                <div className="text-xs text-muted-foreground">Scale Target</div>
               </div>
             </div>
           </div>
