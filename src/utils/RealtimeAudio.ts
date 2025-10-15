@@ -198,16 +198,60 @@ export class RealtimeVoice {
   private recorder: AudioRecorder | null = null;
   private onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void;
   private onTranscript?: (text: string, isFinal: boolean) => void;
+  private onCommand?: (cmd: { type: 'navigate'; path: string }) => void;
   private lastTranscript: string = '';
 
   constructor(
     onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void,
-    onTranscript?: (text: string, isFinal: boolean) => void
+    onTranscript?: (text: string, isFinal: boolean) => void,
+    onCommand?: (cmd: { type: 'navigate'; path: string }) => void
   ) {
     this.onStatusChange = onStatusChange;
     this.onTranscript = onTranscript;
+    this.onCommand = onCommand;
   }
 
+  private detectNavigationPath(transcript: string): string | 'back' | null {
+    const t = transcript.toLowerCase();
+
+    // Basic wake word stripping
+    const cleaned = t.replace(/^\s*(hey\s+rocker|ok\s+rocker|rocker)[,\s:]*/i, '').trim();
+
+    // Go back
+    if (/(go|navigate|take) back|previous page|backwards/.test(cleaned)) return 'back';
+
+    // Dashboard
+    if (/(dashboard|home\s*dashboard|open my dashboard)/.test(cleaned)) return '/dashboard';
+
+    // Home
+    if (/(home|homepage|go home)$/.test(cleaned)) return '/';
+
+    // Horses
+    if (/(horses|open horses|browse horses)/.test(cleaned)) return '/horses';
+
+    // Marketplace / Shop
+    if (/(marketplace|shop|store)/.test(cleaned)) return '/marketplace';
+
+    // Events
+    if (/(events|open events|browse events)/.test(cleaned)) return '/events';
+
+    // Profile
+    if (/(my profile|profile page|open profile)/.test(cleaned)) return '/profile';
+
+    // Saved posts
+    if (/(saved posts|bookmarks|open saved)/.test(cleaned)) return '/posts/saved';
+
+    // Business hub -> route to dashboard businesses tab
+    if (/(business|business hub|my businesses|company)/.test(cleaned)) return '/dashboard?tab=businesses';
+
+    // Admin control room
+    if (/(control room|admin|admin panel)/.test(cleaned)) return '/dashboard?tab=control';
+
+    // Search requests → open search page (we let the user refine there)
+    if (/^search\b|find\b/.test(cleaned)) return '/search';
+
+    return null;
+  }
   stopPlayback() {
     if (audioQueueInstance) {
       audioQueueInstance.stopAll();
@@ -277,12 +321,17 @@ export class RealtimeVoice {
       } else if (message.type === 'input_audio_buffer.speech_stopped') {
         console.log('User stopped speaking');
       } else if (message.type === 'conversation.item.input_audio_transcription.completed') {
-        // Check if user said "stop"
+        // Check for voice commands like navigation
         const transcript = message.transcript?.toLowerCase() || '';
         this.lastTranscript = transcript;
         if (transcript.includes('stop')) {
           console.log('Stop command detected');
           this.stopPlayback();
+        }
+        const path = this.detectNavigationPath(transcript);
+        if (path) {
+          console.log('[Rocker Voice] Navigation command detected:', path);
+          this.onCommand?.({ type: 'navigate', path });
         }
       }
     };

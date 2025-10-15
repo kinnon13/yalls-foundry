@@ -55,6 +55,14 @@ export function RockerChat() {
     }
   }, [isOpen]);
 
+  // Auto-start always listening on mount (wake word works while icon is closed)
+  useEffect(() => {
+    if (!isAlwaysListening && voiceStatus === 'disconnected') {
+      toggleAlwaysListening();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Auto-enable wake word listening when chat opens
   useEffect(() => {
     if (isOpen && !isVoiceMode && !isAlwaysListening) {
@@ -118,6 +126,17 @@ export function RockerChat() {
             } else {
               setVoiceTranscript(text);
             }
+          },
+          (cmd) => {
+            if (cmd.type === 'navigate') {
+              if (cmd.path === 'back') {
+                navigate(-1);
+                toast({ title: 'Navigating back' });
+              } else {
+                navigate(cmd.path);
+                toast({ title: `Navigating to ${cmd.path}` });
+              }
+            }
           }
         );
 
@@ -177,6 +196,17 @@ export function RockerChat() {
             } else {
               setVoiceTranscript(text);
             }
+          },
+          (cmd) => {
+            if (cmd.type === 'navigate') {
+              if (cmd.path === 'back') {
+                navigate(-1);
+                toast({ title: 'Navigating back' });
+              } else {
+                navigate(cmd.path);
+                toast({ title: `Navigating to ${cmd.path}` });
+              }
+            }
           }
         );
 
@@ -220,14 +250,16 @@ export function RockerChat() {
   // Cleanup when chat closes
   useEffect(() => {
     if (!isOpen) {
-      voiceRef.current?.disconnect();
-      voiceRef.current = null;
-      setIsVoiceMode(false);
-      setIsAlwaysListening(false);
-      setVoiceStatus('disconnected');
-      setVoiceTranscript('');
+      if (!isAlwaysListening) {
+        voiceRef.current?.disconnect();
+        voiceRef.current = null;
+        setIsVoiceMode(false);
+        setVoiceStatus('disconnected');
+        setVoiceTranscript('');
+      }
+      // Do NOT disable always listening on close; keep wake word active in background
     }
-  }, [isOpen]);
+  }, [isOpen, isAlwaysListening]);
 
   if (!isOpen) {
     return (
