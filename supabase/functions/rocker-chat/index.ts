@@ -54,7 +54,8 @@ serve(async (req) => {
       return rateLimitResult;
     }
 
-    const { messages } = await req.json();
+    const body = await req.json();
+    const { messages, sessionId: requestedSessionId } = body;
 
     // Build user context from profile, memory, and analytics
     let userContext = `\n\n**CURRENT USER:**\n- User ID: ${user.id}\n- Email: ${user.email || 'Not provided'}`;
@@ -87,9 +88,6 @@ serve(async (req) => {
 
     // Build system prompt with user context
     const systemPrompt = USER_SYSTEM_PROMPT + userContext;
-
-    // Load conversation history - if sessionId provided, load that full session, otherwise load recent
-    const { sessionId: requestedSessionId } = await req.json().then(body => body);
     
     let conversationHistory: any[] = [];
     
