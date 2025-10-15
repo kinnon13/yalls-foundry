@@ -92,7 +92,7 @@ export function ConversationSidebar({
   useEffect(() => {
     loadConversations();
 
-    // Subscribe to changes
+    // Subscribe to changes in DB (realtime)
     const channel = supabase
       .channel('conversation_sessions_changes')
       .on(
@@ -108,8 +108,13 @@ export function ConversationSidebar({
       )
       .subscribe();
 
+    // Also refresh when a session is created/loaded via UI events (fallback if realtime isn't active)
+    const refresh = () => loadConversations();
+    window.addEventListener('rocker-load-session' as any, refresh);
+
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener('rocker-load-session' as any, refresh);
     };
   }, []);
 
