@@ -89,15 +89,15 @@ async function createProposal(supabase: any, userId: string, params: any) {
     });
   }
 
-  // Log the proposal creation
-  await supabase.from('admin_audit_log').insert({
-    actor_user_id: userId,
-    action: 'create_proposal',
-    metadata: {
-      proposal_id: data.id,
-      target_scope,
-      target_ref
-    }
+  // Log the proposal creation using audit RPC
+  await supabase.rpc('audit_write', {
+    p_actor: userId,
+    p_role: 'user',
+    p_tenant: tenant_id,
+    p_action: 'create_proposal',
+    p_scope: target_scope,
+    p_targets: [target_ref],
+    p_meta: { proposal_id: data.id }
   });
 
   return new Response(JSON.stringify({ proposal: data }), {
@@ -108,68 +108,35 @@ async function createProposal(supabase: any, userId: string, params: any) {
 async function approveChange(supabase: any, userId: string, params: any) {
   const { proposal_id, decision, reason, role } = params;
 
-  // Verify user has permission to approve
-  const { data: proposal, error: proposalError } = await supabase
-    .from('ai_change_proposals')
-    .select('*')
-    .eq('id', proposal_id)
-    .single();
+  // Use atomic RPC to record approval
+  const { data, error } = await supabase.rpc('record_approval_tx', {
+    p_proposal_id: proposal_id,
+    p_approver: userId,
+    p_role: role,
+    p_decision: decision,
+    p_reason: reason || null
+  });
 
-  if (proposalError || !proposal) {
-    return new Response(JSON.stringify({ error: 'Proposal not found' }), {
-      status: 404,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  // Check if user matches approver policy
-  const canApprove = await checkApproverEligibility(supabase, userId, role, proposal.approver_policy);
-  if (!canApprove) {
-    return new Response(JSON.stringify({ error: 'User not eligible to approve' }), {
-      status: 403,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  // Record the approval
-  const { data: approval, error: approvalError } = await supabase
-    .from('ai_change_approvals')
-    .insert({
-      proposal_id,
-      approver_id: userId,
-      approver_role: role,
-      decision,
-      reason
-    })
-    .select()
-    .single();
-
-  if (approvalError) {
-    return new Response(JSON.stringify({ error: approvalError.message }), {
+  if (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
-  // Update approval count
+  // Auto-commit if approved
   if (decision === 'approve') {
-    const { data: updated } = await supabase
-      .from('ai_change_proposals')
-      .update({ 
-        approvals_collected: proposal.approvals_collected + 1,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', proposal_id)
-      .select()
-      .single();
+    const { data: commitResult, error: commitError } = await supabase.rpc('commit_change_tx', {
+      p_proposal_id: proposal_id,
+      p_actor: userId
+    });
 
-    // Auto-commit if threshold met
-    if (updated && updated.approvals_collected >= updated.approvals_required) {
-      await commitChange(supabase, userId, { proposal_id });
+    if (commitError) {
+      console.error('Commit error:', commitError);
     }
   }
 
-  return new Response(JSON.stringify({ approval }), {
+  return new Response(JSON.stringify({ success: true, result: data }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }
@@ -177,72 +144,20 @@ async function approveChange(supabase: any, userId: string, params: any) {
 async function commitChange(supabase: any, userId: string, params: any) {
   const { proposal_id } = params;
 
-  // Get proposal
-  const { data: proposal, error: proposalError } = await supabase
-    .from('ai_change_proposals')
-    .select('*')
-    .eq('id', proposal_id)
-    .single();
+  // Use atomic RPC to commit change
+  const { data, error } = await supabase.rpc('commit_change_tx', {
+    p_proposal_id: proposal_id,
+    p_actor: userId
+  });
 
-  if (proposalError || !proposal) {
-    return new Response(JSON.stringify({ error: 'Proposal not found' }), {
-      status: 404,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  // Verify approvals
-  if (proposal.approvals_collected < proposal.approvals_required) {
-    return new Response(JSON.stringify({ error: 'Insufficient approvals' }), {
+  if (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
-  // Apply the change based on target_scope
-  let result: { data?: any; error?: string };
-  switch (proposal.target_scope) {
-    case 'user_memory':
-      result = await applyUserMemoryChange(supabase, proposal);
-      break;
-    case 'entity':
-      result = await applyEntityChange(supabase, proposal);
-      break;
-    case 'global':
-      result = await applyGlobalChange(supabase, proposal);
-      break;
-    default:
-      return new Response(JSON.stringify({ error: 'Invalid target scope' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-  }
-
-  if (result.error) {
-    return new Response(JSON.stringify({ error: result.error }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  // Mark proposal as approved
-  await supabase
-    .from('ai_change_proposals')
-    .update({ status: 'approved', updated_at: new Date().toISOString() })
-    .eq('id', proposal_id);
-
-  // Log the commit
-  await supabase.from('admin_audit_log').insert({
-    actor_user_id: userId,
-    action: 'commit_change',
-    metadata: {
-      proposal_id,
-      target_scope: proposal.target_scope,
-      target_ref: proposal.target_ref
-    }
-  });
-
-  return new Response(JSON.stringify({ success: true, result: result.data }), {
+  return new Response(JSON.stringify({ success: true, result: data }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }
@@ -282,93 +197,4 @@ function calculateRequiredApprovals(policy: any): number {
   if (policy.anyOf) return 1;
   if (policy.allOf) return policy.allOf.length;
   return 1;
-}
-
-async function checkApproverEligibility(supabase: any, userId: string, role: string, policy: any): Promise<boolean> {
-  // Check if user has the required role
-  const { data: userRoles } = await supabase
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', userId);
-
-  if (!userRoles) return false;
-
-  const userRoleList = userRoles.map((r: any) => r.role);
-
-  // Check against policy
-  if (policy.anyOf) {
-    return policy.anyOf.some((req: any) => req.role === role && userRoleList.includes(role));
-  }
-
-  if (policy.allOf) {
-    return policy.allOf.some((req: any) => req.role === role && userRoleList.includes(role));
-  }
-
-  return userRoleList.includes(role);
-}
-
-async function applyUserMemoryChange(supabase: any, proposal: any) {
-  const change = proposal.change;
-  const userId = extractUserIdFromRef(proposal.target_ref);
-
-  if (change.op === 'upsert') {
-    const { data, error } = await supabase
-      .from('ai_user_memory')
-      .upsert({
-        user_id: userId,
-        tenant_id: proposal.tenant_id,
-        key: change.key,
-        value: change.value,
-        type: change.type || 'fact',
-        confidence: change.confidence || 0.9,
-        provenance: [{
-          source: 'proposal',
-          proposal_id: proposal.id,
-          timestamp: new Date().toISOString()
-        }]
-      }, { onConflict: 'tenant_id,user_id,key' })
-      .select()
-      .single();
-
-    return { data, error: error?.message };
-  }
-
-  return { error: 'Unsupported operation' };
-}
-
-async function applyEntityChange(supabase: any, proposal: any): Promise<{ data?: any; error?: string }> {
-  // Handle entity changes (horses, events, etc.)
-  const change = proposal.change;
-  const [entityType, entityId] = proposal.target_ref.split(':');
-
-  // For now, just log - specific entity updates would go here
-  console.log('Entity change:', { entityType, entityId, change });
-  
-  return { data: { applied: true } };
-}
-
-async function applyGlobalChange(supabase: any, proposal: any) {
-  const change = proposal.change;
-
-  if (change.op === 'upsert') {
-    const { data, error } = await supabase
-      .from('ai_global_knowledge')
-      .upsert({
-        tenant_id: proposal.tenant_id,
-        key: change.key,
-        value: change.value,
-        type: change.type || 'policy'
-      }, { onConflict: 'tenant_id,key' })
-      .select()
-      .single();
-
-    return { data, error: error?.message };
-  }
-
-  return { error: 'Unsupported operation' };
-}
-
-function extractUserIdFromRef(ref: string): string {
-  const parts = ref.split(':');
-  return parts[parts.length - 1];
 }
