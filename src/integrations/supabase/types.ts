@@ -339,6 +339,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_interaction_log: {
+        Row: {
+          business_context: Json | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          improvement_applied: boolean | null
+          intent: string
+          interaction_type: string
+          parameters: Json | null
+          result_status: string
+          session_id: string | null
+          tool_called: string | null
+          user_correction: string | null
+          user_id: string
+        }
+        Insert: {
+          business_context?: Json | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          improvement_applied?: boolean | null
+          intent: string
+          interaction_type: string
+          parameters?: Json | null
+          result_status: string
+          session_id?: string | null
+          tool_called?: string | null
+          user_correction?: string | null
+          user_id: string
+        }
+        Update: {
+          business_context?: Json | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          improvement_applied?: boolean | null
+          intent?: string
+          interaction_type?: string
+          parameters?: Json | null
+          result_status?: string
+          session_id?: string | null
+          tool_called?: string | null
+          user_correction?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_model_registry: {
         Row: {
           created_at: string | null
@@ -677,6 +725,48 @@ export type Database = {
           updated_at?: string
           user_id?: string
           value?: Json
+        }
+        Relationships: []
+      }
+      business_kpi_snapshots: {
+        Row: {
+          active_users: number | null
+          ai_interactions: number | null
+          ai_success_rate: number | null
+          business_id: string | null
+          created_at: string | null
+          engagement_score: number | null
+          id: string
+          revenue_cents: number | null
+          snapshot_date: string
+          total_users: number | null
+          trends: Json | null
+        }
+        Insert: {
+          active_users?: number | null
+          ai_interactions?: number | null
+          ai_success_rate?: number | null
+          business_id?: string | null
+          created_at?: string | null
+          engagement_score?: number | null
+          id?: string
+          revenue_cents?: number | null
+          snapshot_date: string
+          total_users?: number | null
+          trends?: Json | null
+        }
+        Update: {
+          active_users?: number | null
+          ai_interactions?: number | null
+          ai_success_rate?: number | null
+          business_id?: string | null
+          created_at?: string | null
+          engagement_score?: number | null
+          id?: string
+          revenue_cents?: number | null
+          snapshot_date?: string
+          total_users?: number | null
+          trends?: Json | null
         }
         Relationships: []
       }
@@ -1979,6 +2069,129 @@ export type Database = {
         }
         Relationships: []
       }
+      term_knowledge: {
+        Row: {
+          added_by: string | null
+          confidence_score: number | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          source_type: string
+          source_url: string | null
+          summary: string | null
+          supersedes: string | null
+          term: string
+          title: string | null
+        }
+        Insert: {
+          added_by?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          source_type: string
+          source_url?: string | null
+          summary?: string | null
+          supersedes?: string | null
+          term: string
+          title?: string | null
+        }
+        Update: {
+          added_by?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          source_type?: string
+          source_url?: string | null
+          summary?: string | null
+          supersedes?: string | null
+          term?: string
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "term_knowledge_supersedes_fkey"
+            columns: ["supersedes"]
+            isOneToOne: false
+            referencedRelation: "term_knowledge"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      term_resolution_events: {
+        Row: {
+          created_at: string | null
+          id: string
+          method: string
+          resolved: boolean | null
+          term: string
+          term_knowledge_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          method: string
+          resolved?: boolean | null
+          term: string
+          term_knowledge_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          method?: string
+          resolved?: boolean | null
+          term?: string
+          term_knowledge_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "term_resolution_events_term_knowledge_id_fkey"
+            columns: ["term_knowledge_id"]
+            isOneToOne: false
+            referencedRelation: "term_knowledge"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      term_votes: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          id: string
+          term_knowledge_id: string | null
+          vote: number
+          voter_user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          term_knowledge_id?: string | null
+          vote: number
+          voter_user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          term_knowledge_id?: string | null
+          vote?: number
+          voter_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "term_votes_term_knowledge_id_fkey"
+            columns: ["term_knowledge_id"]
+            isOneToOne: false
+            referencedRelation: "term_knowledge"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2046,6 +2259,39 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      visual_learning_events: {
+        Row: {
+          action_attempted: string
+          correction_type: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          session_id: string | null
+          user_feedback: string | null
+          user_id: string
+        }
+        Insert: {
+          action_attempted: string
+          correction_type: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_feedback?: string | null
+          user_id: string
+        }
+        Update: {
+          action_attempted?: string
+          correction_type?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_feedback?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

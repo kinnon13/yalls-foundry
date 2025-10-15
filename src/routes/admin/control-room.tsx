@@ -27,9 +27,10 @@ import { EntitySearchPanel } from '@/routes/admin/panels/EntitySearchPanel';
 import { ScaleScorecard } from '@/lib/observability/ScaleScorecard';
 import { MediaUploadDialog } from '@/components/media/MediaUploadDialog';
 import { ModeratorConsole } from '@/routes/admin/panels/ModeratorConsole';
+import AIAnalyticsPanel from '@/routes/admin/panels/AIAnalyticsPanel';
 
 export default function ControlRoom() {
-  const [activeTab, setActiveTab] = useState('security');
+  const [activeTab, setActiveTab] = useState('ai-analytics');
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   return (
@@ -70,7 +71,11 @@ export default function ControlRoom() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Tab Navigation */}
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-10 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-11 lg:w-auto">
+              <TabsTrigger value="ai-analytics" className="gap-2">
+                <Activity className="h-4 w-4" />
+                <span className="hidden sm:inline">AI Analytics</span>
+              </TabsTrigger>
               <TabsTrigger value="security" className="gap-2">
                 <Shield className="h-4 w-4" />
                 <span className="hidden sm:inline">Security</span>
@@ -112,6 +117,11 @@ export default function ControlRoom() {
                 <span className="hidden sm:inline">Scale</span>
               </TabsTrigger>
             </TabsList>
+
+            {/* AI Analytics Tab */}
+            <TabsContent value="ai-analytics" className="space-y-6">
+              <AIAnalyticsPanel />
+            </TabsContent>
 
             {/* Security Tab */}
             <TabsContent value="security" className="space-y-6">
