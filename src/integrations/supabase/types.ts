@@ -1199,6 +1199,137 @@ export type Database = {
           },
         ]
       }
+      post_reshares: {
+        Row: {
+          commentary: string | null
+          created_at: string | null
+          id: string
+          post_id: string
+          tenant_id: string
+          user_id: string
+          visibility: string
+        }
+        Insert: {
+          commentary?: string | null
+          created_at?: string | null
+          id?: string
+          post_id: string
+          tenant_id?: string
+          user_id: string
+          visibility?: string
+        }
+        Update: {
+          commentary?: string | null
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          tenant_id?: string
+          user_id?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reshares_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_reshares_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      post_saves: {
+        Row: {
+          collection: string | null
+          created_at: string | null
+          note: string | null
+          post_id: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          collection?: string | null
+          created_at?: string | null
+          note?: string | null
+          post_id: string
+          tenant_id?: string
+          user_id: string
+        }
+        Update: {
+          collection?: string | null
+          created_at?: string | null
+          note?: string | null
+          post_id?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_saves_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_saves_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          author_id: string
+          body: string | null
+          created_at: string | null
+          id: string
+          kind: string
+          media: Json | null
+          tenant_id: string
+          updated_at: string | null
+          visibility: string
+        }
+        Insert: {
+          author_id: string
+          body?: string | null
+          created_at?: string | null
+          id?: string
+          kind: string
+          media?: Json | null
+          tenant_id?: string
+          updated_at?: string | null
+          visibility?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string | null
+          created_at?: string | null
+          id?: string
+          kind?: string
+          media?: Json | null
+          tenant_id?: string
+          updated_at?: string | null
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1279,6 +1410,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_shortcuts: {
+        Row: {
+          context: Json | null
+          created_at: string | null
+          id: string
+          shortcut: string
+          target_id: string
+          target_type: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          shortcut: string
+          target_id: string
+          target_type: string
+          tenant_id?: string
+          user_id: string
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          shortcut?: string
+          target_id?: string
+          target_type?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_shortcuts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
     }
     Views: {

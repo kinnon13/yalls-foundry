@@ -62,3 +62,15 @@ verify_jwt = true
 
 [functions.upload-media]
 verify_jwt = true
+
+[functions.save-post]
+verify_jwt = true
+
+[functions.unsave-post]
+verify_jwt = true
+
+[functions.reshare-post]
+verify_jwt = true
+
+[functions.recall-content]
+verify_jwt = true
