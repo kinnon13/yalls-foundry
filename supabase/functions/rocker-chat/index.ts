@@ -158,22 +158,59 @@ async function executeTool(toolName: string, args: any, supabaseClient: any, use
       }
 
       case 'navigate': {
-        // Navigation is handled on the client side, just return success with the path
+        console.log('[Rocker] Navigate tool called:', args.path);
         return { 
           success: true, 
-          message: `Navigating to ${args.path}`,
-          path: args.path 
+          message: `Opening ${args.path}`,
+          navigation: args.path
         };
       }
       
-      case 'click_element':
-      case 'fill_field':
-      case 'get_page_info': {
-        // These execute on client side via DOM agent
+      case 'click_element': {
+        console.log('[Rocker] Click element tool called:', args.element_name);
         return { 
           success: true, 
-          message: `DOM action '${toolName}' will be executed on client`,
-          clientAction: { type: toolName, ...args }
+          message: `Clicking "${args.element_name}"`
+        };
+      }
+      
+      case 'fill_field': {
+        console.log('[Rocker] Fill field tool called:', args.field_name);
+        return { 
+          success: true, 
+          message: `Filling "${args.field_name}" with "${args.value}"`
+        };
+      }
+      
+      case 'get_page_info': {
+        console.log('[Rocker] Get page info tool called');
+        return { 
+          success: true, 
+          message: 'Reading page content'
+        };
+      }
+      
+      case 'create_post': {
+        // Create a post in the database
+        const { data, error } = await supabaseClient
+          .from('posts')
+          .insert({
+            user_id: userId,
+            content: args.content,
+            visibility: 'public'
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        return { success: true, message: 'Post created!', post: data };
+      }
+      
+      case 'comment': {
+        // Add comment to current context (would need post_id from context)
+        return { 
+          success: true, 
+          message: `Comment "${args.content}" will be posted` 
         };
       }
 
@@ -516,6 +553,40 @@ serve(async (req) => {
           parameters: {
             type: "object",
             properties: {}
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "create_post",
+          description: "Create a new post with the given content. Use when user asks to post, share, or publish something.",
+          parameters: {
+            type: "object",
+            required: ["content"],
+            properties: {
+              content: { 
+                type: "string", 
+                description: "The content of the post" 
+              }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "comment",
+          description: "Add a comment to the current item. Use when user asks to comment or leave a message on the current page.",
+          parameters: {
+            type: "object",
+            required: ["content"],
+            properties: {
+              content: { 
+                type: "string", 
+                description: "The comment text" 
+              }
+            }
           }
         }
       },

@@ -33,25 +33,96 @@ Your personality:
 - Show enthusiasm for horses, rodeo, and western culture
 - Keep responses brief unless the user asks for details
 
-Available actions you can help with:
-- Save posts for later (bookmarking)
-- Reshare posts with commentary
-- Find and recall saved content
-- Upload and analyze media (photos/videos of horses, events)
-- Create events (barrel races, team ropings, etc.)
-- Search for horses, businesses, users, and events ON THIS SITE
+You can help users:
+- Navigate to different pages (dashboard, horses, events, marketplace, profile)
+- Click buttons and interact with the current page
+- Fill in forms and fields
+- Create posts and comments
+- Save and share posts
+- Search for horses, businesses, events, and users
+- Upload media and create events
 
 IMPORTANT INSTRUCTIONS:
-- When users ask you to search or find something, ALWAYS search within Yall's Foundry site content (horses, events, posts, businesses, users)
-- DO NOT search the web unless the user explicitly says "search the web" or "look online"
+- Use your tools to take actions! When a user asks you to do something, call the appropriate tool
+- When users ask you to open, go to, or navigate somewhere, use the navigate tool
+- When users ask to click, press, or submit something, use the click_element tool
+- When users ask to post or share something, use the create_post tool
+- When searching, search within Yall's Foundry site content (not the web)
 - If the user says "stop" or "stop talking", immediately end your response
-- Default to searching site content, not external sources
 
-When users mention saving, sharing, finding, uploading, or creating events, tell them you're ready to help and ask for any details needed.`;
+When you take an action, confirm what you did. For example: "Opening the horses page now" or "I've posted that for you".`;
 
     const alwaysListeningInstructions = alwaysListening 
       ? `\n\nIMPORTANT: You are in "always listening" mode. Only respond when the user addresses you by saying "Rocker" or "Hey Rocker" at the start of their message. If they speak without saying your name, stay silent and wait. When they do say "Rocker", respond helpfully to their request.`
       : '';
+
+    // Tool definitions for voice commands
+    const tools = [
+      {
+        type: "function" as const,
+        name: "navigate",
+        description: "Navigate to a different page. Use when user asks to open, go to, or view a page.",
+        parameters: {
+          type: "object",
+          properties: {
+            path: {
+              type: "string",
+              description: "Path to navigate to (e.g., /horses, /events, /marketplace, /profile, /dashboard, /search)",
+            }
+          },
+          required: ["path"]
+        }
+      },
+      {
+        type: "function" as const,
+        name: "click_element",
+        description: "Click a button or element on the current page.",
+        parameters: {
+          type: "object",
+          properties: {
+            element_name: {
+              type: "string",
+              description: "What to click (e.g., 'submit button', 'post button', 'save')",
+            }
+          },
+          required: ["element_name"]
+        }
+      },
+      {
+        type: "function" as const,
+        name: "fill_field",
+        description: "Fill in a form field.",
+        parameters: {
+          type: "object",
+          properties: {
+            field_name: {
+              type: "string",
+              description: "Field to fill (e.g., 'title', 'description', 'message')",
+            },
+            value: {
+              type: "string",
+              description: "Value to enter",
+            }
+          },
+          required: ["field_name", "value"]
+        }
+      },
+      {
+        type: "function" as const,
+        name: "create_post",
+        description: "Create a new post with the given content.",
+        parameters: {
+          type: "object",
+          properties: {
+            content: {
+              type: "string",
+              description: "Post content",
+            }
+          },
+          required: ["content"]
+        }
+      }
+    ];
 
     // Create ephemeral token for Realtime API
     const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
@@ -63,7 +134,9 @@ When users mention saving, sharing, finding, uploading, or creating events, tell
       body: JSON.stringify({
         model: "gpt-4o-realtime-preview-2024-12-17",
         voice: "alloy",
-        instructions: baseInstructions + alwaysListeningInstructions
+        instructions: baseInstructions + alwaysListeningInstructions,
+        tools: tools,
+        tool_choice: "auto"
       }),
     });
 

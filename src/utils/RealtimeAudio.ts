@@ -201,14 +201,28 @@ export class RealtimeVoice {
   private recorder: AudioRecorder | null = null;
   private onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void;
   private onTranscript?: (text: string, isFinal: boolean) => void;
-  private onCommand?: (cmd: { type: 'navigate'; path: string }) => void;
+  private onCommand?: (cmd: { 
+    type: 'navigate' | 'click_element' | 'fill_field' | 'create_post'; 
+    path?: string;
+    element_name?: string;
+    field_name?: string;
+    value?: string;
+    content?: string;
+  }) => void;
   private lastTranscript: string = '';
   private instanceId: string;
 
   constructor(
     onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void,
     onTranscript?: (text: string, isFinal: boolean) => void,
-    onCommand?: (cmd: { type: 'navigate'; path: string }) => void
+    onCommand?: (cmd: { 
+      type: 'navigate' | 'click_element' | 'fill_field' | 'create_post';
+      path?: string;
+      element_name?: string;
+      field_name?: string;
+      value?: string;
+      content?: string;
+    }) => void
   ) {
     this.instanceId = Math.random().toString(36).substring(7);
     console.log(`[Rocker Voice ${this.instanceId}] Creating new instance`);
@@ -356,6 +370,43 @@ export class RealtimeVoice {
     this.ws.onmessage = async (event) => {
       const message = JSON.parse(event.data);
       
+      // Handle tool calls from OpenAI
+      if (message.type === 'response.function_call_arguments.done') {
+        console.log(`[Rocker Voice ${this.instanceId}] Tool call:`, message.name, message.arguments);
+        
+        try {
+          const args = JSON.parse(message.arguments);
+          
+          // Handle navigation
+          if (message.name === 'navigate') {
+            console.log(`[Rocker Voice ${this.instanceId}] 🔥 NAVIGATE TOOL CALLED:`, args.path);
+            this.stopPlayback();
+            this.onCommand?.({ type: 'navigate', path: args.path });
+          }
+          
+          // Handle click element
+          else if (message.name === 'click_element') {
+            console.log(`[Rocker Voice ${this.instanceId}] 🔥 CLICK TOOL CALLED:`, args.element_name);
+            // Emit as command to be handled by context
+            this.onCommand?.({ type: 'click_element' as any, element_name: args.element_name } as any);
+          }
+          
+          // Handle fill field
+          else if (message.name === 'fill_field') {
+            console.log(`[Rocker Voice ${this.instanceId}] 🔥 FILL TOOL CALLED:`, args);
+            this.onCommand?.({ type: 'fill_field' as any, ...args } as any);
+          }
+          
+          // Handle create post
+          else if (message.name === 'create_post') {
+            console.log(`[Rocker Voice ${this.instanceId}] 🔥 CREATE_POST TOOL CALLED:`, args);
+            this.onCommand?.({ type: 'create_post' as any, content: args.content } as any);
+          }
+        } catch (err) {
+          console.error(`[Rocker Voice ${this.instanceId}] Error parsing tool arguments:`, err);
+        }
+      }
+      
       if (message.type === 'response.audio.delta') {
         const binaryString = atob(message.delta);
         const bytes = new Uint8Array(binaryString.length);
@@ -382,19 +433,12 @@ export class RealtimeVoice {
           this.stopPlayback();
         }
         
-        // Check for navigation BEFORE processing other responses
+        // Fallback: Check for navigation patterns if no tool was called
         const path = this.detectNavigationPath(transcript);
         if (path) {
-          console.log(`[Rocker Voice ${this.instanceId}] 🔥 NAVIGATION COMMAND DETECTED:`, path);
-          console.log(`[Rocker Voice ${this.instanceId}] Emitting navigation command...`);
-          
-          // Stop any ongoing audio playback when navigating
+          console.log(`[Rocker Voice ${this.instanceId}] 🔥 NAVIGATION PATTERN DETECTED:`, path);
           this.stopPlayback();
-          
-          // Emit navigation command
           this.onCommand?.({ type: 'navigate', path });
-          
-          console.log(`[Rocker Voice ${this.instanceId}] ✓ Navigation command emitted`);
         }
       }
     };
