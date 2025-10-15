@@ -14,10 +14,11 @@ import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileFields } from '@/components/profile/ProfileFields';
 import { ClaimBanner } from '@/components/profile/ClaimBanner';
 import { ProfileActions } from '@/components/profile/ProfileActions';
-import { mockProfileService } from '@/lib/profiles/service.mock';
+import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
 import type { AnyProfile } from '@/lib/profiles/types';
 import { ArrowLeft, User } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
@@ -27,38 +28,95 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // If no ID provided, show current user's profile
-    if (!id && session?.userId) {
+    const fetchProfile = async () => {
+      // If no ID provided, show current user's profile info
+      if (!id && session?.userId) {
+        setLoading(true);
+        // Fetch user's claimed entity profiles
+        const { data } = await supabase
+          .from('entity_profiles')
+          .select('*')
+          .eq('owner_id', session.userId)
+          .limit(1)
+          .maybeSingle();
+
+        if (data) {
+          setProfile({
+            ...data,
+            type: data.entity_type,
+            custom_fields: data.custom_fields || {},
+          } as AnyProfile);
+        } else {
+          // Show basic user info if no entity profiles
+          setProfile({
+            id: session.userId,
+            type: 'rider',
+            name: session.email || 'User',
+            is_claimed: true,
+            claimed_by: session.userId,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            custom_fields: {},
+          } as AnyProfile);
+        }
+        setLoading(false);
+        return;
+      }
+
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
-      // For now, create a basic user profile view
-      setProfile({
-        id: session.userId,
-        type: 'rider',
-        name: session.email || 'User',
-        is_claimed: true,
-        claimed_by: session.userId,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      } as AnyProfile);
-      setLoading(false);
-      return;
-    }
+      const { data, error } = await supabase
+        .from('entity_profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-    if (!id) return;
-
-    setLoading(true);
-    mockProfileService.getById(id).then((p) => {
-      setProfile(p);
+      if (error) {
+        console.error('Error fetching profile:', error);
+        toast.error('Failed to load profile');
+        setProfile(null);
+      } else {
+        setProfile({
+          ...data,
+          type: data.entity_type,
+          custom_fields: data.custom_fields || {},
+        } as AnyProfile);
+      }
       setLoading(false);
-    });
+    };
+
+    fetchProfile();
   }, [id, session]);
 
   const handleClaim = async () => {
     if (!profile || !session?.userId) return;
 
-    const updated = await mockProfileService.claim(profile.id, session.userId);
-    if (updated) {
-      setProfile(updated);
+    const { data, error } = await supabase
+      .from('entity_profiles')
+      .update({
+        is_claimed: true,
+        claimed_by: session.userId,
+        owner_id: session.userId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', profile.id)
+      .select()
+      .single();
+
+    if (error) {
+      toast.error('Failed to claim profile');
+      console.error(error);
+    } else {
+      setProfile({
+        ...data,
+        type: data.entity_type,
+        custom_fields: data.custom_fields || {},
+      } as AnyProfile);
+      toast.success('Profile claimed successfully!');
     }
   };
 
@@ -70,9 +128,17 @@ export default function Profile() {
     if (!profile) return;
     if (!confirm(`Delete profile "${profile.name}"?`)) return;
 
-    const success = await mockProfileService.delete(profile.id);
-    if (success) {
-      window.location.href = '/';
+    const { error } = await supabase
+      .from('entity_profiles')
+      .delete()
+      .eq('id', profile.id);
+
+    if (error) {
+      toast.error('Failed to delete profile');
+      console.error(error);
+    } else {
+      toast.success('Profile deleted successfully');
+      navigate('/');
     }
   };
 
@@ -127,9 +193,7 @@ export default function Profile() {
                   <p className="font-mono text-xs">{session.userId}</p>
                 </div>
                 <div className="flex gap-2 pt-4">
-                  <Button variant="outline" onClick={handleEdit}>Edit Profile</Button>
-                  <Button variant="outline" onClick={() => navigate('/posts/saved')}>Saved Posts</Button>
-                  <Button variant="outline" onClick={() => navigate('/mlm/dashboard')}>My Network</Button>
+                  <Button onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
                 </div>
               </CardContent>
             </Card>

@@ -139,69 +139,6 @@ export default function Index() {
                 </CardContent>
               </Card>
             </Link>
-
-            <Link to="/admin/control-room">
-              <Card className="hover:border-primary transition-colors h-full cursor-pointer">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
-                    Control Room
-                  </CardTitle>
-                  <CardDescription>
-                    Admin dashboard - Security, tests, diagnostics
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button variant="outline" className="w-full">
-                    Open Dashboard
-                  </Button>
-                </CardContent>
-              </Card>
-            </Link>
-
-            {/* Business Hub (Authenticated Users) */}
-            {session && (
-              <Link to={`/business/${session.userId}/hub`}>
-                <Card className="hover:border-primary transition-colors h-full cursor-pointer">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5" />
-                      Business Hub
-                    </CardTitle>
-                    <CardDescription>
-                      Manage your business, CRM, and customers
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button variant="outline" className="w-full">
-                      Open Business Hub
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Link>
-            )}
-
-            {/* MLM Dashboard (Authenticated Users) */}
-            {session && (
-              <Link to="/mlm/dashboard">
-                <Card className="hover:border-primary transition-colors h-full cursor-pointer">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Settings className="h-5 w-5" />
-                      MLM Dashboard
-                    </CardTitle>
-                    <CardDescription>
-                      View your network, earnings & referral tree
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button variant="outline" className="w-full">
-                      My Network
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Link>
-            )}
           </div>
 
           {/* Stats */}
