@@ -50,23 +50,7 @@ IMPORTANT INSTRUCTIONS:
 When users mention saving, sharing, finding, uploading, or creating events, tell them you're ready to help and ask for any details needed.`;
 
     const alwaysListeningInstructions = alwaysListening 
-      ? `\n\nCRITICAL WAKE WORD DETECTION:
-You are in "always listening" mode. You MUST follow these rules EXACTLY:
-
-1. ONLY respond when the user says "Hey Rocker", "Ok Rocker", or "Rocker" at the START of their speech
-2. If they speak WITHOUT saying your wake word first, DO NOT respond at all - stay completely silent
-3. When you DO hear your wake word, acknowledge it briefly then help with their request
-4. After responding to a wake word request, go back to waiting for the next wake word
-
-Examples:
-- User: "Hey Rocker, open the horses page" → You respond and help
-- User: "I need to check something" → You stay SILENT (no wake word)
-- User: "Rocker, what's on my calendar" → You respond and help
-- User: "That's interesting" → You stay SILENT (no wake word)
-
-DO NOT greet users unless they use the wake word first.
-DO NOT respond to background conversation.
-WAIT for "Rocker" or "Hey Rocker" before any response.`
+      ? `\n\nIMPORTANT: You are in "always listening" mode. Only respond when the user addresses you by saying "Rocker" or "Hey Rocker" at the start of their message. If they speak without saying your name, stay silent and wait. When they do say "Rocker", respond helpfully to their request.`
       : '';
 
     // Create ephemeral token for Realtime API
