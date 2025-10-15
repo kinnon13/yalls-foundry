@@ -121,7 +121,15 @@ export function CalendarSidebar({
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Calendar creation error:', error);
+        throw error;
+      }
+
+      if (data?.error) {
+        console.error('Calendar creation failed:', data.error);
+        throw new Error(data.error);
+      }
 
       toast({
         title: 'Calendar created',
@@ -138,7 +146,7 @@ export function CalendarSidebar({
       console.error('Failed to create calendar:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create calendar',
+        description: error instanceof Error ? error.message : 'Failed to create calendar',
         variant: 'destructive',
       });
     }
@@ -158,7 +166,15 @@ export function CalendarSidebar({
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Collection creation error:', error);
+        throw error;
+      }
+
+      if (data?.error) {
+        console.error('Collection creation failed:', data.error);
+        throw new Error(data.error);
+      }
 
       toast({
         title: 'Collection created',
@@ -174,7 +190,7 @@ export function CalendarSidebar({
       console.error('Failed to create collection:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create collection',
+        description: error instanceof Error ? error.message : 'Failed to create collection',
         variant: 'destructive',
       });
     }

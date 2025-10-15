@@ -71,33 +71,27 @@ serve(async (req) => {
 });
 
 async function createCalendar(supabase: any, userId: string, params: any) {
-  const { owner_profile_id, name, calendar_type, color, description } = params;
+  const { name, calendar_type, color, description } = params;
 
-  // Verify ownership
-  const { data: profile } = await supabase
-    .from('entity_profiles')
-    .select('id')
-    .eq('id', owner_profile_id)
-    .eq('owner_id', userId)
-    .single();
-
-  if (!profile) {
-    throw new Error('Profile not found or not owned by user');
-  }
-
+  // Use the authenticated user's ID as owner_profile_id
   const { data, error } = await supabase
     .from('calendars')
     .insert({
-      owner_profile_id,
+      owner_profile_id: userId,
       name,
-      calendar_type: calendar_type || 'custom',
+      calendar_type: calendar_type || 'personal',
       color: color || '#3b82f6',
       description
     })
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error creating calendar:', error);
+    throw error;
+  }
+  
+  console.log('Calendar created successfully:', data);
   return { calendar: data };
 }
 
@@ -166,24 +160,13 @@ async function shareCalendar(supabase: any, params: any) {
 }
 
 async function createCollection(supabase: any, userId: string, params: any) {
-  const { owner_profile_id, name, description, color, calendar_ids } = params;
+  const { name, description, color, calendar_ids } = params;
 
-  // Verify ownership
-  const { data: profile } = await supabase
-    .from('entity_profiles')
-    .select('id')
-    .eq('id', owner_profile_id)
-    .eq('owner_id', userId)
-    .single();
-
-  if (!profile) {
-    throw new Error('Profile not found or not owned by user');
-  }
-
+  // Use the authenticated user's ID as owner_profile_id
   const { data: collection, error: collectionError } = await supabase
     .from('calendar_collections')
     .insert({
-      owner_profile_id,
+      owner_profile_id: userId,
       name,
       description,
       color: color || '#8b5cf6'
@@ -191,7 +174,12 @@ async function createCollection(supabase: any, userId: string, params: any) {
     .select()
     .single();
 
-  if (collectionError) throw collectionError;
+  if (collectionError) {
+    console.error('Error creating collection:', collectionError);
+    throw collectionError;
+  }
+
+  console.log('Collection created successfully:', collection);
 
   // Add calendars to collection
   if (calendar_ids && calendar_ids.length > 0) {
@@ -204,7 +192,10 @@ async function createCollection(supabase: any, userId: string, params: any) {
       .from('calendar_collection_members')
       .insert(members);
 
-    if (membersError) throw membersError;
+    if (membersError) {
+      console.error('Error adding calendars to collection:', membersError);
+      throw membersError;
+    }
   }
 
   return { collection };
