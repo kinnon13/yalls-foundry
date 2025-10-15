@@ -25,6 +25,10 @@ export async function extractLearningsFromConversation(
 
     // Detect preferences, interests, and important facts from user messages
     const learningPatterns = [
+      // Family & relationships (NEW - captures "my mom is X", "my dad is Y")
+      { pattern: /my (mom|mother|dad|father|sister|brother|son|daughter|wife|husband|partner|spouse|grandmother|grandfather|grandma|grandpa|aunt|uncle|cousin) (is|was|works as|lives in|named) ([^.,!?]+)/i, type: 'family_member' },
+      { pattern: /(mom|mother|dad|father|sister|brother)['']s name is ([^.,!?]+)/i, type: 'family_member' },
+      
       // Preferences
       { pattern: /I (prefer|like|love|want|need|always|usually|enjoy|favor)/i, type: 'preference' },
       { pattern: /(never|don't|won't|hate|dislike|avoid|can't stand) (.+)/i, type: 'preference', negative: true },
@@ -55,16 +59,40 @@ export async function extractLearningsFromConversation(
       { pattern: /I (don't know|need help with|struggle with)/i, type: 'skill', negative: true },
     ];
 
+    console.log(`[Learning] Analyzing message: "${userMessage.substring(0, 100)}..."`);
+
+
+
+    let extractedCount = 0;
     for (const { pattern, type, negative } of learningPatterns) {
       const match = userMessage.match(pattern);
       if (match) {
-        const key = `${type}_${match[0].toLowerCase().replace(/\s+/g, '_').substring(0, 50)}`;
-        const value = {
-          statement: match[0],
-          context: userMessage,
-          extracted_at: new Date().toISOString(),
-          is_negative: negative || false
-        };
+        console.log(`[Learning] Pattern matched! Type: ${type}, Match: ${match[0]}`);
+        
+        // For family members, create a cleaner key
+        let key: string;
+        let value: any;
+        
+        if (type === 'family_member') {
+          const relation = match[1]?.toLowerCase() || 'relative';
+          const detail = match[3] || match[2] || '';
+          key = `family_${relation}`;
+          value = {
+            relationship: relation,
+            detail: detail.trim(),
+            full_statement: match[0],
+            context: userMessage,
+            extracted_at: new Date().toISOString()
+          };
+        } else {
+          key = `${type}_${match[0].toLowerCase().replace(/\s+/g, '_').substring(0, 50)}`;
+          value = {
+            statement: match[0],
+            context: userMessage,
+            extracted_at: new Date().toISOString(),
+            is_negative: negative || false
+          };
+        }
 
         // Check if similar memory already exists
         const { data: existing } = await supabaseClient
@@ -75,7 +103,7 @@ export async function extractLearningsFromConversation(
           .maybeSingle();
 
         if (!existing) {
-          await supabaseClient.from('ai_user_memory').insert({
+          const { error: insertErr } = await supabaseClient.from('ai_user_memory').insert({
             user_id: userId,
             tenant_id: tenantId,
             key,
@@ -85,10 +113,21 @@ export async function extractLearningsFromConversation(
             source: 'chat',
             tags: [type, 'auto_learned']
           });
-          console.log(`[Learning] Extracted ${type}:`, key);
+          
+          if (insertErr) {
+            console.error(`[Learning] Failed to insert memory:`, insertErr);
+          } else {
+            console.log(`[Learning] ✅ Extracted ${type}: ${key} = ${JSON.stringify(value).substring(0, 100)}`);
+            extractedCount++;
+          }
+        } else {
+          console.log(`[Learning] Memory already exists for key: ${key}`);
         }
       }
     }
+    
+    console.log(`[Learning] Total memories extracted: ${extractedCount}`);
+
   } catch (error) {
     console.error('[Learning] Failed to extract learnings:', error);
   }
