@@ -107,6 +107,16 @@ export function CalendarSidebar({
     }
   };
 
+  // Expose open helpers for Rocker (fallback when click event is intercepted)
+  useEffect(() => {
+    (window as any).__openCreateCalendar = () => setCreateCalOpen(true);
+    (window as any).__openCreateCollection = () => setCreateCollOpen(true);
+    return () => {
+      delete (window as any).__openCreateCalendar;
+      delete (window as any).__openCreateCollection;
+    };
+  }, []);
+
   const createCalendar = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -261,8 +271,9 @@ export function CalendarSidebar({
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <Label>Name</Label>
+                      <Label htmlFor="calendar-name">Name</Label>
                       <Input
+                        id="calendar-name"
                         value={newCalName}
                         onChange={(e) => setNewCalName(e.target.value)}
                         placeholder="My Calendar"

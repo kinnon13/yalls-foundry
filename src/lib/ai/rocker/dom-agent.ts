@@ -183,12 +183,30 @@ export function clickElement(targetName: string): { success: boolean; message: s
     };
   }
   
-  // Scroll into view and click immediately to avoid race with subsequent actions
+  // Scroll into view and simulate real user interaction
   el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   try {
+    const evtInit: any = { bubbles: true, cancelable: true, composed: true, pointerId: 1, isPrimary: true, button: 0 };
+    el.dispatchEvent(new PointerEvent('pointerdown', evtInit));
+    el.dispatchEvent(new MouseEvent('mousedown', evtInit));
+    el.dispatchEvent(new PointerEvent('pointerup', evtInit));
+    el.dispatchEvent(new MouseEvent('mouseup', evtInit));
     (el as HTMLElement).click();
+    // Also try keyboard for components listening to key events
+    (el as HTMLElement).focus();
+    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    el.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
   } catch (e) {
     console.warn('[DOM Agent] Click error:', e);
+  }
+
+  // Fallbacks for known targets
+  const t = targetName.toLowerCase();
+  if ((t.includes('new calendar') || t.includes('create calendar')) && (window as any).__openCreateCalendar) {
+    try { (window as any).__openCreateCalendar(); } catch {}
+  }
+  if ((t.includes('new collection') || t.includes('create collection')) && (window as any).__openCreateCollection) {
+    try { (window as any).__openCreateCollection(); } catch {}
   }
   
   return { success: true, message: `Clicked "${targetName}"` };
@@ -202,6 +220,21 @@ export function fillField(targetName: string, value: string): { success: boolean
   
   const el = findElement(targetName) as HTMLInputElement | HTMLTextAreaElement | null;
   if (!el) {
+    // Fallback: if user asked for calendar name but dialog isn't open yet, open it and retry shortly
+    const t = targetName.toLowerCase();
+    if (t.includes('calendar') && t.includes('name') && (window as any).__openCreateCalendar) {
+      try { (window as any).__openCreateCalendar(); } catch {}
+      setTimeout(() => {
+        const retry = findElement(targetName) as HTMLInputElement | HTMLTextAreaElement | null;
+        if (retry) {
+          retry.focus();
+          (retry as any).value = value;
+          retry.dispatchEvent(new Event('input', { bubbles: true }));
+          retry.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }, 120);
+      return { success: true, message: `Opened dialog; filling "${targetName}"` };
+    }
     return { 
       success: false, 
       message: `Could not find field "${targetName}". Available fields: ${getAvailableFields().join(', ')}` 
