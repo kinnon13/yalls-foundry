@@ -203,11 +203,22 @@ export function HardeningVerificationPanel() {
     });
   };
 
-  const fixerCommands = `# Apply rate limiting, structured logging, and tenant cleanup
+  const fixerCommands = `# Step 1: Navigate to your project folder
+cd ~/path/to/your-lovable-project
+
+# Step 2: Apply hardening fixes (requires Deno)
 deno run -A scripts/fix-edge-functions.ts
 
-# Clean up code style
-pnpm -w lint --fix && pnpm -w format`;
+# Step 3: Clean up code style
+npm run lint --fix
+npm run format`;
+
+  const altCommands = `# If you don't have Deno installed, skip the fixer script
+# Just verify the checks below instead
+
+# Clean up code style only
+npm run lint --fix
+npm run format`;
 
   return (
     <Card>
@@ -253,24 +264,41 @@ pnpm -w lint --fix && pnpm -w format`;
           </div>
 
           <div className="rounded-md bg-amber-500/10 border border-amber-500/20 p-3 text-sm space-y-2">
-            <p className="font-medium text-amber-600 dark:text-amber-400">📍 How to run:</p>
-            <ol className="list-decimal list-inside space-y-1 text-muted-foreground ml-2">
-              <li>Open Terminal (Mac/Linux) or Command Prompt (Windows)</li>
-              <li>Navigate to your project: <code className="bg-muted px-1 py-0.5 rounded text-xs">cd path/to/your/project</code></li>
-              <li>Copy and paste the commands below</li>
-            </ol>
+            <p className="font-medium text-amber-600 dark:text-amber-400">⚠️ Important:</p>
+            <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-2">
+              <li>Replace <code className="bg-muted px-1 py-0.5 rounded text-xs">~/path/to/your-lovable-project</code> with your actual project path</li>
+              <li>This requires Deno to be installed. If you don't have it, see "Without Deno" below</li>
+            </ul>
           </div>
           
-          <div className="relative rounded-md bg-muted p-4">
-            <pre className="text-xs font-mono whitespace-pre-wrap pr-12">{fixerCommands}</pre>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute top-2 right-2"
-              onClick={() => copyToClipboard(fixerCommands)}
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
+          <div className="space-y-2">
+            <p className="text-sm font-medium">With Deno (Recommended):</p>
+            <div className="relative rounded-md bg-muted p-4">
+              <pre className="text-xs font-mono whitespace-pre-wrap pr-12">{fixerCommands}</pre>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute top-2 right-2"
+                onClick={() => copyToClipboard(fixerCommands)}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Without Deno (Manual checks only):</p>
+            <div className="relative rounded-md bg-muted p-4">
+              <pre className="text-xs font-mono whitespace-pre-wrap pr-12">{altCommands}</pre>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute top-2 right-2"
+                onClick={() => copyToClipboard(altCommands)}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           
           <p className="text-sm text-muted-foreground">
