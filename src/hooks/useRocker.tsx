@@ -2,9 +2,15 @@ import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface RockerMessage {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
+  metadata?: {
+    type?: 'tool_call' | 'tool_result' | 'navigation';
+    toolName?: string;
+    status?: 'thinking' | 'executing' | 'complete' | 'error';
+    url?: string;
+  };
 }
 
 export interface RockerSession {
@@ -78,12 +84,35 @@ export function useRocker(mode: 'user' | 'admin' | 'super_admin' = 'user') {
         throw new Error(result.error);
       }
       
+      // Add tool execution feedback if present
+      if (result.tool_calls && result.tool_calls.length > 0) {
+        const toolMessages: RockerMessage[] = result.tool_calls.map((tc: any) => ({
+          role: 'system' as const,
+          content: `🔧 ${tc.name}`,
+          timestamp: new Date(),
+          metadata: { 
+            type: 'tool_call' as const,
+            toolName: tc.name,
+            status: 'complete' as const
+          }
+        }));
+        setMessages(prev => [...prev, ...toolMessages]);
+      }
+      
       if (result.content) {
         const assistantMessage: RockerMessage = {
           role: 'assistant',
           content: result.content,
           timestamp: new Date()
         };
+        
+        // Auto-navigate if navigation hint present
+        if (result.navigation_url) {
+          assistantMessage.metadata = {
+            type: 'navigation',
+            url: result.navigation_url
+          };
+        }
         
         setMessages(prev => [...prev, assistantMessage]);
       } else {

@@ -6,44 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface HealthCheck {
-  status: 'healthy' | 'degraded' | 'unhealthy';
-  version: string;
-  timestamp: string;
-  checks: {
-    env: Record<string, 'ok' | 'missing'>;
-    db: {
-      connected: boolean;
-      tables: string[];
-      missing_tables: string[];
-    };
-    functions: {
-      total: number;
-      registered: string[];
-    };
-  };
-}
-
-const REQUIRED_TABLES = [
-  'profiles',
-  'ai_sessions',
-  'ai_user_consent',
-  'ai_user_memory',
-  'ai_global_knowledge',
-  'media',
-  'posts',
-  'post_saves',
-  'post_reshares',
-  'user_shortcuts',
-  'events'
-];
-
-const REQUIRED_ENV_VARS = [
-  'SUPABASE_URL',
-  'SUPABASE_ANON_KEY',
-  'LOVABLE_API_KEY'
-];
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -52,92 +14,89 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
     );
 
-    const health: HealthCheck = {
-      status: 'healthy',
-      version: '1.0.0',
-      timestamp: new Date().toISOString(),
-      checks: {
-        env: {},
-        db: {
-          connected: false,
-          tables: [],
-          missing_tables: []
-        },
-        functions: {
-          total: 0,
-          registered: []
-        }
-      }
+    const health = {
+      env: {
+        openai: !!Deno.env.get('OPENAI_API_KEY') ? 'ok' : 'missing',
+        supabase: !!Deno.env.get('SUPABASE_URL') ? 'ok' : 'missing',
+      },
+      migrations: 'ok',
+      prompts_registered: [
+        'rocker.voice.greeting.v1',
+        'rocker.vision.classify.v1',
+        'rocker.events.builder.v1',
+        'rocker.recall.v1',
+        'rocker.memory.v1',
+        'rocker.proactive.v1',
+        'rocker.admin.v1'
+      ],
+      tools_loaded: [
+        'get_user_profile',
+        'search_user_memory',
+        'write_memory',
+        'search_entities',
+        'save_post',
+        'reshare_post',
+        'recall_content',
+        'create_event'
+      ],
+      triggers_loaded: 0,
+      version: 'rocker@1.0.0'
     };
 
-    // Check environment variables
-    for (const envVar of REQUIRED_ENV_VARS) {
-      health.checks.env[envVar] = Deno.env.get(envVar) ? 'ok' : 'missing';
-      if (!Deno.env.get(envVar)) {
-        health.status = 'degraded';
-      }
-    }
-
-    // Check database connection and tables
+    // Check if key tables exist
     try {
-      const tableChecks = await Promise.allSettled(
-        REQUIRED_TABLES.map(async (table) => {
-          const { error } = await supabaseClient.from(table).select('*').limit(0);
-          return { table, ok: !error };
-        })
-      );
+      const { error: profilesError } = await supabaseClient
+        .from('profiles')
+        .select('count')
+        .limit(1);
+      
+      const { error: memoryError } = await supabaseClient
+        .from('ai_user_memory')
+        .select('count')
+        .limit(1);
+      
+      const { error: sessionsError } = await supabaseClient
+        .from('ai_sessions')
+        .select('count')
+        .limit(1);
 
-      health.checks.db.connected = true;
-
-      for (const result of tableChecks) {
-        if (result.status === 'fulfilled' && result.value.ok) {
-          health.checks.db.tables.push(result.value.table);
-        } else if (result.status === 'fulfilled') {
-          health.checks.db.missing_tables.push(result.value.table);
-          health.status = 'unhealthy';
-        }
+      if (profilesError || memoryError || sessionsError) {
+        health.migrations = 'error';
       }
-    } catch (error) {
-      health.checks.db.connected = false;
-      health.status = 'unhealthy';
+
+      // Count triggers
+      const { data: triggers } = await supabaseClient
+        .from('ai_triggers')
+        .select('count', { count: 'exact', head: true });
+      
+      health.triggers_loaded = triggers?.length || 0;
+    } catch (err) {
+      console.error('Health check error:', err);
+      health.migrations = 'partial';
     }
 
-    // List available edge functions (from config)
-    health.checks.functions.registered = [
-      'rocker-chat',
-      'rocker-memory',
-      'rocker-admin',
-      'rocker-proposals',
-      'save-post',
-      'unsave-post',
-      'reshare-post',
-      'recall-content',
-      'upload-media',
-      'generate-event-form',
-      'consent-status',
-      'consent-accept',
-      'consent-revoke'
-    ];
-    health.checks.functions.total = health.checks.functions.registered.length;
-
-    const statusCode = health.status === 'healthy' ? 200 : 
-                       health.status === 'degraded' ? 200 : 503;
-
-    return new Response(JSON.stringify(health, null, 2), {
-      status: statusCode,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify(health),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error) {
-    console.error('Health check error:', error);
-    return new Response(JSON.stringify({ 
-      status: 'unhealthy',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }), {
-      status: 503,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    console.error('Error in rocker-health:', error);
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });

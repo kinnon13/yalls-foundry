@@ -411,11 +411,29 @@ serve(async (req) => {
         continue;
       } else {
         // No more tool calls, return final answer
+        const response: any = { 
+          content: assistantMessage.content,
+          role: 'assistant'
+        };
+
+        // Track which tools were called for UI feedback
+        if (conversationMessages.some(m => m.role === 'tool')) {
+          response.tool_calls = conversationMessages
+            .filter(m => m.role === 'assistant' && m.tool_calls)
+            .flatMap(m => m.tool_calls || [])
+            .map((tc: any) => ({ name: tc.function.name }));
+        }
+
+        // Auto-navigation hint for recall results
+        if (assistantMessage.content.includes('found') && assistantMessage.content.match(/\/\w+\/[\w-]+/)) {
+          const urlMatch = assistantMessage.content.match(/\/\w+\/[\w-]+/);
+          if (urlMatch) {
+            response.navigation_url = urlMatch[0];
+          }
+        }
+
         return new Response(
-          JSON.stringify({ 
-            content: assistantMessage.content,
-            role: 'assistant'
-          }),
+          JSON.stringify(response),
           {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           }

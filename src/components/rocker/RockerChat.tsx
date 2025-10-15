@@ -3,6 +3,7 @@ import { MessageCircle, Send, X, Loader2, Trash2, Mic, MicOff } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useRocker } from '@/hooks/useRocker';
 import { RockerQuickActions } from './RockerQuickActions';
 import { cn } from '@/lib/utils';
@@ -228,23 +229,57 @@ export function RockerChat() {
               <div
                 key={index}
                 className={cn(
-                  'flex',
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
+                  'flex gap-3',
+                  message.role === 'user' ? 'justify-end' : 
+                  message.role === 'system' ? 'justify-center' : 'justify-start'
                 )}
               >
-                <div
-                  className={cn(
-                    'max-w-[85%] rounded-lg px-4 py-2',
-                    message.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
-                  )}
-                >
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  <span className="text-xs opacity-70 mt-1 block">
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
+                {message.role === 'assistant' && (
+                  <Avatar className="w-8 h-8 flex-shrink-0">
+                    <AvatarImage src={new URL('@/assets/rocker-avatar.jpeg', import.meta.url).href} alt="Rocker" />
+                    <AvatarFallback>AI</AvatarFallback>
+                  </Avatar>
+                )}
+                
+                {message.role === 'system' ? (
+                  <div className="max-w-[60%] rounded-full px-4 py-1 bg-muted/50 border border-border/50">
+                    <p className="text-xs text-muted-foreground text-center">
+                      {message.content}
+                    </p>
+                  </div>
+                ) : (
+                  <div
+                    className={cn(
+                      'max-w-[85%] rounded-lg px-4 py-2',
+                      message.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted'
+                    )}
+                  >
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    
+                    {message.metadata?.url && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="mt-2"
+                        onClick={() => window.location.href = message.metadata!.url!}
+                      >
+                        View →
+                      </Button>
+                    )}
+                    
+                    <span className="text-xs opacity-70 mt-1 block">
+                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                )}
+                
+                {message.role === 'user' && (
+                  <Avatar className="w-8 h-8 flex-shrink-0">
+                    <AvatarFallback>You</AvatarFallback>
+                  </Avatar>
+                )}
               </div>
             ))}
             {isLoading && (
