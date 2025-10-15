@@ -107,3 +107,7 @@ verify_jwt = true
 
 [functions.term-lookup]
 verify_jwt = true
+
+[functions.chat-store]
+verify_jwt = true
+

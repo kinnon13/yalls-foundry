@@ -584,8 +584,14 @@ export class RealtimeVoice {
       });
 
       if (insertError) {
-        console.error(`[Rocker Voice ${this.instanceId}] ❌ Failed to insert message:`, insertError);
-        return;
+        console.error(`[Rocker Voice ${this.instanceId}] ❌ Failed to insert message directly, falling back to function:`, insertError);
+        const { error: fnError } = await supabase.functions.invoke('chat-store', {
+          body: { session_id: this.sessionId, role, content, metadata: { source: 'voice', timestamp: new Date().toISOString() } }
+        });
+        if (fnError) {
+          console.error(`[Rocker Voice ${this.instanceId}] ❌ Function fallback failed:`, fnError);
+          return;
+        }
       }
 
       console.log(`[Rocker Voice ${this.instanceId}] ✅ Message saved successfully`);
