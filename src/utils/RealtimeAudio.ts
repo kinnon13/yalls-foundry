@@ -202,7 +202,7 @@ export class RealtimeVoice {
   private onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void;
   private onTranscript?: (text: string, isFinal: boolean) => void;
   private onCommand?: (cmd: { 
-    type: 'navigate' | 'click_element' | 'fill_field' | 'create_post' | 'scroll_page'; 
+    type: 'navigate' | 'click_element' | 'fill_field' | 'create_post' | 'scroll_page' | 'create_horse'; 
     path?: string;
     element_name?: string;
     field_name?: string;
@@ -210,6 +210,10 @@ export class RealtimeVoice {
     content?: string;
     direction?: string;
     amount?: string;
+    name?: string;
+    breed?: string;
+    color?: string;
+    description?: string;
   }) => void;
   private lastTranscript: string = '';
   private instanceId: string;
@@ -218,7 +222,7 @@ export class RealtimeVoice {
     onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void,
     onTranscript?: (text: string, isFinal: boolean) => void,
     onCommand?: (cmd: { 
-      type: 'navigate' | 'click_element' | 'fill_field' | 'create_post' | 'scroll_page';
+      type: 'navigate' | 'click_element' | 'fill_field' | 'create_post' | 'scroll_page' | 'create_horse';
       path?: string;
       element_name?: string;
       field_name?: string;
@@ -226,6 +230,10 @@ export class RealtimeVoice {
       content?: string;
       direction?: string;
       amount?: string;
+      name?: string;
+      breed?: string;
+      color?: string;
+      description?: string;
     }) => void
   ) {
     this.instanceId = Math.random().toString(36).substring(7);
@@ -411,6 +419,12 @@ export class RealtimeVoice {
           else if (message.name === 'scroll_page') {
             console.log(`[Rocker Voice ${this.instanceId}] 🔥 SCROLL TOOL CALLED:`, args);
             this.onCommand?.({ type: 'scroll_page', direction: args.direction, amount: args.amount });
+          }
+          
+          // Handle create horse
+          else if (message.name === 'create_horse') {
+            console.log(`[Rocker Voice ${this.instanceId}] 🔥 CREATE_HORSE TOOL CALLED:`, args);
+            this.onCommand?.({ type: 'create_horse', name: args.name, breed: args.breed, color: args.color, description: args.description });
           }
         } catch (err) {
           console.error(`[Rocker Voice ${this.instanceId}] Error parsing tool arguments:`, err);

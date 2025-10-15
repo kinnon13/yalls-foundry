@@ -21,6 +21,7 @@ When a user asks you to DO something, you MUST use your tools to do it:
 - "Post about my horse" → Call create_post tool with the content
 - "Fill in the title" → Call fill_field tool with field_name and value
 - "What's on this page?" → Call get_page_info tool
+- "Add a horse named Thunder" → Call create_horse tool with name "Thunder"
 
 **Available Tools & When to Use Them:**
 1. navigate(path) - Navigate to pages: /horses, /events, /marketplace, /profile, /dashboard, /search, or 'back'
@@ -28,14 +29,16 @@ When a user asks you to DO something, you MUST use your tools to do it:
 3. fill_field(field_name, value) - Fill form fields: 'title', 'description', 'message'
 4. get_page_info() - Get info about current page elements
 5. create_post(content) - Create a new post
-6. comment(content) - Add a comment to current item
-7. save_post(post_id) - Save/bookmark a post
-8. search_entities(query, type) - Search for horses, events, users, businesses
+6. create_horse(name, breed?, color?, description?) - Create a new horse profile
+7. comment(content) - Add a comment to current item
+8. save_post(post_id) - Save/bookmark a post
+9. search_entities(query, type) - Search for horses, events, users, businesses
 
 **IMPORTANT RULES:**
 - When user says "go to", "open", "show me" → Use navigate tool IMMEDIATELY
 - When user says "click", "press", "submit" → Use click_element tool
 - When user says "post", "share", "publish" → Use create_post tool
+- When user says "add horse", "create horse", "register horse" → Use create_horse tool
 - When user asks "what's here", "what can I do" → Use get_page_info tool
 - ALWAYS call tools when user requests actions, don't just describe what to do
 
@@ -46,7 +49,7 @@ When a user asks you to DO something, you MUST use your tools to do it:
 
 **Tone**
 - Friendly, action-oriented, concise
-- Confirm actions: "Opening horses page now" or "Posted successfully!"
+- Confirm actions: "Opening horses page now" or "Creating Thunder the horse!"
 
 **When Unsure**
 - Ask one clarifying question, then act on best guess
@@ -253,6 +256,53 @@ async function executeTool(toolName: string, args: any, supabaseClient: any, use
           direction: args.direction || 'down',
           amount: args.amount || 'page'
         };
+      }
+
+      case 'create_horse': {
+        console.log('[Tool: create_horse] Creating horse:', args.name);
+        try {
+          const slug = args.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          
+          const customFields: Record<string, any> = {};
+          if (args.breed) customFields.breed = args.breed;
+          if (args.color) customFields.color = args.color;
+          if (args.dateOfBirth) customFields.date_of_birth = args.dateOfBirth;
+
+          const { data, error } = await supabaseClient
+            .from('entity_profiles')
+            .insert({
+              entity_type: 'horse',
+              name: args.name,
+              slug,
+              description: args.description || `A horse named ${args.name}`,
+              owner_id: userId,
+              custom_fields: customFields,
+              is_claimed: false
+            })
+            .select()
+            .single();
+
+          if (error) {
+            console.error('[Tool: create_horse] Error:', error);
+            throw error;
+          }
+
+          console.log('[Tool: create_horse] Success:', data.id);
+          return {
+            success: true,
+            message: `Created horse "${args.name}"!`,
+            horseId: data.id,
+            horseName: args.name,
+            slug: slug,
+            action: 'horse_created'
+          };
+        } catch (error) {
+          console.error('[Tool: create_horse] Failed:', error);
+          return {
+            success: false,
+            message: 'Failed to create horse: ' + (error instanceof Error ? error.message : 'Unknown error')
+          };
+        }
       }
 
       case 'read_file': {
@@ -648,6 +698,39 @@ serve(async (req) => {
                 type: "string",
                 enum: ["page", "screen", "little"],
                 description: "How much to scroll (optional, defaults to 'page')"
+              }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "create_horse",
+          description: "Create a new horse profile. Use when user asks to add, create, or register a horse.",
+          parameters: {
+            type: "object",
+            required: ["name"],
+            properties: {
+              name: {
+                type: "string",
+                description: "Horse name (required)"
+              },
+              breed: {
+                type: "string",
+                description: "Horse breed (optional, e.g., 'Quarter Horse', 'Thoroughbred')"
+              },
+              color: {
+                type: "string",
+                description: "Horse color (optional, e.g., 'Bay', 'Chestnut')"
+              },
+              description: {
+                type: "string",
+                description: "Brief description (optional)"
+              },
+              dateOfBirth: {
+                type: "string",
+                description: "Date of birth in YYYY-MM-DD format (optional)"
               }
             }
           }

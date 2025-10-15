@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeVoice } from '@/utils/RealtimeAudio';
 import { useToast } from '@/hooks/use-toast';
+import { toast as sonnerToast } from 'sonner';
 import type { RockerMessage } from '@/hooks/useRocker';
 import { executeDOMAction } from './dom-agent';
 import { Button } from '@/components/ui/button';
@@ -88,7 +89,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
 
   // Voice command handler
   const handleVoiceCommand = useCallback((cmd: { 
-    type: 'navigate' | 'click_element' | 'fill_field' | 'create_post' | 'scroll_page';
+    type: 'navigate' | 'click_element' | 'fill_field' | 'create_post' | 'scroll_page' | 'create_horse';
     path?: string;
     element_name?: string;
     field_name?: string;
@@ -96,6 +97,10 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     content?: string;
     direction?: string;
     amount?: string;
+    name?: string;
+    breed?: string;
+    color?: string;
+    description?: string;
   }) => {
     console.log('[Rocker Context] Voice command received:', cmd);
     
@@ -178,7 +183,50 @@ export function RockerProvider({ children }: { children: ReactNode }) {
         description: `Scrolling ${direction}`,
       });
     }
-  }, [handleNavigation, toast]);
+    else if (cmd.type === 'create_horse') {
+      console.log('[Rocker Context] Processing create horse command:', cmd.name);
+      
+      const slug = cmd.name!.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const customFields: Record<string, any> = {};
+      if (cmd.breed) customFields.breed = cmd.breed;
+      if (cmd.color) customFields.color = cmd.color;
+
+      // Use sonner toast.promise for better UX
+      sonnerToast.promise(
+        (async () => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error('Not authenticated');
+
+          const { data, error } = await supabase
+            .from('entity_profiles')
+            .insert({
+              entity_type: 'horse',
+              name: cmd.name!,
+              slug,
+              description: cmd.description || `A horse named ${cmd.name}`,
+              owner_id: user.id,
+              custom_fields: customFields,
+              is_claimed: false
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        })(),
+        {
+          loading: `Creating horse ${cmd.name}...`,
+          success: (data) => {
+            setTimeout(() => {
+              navigate(`/horses/${data.id}`);
+            }, 1000);
+            return `🐴 Created ${cmd.name}!`;
+          },
+          error: 'Failed to create horse'
+        }
+      );
+    }
+  }, [handleNavigation, navigate, toast]);
 
   // Initialize voice with navigation handler
   const createVoiceConnection = useCallback(async (alwaysListening: boolean) => {
@@ -456,6 +504,15 @@ export function RockerProvider({ children }: { children: ReactNode }) {
             toast({
               title: '📜 Scrolled',
               description: `Scrolling ${direction}`,
+            });
+          }
+          
+          else if (tc.name === 'create_horse') {
+            const horseName = args.name;
+            console.log('[Rocker] Creating horse via chat tool:', horseName);
+            toast({
+              title: '🐴 Creating horse...',
+              description: `Adding ${horseName} to your horses`,
             });
           }
         }
