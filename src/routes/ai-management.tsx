@@ -39,6 +39,13 @@ export default function AIManagement() {
 
   useEffect(() => {
     loadSessions();
+    
+    // Check if a session was selected from profile
+    const preloadSession = localStorage.getItem('rocker-load-session');
+    if (preloadSession) {
+      setSelectedSession(preloadSession);
+      localStorage.removeItem('rocker-load-session');
+    }
   }, []);
 
   useEffect(() => {
