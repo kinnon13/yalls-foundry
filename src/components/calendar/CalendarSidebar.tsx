@@ -248,10 +248,9 @@ export function CalendarSidebar({
                   <Button
                     variant="ghost"
                     size="sm"
-                    data-rocker="new calendar"
+                    data-rocker="new calendar button new calendar calendar plus"
                     aria-label="New calendar"
                     title="Add a new calendar"
-                    onClick={() => setCreateCalOpen(true)}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -341,7 +340,7 @@ export function CalendarSidebar({
               </h3>
               <Dialog open={createCollOpen} onOpenChange={setCreateCollOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" data-rocker="create collection" aria-label="New collection" onClick={() => setCreateCollOpen(true)}>
+                  <Button variant="ghost" size="sm" data-rocker="create collection new collection collection plus" aria-label="New collection">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
