@@ -188,21 +188,43 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     if (newAlwaysListening) {
       initializingRef.current = true;
       try {
+        // Request mic permission up-front in the same user gesture
+        console.log('[Rocker] Requesting microphone permission preflight');
+        try {
+          const testStream = await navigator.mediaDevices.getUserMedia({
+            audio: { sampleRate: 24000, channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+          });
+          // Immediately stop the test stream; this is just to unlock mic access
+          for (const t of testStream.getTracks()) t.stop();
+          console.log('[Rocker] Microphone permission granted');
+        } catch (permErr) {
+          console.error('[Rocker] Microphone permission denied or failed:', permErr);
+          toast({
+            title: 'Microphone blocked',
+            description: 'Please allow microphone access in your browser and try again.',
+            variant: 'destructive',
+          });
+          setVoiceStatus('disconnected');
+          setIsVoiceMode(false);
+          setIsAlwaysListening(false);
+          return;
+        }
+
         console.log('[Rocker] Creating new voice connection in always listening mode');
         const voice = await createVoiceConnection(true);
         voiceRef.current = voice;
         setIsVoiceMode(true);
         
         toast({
-          title: "Wake word activated",
+          title: 'Wake word activated',
           description: "Say 'Hey Rocker' to start a conversation anywhere on the site",
         });
       } catch (error) {
         console.error('[Rocker] Error starting wake word mode:', error);
         toast({
-          title: "Wake word failed",
+          title: 'Wake word failed',
           description: error instanceof Error ? error.message : 'Failed to start wake word mode',
-          variant: "destructive",
+          variant: 'destructive',
         });
         setVoiceStatus('disconnected');
         setIsVoiceMode(false);
