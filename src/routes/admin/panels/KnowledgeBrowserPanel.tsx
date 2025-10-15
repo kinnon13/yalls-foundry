@@ -37,11 +37,34 @@ export default function KnowledgeBrowserPanel() {
   const [newContent, setNewContent] = useState('');
   const [newUri, setNewUri] = useState('');
   const [adding, setAdding] = useState(false);
+  const [userMemory, setUserMemory] = useState<any[]>([]);
 
   useEffect(() => {
     loadCategories();
     searchKnowledge();
+    if (session?.userId) {
+      loadUserMemory();
+    }
   }, []);
+
+  useEffect(() => {
+    searchKnowledge();
+  }, [scope, category]);
+
+  const loadUserMemory = async () => {
+    try {
+      const { data } = await supabase
+        .from('ai_user_memory')
+        .select('*')
+        .eq('user_id', session?.userId)
+        .order('updated_at', { ascending: false })
+        .limit(20);
+      
+      setUserMemory(data || []);
+    } catch (error) {
+      console.error('[KB Browser] Load memory error:', error);
+    }
+  };
 
   const loadCategories = async () => {
     try {
@@ -159,6 +182,73 @@ export default function KnowledgeBrowserPanel() {
 
   return (
     <div className="space-y-4">
+      {/* What Rocker Knows About Me */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            What Rocker Knows About Me
+          </CardTitle>
+          <CardDescription>
+            Your personal knowledge and learned preferences
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => {
+                setScope('user');
+                setCategory('all');
+              }}
+              variant={scope === 'user' ? 'default' : 'outline'}
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              My Knowledge Files ({items.filter(i => i.scope === 'user' && i.tenant_id === session?.userId).length})
+            </Button>
+            <Button 
+              onClick={() => setAddDialogOpen(true)}
+              variant="outline"
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Teach Rocker
+            </Button>
+          </div>
+
+          {userMemory.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Recent Memories ({userMemory.length})</div>
+              <ScrollArea className="h-[200px]">
+                <div className="space-y-2">
+                  {userMemory.map((mem) => (
+                    <div key={mem.id} className="p-2 border rounded text-sm">
+                      <div className="font-medium">{mem.key}</div>
+                      <div className="text-muted-foreground text-xs mt-1">
+                        {JSON.stringify(mem.value).substring(0, 100)}...
+                      </div>
+                      <div className="flex gap-2 mt-1">
+                        <Badge variant="secondary" className="text-xs">{mem.type}</Badge>
+                        {mem.tags?.map((tag: string) => (
+                          <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
+
+          {userMemory.length === 0 && scope === 'user' && items.length === 0 && (
+            <div className="text-center py-6 text-muted-foreground">
+              <p className="mb-2">Rocker hasn't learned anything about you yet.</p>
+              <p className="text-sm">Start chatting with Rocker or click "Teach Rocker" to add knowledge.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Search and Filters */}
       <Card>
         <CardHeader>
