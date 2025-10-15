@@ -12,7 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
+    // Create client for auth verification with user's JWT
+    const authClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
       {
@@ -22,13 +23,20 @@ serve(async (req) => {
       }
     );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Verify the user is authenticated
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    // Create service role client for database operations (bypasses RLS)
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
 
     const { operation, ...params } = await req.json();
 
@@ -73,7 +81,7 @@ serve(async (req) => {
 async function createCalendar(supabase: any, userId: string, params: any) {
   const { name, calendar_type, color, description } = params;
 
-  // Use the authenticated user's ID as owner_profile_id
+  // Insert calendar with authenticated user as owner
   const { data, error } = await supabase
     .from('calendars')
     .insert({
@@ -98,7 +106,6 @@ async function createCalendar(supabase: any, userId: string, params: any) {
 async function createEvent(supabase: any, userId: string, params: any) {
   const {
     calendar_id,
-    created_by,
     title,
     description,
     location,
@@ -112,7 +119,7 @@ async function createEvent(supabase: any, userId: string, params: any) {
   // Verify calendar access
   const { data: access } = await supabase.rpc('has_calendar_access', {
     _calendar_id: calendar_id,
-    _profile_id: created_by,
+    _profile_id: userId,
     _min_role: 'writer'
   });
 
@@ -124,7 +131,7 @@ async function createEvent(supabase: any, userId: string, params: any) {
     .from('calendar_events')
     .insert({
       calendar_id,
-      created_by,
+      created_by: userId,
       title,
       description,
       location,
