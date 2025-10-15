@@ -381,10 +381,20 @@ export class RealtimeVoice {
           console.log(`[Rocker Voice ${this.instanceId}] Stop command detected`);
           this.stopPlayback();
         }
+        
+        // Check for navigation BEFORE processing other responses
         const path = this.detectNavigationPath(transcript);
         if (path) {
-          console.log(`[Rocker Voice ${this.instanceId}] Navigation command detected:`, path);
+          console.log(`[Rocker Voice ${this.instanceId}] 🔥 NAVIGATION COMMAND DETECTED:`, path);
+          console.log(`[Rocker Voice ${this.instanceId}] Emitting navigation command...`);
+          
+          // Stop any ongoing audio playback when navigating
+          this.stopPlayback();
+          
+          // Emit navigation command
           this.onCommand?.({ type: 'navigate', path });
+          
+          console.log(`[Rocker Voice ${this.instanceId}] ✓ Navigation command emitted`);
         }
       }
     };

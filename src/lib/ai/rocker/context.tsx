@@ -66,19 +66,34 @@ export function RockerProvider({ children }: { children: ReactNode }) {
 
   // Handle navigation from voice or chat
   const handleNavigation = useCallback((path: string) => {
+    console.log('[Rocker Navigation] Attempting to navigate to:', path);
+    
     if (path === 'back') {
+      console.log('[Rocker Navigation] Going back');
       navigate(-1);
       toast({ title: 'Navigating back' });
     } else {
-      navigate(path);
-      toast({ title: `Navigating to ${path}` });
+      console.log('[Rocker Navigation] Navigating to:', path);
+      // Use navigate with replace: false to ensure full navigation
+      navigate(path, { replace: false });
+      toast({ 
+        title: 'Navigation', 
+        description: `Opening ${path}`,
+      });
     }
   }, [navigate, toast]);
 
   // Voice command handler
   const handleVoiceCommand = useCallback((cmd: { type: 'navigate'; path: string }) => {
+    console.log('[Rocker Context] Voice command received:', cmd);
+    
     if (cmd.type === 'navigate') {
-      handleNavigation(cmd.path);
+      console.log('[Rocker Context] Processing navigation command:', cmd.path);
+      
+      // Small delay to ensure audio stops before navigation
+      setTimeout(() => {
+        handleNavigation(cmd.path);
+      }, 100);
     }
   }, [handleNavigation]);
 
