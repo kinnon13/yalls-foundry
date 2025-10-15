@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useInView } from 'react-intersection-observer';
 import { syncUnknownsToEntities } from '@/lib/ai/rocker/learning';
 import { useToast } from '@/hooks/use-toast';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
 
 // Dynamic entity type configuration - add new types here and they auto-appear
 interface EntityConfig {
@@ -80,6 +81,7 @@ export default function UnclaimedEntitiesPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
+  const { isAdmin } = useAdminCheck();
 
   // Debounce search input (300ms)
   useEffect(() => {
@@ -89,8 +91,17 @@ export default function UnclaimedEntitiesPage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Handle sync unknowns to entities
+  // Handle sync unknowns to entities (admin only, auto-refreshes)
   const handleSync = async () => {
+    if (!isAdmin) {
+      toast({
+        title: 'Access Denied',
+        description: 'Only administrators can sync entities',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setIsSyncing(true);
     try {
       const result = await syncUnknownsToEntities();
@@ -99,8 +110,9 @@ export default function UnclaimedEntitiesPage() {
           title: 'Sync Complete',
           description: `Created ${result.created} entities, skipped ${result.skipped}`,
         });
-        // Refetch all queries
-        entityQueries.forEach(({ query }) => query.refetch());
+        
+        // Auto-refresh all queries after sync
+        await Promise.all(entityQueries.map(({ query }) => query.refetch()));
       } else {
         toast({
           title: 'Sync Failed',
@@ -109,6 +121,7 @@ export default function UnclaimedEntitiesPage() {
         });
       }
     } catch (error) {
+      console.error('Sync error:', error);
       toast({
         title: 'Sync Error',
         description: 'An error occurred during sync',
@@ -302,15 +315,17 @@ export default function UnclaimedEntitiesPage() {
           />
         </div>
         
-        <Button 
-          onClick={handleSync} 
-          disabled={isSyncing}
-          variant="outline"
-          className="gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-          {isSyncing ? 'Syncing...' : 'Sync from Knowledge Base'}
-        </Button>
+        {isAdmin && (
+          <Button 
+            onClick={handleSync} 
+            disabled={isSyncing}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing...' : 'Sync from Knowledge Base'}
+          </Button>
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
