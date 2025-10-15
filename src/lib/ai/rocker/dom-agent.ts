@@ -9,9 +9,9 @@
  */
 
 export interface DOMAction {
-  type: 'click' | 'fill' | 'submit' | 'read';
+  type: 'click' | 'fill' | 'submit' | 'read' | 'scroll';
   selector?: string;
-  value?: string;
+  value?: string; // for scroll: 'top' | 'bottom' | 'up' | 'down' | pixel amount
   targetName?: string; // e.g., "post button", "comment field"
 }
 
@@ -158,11 +158,22 @@ export function submitForm(formName?: string): { success: boolean; message: stri
   }
   
   if (!form) {
-    // Try to find submit button instead
-    const submitBtn = document.querySelector('button[type="submit"], button:has-text("Submit")') as HTMLButtonElement;
+    // Try to find a submit-like button by semantics or text
+    const candidates = Array.from(document.querySelectorAll('button')) as HTMLButtonElement[];
+    const submitBtn = candidates.find((btn) => {
+      const text = (btn.textContent || '').toLowerCase();
+      const aria = (btn.getAttribute('aria-label') || '').toLowerCase();
+      const rocker = (btn.getAttribute('data-rocker') || '').toLowerCase();
+      return (
+        btn.type === 'submit' ||
+        /submit|save|create|confirm|continue|done/.test(text) ||
+        /submit|save|create|confirm|continue|done/.test(aria) ||
+        /submit|save|create|confirm|continue|done/.test(rocker)
+      );
+    });
     if (submitBtn) {
       submitBtn.click();
-      return { success: true, message: 'Clicked submit button' };
+      return { success: true, message: 'Clicked submit-like button' };
     }
     return { success: false, message: 'Could not find form or submit button' };
   }
@@ -235,6 +246,23 @@ export function executeDOMAction(action: DOMAction): { success: boolean; message
         message: 'Page content read',
         content: result.content 
       };
+    }
+    
+    case 'scroll': {
+      const val = (action.value || '').toLowerCase();
+      const amount = parseInt(val, 10);
+      if (val === 'top') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (val === 'bottom') {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      } else if (val === 'up') {
+        window.scrollBy({ top: -window.innerHeight * 0.8, behavior: 'smooth' });
+      } else if (val === 'down' || Number.isFinite(amount)) {
+        window.scrollBy({ top: Number.isFinite(amount) ? amount : window.innerHeight * 0.8, behavior: 'smooth' });
+      } else {
+        window.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' });
+      }
+      return { success: true, message: 'Scrolled' };
     }
       
     default:
