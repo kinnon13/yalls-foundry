@@ -7,6 +7,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { createLogger } from "../_shared/logger.ts";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +19,13 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const log = createLogger('analyze-traces');
+  log.startTimer();
+
+  // Apply rate limiting
+  const limited = await withRateLimit(req, 'analyze-traces', RateLimits.expensive);
+  if (limited) return limited;
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -30,7 +39,7 @@ serve(async (req) => {
       throw new Error("user_id required");
     }
 
-    console.log(`Analyzing traces for user ${user_id}`);
+    log.info('Analyzing traces', { user_id });
 
     // Fetch recent traces (last 30 days)
     const thirtyDaysAgo = new Date();
@@ -93,7 +102,7 @@ serve(async (req) => {
       .map(([category, score]) => `${category} (${(score * 100).toFixed(0)}%)`)
       .join(", ");
 
-    console.log("User interests:", interestText);
+    log.info('User interests computed', { interestText });
 
     // Generate embedding using OpenAI
     const openAIKey = Deno.env.get("OPENAI_API_KEY");
@@ -150,7 +159,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Error analyzing traces:", error);
+    log.error('Error analyzing traces', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),

@@ -1,6 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createLogger } from "../_shared/logger.ts";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +13,13 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const log = createLogger('chat-store');
+  log.startTimer();
+
+  // Apply rate limiting
+  const limited = await withRateLimit(req, 'chat-store', RateLimits.high);
+  if (limited) return limited;
 
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -62,7 +71,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    console.error("chat-store error:", e);
+    log.error('Chat-store error', e);
     return new Response(JSON.stringify({ ok: false, error: e instanceof Error ? e.message : "Unknown error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

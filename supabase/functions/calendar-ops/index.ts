@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createLogger } from "../_shared/logger.ts";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +12,13 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const log = createLogger('calendar-ops');
+  log.startTimer();
+
+  // Apply rate limiting
+  const limited = await withRateLimit(req, 'calendar-ops', RateLimits.high);
+  if (limited) return limited;
 
   try {
     // Create client for auth verification with user's JWT
@@ -68,8 +77,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    console.error('Calendar ops error:', error);
-    return new Response(JSON.stringify({ 
+    log.error('Calendar ops error', error);
+    return new Response(JSON.stringify({
       error: error instanceof Error ? error.message : 'Unknown error' 
     }), {
       status: 500,
@@ -95,11 +104,8 @@ async function createCalendar(supabase: any, userId: string, params: any) {
     .single();
 
   if (error) {
-    console.error('Error creating calendar:', error);
     throw error;
   }
-  
-  console.log('Calendar created successfully:', data);
   return { calendar: data };
 }
 
@@ -182,11 +188,8 @@ async function createCollection(supabase: any, userId: string, params: any) {
     .single();
 
   if (collectionError) {
-    console.error('Error creating collection:', collectionError);
     throw collectionError;
   }
-
-  console.log('Collection created successfully:', collection);
 
   // Add calendars to collection
   if (calendar_ids && calendar_ids.length > 0) {
@@ -200,7 +203,6 @@ async function createCollection(supabase: any, userId: string, params: any) {
       .insert(members);
 
     if (membersError) {
-      console.error('Error adding calendars to collection:', membersError);
       throw membersError;
     }
   }

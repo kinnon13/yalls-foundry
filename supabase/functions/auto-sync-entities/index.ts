@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { createLogger } from "../_shared/logger.ts";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,12 +13,19 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const log = createLogger('auto-sync-entities');
+  log.startTimer();
+
+  // Apply rate limiting
+  const limited = await withRateLimit(req, 'auto-sync-entities', RateLimits.standard);
+  if (limited) return limited;
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('[Auto-Sync] Starting automatic entity discovery...');
+    log.info('Starting automatic entity discovery');
 
     // Find AI memories with entity references that aren't synced yet
     const { data: unknowns, error: fetchError } = await supabase
@@ -27,12 +36,12 @@ serve(async (req) => {
       .limit(100);
 
     if (fetchError) {
-      console.error('[Auto-Sync] Error fetching unknowns:', fetchError);
+      log.error('Error fetching unknowns', fetchError);
       throw fetchError;
     }
 
     if (!unknowns || unknowns.length === 0) {
-      console.log('[Auto-Sync] No new entities to discover');
+      log.info('No new entities to discover');
       return new Response(
         JSON.stringify({ created: 0, skipped: 0, message: 'No new entities found' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -69,7 +78,7 @@ serve(async (req) => {
           .maybeSingle();
 
         if (existing) {
-          console.log(`[Auto-Sync] Skipping duplicate: ${entityName}`);
+          log.info('Skipping duplicate', { entityName });
           
           // Log as skipped
           await supabase.from('entity_ingest_log').insert({
@@ -103,7 +112,7 @@ serve(async (req) => {
           .single();
 
         if (insertError) {
-          console.error(`[Auto-Sync] Error creating entity ${entityName}:`, insertError);
+          log.error('Error creating entity', insertError, { entityName });
           skipped++;
           continue;
         }
@@ -120,17 +129,17 @@ serve(async (req) => {
           }
         });
 
-        console.log(`[Auto-Sync] Created entity: ${entityName} (${entityType})`);
+        log.info('Created entity', { entityName, entityType });
         created++;
 
       } catch (error) {
-        console.error(`[Auto-Sync] Error processing unknown ${unknown.id}:`, error);
+        log.error('Error processing unknown', error, { unknown_id: unknown.id });
         skipped++;
       }
     }
 
     const result = { created, skipped };
-    console.log('[Auto-Sync] Complete:', result);
+    log.info('Complete', result);
 
     return new Response(
       JSON.stringify(result),
@@ -138,7 +147,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('[Auto-Sync] Fatal error:', error);
+    log.error('Fatal error', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

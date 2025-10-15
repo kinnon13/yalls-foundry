@@ -10,6 +10,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { createLogger } from "../_shared/logger.ts";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,13 +23,20 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const log = createLogger('apply-deltas');
+  log.startTimer();
+
+  // Apply rate limiting
+  const limited = await withRateLimit(req, 'apply-deltas', RateLimits.admin);
+  if (limited) return limited;
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
   try {
-    console.log("Starting delta application batch...");
+    log.info('Starting delta application batch');
 
     // Call RPC to apply deltas
     const { data, error } = await supabase.rpc("apply_federated_deltas", {
@@ -40,7 +49,7 @@ serve(async (req) => {
 
     const { applied, failed } = data as { applied: number; failed: number };
 
-    console.log(`Delta batch complete: ${applied} applied, ${failed} failed`);
+    log.info('Delta batch complete', { applied, failed });
 
     // Record eval metric
     if (applied > 0) {
@@ -67,7 +76,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Error in apply-deltas:", error);
+    log.error('Error in apply-deltas', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),
