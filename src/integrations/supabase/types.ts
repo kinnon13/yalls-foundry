@@ -38,6 +38,42 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliate_subscriptions: {
+        Row: {
+          commission_rate: number
+          created_at: string
+          id: string
+          metadata: Json
+          referred_user_id: string
+          referrer_user_id: string
+          status: string
+          subscription_type: string
+          terminated_at: string | null
+        }
+        Insert: {
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          metadata?: Json
+          referred_user_id: string
+          referrer_user_id: string
+          status?: string
+          subscription_type: string
+          terminated_at?: string | null
+        }
+        Update: {
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          metadata?: Json
+          referred_user_id?: string
+          referrer_user_id?: string
+          status?: string
+          subscription_type?: string
+          terminated_at?: string | null
+        }
+        Relationships: []
+      }
       ai_admin_private_memory: {
         Row: {
           created_at: string | null
@@ -715,6 +751,90 @@ export type Database = {
           owner_id?: string
           slug?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      claim_events: {
+        Row: {
+          actor_user_id: string
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          event_type: string
+          id: string
+          metadata: Json
+          new_owner_id: string | null
+          previous_owner_id: string | null
+        }
+        Insert: {
+          actor_user_id: string
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          new_owner_id?: string | null
+          previous_owner_id?: string | null
+        }
+        Update: {
+          actor_user_id?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          new_owner_id?: string | null
+          previous_owner_id?: string | null
+        }
+        Relationships: []
+      }
+      commission_ledger: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json
+          settlement_batch_id: string | null
+          source_entity_id: string | null
+          source_entity_type: string | null
+          status: string
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          settlement_batch_id?: string | null
+          source_entity_id?: string | null
+          source_entity_type?: string | null
+          status?: string
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          settlement_batch_id?: string | null
+          source_entity_id?: string | null
+          source_entity_type?: string | null
+          status?: string
+          transaction_type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1454,6 +1574,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      settlement_batches: {
+        Row: {
+          batch_date: string
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json
+          processor_reference: string | null
+          settled_at: string | null
+          status: string
+          total_amount_cents: number
+        }
+        Insert: {
+          batch_date: string
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          processor_reference?: string | null
+          settled_at?: string | null
+          status?: string
+          total_amount_cents?: number
+        }
+        Update: {
+          batch_date?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json
+          processor_reference?: string | null
+          settled_at?: string | null
+          status?: string
+          total_amount_cents?: number
+        }
+        Relationships: []
       }
       spatial_ref_sys: {
         Row: {

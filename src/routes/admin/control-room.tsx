@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Shield, TestTube, Code, FileCheck, Activity, 
-  MessageSquare, Settings, Home, Gauge, Search, Upload
+  MessageSquare, Settings, Home, Gauge, Search, Upload, Flag
 } from 'lucide-react';
 
 // Import panel components
@@ -26,6 +26,7 @@ import { FlagsPanel } from '@/routes/admin/panels/FlagsPanel';
 import { EntitySearchPanel } from '@/routes/admin/panels/EntitySearchPanel';
 import { ScaleScorecard } from '@/lib/observability/ScaleScorecard';
 import { MediaUploadDialog } from '@/components/media/MediaUploadDialog';
+import { ModeratorConsole } from '@/routes/admin/panels/ModeratorConsole';
 
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('security');
@@ -69,7 +70,7 @@ export default function ControlRoom() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Tab Navigation */}
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-10 lg:w-auto">
               <TabsTrigger value="security" className="gap-2">
                 <Shield className="h-4 w-4" />
                 <span className="hidden sm:inline">Security</span>
@@ -101,6 +102,10 @@ export default function ControlRoom() {
               <TabsTrigger value="flags" className="gap-2">
                 <Shield className="h-4 w-4" />
                 <span className="hidden sm:inline">Flags</span>
+              </TabsTrigger>
+              <TabsTrigger value="moderator" className="gap-2">
+                <Shield className="h-4 w-4" />
+                <span className="hidden sm:inline">Moderator</span>
               </TabsTrigger>
               <TabsTrigger value="scale" className="gap-2">
                 <Gauge className="h-4 w-4" />
@@ -164,6 +169,13 @@ export default function ControlRoom() {
               </div>
             </TabsContent>
 
+            {/* Moderator Tab */}
+            <TabsContent value="moderator" className="space-y-6">
+              <div className="grid gap-6 lg:grid-cols-1">
+                <ModeratorConsole />
+              </div>
+            </TabsContent>
+
             {/* Scale Tab */}
             <TabsContent value="scale" className="space-y-6">
               <ScaleScorecard />
@@ -174,7 +186,7 @@ export default function ControlRoom() {
           <div className="mt-12 pt-6 border-t">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div className="p-4 border rounded">
-                <div className="text-2xl font-bold">9</div>
+                <div className="text-2xl font-bold">10</div>
                 <div className="text-xs text-muted-foreground">Panels</div>
               </div>
               <div className="p-4 border rounded">

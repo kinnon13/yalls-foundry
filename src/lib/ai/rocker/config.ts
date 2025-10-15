@@ -79,6 +79,16 @@ ${persona.guidelines.map(g => `- ${g}`).join('\n')}
 Always be helpful, honest, and harmless in your interactions.`;
 }
 
+// Rate Limiting Config
+export const RATE_LIMITS = {
+  events: 100,  // per minute per user
+  actions: 50,  // per minute per user
+  chat: 10,     // per minute per user
+};
+
+// Tenant Config
+export const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+
 /**
  * TODO: User customization schema
  * 
@@ -91,10 +101,4 @@ Always be helpful, honest, and harmless in your interactions.`;
  *   created_at TIMESTAMPTZ DEFAULT now(),
  *   updated_at TIMESTAMPTZ DEFAULT now()
  * );
- * 
- * Allow users to customize:
- * - AI name
- * - Personality traits
- * - Enabled capabilities
- * - Custom guidelines
  */
