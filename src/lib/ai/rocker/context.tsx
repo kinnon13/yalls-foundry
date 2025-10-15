@@ -580,6 +580,46 @@ export function RockerProvider({ children }: { children: ReactNode }) {
               description: 'Added to your saved posts',
             });
           }
+          
+          else if (tc.name === 'create_calendar') {
+            console.log('[Rocker] Creating calendar:', args.name);
+            toast({
+              title: '📅 Calendar created',
+              description: `${args.name} is ready to use`,
+            });
+          }
+          
+          else if (tc.name === 'create_calendar_event') {
+            console.log('[Rocker] Creating calendar event:', args.title);
+            toast({
+              title: '📆 Event created',
+              description: `${args.title} added to calendar`,
+            });
+          }
+          
+          else if (tc.name === 'share_calendar') {
+            console.log('[Rocker] Sharing calendar');
+            toast({
+              title: '🤝 Calendar shared',
+              description: 'Permissions granted successfully',
+            });
+          }
+          
+          else if (tc.name === 'create_calendar_collection') {
+            console.log('[Rocker] Creating collection:', args.name);
+            toast({
+              title: '📚 Collection created',
+              description: `${args.name} master calendar ready`,
+            });
+          }
+          
+          else if (tc.name === 'list_calendars') {
+            console.log('[Rocker] Listing calendars');
+          }
+          
+          else if (tc.name === 'get_calendar_events') {
+            console.log('[Rocker] Getting calendar events');
+          }
         }
         
         const toolMessages: RockerMessage[] = result.tool_calls.map((tc: any) => ({

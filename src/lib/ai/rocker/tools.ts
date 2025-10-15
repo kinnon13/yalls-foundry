@@ -623,6 +623,100 @@ export const rockerTools = [
       },
       required: ["type", "content"]
     }
+  },
+  {
+    type: "function",
+    name: "create_calendar",
+    description: "Create a new calendar for a profile (personal, business, horse, etc.)",
+    parameters: {
+      type: "object",
+      properties: {
+        owner_profile_id: { type: "string", description: "Profile ID that owns the calendar" },
+        name: { type: "string", description: "Calendar name" },
+        calendar_type: { type: "string", enum: ["personal", "business", "horse", "event", "custom"], description: "Type of calendar" },
+        description: { type: "string", description: "Calendar description" },
+        color: { type: "string", description: "Calendar color (hex)" }
+      },
+      required: ["owner_profile_id", "name"]
+    }
+  },
+  {
+    type: "function",
+    name: "create_calendar_event",
+    description: "Create an event in a calendar. Use this for scheduling vet visits, farrier appointments, shows, training sessions, meetings, etc.",
+    parameters: {
+      type: "object",
+      properties: {
+        calendar_id: { type: "string", description: "Calendar to add event to" },
+        created_by: { type: "string", description: "Profile ID creating the event" },
+        title: { type: "string", description: "Event title" },
+        description: { type: "string", description: "Event description" },
+        location: { type: "string", description: "Event location" },
+        starts_at: { type: "string", description: "Start date/time (ISO 8601)" },
+        ends_at: { type: "string", description: "End date/time (ISO 8601)" },
+        all_day: { type: "boolean", description: "Is this an all-day event?" },
+        visibility: { type: "string", enum: ["public", "private", "busy"], description: "Event visibility" },
+        event_type: { type: "string", description: "Type of event: vet, farrier, show, training, meeting, etc." }
+      },
+      required: ["calendar_id", "created_by", "title", "starts_at", "ends_at"]
+    }
+  },
+  {
+    type: "function",
+    name: "share_calendar",
+    description: "Share a calendar with someone (give them owner/writer/reader access)",
+    parameters: {
+      type: "object",
+      properties: {
+        calendar_id: { type: "string", description: "Calendar to share" },
+        profile_id: { type: "string", description: "Profile to share with" },
+        role: { type: "string", enum: ["owner", "writer", "reader"], description: "Access level" },
+        busy_only: { type: "boolean", description: "If true, they only see busy/free times, not details" }
+      },
+      required: ["calendar_id", "profile_id", "role"]
+    }
+  },
+  {
+    type: "function",
+    name: "create_calendar_collection",
+    description: "Create a master calendar that aggregates multiple calendars (e.g., 'My Master', 'Barn Ops', 'Horse Master')",
+    parameters: {
+      type: "object",
+      properties: {
+        owner_profile_id: { type: "string", description: "Profile ID that owns the collection" },
+        name: { type: "string", description: "Collection name" },
+        description: { type: "string", description: "Collection description" },
+        color: { type: "string", description: "Collection color (hex)" },
+        calendar_ids: { type: "array", items: { type: "string" }, description: "Initial calendars to include" }
+      },
+      required: ["owner_profile_id", "name"]
+    }
+  },
+  {
+    type: "function",
+    name: "list_calendars",
+    description: "List calendars accessible to a profile",
+    parameters: {
+      type: "object",
+      properties: {
+        profile_id: { type: "string", description: "Profile ID to list calendars for" }
+      },
+      required: ["profile_id"]
+    }
+  },
+  {
+    type: "function",
+    name: "get_calendar_events",
+    description: "Get events from a calendar or collection for a date range",
+    parameters: {
+      type: "object",
+      properties: {
+        calendar_id: { type: "string", description: "Calendar ID (optional if using collection_id)" },
+        collection_id: { type: "string", description: "Collection ID (optional if using calendar_id)" },
+        starts_at: { type: "string", description: "Start date (ISO 8601)" },
+        ends_at: { type: "string", description: "End date (ISO 8601)" }
+      }
+    }
   }
 ];
 
