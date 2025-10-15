@@ -6,13 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Heart, Package, User, Search, Zap, Loader2, LucideIcon, RefreshCw } from 'lucide-react';
+import { Building2, Heart, Package, User, Search, Zap, Loader2, LucideIcon } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInView } from 'react-intersection-observer';
-import { syncUnknownsToEntities } from '@/lib/ai/rocker/learning';
-import { useToast } from '@/hooks/use-toast';
-import { useAdminCheck } from '@/hooks/useAdminCheck';
 
 // Dynamic entity type configuration - add new types here and they auto-appear
 interface EntityConfig {
@@ -79,9 +76,6 @@ export default function UnclaimedEntitiesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const [isSyncing, setIsSyncing] = useState(false);
-  const { toast } = useToast();
-  const { isAdmin } = useAdminCheck();
 
   // Debounce search input (300ms)
   useEffect(() => {
@@ -90,47 +84,6 @@ export default function UnclaimedEntitiesPage() {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchTerm]);
-
-  // Handle sync unknowns to entities (admin only, auto-refreshes)
-  const handleSync = async () => {
-    if (!isAdmin) {
-      toast({
-        title: 'Access Denied',
-        description: 'Only administrators can sync entities',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    setIsSyncing(true);
-    try {
-      const result = await syncUnknownsToEntities();
-      if (result) {
-        toast({
-          title: 'Sync Complete',
-          description: `Created ${result.created} entities, skipped ${result.skipped}`,
-        });
-        
-        // Auto-refresh all queries after sync
-        await Promise.all(entityQueries.map(({ query }) => query.refetch()));
-      } else {
-        toast({
-          title: 'Sync Failed',
-          description: 'Failed to sync unknowns to entities',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      console.error('Sync error:', error);
-      toast({
-        title: 'Sync Error',
-        description: 'An error occurred during sync',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   // Dynamic entity fetcher with infinite scroll (optimized with keyset pagination)
   const useEntityQuery = (config: EntityConfig) => {
@@ -308,28 +261,14 @@ export default function UnclaimedEntitiesPage() {
         </p>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 flex-1">
-          <Search className="h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Search unclaimed entities..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-md"
-          />
-        </div>
-        
-        {isAdmin && (
-          <Button 
-            onClick={handleSync} 
-            disabled={isSyncing}
-            variant="outline"
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-            {isSyncing ? 'Syncing...' : 'Sync from Knowledge Base'}
-          </Button>
-        )}
+      <div className="flex items-center gap-2 flex-1">
+        <Search className="h-5 w-5 text-muted-foreground" />
+        <Input
+          placeholder="Search unclaimed entities..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-md"
+        />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
