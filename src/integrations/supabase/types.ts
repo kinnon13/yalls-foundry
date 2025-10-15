@@ -300,6 +300,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_global_patterns: {
+        Row: {
+          avg_confidence: number | null
+          created_at: string
+          id: string
+          last_observed_at: string
+          metadata: Json | null
+          occurrence_count: number | null
+          pattern_key: string
+          pattern_type: string
+          success_rate: number | null
+          user_count: number | null
+        }
+        Insert: {
+          avg_confidence?: number | null
+          created_at?: string
+          id?: string
+          last_observed_at?: string
+          metadata?: Json | null
+          occurrence_count?: number | null
+          pattern_key: string
+          pattern_type: string
+          success_rate?: number | null
+          user_count?: number | null
+        }
+        Update: {
+          avg_confidence?: number | null
+          created_at?: string
+          id?: string
+          last_observed_at?: string
+          metadata?: Json | null
+          occurrence_count?: number | null
+          pattern_key?: string
+          pattern_type?: string
+          success_rate?: number | null
+          user_count?: number | null
+        }
+        Relationships: []
+      }
       ai_hypotheses: {
         Row: {
           confidence: number
@@ -617,6 +656,39 @@ export type Database = {
           name?: string
           priority?: number | null
           tenant_id?: string
+        }
+        Relationships: []
+      }
+      ai_user_analytics: {
+        Row: {
+          calculated_at: string
+          compared_to: number | null
+          id: string
+          metadata: Json | null
+          metric_type: string
+          metric_value: number
+          percentile: number | null
+          user_id: string
+        }
+        Insert: {
+          calculated_at?: string
+          compared_to?: number | null
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          metric_value: number
+          percentile?: number | null
+          user_id: string
+        }
+        Update: {
+          calculated_at?: string
+          compared_to?: number | null
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          metric_value?: number
+          percentile?: number | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -2716,6 +2788,10 @@ export type Database = {
             }
         Returns: string
       }
+      aggregate_user_patterns: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
@@ -2763,6 +2839,10 @@ export type Database = {
       bytea: {
         Args: { "": unknown } | { "": unknown }
         Returns: string
+      }
+      calculate_user_percentiles: {
+        Args: { target_user_id: string }
+        Returns: undefined
       }
       can_claim_entity: {
         Args: { entity_id: string }

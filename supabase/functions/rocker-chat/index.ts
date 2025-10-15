@@ -68,6 +68,28 @@ async function extractLearningsFromConversation(
   }
 }
 
+/**
+ * Aggregate patterns across users and calculate analytics
+ */
+async function aggregatePatternsAndAnalytics(
+  supabaseClient: any,
+  userId: string
+) {
+  try {
+    // Call the aggregate function to update global patterns
+    await supabaseClient.rpc('aggregate_user_patterns');
+    
+    // Calculate percentiles for this user
+    await supabaseClient.rpc('calculate_user_percentiles', {
+      target_user_id: userId
+    });
+
+    console.log(`[Analytics] Aggregated patterns and calculated analytics for user ${userId}`);
+  } catch (error) {
+    console.error('[Analytics] Failed to aggregate:', error);
+  }
+}
+
 // System prompts for different modes
 const USER_SYSTEM_PROMPT = `You are Rocker, an AI assistant who can TAKE ACTIONS on behalf of the user.
 
@@ -1473,6 +1495,13 @@ Then offer to search for it:
           messages[messages.length - 1]?.content || '',
           assistantMessage.content
         );
+
+        // Aggregate patterns and calculate analytics (async, don't block response)
+        setTimeout(() => {
+          aggregatePatternsAndAnalytics(supabaseClient, user.id).catch(err => 
+            console.error('[Analytics] Background job failed:', err)
+          );
+        }, 0);
 
         // Return final answer
         const response: any = { 

@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { 
   Search, FileText, Trash2, AlertTriangle, CheckCircle, 
-  FolderTree, Users, Globe, User, Loader2, Plus
+  FolderTree, Users, Globe, User, Loader2, Plus, Activity
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSession } from '@/lib/auth/context';
@@ -40,6 +40,9 @@ export default function KnowledgeBrowserPanel() {
   const [userMemory, setUserMemory] = useState<any[]>([]);
   const [conversations, setConversations] = useState<any[]>([]);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [userAnalytics, setUserAnalytics] = useState<any[]>([]);
+  const [globalPatterns, setGlobalPatterns] = useState<any[]>([]);
+  const [aggregating, setAggregating] = useState(false);
 
   useEffect(() => {
     loadCategories();
@@ -48,7 +51,84 @@ export default function KnowledgeBrowserPanel() {
       loadUserProfile();
       loadUserMemory();
       loadConversations();
+      loadUserAnalytics();
+      loadGlobalPatterns();
     }
+
+    // Set up realtime subscriptions for automatic updates
+    const memoryChannel = supabase
+      .channel('memory-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ai_user_memory',
+          filter: `user_id=eq.${session?.userId}`
+        },
+        () => {
+          console.log('[Realtime] User memory updated');
+          loadUserMemory();
+        }
+      )
+      .subscribe();
+
+    const conversationChannel = supabase
+      .channel('conversation-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'rocker_conversations',
+          filter: `user_id=eq.${session?.userId}`
+        },
+        () => {
+          console.log('[Realtime] New conversation');
+          loadConversations();
+        }
+      )
+      .subscribe();
+
+    const analyticsChannel = supabase
+      .channel('analytics-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ai_user_analytics',
+          filter: `user_id=eq.${session?.userId}`
+        },
+        () => {
+          console.log('[Realtime] Analytics updated');
+          loadUserAnalytics();
+        }
+      )
+      .subscribe();
+
+    const patternsChannel = supabase
+      .channel('patterns-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ai_global_patterns'
+        },
+        () => {
+          console.log('[Realtime] Global patterns updated');
+          loadGlobalPatterns();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(memoryChannel);
+      supabase.removeChannel(conversationChannel);
+      supabase.removeChannel(analyticsChannel);
+      supabase.removeChannel(patternsChannel);
+    };
   }, []);
 
   useEffect(() => {
@@ -104,6 +184,35 @@ export default function KnowledgeBrowserPanel() {
       setConversations(data || []);
     } catch (error) {
       console.error('[KB Browser] Load conversations error:', error);
+    }
+  };
+
+  const loadUserAnalytics = async () => {
+    try {
+      const { data } = await supabase
+        .from('ai_user_analytics')
+        .select('*')
+        .eq('user_id', session?.userId)
+        .order('calculated_at', { ascending: false })
+        .limit(10);
+      
+      setUserAnalytics(data || []);
+    } catch (error) {
+      console.error('[KB Browser] Load analytics error:', error);
+    }
+  };
+
+  const loadGlobalPatterns = async () => {
+    try {
+      const { data } = await supabase
+        .from('ai_global_patterns')
+        .select('*')
+        .order('success_rate', { ascending: false })
+        .limit(10);
+      
+      setGlobalPatterns(data || []);
+    } catch (error) {
+      console.error('[KB Browser] Load patterns error:', error);
     }
   };
 
@@ -175,6 +284,28 @@ export default function KnowledgeBrowserPanel() {
       toast.error('Failed to add knowledge');
     } finally {
       setAdding(false);
+    }
+  };
+
+  const triggerAggregation = async () => {
+    setAggregating(true);
+    try {
+      const { error } = await supabase.functions.invoke('aggregate-learnings', {
+        body: {}
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Aggregated patterns and updated analytics for all users!');
+      setTimeout(() => {
+        loadUserAnalytics();
+        loadGlobalPatterns();
+      }, 2000);
+    } catch (error) {
+      console.error('[KB Browser] Aggregation error:', error);
+      toast.error('Failed to aggregate learnings');
+    } finally {
+      setAggregating(false);
     }
   };
 
@@ -258,6 +389,64 @@ export default function KnowledgeBrowserPanel() {
                     <div className="mt-1">{userProfile.bio}</div>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* User Analytics Comparison */}
+          {userAnalytics.length > 0 && (
+            <div className="p-4 border rounded-lg bg-card">
+              <div className="text-sm font-medium mb-3">How You Compare to Other Users</div>
+              <div className="grid grid-cols-3 gap-4">
+                {userAnalytics.map((metric) => (
+                  <div key={metric.id} className="text-center">
+                    <div className="text-2xl font-bold text-primary">
+                      {metric.metric_type === 'success_rate' 
+                        ? `${(metric.metric_value * 100).toFixed(0)}%`
+                        : metric.metric_value}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {metric.metric_type.replace('_', ' ')}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      vs {metric.compared_to} users
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Global Patterns (What Others Do) */}
+          {globalPatterns.length > 0 && (
+            <div className="p-4 border rounded-lg bg-card">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm font-medium">Common Patterns Across All Users</div>
+                <Button 
+                  onClick={triggerAggregation} 
+                  disabled={aggregating}
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                >
+                  {aggregating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}
+                  Refresh Analytics
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {globalPatterns.slice(0, 5).map((pattern) => (
+                  <div key={pattern.id} className="flex items-center justify-between text-sm">
+                    <div>
+                      <span className="font-medium">{pattern.pattern_key.replace(/_/g, ' ')}</span>
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {pattern.user_count} users
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {(pattern.success_rate * 100).toFixed(0)}% success
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
