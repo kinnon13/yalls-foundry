@@ -39,11 +39,13 @@ export default function KnowledgeBrowserPanel() {
   const [adding, setAdding] = useState(false);
   const [userMemory, setUserMemory] = useState<any[]>([]);
   const [conversations, setConversations] = useState<any[]>([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     loadCategories();
     searchKnowledge();
     if (session?.userId) {
+      loadUserProfile();
       loadUserMemory();
       loadConversations();
     }
@@ -52,6 +54,28 @@ export default function KnowledgeBrowserPanel() {
   useEffect(() => {
     searchKnowledge();
   }, [scope, category]);
+
+  const loadUserProfile = async () => {
+    try {
+      // Get auth user info
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Get profile info
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', session?.userId)
+        .maybeSingle();
+      
+      setUserProfile({
+        email: user?.email,
+        userId: user?.id,
+        ...profile
+      });
+    } catch (error) {
+      console.error('[KB Browser] Load profile error:', error);
+    }
+  };
 
   const loadUserMemory = async () => {
     try {
@@ -211,6 +235,33 @@ export default function KnowledgeBrowserPanel() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* User Profile Card */}
+          {userProfile && (
+            <div className="p-4 border rounded-lg bg-card">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <div className="font-medium">{userProfile.display_name || userProfile.email}</div>
+                  <div className="text-sm text-muted-foreground">{userProfile.email}</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-muted-foreground">User ID:</span>
+                  <div className="font-mono text-xs mt-1 break-all">{userProfile.userId}</div>
+                </div>
+                {userProfile.bio && (
+                  <div>
+                    <span className="text-muted-foreground">Bio:</span>
+                    <div className="mt-1">{userProfile.bio}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <Button 
               onClick={() => {
