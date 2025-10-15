@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { CalendarPrivacySettings } from '@/components/settings/CalendarPrivacySettings';
-import { Button } from '@/components/ui/button';
+import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Settings as SettingsIcon } from 'lucide-react';
+import { Settings as SettingsIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
@@ -11,28 +11,60 @@ import { GlobalHeader } from '@/components/layout/GlobalHeader';
 export default function CalendarPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>([]);
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     loadEvents();
-  }, []);
+  }, [selectedCalendarIds, selectedCollectionIds]);
 
   const loadEvents = async () => {
     try {
-      const { data, error } = await (supabase as any)
-        .from('calendar_events')
-        .select(`
-          *,
-          calendar:calendars(name, calendar_type)
-        `)
-        .order('starts_at', { ascending: true });
+      setLoading(true);
+      
+      // Load events from selected individual calendars
+      let allEvents: any[] = [];
+      
+      if (selectedCalendarIds.length > 0) {
+        const { data: calEvents, error: calError } = await (supabase as any)
+          .from('calendar_events')
+          .select(`
+            *,
+            calendar:calendars(name, calendar_type, color)
+          `)
+          .in('calendar_id', selectedCalendarIds)
+          .order('starts_at', { ascending: true });
 
-      if (error) throw error;
+        if (calError) throw calError;
+        allEvents = [...allEvents, ...(calEvents || [])];
+      }
 
-      setEvents(data?.map((e: any) => ({
+      // Load events from selected collections
+      for (const collectionId of selectedCollectionIds) {
+        const { data, error } = await supabase.functions.invoke('calendar-ops', {
+          body: {
+            operation: 'get_collection_events',
+            collection_id: collectionId,
+          },
+        });
+
+        if (error) throw error;
+        if (data?.events) {
+          allEvents = [...allEvents, ...data.events];
+        }
+      }
+
+      // Deduplicate events by id
+      const uniqueEvents = Array.from(
+        new Map(allEvents.map((e) => [e.id, e])).values()
+      );
+
+      setEvents(uniqueEvents.map((e: any) => ({
         ...e,
         calendar_name: e.calendar?.name,
-      })) || []);
+        calendar_color: e.calendar?.color,
+      })));
     } catch (error) {
       console.error('Failed to load events:', error);
       toast({
@@ -43,6 +75,18 @@ export default function CalendarPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCalendarToggle = (id: string) => {
+    setSelectedCalendarIds((prev) =>
+      prev.includes(id) ? prev.filter((cid) => cid !== id) : [...prev, id]
+    );
+  };
+
+  const handleCollectionToggle = (id: string) => {
+    setSelectedCollectionIds((prev) =>
+      prev.includes(id) ? prev.filter((cid) => cid !== id) : [...prev, id]
+    );
   };
 
   if (loading) {
@@ -59,47 +103,63 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <GlobalHeader />
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">My Calendar</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your events and schedules
-            </p>
+      <div className="flex flex-1 overflow-hidden">
+        <CalendarSidebar
+          selectedCalendarIds={selectedCalendarIds}
+          selectedCollectionIds={selectedCollectionIds}
+          onCalendarToggle={handleCalendarToggle}
+          onCollectionToggle={handleCollectionToggle}
+          onRefresh={loadEvents}
+        />
+        
+        <div className="flex-1 overflow-auto">
+          <div className="container mx-auto p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-3xl font-bold">Calendar</h1>
+                <p className="text-muted-foreground mt-1">
+                  {selectedCalendarIds.length + selectedCollectionIds.length === 0
+                    ? 'Select calendars or collections to view events'
+                    : `Viewing ${selectedCalendarIds.length} calendar(s) and ${selectedCollectionIds.length} collection(s)`}
+                </p>
+              </div>
+            </div>
+
+            <Tabs defaultValue="calendar" className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="calendar">Calendar</TabsTrigger>
+                <TabsTrigger value="privacy">
+                  <SettingsIcon className="h-4 w-4 mr-2" />
+                  Privacy Settings
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="calendar">
+                {loading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <p className="text-muted-foreground">Loading events...</p>
+                  </div>
+                ) : (
+                  <CalendarView
+                    events={events}
+                    onEventClick={(event) => {
+                      toast({
+                        title: event.title,
+                        description: event.description || 'No description',
+                      });
+                    }}
+                  />
+                )}
+              </TabsContent>
+
+              <TabsContent value="privacy">
+                <CalendarPrivacySettings />
+              </TabsContent>
+            </Tabs>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Event
-          </Button>
         </div>
-
-        <Tabs defaultValue="calendar" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="calendar">Calendar</TabsTrigger>
-            <TabsTrigger value="privacy">
-              <SettingsIcon className="h-4 w-4 mr-2" />
-              Privacy Settings
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="calendar">
-            <CalendarView
-              events={events}
-              onEventClick={(event) => {
-                toast({
-                  title: event.title,
-                  description: event.description || 'No description',
-                });
-              }}
-            />
-          </TabsContent>
-
-          <TabsContent value="privacy">
-            <CalendarPrivacySettings />
-          </TabsContent>
-        </Tabs>
       </div>
     </div>
   );
