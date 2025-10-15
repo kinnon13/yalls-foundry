@@ -127,16 +127,12 @@ export function ProfileChatHistory() {
   }
 
   function handleOpenSession(sessionId: string) {
-    // Store session ID in localStorage to be picked up by chat
+    // Store session ID in localStorage and dispatch event to open chat
     localStorage.setItem('rocker-load-session', sessionId);
-    // Navigate to dashboard where chat can be opened
-    navigate('/dashboard');
-    // Wait a bit then dispatch custom event to open chat with this session
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('rocker-open-session', { 
-        detail: { sessionId } 
-      }));
-    }, 100);
+    // Dispatch event immediately to open chat with this session
+    window.dispatchEvent(new CustomEvent('rocker-open-session', { 
+      detail: { sessionId } 
+    }));
   }
 
   function formatDate(dateString: string) {
