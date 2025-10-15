@@ -9,6 +9,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Upload, Image, Video, FileText, Sparkles } from 'lucide-react';
 import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { EntityPreviewCard } from '@/components/EntityPreviewCard';
+import { rockerMediaUploaded } from '@/lib/ai/rocker/integrations/uploads';
+import { useSession } from '@/lib/auth/context';
 
 interface MediaUploadDialogProps {
   open: boolean;
@@ -16,6 +18,7 @@ interface MediaUploadDialogProps {
 }
 
 export const MediaUploadDialog = ({ open, onOpenChange }: MediaUploadDialogProps) => {
+  const { session } = useSession();
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState('');
   const [context, setContext] = useState('');
@@ -41,7 +44,7 @@ export const MediaUploadDialog = ({ open, onOpenChange }: MediaUploadDialogProps
   });
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (!file || !session?.userId) return;
 
     const result = await uploadMedia({
       file,
@@ -49,6 +52,16 @@ export const MediaUploadDialog = ({ open, onOpenChange }: MediaUploadDialogProps
       visibility,
       context,
     });
+
+    // Log to Rocker event bus
+    if (result?.id) {
+      await rockerMediaUploaded({
+        userId: session.userId,
+        mediaId: result.id,
+        fileType: file.type,
+        fileName: file.name,
+      });
+    }
 
     if (result?.ai_analysis) {
       setAnalysisResult(result.ai_analysis);

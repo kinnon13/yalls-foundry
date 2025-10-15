@@ -7,11 +7,10 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { Session } from './types';
 import type { Role } from './rbac';
-import { mockAuthAdapter } from './adapters/mock';
 import { supabaseAuthAdapter } from './adapters/supabase';
 
-// ALWAYS use real Supabase Auth (no mocks for production)
-const defaultAdapter = supabaseAuthAdapter;
+// Production-only: Use Supabase Auth exclusively
+const authAdapter = supabaseAuthAdapter;
 
 type AuthContextValue = {
   session: Session;
@@ -24,7 +23,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({
   children,
-  adapter = defaultAdapter,
+  adapter = authAdapter,
 }: {
   children: React.ReactNode;
   adapter?: {

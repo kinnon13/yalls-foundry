@@ -9,6 +9,7 @@ import { AuthProvider } from '@/lib/auth/context';
 import { RequireAuth } from '@/lib/auth/guards';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import { RockerChat } from '@/components/rocker/RockerChat';
+import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
 import Index from "./routes/index";
 import Search from "./routes/search";
 import Login from "./routes/login";
@@ -100,6 +101,7 @@ const App = () => (
 
             {FEEDBACK_ENABLED && <FeedbackWidget />}
             <RockerChat />
+            <RockerSuggestions />
             <Toaster />
             <Sonner />
           </AuthProvider>
