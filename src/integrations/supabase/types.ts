@@ -759,17 +759,23 @@ export type Database = {
           key: string
           last_used_at: string | null
           namespace: string | null
+          originator_profile_id: string | null
           pinned: boolean | null
           provenance: Json | null
+          safety_category: string | null
           sensitivity: string | null
+          shared_with: string[] | null
           source: string
           tags: string[] | null
           tenant_id: string
+          tone: string | null
+          toxicity: number | null
           type: Database["public"]["Enums"]["memory_type"]
           updated_at: string
           use_count: number | null
           user_id: string
           value: Json
+          visibility: string | null
         }
         Insert: {
           confidence?: number | null
@@ -780,17 +786,23 @@ export type Database = {
           key: string
           last_used_at?: string | null
           namespace?: string | null
+          originator_profile_id?: string | null
           pinned?: boolean | null
           provenance?: Json | null
+          safety_category?: string | null
           sensitivity?: string | null
+          shared_with?: string[] | null
           source?: string
           tags?: string[] | null
           tenant_id: string
+          tone?: string | null
+          toxicity?: number | null
           type: Database["public"]["Enums"]["memory_type"]
           updated_at?: string
           use_count?: number | null
           user_id: string
           value: Json
+          visibility?: string | null
         }
         Update: {
           confidence?: number | null
@@ -801,19 +813,33 @@ export type Database = {
           key?: string
           last_used_at?: string | null
           namespace?: string | null
+          originator_profile_id?: string | null
           pinned?: boolean | null
           provenance?: Json | null
+          safety_category?: string | null
           sensitivity?: string | null
+          shared_with?: string[] | null
           source?: string
           tags?: string[] | null
           tenant_id?: string
+          tone?: string | null
+          toxicity?: number | null
           type?: Database["public"]["Enums"]["memory_type"]
           updated_at?: string
           use_count?: number | null
           user_id?: string
           value?: Json
+          visibility?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ai_user_memory_originator_profile_id_fkey"
+            columns: ["originator_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       business_kpi_snapshots: {
         Row: {
@@ -1988,6 +2014,79 @@ export type Database = {
             columns: ["media_id"]
             isOneToOne: false
             referencedRelation: "media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memory_links: {
+        Row: {
+          can_edit: boolean | null
+          created_at: string | null
+          id: string
+          source_memory_id: string
+          visible_to_profile_id: string
+        }
+        Insert: {
+          can_edit?: boolean | null
+          created_at?: string | null
+          id?: string
+          source_memory_id: string
+          visible_to_profile_id: string
+        }
+        Update: {
+          can_edit?: boolean | null
+          created_at?: string | null
+          id?: string
+          source_memory_id?: string
+          visible_to_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_links_source_memory_id_fkey"
+            columns: ["source_memory_id"]
+            isOneToOne: false
+            referencedRelation: "ai_user_memory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memory_share_requests: {
+        Row: {
+          created_at: string | null
+          decided_at: string | null
+          expires_at: string | null
+          from_profile_id: string
+          id: string
+          memory_id: string
+          status: string | null
+          to_profile_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          decided_at?: string | null
+          expires_at?: string | null
+          from_profile_id: string
+          id?: string
+          memory_id: string
+          status?: string | null
+          to_profile_id: string
+        }
+        Update: {
+          created_at?: string | null
+          decided_at?: string | null
+          expires_at?: string | null
+          from_profile_id?: string
+          id?: string
+          memory_id?: string
+          status?: string | null
+          to_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_share_requests_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "ai_user_memory"
             referencedColumns: ["id"]
           },
         ]

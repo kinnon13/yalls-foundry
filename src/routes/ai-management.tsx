@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { Button } from '@/components/ui/button';
-import { Home, MessageSquare, Search, Brain, AlertCircle, TrendingUp, Link2, Shield, Settings } from 'lucide-react';
+import { Home, MessageSquare, Search, Brain, AlertCircle, TrendingUp, Link2, Shield, Settings, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Import all panels
@@ -19,8 +19,9 @@ import { LearningPanel } from '@/components/ai/LearningPanel';
 import { ConnectedAccountsPanel } from '@/components/ai/ConnectedAccountsPanel';
 import { PrivacyPanel } from '@/components/ai/PrivacyPanel';
 import { SettingsPanel } from '@/components/ai/SettingsPanel';
+import { SharedMemoriesPanel } from '@/components/ai/SharedMemoriesPanel';
 
-type Section = 'home' | 'chat' | 'know' | 'memories' | 'unknowns' | 'learning' | 'accounts' | 'privacy' | 'settings';
+type Section = 'home' | 'chat' | 'know' | 'memories' | 'unknowns' | 'learning' | 'accounts' | 'privacy' | 'settings' | 'shared';
 
 export default function AIManagement() {
   const [activeSection, setActiveSection] = useState<Section>('home');
@@ -30,6 +31,7 @@ export default function AIManagement() {
     { id: 'chat' as Section, label: 'Chat', icon: MessageSquare },
     { id: 'know' as Section, label: 'What I Know', icon: Search },
     { id: 'memories' as Section, label: 'Memories', icon: Brain },
+    { id: 'shared' as Section, label: 'Shared', icon: Share2 },
     { id: 'unknowns' as Section, label: 'Unknowns', icon: AlertCircle },
     { id: 'learning' as Section, label: 'Learning', icon: TrendingUp },
     { id: 'accounts' as Section, label: 'Accounts', icon: Link2 },
@@ -76,6 +78,7 @@ export default function AIManagement() {
             {activeSection === 'chat' && <ChatPanel />}
             {activeSection === 'know' && <WhatIKnowPanel />}
             {activeSection === 'memories' && <MemoriesPanel />}
+            {activeSection === 'shared' && <SharedMemoriesPanel />}
             {activeSection === 'unknowns' && <UnknownsPanel />}
             {activeSection === 'learning' && <LearningPanel />}
             {activeSection === 'accounts' && <ConnectedAccountsPanel />}

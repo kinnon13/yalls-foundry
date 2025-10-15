@@ -297,5 +297,95 @@ export const TOOL_DEFINITIONS = [
         }
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_memory_share_request",
+      description: "Create a request to share a memory with another user. ALWAYS check safety first with moderate_memory_content before calling this. Only call after user confirms they want to share.",
+      parameters: {
+        type: "object",
+        required: ["memory_id", "to_profile_id"],
+        properties: {
+          memory_id: {
+            type: "string",
+            description: "UUID of the memory to share"
+          },
+          to_profile_id: {
+            type: "string",
+            description: "UUID of the profile to share with"
+          },
+          moderation_result: {
+            type: "object",
+            description: "Result from moderate_memory_content call",
+            properties: {
+              decision: { type: "string" },
+              toxicity_score: { type: "number" },
+              safety_category: { type: "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "respond_to_share_request",
+      description: "Accept or decline a memory share request. Call this when user responds to a share notification.",
+      parameters: {
+        type: "object",
+        required: ["request_id", "action"],
+        properties: {
+          request_id: {
+            type: "string",
+            description: "UUID of the share request"
+          },
+          action: {
+            type: "string",
+            enum: ["accept", "decline"],
+            description: "User's decision"
+          }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_pending_share_requests",
+      description: "Get pending memory share requests for the current user (both sent and received)",
+      parameters: {
+        type: "object",
+        properties: {
+          direction: {
+            type: "string",
+            enum: ["received", "sent", "all"],
+            description: "Filter by direction (default: all)"
+          }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "revoke_memory_share",
+      description: "Revoke a previously shared memory, removing recipient's access",
+      parameters: {
+        type: "object",
+        required: ["memory_id", "revoke_from_profile_id"],
+        properties: {
+          memory_id: {
+            type: "string",
+            description: "UUID of the memory"
+          },
+          revoke_from_profile_id: {
+            type: "string",
+            description: "UUID of the profile to revoke access from"
+          }
+        }
+      }
+    }
   }
 ];

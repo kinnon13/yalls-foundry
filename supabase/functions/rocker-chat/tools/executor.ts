@@ -461,6 +461,182 @@ export async function executeTool(
         };
       }
 
+      case 'create_memory_share_request': {
+        // First check if users are mutually connected (implement mutual follow check)
+        // For now, allow sharing between any users
+
+        const { data: shareRequest, error: shareError } = await supabaseClient
+          .from('memory_share_requests')
+          .insert({
+            memory_id: args.memory_id,
+            from_profile_id: userId,
+            to_profile_id: args.to_profile_id,
+          })
+          .select(`
+            *,
+            from_profile:profiles!memory_share_requests_from_profile_id_fkey(display_name),
+            to_profile:profiles!memory_share_requests_to_profile_id_fkey(display_name)
+          `)
+          .single();
+
+        if (shareError) throw shareError;
+
+        // Update memory with moderation data if provided
+        if (args.moderation_result) {
+          await supabaseClient
+            .from('ai_user_memory')
+            .update({
+              toxicity: args.moderation_result.toxicity_score,
+              safety_category: args.moderation_result.safety_category,
+              tone: args.moderation_result.decision === 'ok' ? 'positive' : 'negative'
+            })
+            .eq('id', args.memory_id);
+        }
+
+        return {
+          success: true,
+          request_id: shareRequest.id,
+          message: `Share request sent to ${shareRequest.to_profile?.display_name || 'user'}. They'll be notified.`
+        };
+      }
+
+      case 'respond_to_share_request': {
+        const { data: request, error: fetchError } = await supabaseClient
+          .from('memory_share_requests')
+          .select('*, memory:ai_user_memory(*)')
+          .eq('id', args.request_id)
+          .eq('to_profile_id', userId)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        if (args.action === 'accept') {
+          // Create memory link
+          const { error: linkError } = await supabaseClient
+            .from('memory_links')
+            .insert({
+              source_memory_id: request.memory_id,
+              visible_to_profile_id: userId,
+              can_edit: false
+            });
+
+          if (linkError && linkError.code !== '23505') throw linkError; // Ignore duplicate
+
+          // Update request status
+          await supabaseClient
+            .from('memory_share_requests')
+            .update({ 
+              status: 'accepted', 
+              decided_at: new Date().toISOString() 
+            })
+            .eq('id', args.request_id);
+
+          // Update memory shared_with array
+          const { data: memory } = await supabaseClient
+            .from('ai_user_memory')
+            .select('shared_with')
+            .eq('id', request.memory_id)
+            .single();
+
+          const sharedWith = memory?.shared_with || [];
+          if (!sharedWith.includes(userId)) {
+            await supabaseClient
+              .from('ai_user_memory')
+              .update({
+                shared_with: [...sharedWith, userId],
+                visibility: 'linked'
+              })
+              .eq('id', request.memory_id);
+          }
+
+          return {
+            success: true,
+            message: 'Memory accepted and saved to your Shared Memories! ✅'
+          };
+        } else {
+          // Decline
+          await supabaseClient
+            .from('memory_share_requests')
+            .update({ 
+              status: 'declined', 
+              decided_at: new Date().toISOString() 
+            })
+            .eq('id', args.request_id);
+
+          return {
+            success: true,
+            message: 'Share request declined. The sender will be notified.'
+          };
+        }
+      }
+
+      case 'get_pending_share_requests': {
+        let query = supabaseClient
+          .from('memory_share_requests')
+          .select(`
+            *,
+            memory:ai_user_memory(key, value, type),
+            from_profile:profiles!memory_share_requests_from_profile_id_fkey(display_name, avatar_url),
+            to_profile:profiles!memory_share_requests_to_profile_id_fkey(display_name, avatar_url)
+          `)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+
+        if (args.direction === 'received') {
+          query = query.eq('to_profile_id', userId);
+        } else if (args.direction === 'sent') {
+          query = query.eq('from_profile_id', userId);
+        } else {
+          query = query.or(`from_profile_id.eq.${userId},to_profile_id.eq.${userId}`);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        return {
+          success: true,
+          requests: data || [],
+          count: data?.length || 0
+        };
+      }
+
+      case 'revoke_memory_share': {
+        // Delete memory link
+        const { error: linkError } = await supabaseClient
+          .from('memory_links')
+          .delete()
+          .eq('source_memory_id', args.memory_id)
+          .eq('visible_to_profile_id', args.revoke_from_profile_id);
+
+        if (linkError) throw linkError;
+
+        // Update memory shared_with array
+        const { data: memory } = await supabaseClient
+          .from('ai_user_memory')
+          .select('shared_with')
+          .eq('id', args.memory_id)
+          .single();
+
+        if (memory?.shared_with) {
+          const updatedSharedWith = memory.shared_with.filter(
+            (id: string) => id !== args.revoke_from_profile_id
+          );
+
+          await supabaseClient
+            .from('ai_user_memory')
+            .update({
+              shared_with: updatedSharedWith,
+              visibility: updatedSharedWith.length > 0 ? 'linked' : 'private'
+            })
+            .eq('id', args.memory_id);
+        }
+
+        return {
+          success: true,
+          message: 'Memory share revoked. User will no longer have access.'
+        };
+      }
+
       // ========== FILE OPERATIONS (DEVELOPER TOOLS) ==========
       case 'read_file':
       case 'edit_file':

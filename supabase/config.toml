@@ -87,6 +87,9 @@ verify_jwt = true
 [functions.text-to-speech]
 verify_jwt = false
 
+[functions.moderate-memory]
+verify_jwt = true
+
 [functions.kb-ingest]
 verify_jwt = true
 
