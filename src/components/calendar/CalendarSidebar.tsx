@@ -248,8 +248,9 @@ export function CalendarSidebar({
                   <Button
                     variant="ghost"
                     size="sm"
-                    data-rocker="new calendar button calendar plus open create calendar"
-                    aria-label="New Calendar Button"
+                    data-rocker="new calendar button calendar plus open create calendar calendar + add calendar new calendar +"
+                    aria-label="New Calendar +"
+                    title="Add a new calendar"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>

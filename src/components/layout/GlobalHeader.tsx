@@ -68,7 +68,7 @@ export function GlobalHeader() {
             {session && (
               <>
                 <Link to="/calendar">
-                  <Button variant="ghost" size="sm" data-rocker="calendar tab" aria-label="Calendar Tab">
+                  <Button variant="ghost" size="sm" data-rocker="calendar tab open calendar page calendar nav" aria-label="Calendar Tab">
                     <Calendar className="h-4 w-4 mr-2" />
                     Calendar
                   </Button>
