@@ -31,6 +31,7 @@ import { MediaUploadDialog } from '@/components/media/MediaUploadDialog';
 import { ModeratorConsole } from '@/routes/admin/panels/ModeratorConsole';
 import AIAnalyticsPanel from '@/routes/admin/panels/AIAnalyticsPanel';
 import KnowledgeBrowserPanel from '@/routes/admin/panels/KnowledgeBrowserPanel';
+import { Phase2VerificationPanel } from '@/routes/admin/panels/Phase2VerificationPanel';
 
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('scaling');
@@ -44,7 +45,7 @@ export default function ControlRoom() {
       />
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <header className="border-b bg-card sticky top-0 z-50">
+        <header className="border-b bg-card sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -135,6 +136,7 @@ export default function ControlRoom() {
 
             {/* Scaling Readiness Tab */}
             <TabsContent value="scaling" className="space-y-6">
+              <Phase2VerificationPanel />
               <ScalingReadinessPanel />
             </TabsContent>
 
