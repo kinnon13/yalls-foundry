@@ -27,6 +27,8 @@ export type RockerEventType =
   | 'user.search'
   | 'system.consent.granted'
   | 'system.error'
+  | 'user.create.business'
+  | 'user.create.crm_contact'
   | 'business.create'
   | 'business.lead.created'
   | 'mlm.referral.created'

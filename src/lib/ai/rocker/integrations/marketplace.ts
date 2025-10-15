@@ -6,6 +6,7 @@
  */
 
 import { logRockerEvent } from '../bus';
+import { supabase } from '@/integrations/supabase/client';
 
 export async function rockerListingCreated(params: {
   userId: string;

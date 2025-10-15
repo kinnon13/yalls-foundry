@@ -515,6 +515,71 @@ export function RockerProvider({ children }: { children: ReactNode }) {
               description: `Adding ${horseName} to your horses`,
             });
           }
+          
+          else if (tc.name === 'create_business') {
+            console.log('[Rocker] Creating business:', args.name);
+            toast({
+              title: '🏢 Business created',
+              description: `${args.name} has been registered`,
+            });
+          }
+          
+          else if (tc.name === 'create_listing') {
+            console.log('[Rocker] Creating marketplace listing:', args.title);
+            toast({
+              title: '🛒 Listing created',
+              description: `${args.title} is now available`,
+            });
+          }
+          
+          else if (tc.name === 'add_to_cart') {
+            console.log('[Rocker] Adding to cart:', args.listing_id);
+            toast({
+              title: '🛍️ Added to cart',
+              description: 'Item added successfully',
+            });
+          }
+          
+          else if (tc.name === 'create_crm_contact') {
+            console.log('[Rocker] Creating CRM contact:', args.name);
+            toast({
+              title: '👤 Contact added',
+              description: `${args.name} added to CRM`,
+            });
+          }
+          
+          else if (tc.name === 'edit_profile') {
+            console.log('[Rocker] Editing profile');
+            toast({
+              title: '✏️ Profile updated',
+              description: 'Changes saved successfully',
+            });
+          }
+          
+          else if (tc.name === 'claim_entity') {
+            console.log('[Rocker] Claiming entity:', args.entity_type);
+            toast({
+              title: '🏆 Entity claimed',
+              description: `You now own this ${args.entity_type}`,
+            });
+          }
+          
+          else if (tc.name === 'search') {
+            console.log('[Rocker] Searching:', args.query);
+            handleNavigation(`/search?q=${encodeURIComponent(args.query)}${args.type ? `&type=${args.type}` : ''}`);
+            toast({
+              title: '🔍 Searching',
+              description: `Looking for ${args.query}`,
+            });
+          }
+          
+          else if (tc.name === 'save_post') {
+            console.log('[Rocker] Saving post:', args.post_id);
+            toast({
+              title: '💾 Post saved',
+              description: 'Added to your saved posts',
+            });
+          }
         }
         
         const toolMessages: RockerMessage[] = result.tool_calls.map((tc: any) => ({
