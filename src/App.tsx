@@ -10,6 +10,7 @@ import { RequireAuth } from '@/lib/auth/guards';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
+import InactivityNudge from '@/components/rocker/InactivityNudge';
 import { RockerProvider } from '@/lib/ai/rocker/context';
 import Index from "./routes/index";
 import Search from "./routes/search";
@@ -120,6 +121,7 @@ const App = () => (
               </Routes>
 
               {FEEDBACK_ENABLED && <FeedbackWidget />}
+              <InactivityNudge />
               <RockerChat />
               <RockerSuggestions />
               <Toaster />
