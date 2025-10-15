@@ -139,9 +139,26 @@ async function searchUserMemory(supabase: any, userId: string, params: any) {
 }
 
 async function writeMemory(supabase: any, userId: string, entry: MemoryEntry) {
+  // CONSENT GATE: Check if user has site_opt_in
+  const { data: consent, error: consentError } = await supabase
+    .from('ai_user_consent')
+    .select('site_opt_in, policy_version')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (consentError || !consent || !consent.site_opt_in) {
+    return new Response(JSON.stringify({ 
+      error: 'Consent required',
+      message: 'Memory storage requires site_opt_in consent. Please visit /consent to grant permission.'
+    }), {
+      status: 403,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   const memoryData = {
     user_id: userId,
-    tenant_id: entry.tenant_id || userId, // default tenant to user_id
+    tenant_id: entry.tenant_id || userId,
     type: entry.type,
     key: entry.key,
     value: entry.value,
@@ -159,9 +176,13 @@ async function writeMemory(supabase: any, userId: string, entry: MemoryEntry) {
     memoryDataWithEmbedding.embedding = embedding;
   }
 
+  // IDEMPOTENT UPSERT with ON CONFLICT
   const { data, error } = await supabase
     .from('ai_user_memory')
-    .upsert(memoryDataWithEmbedding, { onConflict: 'tenant_id,user_id,key' })
+    .upsert(memoryDataWithEmbedding, { 
+      onConflict: 'tenant_id,user_id,key',
+      ignoreDuplicates: false 
+    })
     .select()
     .single();
 
@@ -170,6 +191,22 @@ async function writeMemory(supabase: any, userId: string, entry: MemoryEntry) {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+  }
+
+  // AUDIT RECEIPT: Log memory commit
+  try {
+    await supabase.from('admin_audit_log').insert({
+      action: 'memory.commit',
+      actor_user_id: userId,
+      metadata: {
+        key: entry.key,
+        type: entry.type,
+        confidence: data.confidence,
+        source: entry.source,
+      }
+    });
+  } catch (auditErr) {
+    console.error('Failed to log audit receipt:', auditErr);
   }
 
   return new Response(JSON.stringify({ memory: data }), {

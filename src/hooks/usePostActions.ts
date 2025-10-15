@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { rockerBus } from '@/lib/ai/rocker/bus';
 
 interface SavePostOptions {
   post_id: string;
@@ -35,6 +36,17 @@ export function usePostActions() {
       });
 
       if (error) throw error;
+
+      // ROCKER BUS: Emit save event
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await rockerBus.emit({
+          type: 'user.save.post',
+          userId: user.id,
+          tenantId: '00000000-0000-0000-0000-000000000000',
+          payload: { post_id: options.post_id, collection: options.collection, note: options.note }
+        });
+      }
 
       toast({
         title: 'Post saved',
@@ -91,6 +103,17 @@ export function usePostActions() {
       });
 
       if (error) throw error;
+
+      // ROCKER BUS: Emit reshare event
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await rockerBus.emit({
+          type: 'user.reshare.post',
+          userId: user.id,
+          tenantId: '00000000-0000-0000-0000-000000000000',
+          payload: { post_id: options.post_id, commentary: options.commentary, visibility: options.visibility }
+        });
+      }
 
       toast({
         title: 'Post reshared',

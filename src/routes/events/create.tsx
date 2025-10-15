@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { rockerBus } from '@/lib/ai/rocker/bus';
 
 export default function CreateEvent() {
   const [title, setTitle] = useState('');
@@ -27,6 +29,23 @@ export default function CreateEvent() {
         type: 'show',
         starts_at: new Date().toISOString(),
       });
+      
+      // ROCKER BUS: Emit event creation
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await rockerBus.emit({
+          type: 'user.create.event',
+          userId: user.id,
+          tenantId: '00000000-0000-0000-0000-000000000000',
+          payload: {
+            event_id: event.id,
+            event_type: 'show',
+            title: event.title,
+            starts_at: event.starts_at
+          }
+        });
+      }
+      
       toast({ title: 'Event created!' });
       navigate(`/events/${event.id}`);
     } catch (err) {

@@ -208,7 +208,26 @@ serve(async (req) => {
       isAdmin = !!roles;
     }
 
-    const systemPrompt = isAdmin ? ADMIN_SYSTEM_PROMPT : USER_SYSTEM_PROMPT;
+    // REHYDRATION: Load user memories and profile context
+    let contextMemories = '';
+    try {
+      const { data: memoryData } = await supabaseClient.functions.invoke('rocker-memory', {
+        body: {
+          action: 'search_memory',
+          user_id: user.id,
+          limit: 10
+        }
+      });
+      
+      if (memoryData?.memories && memoryData.memories.length > 0) {
+        contextMemories = '\n\n**User Context (from memory):**\n' + 
+          memoryData.memories.map((m: any) => `- ${m.key}: ${JSON.stringify(m.value)}`).join('\n');
+      }
+    } catch (err) {
+      console.warn('Failed to load user memories:', err);
+    }
+
+    const systemPrompt = (isAdmin ? ADMIN_SYSTEM_PROMPT : USER_SYSTEM_PROMPT) + contextMemories;
 
     // Build tools for function calling
     const tools: any = [
