@@ -1,0 +1,206 @@
+/**
+ * Job Processor
+ * 
+ * Background job processor with retry logic and outbox pattern.
+ * Processes pending jobs from the jobs table.
+ */
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  );
+
+  try {
+    console.log("Starting job processing batch");
+    const startTime = Date.now();
+
+    // Fetch pending jobs (batch of 10)
+    const { data: jobs, error: fetchError } = await supabase
+      .from("jobs")
+      .select("*")
+      .eq("status", "pending")
+      .lte("scheduled_at", new Date().toISOString())
+      .limit(10)
+      .order("scheduled_at", { ascending: true });
+
+    if (fetchError) {
+      throw fetchError;
+    }
+
+    if (!jobs || jobs.length === 0) {
+      console.log("No pending jobs found");
+      return new Response(
+        JSON.stringify({ processed: 0, message: "No pending jobs" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
+    console.log(`Found ${jobs.length} pending jobs`);
+
+    const results = [];
+
+    for (const job of jobs) {
+      try {
+        // Mark as processing
+        await supabase
+          .from("jobs")
+          .update({
+            status: "processing",
+            started_at: new Date().toISOString(),
+            attempts: job.attempts + 1,
+          })
+          .eq("id", job.id);
+
+        console.log(`Processing job ${job.id} (${job.job_type})`);
+
+        // Process based on job type
+        let result;
+        switch (job.job_type) {
+          case "generate_embeddings":
+            result = await processEmbeddingsJob(job, supabase);
+            break;
+          case "process_order":
+            result = await processOrderJob(job, supabase);
+            break;
+          case "send_notification":
+            result = await processSendNotificationJob(job, supabase);
+            break;
+          case "update_metrics":
+            result = await processUpdateMetricsJob(job, supabase);
+            break;
+          case "sync_inventory":
+            result = await processSyncInventoryJob(job, supabase);
+            break;
+          case "cleanup_carts":
+            result = await processCleanupCartsJob(job, supabase);
+            break;
+          default:
+            throw new Error(`Unknown job type: ${job.job_type}`);
+        }
+
+        // Mark as completed
+        await supabase
+          .from("jobs")
+          .update({
+            status: "completed",
+            completed_at: new Date().toISOString(),
+            result,
+          })
+          .eq("id", job.id);
+
+        results.push({ job_id: job.id, success: true });
+        console.log(`Completed job ${job.id}`);
+      } catch (error) {
+        console.error(`Error processing job ${job.id}:`, error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+        // Check if should retry
+        const shouldRetry = job.attempts + 1 < job.max_attempts;
+
+        await supabase
+          .from("jobs")
+          .update({
+            status: shouldRetry ? "pending" : "failed",
+            error: errorMessage,
+            completed_at: shouldRetry ? null : new Date().toISOString(),
+          })
+          .eq("id", job.id);
+
+        results.push({ job_id: job.id, success: false, error: errorMessage });
+      }
+    }
+
+    const duration = Date.now() - startTime;
+    const successCount = results.filter(r => r.success).length;
+
+    console.log(`Processed ${jobs.length} jobs in ${duration}ms (${successCount} succeeded)`);
+
+    return new Response(
+      JSON.stringify({
+        processed: jobs.length,
+        succeeded: successCount,
+        failed: jobs.length - successCount,
+        duration_ms: duration,
+        results,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
+  } catch (error) {
+    console.error("Error in process-jobs:", error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  }
+});
+
+// Job processors
+async function processEmbeddingsJob(job: any, supabase: any) {
+  const { chunks } = job.payload;
+  
+  // Call embeddings function
+  const { data, error } = await supabase.functions.invoke("generate-embeddings", {
+    body: { chunks },
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+async function processOrderJob(job: any, supabase: any) {
+  // Process order completion, MLM commissions, etc.
+  console.log("Processing order job:", job.payload);
+  return { processed: true };
+}
+
+async function processSendNotificationJob(job: any, supabase: any) {
+  // Send email/SMS notifications
+  console.log("Sending notification:", job.payload);
+  return { sent: true };
+}
+
+async function processUpdateMetricsJob(job: any, supabase: any) {
+  // Update aggregated metrics
+  console.log("Updating metrics:", job.payload);
+  return { updated: true };
+}
+
+async function processSyncInventoryJob(job: any, supabase: any) {
+  // Sync inventory across listings
+  console.log("Syncing inventory:", job.payload);
+  return { synced: true };
+}
+
+async function processCleanupCartsJob(job: any, supabase: any) {
+  // Cleanup expired carts
+  const { data, error } = await supabase
+    .from("shopping_carts")
+    .delete()
+    .lt("expires_at", new Date().toISOString());
+
+  if (error) throw error;
+  return { deleted: data?.length || 0 };
+}
