@@ -2136,6 +2136,36 @@ export type Database = {
           },
         ]
       }
+      rocker_conversations: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          role: string
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role: string
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role?: string
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       rocker_notifications: {
         Row: {
           created_at: string

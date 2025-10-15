@@ -10,6 +10,64 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+/**
+ * Extract learnings from conversation and save to user memory
+ */
+async function extractLearningsFromConversation(
+  supabaseClient: any,
+  userId: string,
+  userMessage: string,
+  assistantResponse: string
+) {
+  try {
+    // Detect preferences, interests, and important facts from user messages
+    const learningPatterns = [
+      { pattern: /I (prefer|like|love|want|need|always|usually)/i, type: 'preference' },
+      { pattern: /my (name is|birthday is|favorite|goal is)/i, type: 'personal_info' },
+      { pattern: /(never|don't|won't|hate|dislike) (.+)/i, type: 'preference', negative: true },
+      { pattern: /remind me|notification|alert me/i, type: 'notification_preference' },
+      { pattern: /I'm (working on|building|creating|interested in)/i, type: 'interest' },
+    ];
+
+    for (const { pattern, type, negative } of learningPatterns) {
+      const match = userMessage.match(pattern);
+      if (match) {
+        const key = `${type}_${match[0].toLowerCase().replace(/\s+/g, '_').substring(0, 50)}`;
+        const value = {
+          statement: match[0],
+          context: userMessage,
+          extracted_at: new Date().toISOString(),
+          is_negative: negative || false
+        };
+
+        // Check if similar memory already exists
+        const { data: existing } = await supabaseClient
+          .from('ai_user_memory')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('key', key)
+          .maybeSingle();
+
+        if (!existing) {
+          await supabaseClient.from('ai_user_memory').insert({
+            user_id: userId,
+            tenant_id: userId,
+            key,
+            value,
+            type,
+            confidence: 0.8,
+            source: 'chat',
+            tags: [type, 'auto_learned']
+          });
+          console.log(`[Learning] Extracted ${type}:`, key);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('[Learning] Failed to extract learnings:', error);
+  }
+}
+
 // System prompts for different modes
 const USER_SYSTEM_PROMPT = `You are Rocker, an AI assistant who can TAKE ACTIONS on behalf of the user.
 
@@ -1313,6 +1371,19 @@ Then offer to search for it:
       }
     ];
 
+    // Save user message to conversation history
+    const sessionId = crypto.randomUUID();
+    if (messages.length > 0) {
+      const lastUserMessage = messages[messages.length - 1];
+      await supabaseClient.from('rocker_conversations').insert({
+        user_id: user.id,
+        session_id: sessionId,
+        role: 'user',
+        content: lastUserMessage.content,
+        metadata: { timestamp: new Date().toISOString() }
+      });
+    }
+
     // Tool calling loop
     let conversationMessages = [
       { role: 'system', content: systemPrompt },
@@ -1383,7 +1454,27 @@ Then offer to search for it:
         // Continue loop to get AI's response with tool results
         continue;
       } else {
-        // No more tool calls, return final answer
+        // No more tool calls, save assistant response and extract learnings
+        await supabaseClient.from('rocker_conversations').insert({
+          user_id: user.id,
+          session_id: sessionId,
+          role: 'assistant',
+          content: assistantMessage.content,
+          metadata: { 
+            timestamp: new Date().toISOString(),
+            iterations 
+          }
+        });
+
+        // Extract learnings from conversation
+        await extractLearningsFromConversation(
+          supabaseClient, 
+          user.id, 
+          messages[messages.length - 1]?.content || '',
+          assistantMessage.content
+        );
+
+        // Return final answer
         const response: any = { 
           content: assistantMessage.content,
           role: 'assistant'

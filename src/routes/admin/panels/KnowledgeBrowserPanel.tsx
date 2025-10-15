@@ -38,12 +38,14 @@ export default function KnowledgeBrowserPanel() {
   const [newUri, setNewUri] = useState('');
   const [adding, setAdding] = useState(false);
   const [userMemory, setUserMemory] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<any[]>([]);
 
   useEffect(() => {
     loadCategories();
     searchKnowledge();
     if (session?.userId) {
       loadUserMemory();
+      loadConversations();
     }
   }, []);
 
@@ -63,6 +65,21 @@ export default function KnowledgeBrowserPanel() {
       setUserMemory(data || []);
     } catch (error) {
       console.error('[KB Browser] Load memory error:', error);
+    }
+  };
+
+  const loadConversations = async () => {
+    try {
+      const { data } = await supabase
+        .from('rocker_conversations')
+        .select('*')
+        .eq('user_id', session?.userId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      setConversations(data || []);
+    } catch (error) {
+      console.error('[KB Browser] Load conversations error:', error);
     }
   };
 
@@ -216,34 +233,73 @@ export default function KnowledgeBrowserPanel() {
             </Button>
           </div>
 
-          {userMemory.length > 0 && (
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Learned Memories */}
             <div className="space-y-2">
-              <div className="text-sm font-medium">Recent Memories ({userMemory.length})</div>
-              <ScrollArea className="h-[200px]">
-                <div className="space-y-2">
-                  {userMemory.map((mem) => (
-                    <div key={mem.id} className="p-2 border rounded text-sm">
-                      <div className="font-medium">{mem.key}</div>
-                      <div className="text-muted-foreground text-xs mt-1">
-                        {JSON.stringify(mem.value).substring(0, 100)}...
+              <div className="text-sm font-medium">Learned From Conversations ({userMemory.length})</div>
+              <ScrollArea className="h-[300px] border rounded p-2">
+                {userMemory.length > 0 ? (
+                  <div className="space-y-2">
+                    {userMemory.map((mem) => (
+                      <div key={mem.id} className="p-2 border rounded text-sm bg-card">
+                        <div className="font-medium text-xs text-muted-foreground">{mem.type}</div>
+                        <div className="mt-1">{mem.key.replace(/_/g, ' ')}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {typeof mem.value === 'object' && mem.value !== null 
+                            ? JSON.stringify(mem.value).substring(0, 100) 
+                            : String(mem.value).substring(0, 100)}...
+                        </div>
+                        <div className="flex gap-1 mt-2">
+                          <Badge variant="secondary" className="text-xs">{mem.source}</Badge>
+                          {mem.tags?.slice(0, 2).map((tag: string) => (
+                            <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs">{mem.type}</Badge>
-                        {mem.tags?.map((tag: string) => (
-                          <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-8 text-sm">
+                    No learnings yet. Chat with Rocker and it will automatically learn your preferences!
+                  </p>
+                )}
               </ScrollArea>
             </div>
-          )}
 
-          {userMemory.length === 0 && scope === 'user' && items.length === 0 && (
-            <div className="text-center py-6 text-muted-foreground">
-              <p className="mb-2">Rocker hasn't learned anything about you yet.</p>
-              <p className="text-sm">Start chatting with Rocker or click "Teach Rocker" to add knowledge.</p>
+            {/* Recent Conversations */}
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Recent Conversations ({conversations.length})</div>
+              <ScrollArea className="h-[300px] border rounded p-2">
+                {conversations.length > 0 ? (
+                  <div className="space-y-2">
+                    {conversations.map((conv) => (
+                      <div key={conv.id} className="p-2 border rounded text-sm bg-card">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={conv.role === 'user' ? 'default' : 'secondary'} className="text-xs">
+                            {conv.role}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(conv.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs">{conv.content.substring(0, 150)}...</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-8 text-sm">
+                    No conversations yet. Start chatting with Rocker to see your conversation history!
+                  </p>
+                )}
+              </ScrollArea>
+            </div>
+          </div>
+
+          {userMemory.length === 0 && conversations.length === 0 && scope === 'user' && items.length === 0 && (
+            <div className="text-center py-6 text-muted-foreground border-t">
+              <p className="mb-2 font-medium">Rocker hasn't learned anything about you yet.</p>
+              <p className="text-sm mb-4">Start chatting with Rocker or click "Teach Rocker" to add knowledge manually.</p>
+              <p className="text-xs">💡 Rocker automatically learns from your conversations - try saying things like "I prefer...", "I always...", or "My favorite..."</p>
             </div>
           )}
         </CardContent>
