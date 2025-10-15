@@ -1,1 +1,16 @@
 project_id = "xuxfuonzsfvrirdwzddt"
+
+[functions.create-checkout-session]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.delete-account]
+verify_jwt = true
+
+[functions.health-liveness]
+verify_jwt = false
+
+[functions.health-readiness]
+verify_jwt = false

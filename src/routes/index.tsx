@@ -4,7 +4,7 @@ import { DevNav } from '@/components/DevNav';
 import { useSession } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Search, Settings } from 'lucide-react';
+import { Sparkles, Search, Settings, ShoppingBag } from 'lucide-react';
 
 export default function Index() {
   const { session } = useSession();
@@ -55,6 +55,25 @@ export default function Index() {
                 <CardContent>
                   <Button variant="outline" className="w-full">
                     Browse Horses
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link to="/marketplace">
+              <Card className="hover:border-primary transition-colors h-full cursor-pointer">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShoppingBag className="h-5 w-5" />
+                    Marketplace
+                  </CardTitle>
+                  <CardDescription>
+                    Browse and purchase products
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" className="w-full">
+                    Shop Now
                   </Button>
                 </CardContent>
               </Card>

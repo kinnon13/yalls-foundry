@@ -14,6 +14,10 @@ import Login from "./routes/login";
 import Signup from "./routes/signup";
 import Profile from "./routes/profile";
 import ControlRoom from "./routes/admin/control-room";
+import MarketplaceIndex from "./routes/marketplace/index";
+import ListingDetail from "./routes/marketplace/[id]";
+import Cart from "./routes/cart";
+import Checkout from "./routes/checkout";
 import HorsesIndex from "./routes/horses/index";
 import HorseDetail from "./routes/horses/[id]";
 import CreateHorse from "./routes/horses/create";
@@ -45,6 +49,12 @@ const App = () => (
           <Route path="/search" element={<Search />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          
+          {/* Marketplace Routes */}
+          <Route path="/marketplace" element={<MarketplaceIndex />} />
+          <Route path="/marketplace/:id" element={<ListingDetail />} />
+          <Route path="/cart" element={<RequireAuth><Cart /></RequireAuth>} />
+          <Route path="/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
 
           {/* MLM Routes */}
           <Route
