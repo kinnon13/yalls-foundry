@@ -944,6 +944,30 @@ export function RockerProvider({ children }: { children: ReactNode }) {
         };
         
         setMessages(prev => [...prev, assistantMessage]);
+
+        // Play TTS for Rocker's response if voice is authorized
+        const voiceAuthorized = localStorage.getItem('rocker-voice-authorized');
+        if (voiceAuthorized === 'true' && result.content) {
+          try {
+            const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+              body: { 
+                text: result.content,
+                voice: 'alloy'
+              }
+            });
+
+            if (!ttsError && ttsData?.audioContent) {
+              const audio = new Audio(`data:audio/mp3;base64,${ttsData.audioContent}`);
+              await audio.play().catch(err => {
+                console.error('Audio playback failed:', err);
+                // Ignore playback errors (e.g., user interaction required)
+              });
+            }
+          } catch (ttsErr) {
+            console.error('Error with TTS:', ttsErr);
+            // Don't throw - TTS is optional, continue with text response
+          }
+        }
       } else if (!result.tool_calls || result.tool_calls.length === 0) {
         throw new Error('No response from assistant');
       }
