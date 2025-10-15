@@ -2,11 +2,13 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { rateLimit } from "../_shared/rate-limit.ts";
-import { USER_SYSTEM_PROMPT, buildUserContext } from "./prompts.ts";
+import { USER_SYSTEM_PROMPT } from "./prompts.ts";
 import { extractLearningsFromConversation } from "./learning.ts";
 import { aggregatePatternsAndAnalytics } from "./analytics.ts";
 import { TOOL_DEFINITIONS } from "./tools/definitions.ts";
-import { executeTool } from "./tools/executor.ts";
+import { buildUserContext } from "./buildContext.ts";
+import { executeToolLoop } from "./toolLoop.ts";
+import { generateSummary } from "./summarize.ts";
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
@@ -59,46 +61,7 @@ serve(async (req) => {
     const { messages, sessionId: requestedSessionId } = body;
 
     // Build user context from profile, memory, and analytics
-    let userContext = `\n\n**CURRENT USER:**\n- User ID: ${user.id}\n- Email: ${user.email || 'Not provided'}`;
-
-    try {
-      const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('display_name, bio')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      // Fetch user roles
-      const { data: userRoles } = await supabaseClient
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id);
-
-      const roles = (userRoles || []).map((r: any) => r.role);
-      
-      // Add roles to context
-      if (roles.length > 0) {
-        userContext += `\n- Roles: ${roles.join(', ')}`;
-      }
-
-      const { data: memoryData } = await supabaseClient.functions.invoke('rocker-memory', {
-        body: {
-          action: 'search_memory',
-          limit: 25  // Increased from 10 to give AI more context about the user
-        }
-      });
-
-      const { data: analytics } = await supabaseClient
-        .from('ai_user_analytics')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('calculated_at', { ascending: false })
-        .limit(5);
-
-      userContext += buildUserContext(profile, memoryData?.memories || [], analytics || []);
-    } catch (err) {
-      console.warn('Failed to load user context:', err);
-    }
+    const userContext = await buildUserContext(supabaseClient, user.id, user.email);
 
     // Build system prompt with user context
     const systemPrompt = USER_SYSTEM_PROMPT + userContext;
@@ -214,25 +177,14 @@ serve(async (req) => {
 
       // Check if AI wants to call tools
       if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
-        // Add assistant message with tool calls
         conversationMessages.push(assistantMessage);
-
-        // Execute each tool
-        for (const toolCall of assistantMessage.tool_calls) {
-          const toolName = toolCall.function.name;
-          const toolArgs = JSON.parse(toolCall.function.arguments);
-
-          const result = await executeTool(toolName, toolArgs, supabaseClient, user.id);
-
-          // Add tool result
-          conversationMessages.push({
-            role: 'tool',
-            tool_call_id: toolCall.id,
-            content: JSON.stringify(result)
-          });
-        }
-
-        // Continue loop to get AI's response with tool results
+        const toolResults = await executeToolLoop(
+          conversationMessages,
+          assistantMessage.tool_calls,
+          supabaseClient,
+          user.id
+        );
+        conversationMessages.push(...toolResults);
         continue;
       } else {
         // No more tool calls, save assistant response
@@ -270,32 +222,12 @@ serve(async (req) => {
 
         // Generate summary for the conversation (after a few messages)
         if (isNewSession && conversationMessages.length >= 4) {
-          try {
-            const summaryPrompt = `Summarize this conversation in one brief sentence (max 100 chars): ${conversationMessages.slice(-4).map(m => `${m.role}: ${m.content}`).join('\n')}`;
-            const summaryResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${OPENAI_API_KEY}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                model: 'gpt-4o-mini',
-                messages: [{ role: 'system', content: summaryPrompt }],
-                max_tokens: 50
-              }),
-            });
-
-            if (summaryResponse.ok) {
-              const summaryData = await summaryResponse.json();
-              const summary = summaryData.choices[0].message.content;
-              
-              await supabaseClient
-                .from('conversation_sessions')
-                .update({ summary })
-                .eq('session_id', sessionId);
-            }
-          } catch (err) {
-            console.error('[Summary] Failed to generate summary:', err);
+          const summary = await generateSummary(conversationMessages, OPENAI_API_KEY);
+          if (summary) {
+            await supabaseClient
+              .from('conversation_sessions')
+              .update({ summary })
+              .eq('session_id', sessionId);
           }
         }
 

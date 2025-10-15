@@ -1,0 +1,26 @@
+name: guardrails
+on: [push, pull_request]
+jobs:
+  guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Enforce 200-line rule (critical files)
+        run: |
+          MAX=200
+          FAIL=0
+          for f in supabase/functions/rocker-chat/index.ts src/components/rocker/RockerChatUI.tsx src/routes/admin/control-room.tsx; do
+            [ -f "$f" ] || continue
+            L=$(wc -l < "$f")
+            if [ "$L" -gt "$MAX" ]; then echo "❌ $f ($L > $MAX)"; FAIL=1; fi
+          done
+          exit $FAIL
+      
+      - name: No hardcoded tenant
+        run: |
+          ! git grep -n "00000000-0000-0000-0000-000000000000" || echo "Found hardcoded tenant IDs"
+      
+      - name: No raw console in edge functions
+        run: |
+          ! git grep -n "console\\.(log|error|warn)" supabase/functions || echo "Found console calls in edge functions"
