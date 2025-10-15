@@ -14,6 +14,7 @@ import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileFields } from '@/components/profile/ProfileFields';
 import { ClaimBanner } from '@/components/profile/ClaimBanner';
 import { ProfileActions } from '@/components/profile/ProfileActions';
+import { ProfileChatHistory } from '@/components/profile/ProfileChatHistory';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
 import type { AnyProfile } from '@/lib/profiles/types';
@@ -201,6 +202,10 @@ export default function Profile() {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {!id && session && (
+            <ProfileChatHistory />
           )}
 
           {id && (

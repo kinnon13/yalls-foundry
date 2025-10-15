@@ -57,6 +57,32 @@ export function RockerChatUI() {
     }
   }, []);
 
+  // Listen for session load events from profile
+  useEffect(() => {
+    const handleOpenSession = (e: CustomEvent) => {
+      const sessionId = e.detail?.sessionId;
+      if (sessionId) {
+        setCurrentSessionId(sessionId);
+        setIsOpen(true);
+        localStorage.removeItem('rocker-load-session');
+      }
+    };
+
+    window.addEventListener('rocker-open-session' as any, handleOpenSession);
+    
+    // Check if there's a pending session load
+    const pendingSession = localStorage.getItem('rocker-load-session');
+    if (pendingSession) {
+      setCurrentSessionId(pendingSession);
+      setIsOpen(true);
+      localStorage.removeItem('rocker-load-session');
+    }
+
+    return () => {
+      window.removeEventListener('rocker-open-session' as any, handleOpenSession);
+    };
+  }, [setIsOpen]);
+
   // Save always listening preference and voice authorization
   useEffect(() => {
     localStorage.setItem('rocker-always-listening', isAlwaysListening.toString());
