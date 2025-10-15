@@ -141,34 +141,27 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     } 
     else if (cmd.type === 'click_element' && cmd.element_name) {
       console.log('[Rocker Context] Processing click command:', cmd.element_name);
-      executeDOMAction({
+      const clickResult = executeDOMAction({
         type: 'click',
         targetName: cmd.element_name
-      }).then(result => {
-        toast({
-          title: result.success ? '✅ Clicked' : '❌ Click failed',
-          description: result.message,
-          variant: result.success ? 'default' : 'destructive',
-        });
+      });
+      toast({
+        title: clickResult.success ? '✅ Clicked' : '❌ Click failed',
+        description: clickResult.message,
+        variant: clickResult.success ? 'default' : 'destructive',
       });
     }
     else if (cmd.type === 'fill_field' && cmd.field_name && cmd.value) {
       console.log('[Rocker Context] Processing fill command:', cmd.field_name);
-      executeDOMAction({
+      const fillResult = executeDOMAction({
         type: 'fill',
         targetName: cmd.field_name,
         value: cmd.value
-      }).then(result => {
-        toast({
-          title: result.success ? '✍️ Filled field' : '❌ Fill failed',
-          description: result.message,
-          variant: result.success ? 'default' : 'destructive',
-        });
       });
       toast({
-        title: result.success ? '✍️ Filled field' : '❌ Fill failed',
-        description: result.message,
-        variant: result.success ? 'default' : 'destructive',
+        title: fillResult.success ? '✍️ Filled field' : '❌ Fill failed',
+        description: fillResult.message,
+        variant: fillResult.success ? 'default' : 'destructive',
       });
     }
     else if (cmd.type === 'create_post' && cmd.content) {
@@ -530,37 +523,29 @@ export function RockerProvider({ children }: { children: ReactNode }) {
           
           // Handle DOM actions
           else if (tc.name === 'click_element') {
-            executeDOMAction({
+            const clickResult = executeDOMAction({
               type: 'click',
               targetName: args.element_name
-            }).then(domResult => {
-              console.log('[Rocker] Click result:', domResult);
-              toast({
-                title: domResult.success ? '✅ Clicked' : '❌ Click failed',
-                description: domResult.message,
-                variant: domResult.success ? 'default' : 'destructive',
-              });
+            });
+            console.log('[Rocker] Click result:', clickResult);
+            toast({
+              title: clickResult.success ? '✅ Clicked' : '❌ Click failed',
+              description: clickResult.message,
+              variant: clickResult.success ? 'default' : 'destructive',
             });
           }
           
           else if (tc.name === 'fill_field') {
-            executeDOMAction({
+            const fillResult = executeDOMAction({
               type: 'fill',
               targetName: args.field_name,
               value: args.value
-            }).then(domResult => {
-              console.log('[Rocker] Fill result:', domResult);
-              toast({
-                title: domResult.success ? '✍️ Filled field' : '❌ Fill failed',
-                description: domResult.message,
-                variant: domResult.success ? 'default' : 'destructive',
-              });
             });
-            console.log('[Rocker] Fill result:', domResult);
+            console.log('[Rocker] Fill result:', fillResult);
             toast({
-              title: domResult.success ? '✍️ Filled field' : '❌ Fill failed',
-              description: domResult.message,
-              variant: domResult.success ? 'default' : 'destructive',
+              title: fillResult.success ? '✍️ Filled field' : '❌ Fill failed',
+              description: fillResult.message,
+              variant: fillResult.success ? 'default' : 'destructive',
             });
           }
           
