@@ -97,7 +97,7 @@ export default function UnclaimedEntitiesPage() {
 
         let query = supabase
           .from(config.table as any)
-          .select(selectFields, { count: 'planned' }) // Use 'planned' instead of 'exact' for better performance
+          .select(selectFields, { count: 'exact' }) // Use 'exact' to ensure accurate counts for badges
           .limit(config.pageSize)
           .order('created_at', { ascending: false })
           .order('id', { ascending: false }); // Composite sort for stable keyset pagination
