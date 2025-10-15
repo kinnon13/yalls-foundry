@@ -66,9 +66,9 @@ This document outlines the mandatory tracking and logging that occurs for all us
 - `admin_audit_log` table
 - Entity-specific tables (posts, events, etc.)
 
-## Consent-Gated Features
+## Mandatory Learning Features
 
-The following features REQUIRE user consent and are NOT enabled by default:
+The following features are REQUIRED for all users and cannot be disabled:
 
 ### 1. Memory Storage (`ai_user_memory`)
 - Extraction of user preferences from conversations
@@ -81,10 +81,10 @@ The following features REQUIRE user consent and are NOT enabled by default:
 - Personal identifiers (names, emails) are NEVER used in AI training data
 - Helps improve platform for all users without sharing personal details
 
-**User Control:**
-- Users must opt-in via `ai_user_consent.site_opt_in`
-- Can be revoked at any time
-- Data can be deleted on request
+**Mandatory Requirement:**
+- Automatically enabled via `ai_user_consent.site_opt_in` (always true)
+- Cannot be disabled while maintaining a profile
+- Users must accept to use the platform
 - Full transparency via Knowledge Browser
 
 ### 2. Cross-User Analytics (`ai_user_analytics`, `ai_global_patterns`)

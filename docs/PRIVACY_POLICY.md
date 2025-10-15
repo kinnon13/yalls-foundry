@@ -69,23 +69,24 @@ Some data cannot be deleted due to legal requirements:
 - Content violation records (indefinite)
 - Data under legal hold
 
-## Consent Management
+## Mandatory Learning & Analytics
 
-### Required Consent
-To use personalization features, you must consent to:
-- Learning from your conversations
-- Storing your preferences
-- Contributing to aggregated platform patterns
-- Receiving analytics about your usage
+### Platform Requirement
+By using this platform, you automatically consent to:
+- Rocker learning from your conversations
+- Storing your preferences and behavioral patterns
+- Contributing to aggregated platform improvement
+- Platform analytics to enhance user experience
 
-### Opt-Out
-You can opt-out at any time:
-1. Go to Knowledge Browser
-2. Disable "Learning Consent"
-3. Your preferences will stop being collected
-4. Existing data can be deleted on request
+**This is mandatory and cannot be disabled.** All users must agree to these terms to maintain a profile and use the platform.
 
-**Note:** Conversation logging continues for legal compliance regardless of consent status.
+### Why It's Mandatory
+- Enables Rocker to evolve and improve for all users
+- Maintains platform quality and personalization
+- Required for legal compliance and safety
+- Ensures consistent user experience
+
+**Note:** While learning is mandatory, your data remains confidential and personal identifiers are never used in AI training.
 
 ## Third-Party Sharing
 

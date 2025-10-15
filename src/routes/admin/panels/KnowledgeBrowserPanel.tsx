@@ -43,14 +43,12 @@ export default function KnowledgeBrowserPanel() {
   const [userAnalytics, setUserAnalytics] = useState<any[]>([]);
   const [globalPatterns, setGlobalPatterns] = useState<any[]>([]);
   const [aggregating, setAggregating] = useState(false);
-  const [consent, setConsent] = useState<any>(null);
 
   useEffect(() => {
     loadCategories();
     searchKnowledge();
     if (session?.userId) {
       loadUserProfile();
-      loadConsent();
       loadUserMemory();
       loadConversations();
       loadUserAnalytics();
@@ -159,41 +157,6 @@ export default function KnowledgeBrowserPanel() {
     }
   };
 
-  const loadConsent = async () => {
-    try {
-      const { data } = await supabase
-        .from('ai_user_consent')
-        .select('*')
-        .eq('user_id', session?.userId)
-        .maybeSingle();
-      
-      setConsent(data);
-    } catch (error) {
-      console.error('[KB Browser] Load consent error:', error);
-    }
-  };
-
-  const enableConsent = async () => {
-    try {
-      const { error } = await supabase.functions.invoke('consent-accept', {
-        body: {
-          scopes: ['memory', 'personalization', 'analytics'],
-          site_opt_in: true,
-          email_opt_in: false,
-          push_opt_in: false,
-          sms_opt_in: false
-        }
-      });
-
-      if (error) throw error;
-
-      toast.success('Consent enabled! Rocker can now learn from your interactions.');
-      loadConsent();
-    } catch (error) {
-      console.error('[KB Browser] Enable consent error:', error);
-      toast.error('Failed to enable consent');
-    }
-  };
 
   const loadUserMemory = async () => {
     try {
@@ -429,38 +392,24 @@ export default function KnowledgeBrowserPanel() {
                 )}
               </div>
 
-              {/* Consent Status */}
+              {/* Learning Status - Always Enabled */}
               <div className="pt-3 border-t">
-                <div className="text-sm font-medium mb-2">Learning Consent</div>
-                {consent?.site_opt_in ? (
+                <div className="text-sm font-medium mb-2">Learning & Analytics</div>
+                <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
                     <CheckCircle className="h-4 w-4" />
-                    <span>Enabled - Rocker is learning from your interactions</span>
+                    <span>Always Enabled - Platform Requirement</span>
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
-                      <AlertTriangle className="h-4 w-4" />
-                      <span>Consent Required - Enable to use personalization features</span>
-                    </div>
-                    <Button 
-                      onClick={enableConsent} 
-                      size="sm"
-                      className="w-full"
-                    >
-                      Enable Learning & Personalization
-                    </Button>
-                    <div className="text-xs text-muted-foreground">
-                      <strong>How your data is used:</strong>
-                      <ul className="list-disc pl-4 mt-1 space-y-1">
-                        <li>Learn your preferences for personalized recommendations</li>
-                        <li>Improve platform training (anonymized patterns only)</li>
-                        <li>No personal identifiers used in AI training data</li>
-                        <li>All data kept confidential and never shared publicly</li>
-                      </ul>
-                    </div>
+                  <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                    <strong>Rocker learns from all users to evolve and improve the platform.</strong>
+                    <ul className="list-disc pl-4 mt-2 space-y-1">
+                      <li>All data is confidential and used only for platform training</li>
+                      <li>Personal identifiers (names, emails) are never used in AI training</li>
+                      <li>Helps improve the experience for all users</li>
+                      <li>Required for legal compliance and platform safety</li>
+                    </ul>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           )}
