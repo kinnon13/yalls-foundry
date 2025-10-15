@@ -47,7 +47,7 @@ export function ConnectedEntitiesPanel() {
       
       const { data, error, count } = await supabase
         .from('businesses')
-        .select('*', { count: 'exact' })
+        .select('id, name, description, created_at, slug, frozen', { count: 'exact' })
         .eq('owner_id', userId)
         .range(start, end)
         .order('created_at', { ascending: false });
@@ -68,7 +68,7 @@ export function ConnectedEntitiesPanel() {
       
       const { data, error, count } = await supabase
         .from('horses' as any)
-        .select('*', { count: 'exact' })
+        .select('id, name, sex, foal_year, created_at', { count: 'exact' })
         .eq('primary_owner_id', userId)
         .range(start, end)
         .order('created_at', { ascending: false });

@@ -119,27 +119,41 @@ export default function UnclaimedEntitiesPage() {
     }
   };
 
-  // Dynamic entity fetcher with infinite scroll
+  // Dynamic entity fetcher with infinite scroll (optimized with keyset pagination)
   const useEntityQuery = (config: EntityConfig) => {
     return useInfiniteQuery({
       queryKey: ['entities', 'unclaimed', config.type, debouncedSearch],
-      queryFn: async ({ pageParam = 0 }) => {
+      queryFn: async ({ pageParam }) => {
+        // Project only needed columns instead of SELECT *
+        const selectFields = `id, ${config.nameField}, created_at${
+          typeof config.descriptionField === 'string' ? `, ${config.descriptionField}` : ''
+        }`;
+
         let query = supabase
           .from(config.table as any)
-          .select('*', { count: 'exact' })
-          .range(pageParam, pageParam + config.pageSize - 1)
-          .order('created_at', { ascending: false });
+          .select(selectFields, { count: 'planned' }) // Use 'planned' instead of 'exact' for better performance
+          .limit(config.pageSize)
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false }); // Composite sort for stable keyset pagination
+
+        // Keyset pagination: filter by last seen timestamp + id
+        if (pageParam) {
+          query = query.lt('created_at', pageParam.created_at)
+            .neq('id', pageParam.id);
+        }
 
         // Apply unclaimed filters dynamically
         Object.entries(config.unclaimedFilter).forEach(([key, value]) => {
           if (value === null) {
             query = query.is(key, null);
+          } else if (value === false) {
+            query = query.eq(key, false);
           } else {
             query = query.eq(key, value);
           }
         });
 
-        // Apply search filter if present
+        // Apply search filter if present (uses trigram index)
         if (debouncedSearch) {
           query = query.ilike(config.nameField, `%${debouncedSearch}%`);
         }
@@ -147,14 +161,18 @@ export default function UnclaimedEntitiesPage() {
         const { data, error, count } = await query;
         if (error) throw error;
         
+        const lastItem = data && data.length > 0 && data.length === config.pageSize ? data[data.length - 1] : null;
+        
         return {
           data: data || [],
           count: count || 0,
-          nextPage: data && data.length === config.pageSize ? pageParam + config.pageSize : undefined,
+          nextCursor: lastItem && 'created_at' in lastItem && 'id' in lastItem 
+            ? { created_at: lastItem.created_at as string, id: lastItem.id as string } 
+            : undefined,
         };
       },
-      getNextPageParam: (lastPage) => lastPage.nextPage,
-      initialPageParam: 0,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      initialPageParam: null as { created_at: string; id: string } | null,
     });
   };
 
