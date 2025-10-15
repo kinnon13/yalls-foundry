@@ -6,7 +6,7 @@
  */
 
 import { useRef, useEffect } from 'react';
-import { MessageCircle, Send, X, Loader2, Trash2, Mic, MicOff } from 'lucide-react';
+import { MessageCircle, Send, X, Loader2, Trash2, Mic, MicOff, Paperclip, Link as LinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -279,16 +279,57 @@ export function RockerChatUI() {
       {/* Input */}
       {!isVoiceMode && (
         <div className="p-4 border-t border-border">
-          <div className="flex gap-2">
-            <Textarea
-              ref={textareaRef}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask Rocker anything..."
-              className="min-h-[60px] max-h-[120px] resize-none"
-              disabled={isLoading}
-            />
+          <div className="flex gap-2 items-end">
+            <div className="flex-1 space-y-2">
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.accept = 'image/*,application/pdf,.csv,.txt,.doc,.docx';
+                    fileInput.onchange = async (e: Event) => {
+                      const target = e.target as HTMLInputElement;
+                      const file = target.files?.[0];
+                      if (file) {
+                        sendMessage(`[Uploaded file: ${file.name}] Please analyze this file.`);
+                      }
+                    };
+                    fileInput.click();
+                  }}
+                  title="Upload file (image, PDF, CSV, document)"
+                >
+                  <Paperclip className="h-4 w-4 mr-1" />
+                  File
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const url = prompt('Enter website URL to analyze:');
+                    if (url) {
+                      sendMessage(`Fetch and analyze this URL: ${url}`);
+                    }
+                  }}
+                  title="Fetch and analyze website URL"
+                >
+                  <LinkIcon className="h-4 w-4 mr-1" />
+                  URL
+                </Button>
+              </div>
+              <Textarea
+                ref={textareaRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask Rocker anything..."
+                className="min-h-[60px] max-h-[120px] resize-none"
+                disabled={isLoading}
+              />
+            </div>
             <Button
               onClick={handleSend}
               disabled={!inputValue.trim() && !isLoading}

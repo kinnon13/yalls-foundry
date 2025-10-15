@@ -540,6 +540,84 @@ export function RockerProvider({ children }: { children: ReactNode }) {
             });
           }
           
+          else if (tc.name === 'upload_file') {
+            console.log('[Rocker] File upload requested');
+            // Trigger file input
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*,application/pdf,.csv,.txt,.doc,.docx';
+            input.onchange = async (e: Event) => {
+              const target = e.target as HTMLInputElement;
+              const file = target.files?.[0];
+              if (file) {
+                try {
+                  const { data: { session } } = await supabase.auth.getSession();
+                  
+                  const formData = new FormData();
+                  formData.append('file', file);
+                  formData.append('type', file.type);
+                  formData.append('userId', session?.user?.id || 'anonymous');
+
+                  const { data, error } = await supabase.functions.invoke('rocker-process-file', {
+                    body: formData,
+                  });
+
+                  if (error) throw error;
+
+                  toast({
+                    title: '📎 File Processed',
+                    description: `${file.name} uploaded successfully`,
+                  });
+
+                  // Add to messages
+                  setMessages(prev => [...prev, {
+                    role: 'assistant',
+                    content: data.content,
+                    timestamp: new Date()
+                  }]);
+                } catch (error) {
+                  console.error('File upload error:', error);
+                  toast({
+                    title: 'Error',
+                    description: 'Failed to process file',
+                    variant: 'destructive',
+                  });
+                }
+              }
+            };
+            input.click();
+          }
+          else if (tc.name === 'fetch_url') {
+            const args = JSON.parse(tc.arguments || '{}');
+            console.log('[Rocker] Fetching URL:', args.url);
+            
+            try {
+              const { data, error } = await supabase.functions.invoke('rocker-fetch-url', {
+                body: { url: args.url },
+              });
+
+              if (error) throw error;
+
+              toast({
+                title: '🌐 URL Fetched',
+                description: `Analyzed content from ${args.url}`,
+              });
+
+              // Add to messages
+              setMessages(prev => [...prev, {
+                role: 'assistant',
+                content: data.summary,
+                timestamp: new Date()
+              }]);
+            } catch (error) {
+              console.error('URL fetch error:', error);
+              toast({
+                title: 'Error',
+                description: 'Failed to fetch URL content',
+                variant: 'destructive',
+              });
+            }
+          }
           else if (tc.name === 'create_crm_contact') {
             console.log('[Rocker] Creating CRM contact:', args.name);
             toast({

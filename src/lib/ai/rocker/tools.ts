@@ -159,6 +159,39 @@ export const rockerTools = [
   },
   {
     type: "function",
+    name: "upload_file",
+    description: "Upload and process a file (image, CSV, PDF, document). Use when user mentions uploading or analyzing a file.",
+    parameters: {
+      type: "object",
+      properties: {
+        instruction: {
+          type: "string",
+          description: "What to do with the file after upload (e.g., 'analyze this CSV', 'extract text from PDF', 'describe this image')"
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    name: "fetch_url",
+    description: "Fetch and analyze content from a website URL. Use when user provides a link or asks to check a website.",
+    parameters: {
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          description: "The URL to fetch and analyze"
+        },
+        action: {
+          type: "string",
+          description: "What to do with the content (e.g., 'summarize', 'extract data', 'analyze')"
+        }
+      },
+      required: ["url"]
+    }
+  },
+  {
+    type: "function",
     name: "create_crm_contact",
     description: "Create a new CRM contact for a business. Use when user wants to add a contact, create a lead, or add someone to CRM.",
     parameters: {
