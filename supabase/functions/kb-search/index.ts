@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,6 +35,12 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const limited = await withRateLimit(req, 'kb-search', RateLimits.high);
+  if (limited) return limited;
+
+  const log = createLogger('kb-search');
+  log.startTimer();
+
   try {
     const { 
       q, 
@@ -62,7 +70,7 @@ serve(async (req) => {
     );
 
     const { data: { user } } = await supabaseClient.auth.getUser();
-    console.log('[KB Search] Query:', q, 'User:', user?.id);
+    log.info('KB Search query', { query: q, userId: user?.id });
 
     // Build filter conditions
     const filters: any = {};
@@ -95,11 +103,11 @@ serve(async (req) => {
     const { data: keywordResults, error: keywordError } = await itemsQuery;
 
     if (keywordError) {
-      console.error('[KB Search] Keyword error:', keywordError);
+      log.error('KB keyword search error', keywordError);
       throw keywordError;
     }
 
-    console.log('[KB Search] Keyword results:', keywordResults?.length || 0);
+    log.info('Keyword search results', { count: keywordResults?.length || 0 });
 
     // Semantic search if enabled and OpenAI key available
     let semanticResults: any[] = [];
@@ -119,9 +127,9 @@ serve(async (req) => {
         const { data: chunks, error: chunksError } = await chunksQuery;
 
         if (chunksError) {
-          console.error('[KB Search] Semantic error:', chunksError);
+          log.error('KB semantic search error', chunksError);
         } else {
-          console.log('[KB Search] Semantic chunk results:', chunks?.length || 0);
+          log.info('Semantic chunk results', { count: chunks?.length || 0 });
           
           // Group chunks by item
           const itemIds = [...new Set(chunks?.map((c: any) => c.item_id) || [])];
@@ -141,7 +149,7 @@ serve(async (req) => {
           }
         }
       } catch (error) {
-        console.error('[KB Search] Semantic search failed:', error);
+        log.error('Semantic search failed', error);
       }
     }
 
@@ -172,7 +180,7 @@ serve(async (req) => {
 
     const results = Array.from(resultMap.values()).slice(0, limit);
 
-    console.log('[KB Search] Final results:', results.length);
+    log.info('KB search complete', { resultCount: results.length });
 
     return new Response(
       JSON.stringify({ 
@@ -184,7 +192,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('[KB Search] Error:', error);
+    log.error('KB search error', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

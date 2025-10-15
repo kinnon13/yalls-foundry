@@ -7,6 +7,8 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,13 +20,19 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const limited = await withRateLimit(req, 'process-jobs', RateLimits.admin);
+  if (limited) return limited;
+
+  const log = createLogger('process-jobs');
+  log.startTimer();
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
   try {
-    console.log("Starting job processing batch");
+    log.info('Starting job processing batch');
     const startTime = Date.now();
 
     // Fetch pending jobs (batch of 10)
@@ -41,7 +49,7 @@ serve(async (req) => {
     }
 
     if (!jobs || jobs.length === 0) {
-      console.log("No pending jobs found");
+      log.info('No pending jobs found');
       return new Response(
         JSON.stringify({ processed: 0, message: "No pending jobs" }),
         {
@@ -51,7 +59,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Found ${jobs.length} pending jobs`);
+    log.info('Pending jobs found', { count: jobs.length });
 
     const results = [];
 
@@ -67,7 +75,7 @@ serve(async (req) => {
           })
           .eq("id", job.id);
 
-        console.log(`Processing job ${job.id} (${job.job_type})`);
+        log.info('Processing job', { jobId: job.id, jobType: job.job_type });
 
         // Process based on job type
         let result;
@@ -111,9 +119,9 @@ serve(async (req) => {
           .eq("id", job.id);
 
         results.push({ job_id: job.id, success: true });
-        console.log(`Completed job ${job.id}`);
+        log.info('Job completed', { jobId: job.id });
       } catch (error) {
-        console.error(`Error processing job ${job.id}:`, error);
+        log.error('Job processing error', error, { jobId: job.id });
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
         // Check if should retry
@@ -135,7 +143,11 @@ serve(async (req) => {
     const duration = Date.now() - startTime;
     const successCount = results.filter(r => r.success).length;
 
-    console.log(`Processed ${jobs.length} jobs in ${duration}ms (${successCount} succeeded)`);
+    log.info('Job batch complete', { 
+      processed: jobs.length,
+      succeeded: successCount,
+      durationMs: duration
+    });
 
     return new Response(
       JSON.stringify({
@@ -151,7 +163,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Error in process-jobs:", error);
+    log.error('Job processing error', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),
@@ -178,25 +190,21 @@ async function processEmbeddingsJob(job: any, supabase: any) {
 
 async function processOrderJob(job: any, supabase: any) {
   // Process order completion, MLM commissions, etc.
-  console.log("Processing order job:", job.payload);
   return { processed: true };
 }
 
 async function processSendNotificationJob(job: any, supabase: any) {
   // Send email/SMS notifications
-  console.log("Sending notification:", job.payload);
   return { sent: true };
 }
 
 async function processUpdateMetricsJob(job: any, supabase: any) {
   // Update aggregated metrics
-  console.log("Updating metrics:", job.payload);
   return { updated: true };
 }
 
 async function processSyncInventoryJob(job: any, supabase: any) {
   // Sync inventory across listings
-  console.log("Syncing inventory:", job.payload);
   return { synced: true };
 }
 
@@ -223,8 +231,6 @@ async function processImplementSuggestionJob(job: any, supabase: any) {
     .single();
 
   if (fetchError) throw fetchError;
-
-  console.log("Implementing suggestion:", suggestion.title);
 
   // Auto-implement based on suggestion type
   if (suggestion.suggestion_type === "marketplace_category") {
@@ -282,8 +288,6 @@ async function processModerateFlagJob(job: any, supabase: any) {
     .single();
 
   if (fetchError) throw fetchError;
-
-  console.log("Moderating flag:", flag.flag_reason, "for", flag.flagged_content_type);
 
   // For now, just mark as reviewing (AI moderation would analyze here)
   await supabase

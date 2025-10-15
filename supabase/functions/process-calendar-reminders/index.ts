@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,12 +13,18 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const limited = await withRateLimit(req, 'process-calendar-reminders', RateLimits.admin);
+  if (limited) return limited;
+
+  const log = createLogger('process-calendar-reminders');
+  log.startTimer();
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Processing calendar reminders...');
+    log.info('Processing calendar reminders');
 
     // Find reminders that should be sent now
     const now = new Date();
@@ -38,7 +46,7 @@ serve(async (req) => {
 
     if (remindersError) throw remindersError;
 
-    console.log(`Found ${reminders?.length || 0} reminders to process`);
+    log.info('Reminders to process', { count: reminders?.length || 0 });
 
     // Process each reminder
     const results = [];
@@ -48,7 +56,7 @@ serve(async (req) => {
         const userId = event?.calendar?.owner_profile_id;
 
         if (!userId) {
-          console.warn(`No user found for reminder ${reminder.id}`);
+          log.warn('No user found for reminder', { reminderId: reminder.id });
           continue;
         }
 
@@ -73,7 +81,7 @@ serve(async (req) => {
           created_at: new Date().toISOString(),
         };
 
-        console.log('Sending notification:', notificationPayload);
+        log.info('Sending notification', { userId, eventId: event.id });
 
         // Insert notification into database for realtime broadcasting
         const { error: notifError } = await supabase
@@ -86,7 +94,7 @@ serve(async (req) => {
           });
 
         if (notifError) {
-          console.error('Failed to insert notification:', notifError);
+          log.error('Failed to insert notification', notifError);
         }
 
         // Mark reminder as sent
@@ -97,7 +105,7 @@ serve(async (req) => {
 
         if (updateError) throw updateError;
 
-        console.log('Reminder processed and notification broadcasted for event:', event.id);
+        log.info('Reminder processed', { reminderId: reminder.id, eventId: event.id });
 
         results.push({
           reminder_id: reminder.id,
@@ -106,7 +114,7 @@ serve(async (req) => {
           status: 'sent',
         });
       } catch (error) {
-        console.error(`Failed to process reminder ${reminder.id}:`, error);
+        log.error('Failed to process reminder', error, { reminderId: reminder.id });
         results.push({
           reminder_id: reminder.id,
           status: 'failed',
@@ -126,7 +134,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error processing reminders:', error);
+    log.error('Error processing reminders', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       {

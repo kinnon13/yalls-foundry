@@ -1,6 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
@@ -24,6 +26,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const limited = await withRateLimit(req, 'rocker-admin', RateLimits.admin);
+  if (limited) return limited;
+
+  const log = createLogger('rocker-admin');
+  log.startTimer();
 
   try {
     const supabaseClient = createClient(
@@ -90,7 +98,7 @@ serve(async (req) => {
         });
     }
   } catch (error) {
-    console.error('Error in rocker-admin:', error);
+    log.error('Error in rocker-admin', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
@@ -302,7 +310,6 @@ async function auditLogInternal(
 
 async function generateEmbeddingVector(text: string): Promise<number[] | null> {
   if (!OPENAI_API_KEY) {
-    console.warn('OPENAI_API_KEY not set, skipping embedding generation');
     return null;
   }
 
@@ -320,14 +327,12 @@ async function generateEmbeddingVector(text: string): Promise<number[] | null> {
     });
 
     if (!response.ok) {
-      console.error('OpenAI embeddings error:', response.status);
       return null;
     }
 
     const data = await response.json();
     return data.data[0].embedding;
   } catch (error) {
-    console.error('Error generating embedding:', error);
     return null;
   }
 }

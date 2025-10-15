@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -91,6 +93,12 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const limited = await withRateLimit(req, 'kb-ingest', RateLimits.expensive);
+  if (limited) return limited;
+
+  const log = createLogger('kb-ingest');
+  log.startTimer();
+
   try {
     const { content, uri, tenant_id } = await req.json();
     
@@ -117,7 +125,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('[KB Ingest] Parsing content for URI:', uri);
+    log.info('KB ingest started', { uri });
     
     // Parse YAML front-matter
     const { meta, body } = parseYAMLFrontMatter(content);
@@ -152,11 +160,11 @@ serve(async (req) => {
       .single();
 
     if (itemError) {
-      console.error('[KB Ingest] Item error:', itemError);
+      log.error('KB item creation error', itemError);
       throw itemError;
     }
 
-    console.log('[KB Ingest] Item created:', item.id);
+    log.info('KB item created', { itemId: item.id });
 
     // Delete existing chunks
     await supabaseClient
@@ -166,7 +174,7 @@ serve(async (req) => {
 
     // Chunk content
     const chunks = chunkText(body);
-    console.log('[KB Ingest] Created', chunks.length, 'chunks');
+    log.info('Chunks created', { count: chunks.length });
 
     // Insert chunks with embeddings
     const chunkData = [];
@@ -191,17 +199,17 @@ serve(async (req) => {
       .insert(chunkData);
 
     if (chunksError) {
-      console.error('[KB Ingest] Chunks error:', chunksError);
+      log.error('KB chunks insert error', chunksError);
       throw chunksError;
     }
 
-    console.log('[KB Ingest] Chunks inserted');
+    log.info('Chunks inserted successfully');
 
     // Extract playbook if content suggests intent
     const intentMatch = body.match(/intent:\s*([^\n]+)/i);
     if (intentMatch) {
       const intent = intentMatch[1].trim();
-      console.log('[KB Ingest] Extracting playbook for intent:', intent);
+      log.info('Extracting playbook', { intent });
 
       // Extract steps (look for numbered lists or step sections)
       const steps: any[] = [];
@@ -230,7 +238,7 @@ serve(async (req) => {
             embedding: playbookEmbedding,
           });
 
-        console.log('[KB Ingest] Playbook created');
+        log.info('Playbook created successfully');
       }
     }
 
@@ -244,7 +252,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('[KB Ingest] Error:', error);
+    log.error('KB ingest error', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

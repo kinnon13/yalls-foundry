@@ -1,5 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { withRateLimit, RateLimits } from '../_shared/rate-limit-wrapper.ts';
+import { createLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +12,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
+
+  const limited = await withRateLimit(req, 'sync-unknowns-to-entities', RateLimits.admin);
+  if (limited) return limited;
+
+  const log = createLogger('sync-unknowns-to-entities');
+  log.startTimer();
 
   try {
     const supabase = createClient(
@@ -147,7 +155,7 @@ serve(async (req) => {
         });
 
       } catch (error) {
-        console.error('Error processing unknown:', unknown.id, error);
+        log.error('Error processing unknown', error, { unknownId: unknown.id });
         const errorMessage = error instanceof Error ? error.message : String(error);
         skipped.push({ unknown: unknown.id, reason: 'processing_error', error: errorMessage });
       }
@@ -167,7 +175,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Sync unknowns error:', error);
+    log.error('Sync unknowns error', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return new Response(
       JSON.stringify({ error: errorMessage }),

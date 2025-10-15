@@ -1,7 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { rateLimit } from "../_shared/rate-limit.ts";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 import { USER_SYSTEM_PROMPT } from "./prompts.ts";
 import { extractLearningsFromConversation } from "./learning.ts";
 import { aggregatePatternsAndAnalytics } from "./analytics.ts";
@@ -21,6 +22,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const limited = await withRateLimit(req, 'rocker-chat', RateLimits.expensive);
+  if (limited) return limited;
+
+  const log = createLogger('rocker-chat');
+  log.startTimer();
 
   try {
     if (!OPENAI_API_KEY) {
@@ -43,17 +50,6 @@ serve(async (req) => {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
-    }
-
-    // Apply rate limiting (10 requests per minute per user)
-    const rateLimitResult = await rateLimit(req, user.id, {
-      limit: 10,
-      windowSec: 60,
-      prefix: 'ratelimit:rocker-chat'
-    });
-
-    if (rateLimitResult instanceof Response) {
-      return rateLimitResult;
     }
 
     const reqClone = req.clone();
@@ -113,7 +109,7 @@ serve(async (req) => {
         });
       
       if (insertError) {
-        console.error('[Conversation] Failed to save user message:', insertError);
+        log.error('Failed to save user message', insertError);
       }
 
       // For new sessions, create metadata entry
@@ -128,7 +124,7 @@ serve(async (req) => {
           });
         
         if (metaError) {
-          console.error('[Conversation] Failed to create session metadata:', metaError);
+          log.error('Failed to create session metadata', metaError);
         }
       }
     }
@@ -168,7 +164,7 @@ serve(async (req) => {
           });
         }
         const errorText = await response.text();
-        console.error('OpenAI API error:', response.status, errorText);
+        log.error('OpenAI API error', new Error(`Status ${response.status}: ${errorText}`));
         throw new Error('OpenAI API error');
       }
 
@@ -202,7 +198,7 @@ serve(async (req) => {
           });
 
         if (saveError) {
-          console.error('[Conversation] Failed to save assistant message:', saveError);
+          log.error('Failed to save assistant message', saveError);
         }
 
         // Extract learnings from conversation
@@ -216,7 +212,7 @@ serve(async (req) => {
         // Aggregate patterns and analytics (async, don't block response)
         setTimeout(() => {
           aggregatePatternsAndAnalytics(supabaseClient, user.id).catch(err =>
-            console.error('[Analytics] Background job failed:', err)
+            log.error('Background analytics job failed', err)
           );
         }, 0);
 
@@ -279,7 +275,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in rocker-chat:', error);
+    log.error('Error in rocker-chat', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,

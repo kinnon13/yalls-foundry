@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { createLogger } from '../_shared/logger.ts';
+import { withRateLimit, RateLimits } from '../_shared/rate-limit-wrapper.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,12 +11,15 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 Deno.serve(async (req) => {
-  const log = createLogger('export-user-data');
-  log.startTimer();
-
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const limited = await withRateLimit(req, 'export-user-data', RateLimits.auth);
+  if (limited) return limited;
+
+  const log = createLogger('export-user-data');
+  log.startTimer();
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);

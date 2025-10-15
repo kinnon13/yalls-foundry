@@ -1,8 +1,25 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import Stripe from 'https://esm.sh/stripe@17.5.0?target=deno';
+import { withRateLimit, RateLimits } from '../_shared/rate-limit-wrapper.ts';
+import { createLogger } from '../_shared/logger.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const limited = await withRateLimit(req, 'stripe-webhook', RateLimits.high);
+  if (limited) return limited;
+
+  const log = createLogger('stripe-webhook');
+  log.startTimer();
+
   try {
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
@@ -26,14 +43,14 @@ serve(async (req) => {
       try {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
       } catch (err) {
-        console.error('Webhook signature verification failed:', err);
-        return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 400 });
+        log.error('Webhook signature verification failed', err);
+        return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 400, headers: corsHeaders });
       }
     } else {
       event = JSON.parse(body);
     }
 
-    console.log('Webhook event:', event.type);
+    log.info('Webhook event received', { type: event.type });
 
     // Handle payment_intent.succeeded
     if (event.type === 'payment_intent.succeeded') {
@@ -48,8 +65,8 @@ serve(async (req) => {
         .maybeSingle();
 
       if (existingKey) {
-        console.log('Payment already processed:', idempotencyKey);
-        return new Response(JSON.stringify({ received: true }), { status: 200 });
+        log.info('Payment already processed', { idempotencyKey });
+        return new Response(JSON.stringify({ received: true }), { status: 200, headers: corsHeaders });
       }
 
       // Find order by payment_intent_id
@@ -60,8 +77,8 @@ serve(async (req) => {
         .maybeSingle();
 
       if (orderError || !order) {
-        console.error('Order not found:', paymentIntent.id, orderError);
-        return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404 });
+        log.error('Order not found', orderError, { paymentIntentId: paymentIntent.id });
+        return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404, headers: corsHeaders });
       }
 
       // Update order to paid
@@ -74,7 +91,7 @@ serve(async (req) => {
         .eq('id', order.id);
 
       if (updateError) {
-        console.error('Failed to update order:', updateError);
+        log.error('Failed to update order', updateError);
         throw updateError;
       }
 
@@ -95,7 +112,7 @@ serve(async (req) => {
           balance_cents: 0, // Will be calculated by balance tracking system
         });
 
-      console.log('Order marked as paid:', order.id);
+      log.info('Order marked as paid', { orderId: order.id });
 
       // Clear cart
       await supabase
@@ -105,7 +122,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ received: true, orderId: order.id }),
-        { status: 200 }
+        { status: 200, headers: corsHeaders }
       );
     }
 
@@ -118,15 +135,15 @@ serve(async (req) => {
         .update({ payment_status: 'failed' })
         .eq('payment_intent_id', paymentIntent.id);
 
-      console.log('Payment failed:', paymentIntent.id);
+      log.info('Payment failed', { paymentIntentId: paymentIntent.id });
     }
 
-    return new Response(JSON.stringify({ received: true }), { status: 200 });
+    return new Response(JSON.stringify({ received: true }), { status: 200, headers: corsHeaders });
   } catch (error) {
-    console.error('Webhook error:', error);
+    log.error('Webhook error', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 });
