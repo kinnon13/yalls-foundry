@@ -4719,7 +4719,14 @@ export type Database = {
         | "stable"
         | "event"
       event_visibility: "public" | "private" | "busy"
-      memory_type: "preference" | "fact" | "goal" | "note" | "policy" | "schema"
+      memory_type:
+        | "preference"
+        | "fact"
+        | "goal"
+        | "note"
+        | "policy"
+        | "schema"
+        | "relationship"
       recurrence_freq: "daily" | "weekly" | "monthly" | "yearly"
     }
     CompositeTypes: {
@@ -4878,7 +4885,15 @@ export const Constants = {
         "event",
       ],
       event_visibility: ["public", "private", "busy"],
-      memory_type: ["preference", "fact", "goal", "note", "policy", "schema"],
+      memory_type: [
+        "preference",
+        "fact",
+        "goal",
+        "note",
+        "policy",
+        "schema",
+        "relationship",
+      ],
       recurrence_freq: ["daily", "weekly", "monthly", "yearly"],
     },
   },

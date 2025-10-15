@@ -12,7 +12,7 @@ const corsHeaders = {
 interface MemoryEntry {
   user_id?: string;
   tenant_id: string;
-  type: 'preference' | 'fact' | 'goal' | 'note' | 'policy' | 'schema';
+  type: 'preference' | 'fact' | 'goal' | 'note' | 'policy' | 'schema' | 'relationship';
   key: string;
   value: any;
   confidence?: number;
