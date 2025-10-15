@@ -4,7 +4,7 @@ import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { useSession } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Search, Settings, ShoppingBag, Bookmark, Building2 } from 'lucide-react';
+import { Sparkles, Search, Settings, ShoppingBag, Bookmark, Building2, Zap } from 'lucide-react';
 import { PostFeed } from '@/components/posts/PostFeed';
 import { CreatePost } from '@/components/posts/CreatePost';
 import { useState } from 'react';
@@ -138,6 +138,25 @@ export default function Index() {
                 <CardContent>
                   <Button variant="outline" className="w-full" data-rocker="search registry button find" aria-label="Search Registry">
                     Search Registry
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link to="/entities/unclaimed" data-rocker="unclaimed entities link card browse">
+              <Card className="hover:border-primary transition-colors h-full cursor-pointer">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="h-5 w-5" />
+                    Unclaimed Entities
+                  </CardTitle>
+                  <CardDescription>
+                    Claim horses, businesses, and profiles that need owners
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" className="w-full" data-rocker="browse unclaimed button claim" aria-label="Browse Unclaimed">
+                    Browse Unclaimed
                   </Button>
                 </CardContent>
               </Card>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, User, ShoppingBag, Calendar, Home, Building2 } from 'lucide-react';
+import { Search, User, ShoppingBag, Calendar, Home, Building2, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -63,6 +63,12 @@ export function GlobalHeader() {
               <Button variant="ghost" size="sm">
                 <Calendar className="h-4 w-4 mr-2" />
                 Events
+              </Button>
+            </Link>
+            <Link to="/entities/unclaimed">
+              <Button variant="ghost" size="sm" data-rocker="unclaimed entities browse claim" aria-label="Browse Unclaimed">
+                <Zap className="h-4 w-4 mr-2" />
+                Claim
               </Button>
             </Link>
             {session && (
