@@ -3,7 +3,7 @@ import { CalendarView } from '@/components/calendar/CalendarView';
 import { CalendarPrivacySettings } from '@/components/settings/CalendarPrivacySettings';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings as SettingsIcon } from 'lucide-react';
+import { Settings as SettingsIcon, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
@@ -128,7 +128,10 @@ export default function CalendarPage() {
                     : `Viewing ${selectedCalendarIds.length} calendar(s) and ${selectedCollectionIds.length} collection(s)`}
                 </p>
               </div>
-              <Button onClick={() => setCreateOpen(true)}>New Event</Button>
+              <Button onClick={() => setCreateOpen(true)} data-rocker="new event">
+                <Plus className="w-4 h-4 mr-2" />
+                New Event
+              </Button>
             </div>
 
             <CreateEventDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={loadEvents} />

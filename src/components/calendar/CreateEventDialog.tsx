@@ -184,7 +184,7 @@ export default function CreateEventDialog({
           {calendars.length === 0 ? (
             <div className="rounded-md border p-4">
               <p className="text-sm text-muted-foreground mb-3">You don’t have any calendars yet.</p>
-              <Button size="sm" onClick={handleCreateDefaultCalendar} disabled={loading}>
+              <Button size="sm" onClick={handleCreateDefaultCalendar} disabled={loading} data-rocker="create personal calendar">
                 Create Personal Calendar
               </Button>
             </div>
@@ -206,22 +206,22 @@ export default function CreateEventDialog({
 
               <div className="grid gap-2">
                 <Label>Title</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Event title" />
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Event title" data-rocker="event title" />
               </div>
 
               <div className="grid gap-2">
                 <Label>Description</Label>
-                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional details" />
+                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional details" data-rocker="event description" />
               </div>
 
               <div className="grid gap-2">
                 <Label>Location</Label>
-                <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Optional location" />
+                <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Optional location" data-rocker="event location" />
               </div>
 
               <div className="grid gap-2">
                 <Label>Meeting link</Label>
-                <Input type="url" value={meetingLink} onChange={(e) => setMeetingLink(e.target.value)} placeholder="https://zoom.us/j/..." />
+                <Input type="url" value={meetingLink} onChange={(e) => setMeetingLink(e.target.value)} placeholder="https://zoom.us/j/..." data-rocker="meeting link" />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -260,7 +260,7 @@ export default function CreateEventDialog({
 
               <div className="grid gap-2">
                 <Label>Attendees</Label>
-                <Input value={attendeeEmails} onChange={(e) => setAttendeeEmails(e.target.value)} placeholder="email1@example.com, email2@example.com" />
+                <Input value={attendeeEmails} onChange={(e) => setAttendeeEmails(e.target.value)} placeholder="email1@example.com, email2@example.com" data-rocker="attendees" />
                 <p className="text-xs text-muted-foreground">Comma-separated emails</p>
               </div>
 
@@ -281,7 +281,7 @@ export default function CreateEventDialog({
 
         <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
-            <Button onClick={handleCreateEvent} disabled={loading || calendars.length === 0}>Create Event</Button>
+            <Button onClick={handleCreateEvent} disabled={loading || calendars.length === 0} data-rocker="create event submit">Create Event</Button>
           </DialogFooter>
       </DialogContent>
     </Dialog>

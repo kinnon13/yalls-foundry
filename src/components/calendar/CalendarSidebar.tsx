@@ -245,7 +245,7 @@ export function CalendarSidebar({
               </h3>
               <Dialog open={createCalOpen} onOpenChange={setCreateCalOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" data-rocker="create calendar">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
@@ -260,6 +260,7 @@ export function CalendarSidebar({
                         value={newCalName}
                         onChange={(e) => setNewCalName(e.target.value)}
                         placeholder="My Calendar"
+                        data-rocker="calendar name"
                       />
                     </div>
                     <div>
@@ -284,7 +285,7 @@ export function CalendarSidebar({
                         onChange={(e) => setNewCalColor(e.target.value)}
                       />
                     </div>
-                    <Button onClick={createCalendar} className="w-full">
+                    <Button onClick={createCalendar} className="w-full" data-rocker="create calendar submit">
                       Create Calendar
                     </Button>
                   </div>
@@ -328,7 +329,7 @@ export function CalendarSidebar({
               </h3>
               <Dialog open={createCollOpen} onOpenChange={setCreateCollOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" data-rocker="create collection">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
@@ -343,6 +344,7 @@ export function CalendarSidebar({
                         value={newCollName}
                         onChange={(e) => setNewCollName(e.target.value)}
                         placeholder="Master Calendar"
+                        data-rocker="collection name"
                       />
                     </div>
                     <div>
@@ -379,7 +381,7 @@ export function CalendarSidebar({
                         ))}
                       </div>
                     </div>
-                    <Button onClick={createCollection} className="w-full">
+                    <Button onClick={createCollection} className="w-full" data-rocker="create collection submit">
                       Create Collection
                     </Button>
                   </div>
