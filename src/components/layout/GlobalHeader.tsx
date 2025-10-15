@@ -66,12 +66,20 @@ export function GlobalHeader() {
               </Button>
             </Link>
             {session && (
-              <Link to={`/business/${session.userId}/hub`}>
-                <Button variant="ghost" size="sm">
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Business
-                </Button>
-              </Link>
+              <>
+                <Link to="/calendar">
+                  <Button variant="ghost" size="sm">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Calendar
+                  </Button>
+                </Link>
+                <Link to={`/business/${session.userId}/hub`}>
+                  <Button variant="ghost" size="sm">
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Business
+                  </Button>
+                </Link>
+              </>
             )}
           </nav>
         </div>
