@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Flag } from 'lucide-react';
 
 interface FlagContentDialogProps {
@@ -25,7 +25,6 @@ export function FlagContentDialog({ contentType, contentId, trigger }: FlagConte
   const [reason, setReason] = useState<string>('');
   const [details, setDetails] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,8 +42,7 @@ export function FlagContentDialog({ contentType, contentId, trigger }: FlagConte
 
       if (error) throw error;
 
-      toast({
-        title: 'Content Flagged',
+      toast.success('Content flagged successfully', {
         description: 'Thank you for helping keep our community safe. We\'ll review this report.',
       });
 
@@ -53,10 +51,8 @@ export function FlagContentDialog({ contentType, contentId, trigger }: FlagConte
       setOpen(false);
     } catch (error: any) {
       console.error('Error flagging content:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to submit flag. Please try again.',
-        variant: 'destructive',
+      toast.error('Failed to submit flag', {
+        description: error.message || 'Please try again.',
       });
     } finally {
       setSubmitting(false);
