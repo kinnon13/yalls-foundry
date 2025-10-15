@@ -251,11 +251,12 @@ export function CalendarSidebar({
                     data-rocker="new calendar"
                     aria-label="New calendar"
                     title="Add a new calendar"
+                    onClick={() => setCreateCalOpen(true)}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="z-[100]">
                   <DialogHeader>
                     <DialogTitle>Create Calendar</DialogTitle>
                   </DialogHeader>
@@ -277,7 +278,7 @@ export function CalendarSidebar({
                         <SelectTrigger data-rocker="calendar type">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[101]">
                           <SelectItem value="personal" data-rocker="calendar type personal">Personal</SelectItem>
                           <SelectItem value="business" data-rocker="calendar type business">Business</SelectItem>
                           <SelectItem value="horse" data-rocker="calendar type horse">Horse</SelectItem>
@@ -340,11 +341,11 @@ export function CalendarSidebar({
               </h3>
               <Dialog open={createCollOpen} onOpenChange={setCreateCollOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" data-rocker="create collection">
+                  <Button variant="ghost" size="sm" data-rocker="create collection" aria-label="New collection" onClick={() => setCreateCollOpen(true)}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="z-[100]">
                   <DialogHeader>
                     <DialogTitle>Create Collection</DialogTitle>
                   </DialogHeader>
