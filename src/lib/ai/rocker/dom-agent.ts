@@ -125,6 +125,37 @@ export function findElement(targetName: string): HTMLElement | null {
   el = document.querySelector(`[data-rocker*="${normalized}"]`) as HTMLElement;
   if (el) return el;
   
+  // Try label text -> associated control
+  const labels = Array.from(document.querySelectorAll('label')) as HTMLLabelElement[];
+  const matchedLabel = labels.find(l => (l.textContent || '').toLowerCase().includes(normalized));
+  if (matchedLabel) {
+    let control: HTMLElement | null = null;
+    const forId = matchedLabel.getAttribute('for') || (matchedLabel as any).htmlFor;
+    if (forId) {
+      control = document.getElementById(forId) as HTMLElement | null;
+    }
+    if (!control) {
+      control = matchedLabel.querySelector('input, textarea, select') as HTMLElement | null;
+    }
+    if (!control) {
+      const parent = matchedLabel.parentElement;
+      control = parent?.querySelector('input, textarea, select') as HTMLElement | null;
+    }
+    if (!control) {
+      let sib: Element | null = matchedLabel.nextElementSibling;
+      while (sib && !control) {
+        if ((sib as HTMLElement).matches?.('input, textarea, select')) {
+          control = sib as HTMLElement;
+          break;
+        }
+        const nested = (sib as HTMLElement).querySelector?.('input, textarea, select') as HTMLElement | null;
+        if (nested) { control = nested; break; }
+        sib = sib.nextElementSibling;
+      }
+    }
+    if (control) return control as HTMLElement;
+  }
+  
   // Try Radix Select options by text
   const options = Array.from(document.querySelectorAll('[role="option"], [data-radix-select-item]')) as HTMLElement[];
   el = options.find(node => node.textContent?.toLowerCase().includes(normalized)) as HTMLElement;
