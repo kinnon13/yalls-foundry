@@ -192,6 +192,50 @@ export const rockerTools = [
   },
   {
     type: "function",
+    name: "connect_google_drive",
+    description: "Connect to user's Google Drive to access their files. Opens authorization window.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  },
+  {
+    type: "function",
+    name: "list_google_drive_files",
+    description: "List files from connected Google Drive. Can search for specific file types or names.",
+    parameters: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Optional search query (e.g., 'name contains \"report\"')"
+        }
+      },
+      required: []
+    }
+  },
+  {
+    type: "function",
+    name: "download_google_drive_file",
+    description: "Download and process a specific file from Google Drive.",
+    parameters: {
+      type: "object",
+      properties: {
+        fileId: {
+          type: "string",
+          description: "The Google Drive file ID"
+        },
+        fileName: {
+          type: "string",
+          description: "The name of the file"
+        }
+      },
+      required: ["fileId", "fileName"]
+    }
+  },
+  {
+    type: "function",
     name: "create_crm_contact",
     description: "Create a new CRM contact for a business. Use when user wants to add a contact, create a lead, or add someone to CRM.",
     parameters: {

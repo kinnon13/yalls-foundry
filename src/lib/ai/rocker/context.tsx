@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
 import type { RockerMessage } from '@/hooks/useRocker';
 import { executeDOMAction } from './dom-agent';
+import { GoogleDriveService } from './integrations/google-drive';
 import { Button } from '@/components/ui/button';
 import { Mic } from 'lucide-react';
 
@@ -64,6 +65,9 @@ export function RockerProvider({ children }: { children: ReactNode }) {
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const voiceRef = useRef<RealtimeVoice | null>(null);
   const initializingRef = useRef(false);
+  
+  // Google Drive service
+  const googleDriveService = useRef(new GoogleDriveService());
   
   // UI state
   const [isOpen, setIsOpen] = useState(false);
@@ -588,7 +592,6 @@ export function RockerProvider({ children }: { children: ReactNode }) {
             input.click();
           }
           else if (tc.name === 'fetch_url') {
-            const args = JSON.parse(tc.arguments || '{}');
             console.log('[Rocker] Fetching URL:', args.url);
             
             try {
@@ -614,6 +617,101 @@ export function RockerProvider({ children }: { children: ReactNode }) {
               toast({
                 title: 'Error',
                 description: 'Failed to fetch URL content',
+                variant: 'destructive',
+              });
+            }
+          }
+          else if (tc.name === 'connect_google_drive') {
+            console.log('[Rocker] Connecting to Google Drive');
+            try {
+              const authUrl = await googleDriveService.current.connect();
+              window.open(authUrl, '_blank', 'width=600,height=700');
+              toast({
+                title: '☁️ Opening Google Drive',
+                description: 'Please authorize access in the new window',
+              });
+            } catch (error) {
+              console.error('Google Drive connection error:', error);
+              toast({
+                title: 'Error',
+                description: 'Failed to connect to Google Drive',
+                variant: 'destructive',
+              });
+            }
+          }
+          else if (tc.name === 'list_google_drive_files') {
+            console.log('[Rocker] Listing Google Drive files');
+            try {
+              if (!googleDriveService.current.isConnected()) {
+                toast({
+                  title: 'Not Connected',
+                  description: 'Please connect to Google Drive first',
+                  variant: 'destructive',
+                });
+              } else {
+                const files = await googleDriveService.current.listFiles(args.query);
+                const fileList = files.map(f => `- ${f.name} (${f.mimeType})`).join('\n');
+                
+                setMessages(prev => [...prev, {
+                  role: 'assistant',
+                  content: `Found ${files.length} files:\n${fileList}`,
+                  timestamp: new Date()
+                }]);
+                
+                toast({
+                  title: '📁 Files Listed',
+                  description: `Found ${files.length} files`,
+                });
+              }
+            } catch (error) {
+              console.error('Google Drive list error:', error);
+              toast({
+                title: 'Error',
+                description: 'Failed to list Google Drive files',
+                variant: 'destructive',
+              });
+            }
+          }
+          else if (tc.name === 'download_google_drive_file') {
+            console.log('[Rocker] Downloading Google Drive file:', args.fileName);
+            try {
+              if (!googleDriveService.current.isConnected()) {
+                toast({
+                  title: 'Not Connected',
+                  description: 'Please connect to Google Drive first',
+                  variant: 'destructive',
+                });
+              } else {
+                toast({
+                  title: '⏬ Downloading',
+                  description: `Downloading ${args.fileName}...`,
+                });
+                
+                const fileUrl = await googleDriveService.current.downloadFile(args.fileId, args.fileName);
+                
+                // Now process the downloaded file
+                const { data, error } = await supabase.functions.invoke('rocker-process-file', {
+                  body: { fileUrl, fileName: args.fileName }
+                });
+                
+                if (error) throw error;
+                
+                setMessages(prev => [...prev, {
+                  role: 'assistant',
+                  content: data.content,
+                  timestamp: new Date()
+                }]);
+                
+                toast({
+                  title: '✅ File Processed',
+                  description: `${args.fileName} analyzed successfully`,
+                });
+              }
+            } catch (error) {
+              console.error('Google Drive download error:', error);
+              toast({
+                title: 'Error',
+                description: 'Failed to download or process file',
                 variant: 'destructive',
               });
             }

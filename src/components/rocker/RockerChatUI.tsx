@@ -6,12 +6,13 @@
  */
 
 import { useRef, useEffect } from 'react';
-import { MessageCircle, Send, X, Loader2, Trash2, Mic, MicOff, Paperclip, Link as LinkIcon } from 'lucide-react';
+import { MessageCircle, Send, X, Loader2, Trash2, Mic, MicOff, Paperclip, Link as LinkIcon, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { RockerQuickActions } from './RockerQuickActions';
+import { GoogleDriveButton } from './GoogleDriveButton';
 import { cn } from '@/lib/utils';
 import { useRockerGlobal } from '@/lib/ai/rocker/context';
 import { useState } from 'react';
@@ -34,8 +35,22 @@ export function RockerChatUI() {
   } = useRockerGlobal();
 
   const [inputValue, setInputValue] = useState('');
+  const [isMinimized, setIsMinimized] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Load persistent always listening preference
+  useEffect(() => {
+    const savedPreference = localStorage.getItem('rocker-always-listening');
+    if (savedPreference === 'true' && !isAlwaysListening) {
+      toggleAlwaysListening();
+    }
+  }, []);
+
+  // Save always listening preference
+  useEffect(() => {
+    localStorage.setItem('rocker-always-listening', isAlwaysListening.toString());
+  }, [isAlwaysListening]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -71,10 +86,13 @@ export function RockerChatUI() {
     textareaRef.current?.focus();
   };
 
-  if (!isOpen) {
+  if (!isOpen || isMinimized) {
     return (
       <Button
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          setIsOpen(true);
+          setIsMinimized(false);
+        }}
         size="lg"
         className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 p-0 overflow-hidden"
         aria-label="Open Rocker Chat"
@@ -151,7 +169,16 @@ export function RockerChatUI() {
           <Button
             variant="ghost"
             size="icon"
+            onClick={() => setIsMinimized(true)}
+            title="Minimize"
+          >
+            <Minus className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setIsOpen(false)}
+            title="Close"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -281,7 +308,7 @@ export function RockerChatUI() {
         <div className="p-4 border-t border-border">
           <div className="flex gap-2 items-end">
             <div className="flex-1 space-y-2">
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   type="button"
                   size="sm"
@@ -319,6 +346,7 @@ export function RockerChatUI() {
                   <LinkIcon className="h-4 w-4 mr-1" />
                   URL
                 </Button>
+                <GoogleDriveButton />
               </div>
               <Textarea
                 ref={textareaRef}
