@@ -239,47 +239,44 @@ pnpm -w lint --fix && pnpm -w format`;
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="space-y-6">
         {/* Fixer Script Section */}
-        <Card className="mb-6 border-primary/20 bg-primary/5">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
               <Terminal className="h-5 w-5 text-primary" />
-              <CardTitle className="text-base">Auto-Fix Edge Functions</CardTitle>
+              <h3 className="text-base font-semibold">Auto-Fix Edge Functions</h3>
             </div>
-            <CardDescription>
-              Open your terminal/command line on your computer, navigate to your project folder, then run these commands
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="rounded-md bg-amber-500/10 border border-amber-500/20 p-3 text-sm">
-                <p className="font-medium text-amber-600 dark:text-amber-400 mb-1">📍 How to run:</p>
-                <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                  <li>Open Terminal (Mac/Linux) or Command Prompt (Windows)</li>
-                  <li>Navigate to your project: <code className="bg-muted px-1 rounded">cd path/to/your/project</code></li>
-                  <li>Copy and paste the commands below</li>
-                </ol>
-              </div>
-              
-              <div className="relative rounded-md bg-muted p-4 font-mono text-sm">
-                <pre className="whitespace-pre-wrap">{fixerCommands}</pre>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute top-2 right-2"
-                  onClick={() => copyToClipboard(fixerCommands)}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <p className="text-sm text-muted-foreground">
-                ✅ After running successfully, click "Run Verification" above to confirm all checks pass.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+            <p className="text-sm text-muted-foreground">
+              Open your terminal on your computer, navigate to your project folder, then run these commands
+            </p>
+          </div>
+
+          <div className="rounded-md bg-amber-500/10 border border-amber-500/20 p-3 text-sm space-y-2">
+            <p className="font-medium text-amber-600 dark:text-amber-400">📍 How to run:</p>
+            <ol className="list-decimal list-inside space-y-1 text-muted-foreground ml-2">
+              <li>Open Terminal (Mac/Linux) or Command Prompt (Windows)</li>
+              <li>Navigate to your project: <code className="bg-muted px-1 py-0.5 rounded text-xs">cd path/to/your/project</code></li>
+              <li>Copy and paste the commands below</li>
+            </ol>
+          </div>
+          
+          <div className="relative rounded-md bg-muted p-4">
+            <pre className="text-xs font-mono whitespace-pre-wrap pr-12">{fixerCommands}</pre>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-2 right-2"
+              onClick={() => copyToClipboard(fixerCommands)}
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <p className="text-sm text-muted-foreground">
+            ✅ After running successfully, click "Run Verification" above to confirm all checks pass.
+          </p>
+        </div>
         {results.length > 0 && (
           <div className="mb-6 grid grid-cols-4 gap-4">
             <Card>
