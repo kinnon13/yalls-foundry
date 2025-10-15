@@ -18,7 +18,7 @@ import { ProfileChatHistory } from '@/components/profile/ProfileChatHistory';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
 import type { AnyProfile } from '@/lib/profiles/types';
-import { ArrowLeft, User, Calendar } from 'lucide-react';
+import { ArrowLeft, User, Calendar, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Profile() {
@@ -198,6 +198,10 @@ export default function Profile() {
                   <Button variant="outline" onClick={() => navigate('/calendar')} data-rocker="calendar profile button" aria-label="My Calendar">
                     <Calendar className="h-4 w-4 mr-2" />
                     My Calendar
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate('/ai-management')} data-rocker="ai management button" aria-label="AI Management">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    AI Management
                   </Button>
                 </div>
               </CardContent>
