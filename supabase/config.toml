@@ -74,3 +74,6 @@ verify_jwt = true
 
 [functions.recall-content]
 verify_jwt = true
+
+[functions.rocker-health]
+verify_jwt = false

@@ -1,0 +1,83 @@
+# Rocker AI Capability Matrix
+# Single source of truth for AI feature wiring
+
+components:
+  voice_greeting:
+    description: "Initial voice/chat greeting with time awareness"
+    prompts: [rocker.voice.greeting.v1]
+    tools: [consent.status, consent.accept, sessions.start]
+    functions: 
+      - /functions/v1/rocker-chat
+      - /functions/v1/consent-status
+      - /functions/v1/consent-accept
+    tables: [ai_sessions, ai_user_consent, profiles]
+    triggers: [first_visit, inactivity_7d]
+
+  smart_upload:
+    description: "AI-powered media upload with entity detection"
+    prompts: [rocker.vision.classify.v1]
+    tools: [media.analyze, media.link_entities, memory.upsert]
+    functions:
+      - /functions/v1/upload-media
+      - /functions/v1/generate-embeddings
+    tables: [media, media_entities, horse_feed, ai_user_memory, ai_feedback]
+    triggers: [upload_complete]
+
+  event_builder:
+    description: "Conversational event creation with smart defaults"
+    prompts: [rocker.events.builder.v1]
+    tools: [events.suggest, events.commit, events.validate]
+    functions:
+      - /functions/v1/generate-event-form
+      - /functions/v1/rocker-proposals
+    tables: [events, ai_change_proposals, ai_sessions, ai_feedback]
+    triggers: [event_create_intent]
+
+  save_reshare_recall:
+    description: "Post bookmarking, resharing, and contextual recall"
+    prompts: [rocker.recall.v1]
+    tools: [posts.save, posts.reshare, rocker.recall]
+    functions:
+      - /functions/v1/save-post
+      - /functions/v1/unsave-post
+      - /functions/v1/reshare-post
+      - /functions/v1/recall-content
+    tables: [posts, post_saves, post_reshares, user_shortcuts, ai_user_memory]
+    triggers: [save_action, recall_intent]
+
+  proactive_ai:
+    description: "Autonomous suggestions and notifications"
+    prompts: [rocker.proactive.v1]
+    tools: [proposals.create, proposals.approve, triggers.evaluate]
+    functions:
+      - /functions/v1/rocker-proposals
+      - /functions/v1/rocker-admin
+    tables: [ai_proposals, ai_triggers, ai_proactive_log, ai_user_consent]
+    triggers: [time_based, behavior_based, data_health]
+
+  memory_system:
+    description: "Personalized user context and learning"
+    prompts: [rocker.memory.v1]
+    tools: [memory.search, memory.write, memory.delete]
+    functions:
+      - /functions/v1/rocker-memory
+      - /functions/v1/generate-embeddings
+    tables: [ai_user_memory, ai_global_knowledge, ai_hypotheses, ai_sessions]
+    triggers: [context_update, learning_cycle]
+
+  admin_oversight:
+    description: "Super admin AI control and audit"
+    prompts: [rocker.admin.v1]
+    tools: [admin.audit, admin.override, admin.retrain]
+    functions:
+      - /functions/v1/rocker-admin
+    tables: [admin_audit_log, ai_admin_private_memory, ai_policy_rules, ai_model_registry]
+    triggers: [admin_action, policy_violation]
+
+infrastructure:
+  auth_required: true
+  tenant_isolation: true
+  rls_enabled: true
+  rate_limiting: true
+  audit_logging: true
+  consent_gating: true
