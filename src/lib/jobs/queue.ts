@@ -13,7 +13,10 @@ export type JobType =
   | 'send_notification'
   | 'update_metrics'
   | 'sync_inventory'
-  | 'cleanup_carts';
+  | 'cleanup_carts'
+  | 'analyze_suggestion'
+  | 'implement_suggestion'
+  | 'moderate_flag';
 
 export interface JobPayload {
   [key: string]: any;

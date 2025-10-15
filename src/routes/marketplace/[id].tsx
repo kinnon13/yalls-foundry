@@ -14,16 +14,28 @@ import { SEOHelmet } from '@/lib/seo/helmet';
 import { formatPrice } from '@/entities/marketplace';
 import { toast } from 'sonner';
 import { ArrowLeft, ShoppingCart, Plus, Minus } from 'lucide-react';
+import { FlagContentDialog } from '@/components/marketplace/FlagContentDialog';
+import { usePersonalization } from '@/hooks/usePersonalization';
 
 export default function ListingDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(1);
+  const { trackInteraction } = usePersonalization();
 
   const { data: listing, isLoading } = useQuery({
     queryKey: ['listing', id],
-    queryFn: () => getListingById(id!),
+    queryFn: async () => {
+      const listing = await getListingById(id!);
+      // Track view
+      if (listing) {
+        trackInteraction('view', 'marketplace_listings', listing.id, {
+          category: listing.category,
+        });
+      }
+      return listing;
+    },
     enabled: !!id,
   });
 
@@ -39,6 +51,12 @@ export default function ListingDetail() {
   });
 
   const handleAddToCart = () => {
+    if (listing) {
+      trackInteraction('click', 'marketplace_listings', listing.id, {
+        action: 'add_to_cart',
+        quantity,
+      });
+    }
     addToCartMutation.mutate(quantity);
   };
 
@@ -187,6 +205,19 @@ export default function ListingDetail() {
                   </Button>
                 </div>
               )}
+
+              {/* Flag Content */}
+              <div className="pt-4 border-t">
+                <FlagContentDialog
+                  contentType="listing"
+                  contentId={listing.id}
+                  trigger={
+                    <Button variant="outline" size="sm" className="w-full">
+                      Report this listing
+                    </Button>
+                  }
+                />
+              </div>
             </CardContent>
           </Card>
         </div>

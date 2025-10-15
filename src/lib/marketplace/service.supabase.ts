@@ -18,15 +18,15 @@ export async function getAllListings(filters?: {
   let query = (supabase as any)
     .from('marketplace_listings')
     .select('*')
-    .eq('active', true)
+    .eq('status', 'active')
     .order('created_at', { ascending: false });
 
   if (filters?.category) {
-    query = query.eq('category', filters.category);
+    query = query.eq('category_slug', filters.category);
   }
 
   if (filters?.search) {
-    query = query.ilike('title', `%${filters.search}%`);
+    query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
   }
 
   if (filters?.limit) {
@@ -43,7 +43,7 @@ export async function getListingById(id: string): Promise<Listing | null> {
     .from('marketplace_listings')
     .select('*')
     .eq('id', id)
-    .eq('active', true)
+    .eq('status', 'active')
     .maybeSingle();
 
   if (error) throw new Error(error.message);

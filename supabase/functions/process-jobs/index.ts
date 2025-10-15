@@ -90,6 +90,12 @@ serve(async (req) => {
           case "cleanup_carts":
             result = await processCleanupCartsJob(job, supabase);
             break;
+          case "implement_suggestion":
+            result = await processImplementSuggestionJob(job, supabase);
+            break;
+          case "moderate_flag":
+            result = await processModerateFlagJob(job, supabase);
+            break;
           default:
             throw new Error(`Unknown job type: ${job.job_type}`);
         }
@@ -203,4 +209,91 @@ async function processCleanupCartsJob(job: any, supabase: any) {
 
   if (error) throw error;
   return { deleted: data?.length || 0 };
+}
+
+async function processImplementSuggestionJob(job: any, supabase: any) {
+  // Implement approved platform suggestion
+  const { suggestion_id } = job.payload;
+  
+  // Get suggestion details
+  const { data: suggestion, error: fetchError } = await supabase
+    .from("platform_suggestions")
+    .select("*")
+    .eq("id", suggestion_id)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  console.log("Implementing suggestion:", suggestion.title);
+
+  // Auto-implement based on suggestion type
+  if (suggestion.suggestion_type === "marketplace_category") {
+    // Create slug from title
+    const slug = suggestion.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    
+    // Get parent category ID if specified
+    let parentId = null;
+    if (suggestion.config?.parent_category) {
+      const { data: parent } = await supabase
+        .from("dynamic_categories")
+        .select("id")
+        .eq("slug", suggestion.config.parent_category)
+        .single();
+      parentId = parent?.id || null;
+    }
+
+    // Insert new category
+    const { error: insertError } = await supabase
+      .from("dynamic_categories")
+      .insert({
+        slug,
+        name: suggestion.title,
+        description: suggestion.description,
+        parent_category_id: parentId,
+        attributes: suggestion.config?.filters ? { filters: suggestion.config.filters } : {},
+        is_ai_suggested: true,
+        suggestion_id: suggestion.id,
+      });
+
+    if (insertError) throw insertError;
+  }
+
+  // Mark suggestion as implemented
+  await supabase
+    .from("platform_suggestions")
+    .update({
+      status: "implemented",
+      implemented_at: new Date().toISOString(),
+    })
+    .eq("id", suggestion_id);
+
+  return { implemented: true, suggestion_id };
+}
+
+async function processModerateFlagJob(job: any, supabase: any) {
+  // AI-powered content moderation
+  const { flag_id } = job.payload;
+  
+  // Get flag details
+  const { data: flag, error: fetchError } = await supabase
+    .from("content_flags")
+    .select("*")
+    .eq("id", flag_id)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  console.log("Moderating flag:", flag.flag_reason, "for", flag.flagged_content_type);
+
+  // For now, just mark as reviewing (AI moderation would analyze here)
+  await supabase
+    .from("content_flags")
+    .update({ status: "reviewing" })
+    .eq("id", flag_id);
+
+  // TODO: Call AI moderation API to analyze content
+  // TODO: Auto-hide content if AI detects violation
+  // TODO: Notify admins if needs human review
+
+  return { moderated: true, flag_id };
 }

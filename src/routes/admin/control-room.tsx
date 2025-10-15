@@ -22,6 +22,7 @@ import CodeSearchPanel from '@/routes/admin/panels/CodeSearchPanel';
 import AuthPanel from '@/routes/admin/panels/AuthPanel';
 import FeedbackInbox from '@/routes/admin/panels/FeedbackInbox';
 import { SuggestionsPanel } from '@/routes/admin/panels/SuggestionsPanel';
+import { FlagsPanel } from '@/routes/admin/panels/FlagsPanel';
 
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('security');
@@ -58,7 +59,7 @@ export default function ControlRoom() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Tab Navigation */}
-            <TabsList className="grid w-full grid-cols-6 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-7 lg:w-auto">
               <TabsTrigger value="security" className="gap-2">
                 <Shield className="h-4 w-4" />
                 <span className="hidden sm:inline">Security</span>
@@ -82,6 +83,10 @@ export default function ControlRoom() {
               <TabsTrigger value="suggestions" className="gap-2">
                 <FileCheck className="h-4 w-4" />
                 <span className="hidden sm:inline">AI Suggestions</span>
+              </TabsTrigger>
+              <TabsTrigger value="flags" className="gap-2">
+                <Shield className="h-4 w-4" />
+                <span className="hidden sm:inline">Flags</span>
               </TabsTrigger>
             </TabsList>
 
@@ -126,13 +131,20 @@ export default function ControlRoom() {
                 <SuggestionsPanel />
               </div>
             </TabsContent>
+
+            {/* Flags Tab */}
+            <TabsContent value="flags" className="space-y-6">
+              <div className="grid gap-6 lg:grid-cols-1">
+                <FlagsPanel />
+              </div>
+            </TabsContent>
           </Tabs>
 
           {/* Quick Stats Footer */}
           <div className="mt-12 pt-6 border-t">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div className="p-4 border rounded">
-                <div className="text-2xl font-bold">6</div>
+                <div className="text-2xl font-bold">7</div>
                 <div className="text-xs text-muted-foreground">Panels</div>
               </div>
               <div className="p-4 border rounded">

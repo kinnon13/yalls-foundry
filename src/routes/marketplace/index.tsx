@@ -13,6 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { SEOHelmet } from '@/lib/seo/helmet';
 import { formatPrice } from '@/entities/marketplace';
 import { Search, ShoppingCart } from 'lucide-react';
+import { CategoryFilter } from '@/components/marketplace/CategoryFilter';
+import { RequestCategoryDialog } from '@/components/marketplace/RequestCategoryDialog';
 
 export default function MarketplaceIndex() {
   const [search, setSearch] = useState('');
@@ -33,46 +35,72 @@ export default function MarketplaceIndex() {
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">Marketplace</h1>
-            <Link to="/cart">
-              <Button variant="outline" size="sm" className="gap-2">
-                <ShoppingCart className="h-4 w-4" />
-                Cart
-              </Button>
-            </Link>
+            <div>
+              <h1 className="text-3xl font-bold">Marketplace</h1>
+              <p className="text-muted-foreground">Browse listings across Agriculture, Horse World & more</p>
+            </div>
+            <div className="flex gap-2">
+              <RequestCategoryDialog />
+              <Link to="/cart">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <ShoppingCart className="h-4 w-4" />
+                  Cart
+                </Button>
+              </Link>
+            </div>
           </div>
 
-          {/* Search & Filters */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search products..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-10"
+          <div className="grid gap-6 lg:grid-cols-4">
+            {/* Category Sidebar */}
+            <aside className="lg:col-span-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Categories</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CategoryFilter
+                    selectedCategory={category || null}
+                    onCategoryChange={(cat) => setCategory(cat || undefined)}
                   />
-                </div>
-                <Button onClick={() => setSearch('')} variant="outline">
-                  Clear
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </aside>
 
-          {/* Listings Grid */}
-          {isLoading ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Loading products...</p>
-            </div>
-          ) : !listings || listings.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No products found</p>
-            </div>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* Main Content */}
+            <div className="lg:col-span-3 space-y-4">
+              {/* Search */}
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex gap-4">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search products..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    <Button onClick={() => setSearch('')} variant="outline">
+                      Clear
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Listings Grid */}
+              {isLoading ? (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Loading products...</p>
+                </div>
+              ) : !listings || listings.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">
+                    {category ? 'No products in this category yet.' : 'No products found'}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {listings.map((listing) => (
                 <Link key={listing.id} to={`/marketplace/${listing.id}`}>
                   <Card className="hover:border-primary transition-colors h-full cursor-pointer">
@@ -111,6 +139,8 @@ export default function MarketplaceIndex() {
               ))}
             </div>
           )}
+            </div>
+          </div>
         </div>
       </div>
     </>
