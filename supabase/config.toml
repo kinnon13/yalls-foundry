@@ -59,3 +59,6 @@ verify_jwt = true
 
 [functions.generate-preview]
 verify_jwt = true
+
+[functions.upload-media]
+verify_jwt = true

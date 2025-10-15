@@ -1063,6 +1063,142 @@ export type Database = {
           },
         ]
       }
+      horse_feed: {
+        Row: {
+          caption: string | null
+          created_at: string | null
+          created_by: string
+          horse_id: string
+          id: string
+          media_id: string | null
+          post_type: string | null
+          tagged_profiles: Json | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string | null
+          created_by: string
+          horse_id: string
+          id?: string
+          media_id?: string | null
+          post_type?: string | null
+          tagged_profiles?: Json | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string | null
+          created_by?: string
+          horse_id?: string
+          id?: string
+          media_id?: string | null
+          post_type?: string | null
+          tagged_profiles?: Json | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horse_feed_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media: {
+        Row: {
+          ai_analysis: Json | null
+          caption: string | null
+          created_at: string | null
+          file_name: string
+          file_size: number | null
+          file_type: string
+          file_url: string
+          id: string
+          linked_entities: Json | null
+          metadata: Json | null
+          tenant_id: string
+          updated_at: string | null
+          user_id: string
+          visibility: string | null
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          caption?: string | null
+          created_at?: string | null
+          file_name: string
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+          linked_entities?: Json | null
+          metadata?: Json | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id: string
+          visibility?: string | null
+        }
+        Update: {
+          ai_analysis?: Json | null
+          caption?: string | null
+          created_at?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          linked_entities?: Json | null
+          metadata?: Json | null
+          tenant_id?: string
+          updated_at?: string | null
+          user_id?: string
+          visibility?: string | null
+        }
+        Relationships: []
+      }
+      media_entities: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          media_id: string
+          relation_type: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          media_id: string
+          relation_type?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          media_id?: string
+          relation_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_entities_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

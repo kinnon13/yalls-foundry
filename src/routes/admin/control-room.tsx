@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Shield, TestTube, Code, FileCheck, Activity, 
-  MessageSquare, Settings, Home, Gauge, Search
+  MessageSquare, Settings, Home, Gauge, Search, Upload
 } from 'lucide-react';
 
 // Import panel components
@@ -25,9 +25,11 @@ import { SuggestionsPanel } from '@/routes/admin/panels/SuggestionsPanel';
 import { FlagsPanel } from '@/routes/admin/panels/FlagsPanel';
 import { EntitySearchPanel } from '@/routes/admin/panels/EntitySearchPanel';
 import { ScaleScorecard } from '@/lib/observability/ScaleScorecard';
+import { MediaUploadDialog } from '@/components/media/MediaUploadDialog';
 
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('security');
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   return (
     <>
@@ -48,12 +50,18 @@ export default function ControlRoom() {
                 Platform diagnostics, testing, and monitoring
               </p>
             </div>
-            <Link to="/">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Home className="h-4 w-4" />
-                Back to Home
+            <div className="flex items-center gap-2">
+              <Button onClick={() => setUploadDialogOpen(true)} size="sm" className="gap-2">
+                <Upload className="h-4 w-4" />
+                Upload with Rocker
               </Button>
-            </Link>
+              <Link to="/">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Home className="h-4 w-4" />
+                  Back to Home
+                </Button>
+              </Link>
+            </div>
           </div>
         </header>
 
@@ -184,6 +192,11 @@ export default function ControlRoom() {
             </div>
           </div>
         </main>
+
+        <MediaUploadDialog 
+          open={uploadDialogOpen}
+          onOpenChange={setUploadDialogOpen}
+        />
       </div>
     </>
   );
