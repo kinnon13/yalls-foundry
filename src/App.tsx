@@ -37,6 +37,7 @@ import BusinessPaymentsSettings from "./routes/business/[bizId]/settings/payment
 import BusinessCRMContacts from "./routes/business/[bizId]/crm/contacts";
 import BusinessCRMLeads from "./routes/business/[bizId]/crm/leads";
 import Calendar from "./routes/calendar";
+import UnclaimedEntities from "./routes/entities/unclaimed";
 import NotFound from "./pages/NotFound";
 
 // Lazy load MLM routes
@@ -116,6 +117,7 @@ const App = () => (
               <Route path="/business/:bizId/crm/contacts" element={<RequireAuth><BusinessCRMContacts /></RequireAuth>} />
               <Route path="/business/:bizId/crm/leads" element={<RequireAuth><BusinessCRMLeads /></RequireAuth>} />
               <Route path="/calendar" element={<RequireAuth><Calendar /></RequireAuth>} />
+              <Route path="/entities/unclaimed" element={<UnclaimedEntities />} />
               <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
               <Route path="*" element={<NotFound />} />
               </Routes>

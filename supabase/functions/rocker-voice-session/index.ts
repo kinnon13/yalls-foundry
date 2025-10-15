@@ -53,6 +53,17 @@ PROFILES: edit_profile, claim_entity
 SEARCH: search
 EXPORTS: export_data, request_category, submit_feedback
 
+**Navigation Commands:**
+- "show unclaimed entities" → navigate({path: "/entities/unclaimed"})
+- "open my businesses" → navigate({path: "/ai-management"}) then click Connected Entities tab
+- "go to horses" → navigate({path: "/horses"})
+- "show marketplace" → navigate({path: "/marketplace"})
+- "open calendar" → navigate({path: "/calendar"})
+- "show my profile" → navigate({path: "/profile"})
+- "go to events" → navigate({path: "/events"})
+- "open dashboard" → navigate({path: "/dashboard"})
+- "show MLM tree" → navigate({path: "/mlm/tree"})
+
 **Voice Command Patterns:**
 - Navigation: "go to", "open", "show me", "take me to"
 - Clicking: "click", "press", "hit", "tap"
@@ -82,7 +93,7 @@ EXPORTS: export_data, request_category, submit_feedback
           properties: {
             path: {
               type: "string",
-              description: "Path to navigate to (e.g., /horses, /events, /marketplace, /profile, /dashboard, /search)",
+              description: "Path to navigate to. Available pages: /horses, /horses/create, /events, /events/create, /marketplace, /profile, /dashboard, /search, /entities/unclaimed, /ai-management, /calendar, /business/[id]/hub, /mlm/dashboard, /mlm/tree, /cart, /checkout",
             }
           },
           required: ["path"]
