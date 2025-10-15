@@ -864,8 +864,10 @@ serve(async (req) => {
         console.log('[Rocker Chat] Found', kbData.results.length, 'KB items');
       }
 
-      // Resolve any unknown terms
+      // Resolve any unknown terms - mark unknowns for clarification
       const words = lastUserMessage.toLowerCase().match(/\b\w{4,}\b/g) || [];
+      const unknownTerms: string[] = [];
+      
       for (const word of words.slice(0, 5)) { // Check first 5 significant words
         const { data: term } = await supabaseClient
           .from('term_dictionary')
@@ -877,7 +879,37 @@ serve(async (req) => {
         if (term && term.definition) {
           knowledgeContext += `\n**Term: ${term.term}** - ${term.definition}`;
           console.log('[Rocker Chat] Resolved term:', term.term);
+        } else if (word.length > 6) {
+          // Check term_knowledge table for web-verified terms
+          const { data: webTerm } = await supabaseClient
+            .from('term_knowledge')
+            .select('term, title, summary, source_url')
+            .ilike('term', `%${word}%`)
+            .eq('is_active', true)
+            .order('confidence_score', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          if (webTerm) {
+            knowledgeContext += `\n**Term: ${webTerm.term}** - ${webTerm.summary || webTerm.title}`;
+            if (webTerm.source_url) {
+              knowledgeContext += ` (Source: ${webTerm.source_url})`;
+            }
+            console.log('[Rocker Chat] Resolved web term:', webTerm.term);
+          } else {
+            unknownTerms.push(word);
+          }
         }
+      }
+
+      // If unknown terms found, add clarification instruction
+      if (unknownTerms.length > 0) {
+        knowledgeContext += `\n\n**INSTRUCTION: Unknown terms detected (${unknownTerms.join(', ')}). If these are important to answer the user's question, respond with:**
+"I'm not familiar with [term]. Can you explain what that means?"
+
+Then offer to search for it:
+"Would you like me to search for information about [term] to verify we're talking about the same thing?"`;
+        console.log('[Rocker Chat] Unknown terms:', unknownTerms);
       }
     } catch (err) {
       console.warn('[Rocker Chat] KB retrieval failed:', err);

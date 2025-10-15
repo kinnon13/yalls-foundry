@@ -176,60 +176,38 @@ export default function AIAnalyticsPanel() {
         </div>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Activity className="h-4 w-4 text-blue-500" />
-              Total Interactions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats?.total || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">All time</p>
-          </CardContent>
+      {/* Key Metrics - Compact Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Activity className="h-4 w-4 text-primary" />
+            <span className="text-xs font-medium text-muted-foreground">Total</span>
+          </div>
+          <div className="text-2xl font-bold">{stats?.total || 0}</div>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Target className="h-4 w-4 text-green-500" />
-              Success Rate
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats?.successRate}%</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {stats?.successful} / {stats?.total} successful
-            </p>
-          </CardContent>
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Target className="h-4 w-4 text-green-600" />
+            <span className="text-xs font-medium text-muted-foreground">Success</span>
+          </div>
+          <div className="text-2xl font-bold">{stats?.successRate}%</div>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Eye className="h-4 w-4 text-purple-500" />
-              Visual Corrections
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats?.visualCorrections || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">User demonstrations</p>
-          </CardContent>
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Eye className="h-4 w-4 text-purple-600" />
+            <span className="text-xs font-medium text-muted-foreground">Visual</span>
+          </div>
+          <div className="text-2xl font-bold">{stats?.visualCorrections || 0}</div>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Brain className="h-4 w-4 text-orange-500" />
-              Known Terms
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats?.knownTerms || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">Verified definitions</p>
-          </CardContent>
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Brain className="h-4 w-4 text-orange-600" />
+            <span className="text-xs font-medium text-muted-foreground">Terms</span>
+          </div>
+          <div className="text-2xl font-bold">{stats?.knownTerms || 0}</div>
         </Card>
       </div>
 

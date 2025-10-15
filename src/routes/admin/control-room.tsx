@@ -28,6 +28,7 @@ import { ScaleScorecard } from '@/lib/observability/ScaleScorecard';
 import { MediaUploadDialog } from '@/components/media/MediaUploadDialog';
 import { ModeratorConsole } from '@/routes/admin/panels/ModeratorConsole';
 import AIAnalyticsPanel from '@/routes/admin/panels/AIAnalyticsPanel';
+import KnowledgeBrowserPanel from '@/routes/admin/panels/KnowledgeBrowserPanel';
 
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('ai-analytics');
@@ -71,10 +72,14 @@ export default function ControlRoom() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Tab Navigation */}
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-11 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-12 lg:w-auto">
               <TabsTrigger value="ai-analytics" className="gap-2">
                 <Activity className="h-4 w-4" />
-                <span className="hidden sm:inline">AI Analytics</span>
+                <span className="hidden sm:inline">Analytics</span>
+              </TabsTrigger>
+              <TabsTrigger value="knowledge" className="gap-2">
+                <FileCheck className="h-4 w-4" />
+                <span className="hidden sm:inline">Knowledge</span>
               </TabsTrigger>
               <TabsTrigger value="security" className="gap-2">
                 <Shield className="h-4 w-4" />
@@ -105,7 +110,7 @@ export default function ControlRoom() {
                 <span className="hidden sm:inline">AI</span>
               </TabsTrigger>
               <TabsTrigger value="flags" className="gap-2">
-                <Shield className="h-4 w-4" />
+                <Flag className="h-4 w-4" />
                 <span className="hidden sm:inline">Flags</span>
               </TabsTrigger>
               <TabsTrigger value="moderator" className="gap-2">
@@ -121,6 +126,11 @@ export default function ControlRoom() {
             {/* AI Analytics Tab */}
             <TabsContent value="ai-analytics" className="space-y-6">
               <AIAnalyticsPanel />
+            </TabsContent>
+
+            {/* Knowledge Browser Tab */}
+            <TabsContent value="knowledge" className="space-y-6">
+              <KnowledgeBrowserPanel />
             </TabsContent>
 
             {/* Security Tab */}

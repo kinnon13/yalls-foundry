@@ -86,3 +86,24 @@ verify_jwt = true
 
 [functions.text-to-speech]
 verify_jwt = false
+
+[functions.kb-ingest]
+verify_jwt = true
+
+[functions.kb-search]
+verify_jwt = true
+
+[functions.kb-item]
+verify_jwt = true
+
+[functions.kb-related]
+verify_jwt = true
+
+[functions.kb-playbook]
+verify_jwt = true
+
+[functions.rocker-fetch-url]
+verify_jwt = true
+
+[functions.term-lookup]
+verify_jwt = true

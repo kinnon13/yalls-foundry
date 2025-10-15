@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,64 +12,88 @@ serve(async (req) => {
   }
 
   try {
-    const { url } = await req.json();
+    const { url, term } = await req.json();
+    
+    if (!url && !term) {
+      throw new Error('Either url or term is required');
+    }
 
-    if (!url) {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
+    );
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      throw new Error('Unauthorized');
+    }
+
+    console.log('[Rocker Fetch URL] Fetching:', url || `searching for: ${term}`);
+
+    let targetUrl = url;
+    
+    // If term provided, search Google for authoritative sources
+    if (term && !url) {
+      const searchQuery = encodeURIComponent(`"${term}" definition`);
+      const googleSearchUrl = `https://www.google.com/search?q=${searchQuery}`;
+      
+      // Return a search suggestion
       return new Response(
-        JSON.stringify({ error: 'No URL provided' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          search_url: googleSearchUrl,
+          suggestions: [
+            `I'm not familiar with "${term}". Can you explain what that means?`,
+            `Would you like me to search Google for information about "${term}"?`,
+            'Or you can describe it to me directly.'
+          ],
+          action: 'clarify'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Fetching URL: ${url}`);
+    // Fetch the URL content
+    const response = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; RockerBot/1.0)'
+      }
+    });
 
-    // Fetch the URL
-    const response = await fetch(url);
-    const contentType = response.headers.get('content-type') || '';
-
-    let content = '';
-    let summary = '';
-
-    if (contentType.includes('text/html')) {
-      const html = await response.text();
-      
-      // Simple HTML parsing - extract text content
-      const textContent = html
-        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-      content = textContent.substring(0, 5000);
-      summary = `Website: ${url}\nContent length: ${textContent.length} characters\nPreview:\n${textContent.substring(0, 500)}...`;
-    } 
-    else if (contentType.includes('application/json')) {
-      const json = await response.json();
-      content = JSON.stringify(json, null, 2);
-      summary = `JSON data from ${url}:\n${content.substring(0, 500)}...`;
+    if (!response.ok) {
+      throw new Error(`Failed to fetch URL: ${response.status}`);
     }
-    else if (contentType.includes('text/')) {
-      content = await response.text();
-      summary = `Text content from ${url}:\n${content.substring(0, 500)}...`;
-    }
-    else {
-      summary = `Binary content from ${url}. Content-Type: ${contentType}. Size: ${response.headers.get('content-length') || 'unknown'}`;
-    }
+
+    const html = await response.text();
+    
+    // Extract title and description from HTML
+    const titleMatch = html.match(/<title>([^<]*)<\/title>/i);
+    const descMatch = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']*)["']/i);
+    
+    const title = titleMatch ? titleMatch[1] : 'No title';
+    const description = descMatch ? descMatch[1] : '';
+    
+    // Extract main content
+    const pMatch = html.match(/<p[^>]*>([^<]+)<\/p>/i);
+    const content = pMatch ? pMatch[1] : '';
 
     return new Response(
       JSON.stringify({
-        success: true,
-        url,
-        contentType,
-        content,
-        summary,
+        url: targetUrl,
+        title,
+        description,
+        content: content.slice(0, 500),
+        fetched_at: new Date().toISOString()
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error fetching URL:', error);
+    console.error('[Rocker Fetch URL] Error:', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
