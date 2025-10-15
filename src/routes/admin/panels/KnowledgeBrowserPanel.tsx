@@ -43,12 +43,14 @@ export default function KnowledgeBrowserPanel() {
   const [userAnalytics, setUserAnalytics] = useState<any[]>([]);
   const [globalPatterns, setGlobalPatterns] = useState<any[]>([]);
   const [aggregating, setAggregating] = useState(false);
+  const [consent, setConsent] = useState<any>(null);
 
   useEffect(() => {
     loadCategories();
     searchKnowledge();
     if (session?.userId) {
       loadUserProfile();
+      loadConsent();
       loadUserMemory();
       loadConversations();
       loadUserAnalytics();
@@ -154,6 +156,42 @@ export default function KnowledgeBrowserPanel() {
       });
     } catch (error) {
       console.error('[KB Browser] Load profile error:', error);
+    }
+  };
+
+  const loadConsent = async () => {
+    try {
+      const { data } = await supabase
+        .from('ai_user_consent')
+        .select('*')
+        .eq('user_id', session?.userId)
+        .maybeSingle();
+      
+      setConsent(data);
+    } catch (error) {
+      console.error('[KB Browser] Load consent error:', error);
+    }
+  };
+
+  const enableConsent = async () => {
+    try {
+      const { error } = await supabase.functions.invoke('consent-accept', {
+        body: {
+          scopes: ['memory', 'personalization', 'analytics'],
+          site_opt_in: true,
+          email_opt_in: false,
+          push_opt_in: false,
+          sms_opt_in: false
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success('Consent enabled! Rocker can now learn from your interactions.');
+      loadConsent();
+    } catch (error) {
+      console.error('[KB Browser] Enable consent error:', error);
+      toast.error('Failed to enable consent');
     }
   };
 
@@ -373,12 +411,12 @@ export default function KnowledgeBrowserPanel() {
                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <User className="h-6 w-6 text-primary" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <div className="font-medium">{userProfile.display_name || userProfile.email}</div>
                   <div className="text-sm text-muted-foreground">{userProfile.email}</div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-2 gap-2 text-sm mb-4">
                 <div>
                   <span className="text-muted-foreground">User ID:</span>
                   <div className="font-mono text-xs mt-1 break-all">{userProfile.userId}</div>
@@ -387,6 +425,35 @@ export default function KnowledgeBrowserPanel() {
                   <div>
                     <span className="text-muted-foreground">Bio:</span>
                     <div className="mt-1">{userProfile.bio}</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Consent Status */}
+              <div className="pt-3 border-t">
+                <div className="text-sm font-medium mb-2">Learning Consent</div>
+                {consent?.site_opt_in ? (
+                  <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Enabled - Rocker is learning from your interactions</span>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span>Disabled - Rocker cannot save information about you</span>
+                    </div>
+                    <Button 
+                      onClick={enableConsent} 
+                      size="sm"
+                      className="w-full"
+                    >
+                      Enable Learning
+                    </Button>
+                    <div className="text-xs text-muted-foreground">
+                      This allows Rocker to save your preferences, learn from conversations, 
+                      and provide personalized insights. No personal information is shared publicly.
+                    </div>
                   </div>
                 )}
               </div>
