@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   TrendingUp, Users, DollarSign, Award, Building2, User, 
-  BarChart3, Target, ShoppingCart, Calendar 
+  BarChart3, Target, ShoppingCart, Calendar, Shield, Activity 
 } from 'lucide-react';
 import { useSession } from '@/lib/auth/context';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,9 +19,20 @@ import { getMyMLMStats, getMyCommissions } from '@/lib/mlm/service.supabase';
 import { formatCents, getRankBadgeClass } from '@/entities/mlm';
 import { Link } from 'react-router-dom';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
+import RLSScanner from '@/routes/admin/panels/RLSScanner';
+import TestRunner from '@/routes/admin/panels/TestRunner';
+import CodeSearchPanel from '@/routes/admin/panels/CodeSearchPanel';
+import AuthPanel from '@/routes/admin/panels/AuthPanel';
+import FeedbackInbox from '@/routes/admin/panels/FeedbackInbox';
+import { SuggestionsPanel } from '@/routes/admin/panels/SuggestionsPanel';
+import { FlagsPanel } from '@/routes/admin/panels/FlagsPanel';
+import { ScaleScorecard } from '@/lib/observability/ScaleScorecard';
+import { BusinessMetrics } from '@/components/business/BusinessMetrics';
 
 export default function Dashboard() {
   const { session } = useSession();
+  const { isAdmin, isLoading: adminCheckLoading } = useAdminCheck();
 
   // Fetch user profile
   const { data: profile } = useQuery({
@@ -170,6 +181,12 @@ export default function Dashboard() {
             <TabsTrigger value="profiles">Profiles</TabsTrigger>
             <TabsTrigger value="network">Network</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            {isAdmin && !adminCheckLoading && (
+              <TabsTrigger value="control-room">
+                <Shield className="w-4 h-4 mr-2" />
+                Control Room
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Overview Tab */}
@@ -285,26 +302,30 @@ export default function Dashboard() {
 
           {/* Businesses Tab */}
           <TabsContent value="businesses" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>All Businesses</CardTitle>
-                <CardDescription>
-                  Manage finances, marketing, and operations
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {businesses && businesses.length > 0 ? (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {businesses.map((biz) => (
-                      <Link
-                        key={biz.id}
-                        to={`/business/${biz.id}/hub`}
-                        className="p-4 border rounded-lg hover:bg-accent transition-colors"
-                      >
-                        <h3 className="font-bold mb-2">{biz.name}</h3>
-                        <p className="text-sm text-muted-foreground mb-3">
-                          {biz.description}
-                        </p>
+            {businesses && businesses.length > 0 ? (
+              <>
+                {businesses.map((biz) => (
+                  <Card key={biz.id}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle>{biz.name}</CardTitle>
+                          <CardDescription>{biz.description}</CardDescription>
+                        </div>
+                        <Link to={`/business/${biz.id}/hub`}>
+                          <Button variant="outline" size="sm">
+                            <Building2 className="w-4 h-4 mr-2" />
+                            Full Hub
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <BusinessMetrics businessId={biz.id} />
+                      
+                      {/* Capabilities */}
+                      <div className="mt-4">
+                        <h4 className="text-sm font-semibold mb-2">Capabilities</h4>
                         <div className="flex gap-2 flex-wrap">
                           {(biz.capabilities as string[])?.map((cap: string) => (
                             <Badge key={cap} variant="secondary">
@@ -312,19 +333,33 @@ export default function Dashboard() {
                             </Badge>
                           ))}
                         </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
+                      </div>
+
+                      {/* Quick Actions */}
+                      <div className="mt-4 flex gap-2">
+                        <Button size="sm" variant="outline" asChild>
+                          <Link to={`/business/${biz.id}/crm/contacts`}>CRM</Link>
+                        </Button>
+                        <Button size="sm" variant="outline" asChild>
+                          <Link to={`/business/${biz.id}/settings/profile`}>Settings</Link>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </>
+            ) : (
+              <Card>
+                <CardContent className="pt-6">
                   <div className="text-center py-8">
                     <p className="text-muted-foreground mb-4">
                       No businesses yet. Create your first one!
                     </p>
                     <Button>Create Business</Button>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Profiles Tab */}
@@ -447,6 +482,96 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Control Room Tab - Admin Only */}
+          {isAdmin && (
+            <TabsContent value="control-room" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    Admin Control Room
+                  </CardTitle>
+                  <CardDescription>
+                    Platform diagnostics, security scanning, and system monitoring
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Platform Health */}
+                  <div>
+                    <h3 className="font-semibold mb-4">Platform Health</h3>
+                    <ScaleScorecard />
+                  </div>
+
+                  {/* Quick Admin Actions */}
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">Security Scan</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <RLSScanner />
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">Test Runner</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <TestRunner />
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">Code Search</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <CodeSearchPanel />
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">Auth Management</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <AuthPanel />
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">User Feedback</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <FeedbackInbox />
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">AI Suggestions</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <SuggestionsPanel />
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">Content Flags</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <FlagsPanel />
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>

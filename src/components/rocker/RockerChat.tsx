@@ -55,13 +55,13 @@ export function RockerChat() {
     }
   }, [isOpen]);
 
-  // Auto-enable voice mode when chat opens
+  // Auto-enable wake word listening when chat opens
   useEffect(() => {
-    if (isOpen && !isVoiceMode) {
-      // Small delay to ensure UI is ready
+    if (isOpen && !isVoiceMode && !isAlwaysListening) {
+      // Small delay to ensure UI is ready, then enable always listening
       const timer = setTimeout(() => {
-        toggleVoiceMode();
-      }, 300);
+        toggleAlwaysListening();
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
@@ -146,32 +146,62 @@ export function RockerChat() {
     const newAlwaysListening = !isAlwaysListening;
     setIsAlwaysListening(newAlwaysListening);
     
-    if (newAlwaysListening) {
-      // Enable always listening - start voice mode if not already active
-      if (!isVoiceMode) {
-        await toggleVoiceMode();
-      } else {
-        // Restart with new instructions
-        voiceRef.current?.disconnect();
-        voiceRef.current = null;
-        setIsVoiceMode(false);
-        await toggleVoiceMode();
-      }
-      
-      toast({
-        title: "Always listening enabled",
-        description: "Say 'Rocker' to get my attention",
-      });
-    } else {
-      // Disable always listening - stop voice mode
-      voiceRef.current?.disconnect();
+    // Always stop any existing voice connection first
+    if (voiceRef.current) {
+      voiceRef.current.disconnect();
       voiceRef.current = null;
       setIsVoiceMode(false);
       setVoiceStatus('disconnected');
       setVoiceTranscript('');
-      
+    }
+    
+    if (newAlwaysListening) {
+      // Enable always listening with wake word
+      try {
+        setVoiceStatus('connecting');
+        
+        // Get ephemeral token with always-listening flag
+        const { data, error } = await supabase.functions.invoke('rocker-voice-session', {
+          body: { alwaysListening: true }
+        });
+        
+        if (error) throw error;
+        if (!data.client_secret?.value) throw new Error('No ephemeral token received');
+
+        // Initialize voice connection
+        const voice = new RealtimeVoice(
+          (status) => setVoiceStatus(status),
+          (text, isFinal) => {
+            if (isFinal) {
+              setVoiceTranscript('');
+            } else {
+              setVoiceTranscript(text);
+            }
+          }
+        );
+
+        await voice.connect(data.client_secret.value);
+        voiceRef.current = voice;
+        setIsVoiceMode(true);
+        
+        toast({
+          title: "Wake word activated",
+          description: "Say 'Hey Rocker' to start a conversation",
+        });
+      } catch (error) {
+        console.error('Error starting wake word mode:', error);
+        toast({
+          title: "Wake word failed",
+          description: error instanceof Error ? error.message : 'Failed to start wake word mode',
+          variant: "destructive",
+        });
+        setVoiceStatus('disconnected');
+        setIsVoiceMode(false);
+        setIsAlwaysListening(false);
+      }
+    } else {
       toast({
-        title: "Always listening disabled",
+        title: "Wake word deactivated",
         description: "Voice mode turned off",
       });
     }
@@ -179,9 +209,25 @@ export function RockerChat() {
 
   useEffect(() => {
     return () => {
-      voiceRef.current?.disconnect();
+      // Cleanup voice connection on unmount or chat close
+      if (voiceRef.current) {
+        voiceRef.current.disconnect();
+        voiceRef.current = null;
+      }
     };
   }, []);
+
+  // Cleanup when chat closes
+  useEffect(() => {
+    if (!isOpen) {
+      voiceRef.current?.disconnect();
+      voiceRef.current = null;
+      setIsVoiceMode(false);
+      setIsAlwaysListening(false);
+      setVoiceStatus('disconnected');
+      setVoiceTranscript('');
+    }
+  }, [isOpen]);
 
   if (!isOpen) {
     return (
