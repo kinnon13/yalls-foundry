@@ -53,3 +53,9 @@ verify_jwt = true
 
 [functions.consent-revoke]
 verify_jwt = true
+
+[functions.entity-lookup]
+verify_jwt = true
+
+[functions.generate-preview]
+verify_jwt = true

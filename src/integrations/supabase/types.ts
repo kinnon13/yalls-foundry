@@ -1994,6 +1994,18 @@ export type Database = {
         Args: { target_user_id?: string }
         Returns: Json
       }
+      search_entities: {
+        Args: { p_limit?: number; p_query: string; p_tenant_id: string }
+        Returns: {
+          entity_id: string
+          entity_type: string
+          image_url: string
+          is_public: boolean
+          metadata: Json
+          name: string
+          similarity_score: number
+        }[]
+      }
       set_limit: {
         Args: { "": number }
         Returns: number
