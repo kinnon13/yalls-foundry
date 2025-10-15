@@ -23,17 +23,9 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
-    // Create ephemeral token for Realtime API
-    const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-realtime-preview-2024-12-17",
-        voice: "alloy",
-        instructions: `You are Rocker, the AI assistant for Yall's Foundry - a platform for the western performance horse community.
+    const { alwaysListening } = await req.json();
+
+    const baseInstructions = `You are Rocker, the AI assistant for Yall's Foundry - a platform for the western performance horse community.
 
 Your personality:
 - Friendly, helpful, and concise
@@ -49,7 +41,23 @@ Available actions you can help with:
 - Create events (barrel races, team ropings, etc.)
 - Search for horses, businesses, users, and events
 
-When users mention saving, sharing, finding, uploading, or creating events, tell them you're ready to help and ask for any details needed.`
+When users mention saving, sharing, finding, uploading, or creating events, tell them you're ready to help and ask for any details needed.`;
+
+    const alwaysListeningInstructions = alwaysListening 
+      ? `\n\nIMPORTANT: You are in "always listening" mode. Only respond when the user addresses you by saying "Rocker" or "Hey Rocker" at the start of their message. If they speak without saying your name, stay silent and wait. When they do say "Rocker", respond helpfully to their request.`
+      : '';
+
+    // Create ephemeral token for Realtime API
+    const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-realtime-preview-2024-12-17",
+        voice: "alloy",
+        instructions: baseInstructions + alwaysListeningInstructions
       }),
     });
 

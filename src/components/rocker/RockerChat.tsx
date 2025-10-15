@@ -18,6 +18,7 @@ export function RockerChat() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isAlwaysListening, setIsAlwaysListening] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
   const voiceRef = useRef<RealtimeVoice | null>(null);
   const [voiceTranscript, setVoiceTranscript] = useState('');
@@ -59,19 +60,23 @@ export function RockerChat() {
 
   const toggleVoiceMode = async () => {
     if (isVoiceMode) {
-      // Stop voice mode
-      voiceRef.current?.disconnect();
-      voiceRef.current = null;
+      // Stop voice mode only if not in always-listening mode
+      if (!isAlwaysListening) {
+        voiceRef.current?.disconnect();
+        voiceRef.current = null;
+        setVoiceStatus('disconnected');
+        setVoiceTranscript('');
+      }
       setIsVoiceMode(false);
-      setVoiceStatus('disconnected');
-      setVoiceTranscript('');
     } else {
       // Start voice mode
       try {
         setVoiceStatus('connecting');
         
-        // Get ephemeral token
-        const { data, error } = await supabase.functions.invoke('rocker-voice-session');
+        // Get ephemeral token with always-listening flag
+        const { data, error } = await supabase.functions.invoke('rocker-voice-session', {
+          body: { alwaysListening: isAlwaysListening }
+        });
         
         if (error) throw error;
         if (!data.client_secret?.value) throw new Error('No ephemeral token received');
@@ -94,7 +99,7 @@ export function RockerChat() {
         
         toast({
           title: "Voice mode active",
-          description: "Start speaking to Rocker!",
+          description: isAlwaysListening ? "Say 'Rocker' to get my attention" : "Start speaking to Rocker!",
         });
       } catch (error) {
         console.error('Error starting voice mode:', error);
@@ -106,6 +111,41 @@ export function RockerChat() {
         setVoiceStatus('disconnected');
         setIsVoiceMode(false);
       }
+    }
+  };
+
+  const toggleAlwaysListening = async () => {
+    const newAlwaysListening = !isAlwaysListening;
+    setIsAlwaysListening(newAlwaysListening);
+    
+    if (newAlwaysListening) {
+      // Enable always listening - start voice mode if not already active
+      if (!isVoiceMode) {
+        await toggleVoiceMode();
+      } else {
+        // Restart with new instructions
+        voiceRef.current?.disconnect();
+        voiceRef.current = null;
+        setIsVoiceMode(false);
+        await toggleVoiceMode();
+      }
+      
+      toast({
+        title: "Always listening enabled",
+        description: "Say 'Rocker' to get my attention",
+      });
+    } else {
+      // Disable always listening - stop voice mode
+      voiceRef.current?.disconnect();
+      voiceRef.current = null;
+      setIsVoiceMode(false);
+      setVoiceStatus('disconnected');
+      setVoiceTranscript('');
+      
+      toast({
+        title: "Always listening disabled",
+        description: "Voice mode turned off",
+      });
     }
   };
 
@@ -155,14 +195,28 @@ export function RockerChat() {
         </div>
         <div className="flex items-center gap-1">
           <Button
-            variant={isVoiceMode ? "default" : "ghost"}
+            variant={isAlwaysListening ? "default" : "ghost"}
             size="icon"
-            onClick={toggleVoiceMode}
+            onClick={toggleAlwaysListening}
             disabled={isLoading}
-            title={isVoiceMode ? "Stop voice mode" : "Start voice mode"}
+            title={isAlwaysListening ? "Disable always listening" : "Enable always listening"}
+            className={cn(
+              isAlwaysListening && "animate-pulse"
+            )}
           >
-            {isVoiceMode ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            <Mic className="h-4 w-4" />
           </Button>
+          {!isAlwaysListening && (
+            <Button
+              variant={isVoiceMode ? "default" : "ghost"}
+              size="icon"
+              onClick={toggleVoiceMode}
+              disabled={isLoading}
+              title={isVoiceMode ? "Stop voice mode" : "Start voice mode"}
+            >
+              {isVoiceMode ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </Button>
+          )}
           {messages.length > 0 && !isVoiceMode && (
             <Button
               variant="ghost"
@@ -202,7 +256,9 @@ export function RockerChat() {
               {voiceStatus === 'connected' ? 'Listening...' : 'Connecting...'}
             </p>
             <p className="text-xs text-muted-foreground mb-4">
-              Speak naturally to Rocker
+              {isAlwaysListening 
+                ? 'Say "Rocker" to get my attention' 
+                : 'Speak naturally to Rocker'}
             </p>
             {voiceTranscript && (
               <div className="bg-muted rounded-lg p-3 max-w-[80%]">
