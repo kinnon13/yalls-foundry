@@ -302,13 +302,17 @@ async function executeTool(toolName: string, args: any, supabaseClient: any, use
           .eq('user_id', userId)
           .maybeSingle();
         
+        const fullName = (user as any)?.user_metadata?.full_name as string | undefined;
+        const emailName = user.email ? user.email.split('@')[0] : undefined;
+        const friendlyName = profile?.display_name || fullName || emailName || null;
+        
         return { 
           success: true, 
           user_id: user.id,
           email: user.email,
-          display_name: profile?.display_name || null,
+          display_name: friendlyName,
           bio: profile?.bio || null,
-          message: `You are currently talking to ${user.email} (User ID: ${user.id})`
+          message: `You are currently talking to ${friendlyName || user.email} (User ID: ${user.id})`
         };
       }
 
@@ -950,14 +954,18 @@ You MUST be able to identify users when needed for safety, moderation, or legal 
         .eq('user_id', user.id)
         .maybeSingle();
       
-      if (profile) {
-        userIdentityContext += `\n- Display Name: ${profile.display_name || 'Not set'}`;
-        if (profile.bio) {
-          userIdentityContext += `\n- Bio: ${profile.bio}`;
-        }
+      const fullName = (user as any)?.user_metadata?.full_name as string | undefined;
+      const emailName = user.email ? user.email.split('@')[0] : undefined;
+      const friendlyName = profile?.display_name || fullName || emailName;
+
+      userIdentityContext += `\n- Name: ${friendlyName || 'Unknown'}`;
+      if (profile?.bio) {
+        userIdentityContext += `\n- Bio: ${profile.bio}`;
       }
     } catch (err) {
       console.warn('Failed to load user profile:', err);
+      const emailName = user.email ? user.email.split('@')[0] : undefined;
+      userIdentityContext += `\n- Name: ${emailName || 'Unknown'}`;
     }
 
     let contextMemories = '';
