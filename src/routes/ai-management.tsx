@@ -36,9 +36,12 @@ export default function AIManagement() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [memories, setMemories] = useState<any[]>([]);
+  const [loadingMemories, setLoadingMemories] = useState(false);
 
   useEffect(() => {
     loadSessions();
+    loadMemories();
     
     // Check if a session was selected from profile
     const preloadSession = localStorage.getItem('rocker-load-session');
@@ -52,6 +55,48 @@ export default function AIManagement() {
     if (selectedSession) {
       loadMessages(selectedSession);
     }
+  }, [selectedSession]);
+
+  useEffect(() => {
+    // Realtime updates for new messages/sessions
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      channel = supabase
+        .channel('ai-management')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'rocker_conversations' }, (payload: any) => {
+          const row = payload.new as any;
+          if (row.user_id !== user.id) return;
+          // If it's a new session id, refresh sessions list
+          setSessions(prev => {
+            const exists = prev.some(s => s.session_id === row.session_id);
+            if (!exists) {
+              // lightweight reload
+              loadSessions();
+            }
+            return prev;
+          });
+          if (selectedSession && row.session_id === selectedSession) {
+            setMessages(prev => [...prev, { role: row.role, content: row.content, created_at: row.created_at }]);
+          }
+        })
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversation_sessions' }, (payload: any) => {
+          const row = payload.new as any;
+          setSessions(prev => [{
+            session_id: row.session_id,
+            title: row.title || 'Voice Conversation',
+            summary: row.summary || '',
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+            message_count: 0
+          }, ...prev]);
+        })
+        .subscribe();
+    })();
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
   }, [selectedSession]);
 
   async function loadSessions() {
@@ -122,6 +167,28 @@ export default function AIManagement() {
       toast.error('Failed to load conversation');
     } finally {
       setLoadingMessages(false);
+    }
+  }
+
+  async function loadMemories() {
+    setLoadingMemories(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('ai_user_memory')
+        .select('id, type, key, value, confidence, tags, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      setMemories(data || []);
+    } catch (e) {
+      console.error('Failed to load memories:', e);
+    } finally {
+      setLoadingMemories(false);
     }
   }
 
@@ -360,12 +427,45 @@ export default function AIManagement() {
 
             <TabsContent value="memories" className="mt-6">
               <Card>
-                <CardHeader>
-                  <CardTitle>AI Memories</CardTitle>
-                  <CardDescription>What Rocker remembers about you</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>AI Memories</CardTitle>
+                    <CardDescription>What Rocker remembers about you</CardDescription>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={loadMemories} disabled={loadingMemories}>
+                    {loadingMemories ? 'Refreshing...' : 'Refresh'}
+                  </Button>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">Memory management coming soon...</p>
+                  {loadingMemories ? (
+                    <p className="text-sm text-muted-foreground">Loading memories...</p>
+                  ) : memories.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No memories yet.</p>
+                  ) : (
+                    <ScrollArea className="h-[600px]">
+                      <div className="space-y-3 pr-4">
+                        {memories.map((m) => (
+                          <div key={m.id} className="p-3 rounded-lg border">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs uppercase tracking-wide text-muted-foreground">{m.type}</span>
+                              <span className="text-xs text-muted-foreground">{formatDate(m.created_at)}</span>
+                            </div>
+                            <p className="font-medium text-sm">{m.key}</p>
+                            <pre className="mt-1 text-xs whitespace-pre-wrap">
+                              {typeof m.value === 'string' ? m.value : JSON.stringify(m.value, null, 2)}
+                            </pre>
+                            {Array.isArray(m.tags) && m.tags.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-1">
+                                {m.tags.map((t: string, i: number) => (
+                                  <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-muted">{t}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
