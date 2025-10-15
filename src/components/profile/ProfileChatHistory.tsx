@@ -140,12 +140,9 @@ export function ProfileChatHistory() {
   }
 
   function handleOpenSession(sessionId: string) {
-    // Store session ID in localStorage and dispatch event to open chat
+    // Navigate to AI Management page with the session ID
     localStorage.setItem('rocker-load-session', sessionId);
-    // Dispatch event immediately to open chat with this session
-    window.dispatchEvent(new CustomEvent('rocker-open-session', { 
-      detail: { sessionId } 
-    }));
+    navigate('/ai-management');
   }
 
   function formatDate(dateString: string) {
