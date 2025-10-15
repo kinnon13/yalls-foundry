@@ -223,6 +223,7 @@ export class RealtimeVoice {
   }) => void;
   private lastTranscript: string = '';
   private instanceId: string;
+  private sessionId: string;
 
   constructor(
     onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void,
@@ -243,7 +244,8 @@ export class RealtimeVoice {
     }) => void
   ) {
     this.instanceId = Math.random().toString(36).substring(7);
-    console.log(`[Rocker Voice ${this.instanceId}] Creating new instance`);
+    this.sessionId = crypto.randomUUID();
+    console.log(`[Rocker Voice ${this.instanceId}] Creating new instance with session:`, this.sessionId);
     
     // If there's already a global instance, disconnect it first
     if (globalVoiceInstance && globalVoiceInstance !== this) {
@@ -458,6 +460,9 @@ export class RealtimeVoice {
         this.lastTranscript = transcript;
         console.log(`[Rocker Voice ${this.instanceId}] Transcript:`, transcript);
         
+        // Save user message to database
+        await this.saveMessage('user', message.transcript || '');
+        
         if (transcript.includes('stop')) {
           console.log(`[Rocker Voice ${this.instanceId}] Stop command detected`);
           this.stopPlayback();
@@ -469,6 +474,20 @@ export class RealtimeVoice {
           console.log(`[Rocker Voice ${this.instanceId}] 🔥 NAVIGATION PATTERN DETECTED:`, path);
           this.stopPlayback();
           this.onCommand?.({ type: 'navigate', path });
+        }
+      } else if (message.type === 'response.done') {
+        // Save assistant's complete response
+        if (message.response?.output && message.response.output.length > 0) {
+          const lastOutput = message.response.output[message.response.output.length - 1];
+          if (lastOutput.content && lastOutput.content.length > 0) {
+            const textContent = lastOutput.content
+              .filter((c: any) => c.type === 'text')
+              .map((c: any) => c.text)
+              .join(' ');
+            if (textContent) {
+              await this.saveMessage('assistant', textContent);
+            }
+          }
         }
       }
     };
@@ -507,6 +526,45 @@ export class RealtimeVoice {
     this.ws?.close();
     if (globalVoiceInstance === this) {
       globalVoiceInstance = null;
+    }
+  }
+
+  private async saveMessage(role: 'user' | 'assistant', content: string) {
+    if (!this.sessionId || !content.trim()) return;
+    
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Save message
+      await supabase.from('rocker_conversations').insert({
+        user_id: user.id,
+        session_id: this.sessionId,
+        role,
+        content,
+        metadata: { source: 'voice', timestamp: new Date().toISOString() }
+      });
+
+      // Create/update session metadata on first message
+      if (role === 'user') {
+        const { data: existingSession } = await supabase
+          .from('conversation_sessions')
+          .select('id')
+          .eq('session_id', this.sessionId)
+          .maybeSingle();
+
+        if (!existingSession) {
+          await supabase.from('conversation_sessions').insert({
+            user_id: user.id,
+            session_id: this.sessionId,
+            title: content.slice(0, 60) + (content.length > 60 ? '...' : ''),
+            summary: 'Voice conversation'
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`[Rocker Voice ${this.instanceId}] Failed to save message:`, error);
     }
   }
 

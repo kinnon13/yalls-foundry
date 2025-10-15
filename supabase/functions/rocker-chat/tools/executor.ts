@@ -40,6 +40,12 @@ export async function executeTool(
 
       // ========== NAVIGATION ==========
       case 'navigate': {
+        if (!args || !args.path) {
+          return {
+            success: false,
+            error: 'Navigation path is required'
+          };
+        }
         return {
           success: true,
           path: args.path,
