@@ -94,7 +94,7 @@ export default function MarketplaceIndex() {
                     <CardContent>
                       <div className="flex items-center justify-between">
                         <span className="text-2xl font-bold">
-                          {formatPrice(listing.price_cents)}
+                          {formatPrice(listing.base_price_cents)}
                         </span>
                         <Badge variant="secondary">
                           {listing.stock_quantity} in stock

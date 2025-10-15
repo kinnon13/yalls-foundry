@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SEOHelmet } from '@/lib/seo/helmet';
-import { formatPrice, calculateCartTotal } from '@/entities/marketplace';
+import { formatPrice, calculateCartTotal, getEffectivePrice } from '@/entities/marketplace';
 import { toast } from 'sonner';
 import { ArrowLeft, Trash2, ShoppingBag } from 'lucide-react';
 import { useSession } from '@/lib/auth/context';
@@ -148,10 +148,10 @@ export default function Cart() {
                                 to={`/marketplace/${item.listing.id}`}
                                 className="font-semibold hover:underline"
                               >
-                                {item.listing.title}
+                              {item.listing.title}
                               </Link>
                               <p className="text-sm text-muted-foreground">
-                                {formatPrice(item.listing.price_cents)} each
+                                {formatPrice(getEffectivePrice(item.listing))} each
                               </p>
                             </div>
                             <Button
@@ -182,7 +182,7 @@ export default function Cart() {
                               />
                             </div>
                             <p className="font-semibold">
-                              {formatPrice(item.listing.price_cents * item.quantity)}
+                              {formatPrice(getEffectivePrice(item.listing) * item.quantity)}
                             </p>
                           </div>
                         </div>

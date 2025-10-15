@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SEOHelmet } from '@/lib/seo/helmet';
-import { formatPrice, calculateCartTotal } from '@/entities/marketplace';
+import { formatPrice, calculateCartTotal, getEffectivePrice } from '@/entities/marketplace';
 import { toast } from 'sonner';
 import { ArrowLeft, CreditCard } from 'lucide-react';
 
@@ -176,7 +176,7 @@ export default function Checkout() {
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
                       <span>{item.listing.title} × {item.quantity}</span>
-                      <span>{formatPrice(item.listing.price_cents * item.quantity)}</span>
+                      <span>{formatPrice(getEffectivePrice(item.listing) * item.quantity)}</span>
                     </div>
                   ))}
                   <div className="pt-4 border-t">

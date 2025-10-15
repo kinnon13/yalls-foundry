@@ -117,7 +117,7 @@ export default function ListingDetail() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <p className="text-4xl font-bold">{formatPrice(listing.price_cents)}</p>
+                <p className="text-4xl font-bold">{formatPrice(listing.base_price_cents)}</p>
               </div>
 
               {listing.description && (
