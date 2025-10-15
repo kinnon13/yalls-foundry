@@ -16,6 +16,7 @@ import { executeDOMAction } from './dom-agent';
 import { GoogleDriveService } from './integrations/google-drive';
 import { Button } from '@/components/ui/button';
 import { Mic } from 'lucide-react';
+import { useRockerNotifications } from '@/hooks/useRockerNotifications';
 
 interface RockerContextValue {
   // Chat state
@@ -71,6 +72,17 @@ export function RockerProvider({ children }: { children: ReactNode }) {
   
   // UI state
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Get current user for notifications
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>();
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setCurrentUserId(data.user?.id);
+    });
+  }, []);
+  
+  // Listen for voice reminders
+  useRockerNotifications(currentUserId);
 
   // Handle navigation from voice or chat
   const handleNavigation = useCallback((path: string) => {

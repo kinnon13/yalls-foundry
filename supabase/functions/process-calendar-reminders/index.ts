@@ -52,23 +52,42 @@ serve(async (req) => {
           continue;
         }
 
-        // Send notification (using toast in real-time)
-        // In production, you'd send via email/push/SMS
+        // Check if this is a voice reminder (has tts_message in metadata)
+        const eventMetadata = event.metadata || {};
+        const ttsMessage = eventMetadata.tts_message || event.description || event.title;
+        
+        // Send notification payload
         const notificationPayload = {
           user_id: userId,
           type: 'calendar_reminder',
           title: `Reminder: ${event.title}`,
           message: event.description || `Your event "${event.title}" is coming up`,
+          tts_message: ttsMessage, // Include TTS message
           metadata: {
             event_id: event.id,
             event_title: event.title,
             starts_at: event.starts_at,
             reminder_id: reminder.id,
+            should_speak: !!eventMetadata.tts_message, // Flag if this should trigger TTS
           },
           created_at: new Date().toISOString(),
         };
 
         console.log('Sending notification:', notificationPayload);
+
+        // Insert notification into database for realtime broadcasting
+        const { error: notifError } = await supabase
+          .from('rocker_notifications')
+          .insert({
+            user_id: userId,
+            type: 'voice_reminder',
+            payload: notificationPayload,
+            created_at: new Date().toISOString(),
+          });
+
+        if (notifError) {
+          console.error('Failed to insert notification:', notifError);
+        }
 
         // Mark reminder as sent
         const { error: updateError } = await supabase
@@ -78,16 +97,7 @@ serve(async (req) => {
 
         if (updateError) throw updateError;
 
-        // Publish realtime notification
-        await supabase
-          .from('calendar_events')
-          .select('*')
-          .eq('id', event.id)
-          .single()
-          .then(() => {
-            // Trigger realtime event for UI
-            console.log('Realtime notification triggered for event:', event.id);
-          });
+        console.log('Reminder processed and notification broadcasted for event:', event.id);
 
         results.push({
           reminder_id: reminder.id,

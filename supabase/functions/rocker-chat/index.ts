@@ -225,6 +225,96 @@ async function executeTool(toolName: string, args: any, supabaseClient: any, use
         return { success: true, message: 'Event builder started', form: data };
       }
 
+      case 'create_calendar_event': {
+        console.log('[Tool: create_calendar_event] Creating calendar event:', args.title);
+        try {
+          // Get or create personal calendar
+          let calendarId = args.calendar_id;
+          
+          if (!calendarId) {
+            const { data: existingCal } = await supabaseClient
+              .from('calendars')
+              .select('id')
+              .eq('owner_profile_id', userId)
+              .eq('calendar_type', 'personal')
+              .single();
+            
+            if (existingCal) {
+              calendarId = existingCal.id;
+            } else {
+              const { data: newCal, error: calError } = await supabaseClient
+                .from('calendars')
+                .insert({
+                  owner_profile_id: userId,
+                  name: 'My Calendar',
+                  calendar_type: 'personal',
+                  color: '#3b82f6'
+                })
+                .select()
+                .single();
+              
+              if (calError) throw calError;
+              calendarId = newCal.id;
+            }
+          }
+
+          // Create the calendar event with TTS message in metadata
+          const metadata: any = { ...args.metadata };
+          if (args.tts_message || args.voice_message) {
+            metadata.tts_message = args.tts_message || args.voice_message || args.title;
+          }
+
+          const { data: event, error: eventError } = await supabaseClient
+            .from('calendar_events')
+            .insert({
+              calendar_id: calendarId,
+              title: args.title,
+              description: args.description || args.title,
+              starts_at: args.starts_at,
+              ends_at: args.ends_at || args.starts_at,
+              all_day: args.all_day || false,
+              created_by: userId,
+              metadata
+            })
+            .select()
+            .single();
+
+          if (eventError) throw eventError;
+
+          // Create reminder if specified
+          if (args.reminder_minutes !== undefined) {
+            const reminderTime = new Date(args.starts_at);
+            reminderTime.setMinutes(reminderTime.getMinutes() - args.reminder_minutes);
+
+            const { error: reminderError } = await supabaseClient
+              .from('calendar_event_reminders')
+              .insert({
+                event_id: event.id,
+                profile_id: userId,
+                trigger_at: reminderTime.toISOString()
+              });
+
+            if (reminderError) {
+              console.error('[Tool: create_calendar_event] Reminder error:', reminderError);
+            }
+          }
+
+          console.log('[Tool: create_calendar_event] Success:', event.id);
+          return {
+            success: true,
+            message: `Calendar event "${args.title}" created!`,
+            eventId: event.id,
+            action: 'calendar_event_created'
+          };
+        } catch (error) {
+          console.error('[Tool: create_calendar_event] Failed:', error);
+          return {
+            success: false,
+            message: 'Failed to create calendar event: ' + (error instanceof Error ? error.message : 'Unknown error')
+          };
+        }
+      }
+
       case 'navigate': {
         console.log('[Rocker] Navigate tool called:', args.path);
         return { 
@@ -794,6 +884,27 @@ serve(async (req) => {
                 type: "string", 
                 description: "Natural language query like 'that Kinnon barrel video' or 'Sarah's horse profile'" 
               }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "create_calendar_event",
+          description: "Create a calendar event or timed reminder. For 'notify me in X minutes/hours', set starts_at to current time + X and reminder_minutes: 0. For voice reminders, include tts_message.",
+          parameters: {
+            type: "object",
+            required: ["title", "starts_at"],
+            properties: {
+              title: { type: "string", description: "Event title or reminder message" },
+              starts_at: { type: "string", description: "ISO timestamp when event starts or notification triggers" },
+              ends_at: { type: "string", description: "ISO timestamp when event ends (optional)" },
+              description: { type: "string", description: "Event description (optional)" },
+              calendar_id: { type: "string", description: "Calendar ID (optional, uses personal calendar if not provided)" },
+              reminder_minutes: { type: "number", description: "Minutes before event to remind (0 = at event time)" },
+              tts_message: { type: "string", description: "Voice message to speak when reminder triggers (optional)" },
+              all_day: { type: "boolean", description: "Is this an all-day event?" }
             }
           }
         }
