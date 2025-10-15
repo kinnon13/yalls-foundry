@@ -69,7 +69,7 @@ export function usePlatformEvolution() {
     setLoading(true);
     try {
       // @ts-ignore - Type will be available after Supabase regenerates types
-      let query = supabase
+      let query = (supabase as any)
         .from('platform_suggestions')
         .select('*')
         .order('interest_score', { ascending: false })
@@ -140,7 +140,7 @@ export function usePlatformEvolution() {
     setLoading(true);
     try {
       // @ts-ignore - Type will be available after Supabase regenerates types
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('platform_suggestions')
         .update({ status: 'rejected' })
         .eq('id', suggestionId);
