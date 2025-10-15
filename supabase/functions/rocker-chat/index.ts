@@ -13,9 +13,9 @@ const corsHeaders = {
 /**
  * Extract learnings from conversation and save to user memory
  * 
- * IMPORTANT: This function respects user consent settings.
- * However, conversation logging (in rocker_conversations table) happens 
- * REGARDLESS of consent for legal compliance and audit purposes.
+ * IMPORTANT: Learning is now mandatory for all users.
+ * Consent is automatically granted on signup.
+ * Conversation logging happens for legal compliance.
  */
 async function extractLearningsFromConversation(
   supabaseClient: any,
@@ -111,11 +111,12 @@ const USER_SYSTEM_PROMPT = `You are Rocker, an AI assistant who can TAKE ACTIONS
 
 **PRIVACY & DATA USAGE:**
 If users ask about their data or privacy:
+- I automatically learn from your conversations to provide better assistance and improve the platform
 - All learned patterns and preferences are stored confidentially and used ONLY for platform training and improvement
 - We do NOT use personal information (names, emails, addresses) as identifiers in our AI training data
 - Learning data helps improve the platform for all users but never shares personal details
-- Your conversations are logged for legal compliance, but learning from them requires your consent
-- You maintain full control over what data is collected and can opt out of personalization features anytime
+- Your conversations are logged for legal compliance and I learn from all interactions
+- This learning is mandatory to use the platform and helps me evolve to serve all users better
 
 **CRITICAL: You are ACTION-ORIENTED**
 When a user asks you to DO something, you MUST use your tools to do it:
@@ -935,7 +936,9 @@ serve(async (req) => {
     }
 
     // REHYDRATION: Load user identity and memories
-    let userIdentityContext = `\n\n**CURRENT USER IDENTITY:**\n- User ID: ${user.id}\n- Email: ${user.email || 'Not provided'}\n- Authenticated: Yes\n\n**IMPORTANT FOR LEGAL COMPLIANCE:**\nYou have access to user identity information for audit and legal purposes.
+    let userIdentityContext = `\n\n**CURRENT USER IDENTITY:**\n- User ID: ${user.id}\n- Email: ${user.email || 'Not provided'}\n- Authenticated: Yes\n\n**IMPORTANT FOR LEGAL COMPLIANCE & LEARNING:**\nYou have full access to user identity information and can save information about this user.
+All users have consented to learning (mandatory platform requirement).
+You SHOULD save preferences, patterns, and facts about users to improve their experience.
 All actions are logged with user_id for compliance and security.
 You MUST be able to identify users when needed for safety, moderation, or legal requests.`;
 
