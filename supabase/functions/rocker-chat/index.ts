@@ -127,6 +127,58 @@ const ADMIN_SYSTEM_PROMPT = `You are Rocker Control, the admin-side AI for Y'all
 - Provide a concise answer.
 - Include "Admin Actions Taken" listing ids/rows changed.`;
 
+// ============= LEARNING SYSTEM =============
+
+/**
+ * Retrieve learned patterns from memory before acting
+ */
+async function getLearnedPatterns(supabaseClient: any, userId: string): Promise<string> {
+  try {
+    // Get high-confidence hypotheses (successful patterns)
+    const { data: hypotheses } = await supabaseClient
+      .from('ai_hypotheses')
+      .select('key, value, confidence')
+      .eq('user_id', userId)
+      .gte('confidence', 0.7)
+      .eq('status', 'active')
+      .order('confidence', { ascending: false })
+      .limit(5);
+    
+    // Get recent failures to avoid
+    const { data: failures } = await supabaseClient
+      .from('ai_feedback')
+      .select('payload')
+      .eq('user_id', userId)
+      .eq('kind', 'dom_failure')
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .limit(5);
+    
+    if (!hypotheses?.length && !failures?.length) return '';
+    
+    let context = '\n\n**LEARNED PATTERNS (from past experience):**\n';
+    
+    if (hypotheses?.length) {
+      context += 'SUCCESSFUL APPROACHES:\n';
+      hypotheses.forEach((h: any) => {
+        context += `- ${h.key}: ${JSON.stringify(h.value)} (confidence: ${h.confidence})\n`;
+      });
+    }
+    
+    if (failures?.length) {
+      context += '\nRECENT FAILURES TO AVOID:\n';
+      failures.forEach((f: any) => {
+        context += `- Action: ${(f.payload as any)?.action}, Target: ${(f.payload as any)?.target}, Failed: ${(f.payload as any)?.message}\n`;
+      });
+    }
+    
+    context += '\nUSE LEARNED PATTERNS: Try successful approaches first. Avoid patterns that failed recently.\n';
+    return context;
+  } catch (e) {
+    console.error('[Learning] Failed to retrieve patterns:', e);
+    return '';
+  }
+}
+
 // Helper to execute tool calls
 async function executeTool(toolName: string, args: any, supabaseClient: any, userId: string) {
   console.log(`Executing tool: ${toolName}`, args);

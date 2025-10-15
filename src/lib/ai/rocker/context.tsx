@@ -94,10 +94,19 @@ export function RockerProvider({ children }: { children: ReactNode }) {
       toast({ title: 'Navigating back' });
     } else {
       console.log('[Rocker Navigation] Navigating to:', path);
-      // Use navigate with replace: false to ensure full navigation
       navigate(path, { replace: false });
+      
+      // LEARN: Store successful navigation
+      if (currentUserId) {
+        supabase.from('ai_feedback').insert({
+          user_id: currentUserId,
+          kind: 'dom_success',
+          payload: { action: 'navigate', target: path, timestamp: new Date().toISOString() }
+        });
+      }
+      
       toast({ 
-        title: 'Navigation', 
+        title: 'Navigation',
         description: `Opening ${path}`,
       });
     }
@@ -132,22 +141,29 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     } 
     else if (cmd.type === 'click_element' && cmd.element_name) {
       console.log('[Rocker Context] Processing click command:', cmd.element_name);
-      const result = executeDOMAction({
+      executeDOMAction({
         type: 'click',
         targetName: cmd.element_name
-      });
-      toast({
-        title: result.success ? '✅ Clicked' : '❌ Click failed',
-        description: result.message,
-        variant: result.success ? 'default' : 'destructive',
+      }).then(result => {
+        toast({
+          title: result.success ? '✅ Clicked' : '❌ Click failed',
+          description: result.message,
+          variant: result.success ? 'default' : 'destructive',
+        });
       });
     }
     else if (cmd.type === 'fill_field' && cmd.field_name && cmd.value) {
       console.log('[Rocker Context] Processing fill command:', cmd.field_name);
-      const result = executeDOMAction({
+      executeDOMAction({
         type: 'fill',
         targetName: cmd.field_name,
         value: cmd.value
+      }).then(result => {
+        toast({
+          title: result.success ? '✍️ Filled field' : '❌ Fill failed',
+          description: result.message,
+          variant: result.success ? 'default' : 'destructive',
+        });
       });
       toast({
         title: result.success ? '✍️ Filled field' : '❌ Fill failed',
@@ -514,23 +530,31 @@ export function RockerProvider({ children }: { children: ReactNode }) {
           
           // Handle DOM actions
           else if (tc.name === 'click_element') {
-            const domResult = executeDOMAction({
+            executeDOMAction({
               type: 'click',
               targetName: args.element_name
-            });
-            console.log('[Rocker] Click result:', domResult);
-            toast({
-              title: domResult.success ? '✅ Clicked' : '❌ Click failed',
-              description: domResult.message,
-              variant: domResult.success ? 'default' : 'destructive',
+            }).then(domResult => {
+              console.log('[Rocker] Click result:', domResult);
+              toast({
+                title: domResult.success ? '✅ Clicked' : '❌ Click failed',
+                description: domResult.message,
+                variant: domResult.success ? 'default' : 'destructive',
+              });
             });
           }
           
           else if (tc.name === 'fill_field') {
-            const domResult = executeDOMAction({
+            executeDOMAction({
               type: 'fill',
               targetName: args.field_name,
               value: args.value
+            }).then(domResult => {
+              console.log('[Rocker] Fill result:', domResult);
+              toast({
+                title: domResult.success ? '✍️ Filled field' : '❌ Fill failed',
+                description: domResult.message,
+                variant: domResult.success ? 'default' : 'destructive',
+              });
             });
             console.log('[Rocker] Fill result:', domResult);
             toast({

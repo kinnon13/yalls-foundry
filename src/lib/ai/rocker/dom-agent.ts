@@ -1,26 +1,126 @@
 /**
- * Rocker DOM Agent
+ * Rocker DOM Agent with Learning
  * 
- * Enables Rocker to interact with page elements:
- * - Find and click buttons
- * - Fill form fields
- * - Submit forms
- * - Read page content
+ * Handles direct interaction with the page DOM and learns from successes/failures.
  */
+
+import { supabase } from '@/integrations/supabase/client';
+
+// ============= LEARNING INFRASTRUCTURE =============
+
+/**
+ * Store action result in ai_feedback for learning
+ */
+async function logActionResult(
+  action: string,
+  targetName: string,
+  success: boolean,
+  message: string,
+  userId?: string
+) {
+  if (!userId) return;
+  
+  try {
+    await supabase.from('ai_feedback').insert({
+      session_id: (window as any).__rockerSessionId || null,
+      user_id: userId,
+      kind: success ? 'dom_success' : 'dom_failure',
+      payload: {
+        action,
+        target: targetName,
+        message,
+        timestamp: new Date().toISOString(),
+        page: window.location.pathname,
+        available_elements: getAvailableElements().slice(0, 20)
+      }
+    });
+  } catch (e) {
+    console.warn('[Learning] Failed to log action result:', e);
+  }
+}
+
+/**
+ * Retrieve past failures for this action type to learn from
+ */
+async function getPastFailures(action: string, userId?: string): Promise<any[]> {
+  if (!userId) return [];
+  
+  try {
+    const { data } = await supabase
+      .from('ai_feedback')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('kind', 'dom_failure')
+      .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+      .order('created_at', { ascending: false })
+      .limit(10);
+    
+    return data?.filter(f => (f.payload as any)?.action === action) || [];
+  } catch (e) {
+    console.warn('[Learning] Failed to retrieve past failures:', e);
+    return [];
+  }
+}
+
+/**
+ * Store hypothesis when user corrects Rocker
+ */
+async function storeHypothesis(
+  key: string,
+  value: any,
+  evidence: any,
+  userId?: string
+) {
+  if (!userId) return;
+  
+  try {
+    const { data: existing } = await supabase
+      .from('ai_hypotheses')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('key', key)
+      .single();
+    
+    if (existing) {
+      const currentEvidence = Array.isArray(existing.evidence) ? existing.evidence : [];
+      await supabase
+        .from('ai_hypotheses')
+        .update({
+          confidence: Math.min((existing.confidence || 0.5) + 0.1, 1.0),
+          evidence: [...currentEvidence, evidence],
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id);
+    } else {
+      await supabase.from('ai_hypotheses').insert({
+        tenant_id: '00000000-0000-0000-0000-000000000000',
+        user_id: userId,
+        key,
+        value,
+        confidence: 0.7,
+        evidence: [evidence],
+        status: 'active'
+      });
+    }
+  } catch (e) {
+    console.warn('[Learning] Failed to store hypothesis:', e);
+  }
+}
+
+// ============= ELEMENT FINDING =============
 
 export interface DOMAction {
   type: 'click' | 'fill' | 'submit' | 'read' | 'scroll';
   selector?: string;
-  value?: string; // for scroll: 'top' | 'bottom' | 'up' | 'down' | pixel amount
-  targetName?: string; // e.g., "post button", "comment field"
+  value?: string;
+  targetName?: string;
 }
 
-/** Helper functions for fuzzy matching and labeling */
 function getElementLabel(el: HTMLElement): string {
   const text = el.textContent || '';
   const aria = el.getAttribute('aria-label') || '';
   const rocker = el.getAttribute('data-rocker') || '';
-  const placeholder = (el as HTMLElement).getAttribute?.('placeholder') || '';
+  const placeholder = (el as any).getAttribute?.('placeholder') || '';
   return [text, aria, rocker, placeholder].join(' ').toLowerCase().trim();
 }
 
@@ -57,7 +157,7 @@ function fuzzyFind(candidates: HTMLElement[], target: string): HTMLElement | nul
       for (const q of tTokens) {
         const d = levenshtein(tok, q);
         if (d < min) min = d;
-        if (d <= 1) return el; // fast path near-match
+        if (d <= 1) return el;
       }
     }
     if (!best || min < best.score) best = { el, score: min };
@@ -66,34 +166,25 @@ function fuzzyFind(candidates: HTMLElement[], target: string): HTMLElement | nul
   return null;
 }
 
-/**
- * Find element by various strategies
- */
 export function findElement(targetName: string): HTMLElement | null {
   const normalized = targetName.toLowerCase().trim();
   
-  // Try data-rocker attributes first (explicit markers)
   let el = document.querySelector(`[data-rocker="${normalized}"]`) as HTMLElement;
   if (el) return el;
   
-  // Try partial data-rocker match
   el = document.querySelector(`[data-rocker*="${normalized}"]`) as HTMLElement;
   if (el) return el;
   
-  // Try by aria-label
   el = document.querySelector(`[aria-label*="${normalized}" i]`) as HTMLElement;
   if (el) return el;
   
-  // Try by placeholder
   el = document.querySelector(`[placeholder*="${normalized}" i]`) as HTMLElement;
   if (el) return el;
   
-  // Try by button text content
   const buttons = Array.from(document.querySelectorAll('button'));
   el = buttons.find(btn => btn.textContent?.toLowerCase().includes(normalized)) as HTMLElement;
   if (el) return el;
 
-  // Try by link text content (prioritize links with buttons inside)
   const links = Array.from(document.querySelectorAll('a'));
   el = links.find(a => {
     const text = a.textContent?.toLowerCase() || '';
@@ -102,30 +193,24 @@ export function findElement(targetName: string): HTMLElement | null {
     return text.includes(normalized) || ariaLabel.includes(normalized) || dataRocker.includes(normalized);
   }) as HTMLElement;
   if (el) {
-    // If link contains a button, return the button for better interaction
     const innerButton = el.querySelector('button');
     if (innerButton) return innerButton;
     return el;
   }
   
-  // Try by role-based buttons and tabs
   const roleButtons = Array.from(document.querySelectorAll('[role="button"], [role="tab"]')) as HTMLElement[];
   el = roleButtons.find(node => node.textContent?.toLowerCase().includes(normalized) || node.getAttribute('aria-label')?.toLowerCase().includes(normalized)) as HTMLElement;
   if (el) return el;
   
-  // Try by input name/id
   el = document.querySelector(`input[name*="${normalized}" i], input[id*="${normalized}" i]`) as HTMLElement;
   if (el) return el;
   
-  // Try by textarea
   el = document.querySelector(`textarea[name*="${normalized}" i], textarea[placeholder*="${normalized}" i]`) as HTMLElement;
   if (el) return el;
   
-  // Try by generic elements with matching data-rocker (partial)
   el = document.querySelector(`[data-rocker*="${normalized}"]`) as HTMLElement;
   if (el) return el;
   
-  // Try label text -> associated control
   const labels = Array.from(document.querySelectorAll('label')) as HTMLLabelElement[];
   const matchedLabel = labels.find(l => (l.textContent || '').toLowerCase().includes(normalized));
   if (matchedLabel) {
@@ -156,12 +241,10 @@ export function findElement(targetName: string): HTMLElement | null {
     if (control) return control as HTMLElement;
   }
   
-  // Try Radix Select options by text
   const options = Array.from(document.querySelectorAll('[role="option"], [data-radix-select-item]')) as HTMLElement[];
   el = options.find(node => node.textContent?.toLowerCase().includes(normalized)) as HTMLElement;
   if (el) return el;
   
-  // Try by any clickable element with matching text
   const clickables = Array.from(document.querySelectorAll('[onclick], .cursor-pointer')) as HTMLElement[];
   el = clickables.find(elem => elem.textContent?.toLowerCase().includes(normalized)) as HTMLElement;
   if (el) return el;
@@ -169,21 +252,26 @@ export function findElement(targetName: string): HTMLElement | null {
   return null;
 }
 
-/**
- * Click an element (button, link, etc.)
- */
-export function clickElement(targetName: string): { success: boolean; message: string } {
-  console.log('[DOM Agent] Attempting to click:', targetName);
+// ============= ACTIONS WITH LEARNING =============
+
+export async function clickElement(targetName: string, userId?: string): Promise<{ success: boolean; message: string }> {
+  console.log('[DOM Agent] Click:', targetName);
+  
+  const pastFailures = await getPastFailures('click', userId);
+  if (pastFailures.length > 2) {
+    console.log(`[Learning] Found ${pastFailures.length} past click failures. Trying alternative approach.`);
+  }
   
   const el = findElement(targetName);
   if (!el) {
-    return { 
+    const result = { 
       success: false, 
-      message: `Could not find "${targetName}" to click. Available buttons: ${getAvailableButtons().join(', ')}` 
+      message: `Could not find "${targetName}". Available buttons: ${getAvailableButtons().join(', ')}` 
     };
+    await logActionResult('click', targetName, false, result.message, userId);
+    return result;
   }
   
-  // Scroll into view and simulate real user interaction
   el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   try {
     const evtInit: any = { bubbles: true, cancelable: true, composed: true, pointerId: 1, isPrimary: true, button: 0 };
@@ -192,7 +280,6 @@ export function clickElement(targetName: string): { success: boolean; message: s
     el.dispatchEvent(new PointerEvent('pointerup', evtInit));
     el.dispatchEvent(new MouseEvent('mouseup', evtInit));
     (el as HTMLElement).click();
-    // Also try keyboard for components listening to key events
     (el as HTMLElement).focus();
     el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     el.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
@@ -200,7 +287,6 @@ export function clickElement(targetName: string): { success: boolean; message: s
     console.warn('[DOM Agent] Click error:', e);
   }
 
-  // Fallbacks for known targets
   const t = targetName.toLowerCase();
   if ((t.includes('new calendar') || t.includes('create calendar')) && (window as any).__openCreateCalendar) {
     try { (window as any).__openCreateCalendar(); } catch {}
@@ -209,18 +295,21 @@ export function clickElement(targetName: string): { success: boolean; message: s
     try { (window as any).__openCreateCollection(); } catch {}
   }
   
-  return { success: true, message: `Clicked "${targetName}"` };
+  const result = { success: true, message: `Clicked "${targetName}"` };
+  await logActionResult('click', targetName, true, result.message, userId);
+  return result;
 }
 
-/**
- * Fill a form field
- */
-export function fillField(targetName: string, value: string): { success: boolean; message: string } {
-  console.log('[DOM Agent] Attempting to fill:', targetName, 'with:', value);
+export async function fillField(targetName: string, value: string, userId?: string): Promise<{ success: boolean; message: string }> {
+  console.log('[DOM Agent] Fill:', targetName, '=', value);
+  
+  const pastFailures = await getPastFailures('fill', userId);
+  if (pastFailures.length > 2) {
+    console.log(`[Learning] Found ${pastFailures.length} past fill failures. Trying alternative.`);
+  }
   
   const el = findElement(targetName) as HTMLInputElement | HTMLTextAreaElement | null;
   if (!el) {
-    // Fallback: if user asked for calendar name but dialog isn't open yet, open it and retry shortly
     const t = targetName.toLowerCase();
     if (t.includes('calendar') && t.includes('name') && (window as any).__openCreateCalendar) {
       try { (window as any).__openCreateCalendar(); } catch {}
@@ -228,52 +317,53 @@ export function fillField(targetName: string, value: string): { success: boolean
         const retry = findElement(targetName) as HTMLInputElement | HTMLTextAreaElement | null;
         if (retry) {
           retry.focus();
-          (retry as any).value = value;
+          retry.value = value;
           retry.dispatchEvent(new Event('input', { bubbles: true }));
           retry.dispatchEvent(new Event('change', { bubbles: true }));
         }
       }, 120);
       return { success: true, message: `Opened dialog; filling "${targetName}"` };
     }
-    return { 
+    const result = { 
       success: false, 
       message: `Could not find field "${targetName}". Available fields: ${getAvailableFields().join(', ')}` 
     };
+    await logActionResult('fill', targetName, false, result.message, userId);
+    return result;
   }
   
-  // Scroll into view
   el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  
-  // Focus and fill
   el.focus();
   el.value = value;
-  
-  // Trigger events for React/framework reactivity
   el.dispatchEvent(new Event('input', { bubbles: true }));
   el.dispatchEvent(new Event('change', { bubbles: true }));
   
-  return { success: true, message: `Filled "${targetName}" with "${value}"` };
+  const result = { success: true, message: `Filled "${targetName}"` };
+  await logActionResult('fill', targetName, true, result.message, userId);
+  
+  await storeHypothesis(
+    `fill_field_${targetName.toLowerCase().replace(/\s+/g, '_')}`,
+    { selector: el.getAttribute('data-rocker') || el.id || el.name },
+    { action: 'fill', target: targetName, timestamp: new Date().toISOString() },
+    userId
+  );
+  
+  return result;
 }
 
-/**
- * Submit a form
- */
 export function submitForm(formName?: string): { success: boolean; message: string } {
   console.log('[DOM Agent] Attempting to submit form:', formName || 'nearest form');
   
   let form: HTMLFormElement | null;
   
   if (formName) {
-    // Find form by name or nearby submit button
     const submitBtn = findElement(formName);
     form = submitBtn?.closest('form') || null;
   } else {
-    // Find first form on page
     form = document.querySelector('form');
   }
   
   if (!form) {
-    // Try to find a submit-like button by semantics or text
     const candidates = Array.from(document.querySelectorAll('button')) as HTMLButtonElement[];
     const submitBtn = candidates.find((btn) => {
       const text = (btn.textContent || '').toLowerCase();
@@ -293,28 +383,16 @@ export function submitForm(formName?: string): { success: boolean; message: stri
     return { success: false, message: 'Could not find form or submit button' };
   }
   
-  // Trigger submit
   form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-  
   return { success: true, message: 'Form submitted' };
 }
 
-/**
- * Read page content
- */
 export function readPageContent(): { success: boolean; content: string } {
   const main = document.querySelector('main') || document.body;
   const text = main.textContent?.trim().substring(0, 500) || '';
-  
-  return {
-    success: true,
-    content: text
-  };
+  return { success: true, content: text };
 }
 
-/**
- * Get available buttons on page
- */
 export function getAvailableButtons(): string[] {
   const buttons = Array.from(document.querySelectorAll('button'));
   return buttons
@@ -322,9 +400,6 @@ export function getAvailableButtons(): string[] {
     .filter(Boolean) as string[];
 }
 
-/**
- * Get available form fields
- */
 export function getAvailableFields(): string[] {
   const fields = Array.from(document.querySelectorAll('input, textarea'));
   return fields
@@ -338,18 +413,19 @@ export function getAvailableFields(): string[] {
     .filter(Boolean) as string[];
 }
 
-/**
- * Execute a DOM action
- */
+export function getAvailableElements(): string[] {
+  return [...getAvailableButtons(), ...getAvailableFields()];
+}
+
 export function executeDOMAction(action: DOMAction): { success: boolean; message: string; content?: string } {
   console.log('[DOM Agent] Executing action:', action);
   
   switch (action.type) {
     case 'click':
-      return clickElement(action.targetName || action.selector || '');
+      return clickElement(action.targetName || action.selector || '') as any;
       
     case 'fill':
-      return fillField(action.targetName || action.selector || '', action.value || '');
+      return fillField(action.targetName || action.selector || '', action.value || '') as any;
       
     case 'submit':
       return submitForm(action.targetName);
@@ -385,7 +461,6 @@ export function executeDOMAction(action: DOMAction): { success: boolean; message
   }
 }
 
-// Expose to window for Rocker to use
 if (typeof window !== 'undefined') {
   (window as any).__rockerDOMAgent = {
     click: clickElement,
