@@ -13,12 +13,16 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { 
   Search, FileText, Trash2, AlertTriangle, CheckCircle, 
-  FolderTree, Users, Globe, User, Loader2
+  FolderTree, Users, Globe, User, Loader2, Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSession } from '@/lib/auth/context';
+import { ingestKnowledge } from '@/lib/ai/rocker/kb';
 
 export default function KnowledgeBrowserPanel() {
   const { session } = useSession();
@@ -29,6 +33,10 @@ export default function KnowledgeBrowserPanel() {
   const [items, setItems] = useState<any[]>([]);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [categories, setCategories] = useState<string[]>([]);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [newContent, setNewContent] = useState('');
+  const [newUri, setNewUri] = useState('');
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     loadCategories();
@@ -57,7 +65,10 @@ export default function KnowledgeBrowserPanel() {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (scope !== 'all') {
+      if (scope === 'user') {
+        // Filter by current user's tenant_id
+        query = query.eq('scope', 'user').eq('tenant_id', session?.userId);
+      } else if (scope !== 'all') {
         query = query.eq('scope', scope);
       }
 
@@ -78,6 +89,28 @@ export default function KnowledgeBrowserPanel() {
       toast.error('Failed to search knowledge base');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const addKnowledge = async () => {
+    if (!newContent.trim() || !newUri.trim()) {
+      toast.error('Content and URI are required');
+      return;
+    }
+
+    setAdding(true);
+    try {
+      await ingestKnowledge(newContent, newUri, session?.userId);
+      toast.success('Knowledge added successfully');
+      setAddDialogOpen(false);
+      setNewContent('');
+      setNewUri('');
+      searchKnowledge();
+    } catch (error) {
+      console.error('[KB Browser] Add error:', error);
+      toast.error('Failed to add knowledge');
+    } finally {
+      setAdding(false);
     }
   };
 
@@ -129,13 +162,21 @@ export default function KnowledgeBrowserPanel() {
       {/* Search and Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FolderTree className="h-5 w-5" />
-            Knowledge Browser
-          </CardTitle>
-          <CardDescription>
-            Search, browse, and moderate all knowledge base content
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <FolderTree className="h-5 w-5" />
+                Knowledge Browser
+              </CardTitle>
+              <CardDescription>
+                Search, browse, and moderate all knowledge base content
+              </CardDescription>
+            </div>
+            <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Knowledge
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -252,9 +293,21 @@ export default function KnowledgeBrowserPanel() {
                   </button>
                 ))}
                 {items.length === 0 && !loading && (
-                  <p className="text-center text-muted-foreground py-8">
-                    No knowledge items found
-                  </p>
+                  <div className="text-center py-8 space-y-2">
+                    <p className="text-muted-foreground">
+                      {scope === 'user' 
+                        ? "No knowledge items found under your user scope. Click 'Add Knowledge' to teach Rocker about your preferences."
+                        : scope === 'site'
+                        ? "No site-wide knowledge items found."
+                        : "No knowledge items found. Try adjusting your filters or search query."}
+                    </p>
+                    {scope === 'user' && (
+                      <Button onClick={() => setAddDialogOpen(true)} variant="outline" size="sm" className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        Add Your First Knowledge Item
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
             </ScrollArea>
@@ -385,6 +438,69 @@ export default function KnowledgeBrowserPanel() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Add Knowledge Dialog */}
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Knowledge</DialogTitle>
+            <DialogDescription>
+              Add new knowledge for Rocker. Use YAML front-matter for metadata, followed by markdown content.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="uri">URI (unique identifier)</Label>
+              <Input
+                id="uri"
+                placeholder="e.g., user/preferences/my-settings"
+                value={newUri}
+                onChange={(e) => setNewUri(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Use format: scope/category/subcategory/title (e.g., user/preferences/notifications)
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="content">Content (YAML + Markdown)</Label>
+              <Textarea
+                id="content"
+                placeholder={`---
+scope: user
+category: preferences
+subcategory: notifications
+title: My Notification Settings
+tags: [user-preference, notifications]
+summary: My preferred notification settings
+---
+
+# My Notification Settings
+
+I prefer to receive notifications via email, not SMS.
+I want daily digest emails at 8am.`}
+                value={newContent}
+                onChange={(e) => setNewContent(e.target.value)}
+                className="min-h-[300px] font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Start with YAML front-matter (between ---), then add markdown content
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={addKnowledge} disabled={adding}>
+              {adding ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+              Add Knowledge
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
