@@ -5,8 +5,8 @@
  * Single instance persists across all pages.
  */
 
-import { useRef, useEffect } from 'react';
-import { MessageCircle, Send, X, Loader2, Trash2, Mic, MicOff, Paperclip, Link as LinkIcon, Minus } from 'lucide-react';
+import { useRef, useEffect, useState } from 'react';
+import { MessageCircle, Send, X, Loader2, Trash2, Mic, MicOff, Paperclip, Link as LinkIcon, Minus, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,9 +14,9 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { RockerQuickActions } from './RockerQuickActions';
 import { GoogleDriveButton } from './GoogleDriveButton';
 import { RockerMessageActions } from './RockerMessageActions';
+import { ConversationHistory } from './ConversationHistory';
 import { cn } from '@/lib/utils';
 import { useRockerGlobal } from '@/lib/ai/rocker/context';
-import { useState } from 'react';
 
 export function RockerChatUI() {
   const {
@@ -37,6 +37,8 @@ export function RockerChatUI() {
 
   const [inputValue, setInputValue] = useState('');
   const [isMinimized, setIsMinimized] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string>();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -99,6 +101,18 @@ export function RockerChatUI() {
     textareaRef.current?.focus();
   };
 
+  const handleLoadSession = async (sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    setShowHistory(false);
+    // Session will be loaded automatically on next message via backend
+  };
+
+  const handleNewChat = () => {
+    setCurrentSessionId(undefined);
+    clearMessages();
+    setShowHistory(false);
+  };
+
   if (!isOpen || isMinimized) {
     return (
       <Button
@@ -120,9 +134,22 @@ export function RockerChatUI() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col w-96 h-[600px] bg-background border border-border rounded-lg shadow-2xl">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+    <div className="fixed bottom-6 right-6 z-50 flex w-[800px] h-[600px] bg-background border border-border rounded-lg shadow-2xl">
+      {/* Conversation History Sidebar */}
+      {showHistory && (
+        <div className="w-64 flex-shrink-0">
+          <ConversationHistory
+            onLoadSession={handleLoadSession}
+            onNewChat={handleNewChat}
+            currentSessionId={currentSessionId}
+          />
+        </div>
+      )}
+      
+      {/* Main Chat */}
+      <div className="flex flex-col flex-1">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center gap-3">
           <img 
             src={new URL('@/assets/rocker-cowboy-avatar.jpeg', import.meta.url).href} 
@@ -145,6 +172,14 @@ export function RockerChatUI() {
           )}
         </div>
         <div className="flex items-center gap-1">
+          <Button
+            variant={showHistory ? "default" : "ghost"}
+            size="icon"
+            onClick={() => setShowHistory(!showHistory)}
+            title="Conversation history"
+          >
+            <History className="h-4 w-4" />
+          </Button>
           <Button
             variant={isAlwaysListening ? "default" : "ghost"}
             size="icon"
@@ -398,6 +433,7 @@ export function RockerChatUI() {
           </p>
         </div>
       )}
+      </div>
     </div>
   );
 }

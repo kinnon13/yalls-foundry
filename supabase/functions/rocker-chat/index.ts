@@ -88,19 +88,38 @@ serve(async (req) => {
     // Build system prompt with user context
     const systemPrompt = USER_SYSTEM_PROMPT + userContext;
 
-    // Load recent conversation history (last 10 messages)
-    const { data: recentConversations } = await supabaseClient
-      .from('rocker_conversations')
-      .select('role, content')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(10);
+    // Load conversation history - if sessionId provided, load that full session, otherwise load recent
+    const { sessionId: requestedSessionId } = await req.json().then(body => body);
+    
+    let conversationHistory: any[] = [];
+    
+    if (requestedSessionId) {
+      // Load specific session (all messages)
+      const { data: sessionMessages } = await supabaseClient
+        .from('rocker_conversations')
+        .select('role, content, created_at')
+        .eq('user_id', user.id)
+        .eq('session_id', requestedSessionId)
+        .order('created_at', { ascending: true });
+      
+      conversationHistory = (sessionMessages || []).map((msg: any) => ({
+        role: msg.role,
+        content: msg.content
+      }));
+    } else {
+      // Load recent messages across all sessions (last 20 for context)
+      const { data: recentConversations } = await supabaseClient
+        .from('rocker_conversations')
+        .select('role, content')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-    // Reverse to chronological order
-    const conversationHistory = (recentConversations || []).reverse().map((msg: any) => ({
-      role: msg.role,
-      content: msg.content
-    }));
+      conversationHistory = (recentConversations || []).reverse().map((msg: any) => ({
+        role: msg.role,
+        content: msg.content
+      }));
+    }
 
     // Save current user message to conversation history
     const sessionId = crypto.randomUUID();
