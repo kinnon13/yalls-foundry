@@ -38,6 +38,13 @@ export function RockerChat() {
     }
   }, [isOpen]);
 
+  // Auto-enable voice mode when chat opens
+  useEffect(() => {
+    if (isOpen && !isVoiceMode && !isAlwaysListening) {
+      toggleVoiceMode();
+    }
+  }, [isOpen]);
+
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
     

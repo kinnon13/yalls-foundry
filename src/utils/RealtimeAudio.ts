@@ -123,6 +123,7 @@ class AudioQueue {
   private queue: Uint8Array[] = [];
   private isPlaying = false;
   private audioContext: AudioContext;
+  private currentSource: AudioBufferSourceNode | null = null;
 
   constructor(audioContext: AudioContext) {
     this.audioContext = audioContext;
@@ -135,9 +136,23 @@ class AudioQueue {
     }
   }
 
+  stopAll() {
+    this.queue = [];
+    if (this.currentSource) {
+      try {
+        this.currentSource.stop();
+      } catch (e) {
+        // Source may already be stopped
+      }
+      this.currentSource = null;
+    }
+    this.isPlaying = false;
+  }
+
   private async playNext() {
     if (this.queue.length === 0) {
       this.isPlaying = false;
+      this.currentSource = null;
       return;
     }
 
@@ -153,11 +168,16 @@ class AudioQueue {
       const source = this.audioContext.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(this.audioContext.destination);
+      this.currentSource = source;
       
-      source.onended = () => this.playNext();
+      source.onended = () => {
+        this.currentSource = null;
+        this.playNext();
+      };
       source.start(0);
     } catch (error) {
       console.error('Error playing audio:', error);
+      this.currentSource = null;
       this.playNext();
     }
   }
@@ -178,6 +198,7 @@ export class RealtimeVoice {
   private recorder: AudioRecorder | null = null;
   private onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void;
   private onTranscript?: (text: string, isFinal: boolean) => void;
+  private lastTranscript: string = '';
 
   constructor(
     onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected') => void,
@@ -185,6 +206,18 @@ export class RealtimeVoice {
   ) {
     this.onStatusChange = onStatusChange;
     this.onTranscript = onTranscript;
+  }
+
+  stopPlayback() {
+    if (audioQueueInstance) {
+      audioQueueInstance.stopAll();
+    }
+    // Send cancel response to API
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({
+        type: 'response.cancel'
+      }));
+    }
   }
 
   async connect(ephemeralToken: string) {
@@ -243,6 +276,14 @@ export class RealtimeVoice {
         console.log('User started speaking');
       } else if (message.type === 'input_audio_buffer.speech_stopped') {
         console.log('User stopped speaking');
+      } else if (message.type === 'conversation.item.input_audio_transcription.completed') {
+        // Check if user said "stop"
+        const transcript = message.transcript?.toLowerCase() || '';
+        this.lastTranscript = transcript;
+        if (transcript.includes('stop')) {
+          console.log('Stop command detected');
+          this.stopPlayback();
+        }
       }
     };
 
