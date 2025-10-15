@@ -1,12 +1,11 @@
 // deno run -A scripts/fix-edge-functions.ts
 import { expandGlob } from "https://deno.land/std@0.210.0/fs/expand_glob.ts";
 
-const EDGE_GLOB = "supabase/functions/*/index.ts";
+const EDGE_GLOB = "supabase/functions/**/index.ts";
 const SHARED_IMPORTS = [
-  `import { serve } from "https://deno.land/std@0.168.0/http/server.ts";`,
-  `import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";`,
   `import { withRateLimit, getTenantFromJWT, RateLimits } from "../_shared/rate-limit-wrapper.ts";`,
   `import { createLogger } from "../_shared/logger.ts";`,
+  `import { serve } from "https://deno.land/std@0.168.0/http/server.ts";`,
 ];
 
 const TIERS: Record<string, string> = {
@@ -87,8 +86,8 @@ function endpointNameFromPath(path: string) {
 }
 
 function insertLimiterAndLogger(src: string, endpoint: string, tier: string): string {
-  // Ensure serve(async (req) => { … }) exists
-  const serveStart = /serve\(\s*async\s*\(\s*req\s*\)\s*=>\s*\{/;
+  // Ensure serve(async (req) => { … }) or Deno.serve(async (req) => { … }) exists
+  const serveStart = /(?:^|\s)(?:serve|Deno\.serve)\(\s*async\s*\(\s*req\s*\)\s*=>\s*\{/m;
   if (!serveStart.test(src)) return src;
 
   // Ensure CORS preflight block then limiter immediately after it
@@ -120,24 +119,28 @@ function insertLimiterAndLogger(src: string, endpoint: string, tier: string): st
 }
 
 function stripHardcodedTenant(src: string): string {
-  // kill the zero UUID in handlers, but keep constants like GLOBAL_TENANT if they exist
-  const ZERO = /['"]00000000-0000-0000-0000-000000000000['"]/g;
-  if (ZERO.test(src)) {
-    // common pattern: replace with runtime tenant fallback
-    src = src.replace(
-      ZERO,
-      `(getTenantFromJWT(req) ?? 'GLOBAL')`,
-    );
+  // skip the line that defines GLOBAL_TENANT constant
+  const lines = src.split("\n");
+  const ZERO = /["']00000000-0000-0000-0000-000000000000["']/g;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes("const GLOBAL_TENANT")) continue;
+    // only replace when used as a value (tenant_id / tenantId / p_tenant)
+    if (/(tenant_id|tenantId|p_tenant)\s*[:=]\s*["']00000000-0000-0000-0000-000000000000["']/.test(lines[i])) {
+      lines[i] = lines[i].replace(
+        ZERO,
+        "(getTenantFromJWT(req) ?? 'GLOBAL')"
+      );
+    }
   }
-  return src;
+  return lines.join("\n");
 }
 
 function replaceConsoleWithStructured(src: string): string {
-  // only inside functions dir, not _shared logger
-  src = src.replace(/console\.log\(/g, "log.info(");
-  src = src.replace(/console\.warn\(/g, "log.info(");
-  src = src.replace(/console\.error\(/g, "log.error(");
-  return src;
+  // Replace inside handlers; log.info/error will be available after createLogger injection
+  return src
+    .replace(/console\.error\(/g, "log.error(")
+    .replace(/console\.warn\(/g, "log.info(")
+    .replace(/console\.log\(/g, "log.info(");
 }
 
 let changed = 0;
