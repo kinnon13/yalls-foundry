@@ -120,13 +120,13 @@ export function GlobalHeader() {
           {session ? (
             <>
               <Link to="/profile">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" data-rocker="profile profile page open profile profile nav" aria-label="Open Profile">
                   <User className="h-4 w-4 mr-2" />
                   Profile
                 </Button>
               </Link>
               <Link to="/login">
-                <Button variant="outline" size="sm">Sign Out</Button>
+                <Button variant="outline" size="sm" data-rocker="sign out logout" aria-label="Sign Out">Sign Out</Button>
               </Link>
             </>
           ) : (

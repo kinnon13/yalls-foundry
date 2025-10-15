@@ -37,6 +37,11 @@ export function findElement(targetName: string): HTMLElement | null {
   const buttons = Array.from(document.querySelectorAll('button'));
   el = buttons.find(btn => btn.textContent?.toLowerCase().includes(normalized)) as HTMLElement;
   if (el) return el;
+
+  // Try by link text content
+  const links = Array.from(document.querySelectorAll('a'));
+  el = links.find(a => a.textContent?.toLowerCase().includes(normalized) || a.getAttribute('aria-label')?.toLowerCase().includes(normalized)) as HTMLElement;
+  if (el) return el;
   
   // Try by role-based buttons and tabs
   const roleButtons = Array.from(document.querySelectorAll('[role="button"], [role="tab"]')) as HTMLElement[];
