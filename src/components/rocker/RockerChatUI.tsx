@@ -102,10 +102,10 @@ export function RockerChatUI() {
 
   // Focus textarea when opened
   useEffect(() => {
-    if (isOpen && textareaRef.current && !isVoiceMode) {
+    if (isOpen && textareaRef.current) {
       textareaRef.current.focus();
     }
-  }, [isOpen, isVoiceMode]);
+  }, [isOpen]);
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -261,33 +261,7 @@ export function RockerChatUI() {
 
       {/* Messages */}
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-        {isVoiceMode ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className={cn(
-              "mb-4 transition-all",
-              voiceStatus === 'connected' && "scale-110 animate-pulse"
-            )}>
-              <img 
-                src={new URL('@/assets/rocker-cowboy-avatar.jpeg', import.meta.url).href}
-                alt="Rocker listening"
-                className="h-24 w-24 rounded-full object-cover"
-              />
-            </div>
-            <p className="text-sm font-semibold mb-2">
-              {voiceStatus === 'connected' ? 'Listening...' : 'Connecting...'}
-            </p>
-            <p className="text-xs text-muted-foreground mb-4">
-              {isAlwaysListening 
-                ? 'Say "Hey Rocker" to get my attention' 
-                : 'Speak naturally to Rocker'}
-            </p>
-            {voiceTranscript && (
-              <div className="bg-muted rounded-lg p-3 max-w-[80%]">
-                <p className="text-sm text-muted-foreground italic">"{voiceTranscript}"</p>
-              </div>
-            )}
-          </div>
-        ) : messages.length === 0 ? (
+        {messages.length === 0 && !isVoiceMode ? (
           <div className="flex flex-col h-full">
             <div className="flex flex-col items-center justify-center flex-1 text-center text-muted-foreground">
               <img 
@@ -302,6 +276,35 @@ export function RockerChatUI() {
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Voice Mode Status (shown at top when active) */}
+            {isVoiceMode && (
+              <div className="flex flex-col items-center p-4 bg-muted/50 rounded-lg border border-border">
+                <div className={cn(
+                  "mb-2 transition-all",
+                  voiceStatus === 'connected' && "scale-110 animate-pulse"
+                )}>
+                  <img 
+                    src={new URL('@/assets/rocker-cowboy-avatar.jpeg', import.meta.url).href}
+                    alt="Rocker listening"
+                    className="h-16 w-16 rounded-full object-cover"
+                  />
+                </div>
+                <p className="text-xs font-semibold">
+                  {voiceStatus === 'connected' ? '🎤 Listening...' : 'Connecting...'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {isAlwaysListening 
+                    ? 'Say "Hey Rocker" or type below' 
+                    : 'Speak or type your message'}
+                </p>
+                {voiceTranscript && (
+                  <div className="mt-2 bg-background rounded-lg p-2 w-full">
+                    <p className="text-xs text-muted-foreground italic">"{voiceTranscript}"</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
             {messages.map((message, index) => (
               <div
                 key={index}
@@ -386,9 +389,8 @@ export function RockerChatUI() {
         </div>
       )}
 
-      {/* Input */}
-      {!isVoiceMode && (
-        <div className="p-4 border-t border-border">
+      {/* Input - Always shown */}
+      <div className="p-4 border-t border-border">
           <div className="flex gap-2 items-end">
             <div className="flex-1 space-y-2">
               <div className="flex gap-2 flex-wrap">
@@ -455,10 +457,11 @@ export function RockerChatUI() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Press Enter to send, Shift+Enter for new line
+            {isVoiceMode 
+              ? 'Voice mode active - you can also type or upload files'
+              : 'Press Enter to send, Shift+Enter for new line'}
           </p>
         </div>
-      )}
       </div>
     </div>
   );
