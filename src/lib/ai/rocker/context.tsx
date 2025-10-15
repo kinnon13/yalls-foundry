@@ -271,6 +271,40 @@ export function RockerProvider({ children }: { children: ReactNode }) {
       setIsVoiceMode(false);
     } else {
       try {
+        // Check if mic permission is already granted
+        console.log('[Rocker] Checking microphone permission for voice mode');
+        let permissionGranted = false;
+        
+        try {
+          const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          permissionGranted = permissionStatus.state === 'granted';
+          console.log('[Rocker] Permission status:', permissionStatus.state);
+        } catch (e) {
+          console.log('[Rocker] Permissions API not supported');
+        }
+        
+        // Only request permission if not already granted
+        if (!permissionGranted) {
+          console.log('[Rocker] Requesting microphone permission for voice mode');
+          try {
+            const testStream = await navigator.mediaDevices.getUserMedia({
+              audio: { sampleRate: 24000, channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+            });
+            for (const t of testStream.getTracks()) t.stop();
+            console.log('[Rocker] Microphone permission granted for voice mode');
+          } catch (permErr) {
+            console.error('[Rocker] Microphone permission denied:', permErr);
+            toast({
+              title: 'Microphone blocked',
+              description: 'Please allow microphone access in your browser',
+              variant: 'destructive',
+            });
+            return;
+          }
+        } else {
+          console.log('[Rocker] Microphone already authorized for voice mode');
+        }
+        
         const voice = await createVoiceConnection(isAlwaysListening);
         voiceRef.current = voice;
         setIsVoiceMode(true);
@@ -322,26 +356,42 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     if (newAlwaysListening) {
       initializingRef.current = true;
       try {
-        // Request mic permission up-front in the same user gesture
-        console.log('[Rocker] Requesting microphone permission preflight');
+        // Check if mic permission is already granted
+        console.log('[Rocker] Checking microphone permission status');
+        let permissionGranted = false;
+        
         try {
-          const testStream = await navigator.mediaDevices.getUserMedia({
-            audio: { sampleRate: 24000, channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-          });
-          // Immediately stop the test stream; this is just to unlock mic access
-          for (const t of testStream.getTracks()) t.stop();
-          console.log('[Rocker] Microphone permission granted');
-        } catch (permErr) {
-          console.error('[Rocker] Microphone permission denied or failed:', permErr);
-          toast({
-            title: 'Microphone blocked',
-            description: 'Please allow microphone access in your browser and try again.',
-            variant: 'destructive',
-          });
-          setVoiceStatus('disconnected');
-          setIsVoiceMode(false);
-          setIsAlwaysListening(false);
-          return;
+          const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          permissionGranted = permissionStatus.state === 'granted';
+          console.log('[Rocker] Permission status:', permissionStatus.state);
+        } catch (e) {
+          console.log('[Rocker] Permissions API not supported, will request directly');
+        }
+        
+        // Only request permission if not already granted
+        if (!permissionGranted) {
+          console.log('[Rocker] Requesting microphone permission');
+          try {
+            const testStream = await navigator.mediaDevices.getUserMedia({
+              audio: { sampleRate: 24000, channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+            });
+            // Immediately stop the test stream; this is just to unlock mic access
+            for (const t of testStream.getTracks()) t.stop();
+            console.log('[Rocker] Microphone permission granted');
+          } catch (permErr) {
+            console.error('[Rocker] Microphone permission denied or failed:', permErr);
+            toast({
+              title: 'Microphone blocked',
+              description: 'Please allow microphone access in your browser and try again.',
+              variant: 'destructive',
+            });
+            setVoiceStatus('disconnected');
+            setIsVoiceMode(false);
+            setIsAlwaysListening(false);
+            return;
+          }
+        } else {
+          console.log('[Rocker] Microphone already authorized, skipping permission request');
         }
 
         console.log('[Rocker] Creating new voice connection in always listening mode');
