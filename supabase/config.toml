@@ -29,3 +29,12 @@ verify_jwt = false
 
 [functions.generate-event-form]
 verify_jwt = true
+
+[functions.rocker-memory]
+verify_jwt = true
+
+[functions.rocker-admin]
+verify_jwt = true
+
+[functions.rocker-chat]
+verify_jwt = true

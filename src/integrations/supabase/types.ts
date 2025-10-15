@@ -38,6 +38,102 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_global_knowledge: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          created_by: string | null
+          embedding: string | null
+          expires_at: string | null
+          id: string
+          key: string
+          source: string
+          tags: string[] | null
+          tenant_id: string
+          type: Database["public"]["Enums"]["memory_type"]
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          embedding?: string | null
+          expires_at?: string | null
+          id?: string
+          key: string
+          source?: string
+          tags?: string[] | null
+          tenant_id: string
+          type: Database["public"]["Enums"]["memory_type"]
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          embedding?: string | null
+          expires_at?: string | null
+          id?: string
+          key?: string
+          source?: string
+          tags?: string[] | null
+          tenant_id?: string
+          type?: Database["public"]["Enums"]["memory_type"]
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      ai_user_memory: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          embedding: string | null
+          expires_at: string | null
+          id: string
+          key: string
+          source: string
+          tags: string[] | null
+          tenant_id: string
+          type: Database["public"]["Enums"]["memory_type"]
+          updated_at: string
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          embedding?: string | null
+          expires_at?: string | null
+          id?: string
+          key: string
+          source?: string
+          tags?: string[] | null
+          tenant_id: string
+          type: Database["public"]["Enums"]["memory_type"]
+          updated_at?: string
+          user_id: string
+          value: Json
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          embedding?: string | null
+          expires_at?: string | null
+          id?: string
+          key?: string
+          source?: string
+          tags?: string[] | null
+          tenant_id?: string
+          type?: Database["public"]["Enums"]["memory_type"]
+          updated_at?: string
+          user_id?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       business_team: {
         Row: {
           business_id: string
@@ -788,6 +884,10 @@ export type Database = {
       claim_entity: {
         Args: { entity_id: string }
         Returns: Json
+      }
+      cleanup_expired_memories: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       delete_account_prepare: {
         Args: Record<PropertyKey, never>
@@ -2530,6 +2630,7 @@ export type Database = {
         | "rider"
         | "stable"
         | "event"
+      memory_type: "preference" | "fact" | "goal" | "note" | "policy" | "schema"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -2684,6 +2785,7 @@ export const Constants = {
         "stable",
         "event",
       ],
+      memory_type: ["preference", "fact", "goal", "note", "policy", "schema"],
     },
   },
 } as const

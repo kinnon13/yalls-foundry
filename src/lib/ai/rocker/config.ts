@@ -15,6 +15,7 @@ export interface RockerPersona {
   personality: string[];
   capabilities: string[];
   guidelines: string[];
+  mode?: 'user' | 'admin';
 }
 
 /**
@@ -36,6 +37,9 @@ const DEFAULT_PERSONA: RockerPersona = {
     'Community insights',
     'Search assistance',
     'Business support',
+    'Long-term memory of your preferences',
+    'Semantic search across your data',
+    'Proactive suggestions based on your history',
   ],
   
   guidelines: [
