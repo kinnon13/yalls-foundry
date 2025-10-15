@@ -23,7 +23,7 @@ interface RockerContextValue {
   messages: RockerMessage[];
   isLoading: boolean;
   error: string | null;
-  sendMessage: (content: string) => Promise<void>;
+  sendMessage: (content: string, sessionId?: string) => Promise<{ sessionId?: string }>;
   clearMessages: () => void;
   
   // Voice state
@@ -446,8 +446,8 @@ export function RockerProvider({ children }: { children: ReactNode }) {
   }, [isAlwaysListening, createVoiceConnection, toast]);
 
   // Send message to Rocker
-  const sendMessage = useCallback(async (content: string) => {
-    if (!content.trim()) return;
+  const sendMessage = useCallback(async (content: string, sessionId?: string) => {
+    if (!content.trim()) return {};
 
     const userMessage: RockerMessage = {
       role: 'user',
@@ -481,6 +481,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
               role: m.role,
               content: m.content
             })),
+            sessionId: sessionId,
             mode: 'user'
           }),
           signal: abortControllerRef.current.signal
@@ -993,6 +994,9 @@ export function RockerProvider({ children }: { children: ReactNode }) {
         throw new Error('No response from assistant');
       }
 
+      // Return session ID if provided
+      return { sessionId: result.sessionId };
+
     } catch (err: any) {
       if (err.name === 'AbortError') {
         setError('Request cancelled');
@@ -1001,6 +1005,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
         console.error('Rocker error:', err);
       }
       setMessages(prev => prev.filter(m => m.role !== 'assistant' || m.content.length > 0));
+      return {};
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;

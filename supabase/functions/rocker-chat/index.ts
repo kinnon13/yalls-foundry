@@ -120,8 +120,10 @@ serve(async (req) => {
       }));
     }
 
-    // Save current user message to conversation history
-    const sessionId = crypto.randomUUID();
+    // Use provided session ID or create new one
+    const sessionId = requestedSessionId || crypto.randomUUID();
+    const isNewSession = !requestedSessionId;
+
     if (messages.length > 0) {
       const lastUserMessage = messages[messages.length - 1];
       const { error: insertError } = await supabaseClient
@@ -136,6 +138,22 @@ serve(async (req) => {
       
       if (insertError) {
         console.error('[Conversation] Failed to save user message:', insertError);
+      }
+
+      // For new sessions, create metadata entry
+      if (isNewSession) {
+        const { error: metaError } = await supabaseClient
+          .from('conversation_sessions')
+          .insert({
+            user_id: user.id,
+            session_id: sessionId,
+            title: lastUserMessage.content.slice(0, 60) + (lastUserMessage.content.length > 60 ? '...' : ''),
+            summary: null
+          });
+        
+        if (metaError) {
+          console.error('[Conversation] Failed to create session metadata:', metaError);
+        }
       }
     }
 
@@ -237,10 +255,42 @@ serve(async (req) => {
           );
         }, 0);
 
+        // Generate summary for the conversation (after a few messages)
+        if (isNewSession && conversationMessages.length >= 4) {
+          try {
+            const summaryPrompt = `Summarize this conversation in one brief sentence (max 100 chars): ${conversationMessages.slice(-4).map(m => `${m.role}: ${m.content}`).join('\n')}`;
+            const summaryResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [{ role: 'system', content: summaryPrompt }],
+                max_tokens: 50
+              }),
+            });
+
+            if (summaryResponse.ok) {
+              const summaryData = await summaryResponse.json();
+              const summary = summaryData.choices[0].message.content;
+              
+              await supabaseClient
+                .from('conversation_sessions')
+                .update({ summary })
+                .eq('session_id', sessionId);
+            }
+          } catch (err) {
+            console.error('[Summary] Failed to generate summary:', err);
+          }
+        }
+
         // Build response
         const response: any = {
           content: assistantMessage.content,
-          role: 'assistant'
+          role: 'assistant',
+          sessionId: sessionId
         };
 
         // Check if navigation was called
