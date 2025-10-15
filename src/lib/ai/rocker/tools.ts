@@ -274,6 +274,355 @@ export const rockerTools = [
       properties: {},
       required: []
     }
+  },
+  {
+    type: "function",
+    name: "scroll_page",
+    description: "Scroll the page up, down, to top, or to bottom.",
+    parameters: {
+      type: "object",
+      properties: {
+        direction: {
+          type: "string",
+          enum: ["up", "down", "top", "bottom"],
+          description: "Direction to scroll"
+        },
+        amount: {
+          type: "string",
+          enum: ["little", "screen", "page"],
+          description: "How much to scroll"
+        }
+      },
+      required: ["direction"]
+    }
+  },
+  {
+    type: "function",
+    name: "create_event",
+    description: "Create a new event. Use when user wants to create, schedule, or organize an event.",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Event name" },
+        event_type: { type: "string", description: "Type of event (e.g., 'rodeo', 'barrel race', 'show')" },
+        starts_at: { type: "string", description: "Start date/time" },
+        ends_at: { type: "string", description: "End date/time (optional)" },
+        description: { type: "string", description: "Event description (optional)" }
+      },
+      required: ["title", "event_type", "starts_at"]
+    }
+  },
+  {
+    type: "function",
+    name: "register_event",
+    description: "Register for an event or enter a horse in an event.",
+    parameters: {
+      type: "object",
+      properties: {
+        event_id: { type: "string", description: "Event ID or 'current'" },
+        horse_id: { type: "string", description: "Horse ID (optional)" },
+        class_name: { type: "string", description: "Class/division name (optional)" }
+      },
+      required: ["event_id"]
+    }
+  },
+  {
+    type: "function",
+    name: "upload_results",
+    description: "Upload event results or times. Use for adding run times, scores, or placements.",
+    parameters: {
+      type: "object",
+      properties: {
+        event_id: { type: "string", description: "Event ID" },
+        results_data: { type: "object", description: "Results data (times, scores, placements)" }
+      },
+      required: ["event_id", "results_data"]
+    }
+  },
+  {
+    type: "function",
+    name: "manage_entries",
+    description: "Manage event entries - approve, reject, or organize entries.",
+    parameters: {
+      type: "object",
+      properties: {
+        event_id: { type: "string", description: "Event ID" },
+        action: { type: "string", enum: ["approve", "reject", "organize"], description: "Action to perform" },
+        entry_ids: { type: "array", items: { type: "string" }, description: "Entry IDs to manage" }
+      },
+      required: ["event_id", "action"]
+    }
+  },
+  {
+    type: "function",
+    name: "start_timer",
+    description: "Start event timer for live timing. Use during live events.",
+    parameters: {
+      type: "object",
+      properties: {
+        event_id: { type: "string", description: "Event ID" },
+        run_id: { type: "string", description: "Run/entry ID" }
+      },
+      required: ["event_id"]
+    }
+  },
+  {
+    type: "function",
+    name: "send_message",
+    description: "Send a message to another user or start a conversation.",
+    parameters: {
+      type: "object",
+      properties: {
+        recipient_id: { type: "string", description: "Recipient user ID" },
+        content: { type: "string", description: "Message content" },
+        thread_id: { type: "string", description: "Thread ID for replies (optional)" }
+      },
+      required: ["recipient_id", "content"]
+    }
+  },
+  {
+    type: "function",
+    name: "mark_notification_read",
+    description: "Mark notifications as read or clear notifications.",
+    parameters: {
+      type: "object",
+      properties: {
+        notification_id: { type: "string", description: "Notification ID or 'all' for all notifications" }
+      },
+      required: ["notification_id"]
+    }
+  },
+  {
+    type: "function",
+    name: "checkout",
+    description: "Proceed to checkout with items in cart.",
+    parameters: {
+      type: "object",
+      properties: {
+        payment_method: { type: "string", description: "Payment method (optional)" }
+      },
+      required: []
+    }
+  },
+  {
+    type: "function",
+    name: "view_orders",
+    description: "View order history or order details.",
+    parameters: {
+      type: "object",
+      properties: {
+        order_id: { type: "string", description: "Specific order ID (optional)" }
+      },
+      required: []
+    }
+  },
+  {
+    type: "function",
+    name: "create_pos_order",
+    description: "Create a point-of-sale order for a business.",
+    parameters: {
+      type: "object",
+      properties: {
+        business_id: { type: "string", description: "Business ID" },
+        items: { type: "array", items: { type: "object" }, description: "Order items" },
+        customer_id: { type: "string", description: "Customer ID (optional)" }
+      },
+      required: ["business_id", "items"]
+    }
+  },
+  {
+    type: "function",
+    name: "manage_inventory",
+    description: "Add, update, or check inventory for a business.",
+    parameters: {
+      type: "object",
+      properties: {
+        business_id: { type: "string", description: "Business ID" },
+        action: { type: "string", enum: ["add", "update", "check"], description: "Action to perform" },
+        item_name: { type: "string", description: "Item name" },
+        quantity: { type: "number", description: "Quantity (optional)" }
+      },
+      required: ["business_id", "action", "item_name"]
+    }
+  },
+  {
+    type: "function",
+    name: "create_shift",
+    description: "Create or schedule an employee shift.",
+    parameters: {
+      type: "object",
+      properties: {
+        business_id: { type: "string", description: "Business ID" },
+        employee_id: { type: "string", description: "Employee ID" },
+        start_time: { type: "string", description: "Shift start time" },
+        end_time: { type: "string", description: "Shift end time" }
+      },
+      required: ["business_id", "employee_id", "start_time", "end_time"]
+    }
+  },
+  {
+    type: "function",
+    name: "manage_team",
+    description: "Add or manage team members for a business.",
+    parameters: {
+      type: "object",
+      properties: {
+        business_id: { type: "string", description: "Business ID" },
+        action: { type: "string", enum: ["add", "remove", "update_role"], description: "Action" },
+        user_id: { type: "string", description: "User ID" },
+        role: { type: "string", description: "Team role (optional)" }
+      },
+      required: ["business_id", "action", "user_id"]
+    }
+  },
+  {
+    type: "function",
+    name: "flag_content",
+    description: "Flag or report content for moderation.",
+    parameters: {
+      type: "object",
+      properties: {
+        content_type: { type: "string", description: "Type (post, listing, profile, etc.)" },
+        content_id: { type: "string", description: "Content ID or 'current'" },
+        reason: { type: "string", description: "Reason for flagging" }
+      },
+      required: ["content_type", "content_id", "reason"]
+    }
+  },
+  {
+    type: "function",
+    name: "moderate_content",
+    description: "Admin: Moderate flagged content - approve, remove, or warn.",
+    parameters: {
+      type: "object",
+      properties: {
+        flag_id: { type: "string", description: "Flag ID" },
+        action: { type: "string", enum: ["approve", "remove", "warn"], description: "Moderation action" },
+        notes: { type: "string", description: "Moderation notes (optional)" }
+      },
+      required: ["flag_id", "action"]
+    }
+  },
+  {
+    type: "function",
+    name: "bulk_upload",
+    description: "Admin: Bulk upload data (horses, events, users, etc.).",
+    parameters: {
+      type: "object",
+      properties: {
+        data_type: { type: "string", description: "Type of data (horses, events, users)" },
+        file_path: { type: "string", description: "File path or 'browse' to select" }
+      },
+      required: ["data_type"]
+    }
+  },
+  {
+    type: "function",
+    name: "create_automation",
+    description: "Create an AI automation or workflow.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Automation name" },
+        trigger: { type: "string", description: "Trigger event" },
+        action: { type: "string", description: "Action to perform" }
+      },
+      required: ["name", "trigger", "action"]
+    }
+  },
+  {
+    type: "function",
+    name: "update_memory",
+    description: "Update or add to AI memory/preferences.",
+    parameters: {
+      type: "object",
+      properties: {
+        key: { type: "string", description: "Memory key" },
+        value: { type: "string", description: "Memory value" }
+      },
+      required: ["key", "value"]
+    }
+  },
+  {
+    type: "function",
+    name: "create_profile",
+    description: "Create any type of profile (rider, trainer, breeder, farm, facility, vendor, etc.).",
+    parameters: {
+      type: "object",
+      properties: {
+        profile_type: { type: "string", description: "Type (rider, trainer, owner, breeder, farm, facility, vendor, sponsor, photographer)" },
+        name: { type: "string", description: "Profile name" },
+        description: { type: "string", description: "Description (optional)" }
+      },
+      required: ["profile_type", "name"]
+    }
+  },
+  {
+    type: "function",
+    name: "export_data",
+    description: "Export data in various formats (CSV, JSON, PDF).",
+    parameters: {
+      type: "object",
+      properties: {
+        data_type: { type: "string", description: "What to export (orders, entries, results, etc.)" },
+        format: { type: "string", enum: ["csv", "json", "pdf"], description: "Export format" },
+        filters: { type: "object", description: "Filters to apply (optional)" }
+      },
+      required: ["data_type", "format"]
+    }
+  },
+  {
+    type: "function",
+    name: "upload_media",
+    description: "Upload photos, videos, or other media files.",
+    parameters: {
+      type: "object",
+      properties: {
+        file_type: { type: "string", description: "Type (photo, video, document)" },
+        caption: { type: "string", description: "Caption or description (optional)" },
+        linked_entity_id: { type: "string", description: "Link to horse, event, etc. (optional)" }
+      },
+      required: ["file_type"]
+    }
+  },
+  {
+    type: "function",
+    name: "reshare_post",
+    description: "Reshare or repost content with optional commentary.",
+    parameters: {
+      type: "object",
+      properties: {
+        post_id: { type: "string", description: "Post ID or 'current'" },
+        commentary: { type: "string", description: "Additional commentary (optional)" }
+      },
+      required: ["post_id"]
+    }
+  },
+  {
+    type: "function",
+    name: "request_category",
+    description: "Request a new marketplace category or feature.",
+    parameters: {
+      type: "object",
+      properties: {
+        category_name: { type: "string", description: "Requested category name" },
+        reason: { type: "string", description: "Why this category is needed" }
+      },
+      required: ["category_name", "reason"]
+    }
+  },
+  {
+    type: "function",
+    name: "submit_feedback",
+    description: "Submit feedback, bug report, or feature request.",
+    parameters: {
+      type: "object",
+      properties: {
+        type: { type: "string", enum: ["feedback", "bug", "feature"], description: "Type of submission" },
+        content: { type: "string", description: "Feedback content" }
+      },
+      required: ["type", "content"]
+    }
   }
 ];
 
