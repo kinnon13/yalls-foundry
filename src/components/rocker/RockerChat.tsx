@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, X, Loader2, Trash2, Mic, MicOff } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,6 +13,7 @@ import { RealtimeVoice } from '@/utils/RealtimeAudio';
 import { useToast } from '@/hooks/use-toast';
 
 export function RockerChat() {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const { messages, isLoading, error, sendMessage, cancelRequest, clearMessages } = useRocker();
@@ -23,6 +25,21 @@ export function RockerChat() {
   const voiceRef = useRef<RealtimeVoice | null>(null);
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const { toast } = useToast();
+
+  // Handle navigation from AI responses
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant' && lastMessage.metadata?.navigationPath) {
+      const path = lastMessage.metadata.navigationPath;
+      if (path === 'back') {
+        navigate(-1);
+        toast({ title: 'Navigating back' });
+      } else {
+        navigate(path);
+        toast({ title: `Navigating to ${path}` });
+      }
+    }
+  }, [messages, navigate, toast]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

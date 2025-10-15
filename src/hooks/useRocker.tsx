@@ -10,6 +10,7 @@ export interface RockerMessage {
     toolName?: string;
     status?: 'thinking' | 'executing' | 'complete' | 'error';
     url?: string;
+    navigationPath?: string; // For navigation commands
   };
 }
 
@@ -106,8 +107,13 @@ export function useRocker(mode: 'user' | 'admin' | 'super_admin' = 'user') {
           timestamp: new Date()
         };
         
-        // Auto-navigate if navigation hint present
-        if (result.navigation_url) {
+        // Handle navigation from tool calls or hints
+        if (result.navigationPath) {
+          assistantMessage.metadata = {
+            type: 'navigation',
+            navigationPath: result.navigationPath
+          };
+        } else if (result.navigation_url) {
           assistantMessage.metadata = {
             type: 'navigation',
             url: result.navigation_url

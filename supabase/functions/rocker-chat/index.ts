@@ -157,6 +157,15 @@ async function executeTool(toolName: string, args: any, supabaseClient: any, use
         return { success: true, message: 'Event builder started', form: data };
       }
 
+      case 'navigate': {
+        // Navigation is handled on the client side, just return success with the path
+        return { 
+          success: true, 
+          message: `Navigating to ${args.path}`,
+          path: args.path 
+        };
+      }
+
       default:
         return { success: false, error: 'Unknown tool: ' + toolName };
     }
@@ -368,6 +377,23 @@ serve(async (req) => {
             }
           }
         }
+      },
+      {
+        type: "function",
+        function: {
+          name: "navigate",
+          description: "Navigate to a page on the site. Use this when user asks to go to a page, go back, open a section, etc.",
+          parameters: {
+            type: "object",
+            required: ["path"],
+            properties: {
+              path: { 
+                type: "string", 
+                description: "Path to navigate to. Use 'back' for going back, or paths like '/', '/horses', '/marketplace', '/events', '/search', '/profile', '/business/{id}/hub', '/mlm/dashboard', '/admin/control-room'" 
+              }
+            }
+          }
+        }
       }
     ];
 
@@ -446,6 +472,18 @@ serve(async (req) => {
           content: assistantMessage.content,
           role: 'assistant'
         };
+
+        // Check if navigation was called
+        const navigationCalls = conversationMessages
+          .filter(m => m.role === 'assistant' && m.tool_calls)
+          .flatMap(m => m.tool_calls || [])
+          .filter((tc: any) => tc.function.name === 'navigate');
+        
+        if (navigationCalls.length > 0) {
+          const lastNavCall = navigationCalls[navigationCalls.length - 1];
+          const navArgs = JSON.parse(lastNavCall.function.arguments);
+          response.navigationPath = navArgs.path;
+        }
 
         // Track which tools were called for UI feedback
         if (conversationMessages.some(m => m.role === 'tool')) {

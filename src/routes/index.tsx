@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import { SEOHelmet } from '@/lib/seo/helmet';
-import { DevNav } from '@/components/DevNav';
+import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { useSession } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Search, Settings, ShoppingBag, Bookmark } from 'lucide-react';
+import { Sparkles, Search, Settings, ShoppingBag, Bookmark, Building2 } from 'lucide-react';
 import { PostFeed } from '@/components/posts/PostFeed';
 
 export default function Index() {
@@ -13,7 +13,7 @@ export default function Index() {
   return (
     <>
       <SEOHelmet title="Home" description="yalls.ai - Connecting equestrian communities with profiles, events, and marketplace" />
-      <DevNav />
+      <GlobalHeader />
       <main className="min-h-screen p-6">
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Header */}
@@ -138,6 +138,28 @@ export default function Index() {
                 </CardContent>
               </Card>
             </Link>
+
+            {/* Business Hub (Authenticated Users) */}
+            {session && (
+              <Link to={`/business/${session.userId}/hub`}>
+                <Card className="hover:border-primary transition-colors h-full cursor-pointer">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5" />
+                      Business Hub
+                    </CardTitle>
+                    <CardDescription>
+                      Manage your business, CRM, and customers
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button variant="outline" className="w-full">
+                      Open Business Hub
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Link>
+            )}
 
             {/* MLM Dashboard (Authenticated Users) */}
             {session && (
