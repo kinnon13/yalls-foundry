@@ -88,7 +88,21 @@ serve(async (req) => {
     // Build system prompt with user context
     const systemPrompt = USER_SYSTEM_PROMPT + userContext;
 
-    // Save user message to conversation history
+    // Load recent conversation history (last 10 messages)
+    const { data: recentConversations } = await supabaseClient
+      .from('rocker_conversations')
+      .select('role, content')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    // Reverse to chronological order
+    const conversationHistory = (recentConversations || []).reverse().map((msg: any) => ({
+      role: msg.role,
+      content: msg.content
+    }));
+
+    // Save current user message to conversation history
     const sessionId = crypto.randomUUID();
     if (messages.length > 0) {
       const lastUserMessage = messages[messages.length - 1];
@@ -107,9 +121,10 @@ serve(async (req) => {
       }
     }
 
-    // Tool calling loop
+    // Tool calling loop - include conversation history for context
     let conversationMessages = [
       { role: 'system', content: systemPrompt },
+      ...conversationHistory.slice(-5),  // Include last 5 historical messages for context
       ...messages
     ];
 
