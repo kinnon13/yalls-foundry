@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
+import { Suspense, lazy } from 'react';
 import { AuthProvider } from '@/lib/auth/context';
 import { RequireAuth } from '@/lib/auth/guards';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
@@ -25,6 +26,10 @@ import BusinessCRMContacts from "./routes/business/[bizId]/crm/contacts";
 import BusinessCRMLeads from "./routes/business/[bizId]/crm/leads";
 import NotFound from "./pages/NotFound";
 
+// Lazy load MLM routes
+const MLMDashboard = lazy(() => import('./routes/mlm/dashboard'));
+const MLMTree = lazy(() => import('./routes/mlm/tree'));
+
 const queryClient = new QueryClient();
 const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on';
 
@@ -36,8 +41,30 @@ const App = () => (
           <AuthProvider>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/login" element={<Login />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/login" element={<Login />} />
+
+          {/* MLM Routes */}
+          <Route
+            path="/mlm/dashboard"
+            element={
+              <RequireAuth>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <MLMDashboard />
+                </Suspense>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/mlm/tree"
+            element={
+              <RequireAuth>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <MLMTree />
+                </Suspense>
+              </RequireAuth>
+            }
+          />
               <Route path="/profile/:id" element={<Profile />} />
               <Route path="/horses" element={<HorsesIndex />} />
               <Route path="/horses/create" element={<RequireAuth><CreateHorse /></RequireAuth>} />
