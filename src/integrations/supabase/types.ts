@@ -2257,6 +2257,36 @@ export type Database = {
           },
         ]
       }
+      outbox: {
+        Row: {
+          attempts: number
+          created_at: string
+          delivered_at: string | null
+          id: string
+          payload: Json
+          tenant_id: string
+          topic: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          payload: Json
+          tenant_id?: string
+          topic: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          payload?: Json
+          tenant_id?: string
+          topic?: string
+        }
+        Relationships: []
+      }
       playbooks: {
         Row: {
           ask_templates: Json | null

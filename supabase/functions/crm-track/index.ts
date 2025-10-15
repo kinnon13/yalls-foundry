@@ -19,7 +19,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, idempotency-key',
 };
 
-type ContactHint = { id?: string; email?: string; phone?: string; name?: string };
+type ContactHint = { 
+  id?: string; 
+  email?: string; 
+  phone?: string; 
+  name?: string;
+  externalId?: string;
+};
 
 interface TrackEventPayload {
   type: string;
@@ -28,15 +34,22 @@ interface TrackEventPayload {
   props?: Record<string, unknown>;
 }
 
-// Normalize email and phone for identity matching
+// Normalize email, phone, and external ID for identity matching
 const normEmail = (s?: string) => (s ? s.trim().toLowerCase() : undefined);
 const normPhone = (s?: string) => (s ? s.replace(/[^\d+]/g, "") : undefined);
+const normExtId = (s?: string) => (s ? s.trim() : undefined);
+
+async function writeOutbox(supabase: any, topic: string, payload: any) {
+  const { error } = await supabase.from("outbox").insert({ topic, payload });
+  if (error) throw error;
+}
 
 async function resolveContact(supabase: any, businessId: string, hint?: ContactHint) {
   if (!hint) return { contactId: null as string | null, changed: false };
 
   const wantedEmail = normEmail(hint.email);
   const wantedPhone = normPhone(hint.phone);
+  const wantedExt = normExtId(hint.externalId);
 
   // If contact id supplied, verify it belongs to this business
   if (hint.id) {
@@ -57,6 +70,10 @@ async function resolveContact(supabase: any, businessId: string, hint?: ContactH
       if (wantedPhone) {
         await supabase.from("contact_identities")
           .upsert({ contact_id: existing.id, type: "phone", value: wantedPhone });
+      }
+      if (wantedExt) {
+        await supabase.from("contact_identities")
+          .upsert({ contact_id: existing.id, type: "external_id", value: wantedExt });
       }
 
       // Merge new name or email/phone if empty
@@ -86,7 +103,17 @@ async function resolveContact(supabase: any, businessId: string, hint?: ContactH
     }
   }
 
-  // Try by identity (email then phone)
+  // Try by identity (external_id first, then email, then phone)
+  if (wantedExt) {
+    const { data: idRow } = await supabase
+      .from("contact_identities")
+      .select("contact_id")
+      .eq("type", "external_id")
+      .eq("value", wantedExt)
+      .maybeSingle();
+    if (idRow?.contact_id) return { contactId: idRow.contact_id as string, changed: false };
+  }
+  
   if (wantedEmail) {
     const { data: idRow } = await supabase
       .from("contact_identities")
@@ -124,6 +151,10 @@ async function resolveContact(supabase: any, businessId: string, hint?: ContactH
         await supabase.from("contact_identities")
           .upsert({ contact_id: existing.id, type: "phone", value: wantedPhone });
       }
+      if (wantedExt) {
+        await supabase.from("contact_identities")
+          .upsert({ contact_id: existing.id, type: "external_id", value: wantedExt });
+      }
       return { contactId: existing.id as string, changed: false };
     }
   }
@@ -151,6 +182,10 @@ async function resolveContact(supabase: any, businessId: string, hint?: ContactH
   if (wantedPhone) {
     await supabase.from("contact_identities")
       .upsert({ contact_id: created.id, type: "phone", value: wantedPhone });
+  }
+  if (wantedExt) {
+    await supabase.from("contact_identities")
+      .upsert({ contact_id: created.id, type: "external_id", value: wantedExt });
   }
 
   return { contactId: created.id as string, changed: true };
@@ -259,6 +294,13 @@ Deno.serve(async (req) => {
 
     // Emit contact.updated if we changed/created anything
     if (changed && contactId) {
+      const evt = {
+        type: "contact.updated.v1",
+        occurred_at: new Date().toISOString(),
+        data: { contact_id: contactId, sources: payload.contact }
+      };
+      
+      // Write to crm_events
       await supabase.from('crm_events').insert({
         type: 'contact.updated',
         props: { 
@@ -269,6 +311,9 @@ Deno.serve(async (req) => {
         contact_id: contactId,
         source: 'system',
       });
+      
+      // Enqueue for publish (Kafka/Redpanda later)
+      await writeOutbox(supabase, "contact.updated.v1", evt);
     }
 
     log('info', 'event_tracked', { 
