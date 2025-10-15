@@ -44,158 +44,6 @@ const normEmail = (s?: string) => (s ? s.trim().toLowerCase() : undefined);
 const normPhone = (s?: string) => (s ? s.replace(/[^\d+]/g, "") : undefined);
 const normExtId = (s?: string) => (s ? s.trim() : undefined);
 
-async function writeOutbox(supabase: any, topic: string, payload: any) {
-  const { error } = await supabase.from("outbox").insert({ topic, payload });
-  if (error) throw error;
-}
-
-async function resolveContact(supabase: any, businessId: string, hint?: ContactHint) {
-  if (!hint) return { contactId: null as string | null, changed: false };
-
-  const wantedEmail = normEmail(hint.email);
-  const wantedPhone = normPhone(hint.phone);
-  const wantedExt = normExtId(hint.externalId);
-
-  // If contact id supplied, verify it belongs to this business
-  if (hint.id) {
-    const { data: existing, error } = await supabase
-      .from("crm_contacts")
-      .select("id,name,email,phone")
-      .eq("id", hint.id)
-      .eq("business_id", businessId)
-      .maybeSingle();
-    
-    if (error) throw error;
-    if (existing) {
-      // Upsert identities to link future lookups
-      if (wantedEmail) {
-        await supabase.from("contact_identities")
-          .upsert({ contact_id: existing.id, type: "email", value: wantedEmail });
-      }
-      if (wantedPhone) {
-        await supabase.from("contact_identities")
-          .upsert({ contact_id: existing.id, type: "phone", value: wantedPhone });
-      }
-      if (wantedExt) {
-        await supabase.from("contact_identities")
-          .upsert({ contact_id: existing.id, type: "external_id", value: wantedExt });
-      }
-
-      // Merge new name or email/phone if empty
-      let changed = false;
-      const patch: any = {};
-      if (hint.name && hint.name !== existing.name) { 
-        patch.name = hint.name; 
-        changed = true; 
-      }
-      if (wantedEmail && !existing.email) { 
-        patch.email = wantedEmail; 
-        changed = true; 
-      }
-      if (wantedPhone && !existing.phone) { 
-        patch.phone = wantedPhone; 
-        changed = true; 
-      }
-      
-      if (changed) {
-        const { error: upErr } = await supabase
-          .from("crm_contacts")
-          .update(patch)
-          .eq("id", existing.id);
-        if (upErr) throw upErr;
-      }
-      return { contactId: existing.id as string, changed };
-    }
-  }
-
-  // Try by identity (external_id first, then email, then phone)
-  if (wantedExt) {
-    const { data: idRow } = await supabase
-      .from("contact_identities")
-      .select("contact_id")
-      .eq("type", "external_id")
-      .eq("value", wantedExt)
-      .maybeSingle();
-    if (idRow?.contact_id) return { contactId: idRow.contact_id as string, changed: false };
-  }
-  
-  if (wantedEmail) {
-    const { data: idRow } = await supabase
-      .from("contact_identities")
-      .select("contact_id")
-      .eq("type", "email")
-      .eq("value", wantedEmail)
-      .maybeSingle();
-    if (idRow?.contact_id) return { contactId: idRow.contact_id as string, changed: false };
-  }
-  
-  if (wantedPhone) {
-    const { data: idRow } = await supabase
-      .from("contact_identities")
-      .select("contact_id")
-      .eq("type", "phone")
-      .eq("value", wantedPhone)
-      .maybeSingle();
-    if (idRow?.contact_id) return { contactId: idRow.contact_id as string, changed: false };
-  }
-
-  // Try legacy crm_contacts email
-  if (wantedEmail) {
-    const { data: existing } = await supabase
-      .from("crm_contacts")
-      .select("id")
-      .eq("business_id", businessId)
-      .ilike("email", wantedEmail)
-      .maybeSingle();
-    
-    if (existing?.id) {
-      // Backfill identity link
-      await supabase.from("contact_identities")
-        .upsert({ contact_id: existing.id, type: "email", value: wantedEmail });
-      if (wantedPhone) {
-        await supabase.from("contact_identities")
-          .upsert({ contact_id: existing.id, type: "phone", value: wantedPhone });
-      }
-      if (wantedExt) {
-        await supabase.from("contact_identities")
-          .upsert({ contact_id: existing.id, type: "external_id", value: wantedExt });
-      }
-      return { contactId: existing.id as string, changed: false };
-    }
-  }
-
-  // Create new contact
-  const { data: created, error: cErr } = await supabase
-    .from("crm_contacts")
-    .insert({ 
-      business_id: businessId,
-      name: hint.name ?? "Unknown",
-      email: wantedEmail ?? null, 
-      phone: wantedPhone ?? null,
-      status: 'lead'
-    })
-    .select("id")
-    .single();
-  
-  if (cErr) throw cErr;
-
-  // Link identities
-  if (wantedEmail) {
-    await supabase.from("contact_identities")
-      .upsert({ contact_id: created.id, type: "email", value: wantedEmail });
-  }
-  if (wantedPhone) {
-    await supabase.from("contact_identities")
-      .upsert({ contact_id: created.id, type: "phone", value: wantedPhone });
-  }
-  if (wantedExt) {
-    await supabase.from("contact_identities")
-      .upsert({ contact_id: created.id, type: "external_id", value: wantedExt });
-  }
-
-  return { contactId: created.id as string, changed: true };
-}
-
 Deno.serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -245,24 +93,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Idempotency check
-    const idemKey = req.headers.get('idempotency-key');
-    if (idemKey) {
-      const { data: seen } = await supabase
-        .from('crm_events')
-        .select('id')
-        .eq('source', 'web')
-        .eq('props->>idemKey', idemKey)
-        .limit(1);
-      
-      if (seen && seen.length) {
-        return new Response(
-          JSON.stringify({ ok: true, idempotent: true }), 
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
-
     // Validate business_id ownership
     const requestedBusinessId = payload.props?.business_id as string | undefined;
     if (!requestedBusinessId) {
@@ -293,91 +123,39 @@ Deno.serve(async (req) => {
 
     const businessId = requestedBusinessId;
 
-    // Normalize identities for atomic resolution
-    const wantedEmail = normEmail(payload.contact?.email);
-    const wantedPhone = normPhone(payload.contact?.phone);
-    const wantedExt = normExtId(payload.contact?.externalId);
+    // Atomic ingest via single RPC (resolve + insert + emit)
+    const idemKey = req.headers.get('idempotency-key') ?? null;
+    
+    const contactJson = {
+      email: normEmail(payload.contact?.email) ?? null,
+      phone: normPhone(payload.contact?.phone) ?? null,
+      externalId: normExtId(payload.contact?.externalId) ?? null,
+      name: payload.contact?.name ?? null,
+    };
 
-    // Atomic contact resolution via RPC (advisory locks prevent races)
-    const { data: rpc, error: resolveError } = await supabase.rpc('app.resolve_contact', {
+    const { data: res, error: rpcErr } = await supabase.rpc('app.ingest_event', {
       p_business: businessId,
-      p_email: wantedEmail ?? null,
-      p_phone: wantedPhone ?? null,
-      p_ext_id: wantedExt ?? null,
-      p_name: payload.contact?.name ?? null,
+      p_type: payload.type,
+      p_props: payload.props ?? {},
+      p_contact: contactJson,
+      p_idem_key: idemKey,
     });
 
-    if (resolveError) {
-      log('error', 'crm_track_contact_resolve_failed', { 
-        code: resolveError.code,
-        msg: resolveError.message 
-      });
+    if (rpcErr) {
+      log('error', 'ingest_failed', { code: rpcErr.code, msg: rpcErr.message });
       return new Response(
-        JSON.stringify({ error: 'Contact resolution failed' }),
+        JSON.stringify({ error: 'Ingest failed' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const contactId = (rpc as any)?.contact_id as string | null;
-    const changed = Boolean((rpc as any)?.changed);
-
-    // Write event with contact_id
-    const eventProps = { 
-      ...(payload.props ?? {}), 
-      ...(idemKey ? { idemKey } : {}) 
-    };
-    
-    const { error: insertError } = await supabase
-      .from('crm_events')
-      .insert({
-        type: payload.type,
-        props: eventProps,
-        anonymous_id: payload.anonymousId || null,
-        contact_hint: payload.contact || null,
-        contact_id: contactId || null,
-        ts: new Date().toISOString(),
-        source: 'web',
-      });
-
-    if (insertError) {
-      log('error', 'event_insert_failed', { 
-        code: insertError.code, 
-        msg: insertError.message 
-      });
-      return new Response(
-        JSON.stringify({ error: 'Failed to track event' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Emit contact.updated.v1 to outbox if contact was created/modified
-    if (changed && contactId) {
-      const evt = {
-        type: "contact.updated.v1",
-        occurred_at: new Date().toISOString(),
-        data: { contact_id: contactId, sources: payload.contact, business_id: businessId }
-      };
-      
-      // Enqueue for publish (Kafka/Redpanda later)
-      const { error: outErr } = await supabase
-        .from('outbox')
-        .insert({ topic: 'contact.updated.v1', payload: evt });
-      
-      if (outErr) {
-        log('error', 'outbox_enqueue_failed', { 
-          code: outErr.code, 
-          msg: outErr.message 
-        });
-      }
-    }
-
-    log('info', 'event_tracked', { 
+    log('info', 'crm_event_ingested', { 
       type: payload.type, 
-      contactLinked: Boolean(contactId) 
+      idempotent: (res as any)?.idempotent 
     });
 
     return new Response(
-      JSON.stringify({ ok: true, contactId }),
+      JSON.stringify(res ?? { ok: true }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
