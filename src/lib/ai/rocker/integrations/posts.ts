@@ -4,7 +4,7 @@
  * Connects post actions to Rocker for memory building and engagement.
  */
 
-import { logRockerEvent } from '../bus';
+import { emitRockerEvent } from '../bus';
 
 export async function rockerPostCreated(params: {
   userId: string;
@@ -12,7 +12,7 @@ export async function rockerPostCreated(params: {
   kind: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.create.post', params.userId, {
+  await emitRockerEvent('user.create.post', params.userId, {
     postId: params.postId,
     kind: params.kind,
   }, params.sessionId);
@@ -24,7 +24,7 @@ export async function rockerPostSaved(params: {
   collection?: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.save.post', params.userId, {
+  await emitRockerEvent('user.save.post', params.userId, {
     postId: params.postId,
     collection: params.collection,
   }, params.sessionId);
@@ -38,7 +38,7 @@ export async function rockerPostReshared(params: {
   commentary?: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.reshare.post', params.userId, {
+  await emitRockerEvent('user.reshare.post', params.userId, {
     postId: params.postId,
     commentary: params.commentary,
   }, params.sessionId);

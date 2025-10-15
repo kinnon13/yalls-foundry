@@ -5,7 +5,7 @@
  * Logs all profile actions and enables Rocker suggestions.
  */
 
-import { rockerBus, logRockerEvent } from '../bus';
+import { rockerBus, emitRockerEvent } from '../bus';
 import { supabase } from '@/integrations/supabase/client';
 
 // ============= Profile Event Emitters =============
@@ -17,7 +17,7 @@ export async function rockerProfileCreated(params: {
   name: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.create.profile', params.userId, {
+  await emitRockerEvent('user.create.profile', params.userId, {
     profileId: params.profileId,
     entityType: params.entityType,
     name: params.name,
@@ -35,7 +35,7 @@ export async function rockerProfileUpdated(params: {
   changes: Record<string, any>;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.update.profile', params.userId, {
+  await emitRockerEvent('user.update.profile', params.userId, {
     profileId: params.profileId,
     changes: params.changes,
   }, params.sessionId);
@@ -47,7 +47,7 @@ export async function rockerProfileClaimed(params: {
   entityType: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.claim.profile', params.userId, {
+  await emitRockerEvent('user.claim.profile', params.userId, {
     profileId: params.profileId,
     entityType: params.entityType,
   }, params.sessionId);
@@ -63,7 +63,7 @@ export async function rockerProfileViewed(params: {
   entityType: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.view.profile', params.userId, {
+  await emitRockerEvent('user.view.profile', params.userId, {
     profileId: params.profileId,
     entityType: params.entityType,
   }, params.sessionId);

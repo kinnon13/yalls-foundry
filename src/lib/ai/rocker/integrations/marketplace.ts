@@ -5,7 +5,7 @@
  * Enables Rocker to recommend listings, track interests, and prompt referrals.
  */
 
-import { logRockerEvent } from '../bus';
+import { emitRockerEvent } from '../bus';
 import { supabase } from '@/integrations/supabase/client';
 
 export async function rockerListingCreated(params: {
@@ -16,7 +16,7 @@ export async function rockerListingCreated(params: {
   category: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.create.listing', params.userId, {
+  await emitRockerEvent('user.create.listing', params.userId, {
     listingId: params.listingId,
     title: params.title,
     price: params.price,
@@ -35,7 +35,7 @@ export async function rockerListingViewed(params: {
   category: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.view.listing', params.userId, {
+  await emitRockerEvent('user.view.listing', params.userId, {
     listingId: params.listingId,
     category: params.category,
   }, params.sessionId);
@@ -52,7 +52,7 @@ export async function rockerPurchaseCompleted(params: {
   amount: number;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.purchase.listing', params.userId, {
+  await emitRockerEvent('user.purchase.listing', params.userId, {
     listingId: params.listingId,
     amount: params.amount,
   }, params.sessionId);

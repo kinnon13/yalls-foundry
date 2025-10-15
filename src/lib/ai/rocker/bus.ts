@@ -6,6 +6,8 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { resolveTenantId } from '@/lib/tenancy/context';
+import { log } from '@/lib/logger';
 
 // ============= Event Types =============
 
@@ -154,15 +156,16 @@ class RockerBus {
 
     // Persist action for later retrieval
     try {
+      const tenantId = await resolveTenantId(action.targetUserId);
       await supabase.from('ai_proposals').insert({
         type: action.type,
         user_id: action.targetUserId,
-        tenant_id: '00000000-0000-0000-0000-000000000000', // TODO: Multi-tenant
+        tenant_id: tenantId,
         payload: action.payload,
         due_at: action.expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       });
     } catch (err) {
-      console.error('[RockerBus] Failed to persist action:', err);
+      log.error('[RockerBus] Failed to persist action', { error: err });
     }
   }
 
@@ -209,16 +212,17 @@ export const rockerBus = new RockerBus();
 /**
  * Log a Rocker event (shorthand)
  */
-export async function logRockerEvent(
+export async function emitRockerEvent(
   type: RockerEventType,
   userId: string,
-  payload: Record<string, any>,
+  payload: Record<string, unknown>,
   sessionId?: string
 ): Promise<void> {
+  const tenantId = await resolveTenantId(userId);
   await rockerBus.emit({
     type,
     userId,
-    tenantId: '00000000-0000-0000-0000-000000000000', // TODO: Multi-tenant
+    tenantId,
     payload,
     sessionId,
   });

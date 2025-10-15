@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { resolveTenantId } from '@/lib/tenancy/context';
 
 export interface Correction {
   correction_type: 'missing_category' | 'missing_tool' | 'missing_tab' | 'wrong_result';
@@ -37,9 +38,10 @@ export function usePlatformEvolution() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      const tenantId = await resolveTenantId(user.id);
       // @ts-ignore - Type will be available after Supabase regenerates types
       const { error } = await supabase.from('ai_corrections').insert({
-        tenant_id: '00000000-0000-0000-0000-000000000000',
+        tenant_id: tenantId,
         user_id: user.id,
         ...correction,
       });

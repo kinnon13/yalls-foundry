@@ -4,7 +4,7 @@
  * Connects calendar management to Rocker for natural language scheduling.
  */
 
-import { logRockerEvent } from '../bus';
+import { emitRockerEvent } from '../bus';
 
 export async function rockerCalendarCreated(params: {
   userId: string;
@@ -13,7 +13,7 @@ export async function rockerCalendarCreated(params: {
   name: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.create.calendar', params.userId, {
+  await emitRockerEvent('user.create.calendar', params.userId, {
     calendarId: params.calendarId,
     calendarType: params.calendarType,
     name: params.name,
@@ -34,7 +34,7 @@ export async function rockerCalendarEventCreated(params: {
   eventType?: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.create.calendar_event', params.userId, {
+  await emitRockerEvent('user.create.calendar_event', params.userId, {
     eventId: params.eventId,
     calendarId: params.calendarId,
     title: params.title,
@@ -56,7 +56,7 @@ export async function rockerCalendarShared(params: {
   role: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.share.calendar', params.userId, {
+  await emitRockerEvent('user.share.calendar', params.userId, {
     calendarId: params.calendarId,
     sharedWith: params.sharedWith,
     role: params.role,
@@ -75,7 +75,7 @@ export async function rockerCollectionCreated(params: {
   calendarCount: number;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.create.calendar_collection', params.userId, {
+  await emitRockerEvent('user.create.calendar_collection', params.userId, {
     collectionId: params.collectionId,
     name: params.name,
     calendarCount: params.calendarCount,

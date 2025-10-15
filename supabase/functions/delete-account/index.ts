@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { withRateLimit, RateLimits } from '../_shared/rate-limit-wrapper.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +20,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Apply rate limiting
+  const limited = await withRateLimit(req, 'delete-account', RateLimits.auth);
+  if (limited) return limited;
 
   try {
     // Create authenticated client

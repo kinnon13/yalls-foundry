@@ -4,7 +4,7 @@
  * Connects business operations to Rocker event bus.
  */
 
-import { logRockerEvent } from '../bus';
+import { emitRockerEvent } from '../bus';
 import { supabase } from '@/integrations/supabase/client';
 
 export async function rockerBusinessCreated(params: {
@@ -13,7 +13,7 @@ export async function rockerBusinessCreated(params: {
   name: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.create.business', params.userId, {
+  await emitRockerEvent('user.create.business', params.userId, {
     businessId: params.businessId,
     name: params.name,
   }, params.sessionId);
@@ -72,7 +72,7 @@ export async function createCRMContactWithRocker(params: {
 
   if (error) throw error;
 
-  await logRockerEvent('user.create.crm_contact', params.userId, {
+  await emitRockerEvent('user.create.crm_contact', params.userId, {
     contactId: contact.id,
     businessId: params.businessId,
     name: params.name,

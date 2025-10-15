@@ -88,9 +88,8 @@ export const RATE_LIMITS = {
 
 // Tenant Config - Dynamic resolution (multi-tenant ready)
 export async function getTenantId(userId?: string): Promise<string> {
-  // Future: Resolve from user's organization/workspace
-  // For now, use user_id as tenant_id for user-level tenancy
-  return userId || '00000000-0000-0000-0000-000000000000';
+  const { resolveTenantId } = await import('@/lib/tenancy/context');
+  return resolveTenantId(userId);
 }
 
 /**

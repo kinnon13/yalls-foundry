@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { rockerBus } from '@/lib/ai/rocker/bus';
+import { resolveTenantId } from '@/lib/tenancy/context';
 
 export default function CreateEvent() {
   const [title, setTitle] = useState('');
@@ -33,10 +34,11 @@ export default function CreateEvent() {
       // ROCKER BUS: Emit event creation
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        const tenantId = await resolveTenantId(user.id);
         await rockerBus.emit({
           type: 'user.create.event',
           userId: user.id,
-          tenantId: '00000000-0000-0000-0000-000000000000',
+          tenantId,
           payload: {
             event_id: event.id,
             event_type: 'show',

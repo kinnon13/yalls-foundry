@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Send } from 'lucide-react';
+import { resolveTenantId } from '@/lib/tenancy/context';
 
 interface CreatePostProps {
   onPostCreated?: () => void;
@@ -40,13 +41,14 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
         return;
       }
 
+      const tenantId = await resolveTenantId(user.id);
       const { error } = await supabase
         .from('posts')
         .insert({
           body: content,
           author_id: user.id,
           kind: 'text',
-          tenant_id: import.meta.env.VITE_TENANT_ID || '00000000-0000-0000-0000-000000000000',
+          tenant_id: tenantId,
         });
 
       if (error) throw error;

@@ -7,6 +7,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { withRateLimit, RateLimits } from '../_shared/rate-limit-wrapper.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,6 +25,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Apply rate limiting (admin-level since this is a worker endpoint)
+  const limited = await withRateLimit(req, 'outbox-drain', RateLimits.admin);
+  if (limited) return limited;
 
   try {
     // Use service role key to scan across all tenants

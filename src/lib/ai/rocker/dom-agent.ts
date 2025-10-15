@@ -92,8 +92,10 @@ async function storeHypothesis(
         })
         .eq('id', existing.id);
     } else {
+      const { resolveTenantId } = await import('@/lib/tenancy/context');
+      const tenantId = await resolveTenantId(userId);
       await supabase.from('ai_hypotheses').insert({
-        tenant_id: '00000000-0000-0000-0000-000000000000',
+        tenant_id: tenantId,
         user_id: userId,
         key,
         value,

@@ -4,7 +4,7 @@
  * Connects affiliate operations to Rocker for transparency and tracking.
  */
 
-import { logRockerEvent } from '../bus';
+import { emitRockerEvent } from '../bus';
 
 export async function rockerReferralCreated(params: {
   userId: string;
@@ -12,7 +12,7 @@ export async function rockerReferralCreated(params: {
   referredUserId: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('mlm.referral.created', params.userId, {
+  await emitRockerEvent('mlm.referral.created', params.userId, {
     referralId: params.referralId,
     referredUserId: params.referredUserId,
   }, params.sessionId);
@@ -28,7 +28,7 @@ export async function rockerPayoutTriggered(params: {
   reason: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('mlm.payout.triggered', params.userId, {
+  await emitRockerEvent('mlm.payout.triggered', params.userId, {
     amount: params.amount,
     reason: params.reason,
   }, params.sessionId);

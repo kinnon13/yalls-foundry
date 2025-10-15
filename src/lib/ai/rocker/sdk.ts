@@ -5,7 +5,7 @@
  * Provides simple, consistent API for features to integrate with Rocker.
  */
 
-import { rockerBus, logRockerEvent, RockerEvent, RockerAction } from './bus';
+import { rockerBus, emitRockerEvent, RockerEvent, RockerAction } from './bus';
 import type { RockerEventType, RockerActionType } from './bus';
 
 // Re-export for convenience
@@ -27,7 +27,7 @@ class RockerSDK {
     payload: Record<string, any>,
     sessionId?: string
   ): Promise<void> {
-    await logRockerEvent(type, userId, payload, sessionId);
+    await emitRockerEvent(type, userId, payload, sessionId);
   }
 
   /**
@@ -103,7 +103,7 @@ export const rocker = new RockerSDK();
 // ============= Convenience Exports =============
 
 export { 
-  logRockerEvent,
+  emitRockerEvent,
   type RockerEventType,
   type RockerActionType,
 } from './bus';

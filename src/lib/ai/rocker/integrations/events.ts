@@ -4,7 +4,7 @@
  * Connects event management to Rocker for guidance and validation.
  */
 
-import { logRockerEvent } from '../bus';
+import { emitRockerEvent } from '../bus';
 
 export async function rockerEventCreated(params: {
   userId: string;
@@ -14,7 +14,7 @@ export async function rockerEventCreated(params: {
   startsAt: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.create.event', params.userId, {
+  await emitRockerEvent('user.create.event', params.userId, {
     eventId: params.eventId,
     eventType: params.eventType,
     title: params.title,
@@ -32,7 +32,7 @@ export async function rockerEventRegistration(params: {
   eventId: string;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.register.event', params.userId, {
+  await emitRockerEvent('user.register.event', params.userId, {
     eventId: params.eventId,
   }, params.sessionId);
 

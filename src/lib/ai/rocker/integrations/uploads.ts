@@ -4,7 +4,7 @@
  * Connects upload operations to Rocker for AI analysis and tagging.
  */
 
-import { logRockerEvent } from '../bus';
+import { emitRockerEvent } from '../bus';
 import { supabase } from '@/integrations/supabase/client';
 
 export async function rockerMediaUploaded(params: {
@@ -15,7 +15,7 @@ export async function rockerMediaUploaded(params: {
   linkedEntities?: Array<{ id: string; type: string }>;
   sessionId?: string;
 }): Promise<void> {
-  await logRockerEvent('user.upload.media', params.userId, {
+  await emitRockerEvent('user.upload.media', params.userId, {
     mediaId: params.mediaId,
     fileType: params.fileType,
     fileName: params.fileName,
