@@ -44,6 +44,25 @@ export function ModeratorConsole() {
 
   useEffect(() => {
     fetchFlags();
+
+    // Subscribe to realtime updates for both content_flags and result_flags
+    const channel = supabase
+      .channel('moderator-flags-updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'content_flags' },
+        () => fetchFlags()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'result_flags' },
+        () => fetchFlags()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchFlags = async () => {

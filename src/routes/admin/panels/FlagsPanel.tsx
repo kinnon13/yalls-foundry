@@ -32,6 +32,20 @@ export function FlagsPanel() {
 
   useEffect(() => {
     loadFlags();
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('admin-flags-updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'content_flags' },
+        () => loadFlags()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [activeTab]);
 
   const loadFlags = async () => {

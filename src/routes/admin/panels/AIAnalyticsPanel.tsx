@@ -29,6 +29,30 @@ export default function AIAnalyticsPanel() {
   useEffect(() => {
     if (session?.userId) {
       loadAnalytics();
+
+      // Subscribe to realtime updates
+      const channel = supabase
+        .channel('admin-analytics-updates')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'ai_interaction_log' },
+          () => loadAnalytics()
+        )
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'ai_feedback' },
+          () => loadAnalytics()
+        )
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'visual_learning_events' },
+          () => loadAnalytics()
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [session]);
 
