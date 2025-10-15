@@ -1,6 +1,6 @@
 # Phase 1: Production-Ready Infrastructure ✅
 
-## Status: 100% Complete (All 4 Blockers Resolved)
+## Status: 100% Complete (All 4 Blockers Resolved + Hardened)
 
 ### ✅ 1. Safe Logger (PII-Aware)
 **File**: `src/lib/logger.ts`
@@ -29,7 +29,7 @@
 
 ---
 
-### ✅ 3. Multi-Tenant Infrastructure (JWT-Based)
+### ✅ 3. Multi-Tenant Infrastructure (JWT-Based + Hardened)
 **Files**: 
 - `src/lib/tenancy/context.ts` - Tenant resolver
 - `src/lib/utils/db.ts` - Tenant-safe helpers (tInsert, tUpdate, tDelete)
@@ -37,14 +37,13 @@
 
 **Database Changes**:
 - ✅ Created `app` schema for tenant helpers
-- ✅ `app.current_tenant_id()` function (JWT-based, security definer)
-- ✅ `audit_events` table with RLS
-- ✅ `crm_events` table for event intake
-- ✅ Added `tenant_id` to: crm_contacts, marketplace_listings, orders
-- ✅ Backfilled existing data from user relationships
-- ✅ RLS policies on all tenant-scoped tables
-- ✅ Unique constraints prevent cross-tenant duplicates
+- ✅ `app.current_tenant_id()` function (JWT-based, security definer, SET search_path)
+- ✅ `crm_events` table for event intake with RLS
+- ✅ RLS policies use JWT tenant_id (not auth.uid()) - supports webhooks & service calls
+- ✅ Default tenant_id via `app.current_tenant_id()` with fallback to auth.uid() in dev
+- ✅ NOT NULL constraint on tenant_id after validation
 - ✅ Performance indexes on tenant_id columns
+- ✅ `has_role()` function for JWT-based role checks
 
 **API Changes**:
 - ✅ `tInsert()`, `tUpdate()`, `tDelete()` auto-inject tenant_id
@@ -64,9 +63,10 @@
 
 **Features**:
 - ✅ Dual-window: burst (10/sec) + sustained (100/min)
-- ✅ Per user/IP tracking with Redis
+- ✅ Per tenant:user:ip tracking with Redis (prevents hot-key collisions)
 - ✅ Predefined configs: high, standard, expensive, auth, admin
 - ✅ Returns 429 with Retry-After header
+- ✅ `getTenantFromJWT()` helper extracts tenant from JWT claims
 
 **Applied To**:
 - ✅ `crm-track` edge function (event intake)
@@ -82,9 +82,10 @@
 
 **Features**:
 - ✅ POST /crm-track accepts events: { type, anonymousId?, contact?, props }
-- ✅ Rate-limited (10/sec, 100/min)
-- ✅ Tenant-isolated (JWT required)
-- ✅ Stores in `crm_events` table
+- ✅ Rate-limited (10/sec, 100/min) with tenant:user:ip keys
+- ✅ Tenant-isolated via JWT tenant_id (not auth.uid())
+- ✅ Stores in `crm_events` table with automatic tenant injection
+- ✅ PII-safe structured logging (no console.*)
 - ✅ Ready for Phase 2 automation triggers
 
 **Usage**:
@@ -168,16 +169,24 @@ fetch('/functions/v1/crm-track', {
 
 ## Definition of Done: Phase 1 ✅
 
-- [x] All console.* replaced with safe logger (core areas)
+- [x] All console.* replaced with safe logger in edge functions
 - [x] In-memory state moved to Redis
-- [x] Tenant_id enforced via JWT + RLS
-- [x] Rate limiting on public endpoints
-- [x] CRM intake endpoint live
+- [x] Tenant_id enforced via JWT + RLS (not auth.uid())
+- [x] Rate limiting on CRM endpoint with tenant:user:ip keys
+- [x] CRM intake endpoint live with PII-safe logging
+- [x] NOT NULL constraint on tenant_id after backfill validation
 - [x] Tests verify cross-tenant isolation
 - [x] Tests verify rate limiting behavior
 - [x] Documentation updated
 
-**Ready for 100K users**: ✅ Yes
+**Smoke Tests Passed**:
+- ✅ JWT tenant_id extraction works
+- ✅ RLS blocks cross-tenant reads
+- ✅ Rate limiting returns 429 under load
+- ✅ crm_events rows have tenant_id populated
+- ✅ No console.* in edge functions
+
+**Ready for 100K users**: ✅ Yes - Multi-tenant RLS + distributed cache + rate limits
 **Ready for 1M users**: 🚧 Needs connection pooling, replicas, monitoring
 **Ready for 1B users**: ❌ Requires sharding, custom infra, regional routing
 

@@ -19,6 +19,23 @@ import { rateLimit } from './rate-limit.ts';
 export interface RateLimitConfig {
   burst?: number;    // Requests per second (default: 10)
   perMin?: number;   // Requests per minute (default: 100)
+  tenantId?: string; // Optional tenant ID for tenant-scoped rate limiting
+}
+
+/**
+ * Extract tenant_id from JWT claims
+ */
+export function getTenantFromJWT(req: Request): string | undefined {
+  const auth = req.headers.get('authorization');
+  if (!auth?.startsWith('Bearer ')) return;
+  try {
+    const token = auth.split(' ')[1];
+    const [, payload] = token.split('.');
+    const json = JSON.parse(atob(payload));
+    return json['tenant_id'];
+  } catch {
+    return;
+  }
 }
 
 /**
@@ -30,22 +47,27 @@ export async function withRateLimit(
   functionName: string,
   config: RateLimitConfig = {}
 ): Promise<Response | null> {
-  const { burst = 10, perMin = 100 } = config;
+  const { burst = 10, perMin = 100, tenantId } = config;
   
-  // Extract identifier (user ID or IP)
+  // Extract identifier components
   const authHeader = req.headers.get('Authorization');
-  let identifier = req.headers.get('x-forwarded-for') || 'anonymous';
+  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  let userId = 'anon';
   
   // Try to get user ID from auth header
   if (authHeader) {
     try {
       const token = authHeader.replace('Bearer ', '');
       const payload = JSON.parse(atob(token.split('.')[1]));
-      identifier = payload.sub || identifier;
+      userId = payload.sub || userId;
     } catch {
-      // Failed to parse token, use IP
+      // Failed to parse token, use anon
     }
   }
+  
+  // Build tenant:user:ip key for distributed rate limiting
+  const tenant = tenantId || getTenantFromJWT(req) || 'global';
+  const identifier = `${tenant}:${userId}:${ip}`;
   
   // Check rate limit
   const result = await rateLimit(req, identifier, {

@@ -6,7 +6,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { withRateLimit, RateLimits } from '../_shared/rate-limit-wrapper.ts';
+import { withRateLimit, RateLimits, getTenantFromJWT } from '../_shared/rate-limit-wrapper.ts';
 
 // PII-safe structured logger
 function log(level: 'info' | 'error', msg: string, fields?: Record<string, unknown>) {
@@ -36,8 +36,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Apply rate limiting
-  const limited = await withRateLimit(req, 'crm-track', RateLimits.standard);
+  // Apply tenant-aware rate limiting
+  const tenantId = getTenantFromJWT(req);
+  const limited = await withRateLimit(req, 'crm-track', { ...RateLimits.standard, tenantId });
   if (limited) return limited;
 
   try {

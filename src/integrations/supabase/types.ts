@@ -1519,7 +1519,7 @@ export type Database = {
           id?: string
           props?: Json
           source?: string
-          tenant_id: string
+          tenant_id?: string
           ts?: string
           type: string
         }
