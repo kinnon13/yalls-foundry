@@ -827,7 +827,63 @@ serve(async (req) => {
       console.warn('Failed to load user memories:', err);
     }
 
-    const systemPrompt = (isAdmin ? ADMIN_SYSTEM_PROMPT : USER_SYSTEM_PROMPT) + contextMemories;
+    // KNOWLEDGE BASE: Retrieve relevant knowledge
+    let knowledgeContext = '';
+    const lastUserMessage = messages[messages.length - 1]?.content || '';
+    
+    try {
+      // Try to find a playbook for this intent
+      const { data: playbookData } = await supabaseClient.functions.invoke('kb-playbook', {
+        body: { intent: lastUserMessage }
+      });
+
+      if (playbookData?.found) {
+        knowledgeContext += '\n\n**Relevant Playbook:**\n';
+        knowledgeContext += `Intent: ${playbookData.playbook.intent}\n`;
+        knowledgeContext += `Steps:\n${playbookData.playbook.steps.map((s: any, i: number) => `${i + 1}. ${s.description}`).join('\n')}`;
+        console.log('[Rocker Chat] Found playbook:', playbookData.playbook.intent);
+      }
+
+      // Search knowledge base for relevant content
+      const { data: kbData } = await supabaseClient.functions.invoke('kb-search', {
+        body: {
+          q: lastUserMessage,
+          limit: 3,
+          semantic: true,
+        }
+      });
+
+      if (kbData?.results && kbData.results.length > 0) {
+        knowledgeContext += '\n\n**Relevant Knowledge:**\n';
+        kbData.results.forEach((item: any, i: number) => {
+          knowledgeContext += `${i + 1}. ${item.title} (${item.category})\n`;
+          if (item.summary) {
+            knowledgeContext += `   ${item.summary.slice(0, 200)}...\n`;
+          }
+        });
+        console.log('[Rocker Chat] Found', kbData.results.length, 'KB items');
+      }
+
+      // Resolve any unknown terms
+      const words = lastUserMessage.toLowerCase().match(/\b\w{4,}\b/g) || [];
+      for (const word of words.slice(0, 5)) { // Check first 5 significant words
+        const { data: term } = await supabaseClient
+          .from('term_dictionary')
+          .select('term, definition, synonyms')
+          .or(`term.ilike.%${word}%,synonyms.cs.{${word}}`)
+          .limit(1)
+          .maybeSingle();
+
+        if (term && term.definition) {
+          knowledgeContext += `\n**Term: ${term.term}** - ${term.definition}`;
+          console.log('[Rocker Chat] Resolved term:', term.term);
+        }
+      }
+    } catch (err) {
+      console.warn('[Rocker Chat] KB retrieval failed:', err);
+    }
+
+    const systemPrompt = (isAdmin ? ADMIN_SYSTEM_PROMPT : USER_SYSTEM_PROMPT) + contextMemories + knowledgeContext;
 
     // Build tools for function calling
     const tools: any = [

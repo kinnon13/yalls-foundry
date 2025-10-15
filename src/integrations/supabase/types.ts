@@ -1673,6 +1673,107 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_chunks: {
+        Row: {
+          created_at: string | null
+          embedding: string | null
+          id: string
+          idx: number
+          item_id: string
+          text: string
+          token_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          idx: number
+          item_id: string
+          text: string
+          token_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          idx?: number
+          item_id?: string
+          text?: string
+          token_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_chunks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_items: {
+        Row: {
+          category: string
+          content_excerpt: string | null
+          created_at: string | null
+          created_by: string | null
+          embedding: string | null
+          id: string
+          language: string | null
+          permissions: Json | null
+          scope: string
+          source_bucket_path: string | null
+          subcategory: string | null
+          summary: string | null
+          tags: string[] | null
+          tenant_id: string | null
+          title: string
+          updated_at: string | null
+          uri: string
+          version: number
+        }
+        Insert: {
+          category: string
+          content_excerpt?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          embedding?: string | null
+          id?: string
+          language?: string | null
+          permissions?: Json | null
+          scope: string
+          source_bucket_path?: string | null
+          subcategory?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          tenant_id?: string | null
+          title: string
+          updated_at?: string | null
+          uri: string
+          version?: number
+        }
+        Update: {
+          category?: string
+          content_excerpt?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          embedding?: string | null
+          id?: string
+          language?: string | null
+          permissions?: Json | null
+          scope?: string
+          source_bucket_path?: string | null
+          subcategory?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string | null
+          uri?: string
+          version?: number
+        }
+        Relationships: []
+      }
       media: {
         Row: {
           ai_analysis: Json | null
@@ -1759,6 +1860,59 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "media"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      playbooks: {
+        Row: {
+          ask_templates: Json | null
+          created_at: string | null
+          embedding: string | null
+          from_knowledge_uri: string | null
+          id: string
+          intent: string
+          required_slots: Json | null
+          scope: string
+          steps: Json
+          tenant_id: string | null
+          updated_at: string | null
+          version: number
+        }
+        Insert: {
+          ask_templates?: Json | null
+          created_at?: string | null
+          embedding?: string | null
+          from_knowledge_uri?: string | null
+          id?: string
+          intent: string
+          required_slots?: Json | null
+          scope: string
+          steps: Json
+          tenant_id?: string | null
+          updated_at?: string | null
+          version?: number
+        }
+        Update: {
+          ask_templates?: Json | null
+          created_at?: string | null
+          embedding?: string | null
+          from_knowledge_uri?: string | null
+          id?: string
+          intent?: string
+          required_slots?: Json | null
+          scope?: string
+          steps?: Json
+          tenant_id?: string | null
+          updated_at?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playbooks_from_knowledge_uri_fkey"
+            columns: ["from_knowledge_uri"]
+            isOneToOne: false
+            referencedRelation: "knowledge_items"
+            referencedColumns: ["uri"]
           },
         ]
       }
@@ -2068,6 +2222,50 @@ export type Database = {
           srtext?: string | null
         }
         Relationships: []
+      }
+      term_dictionary: {
+        Row: {
+          definition: string | null
+          embedding: string | null
+          scope: string
+          source_uri: string | null
+          synonyms: string[] | null
+          tenant_id: string | null
+          term: string
+          term_knowledge_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          definition?: string | null
+          embedding?: string | null
+          scope: string
+          source_uri?: string | null
+          synonyms?: string[] | null
+          tenant_id?: string | null
+          term: string
+          term_knowledge_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          definition?: string | null
+          embedding?: string | null
+          scope?: string
+          source_uri?: string | null
+          synonyms?: string[] | null
+          tenant_id?: string | null
+          term?: string
+          term_knowledge_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "term_dictionary_term_knowledge_id_fkey"
+            columns: ["term_knowledge_id"]
+            isOneToOne: false
+            referencedRelation: "term_knowledge"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       term_knowledge: {
         Row: {
@@ -2828,6 +3026,10 @@ export type Database = {
         Args: { "": string }
         Returns: unknown
       }
+      get_knowledge_scope_filter: {
+        Args: { p_tenant_id?: string; p_user_id: string }
+        Returns: string
+      }
       get_proj4_from_srid: {
         Args: { "": number }
         Returns: string
@@ -2973,6 +3175,38 @@ export type Database = {
       longtransactionsenabled: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      match_knowledge_chunks: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          id: string
+          idx: number
+          item_id: string
+          similarity: number
+          text: string
+        }[]
+      }
+      match_knowledge_items: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          category: string
+          id: string
+          scope: string
+          similarity: number
+          subcategory: string
+          summary: string
+          tags: string[]
+          title: string
+          uri: string
+        }[]
       }
       needs_kyc: {
         Args: { _business_id: string }
