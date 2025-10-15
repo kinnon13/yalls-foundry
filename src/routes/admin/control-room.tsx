@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Shield, TestTube, Code, FileCheck, Activity, 
-  MessageSquare, Settings, Home, Gauge, Search, Upload, Flag, AlertTriangle, TrendingUp
+  MessageSquare, Settings, Home, Gauge, Search, Upload, Flag, AlertTriangle, TrendingUp, Hammer
 } from 'lucide-react';
 
 // Import panel components
@@ -32,6 +32,7 @@ import { ModeratorConsole } from '@/routes/admin/panels/ModeratorConsole';
 import AIAnalyticsPanel from '@/routes/admin/panels/AIAnalyticsPanel';
 import KnowledgeBrowserPanel from '@/routes/admin/panels/KnowledgeBrowserPanel';
 import { Phase2VerificationPanel } from '@/routes/admin/panels/Phase2VerificationPanel';
+import { HardeningVerificationPanel } from '@/routes/admin/panels/HardeningVerificationPanel';
 
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('scaling');
@@ -75,10 +76,14 @@ export default function ControlRoom() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Tab Navigation */}
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-14 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-15 lg:w-auto">
               <TabsTrigger value="scaling" className="gap-2">
                 <TrendingUp className="h-4 w-4" />
                 <span className="hidden sm:inline">1B Scale</span>
+              </TabsTrigger>
+              <TabsTrigger value="hardening" className="gap-2">
+                <Hammer className="h-4 w-4" />
+                <span className="hidden sm:inline">Hardening</span>
               </TabsTrigger>
               <TabsTrigger value="audit" className="gap-2">
                 <AlertTriangle className="h-4 w-4" />
@@ -138,6 +143,11 @@ export default function ControlRoom() {
             <TabsContent value="scaling" className="space-y-6">
               <Phase2VerificationPanel />
               <ScalingReadinessPanel />
+            </TabsContent>
+
+            {/* Hardening Tab */}
+            <TabsContent value="hardening" className="space-y-6">
+              <HardeningVerificationPanel />
             </TabsContent>
 
             {/* Code Audit Tab */}
@@ -228,7 +238,7 @@ export default function ControlRoom() {
           <div className="mt-12 pt-6 border-t">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div className="p-4 border rounded">
-                <div className="text-2xl font-bold">14</div>
+                <div className="text-2xl font-bold">15</div>
                 <div className="text-xs text-muted-foreground">Admin Panels</div>
               </div>
               <div className="p-4 border rounded bg-success/5">
