@@ -1572,6 +1572,278 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_events_2025_10: {
+        Row: {
+          contact_hint: Json | null
+          contact_id: string | null
+          id: string
+          props: Json
+          source: string
+          tenant_id: string
+          ts: string
+          type: string
+        }
+        Insert: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id: string
+          ts?: string
+          type: string
+        }
+        Update: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id?: string
+          ts?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      crm_events_2025_11: {
+        Row: {
+          contact_hint: Json | null
+          contact_id: string | null
+          id: string
+          props: Json
+          source: string
+          tenant_id: string
+          ts: string
+          type: string
+        }
+        Insert: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id: string
+          ts?: string
+          type: string
+        }
+        Update: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id?: string
+          ts?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      crm_events_2025_12: {
+        Row: {
+          contact_hint: Json | null
+          contact_id: string | null
+          id: string
+          props: Json
+          source: string
+          tenant_id: string
+          ts: string
+          type: string
+        }
+        Insert: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id: string
+          ts?: string
+          type: string
+        }
+        Update: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id?: string
+          ts?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      crm_events_2026_01: {
+        Row: {
+          contact_hint: Json | null
+          contact_id: string | null
+          id: string
+          props: Json
+          source: string
+          tenant_id: string
+          ts: string
+          type: string
+        }
+        Insert: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id: string
+          ts?: string
+          type: string
+        }
+        Update: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id?: string
+          ts?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      crm_events_2026_02: {
+        Row: {
+          contact_hint: Json | null
+          contact_id: string | null
+          id: string
+          props: Json
+          source: string
+          tenant_id: string
+          ts: string
+          type: string
+        }
+        Insert: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id: string
+          ts?: string
+          type: string
+        }
+        Update: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id?: string
+          ts?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      crm_events_2026_03: {
+        Row: {
+          contact_hint: Json | null
+          contact_id: string | null
+          id: string
+          props: Json
+          source: string
+          tenant_id: string
+          ts: string
+          type: string
+        }
+        Insert: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id: string
+          ts?: string
+          type: string
+        }
+        Update: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id?: string
+          ts?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      crm_events_default: {
+        Row: {
+          contact_hint: Json | null
+          contact_id: string | null
+          id: string
+          props: Json
+          source: string
+          tenant_id: string
+          ts: string
+          type: string
+        }
+        Insert: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id: string
+          ts?: string
+          type: string
+        }
+        Update: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id?: string
+          ts?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      crm_events_partitioned: {
+        Row: {
+          contact_hint: Json | null
+          contact_id: string | null
+          id: string
+          props: Json
+          source: string
+          tenant_id: string
+          ts: string
+          type: string
+        }
+        Insert: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id: string
+          ts?: string
+          type: string
+        }
+        Update: {
+          contact_hint?: Json | null
+          contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id?: string
+          ts?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_crm_events_contact"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dynamic_categories: {
         Row: {
           created_at: string
