@@ -12,6 +12,10 @@ const corsHeaders = {
 
 /**
  * Extract learnings from conversation and save to user memory
+ * 
+ * IMPORTANT: This function respects user consent settings.
+ * However, conversation logging (in rocker_conversations table) happens 
+ * REGARDLESS of consent for legal compliance and audit purposes.
  */
 async function extractLearningsFromConversation(
   supabaseClient: any,
@@ -20,6 +24,18 @@ async function extractLearningsFromConversation(
   assistantResponse: string
 ) {
   try {
+    // Check if user has consented to memory storage
+    const { data: consent } = await supabaseClient
+      .from('ai_user_consent')
+      .select('site_opt_in')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (!consent?.site_opt_in) {
+      console.log(`[Learning] User ${userId} has not opted in to memory storage - skipping learning extraction`);
+      return;
+    }
+
     // Detect preferences, interests, and important facts from user messages
     const learningPatterns = [
       { pattern: /I (prefer|like|love|want|need|always|usually)/i, type: 'preference' },
@@ -265,6 +281,28 @@ async function executeTool(toolName: string, args: any, supabaseClient: any, use
   
   try {
     switch (toolName) {
+      case 'get_current_user': {
+        // Get auth user
+        const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+        if (authError) throw authError;
+        
+        // Get profile
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('display_name, bio')
+          .eq('user_id', userId)
+          .maybeSingle();
+        
+        return { 
+          success: true, 
+          user_id: user.id,
+          email: user.email,
+          display_name: profile?.display_name || null,
+          bio: profile?.bio || null,
+          message: `You are currently talking to ${user.email} (User ID: ${user.id})`
+        };
+      }
+
       case 'get_user_profile': {
         const { data: profile, error } = await supabaseClient
           .from('profiles')
@@ -888,7 +926,29 @@ serve(async (req) => {
       isAdmin = !!roles;
     }
 
-    // REHYDRATION: Load user memories and profile context
+    // REHYDRATION: Load user identity and memories
+    let userIdentityContext = `\n\n**CURRENT USER IDENTITY:**\n- User ID: ${user.id}\n- Email: ${user.email || 'Not provided'}\n- Authenticated: Yes\n\n**IMPORTANT FOR LEGAL COMPLIANCE:**\nYou have access to user identity information for audit and legal purposes.
+All actions are logged with user_id for compliance and security.
+You MUST be able to identify users when needed for safety, moderation, or legal requests.`;
+
+    // Get user profile information
+    try {
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('display_name, bio')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (profile) {
+        userIdentityContext += `\n- Display Name: ${profile.display_name || 'Not set'}`;
+        if (profile.bio) {
+          userIdentityContext += `\n- Bio: ${profile.bio}`;
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load user profile:', err);
+    }
+
     let contextMemories = '';
     try {
       const { data: memoryData } = await supabaseClient.functions.invoke('rocker-memory', {
@@ -995,15 +1055,23 @@ Then offer to search for it:
       console.warn('[Rocker Chat] KB retrieval failed:', err);
     }
 
-    const systemPrompt = (isAdmin ? ADMIN_SYSTEM_PROMPT : USER_SYSTEM_PROMPT) + contextMemories + knowledgeContext;
+    const systemPrompt = (isAdmin ? ADMIN_SYSTEM_PROMPT : USER_SYSTEM_PROMPT) + userIdentityContext + contextMemories + knowledgeContext;
 
     // Build tools for function calling
     const tools: any = [
       {
         type: "function",
         function: {
+          name: "get_current_user",
+          description: "Get information about who you are currently talking to - their user ID, email, and basic profile info. Use this when you need to confirm user identity or reference who you're helping.",
+          parameters: { type: "object", properties: {} }
+        }
+      },
+      {
+        type: "function",
+        function: {
           name: "get_user_profile",
-          description: "Get the current user's profile information",
+          description: "Get the current user's detailed profile information including preferences and settings",
           parameters: { type: "object", properties: {} }
         }
       },

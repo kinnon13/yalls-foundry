@@ -2,15 +2,53 @@
 
 ## Overview
 The system automatically learns from ALL users and continuously improves by:
-1. **Tracking every conversation** - Saves all messages in `rocker_conversations`
-2. **Extracting patterns** - Automatically detects preferences, interests, and facts
-3. **Comparing across users** - Aggregates patterns to find what works best
+1. **Tracking every conversation** - Saves all messages in `rocker_conversations` (ALWAYS ENABLED)
+2. **Extracting patterns** - Automatically detects preferences, interests, and facts (REQUIRES CONSENT)
+3. **Comparing across users** - Aggregates patterns to find what works best (REQUIRES CONSENT)
 4. **Real-time updates** - Live dashboard updates when new data comes in
+
+## IMPORTANT: Consent vs. Compliance
+
+### Always Enabled (No Consent Required)
+For legal compliance and platform safety, these are ALWAYS tracked:
+- ✅ User identity (user ID, email)
+- ✅ Full conversation history in `rocker_conversations`
+- ✅ All actions performed through Rocker
+- ✅ Timestamps and session metadata
+
+**Why:** Legal requirements, law enforcement requests, fraud prevention, abuse detection
+
+See [LEGAL_COMPLIANCE.md](./LEGAL_COMPLIANCE.md) for complete details.
+
+### Requires User Consent
+These features require explicit opt-in via `ai_user_consent.site_opt_in`:
+- 🔒 Extraction of preferences into `ai_user_memory`
+- 🔒 Cross-user pattern aggregation
+- 🔒 Personalized analytics and comparisons
+- 🔒 Proactive suggestions
+
+**User Control:** Users can enable/disable in Knowledge Browser or consent settings.
 
 ## How It Works for Every User
 
-### 1. Automatic Learning (Per User)
-When any user (including kinnonpeck@gmail.com) chats with Rocker:
+### 1. Automatic Conversation Logging (Always On)
+ALL conversations are logged to `rocker_conversations` regardless of consent:
+
+```typescript
+// Happens automatically in rocker-chat function
+await supabaseClient.from('rocker_conversations').insert({
+  user_id: user.id,  // ALWAYS captured
+  session_id: sessionId,
+  role: 'user' | 'assistant',
+  content: message,
+  metadata: { timestamp, ... }
+});
+```
+
+**This is MANDATORY for legal compliance.**
+
+### 2. Automatic Learning Extraction (Requires Consent)
+When users opt-in, patterns are extracted from conversations:
 
 ```typescript
 // Automatically triggered after EVERY conversation
