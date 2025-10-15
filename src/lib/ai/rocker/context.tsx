@@ -1,0 +1,344 @@
+/**
+ * Rocker Global Context
+ * 
+ * Single persistent AI instance that follows the user across all pages.
+ * Manages conversation state, voice connection, and navigation.
+ */
+
+import { createContext, useContext, useState, useRef, useEffect, useCallback, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { RealtimeVoice } from '@/utils/RealtimeAudio';
+import { useToast } from '@/hooks/use-toast';
+import type { RockerMessage } from '@/hooks/useRocker';
+
+interface RockerContextValue {
+  // Chat state
+  messages: RockerMessage[];
+  isLoading: boolean;
+  error: string | null;
+  sendMessage: (content: string) => Promise<void>;
+  clearMessages: () => void;
+  
+  // Voice state
+  isVoiceMode: boolean;
+  isAlwaysListening: boolean;
+  voiceStatus: 'connecting' | 'connected' | 'disconnected';
+  voiceTranscript: string;
+  toggleVoiceMode: () => Promise<void>;
+  toggleAlwaysListening: () => Promise<void>;
+  
+  // UI state
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+}
+
+const RockerContext = createContext<RockerContextValue | null>(null);
+
+export function useRockerGlobal() {
+  const context = useContext(RockerContext);
+  if (!context) {
+    throw new Error('useRockerGlobal must be used within RockerProvider');
+  }
+  return context;
+}
+
+export function RockerProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  // Chat state
+  const [messages, setMessages] = useState<RockerMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  
+  // Voice state
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isAlwaysListening, setIsAlwaysListening] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const voiceRef = useRef<RealtimeVoice | null>(null);
+  
+  // UI state
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Handle navigation from voice or chat
+  const handleNavigation = useCallback((path: string) => {
+    if (path === 'back') {
+      navigate(-1);
+      toast({ title: 'Navigating back' });
+    } else {
+      navigate(path);
+      toast({ title: `Navigating to ${path}` });
+    }
+  }, [navigate, toast]);
+
+  // Voice command handler
+  const handleVoiceCommand = useCallback((cmd: { type: 'navigate'; path: string }) => {
+    if (cmd.type === 'navigate') {
+      handleNavigation(cmd.path);
+    }
+  }, [handleNavigation]);
+
+  // Initialize voice with navigation handler
+  const createVoiceConnection = useCallback(async (alwaysListening: boolean) => {
+    setVoiceStatus('connecting');
+    
+    const { data, error } = await supabase.functions.invoke('rocker-voice-session', {
+      body: { alwaysListening }
+    });
+    
+    if (error) throw error;
+    if (!data.client_secret?.value) throw new Error('No ephemeral token received');
+
+    const voice = new RealtimeVoice(
+      (status) => setVoiceStatus(status),
+      (text, isFinal) => {
+        if (isFinal) {
+          setVoiceTranscript('');
+        } else {
+          setVoiceTranscript(text);
+        }
+      },
+      handleVoiceCommand
+    );
+
+    await voice.connect(data.client_secret.value);
+    return voice;
+  }, [handleVoiceCommand]);
+
+  // Toggle voice mode
+  const toggleVoiceMode = useCallback(async () => {
+    if (isVoiceMode) {
+      if (!isAlwaysListening) {
+        voiceRef.current?.disconnect();
+        voiceRef.current = null;
+        setVoiceStatus('disconnected');
+        setVoiceTranscript('');
+      }
+      setIsVoiceMode(false);
+    } else {
+      try {
+        const voice = await createVoiceConnection(isAlwaysListening);
+        voiceRef.current = voice;
+        setIsVoiceMode(true);
+        
+        toast({
+          title: "Voice mode active",
+          description: isAlwaysListening ? "Say 'Hey Rocker' to get my attention" : "Start speaking to Rocker!",
+        });
+      } catch (error) {
+        console.error('Error starting voice mode:', error);
+        toast({
+          title: "Voice mode failed",
+          description: error instanceof Error ? error.message : 'Failed to start voice mode',
+          variant: "destructive",
+        });
+        setVoiceStatus('disconnected');
+        setIsVoiceMode(false);
+      }
+    }
+  }, [isVoiceMode, isAlwaysListening, createVoiceConnection, toast]);
+
+  // Toggle always listening
+  const toggleAlwaysListening = useCallback(async () => {
+    const newAlwaysListening = !isAlwaysListening;
+    setIsAlwaysListening(newAlwaysListening);
+    
+    // Stop existing connection
+    if (voiceRef.current) {
+      voiceRef.current.disconnect();
+      voiceRef.current = null;
+      setIsVoiceMode(false);
+      setVoiceStatus('disconnected');
+      setVoiceTranscript('');
+    }
+    
+    if (newAlwaysListening) {
+      try {
+        const voice = await createVoiceConnection(true);
+        voiceRef.current = voice;
+        setIsVoiceMode(true);
+        
+        toast({
+          title: "Wake word activated",
+          description: "Say 'Hey Rocker' to start a conversation anywhere on the site",
+        });
+      } catch (error) {
+        console.error('Error starting wake word mode:', error);
+        toast({
+          title: "Wake word failed",
+          description: error instanceof Error ? error.message : 'Failed to start wake word mode',
+          variant: "destructive",
+        });
+        setVoiceStatus('disconnected');
+        setIsVoiceMode(false);
+        setIsAlwaysListening(false);
+      }
+    } else {
+      toast({
+        title: "Wake word deactivated",
+        description: "Voice mode turned off",
+      });
+    }
+  }, [isAlwaysListening, createVoiceConnection, toast]);
+
+  // Send message to Rocker
+  const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim()) return;
+
+    const userMessage: RockerMessage = {
+      role: 'user',
+      content: content.trim(),
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+    setError(null);
+
+    abortControllerRef.current = new AbortController();
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rocker-chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({
+            messages: [...messages, userMessage].map(m => ({
+              role: m.role,
+              content: m.content
+            })),
+            mode: 'user'
+          }),
+          signal: abortControllerRef.current.signal
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('Rate limit exceeded. Please try again in a moment.');
+        }
+        if (response.status === 402) {
+          throw new Error('AI usage limit reached. Please add credits to continue.');
+        }
+        throw new Error(`Request failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      // Add tool execution feedback if present
+      if (result.tool_calls && result.tool_calls.length > 0) {
+        const toolMessages: RockerMessage[] = result.tool_calls.map((tc: any) => ({
+          role: 'system' as const,
+          content: `🔧 ${tc.name}`,
+          timestamp: new Date(),
+          metadata: { 
+            type: 'tool_call' as const,
+            toolName: tc.name,
+            status: 'complete' as const
+          }
+        }));
+        setMessages(prev => [...prev, ...toolMessages]);
+      }
+      
+      if (result.content) {
+        const assistantMessage: RockerMessage = {
+          role: 'assistant',
+          content: result.content,
+          timestamp: new Date()
+        };
+        
+        // Handle navigation from tool calls
+        if (result.navigationPath) {
+          handleNavigation(result.navigationPath);
+          assistantMessage.metadata = {
+            type: 'navigation',
+            navigationPath: result.navigationPath
+          };
+        } else if (result.navigation_url) {
+          assistantMessage.metadata = {
+            type: 'navigation',
+            url: result.navigation_url
+          };
+        }
+        
+        setMessages(prev => [...prev, assistantMessage]);
+      } else {
+        throw new Error('No response from assistant');
+      }
+
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        setError('Request cancelled');
+      } else {
+        setError(err.message || 'Failed to send message');
+        console.error('Rocker error:', err);
+      }
+      setMessages(prev => prev.filter(m => m.role !== 'assistant' || m.content.length > 0));
+    } finally {
+      setIsLoading(false);
+      abortControllerRef.current = null;
+    }
+  }, [messages, handleNavigation]);
+
+  const clearMessages = useCallback(() => {
+    setMessages([]);
+    setError(null);
+  }, []);
+
+  // Auto-start always listening on mount (persists across pages)
+  useEffect(() => {
+    if (!isAlwaysListening && voiceStatus === 'disconnected') {
+      toggleAlwaysListening();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (voiceRef.current && !isAlwaysListening) {
+        voiceRef.current.disconnect();
+        voiceRef.current = null;
+      }
+    };
+  }, [isAlwaysListening]);
+
+  const value: RockerContextValue = {
+    messages,
+    isLoading,
+    error,
+    sendMessage,
+    clearMessages,
+    isVoiceMode,
+    isAlwaysListening,
+    voiceStatus,
+    voiceTranscript,
+    toggleVoiceMode,
+    toggleAlwaysListening,
+    isOpen,
+    setIsOpen,
+  };
+
+  return (
+    <RockerContext.Provider value={value}>
+      {children}
+    </RockerContext.Provider>
+  );
+}

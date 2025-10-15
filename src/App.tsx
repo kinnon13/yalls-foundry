@@ -10,6 +10,7 @@ import { RequireAuth } from '@/lib/auth/guards';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
+import { RockerProvider } from '@/lib/ai/rocker/context';
 import Index from "./routes/index";
 import Search from "./routes/search";
 import Login from "./routes/login";
@@ -49,7 +50,8 @@ const App = () => (
       <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
+            <RockerProvider>
+              <Routes>
               <Route path="/" element={<Index />} />
           <Route path="/search" element={<Search />} />
           <Route path="/login" element={<Login />} />
@@ -110,13 +112,14 @@ const App = () => (
               <Route path="/business/:bizId/crm/leads" element={<RequireAuth><BusinessCRMLeads /></RequireAuth>} />
               <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
               <Route path="*" element={<NotFound />} />
-            </Routes>
+              </Routes>
 
-            {FEEDBACK_ENABLED && <FeedbackWidget />}
-            <RockerChat />
-            <RockerSuggestions />
-            <Toaster />
-            <Sonner />
+              {FEEDBACK_ENABLED && <FeedbackWidget />}
+              <RockerChat />
+              <RockerSuggestions />
+              <Toaster />
+              <Sonner />
+            </RockerProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
