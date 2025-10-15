@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SEOHelmet } from '@/lib/seo/helmet';
+import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { Plus, Calendar, MapPin } from 'lucide-react';
 import type { EventType } from '@/entities/event';
 
@@ -44,6 +45,7 @@ export default function EventsIndex() {
         title="Events"
         description="Browse upcoming equine events, shows, clinics, sales, and conferences"
       />
+      <GlobalHeader />
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { SEOHelmet } from '@/lib/seo/helmet';
+import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { formatPrice } from '@/entities/marketplace';
 import { Search, ShoppingCart } from 'lucide-react';
 import { CategoryFilter } from '@/components/marketplace/CategoryFilter';
@@ -31,6 +32,7 @@ export default function MarketplaceIndex() {
         title="Marketplace" 
         description="Browse and purchase products from the yalls.ai marketplace" 
       />
+      <GlobalHeader />
       <div className="min-h-screen p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}

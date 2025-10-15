@@ -57,8 +57,12 @@ export function RockerChat() {
 
   // Auto-enable voice mode when chat opens
   useEffect(() => {
-    if (isOpen && !isVoiceMode && !isAlwaysListening) {
-      toggleVoiceMode();
+    if (isOpen && !isVoiceMode) {
+      // Small delay to ensure UI is ready
+      const timer = setTimeout(() => {
+        toggleVoiceMode();
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -184,10 +188,14 @@ export function RockerChat() {
       <Button
         onClick={() => setIsOpen(true)}
         size="lg"
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50"
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 p-0 overflow-hidden"
         aria-label="Open Rocker Chat"
       >
-        <MessageCircle className="h-6 w-6" />
+        <img 
+          src={new URL('@/assets/rocker-cowboy-avatar.jpeg', import.meta.url).href}
+          alt="Rocker"
+          className="h-full w-full object-cover"
+        />
       </Button>
     );
   }
@@ -198,7 +206,7 @@ export function RockerChat() {
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center gap-3">
           <img 
-            src={new URL('@/assets/rocker-cowboy.jpeg', import.meta.url).href} 
+            src={new URL('@/assets/rocker-cowboy-avatar.jpeg', import.meta.url).href} 
             alt="Rocker" 
             className="h-10 w-10 rounded-full object-cover"
           />
@@ -271,7 +279,7 @@ export function RockerChat() {
               voiceStatus === 'connected' && "scale-110 animate-pulse"
             )}>
               <img 
-                src={new URL('@/assets/rocker-cowboy.jpeg', import.meta.url).href}
+                src={new URL('@/assets/rocker-cowboy-avatar.jpeg', import.meta.url).href}
                 alt="Rocker listening"
                 className="h-24 w-24 rounded-full object-cover"
               />

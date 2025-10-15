@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { entityProfileService } from '@/lib/profiles/entity-service';
 import { Zap, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
@@ -37,7 +38,9 @@ export default function HorsesListPage() {
   const displayedHorses = searchTerm.trim() ? searchResults : horses;
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <>
+      <GlobalHeader />
+      <div className="container mx-auto py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -130,6 +133,7 @@ export default function HorsesListPage() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
