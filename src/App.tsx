@@ -8,6 +8,7 @@ import { Suspense, lazy } from 'react';
 import { AuthProvider } from '@/lib/auth/context';
 import { RequireAuth } from '@/lib/auth/guards';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
+import { RockerChat } from '@/components/rocker/RockerChat';
 import Index from "./routes/index";
 import Search from "./routes/search";
 import Login from "./routes/login";
@@ -96,6 +97,7 @@ const App = () => (
             </Routes>
 
             {FEEDBACK_ENABLED && <FeedbackWidget />}
+            <RockerChat />
             <Toaster />
             <Sonner />
           </AuthProvider>

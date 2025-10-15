@@ -234,6 +234,93 @@ serve(async (req) => {
             }
           }
         }
+      },
+      {
+        type: "function",
+        function: {
+          name: "save_post",
+          description: "Save/bookmark a post for later reference",
+          parameters: {
+            type: "object",
+            required: ["post_id"],
+            properties: {
+              post_id: { type: "string", description: "UUID of the post to save" },
+              collection: { type: "string", description: "Collection name (optional, defaults to 'All')" },
+              note: { type: "string", description: "Personal note about this save" }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "reshare_post",
+          description: "Reshare a post with optional commentary",
+          parameters: {
+            type: "object",
+            required: ["post_id"],
+            properties: {
+              post_id: { type: "string", description: "UUID of the post to reshare" },
+              commentary: { type: "string", description: "Your commentary on the post" },
+              visibility: { 
+                type: "string", 
+                enum: ["public", "followers", "private"],
+                description: "Who can see this reshare" 
+              }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "recall_content",
+          description: "Find previously saved posts, profiles, or horses using natural language",
+          parameters: {
+            type: "object",
+            required: ["query"],
+            properties: {
+              query: { 
+                type: "string", 
+                description: "Natural language query like 'that Kinnon barrel video' or 'Sarah's horse profile'" 
+              }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "upload_media",
+          description: "Upload and analyze a photo or video with AI assistance",
+          parameters: {
+            type: "object",
+            required: ["context"],
+            properties: {
+              context: { 
+                type: "string", 
+                description: "What this upload is about (e.g., 'barrel race photo', 'horse pedigree document')" 
+              }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "create_event",
+          description: "Start the conversational event builder to create a new event",
+          parameters: {
+            type: "object",
+            properties: {
+              event_type: { 
+                type: "string", 
+                enum: ["barrel_race", "pole_bending", "rodeo", "jackpot", "show"],
+                description: "Type of event to create" 
+              }
+            }
+          }
+        }
       }
     ];
 
