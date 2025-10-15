@@ -12,13 +12,14 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Shield, TestTube, Code, FileCheck, Activity, 
-  MessageSquare, Settings, Home, Gauge, Search, Upload, Flag
+  MessageSquare, Settings, Home, Gauge, Search, Upload, Flag, AlertTriangle
 } from 'lucide-react';
 
 // Import panel components
 import RLSScanner from '@/routes/admin/panels/RLSScanner';
 import TestRunner from '@/routes/admin/panels/TestRunner';
 import CodeSearchPanel from '@/routes/admin/panels/CodeSearchPanel';
+import CodeAuditPanel from '@/routes/admin/panels/CodeAuditPanel';
 import AuthPanel from '@/routes/admin/panels/AuthPanel';
 import FeedbackInbox from '@/routes/admin/panels/FeedbackInbox';
 import { SuggestionsPanel } from '@/routes/admin/panels/SuggestionsPanel';
@@ -72,7 +73,11 @@ export default function ControlRoom() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Tab Navigation */}
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-12 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-13 lg:w-auto">
+              <TabsTrigger value="audit" className="gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="hidden sm:inline">Audit</span>
+              </TabsTrigger>
               <TabsTrigger value="ai-analytics" className="gap-2">
                 <Activity className="h-4 w-4" />
                 <span className="hidden sm:inline">Analytics</span>
@@ -122,6 +127,11 @@ export default function ControlRoom() {
                 <span className="hidden sm:inline">Scale</span>
               </TabsTrigger>
             </TabsList>
+
+            {/* Code Audit Tab */}
+            <TabsContent value="audit" className="space-y-6">
+              <CodeAuditPanel />
+            </TabsContent>
 
             {/* AI Analytics Tab */}
             <TabsContent value="ai-analytics" className="space-y-6">
@@ -206,20 +216,20 @@ export default function ControlRoom() {
           <div className="mt-12 pt-6 border-t">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div className="p-4 border rounded">
-                <div className="text-2xl font-bold">10</div>
+                <div className="text-2xl font-bold">13</div>
                 <div className="text-xs text-muted-foreground">Panels</div>
               </div>
               <div className="p-4 border rounded">
-                <div className="text-2xl font-bold">✓</div>
-                <div className="text-xs text-muted-foreground">Entity Search</div>
+                <div className="text-2xl font-bold text-destructive">4</div>
+                <div className="text-xs text-muted-foreground">Critical Issues</div>
               </div>
               <div className="p-4 border rounded">
                 <div className="text-2xl font-bold">✓</div>
-                <div className="text-xs text-muted-foreground">AI Evolution</div>
+                <div className="text-xs text-muted-foreground">Code Audit</div>
               </div>
               <div className="p-4 border rounded">
                 <div className="text-2xl font-bold">✓</div>
-                <div className="text-xs text-muted-foreground">Export Ready</div>
+                <div className="text-xs text-muted-foreground">Scale Ready</div>
               </div>
             </div>
           </div>
