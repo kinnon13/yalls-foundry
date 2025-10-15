@@ -260,6 +260,8 @@ export function CalendarSidebar({
                         value={newCalName}
                         onChange={(e) => setNewCalName(e.target.value)}
                         placeholder="My Calendar"
+                        aria-label="calendar name"
+                        name="calendar-name"
                         data-rocker="calendar name"
                       />
                     </div>
@@ -285,9 +287,9 @@ export function CalendarSidebar({
                         onChange={(e) => setNewCalColor(e.target.value)}
                       />
                     </div>
-                    <Button onClick={createCalendar} className="w-full" data-rocker="create calendar submit">
-                      Create Calendar
-                    </Button>
+                      <Button onClick={createCalendar} className="w-full" data-rocker="create calendar submit" aria-label="save calendar">
+                        Create Calendar
+                      </Button>
                   </div>
                 </DialogContent>
               </Dialog>

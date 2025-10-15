@@ -63,11 +63,13 @@ export function clickElement(targetName: string): { success: boolean; message: s
     };
   }
   
-  // Scroll into view and click
+  // Scroll into view and click immediately to avoid race with subsequent actions
   el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  setTimeout(() => {
-    el.click();
-  }, 300);
+  try {
+    (el as HTMLElement).click();
+  } catch (e) {
+    console.warn('[DOM Agent] Click error:', e);
+  }
   
   return { success: true, message: `Clicked "${targetName}"` };
 }
