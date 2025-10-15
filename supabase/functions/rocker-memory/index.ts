@@ -1,6 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { withRateLimit, getTenantFromJWT, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
@@ -26,6 +28,12 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const limited = await withRateLimit(req, 'rocker-memory', RateLimits.standard);
+  if (limited) return limited;
+
+  const log = createLogger('rocker-memory');
+  log.startTimer();
+
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -45,6 +53,7 @@ serve(async (req) => {
       });
     }
 
+    const tenantId = getTenantFromJWT(req) ?? user.id;
     const { action, ...params } = await req.json();
 
     switch (action) {
@@ -55,7 +64,7 @@ serve(async (req) => {
         return await searchUserMemory(supabaseClient, user.id, params);
       
       case 'write_memory':
-        return await writeMemory(supabaseClient, user.id, params.entry);
+        return await writeMemory(supabaseClient, user.id, tenantId, params.entry);
       
       case 'delete_memory':
         return await deleteMemory(supabaseClient, user.id, params.id);
@@ -73,7 +82,7 @@ serve(async (req) => {
         });
     }
   } catch (error) {
-    console.error('Error in rocker-memory:', error);
+    log.error('Error in rocker-memory', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
@@ -138,9 +147,8 @@ async function searchUserMemory(supabase: any, userId: string, params: any) {
   });
 }
 
-async function writeMemory(supabase: any, userId: string, entry: MemoryEntry) {
+async function writeMemory(supabase: any, userId: string, tenantId: string, entry: MemoryEntry) {
   // Learning is mandatory - auto-ensure consent exists
-  const tenantId = '00000000-0000-0000-0000-000000000000';
   await supabase
     .from('ai_user_consent')
     .upsert({
@@ -202,7 +210,7 @@ async function writeMemory(supabase: any, userId: string, entry: MemoryEntry) {
       }
     });
   } catch (auditErr) {
-    console.error('Failed to log audit receipt:', auditErr);
+    // Silently fail audit logging
   }
 
   return new Response(JSON.stringify({ memory: data }), {
@@ -270,7 +278,6 @@ async function generateEmbedding(text: string) {
 
 async function generateEmbeddingVector(text: string): Promise<number[] | null> {
   if (!OPENAI_API_KEY) {
-    console.warn('OPENAI_API_KEY not set, skipping embedding generation');
     return null;
   }
 
@@ -288,14 +295,12 @@ async function generateEmbeddingVector(text: string): Promise<number[] | null> {
     });
 
     if (!response.ok) {
-      console.error('OpenAI embeddings error:', response.status);
       return null;
     }
 
     const data = await response.json();
     return data.data[0].embedding;
   } catch (error) {
-    console.error('Error generating embedding:', error);
     return null;
   }
 }

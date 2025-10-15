@@ -11,6 +11,7 @@ const SHARED_IMPORTS = [
 const TIERS: Record<string, string> = {
   "outbox-drain": "admin",
   "delete-account": "auth",
+  "export-user-data": "auth",
   "health-liveness": "high",
   "health-readiness": "high",
   "rocker-chat": "expensive",
@@ -32,6 +33,7 @@ const TIERS: Record<string, string> = {
   "calendar-ops": "high",
   "chat-store": "high",
   "create-checkout-session": "auth",
+  "crm-track": "standard",
   "generate-event-form": "expensive",
   "generate-preview": "expensive",
   "generate-suggestions": "expensive",

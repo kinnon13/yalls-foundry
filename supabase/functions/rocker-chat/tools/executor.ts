@@ -56,11 +56,20 @@ export async function executeTool(
 
       // ========== MEMORY & CONTEXT ==========
       case 'write_memory': {
+        // Get tenant from user profile
+        const { data: userProfile } = await supabaseClient
+          .from('profiles')
+          .select('tenant_id')
+          .eq('user_id', userId)
+          .maybeSingle();
+        
+        const tenantId = userProfile?.tenant_id || userId;
+        
         const { data, error } = await supabaseClient.functions.invoke('rocker-memory', {
           body: {
             action: 'write_memory',
             entry: {
-              tenant_id: '00000000-0000-0000-0000-000000000000',
+              tenant_id: tenantId,
               user_id: userId,
               ...args
             }
@@ -375,11 +384,20 @@ export async function executeTool(
         if (exactMatch) {
           // Store relationship in memory if provided
           if (args.relationship) {
+            // Get tenant from user profile
+            const { data: userProfile } = await supabaseClient
+              .from('profiles')
+              .select('tenant_id')
+              .eq('user_id', userId)
+              .maybeSingle();
+            
+            const tenantId = userProfile?.tenant_id || userId;
+            
             await supabaseClient.functions.invoke('rocker-memory', {
               body: {
                 action: 'write_memory',
                 entry: {
-                  tenant_id: '00000000-0000-0000-0000-000000000000',
+                  tenant_id: tenantId,
                   user_id: userId,
                   key: `relationship.${args.entity_type}.${slug}`,
                   value: {
@@ -429,11 +447,20 @@ export async function executeTool(
 
         // Store relationship in memory
         if (args.relationship) {
+          // Get tenant from user profile
+          const { data: userProfile } = await supabaseClient
+            .from('profiles')
+            .select('tenant_id')
+            .eq('user_id', userId)
+            .maybeSingle();
+          
+          const tenantId = userProfile?.tenant_id || userId;
+          
           await supabaseClient.functions.invoke('rocker-memory', {
             body: {
               action: 'write_memory',
               entry: {
-                tenant_id: '00000000-0000-0000-0000-000000000000',
+                tenant_id: tenantId,
                 user_id: userId,
                 key: `relationship.${args.entity_type}.${slug}`,
                 value: {

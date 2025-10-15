@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { withRateLimit, getTenantFromJWT, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +12,14 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const limited = await withRateLimit(req, 'generate-preview', RateLimits.expensive);
+  if (limited) return limited;
+
+  const log = createLogger('generate-preview');
+  log.startTimer();
+
+  const tenantId = getTenantFromJWT(req) ?? 'GLOBAL';
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -44,7 +54,7 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Generating preview for ${entityType}:${entityId}`);
+    log.info('Generating preview', { entityType, entityId });
 
     // Fetch entity data based on type
     let entityData: any = null;
@@ -117,7 +127,7 @@ serve(async (req) => {
     await supabase.rpc('audit_write', {
       p_actor: user.id,
       p_role: 'user',
-      p_tenant: '00000000-0000-0000-0000-000000000000',
+      p_tenant: tenantId,
       p_action: 'preview.generate',
       p_scope: entityType,
       p_targets: [entityId],
@@ -129,7 +139,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in generate-preview:', error);
+    log.error('Error in generate-preview', error);
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : 'Unknown error' 
     }), {

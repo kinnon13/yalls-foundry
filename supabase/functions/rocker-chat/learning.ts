@@ -11,7 +11,14 @@ export async function extractLearningsFromConversation(
 ) {
   try {
     // Automatically create consent record for mandatory learning (no blocking)
-    const tenantId = '00000000-0000-0000-0000-000000000000';
+    // Get tenant from user context or default to user_id
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('tenant_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    const tenantId = profile?.tenant_id || userId;
     await supabaseClient
       .from('ai_user_consent')
       .upsert({

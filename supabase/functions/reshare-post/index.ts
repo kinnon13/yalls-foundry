@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { withRateLimit, getTenantFromJWT, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +12,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const limited = await withRateLimit(req, 'reshare-post', RateLimits.auth);
+  if (limited) return limited;
+
+  const log = createLogger('reshare-post');
+  log.startTimer();
 
   try {
     const supabaseClient = createClient(
@@ -30,6 +38,7 @@ serve(async (req) => {
       });
     }
 
+    const tenantId = getTenantFromJWT(req) ?? user.id;
     const { post_id, commentary, visibility = 'public' } = await req.json();
 
     if (!post_id) {
@@ -87,13 +96,13 @@ serve(async (req) => {
         post_id,
         commentary,
         visibility: finalVisibility,
-        tenant_id: '00000000-0000-0000-0000-000000000000',
+        tenant_id: tenantId,
       })
       .select()
       .single();
 
     if (error) {
-      console.error('Error resharing post:', error);
+      log.error('Error resharing post', error);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -104,7 +113,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in reshare-post:', error);
+    log.error('Error in reshare-post', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
