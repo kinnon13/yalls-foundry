@@ -54,7 +54,8 @@ serve(async (req) => {
       return rateLimitResult;
     }
 
-    const body = await req.json();
+    const reqClone = req.clone();
+    const body = await reqClone.json();
     const { messages, sessionId: requestedSessionId } = body;
 
     // Build user context from profile, memory, and analytics
