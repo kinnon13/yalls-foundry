@@ -754,6 +754,293 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_collection_members: {
+        Row: {
+          calendar_id: string
+          collection_id: string
+        }
+        Insert: {
+          calendar_id: string
+          collection_id: string
+        }
+        Update: {
+          calendar_id?: string
+          collection_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_collection_members_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_collection_members_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_collection_shares: {
+        Row: {
+          collection_id: string
+          created_at: string
+          profile_id: string
+          role: Database["public"]["Enums"]["calendar_role"]
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string
+          profile_id: string
+          role?: Database["public"]["Enums"]["calendar_role"]
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string
+          profile_id?: string
+          role?: Database["public"]["Enums"]["calendar_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_collection_shares_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_collections: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          owner_profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          owner_profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          owner_profile_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      calendar_event_attendees: {
+        Row: {
+          event_id: string
+          profile_id: string
+          response_at: string | null
+          status: string
+        }
+        Insert: {
+          event_id: string
+          profile_id: string
+          response_at?: string | null
+          status?: string
+        }
+        Update: {
+          event_id?: string
+          profile_id?: string
+          response_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_event_attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_event_reminders: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          profile_id: string
+          sent_at: string | null
+          trigger_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          profile_id: string
+          sent_at?: string | null
+          trigger_at: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          profile_id?: string
+          sent_at?: string | null
+          trigger_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_event_reminders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_events: {
+        Row: {
+          all_day: boolean | null
+          calendar_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          ends_at: string
+          event_type: string | null
+          id: string
+          location: string | null
+          metadata: Json | null
+          recurrence_freq: Database["public"]["Enums"]["recurrence_freq"] | null
+          recurrence_rule: string | null
+          starts_at: string
+          title: string
+          updated_at: string
+          visibility: Database["public"]["Enums"]["event_visibility"]
+        }
+        Insert: {
+          all_day?: boolean | null
+          calendar_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          ends_at: string
+          event_type?: string | null
+          id?: string
+          location?: string | null
+          metadata?: Json | null
+          recurrence_freq?:
+            | Database["public"]["Enums"]["recurrence_freq"]
+            | null
+          recurrence_rule?: string | null
+          starts_at: string
+          title: string
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["event_visibility"]
+        }
+        Update: {
+          all_day?: boolean | null
+          calendar_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          ends_at?: string
+          event_type?: string | null
+          id?: string
+          location?: string | null
+          metadata?: Json | null
+          recurrence_freq?:
+            | Database["public"]["Enums"]["recurrence_freq"]
+            | null
+          recurrence_rule?: string | null
+          starts_at?: string
+          title?: string
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["event_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_shares: {
+        Row: {
+          calendar_id: string
+          created_at: string
+          profile_id: string
+          role: Database["public"]["Enums"]["calendar_role"]
+        }
+        Insert: {
+          calendar_id: string
+          created_at?: string
+          profile_id: string
+          role?: Database["public"]["Enums"]["calendar_role"]
+        }
+        Update: {
+          calendar_id?: string
+          created_at?: string
+          profile_id?: string
+          role?: Database["public"]["Enums"]["calendar_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_shares_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendars: {
+        Row: {
+          calendar_type: Database["public"]["Enums"]["calendar_type"]
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          owner_profile_id: string
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          calendar_type?: Database["public"]["Enums"]["calendar_type"]
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          owner_profile_id: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          calendar_type?: Database["public"]["Enums"]["calendar_type"]
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          owner_profile_id?: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       claim_events: {
         Row: {
           actor_user_id: string
@@ -1520,6 +1807,8 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          calendar_public: boolean | null
+          calendar_settings: Json | null
           created_at: string
           deleted_at: string | null
           display_name: string | null
@@ -1530,6 +1819,8 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          calendar_public?: boolean | null
+          calendar_settings?: Json | null
           created_at?: string
           deleted_at?: string | null
           display_name?: string | null
@@ -1540,6 +1831,8 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          calendar_public?: boolean | null
+          calendar_settings?: Json | null
           created_at?: string
           deleted_at?: string | null
           display_name?: string | null
@@ -1974,6 +2267,10 @@ export type Database = {
         Args: { entity_id: string }
         Returns: boolean
       }
+      can_view_calendar: {
+        Args: { calendar_owner_id: string; viewer_id: string }
+        Returns: boolean
+      }
       claim_entity: {
         Args: { entity_id: string }
         Returns: Json
@@ -2323,6 +2620,22 @@ export type Database = {
       halfvec_typmod_in: {
         Args: { "": unknown[] }
         Returns: number
+      }
+      has_calendar_access: {
+        Args: {
+          cal_id: string
+          min_role?: Database["public"]["Enums"]["calendar_role"]
+          user_id: string
+        }
+        Returns: boolean
+      }
+      has_collection_access: {
+        Args: {
+          coll_id: string
+          min_role?: Database["public"]["Enums"]["calendar_role"]
+          user_id: string
+        }
+        Returns: boolean
       }
       has_role: {
         Args: { _role: string; _user_id: string }
@@ -3747,6 +4060,8 @@ export type Database = {
         | "breeder"
         | "owner"
         | "guest"
+      calendar_role: "owner" | "writer" | "reader"
+      calendar_type: "personal" | "business" | "horse" | "event" | "custom"
       entity_type:
         | "profile"
         | "horse"
@@ -3756,7 +4071,9 @@ export type Database = {
         | "rider"
         | "stable"
         | "event"
+      event_visibility: "public" | "private" | "busy"
       memory_type: "preference" | "fact" | "goal" | "note" | "policy" | "schema"
+      recurrence_freq: "daily" | "weekly" | "monthly" | "yearly"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -3901,6 +4218,8 @@ export const Constants = {
         "owner",
         "guest",
       ],
+      calendar_role: ["owner", "writer", "reader"],
+      calendar_type: ["personal", "business", "horse", "event", "custom"],
       entity_type: [
         "profile",
         "horse",
@@ -3911,7 +4230,9 @@ export const Constants = {
         "stable",
         "event",
       ],
+      event_visibility: ["public", "private", "busy"],
       memory_type: ["preference", "fact", "goal", "note", "policy", "schema"],
+      recurrence_freq: ["daily", "weekly", "monthly", "yearly"],
     },
   },
 } as const

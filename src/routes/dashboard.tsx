@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   TrendingUp, Users, DollarSign, Award, Building2, User, 
-  BarChart3, Target, ShoppingCart, Calendar, Shield, Activity 
+  BarChart3, Target, ShoppingCart, Calendar as CalendarIcon, Shield, Activity 
 } from 'lucide-react';
 import { useSession } from '@/lib/auth/context';
 import { supabase } from '@/integrations/supabase/client';
@@ -276,7 +276,13 @@ export default function Dashboard() {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-2 md:grid-cols-3">
+                <div className="grid gap-2 md:grid-cols-4">
+                  <Button variant="outline" asChild>
+                    <Link to="/calendar">
+                      <CalendarIcon className="w-4 h-4 mr-2" />
+                      My Calendar
+                    </Link>
+                  </Button>
                   <Button variant="outline" asChild>
                     <Link to="/horses/create">
                       <Target className="w-4 h-4 mr-2" />
@@ -291,7 +297,7 @@ export default function Dashboard() {
                   </Button>
                   <Button variant="outline" asChild>
                     <Link to="/events">
-                      <Calendar className="w-4 h-4 mr-2" />
+                      <CalendarIcon className="w-4 h-4 mr-2" />
                       Find Events
                     </Link>
                   </Button>

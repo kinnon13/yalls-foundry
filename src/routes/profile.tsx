@@ -17,7 +17,7 @@ import { ProfileActions } from '@/components/profile/ProfileActions';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
 import type { AnyProfile } from '@/lib/profiles/types';
-import { ArrowLeft, User } from 'lucide-react';
+import { ArrowLeft, User, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Profile() {
@@ -194,6 +194,10 @@ export default function Profile() {
                 </div>
                 <div className="flex gap-2 pt-4">
                   <Button onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
+                  <Button variant="outline" onClick={() => navigate('/calendar')}>
+                    <Calendar className="h-4 w-4 mr-2" />
+                    My Calendar
+                  </Button>
                 </div>
               </CardContent>
             </Card>
