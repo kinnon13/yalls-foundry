@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { SEOHelmet } from '@/lib/seo/helmet';
 import { useSession } from '@/lib/auth/context';
 import { signUpWithPassword, signInWithPassword } from '@/lib/auth/adapters/supabase';
