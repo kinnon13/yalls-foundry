@@ -7,6 +7,8 @@ import { Settings as SettingsIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
+import { Button } from '@/components/ui/button';
+import CreateEventDialog from '@/components/calendar/CreateEventDialog';
 
 export default function CalendarPage() {
   const [events, setEvents] = useState<any[]>([]);
@@ -14,6 +16,7 @@ export default function CalendarPage() {
   const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>([]);
   const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([]);
   const { toast } = useToast();
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     loadEvents();
@@ -125,8 +128,10 @@ export default function CalendarPage() {
                     : `Viewing ${selectedCalendarIds.length} calendar(s) and ${selectedCollectionIds.length} collection(s)`}
                 </p>
               </div>
+              <Button onClick={() => setCreateOpen(true)}>New Event</Button>
             </div>
 
+            <CreateEventDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={loadEvents} />
             <Tabs defaultValue="calendar" className="space-y-4">
               <TabsList>
                 <TabsTrigger value="calendar">Calendar</TabsTrigger>
