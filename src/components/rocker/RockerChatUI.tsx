@@ -145,9 +145,14 @@ export function RockerChatUI() {
     textareaRef.current?.focus();
   };
 
-  const handleNewConversation = () => {
-    setCurrentSessionId(undefined);
-    clearMessages();
+  const handleNewConversation = async () => {
+    const newId = await createNewConversation();
+    if (newId) {
+      setCurrentSessionId(newId);
+      clearMessages();
+      // Ensure sidebar highlights the new session
+      window.dispatchEvent(new CustomEvent('rocker-load-session', { detail: { sessionId: newId } }));
+    }
   };
 
   const handleSelectSession = (sessionId: string) => {

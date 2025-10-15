@@ -45,11 +45,24 @@ export function ProfileChatHistory() {
 
       let items: ConversationSession[] = [];
       if (sessionsData && sessionsData.length > 0) {
+        // Compute message counts for these sessions
+        const sessionIds = sessionsData.map((row: any) => row.session_id);
+        const { data: msgs, error: msgsErr } = await supabase
+          .from('rocker_conversations')
+          .select('session_id')
+          .eq('user_id', user.id)
+          .in('session_id', sessionIds);
+        if (msgsErr) throw msgsErr;
+        const counts = new Map<string, number>();
+        (msgs || []).forEach((m: any) => {
+          counts.set(m.session_id, (counts.get(m.session_id) || 0) + 1);
+        });
+
         items = sessionsData.map((row: any) => ({
           session_id: row.session_id,
           first_message: row.title || row.summary || 'Conversation',
           last_updated: row.updated_at || row.created_at,
-          message_count: 0,
+          message_count: counts.get(row.session_id) || 0,
         }));
       } else {
         // Fallback: derive from rocker_conversations (user messages)
