@@ -339,6 +339,24 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_policy_config: {
+        Row: {
+          required_policy_version: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          required_policy_version?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          required_policy_version?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ai_policy_rules: {
         Row: {
           action: string
@@ -521,32 +539,56 @@ export type Database = {
       ai_user_consent: {
         Row: {
           cadence: string | null
+          consented_at: string | null
+          email_opt_in: boolean
           id: string
+          ip: unknown | null
+          policy_version: string
           proactive_enabled: boolean | null
+          push_opt_in: boolean
           quiet_hours: unknown | null
           scopes: string[] | null
+          site_opt_in: boolean
+          sms_opt_in: boolean
           tenant_id: string
           updated_at: string | null
+          user_agent: string | null
           user_id: string
         }
         Insert: {
           cadence?: string | null
+          consented_at?: string | null
+          email_opt_in?: boolean
           id?: string
+          ip?: unknown | null
+          policy_version?: string
           proactive_enabled?: boolean | null
+          push_opt_in?: boolean
           quiet_hours?: unknown | null
           scopes?: string[] | null
+          site_opt_in?: boolean
+          sms_opt_in?: boolean
           tenant_id: string
           updated_at?: string | null
+          user_agent?: string | null
           user_id: string
         }
         Update: {
           cadence?: string | null
+          consented_at?: string | null
+          email_opt_in?: boolean
           id?: string
+          ip?: unknown | null
+          policy_version?: string
           proactive_enabled?: boolean | null
+          push_opt_in?: boolean
           quiet_hours?: unknown | null
           scopes?: string[] | null
+          site_opt_in?: boolean
+          sms_opt_in?: boolean
           tenant_id?: string
           updated_at?: string | null
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
@@ -1690,6 +1732,10 @@ export type Database = {
         Args: { _role: string; _user_id: string }
         Returns: boolean
       }
+      has_site_opt_in: {
+        Args: { p_tenant: string; p_user: string }
+        Returns: boolean
+      }
       hnsw_bit_support: {
         Args: { "": unknown }
         Returns: unknown
@@ -1705,6 +1751,10 @@ export type Database = {
       hnswhandler: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      is_admin: {
+        Args: { p_user: string }
+        Returns: boolean
       }
       is_biz_member: {
         Args: { _business_id: string; _min_role?: string; _user_id: string }

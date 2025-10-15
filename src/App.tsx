@@ -12,6 +12,7 @@ import Index from "./routes/index";
 import Search from "./routes/search";
 import Login from "./routes/login";
 import Signup from "./routes/signup";
+import ConsentPage from "./routes/consent";
 import Profile from "./routes/profile";
 import ControlRoom from "./routes/admin/control-room";
 import MarketplaceIndex from "./routes/marketplace/index";
@@ -49,6 +50,7 @@ const App = () => (
           <Route path="/search" element={<Search />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/consent" element={<ConsentPage />} />
           
           {/* Marketplace Routes */}
           <Route path="/marketplace" element={<MarketplaceIndex />} />

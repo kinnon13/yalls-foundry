@@ -41,3 +41,12 @@ verify_jwt = true
 
 [functions.rocker-proposals]
 verify_jwt = true
+
+[functions.consent-status]
+verify_jwt = true
+
+[functions.consent-accept]
+verify_jwt = true
+
+[functions.consent-revoke]
+verify_jwt = true
