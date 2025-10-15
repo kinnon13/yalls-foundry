@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
     const { data: batch, error: claimError } = await supabase.rpc('app.outbox_claim', {
       p_limit: 100,
       p_token: token,
+      p_tenant: null, // null = all tenants
     });
 
     if (claimError) {
@@ -52,61 +53,43 @@ Deno.serve(async (req) => {
       );
     }
 
-    let processed = 0;
-    let failed = 0;
-
-    for (const r of (batch ?? []) as any[]) {
-      try {
-        // TODO: Future - send to Kafka/Redpanda
-        // await kafkaProduce(r.topic, r.payload)
-        
-        // Mark as delivered only if we still hold the claim
-        const { error: upErr } = await supabase
-          .from('outbox')
-          .update({ 
-            delivered_at: new Date().toISOString(), 
-            attempts: (r.attempts ?? 0) + 1,
-            processing_token: null
-          })
-          .eq('id', r.id)
-          .eq('processing_token', token);
-
-        if (upErr) throw upErr;
-        processed++;
-      } catch (err) {
-        failed++;
-        log('error', 'outbox_delivery_failed', { 
-          id: r.id, 
-          topic: r.topic, 
-          attempts: (r.attempts ?? 0) + 1,
-          msg: err instanceof Error ? err.message : 'unknown'
-        });
-
-        // Release claim but increment attempts
-        await supabase
-          .from('outbox')
-          .update({ 
-            attempts: (r.attempts ?? 0) + 1,
-            processing_token: null
-          })
-          .eq('id', r.id)
-          .eq('processing_token', token);
-      }
+    const total = (batch ?? []).length;
+    if (total === 0) {
+      log('info', 'outbox_drain_complete', { processed: 0, total: 0 });
+      return new Response(
+        JSON.stringify({ ok: true, processed: 0, total: 0 }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    log('info', 'outbox_drain_complete', { 
-      processed, 
-      failed, 
-      total: (batch ?? []).length 
+    // Collect IDs for batched finalization
+    const ids = (batch as any[]).map(r => r.id);
+
+    // TODO: Future - send to Kafka/Redpanda
+    // await kafkaProduceMany(batch.map(r => ({ topic: r.topic, payload: r.payload })));
+
+    // Batched finalization: mark all delivered in one RPC call
+    const { data: delivered, error: markError } = await supabase.rpc('app.outbox_mark_delivered', {
+      p_token: token,
+      p_ids: ids,
     });
 
+    if (markError) {
+      log('error', 'outbox_mark_delivered_failed', { 
+        code: markError.code, 
+        msg: markError.message 
+      });
+      return new Response(
+        JSON.stringify({ error: 'Failed to mark delivered' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const processed = delivered ?? 0;
+    log('info', 'outbox_drain_complete', { processed, total });
+
     return new Response(
-      JSON.stringify({ 
-        ok: true, 
-        processed, 
-        failed,
-        total: (batch ?? []).length 
-      }),
+      JSON.stringify({ ok: true, processed, total }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
