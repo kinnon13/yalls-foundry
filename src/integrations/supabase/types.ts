@@ -802,6 +802,7 @@ export type Database = {
           created_at: string
           currency: string
           id: string
+          idempotency_key: string | null
           metadata: Json
           settlement_batch_id: string | null
           source_entity_id: string | null
@@ -815,6 +816,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          idempotency_key?: string | null
           metadata?: Json
           settlement_batch_id?: string | null
           source_entity_id?: string | null
@@ -828,6 +830,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          idempotency_key?: string | null
           metadata?: Json
           settlement_batch_id?: string | null
           source_entity_id?: string | null
@@ -1272,6 +1275,27 @@ export type Database = {
           },
         ]
       }
+      idempotency_log: {
+        Row: {
+          created_at: string
+          expires_at: string
+          key: string
+          result: Json
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          key: string
+          result: Json
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          key?: string
+          result?: Json
+        }
+        Relationships: []
+      }
       media: {
         Row: {
           ai_analysis: Json | null
@@ -1637,6 +1661,7 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          created_at: string
           granted_at: string
           granted_by: string | null
           id: string
@@ -1644,6 +1669,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          created_at?: string
           granted_at?: string
           granted_by?: string | null
           id?: string
@@ -1651,6 +1677,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          created_at?: string
           granted_at?: string
           granted_by?: string | null
           id?: string
@@ -1950,6 +1977,10 @@ export type Database = {
       claim_entity: {
         Args: { entity_id: string }
         Returns: Json
+      }
+      cleanup_expired_idempotency: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       cleanup_expired_memories: {
         Args: Record<PropertyKey, never>

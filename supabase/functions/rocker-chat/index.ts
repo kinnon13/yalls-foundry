@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { rateLimit } from "../_shared/rate-limit.ts";
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
@@ -191,6 +192,17 @@ serve(async (req) => {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Apply rate limiting (10 requests per minute per user)
+    const rateLimitResult = await rateLimit(req, user.id, {
+      limit: 10,
+      windowSec: 60,
+      prefix: 'ratelimit:rocker-chat'
+    });
+
+    if (rateLimitResult instanceof Response) {
+      return rateLimitResult;
     }
 
     const { messages, mode = 'user' } = await req.json();

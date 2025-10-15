@@ -1,5 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { rateLimit } from '../_shared/rate-limit.ts';
+import { withIdempotency, buildKey, hashObject } from '../_shared/idempotency.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,11 +33,34 @@ serve(async (req) => {
       throw new Error('Not authenticated');
     }
 
+    // Apply rate limiting (3 checkouts per minute per user)
+    const rateLimitResult = await rateLimit(req, user.id, {
+      limit: 3,
+      windowSec: 60,
+      prefix: 'ratelimit:checkout'
+    });
+
+    if (rateLimitResult instanceof Response) {
+      return rateLimitResult;
+    }
+
     const { cartItems } = await req.json();
 
     if (!cartItems || cartItems.length === 0) {
       throw new Error('Cart is empty');
     }
+
+    // Build idempotency key from cart contents
+    const cartHash = await hashObject(cartItems);
+    const idemKey = buildKey({
+      u: user.id,
+      h: cartHash
+    });
+
+    // Execute checkout with idempotency protection
+    const { result, cached } = await withIdempotency(
+      `checkout:${idemKey}`,
+      async () => {
 
     // Calculate total
     const total = cartItems.reduce((sum: number, item: any) => {
@@ -53,6 +78,7 @@ serve(async (req) => {
         amount: total.toString(),
         currency: 'usd',
         'metadata[user_id]': user.id,
+        'metadata[idempotency_key]': idemKey,
       }).toString(),
     });
 
@@ -99,11 +125,15 @@ serve(async (req) => {
       console.error('Line items error:', lineItemsError);
     }
 
+        return {
+          orderId: order.id,
+          clientSecret: paymentIntent.client_secret,
+        };
+      }
+    );
+
     return new Response(
-      JSON.stringify({
-        orderId: order.id,
-        clientSecret: paymentIntent.client_secret,
-      }),
+      JSON.stringify({ ...result, cached }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }

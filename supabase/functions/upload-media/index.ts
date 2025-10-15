@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { rateLimit } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -35,6 +36,17 @@ serve(async (req) => {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Apply rate limiting (5 uploads per minute per user)
+    const rateLimitResult = await rateLimit(req, user.id, {
+      limit: 5,
+      windowSec: 60,
+      prefix: 'ratelimit:upload-media'
+    });
+
+    if (rateLimitResult instanceof Response) {
+      return rateLimitResult;
     }
 
     const formData = await req.formData();
