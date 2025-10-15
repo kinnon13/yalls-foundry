@@ -8,6 +8,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { withRateLimit, RateLimits } from '../_shared/rate-limit-wrapper.ts';
 
+// PII-safe structured logger
+function log(level: 'info' | 'error', msg: string, fields?: Record<string, unknown>) {
+  const payload = { lvl: level, msg, ts: new Date().toISOString(), ...fields };
+  console[level](JSON.stringify(payload));
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -77,21 +83,21 @@ Deno.serve(async (req) => {
       });
 
     if (insertError) {
-      console.error('Failed to insert event:', insertError);
+      log('error', 'event_insert_failed', { code: insertError.code, msg: insertError.message });
       return new Response(
         JSON.stringify({ error: 'Failed to track event' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Event tracked:', { type: payload.type, userId: user.id });
+    log('info', 'event_tracked', { type: payload.type });
 
     return new Response(
       JSON.stringify({ ok: true }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('CRM track error:', error);
+    log('error', 'crm_track_error', { msg: error instanceof Error ? error.message : 'unknown' });
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
