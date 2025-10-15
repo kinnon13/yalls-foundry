@@ -757,12 +757,17 @@ export type Database = {
           expires_at: string | null
           id: string
           key: string
+          last_used_at: string | null
+          namespace: string | null
+          pinned: boolean | null
           provenance: Json | null
+          sensitivity: string | null
           source: string
           tags: string[] | null
           tenant_id: string
           type: Database["public"]["Enums"]["memory_type"]
           updated_at: string
+          use_count: number | null
           user_id: string
           value: Json
         }
@@ -773,12 +778,17 @@ export type Database = {
           expires_at?: string | null
           id?: string
           key: string
+          last_used_at?: string | null
+          namespace?: string | null
+          pinned?: boolean | null
           provenance?: Json | null
+          sensitivity?: string | null
           source?: string
           tags?: string[] | null
           tenant_id: string
           type: Database["public"]["Enums"]["memory_type"]
           updated_at?: string
+          use_count?: number | null
           user_id: string
           value: Json
         }
@@ -789,12 +799,17 @@ export type Database = {
           expires_at?: string | null
           id?: string
           key?: string
+          last_used_at?: string | null
+          namespace?: string | null
+          pinned?: boolean | null
           provenance?: Json | null
+          sensitivity?: string | null
           source?: string
           tags?: string[] | null
           tenant_id?: string
           type?: Database["public"]["Enums"]["memory_type"]
           updated_at?: string
+          use_count?: number | null
           user_id?: string
           value?: Json
         }
