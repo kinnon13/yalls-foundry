@@ -14,6 +14,11 @@ function log(level: 'info' | 'error', msg: string, fields?: Record<string, unkno
   console[level](JSON.stringify(payload));
 }
 
+// Hash sensitive IDs for logging
+function hashUserId(userId: string): string {
+  return `user_${userId.slice(0, 8)}...`;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, idempotency-key',
@@ -232,6 +237,14 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Validate props is an object
+    if (payload.props && typeof payload.props !== 'object') {
+      return new Response(
+        JSON.stringify({ error: 'Invalid props: must be an object' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Idempotency check
     const idemKey = req.headers.get('idempotency-key');
     if (idemKey) {
@@ -250,18 +263,59 @@ Deno.serve(async (req) => {
       }
     }
 
-    // For now, use user's first business or require business_id in payload
-    // TODO: Make business selection more explicit
-    const businessId = payload.props?.business_id as string | undefined;
-    if (!businessId) {
+    // Validate business_id ownership
+    const requestedBusinessId = payload.props?.business_id as string | undefined;
+    if (!requestedBusinessId) {
       return new Response(
         JSON.stringify({ error: 'business_id required in props' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Resolve / create contact
-    const { contactId, changed } = await resolveContact(supabase, businessId, payload.contact);
+    // Verify user has access to this business (owner or team member)
+    const { data: businessAccess, error: accessError } = await supabase
+      .from('businesses')
+      .select('id')
+      .eq('id', requestedBusinessId)
+      .or(`owner_id.eq.${user.id},business_team.user_id.eq.${user.id}`)
+      .maybeSingle();
+
+    if (accessError || !businessAccess) {
+      log('error', 'crm_track_unauthorized_business', { 
+        user: hashUserId(user.id),
+        business: requestedBusinessId 
+      });
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: business_id not accessible' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const businessId = requestedBusinessId;
+
+    // Use atomic contact resolution (prevents race conditions)
+    const wantedEmail = normEmail(payload.contact?.email);
+    const wantedPhone = normPhone(payload.contact?.phone);
+    const wantedExt = normExtId(payload.contact?.externalId);
+
+    const { data: contactId, error: resolveError } = await supabase.rpc('app.resolve_contact', {
+      p_business: businessId,
+      p_email: wantedEmail ?? null,
+      p_phone: wantedPhone ?? null,
+      p_ext_id: wantedExt ?? null,
+      p_name: payload.contact?.name ?? null,
+    });
+
+    if (resolveError) {
+      log('error', 'crm_track_contact_resolve_failed', { 
+        code: resolveError.code,
+        msg: resolveError.message 
+      });
+      return new Response(
+        JSON.stringify({ error: 'Contact resolution failed' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Write event with contact_id
     const eventProps = { 
@@ -292,8 +346,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Emit contact.updated if we changed/created anything
-    if (changed && contactId) {
+    // Emit contact.updated event (RPC always mutates or confirms existence)
+    if (contactId) {
       const evt = {
         type: "contact.updated.v1",
         occurred_at: new Date().toISOString(),
