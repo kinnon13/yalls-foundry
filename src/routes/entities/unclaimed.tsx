@@ -32,7 +32,7 @@ const ENTITY_CONFIGS: EntityConfig[] = [
     table: 'entity_profiles',
     nameField: 'name',
     descriptionField: 'entity_type',
-    unclaimedFilter: { claimed_by: null },
+    unclaimedFilter: { is_claimed: false },
     routeTemplate: '/profile',
     pageSize: 20,
   },
@@ -153,17 +153,24 @@ export default function UnclaimedEntitiesPage() {
   }));
 
   // Flatten paginated results
-  const entities = useMemo(() => {
-    return entityQueries.map(({ config, query }) => ({
+  const entities = entityQueries.map(({ config, query }) => {
+    const pages = query.data?.pages ?? [];
+    const items = pages.flatMap((page: any) => page.data) || [];
+    const headerCount = pages[0]?.count as number | undefined;
+
+    // Avoid misleading badges: if no items loaded, show 0 even if headerCount is stale
+    const totalCount = items.length === 0 ? 0 : (headerCount ?? items.length);
+
+    return {
       config,
-      items: query.data?.pages.flatMap(page => page.data) || [],
-      totalCount: query.data?.pages[0]?.count || 0,
+      items,
+      totalCount,
       isLoading: query.isLoading,
       isFetchingNextPage: query.isFetchingNextPage,
       hasNextPage: query.hasNextPage,
       fetchNextPage: query.fetchNextPage,
-    }));
-  }, [entityQueries.map(eq => eq.query.data).join(',')]);
+    };
+  });
 
   const totalCount = entities.reduce((sum, e) => sum + e.totalCount, 0);
   const isAnyLoading = entities.some(e => e.isLoading);
