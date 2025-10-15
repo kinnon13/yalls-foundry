@@ -165,3 +165,24 @@ export async function exportLearningData(userId: string) {
     return null;
   }
 }
+
+/**
+ * Sync AI unknowns to entity profiles automatically
+ * This converts discovered entities in the knowledge base into claimable entities
+ */
+export async function syncUnknownsToEntities() {
+  try {
+    const { data, error } = await supabase.functions.invoke('sync-unknowns-to-entities');
+    
+    if (error) {
+      console.error('Failed to sync unknowns to entities:', error);
+      return null;
+    }
+    
+    console.log('Synced unknowns to entities:', data);
+    return data;
+  } catch (error) {
+    console.error('Error syncing unknowns:', error);
+    return null;
+  }
+}
