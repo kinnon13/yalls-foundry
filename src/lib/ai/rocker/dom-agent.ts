@@ -25,6 +25,10 @@ export function findElement(targetName: string): HTMLElement | null {
   let el = document.querySelector(`[data-rocker="${normalized}"]`) as HTMLElement;
   if (el) return el;
   
+  // Try partial data-rocker match
+  el = document.querySelector(`[data-rocker*="${normalized}"]`) as HTMLElement;
+  if (el) return el;
+  
   // Try by aria-label
   el = document.querySelector(`[aria-label*="${normalized}" i]`) as HTMLElement;
   if (el) return el;
@@ -38,10 +42,20 @@ export function findElement(targetName: string): HTMLElement | null {
   el = buttons.find(btn => btn.textContent?.toLowerCase().includes(normalized)) as HTMLElement;
   if (el) return el;
 
-  // Try by link text content
+  // Try by link text content (prioritize links with buttons inside)
   const links = Array.from(document.querySelectorAll('a'));
-  el = links.find(a => a.textContent?.toLowerCase().includes(normalized) || a.getAttribute('aria-label')?.toLowerCase().includes(normalized)) as HTMLElement;
-  if (el) return el;
+  el = links.find(a => {
+    const text = a.textContent?.toLowerCase() || '';
+    const ariaLabel = a.getAttribute('aria-label')?.toLowerCase() || '';
+    const dataRocker = a.getAttribute('data-rocker')?.toLowerCase() || '';
+    return text.includes(normalized) || ariaLabel.includes(normalized) || dataRocker.includes(normalized);
+  }) as HTMLElement;
+  if (el) {
+    // If link contains a button, return the button for better interaction
+    const innerButton = el.querySelector('button');
+    if (innerButton) return innerButton;
+    return el;
+  }
   
   // Try by role-based buttons and tabs
   const roleButtons = Array.from(document.querySelectorAll('[role="button"], [role="tab"]')) as HTMLElement[];
@@ -63,6 +77,11 @@ export function findElement(targetName: string): HTMLElement | null {
   // Try Radix Select options by text
   const options = Array.from(document.querySelectorAll('[role="option"], [data-radix-select-item]')) as HTMLElement[];
   el = options.find(node => node.textContent?.toLowerCase().includes(normalized)) as HTMLElement;
+  if (el) return el;
+  
+  // Try by any clickable element with matching text
+  const clickables = Array.from(document.querySelectorAll('[onclick], .cursor-pointer')) as HTMLElement[];
+  el = clickables.find(elem => elem.textContent?.toLowerCase().includes(normalized)) as HTMLElement;
   if (el) return el;
   
   return null;

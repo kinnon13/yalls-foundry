@@ -193,8 +193,8 @@ export default function Profile() {
                   <p className="font-mono text-xs">{session.userId}</p>
                 </div>
                 <div className="flex gap-2 pt-4">
-                  <Button onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
-                  <Button variant="outline" onClick={() => navigate('/calendar')}>
+                  <Button onClick={() => navigate('/dashboard')} data-rocker="dashboard profile button" aria-label="Go to Dashboard">Go to Dashboard</Button>
+                  <Button variant="outline" onClick={() => navigate('/calendar')} data-rocker="calendar profile button" aria-label="My Calendar">
                     <Calendar className="h-4 w-4 mr-2" />
                     My Calendar
                   </Button>

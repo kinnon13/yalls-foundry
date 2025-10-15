@@ -17,7 +17,7 @@ export default function Index() {
     <>
       <SEOHelmet title="Home" description="yalls.ai - Connecting equestrian communities with profiles, events, and marketplace" />
       <GlobalHeader />
-      <main className="min-h-screen p-6">
+      <main className="min-h-screen p-6" data-rocker="homepage main feed">
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Header */}
           <div className="text-center space-y-4 py-12">
@@ -32,12 +32,12 @@ export default function Index() {
                     Signed in as <span className="font-medium">{session.email}</span> ({session.role})
                   </span>
                   <Link to="/login">
-                    <Button variant="outline" size="sm">Sign Out</Button>
+                    <Button variant="outline" size="sm" data-rocker="sign out logout homepage" aria-label="Sign Out">Sign Out</Button>
                   </Link>
                 </div>
               ) : (
                 <Link to="/login">
-                  <Button>Sign In</Button>
+                  <Button data-rocker="sign in login homepage" aria-label="Sign In">Sign In</Button>
                 </Link>
               )}
             </div>
@@ -46,7 +46,7 @@ export default function Index() {
           {/* Quick Navigation */}
           <div className="grid gap-6 md:grid-cols-3">
             {session && (
-              <Link to="/dashboard">
+              <Link to="/dashboard" data-rocker="dashboard link card">
                 <Card className="hover:border-primary transition-colors h-full cursor-pointer">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -58,7 +58,7 @@ export default function Index() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full" data-rocker="go to dashboard button" aria-label="Go to Dashboard">
                       Go to Dashboard
                     </Button>
                   </CardContent>
@@ -66,7 +66,7 @@ export default function Index() {
               </Link>
             )}
             {session && (
-              <Link to="/posts/saved">
+              <Link to="/posts/saved" data-rocker="saved posts link card">
                 <Card className="hover:border-primary transition-colors h-full cursor-pointer">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -78,7 +78,7 @@ export default function Index() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full" data-rocker="view saved posts button" aria-label="View Saved Posts">
                       View Saved
                     </Button>
                   </CardContent>
@@ -86,7 +86,7 @@ export default function Index() {
               </Link>
             )}
 
-            <Link to="/horses">
+            <Link to="/horses" data-rocker="horses link card browse">
               <Card className="hover:border-primary transition-colors h-full cursor-pointer">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -98,14 +98,14 @@ export default function Index() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full" data-rocker="browse horses button" aria-label="Browse Horses">
                     Browse Horses
                   </Button>
                 </CardContent>
               </Card>
             </Link>
 
-            <Link to="/marketplace">
+            <Link to="/marketplace" data-rocker="marketplace link card shop">
               <Card className="hover:border-primary transition-colors h-full cursor-pointer">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -117,14 +117,14 @@ export default function Index() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full" data-rocker="shop now marketplace button" aria-label="Shop Now">
                     Shop Now
                   </Button>
                 </CardContent>
               </Card>
             </Link>
 
-            <Link to="/search">
+            <Link to="/search" data-rocker="search link card find">
               <Card className="hover:border-primary transition-colors h-full cursor-pointer">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -136,7 +136,7 @@ export default function Index() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full" data-rocker="search registry button find" aria-label="Search Registry">
                     Search Registry
                   </Button>
                 </CardContent>
@@ -175,7 +175,7 @@ export default function Index() {
 
           {/* Community Feed */}
           {session && (
-            <div className="mt-8 space-y-6">
+            <div className="mt-8 space-y-6" data-rocker="community feed section">
               <h2 className="text-2xl font-bold">Community Feed</h2>
               <CreatePost onPostCreated={() => setRefreshKey(prev => prev + 1)} />
               <PostFeed key={refreshKey} />
