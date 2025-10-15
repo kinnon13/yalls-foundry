@@ -1,39 +1,74 @@
 /**
- * Login Route
+ * Auth Page
  * 
- * Mock login form for development.
+ * Real Supabase authentication with email/password signup and login.
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SEOHelmet } from '@/lib/seo/helmet';
+import { useSession } from '@/lib/auth/context';
+import { signUpWithPassword, signInWithPassword } from '@/lib/auth/adapters/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSession } from '@/lib/auth/context';
-import type { Role } from '@/lib/auth/rbac';
-
-const roles: Role[] = ['admin', 'moderator', 'business_owner', 'rider', 'breeder', 'owner', 'guest'];
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from '@/hooks/use-toast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<Role>('guest');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useSession();
+  const { session } = useSession();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
+  if (session) {
+    navigate('/');
+    return null;
+  }
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      toast({ title: 'Email and password required', variant: 'destructive' });
+      return;
+    }
     setLoading(true);
     try {
-      await signIn(email, role);
+      const { error } = await signUpWithPassword(email, password);
+      if (error) throw error;
+      toast({ title: 'Account created! You can now log in.' });
+      setPassword('');
+    } catch (err) {
+      toast({
+        title: 'Sign up failed',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      toast({ title: 'Email and password required', variant: 'destructive' });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await signInWithPassword(email, password);
+      if (error) throw error;
+      toast({ title: 'Signed in successfully' });
       navigate('/');
-    } catch (error) {
-      console.error('Sign in failed:', error);
+    } catch (err) {
+      toast({
+        title: 'Sign in failed',
+        description: err instanceof Error ? err.message : 'Invalid credentials',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
@@ -45,45 +80,91 @@ export default function Login() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Mock Login</CardTitle>
+            <CardTitle>Y'alls.ai Authentication</CardTitle>
             <CardDescription>
-              Development mode - choose any role to test
+              Sign up or log in to access features
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="user@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+            <Tabs defaultValue="login" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login">Log In</TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="login">
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">Email</Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      placeholder="user@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Password</Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading}
+                      minLength={6}
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select value={role} onValueChange={(v) => setRole(v as Role)}>
-                  <SelectTrigger id="role">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.map((r) => (
-                      <SelectItem key={r} value={r} className="capitalize">
-                        {r.replace('_', ' ')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? 'Signing in...' : 'Log In'}
+                  </Button>
+                </form>
+              </TabsContent>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Signing in...' : 'Sign In'}
-              </Button>
-            </form>
+              <TabsContent value="signup">
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="user@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Password</Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading}
+                      minLength={6}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Minimum 6 characters
+                    </p>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? 'Creating account...' : 'Sign Up'}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>

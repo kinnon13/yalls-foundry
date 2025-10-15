@@ -15,6 +15,9 @@ import ControlRoom from "./routes/admin/control-room";
 import HorsesIndex from "./routes/horses/index";
 import HorseDetail from "./routes/horses/[id]";
 import CreateHorse from "./routes/horses/create";
+import EventsIndex from "./routes/events/index";
+import CreateEvent from "./routes/events/create";
+import EventDetail from "./routes/events/[id]";
 import BusinessHub from "./routes/business/[bizId]/hub";
 import BusinessProfileSettings from "./routes/business/[bizId]/settings/profile";
 import BusinessPaymentsSettings from "./routes/business/[bizId]/settings/payments";
@@ -39,6 +42,9 @@ const App = () => (
               <Route path="/horses" element={<HorsesIndex />} />
               <Route path="/horses/create" element={<RequireAuth><CreateHorse /></RequireAuth>} />
               <Route path="/horses/:id" element={<HorseDetail />} />
+              <Route path="/events" element={<EventsIndex />} />
+              <Route path="/events/create" element={<RequireAuth><CreateEvent /></RequireAuth>} />
+              <Route path="/events/:id" element={<EventDetail />} />
               <Route path="/business/:bizId/hub" element={<RequireAuth><BusinessHub /></RequireAuth>} />
               <Route path="/business/:bizId/settings/profile" element={<RequireAuth><BusinessProfileSettings /></RequireAuth>} />
               <Route path="/business/:bizId/settings/payments" element={<RequireAuth><BusinessPaymentsSettings /></RequireAuth>} />

@@ -10,9 +10,8 @@ import type { Role } from './rbac';
 import { mockAuthAdapter } from './adapters/mock';
 import { supabaseAuthAdapter } from './adapters/supabase';
 
-// Toggle between mock and real auth via env var
-const USE_REAL_AUTH = import.meta.env.VITE_AUTH_BACKEND === 'supabase';
-const defaultAdapter = USE_REAL_AUTH ? supabaseAuthAdapter : mockAuthAdapter;
+// ALWAYS use real Supabase Auth (no mocks for production)
+const defaultAdapter = supabaseAuthAdapter;
 
 type AuthContextValue = {
   session: Session;
