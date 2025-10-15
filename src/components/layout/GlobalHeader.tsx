@@ -40,6 +40,11 @@ export function GlobalHeader() {
                 Home
               </Button>
             </Link>
+            {session && (
+              <Link to="/dashboard">
+                <Button variant="ghost" size="sm">Dashboard</Button>
+              </Link>
+            )}
             <Link to="/horses">
               <Button variant="ghost" size="sm">Horses</Button>
             </Link>

@@ -43,6 +43,26 @@ export default function Index() {
           {/* Quick Navigation */}
           <div className="grid gap-6 md:grid-cols-3">
             {session && (
+              <Link to="/dashboard">
+                <Card className="hover:border-primary transition-colors h-full cursor-pointer">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Settings className="h-5 w-5" />
+                      Dashboard
+                    </CardTitle>
+                    <CardDescription>
+                      View all your account connections and analytics
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button variant="outline" className="w-full">
+                      Go to Dashboard
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Link>
+            )}
+            {session && (
               <Link to="/posts/saved">
                 <Card className="hover:border-primary transition-colors h-full cursor-pointer">
                   <CardHeader>

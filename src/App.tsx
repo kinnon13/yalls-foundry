@@ -36,6 +36,7 @@ import BusinessCRMLeads from "./routes/business/[bizId]/crm/leads";
 import NotFound from "./pages/NotFound";
 
 // Lazy load MLM routes
+const Dashboard = lazy(() => import('./routes/dashboard'));
 const MLMDashboard = lazy(() => import('./routes/mlm/dashboard'));
 const MLMTree = lazy(() => import('./routes/mlm/tree'));
 
@@ -60,6 +61,18 @@ const App = () => (
           <Route path="/marketplace/:id" element={<ListingDetail />} />
           <Route path="/cart" element={<RequireAuth><Cart /></RequireAuth>} />
           <Route path="/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
+
+          {/* Dashboard */}
+          <Route
+            path="/dashboard"
+            element={
+              <RequireAuth>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <Dashboard />
+                </Suspense>
+              </RequireAuth>
+            }
+          />
 
           {/* MLM Routes */}
           <Route
