@@ -36,6 +36,8 @@ export default function CreateEventDialog({
   const [meetingLink, setMeetingLink] = useState('');
   const [voiceReminder, setVoiceReminder] = useState(false);
   const [reminderMinutes, setReminderMinutes] = useState<number>(10);
+  const [recurrence, setRecurrence] = useState<string>('none');
+  const [attendeeEmails, setAttendeeEmails] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -92,6 +94,11 @@ export default function CreateEventDialog({
     setDescription('');
     setLocation('');
     setAllDay(false);
+    setMeetingLink('');
+    setVoiceReminder(false);
+    setReminderMinutes(10);
+    setRecurrence('none');
+    setAttendeeEmails('');
   };
 
   const handleCreateEvent = async () => {
@@ -112,6 +119,16 @@ export default function CreateEventDialog({
       setLoading(true);
       const meta: any = {};
       if (meetingLink.trim()) meta.zoom_url = meetingLink.trim();
+      if (voiceReminder) {
+        meta.tts_message = `Reminder: ${title.trim()} is starting soon`;
+        meta.reminder_minutes = reminderMinutes;
+      }
+
+      let recurrenceRule: string | null = null;
+      if (recurrence !== 'none') {
+        recurrenceRule = `FREQ=${recurrence.toUpperCase()}`;
+      }
+
       const payload: any = {
         operation: 'create_event',
         calendar_id: calendarId,
@@ -121,10 +138,28 @@ export default function CreateEventDialog({
         all_day: allDay,
         starts_at: new Date(startsAt).toISOString(),
         ends_at: new Date(endsAt).toISOString(),
+        recurrence_rule: recurrenceRule,
         metadata: Object.keys(meta).length ? meta : undefined,
       };
       const { data, error } = await supabase.functions.invoke('calendar-ops', { body: payload });
       if (error) throw error;
+
+      // Create reminder if voice reminder is enabled
+      if (voiceReminder && data?.event?.id) {
+        const reminderTime = new Date(new Date(startsAt).getTime() - reminderMinutes * 60 * 1000);
+        await supabase.from('calendar_event_reminders').insert({
+          event_id: data.event.id,
+          profile_id: (await supabase.auth.getUser()).data.user?.id,
+          trigger_at: reminderTime.toISOString(),
+        });
+      }
+
+      // Parse and invite attendees if provided
+      if (attendeeEmails.trim()) {
+        const emails = attendeeEmails.split(',').map(e => e.trim()).filter(e => e);
+        // TODO: Look up profile_id by email and insert into calendar_event_attendees
+        console.log('Attendees to invite:', emails);
+      }
 
       toast({ title: 'Event created', description: 'Your event was added to the calendar.' });
       onOpenChange(false);
@@ -208,21 +243,43 @@ export default function CreateEventDialog({
                 <Switch checked={allDay} onCheckedChange={setAllDay} />
               </div>
 
+              <div className="grid gap-2">
+                <Label>Recurrence</Label>
+                <Select value={recurrence} onValueChange={setRecurrence}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="One-time event" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">One-time event</SelectItem>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Attendees</Label>
+                <Input value={attendeeEmails} onChange={(e) => setAttendeeEmails(e.target.value)} placeholder="email1@example.com, email2@example.com" />
+                <p className="text-xs text-muted-foreground">Comma-separated emails</p>
+              </div>
+
               <div className="flex items-center justify-between border rounded-md px-3 py-2">
                 <div>
                   <Label className="text-sm">Voice reminder</Label>
                   <p className="text-xs text-muted-foreground">Rocker will speak a reminder before the event</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Input type="number" min={1} max={1440} className="w-24" value={reminderMinutes} onChange={(e) => setReminderMinutes(Number(e.target.value) || 0)} />
+                  <Input type="number" min={1} max={1440} className="w-24" value={reminderMinutes} onChange={(e) => setReminderMinutes(Number(e.target.value) || 10)} />
                   <span className="text-sm text-muted-foreground">min before</span>
                   <Switch checked={voiceReminder} onCheckedChange={setVoiceReminder} />
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+        </div>
 
-          <DialogFooter>
+        <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
             <Button onClick={handleCreateEvent} disabled={loading || calendars.length === 0}>Create Event</Button>
           </DialogFooter>
