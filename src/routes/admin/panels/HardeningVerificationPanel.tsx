@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PlayCircle, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
+import { PlayCircle, CheckCircle2, XCircle, AlertCircle, Loader2, Copy, Terminal } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -195,6 +195,20 @@ export function HardeningVerificationPanel() {
     warning: results.filter(r => r.status === 'warning').length,
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied to clipboard",
+      description: "Command copied successfully",
+    });
+  };
+
+  const fixerCommands = `# Apply rate limiting, structured logging, and tenant cleanup
+deno run -A scripts/fix-edge-functions.ts
+
+# Clean up code style
+pnpm -w lint --fix && pnpm -w format`;
+
   return (
     <Card>
       <CardHeader>
@@ -226,6 +240,36 @@ export function HardeningVerificationPanel() {
       </CardHeader>
 
       <CardContent>
+        {/* Fixer Script Section */}
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Terminal className="h-5 w-5 text-primary" />
+              <CardTitle className="text-base">Auto-Fix Edge Functions</CardTitle>
+            </div>
+            <CardDescription>
+              Run these commands in your terminal to automatically apply rate limiting, structured logging, and tenant cleanup to all edge functions
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="relative rounded-md bg-muted p-4 font-mono text-sm">
+                <pre className="whitespace-pre-wrap">{fixerCommands}</pre>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => copyToClipboard(fixerCommands)}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                After running, return here and click "Run Verification" to confirm all checks pass.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
         {results.length > 0 && (
           <div className="mb-6 grid grid-cols-4 gap-4">
             <Card>
