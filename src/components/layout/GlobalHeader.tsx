@@ -29,7 +29,12 @@ export function GlobalHeader() {
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo & Main Nav */}
         <div className="flex items-center gap-6">
-          <Link to="/" className="flex items-center gap-2 font-bold text-lg">
+          <Link 
+            to="/" 
+            className="flex items-center gap-2 font-bold text-lg"
+            data-rocker="home-logo"
+            aria-label="Go to homepage"
+          >
             yalls.ai
           </Link>
           
