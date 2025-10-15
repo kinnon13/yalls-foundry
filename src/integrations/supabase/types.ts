@@ -1498,6 +1498,53 @@ export type Database = {
           },
         ]
       }
+      dynamic_categories: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_ai_suggested: boolean
+          name: string
+          parent_category_id: string | null
+          slug: string
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_ai_suggested?: boolean
+          name: string
+          parent_category_id?: string | null
+          slug: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_ai_suggested?: boolean
+          name?: string
+          parent_category_id?: string | null
+          slug?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dynamic_categories_parent_category_id_fkey"
+            columns: ["parent_category_id"]
+            isOneToOne: false
+            referencedRelation: "dynamic_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entity_ingest_log: {
         Row: {
           action: string | null
