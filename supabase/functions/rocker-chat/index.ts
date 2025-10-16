@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 import { createLogger } from "../_shared/logger.ts";
-import { USER_SYSTEM_PROMPT } from "./prompts.ts";
+import { USER_SYSTEM_PROMPT, ANDY_SYSTEM_PROMPT } from "./prompts.ts";
 import { extractLearningsFromConversation } from "./learning.ts";
 import { aggregatePatternsAndAnalytics } from "./analytics.ts";
 import { TOOL_DEFINITIONS } from "./tools/definitions.ts";
@@ -64,15 +64,20 @@ serve(async (req) => {
     // Build user context from profile, memory, and analytics
     const userContext = await buildUserContext(supabaseClient, user.id, user.email, currentRoute, actorRole);
 
-    // Add role-specific system message
+    // Build role-specific system prompt
     const { USER_MODE_NOTICE, ADMIN_MODE_NOTICE, KNOWER_MODE_NOTICE } = await import('./prompts.ts');
-    const roleNotice = 
-      actorRole === 'admin' ? ADMIN_MODE_NOTICE :
-      actorRole === 'knower' ? KNOWER_MODE_NOTICE :
-      USER_MODE_NOTICE;
-
-    // Build system prompt with user context and role notice
-    const systemPrompt = roleNotice + USER_SYSTEM_PROMPT + userContext;
+    
+    let systemPrompt: string;
+    if (actorRole === 'knower') {
+      // Andy gets his own completely separate prompt
+      systemPrompt = KNOWER_MODE_NOTICE + ANDY_SYSTEM_PROMPT + userContext;
+    } else if (actorRole === 'admin') {
+      // Admin Rocker gets admin notice + user prompt
+      systemPrompt = ADMIN_MODE_NOTICE + USER_SYSTEM_PROMPT + userContext;
+    } else {
+      // Regular Rocker gets user notice + user prompt
+      systemPrompt = USER_MODE_NOTICE + USER_SYSTEM_PROMPT + userContext;
+    }
     
     let conversationHistory: any[] = [];
     
