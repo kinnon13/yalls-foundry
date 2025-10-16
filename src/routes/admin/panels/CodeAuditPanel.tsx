@@ -8,8 +8,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, CheckCircle, XCircle, Info, Search } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, Info, Search, Database } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuditIssue {
   type: 'error' | 'warning' | 'info';
@@ -22,6 +24,8 @@ interface AuditIssue {
 export default function CodeAuditPanel() {
   const [scanning, setScanning] = useState(false);
   const [issues, setIssues] = useState<AuditIssue[]>([]);
+  const [liveMetrics, setLiveMetrics] = useState<any>(null);
+  const { toast } = useToast();
 
   // Current audit results - reflects actual codebase state after billion-user hardening
   const auditResults: AuditIssue[] = [
@@ -48,12 +52,32 @@ export default function CodeAuditPanel() {
     }
   ];
 
-  const runAudit = () => {
+  const runAudit = async () => {
     setScanning(true);
-    setTimeout(() => {
+    try {
+      // Fetch live database metrics
+      const { data, error } = await supabase.functions.invoke('database-health');
+      
+      if (error) throw error;
+      
+      setLiveMetrics(data);
       setIssues(auditResults);
+      
+      toast({
+        title: "Audit Complete",
+        description: `System healthy. ${data.totalEvents.toLocaleString()} events processed across ${data.partitionCount} partitions.`,
+      });
+    } catch (error) {
+      console.error('Audit failed:', error);
+      toast({
+        title: "Audit Failed",
+        description: "Could not fetch live metrics. Showing static data.",
+        variant: "destructive",
+      });
+      setIssues(auditResults);
+    } finally {
       setScanning(false);
-    }, 1500);
+    }
   };
 
   useEffect(() => {
@@ -102,6 +126,40 @@ export default function CodeAuditPanel() {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Live Database Metrics */}
+        {liveMetrics && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div className="p-4 border rounded bg-card">
+              <div className="flex items-center gap-2 mb-1">
+                <Database className="h-4 w-4 text-primary" />
+                <div className="text-xs text-muted-foreground">Total Events</div>
+              </div>
+              <div className="text-2xl font-bold">{liveMetrics.totalEvents.toLocaleString()}</div>
+            </div>
+            <div className="p-4 border rounded bg-card">
+              <div className="flex items-center gap-2 mb-1">
+                <Database className="h-4 w-4 text-primary" />
+                <div className="text-xs text-muted-foreground">Partitions</div>
+              </div>
+              <div className="text-2xl font-bold">{liveMetrics.partitionCount}</div>
+            </div>
+            <div className="p-4 border rounded bg-card">
+              <div className="flex items-center gap-2 mb-1">
+                <Database className="h-4 w-4 text-primary" />
+                <div className="text-xs text-muted-foreground">RLS Policies</div>
+              </div>
+              <div className="text-2xl font-bold">{liveMetrics.rlsPolicyCount}</div>
+            </div>
+            <div className="p-4 border rounded bg-card">
+              <div className="flex items-center gap-2 mb-1">
+                <Database className="h-4 w-4 text-primary" />
+                <div className="text-xs text-muted-foreground">Active Users</div>
+              </div>
+              <div className="text-2xl font-bold">{liveMetrics.userCount.toLocaleString()}</div>
+            </div>
+          </div>
+        )}
+
         {/* Summary Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 border rounded bg-card">
