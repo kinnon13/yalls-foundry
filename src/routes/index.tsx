@@ -8,7 +8,7 @@ import { TikTokFeed } from '@/components/posts/TikTokFeed';
 import { TwitterFeed } from '@/components/posts/TwitterFeed';
 import { LiveFeed } from '@/components/posts/LiveFeed';
 import { CreatePost } from '@/components/posts/CreatePost';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Video, MessageCircle, Radio, Eye, EyeOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -17,10 +17,15 @@ export default function Index() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showRockerLabels, setShowRockerLabels] = useState(false);
 
+  // Persist label state
+  useEffect(() => {
+    localStorage.setItem('show-rocker-labels', showRockerLabels.toString());
+  }, [showRockerLabels]);
+
   return (
     <>
       <SEOHelmet title="Home" description="yalls.ai - Connecting equestrian communities with profiles, events, and marketplace" />
-      <GlobalHeader />
+      <GlobalHeader showRockerLabels={showRockerLabels} />
       
       {/* Rocker Label Toggle */}
       <Button

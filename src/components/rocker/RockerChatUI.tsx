@@ -17,6 +17,7 @@ import { CapabilityHighlighter } from './CapabilityHighlighter';
 import { useRockerGlobal } from '@/lib/ai/rocker/context';
 import { useSession } from '@/lib/auth/context';
 import { AI_PROFILES } from '@/lib/ai/rocker/config';
+import { Badge } from '@/components/ui/badge';
 
 export function RockerChatUI() {
   const {
@@ -44,7 +45,19 @@ export function RockerChatUI() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [currentSessionId, setCurrentSessionId] = useState<string>();
+  const [showRockerLabels, setShowRockerLabels] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Load label preference
+  useEffect(() => {
+    const checkLabels = () => {
+      const labels = localStorage.getItem('show-rocker-labels') === 'true';
+      setShowRockerLabels(labels);
+    };
+    checkLabels();
+    const interval = setInterval(checkLabels, 500);
+    return () => clearInterval(interval);
+  }, []);
 
   // Load persistent always listening preference and check one-time voice authorization
   useEffect(() => {
@@ -141,21 +154,29 @@ export function RockerChatUI() {
 
   if (!isOpen || isMinimized) {
     return (
-      <Button
-        onClick={() => {
-          setIsOpen(true);
-          setIsMinimized(false);
-        }}
-        size="lg"
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 p-0 overflow-hidden"
-        aria-label={`Open ${aiProfile.name} Chat`}
-      >
-        <img 
-          src={new URL('@/assets/rocker-cowboy-avatar.jpeg', import.meta.url).href}
-          alt={aiProfile.name}
-          className="h-full w-full object-cover"
-        />
-      </Button>
+      <div className="relative">
+        <Button
+          onClick={() => {
+            setIsOpen(true);
+            setIsMinimized(false);
+          }}
+          size="lg"
+          className={`fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 p-0 overflow-hidden ${showRockerLabels ? "ring-4 ring-primary ring-offset-2" : ""}`}
+          aria-label={`Open ${aiProfile.name} Chat`}
+          data-rocker="rocker chat assistant"
+        >
+          <img 
+            src={new URL('@/assets/rocker-cowboy-avatar.jpeg', import.meta.url).href}
+            alt={aiProfile.name}
+            className="h-full w-full object-cover"
+          />
+        </Button>
+        {showRockerLabels && (
+          <Badge className="fixed bottom-24 right-6 z-50 bg-primary/90 pointer-events-none whitespace-nowrap">
+            "rocker chat assistant"
+          </Badge>
+        )}
+      </div>
     );
   }
 
