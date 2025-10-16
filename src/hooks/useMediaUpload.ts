@@ -30,11 +30,81 @@ interface MediaRecord {
   created_at: string;
 }
 
-export const useMediaUpload = () => {
-  const { toast } = useToast();
+export function useMediaUpload() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const { toast } = useToast();
 
+  // Simple upload for posts (direct to storage)
+  const uploadPostMedia = async (file: File): Promise<{ file_url: string } | null> => {
+    try {
+      setUploading(true);
+
+      // Validate file type
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      
+      if (!isImage && !isVideo) {
+        toast({
+          title: 'Invalid file type',
+          description: 'Please upload an image or video file',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      // Validate file size (50MB max)
+      if (file.size > 50 * 1024 * 1024) {
+        toast({
+          title: 'File too large',
+          description: 'Please upload a file smaller than 50MB',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: 'Not authenticated',
+          description: 'Please sign in to upload media',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      // Create unique file path
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const bucket = isImage ? 'post-images' : 'post-videos';
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(data.path);
+
+      return { file_url: publicUrl };
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Upload failed',
+        description: error instanceof Error ? error.message : 'Failed to upload media',
+        variant: 'destructive',
+      });
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Full upload with AI analysis (via edge function)
   const uploadMedia = async (options: UploadOptions): Promise<MediaRecord | null> => {
     setUploading(true);
     setProgress(0);
@@ -76,98 +146,10 @@ export const useMediaUpload = () => {
     }
   };
 
-  const linkMediaToEntity = async (
-    mediaId: string,
-    entityType: 'horse' | 'profile' | 'business' | 'event',
-    entityId: string
-  ) => {
-    try {
-      const { error } = await (supabase as any)
-        .from('media_entities')
-        .insert({
-          media_id: mediaId,
-          entity_type: entityType,
-          entity_id: entityId,
-          confidence: 1.0
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Linked successfully',
-        description: 'Media has been linked to the entity.',
-      });
-    } catch (error) {
-      console.error('Link error:', error);
-      toast({
-        title: 'Link failed',
-        description: 'Failed to link media to entity',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const createHorseFeedPost = async (
-    horseId: string,
-    mediaId: string,
-    caption: string
-  ) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { error } = await (supabase as any)
-        .from('horse_feed')
-        .insert({
-          horse_id: horseId,
-          media_id: mediaId,
-          post_type: 'photo',
-          caption: caption,
-          created_by: user.id
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Posted to feed',
-        description: 'Your post has been added to the horse feed.',
-      });
-    } catch (error) {
-      console.error('Feed post error:', error);
-      toast({
-        title: 'Post failed',
-        description: 'Failed to create feed post',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const getUserMedia = async (limit = 20) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { data, error } = await (supabase as any)
-        .from('media')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) throw error;
-      return data as MediaRecord[];
-    } catch (error) {
-      console.error('Get media error:', error);
-      return [];
-    }
-  };
-
-  return {
+  return { 
+    uploadMedia, 
+    uploadPostMedia,
     uploading,
-    progress,
-    uploadMedia,
-    linkMediaToEntity,
-    createHorseFeedPost,
-    getUserMedia,
+    progress
   };
-};
+}

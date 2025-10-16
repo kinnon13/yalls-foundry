@@ -3,9 +3,13 @@ import { SEOHelmet } from '@/lib/seo/helmet';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { useSession } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
-import { PostFeed } from '@/components/posts/PostFeed';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TikTokFeed } from '@/components/posts/TikTokFeed';
+import { TwitterFeed } from '@/components/posts/TwitterFeed';
+import { LiveFeed } from '@/components/posts/LiveFeed';
 import { CreatePost } from '@/components/posts/CreatePost';
 import { useState } from 'react';
+import { Video, MessageCircle, Radio } from 'lucide-react';
 
 export default function Index() {
   const { session } = useSession();
@@ -18,10 +22,10 @@ export default function Index() {
       <main className="min-h-screen p-6" data-rocker="homepage main feed">
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Header */}
-          <div className="text-center space-y-4 py-12">
-            <h1 className="text-5xl font-bold">yalls.ai</h1>
-            <p className="text-xl text-muted-foreground">
-              Equestrian community platform - Horses, Events, Marketplace
+          <div className="text-center space-y-4 py-8">
+            <h1 className="text-4xl font-bold">yalls.ai</h1>
+            <p className="text-lg text-muted-foreground">
+              Equestrian community platform
             </p>
             {!session && (
               <div className="flex gap-3 justify-center mt-4">
@@ -35,12 +39,39 @@ export default function Index() {
             )}
           </div>
 
-          {/* Community Feed */}
+          {/* Feed Tabs */}
           {session && (
-            <div className="mt-8 space-y-6" data-rocker="community feed section">
-              <h2 className="text-2xl font-bold">Community Feed</h2>
+            <div className="mt-4 space-y-6" data-rocker="community feed section">
               <CreatePost onPostCreated={() => setRefreshKey(prev => prev + 1)} />
-              <PostFeed key={refreshKey} />
+              
+              <Tabs defaultValue="media" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="media" className="gap-2">
+                    <Video className="h-4 w-4" />
+                    Media
+                  </TabsTrigger>
+                  <TabsTrigger value="text" className="gap-2">
+                    <MessageCircle className="h-4 w-4" />
+                    Posts
+                  </TabsTrigger>
+                  <TabsTrigger value="live" className="gap-2">
+                    <Radio className="h-4 w-4" />
+                    Live
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="media" className="mt-6">
+                  <TikTokFeed key={refreshKey} />
+                </TabsContent>
+                
+                <TabsContent value="text" className="mt-6">
+                  <TwitterFeed key={refreshKey} />
+                </TabsContent>
+                
+                <TabsContent value="live" className="mt-6">
+                  <LiveFeed />
+                </TabsContent>
+              </Tabs>
             </div>
           )}
         </div>

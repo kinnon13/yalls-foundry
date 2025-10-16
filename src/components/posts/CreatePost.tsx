@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Send } from 'lucide-react';
+import { Send, Image, Video, X } from 'lucide-react';
 import { resolveTenantId } from '@/lib/tenancy/context';
+import { useMediaUpload } from '@/hooks/useMediaUpload';
 
 interface CreatePostProps {
   onPostCreated?: () => void;
@@ -14,15 +15,35 @@ interface CreatePostProps {
 export function CreatePost({ onPostCreated }: CreatePostProps) {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { uploadPostMedia, uploading } = useMediaUpload();
+
+  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setMediaFile(file);
+      const preview = URL.createObjectURL(file);
+      setMediaPreview(preview);
+    }
+  };
+
+  const removeMedia = () => {
+    if (mediaPreview) URL.revokeObjectURL(mediaPreview);
+    setMediaFile(null);
+    setMediaPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!content.trim()) {
+    if (!content.trim() && !mediaFile) {
       toast({
         title: 'Error',
-        description: 'Post content cannot be empty',
+        description: 'Please add content or media',
         variant: 'destructive',
       });
       return;
@@ -41,13 +62,24 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
         return;
       }
 
+      let mediaUrl = null;
+      let mediaType = 'text';
+
+      if (mediaFile) {
+        const uploadResult = await uploadPostMedia(mediaFile);
+        if (!uploadResult) return;
+        mediaUrl = uploadResult.file_url;
+        mediaType = mediaFile.type.startsWith('image/') ? 'image' : 'video';
+      }
+
       const tenantId = await resolveTenantId(user.id);
       const { error } = await supabase
         .from('posts')
         .insert({
-          body: content,
+          body: content || null,
           author_id: user.id,
-          kind: 'text',
+          kind: mediaType,
+          media: mediaUrl ? [{ url: mediaUrl, type: mediaType }] : [],
           tenant_id: tenantId,
         });
 
@@ -59,6 +91,7 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
       });
 
       setContent('');
+      removeMedia();
       onPostCreated?.();
     } catch (error) {
       console.error('Failed to create post:', error);
@@ -83,16 +116,69 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
             className="min-h-[100px] resize-none"
             data-rocker="post"
             aria-label="Post content"
-            disabled={isSubmitting}
+            disabled={isSubmitting || uploading}
           />
-          <div className="flex justify-end">
+          
+          {mediaPreview && (
+            <div className="relative rounded-lg overflow-hidden">
+              {mediaFile?.type.startsWith('image/') ? (
+                <img src={mediaPreview} alt="Preview" className="w-full max-h-96 object-cover" />
+              ) : (
+                <video src={mediaPreview} controls className="w-full max-h-96" />
+              )}
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute top-2 right-2"
+                onClick={removeMedia}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          <div className="flex justify-between items-center">
+            <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                onChange={handleMediaSelect}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isSubmitting || uploading || !!mediaFile}
+              >
+                <Image className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  if (fileInputRef.current) {
+                    fileInputRef.current.accept = 'video/*';
+                    fileInputRef.current.click();
+                  }
+                }}
+                disabled={isSubmitting || uploading || !!mediaFile}
+              >
+                <Video className="h-4 w-4" />
+              </Button>
+            </div>
+            
             <Button 
               type="submit" 
-              disabled={isSubmitting || !content.trim()}
+              disabled={isSubmitting || uploading || (!content.trim() && !mediaFile)}
               data-rocker="post button"
             >
               <Send className="h-4 w-4 mr-2" />
-              {isSubmitting ? 'Posting...' : 'Post'}
+              {uploading ? 'Uploading...' : isSubmitting ? 'Posting...' : 'Post'}
             </Button>
           </div>
         </form>
