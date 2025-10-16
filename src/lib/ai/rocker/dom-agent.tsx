@@ -38,7 +38,7 @@ async function logActionResult(
     const actorRole = (window as any).__rockerActorRole || 'user';
     const available = getAvailableElements().slice(0, 40);
 
-    // Prepare row for direct insert fallback
+    // Prepare row for edge function (includes actor_role at top-level)
     const insertRow = {
       user_id: uid,
       route,
@@ -61,6 +61,10 @@ async function logActionResult(
       },
     } as const;
 
+    // For direct table insert, actor_role must live under meta (no actor_role column on ai_feedback)
+    const { actor_role, ...directBase } = insertRow as any;
+    const directRow = { ...directBase, meta: { ...(directBase.meta || {}), actor_role } };
+
     // Try edge function first (server-side enrichment + auth validation)
     const { data: fnData, error: fnError } = await supabase.functions.invoke('rocker-telemetry', {
       body: insertRow,
@@ -68,11 +72,9 @@ async function logActionResult(
 
     if (fnError || (fnData && (fnData as any).error)) {
       console.warn('[Learning] Telemetry function error, falling back to direct insert:', fnError || (fnData as any).error);
-      const { error: insertError } = await supabase.from('ai_feedback').insert(insertRow as any);
+      const { error: insertError } = await supabase.from('ai_feedback').insert(directRow as any);
       if (insertError) {
-        console.warn('[Learning] Direct insert failed:', insertError);
-      } else {
-        // Notify realtime listeners (panel) by touching a channel via noop select (optional) or leave to realtime
+        console.error('[Learning] Direct insert failed:', insertError);
       }
     }
   } catch (e) {
