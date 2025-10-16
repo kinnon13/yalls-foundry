@@ -1239,7 +1239,6 @@ export function RockerProvider({ children }: { children: ReactNode }) {
                   title: "Voice activated!",
                   description: `Say 'Hey ${AI_PROFILES[actorRole || 'user'].name}' to start a conversation`,
                 });
-                });
               } catch (error: any) {
                 console.error('[Rocker] Activation failed:', error);
                 if (error?.name === 'NotAllowedError') {
