@@ -31,8 +31,8 @@ const PAGE_CAPABILITIES: Record<string, { description: string; actions: string[]
   '/': {
     description: 'Home feed with composer and quick actions',
     actions: [
-      'Create a post: fill "post field" then click "post button"',
-      'Scan visible elements',
+      'Create a post: use create_post tool (automatically fills field then clicks button)',
+      'Scan visible elements with get_page_elements',
       'Navigate to marketplace, calendar, profile'
     ]
   },

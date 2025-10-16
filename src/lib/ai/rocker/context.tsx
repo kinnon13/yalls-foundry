@@ -682,11 +682,48 @@ export function RockerProvider({ children }: { children: ReactNode }) {
           }
           
           else if (tc.name === 'create_post') {
-            console.log('[Rocker] Post created via tool');
-            toast({
-              title: '📝 Posted!',
-              description: 'Your post has been created successfully',
-            });
+            console.log('[Rocker] Creating post with sequence: fill then click');
+            const content = args.content;
+            
+            // Step 1: Fill the post composer field
+            const fillResult = await executeDOMAction({
+              type: 'fill',
+              targetName: 'post composer',
+              value: content
+            }, currentUserId);
+            
+            if (!fillResult.success) {
+              toast({
+                title: '❌ Failed to fill post',
+                description: fillResult.message,
+                variant: 'destructive',
+              });
+              console.error('[Rocker] Failed to fill post field:', fillResult);
+              continue;
+            }
+            
+            console.log('[Rocker] Post field filled, now clicking post button');
+            
+            // Step 2: Wait a moment for the field to update
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Step 3: Click the post button
+            const clickResult = await executeDOMAction({
+              type: 'click',
+              targetName: 'post button'
+            }, currentUserId);
+            
+            if (clickResult.success) {
+              toast({
+                title: '📝 Posted!',
+                description: 'Your post has been created successfully',
+              });
+            } else {
+              toast({
+                title: '⚠️ Post filled but not submitted',
+                description: 'The content is in the composer. You may need to click Post manually.',
+              });
+            }
           }
           
           else if (tc.name === 'scroll_page') {
