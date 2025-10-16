@@ -359,6 +359,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     }
   }, [isVoiceMode, isAlwaysListening, createVoiceConnection, toast]);
 
+
   // Toggle always listening
   const toggleAlwaysListening = useCallback(async () => {
     console.log('[Rocker] toggleAlwaysListening called', { 

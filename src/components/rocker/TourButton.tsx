@@ -10,12 +10,11 @@ import { useRockerGlobal } from '@/lib/ai/rocker/context';
 import { useToast } from '@/hooks/use-toast';
 
 export function TourButton() {
-  const { sendMessage, setIsOpen } = useRockerGlobal();
   const { toast } = useToast();
 
   const startTour = async () => {
-    setIsOpen(true);
-    await sendMessage('Show me around the platform - give me a complete tour!');
+    // Tell Rocker to start the tour without requiring context hook
+    window.dispatchEvent(new CustomEvent('rocker-start-tour'));
     toast({
       title: 'Tour Started',
       description: 'Rocker will guide you through all features',

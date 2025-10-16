@@ -9,12 +9,18 @@ import { createPortal } from 'react-dom';
 interface LearnModeOverlayProps {
   candidates: HTMLElement[];
   question: string;
-  onAnswer: (confirmed: boolean, element?: HTMLElement) => void;
+  onAnswer: (result: { 
+    action: 'confirm' | 'next' | 'cancel' | 'feedback'; 
+    element?: HTMLElement; 
+    feedbackText?: string; 
+    correctTargetName?: string; 
+  }) => void;
 }
 
 export function LearnModeOverlay({ candidates, question, onAnswer }: LearnModeOverlayProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const [feedback, setFeedback] = useState('');
 
   useEffect(() => {
     setMounted(true);
@@ -23,7 +29,7 @@ export function LearnModeOverlay({ candidates, question, onAnswer }: LearnModeOv
 
   useEffect(() => {
     if (candidates.length === 0) {
-      onAnswer(false);
+      onAnswer({ action: 'cancel' });
       return;
     }
 
@@ -38,7 +44,7 @@ export function LearnModeOverlay({ candidates, question, onAnswer }: LearnModeOv
       
       if (key === 'y' || key === 'enter') {
         e.preventDefault();
-        onAnswer(true, candidates[currentIndex]);
+        onAnswer({ action: 'confirm', element: candidates[currentIndex] });
       } else if (key === 'n' || key === 'arrowright') {
         e.preventDefault();
         setCurrentIndex((i) => (i + 1) % candidates.length);
@@ -47,7 +53,7 @@ export function LearnModeOverlay({ candidates, question, onAnswer }: LearnModeOv
         setCurrentIndex((i) => (i - 1 + candidates.length) % candidates.length);
       } else if (key === 'escape') {
         e.preventDefault();
-        onAnswer(false);
+        onAnswer({ action: 'cancel' });
       }
     };
 
@@ -138,6 +144,43 @@ export function LearnModeOverlay({ candidates, question, onAnswer }: LearnModeOv
             Esc
           </kbd>
           <span style={{ opacity: 0.7 }}>Cancel</span>
+        </div>
+        
+        {/* Free-text feedback */}
+        <div style={{ marginTop: '10px' }}>
+          <div style={{ fontSize: '12px', marginBottom: '6px', opacity: 0.8 }}>
+            Tell Rocker what’s wrong or type the correct element name:
+          </div>
+          <input
+            type="text"
+            value={feedback}
+            onChange={(e) => setFeedback((e.target as HTMLInputElement).value)}
+            placeholder="e.g., Select the form field first, then click Post"
+            style={{
+              width: '100%',
+              padding: '8px 10px',
+              borderRadius: '6px',
+              border: '1px solid hsl(var(--border))',
+              background: 'hsl(var(--background))',
+              color: 'hsl(var(--foreground))',
+              fontSize: '13px'
+            }}
+          />
+          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <button
+              onClick={() => onAnswer({ action: 'feedback', feedbackText: feedback })}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '6px',
+                border: '1px solid hsl(var(--border))',
+                background: 'hsl(var(--secondary))',
+                color: 'hsl(var(--secondary-foreground))',
+                cursor: 'pointer'
+              }}
+            >
+              Submit feedback
+            </button>
+          </div>
         </div>
       </div>
 

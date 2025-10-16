@@ -382,10 +382,11 @@ async function learnSelector(
       container.remove();
     };
     
-    const handleAnswer = async (confirmed: boolean, el?: HTMLElement) => {
+    const handleAnswer = async (result: { action: 'confirm' | 'next' | 'cancel' | 'feedback'; element?: HTMLElement; feedbackText?: string; correctTargetName?: string; }) => {
       cleanup();
       
-      if (confirmed && el) {
+      if (result.action === 'confirm' && result.element) {
+        const el = result.element;
         const selector = stableSelector(el);
         const meta = {
           tag: el.tagName.toLowerCase(),
@@ -413,6 +414,26 @@ async function learnSelector(
         }
         console.log(`[Learn Mode] Confirmed: ${targetName} → ${selector}`);
         resolve(el);
+      } else if (result.action === 'feedback') {
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        if (userId) {
+          await logActionWithScreenshot(
+            'learn_feedback', 
+            targetName, 
+            false, 
+            result.feedbackText || 'User provided feedback', 
+            userId,
+            { route, captureScreenshot: true }
+          );
+          await logTelemetry({ 
+            event_type: 'learn_session', 
+            route, 
+            target: targetName, 
+            metadata: { outcome: 'feedback', text: result.feedbackText || '' }
+          });
+        }
+        console.log(`[Learn Mode] Feedback for ${targetName}:`, result.feedbackText);
+        resolve(null);
       } else {
         const userId = (await supabase.auth.getUser()).data.user?.id;
         if (userId) {
@@ -434,7 +455,7 @@ async function learnSelector(
         console.log(`[Learn Mode] Cancelled for: ${targetName}`);
         resolve(null);
       }
-    };
+    }; 
     
     root.render(
       <LearnModeOverlay
