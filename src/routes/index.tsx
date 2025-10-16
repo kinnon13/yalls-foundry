@@ -9,13 +9,76 @@ import { TwitterFeed } from '@/components/posts/TwitterFeed';
 import { LiveFeed } from '@/components/posts/LiveFeed';
 import { CreatePost } from '@/components/posts/CreatePost';
 import { useState } from 'react';
-import { Video, MessageCircle, Radio, BarChart3 } from 'lucide-react';
+import { Video, MessageCircle, Radio, BarChart3, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export default function Index() {
   const { session } = useSession();
   const [refreshKey, setRefreshKey] = useState(0);
   const { isAdmin } = useAdminCheck();
+  const [showGuide, setShowGuide] = useState(true);
+
+  const navigationFeatures = [
+    {
+      category: "Authentication (Logged Out)",
+      items: [
+        {
+          name: "Get Started Button",
+          action: "Navigate to /signup",
+          rockerId: "sign up homepage",
+          description: "Creates new user account"
+        },
+        {
+          name: "Sign In Button",
+          action: "Navigate to /login",
+          rockerId: "sign in login homepage",
+          description: "Access existing account"
+        }
+      ]
+    },
+    {
+      category: "Admin Features (Admin Only)",
+      items: [
+        {
+          name: "Learning Dashboard",
+          action: "Navigate to /admin/learning",
+          rockerId: "learning dashboard link",
+          description: "View AI learning outcomes, selector memory, and failure analytics"
+        }
+      ]
+    },
+    {
+      category: "Feed Controls (Logged In)",
+      items: [
+        {
+          name: "Create Post",
+          action: "Open post composer",
+          rockerId: "post field",
+          description: "Write and submit new posts to the community"
+        },
+        {
+          name: "Media Tab",
+          action: "Switch to media feed",
+          rockerId: "feed media tab",
+          description: "View TikTok-style video and image posts"
+        },
+        {
+          name: "Posts Tab",
+          action: "Switch to text feed",
+          rockerId: "feed posts tab",
+          description: "View Twitter-style text posts"
+        },
+        {
+          name: "Live Tab",
+          action: "Switch to live feed",
+          rockerId: "feed live tab",
+          description: "View real-time live streams and updates"
+        }
+      ]
+    }
+  ];
 
   return (
     <>
@@ -50,6 +113,88 @@ export default function Index() {
               </div>
             )}
           </div>
+
+          {/* Rocker Navigation Guide */}
+          <Card className="border-primary/20 bg-muted/50">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-primary" />
+                  <CardTitle>Rocker Navigation Guide</CardTitle>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowGuide(!showGuide)}
+                  className="gap-1"
+                >
+                  {showGuide ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  {showGuide ? 'Hide' : 'Show'}
+                </Button>
+              </div>
+              <CardDescription>
+                All interactive elements on this page and how Rocker AI can control them
+              </CardDescription>
+            </CardHeader>
+            
+            {showGuide && (
+              <CardContent className="space-y-6">
+                {navigationFeatures.map((section, idx) => (
+                  <div key={idx} className="space-y-3">
+                    <h3 className="text-sm font-semibold text-primary border-b pb-2">
+                      {section.category}
+                    </h3>
+                    <div className="grid gap-3">
+                      {section.items.map((item, itemIdx) => (
+                        <div 
+                          key={itemIdx} 
+                          className="p-3 rounded-lg border bg-background/50 space-y-2"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="space-y-1 flex-1">
+                              <div className="font-medium">{item.name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {item.description}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2 pt-2 border-t">
+                            <Badge variant="outline" className="gap-1">
+                              <span className="text-xs text-muted-foreground">Action:</span>
+                              <span className="text-xs">{item.action}</span>
+                            </Badge>
+                            <Badge variant="secondary" className="gap-1 font-mono">
+                              <span className="text-xs text-muted-foreground">Rocker ID:</span>
+                              <span className="text-xs">{item.rockerId}</span>
+                            </Badge>
+                          </div>
+                          
+                          <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+                            <strong>Rocker Command Example:</strong> "Click {item.rockerId}" or "Navigate to {item.name}"
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                
+                <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    <Info className="h-4 w-4" />
+                    How Rocker Works
+                  </h4>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Each element has a <code className="bg-muted px-1 rounded">data-rocker</code> attribute</li>
+                    <li>Rocker uses these IDs to find and interact with elements</li>
+                    <li>When Rocker succeeds, it learns and stores the selector for future use</li>
+                    <li>When Rocker fails, it logs the failure to the Learning Dashboard</li>
+                    <li>Admin can view all learning data at <Link to="/admin/learning" className="text-primary hover:underline">/admin/learning</Link></li>
+                  </ul>
+                </div>
+              </CardContent>
+            )}
+          </Card>
 
           {/* Feed Tabs */}
           {session && (
