@@ -55,6 +55,11 @@ export function MemoriesPanel() {
 
   const debouncedSearch = useDebounced(searchQuery, 350);
 
+  // Auto-backfill on first visit
+  useEffect(() => {
+    autoBackfillIfNeeded();
+  }, []);
+
   // Load memories with server-side filtering
   useEffect(() => {
     loadMemories();
@@ -94,6 +99,48 @@ export function MemoriesPanel() {
       if (channel) supabase.removeChannel(channel); 
     };
   }, []);
+
+  async function autoBackfillIfNeeded() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Check if user has any memories
+      const { data: existingMemories, error } = await supabase
+        .from('ai_user_memory')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (error) throw error;
+
+      // Check if user has conversations
+      const { data: conversations, error: convError } = await supabase
+        .from('rocker_conversations')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (convError) throw convError;
+
+      // If no memories but has conversations, auto-backfill
+      if ((!existingMemories || existingMemories.length === 0) && conversations && conversations.length > 0) {
+        toast.info("🧠 Analyzing your past conversations... This will take a moment.");
+
+        // Run backfill in background
+        supabase.functions.invoke('analyze-memories').then(({ data, error }) => {
+          if (error) {
+            console.error('Auto-backfill error:', error);
+          } else if (data?.totalExtracted > 0) {
+            toast.success(`✅ Extracted ${data.totalExtracted} memories! Refreshing...`);
+            setTimeout(() => window.location.reload(), 2000);
+          }
+        });
+      }
+    } catch (e) {
+      console.error('Auto-backfill check error:', e);
+    }
+  }
 
   async function loadNamespaces() {
     try {
@@ -281,7 +328,6 @@ export function MemoriesPanel() {
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
             Namespaces
           </h3>
-          <BackfillMemoriesButton />
         </div>
         <ScrollArea className="h-[calc(100%-2rem)]">
           <div className="space-y-1">
