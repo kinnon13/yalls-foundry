@@ -48,6 +48,7 @@ import { PromotionPanel } from '@/routes/admin/panels/PromotionPanel';
 import AdminRockerPanel from '@/routes/admin/panels/AdminRockerPanel';
 import RockerLearningPanel from '@/routes/admin/panels/RockerLearningPanel';
 import { RockerLabelsPanel } from '@/routes/admin/panels/RockerLabelsPanel';
+import { CapabilityBrowserPanel } from '@/routes/admin/panels/CapabilityBrowserPanel';
 
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -203,6 +204,10 @@ export default function ControlRoom() {
                 <TabsTrigger value="learning" className="gap-2 data-[state=active]:bg-background">
                   <Brain className="h-4 w-4" />
                   <span>Learning</span>
+                </TabsTrigger>
+                <TabsTrigger value="capabilities" className="gap-2 data-[state=active]:bg-background">
+                  <Hammer className="h-4 w-4" />
+                  <span>Capabilities</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -402,6 +407,11 @@ export default function ControlRoom() {
             {/* Learning Tab */}
             <TabsContent value="learning" className="space-y-6">
               <RockerLearningPanel />
+            </TabsContent>
+
+            {/* Capabilities Tab */}
+            <TabsContent value="capabilities" className="space-y-6">
+              <CapabilityBrowserPanel />
             </TabsContent>
           </Tabs>
         </main>

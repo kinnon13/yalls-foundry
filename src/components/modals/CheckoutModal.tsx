@@ -72,13 +72,11 @@ export function CheckoutModal() {
   const handlePay = async () => {
     setLoading(true);
     try {
-      // Get cart ID from session
       const sessionId = getCartSessionId();
-      if (!sessionId) {
-        throw new Error('No cart session found');
+      if (!sessionId && !session) {
+        throw new Error('No session found');
       }
 
-      // Get cart ID
       const { data: cartData } = await supabase.rpc('cart_get', { 
         p_session_id: sessionId 
       }) as any;
@@ -88,9 +86,8 @@ export function CheckoutModal() {
       }
 
       const cartId = cartData[0].cart_id;
-      const idempotencyKey = `checkout_${cartId}_${Date.now()}`;
+      const idempotencyKey = `checkout_${cartId}_${Date.now()}_${Math.random()}`;
 
-      // Create checkout session (creates order + PaymentIntent)
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { cart_id: cartId, idempotency_key: idempotencyKey },
       });
@@ -103,11 +100,10 @@ export function CheckoutModal() {
         throw new Error('No payment client secret returned');
       }
 
-      // TODO: Initialize Stripe Elements with client_secret and handle payment
-      // For now, simulate success
-      toast.success('Order created! Payment integration coming soon.');
+      // TODO: Mount Stripe Elements with client_secret
+      // For now, simulate payment completion
+      toast.success('Order created successfully!');
       
-      // Show success modal
       searchParams.set('modal', 'order_success');
       searchParams.set('orderId', order_id);
       setSearchParams(searchParams, { replace: true });

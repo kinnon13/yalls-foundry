@@ -28,6 +28,8 @@ const Dashboard = lazy(() => import('./routes/dashboard'));
 const queryClient = new QueryClient();
 const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on';
 
+import { CommandPalette } from '@/components/command/CommandPalette';
+
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
@@ -35,6 +37,9 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <RockerProvider>
+              {/* Global Command Palette */}
+              <CommandPalette />
+              
               <RedirectHandler />
               <Routes>
           {/* 7-Route Spine */}

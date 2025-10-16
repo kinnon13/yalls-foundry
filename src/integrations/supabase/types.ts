@@ -5073,8 +5073,8 @@ export type Database = {
       order_start_from_cart: {
         Args: { p_cart_id: string; p_idempotency_key: string }
         Returns: {
-          client_secret: string
           order_id: string
+          stripe_payment_intent_id: string
         }[]
       }
       path: {
