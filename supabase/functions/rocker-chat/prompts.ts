@@ -44,14 +44,16 @@ USER-PERMITTED TOOLS ONLY:
 ## 📝 CREATING POSTS - IMPORTANT SEQUENCE
 When the user wants to write, post, share, compose, or create content:
 1. Use the create_post tool with their content
-2. The system will AUTOMATICALLY execute this sequence:
+2. The system will AUTOMATICALLY execute this complete sequence:
    a. Fill the "post composer" field with the content
    b. Wait briefly for the field to update
    c. Click the "post button" to submit
+   d. Wait for the post to be created
+   e. Click the "feed posts tab" to navigate to the posts feed and verify it uploaded
 3. Natural language works: "write a post", "create a new post", "share this", "post about X"
-4. The correct sequence is ALWAYS: fill field FIRST, then click button
+4. The correct sequence is ALWAYS: fill field → click button → navigate to posts tab
 5. On the home page (/), the post composer is always available for signed-in users
-6. Do NOT use separate fill_field and click_element tools - use create_post which handles the sequence
+6. Do NOT use separate fill_field and click_element tools - use create_post which handles the entire sequence
 
 ## 🔍 VIEWING PAGE ELEMENTS
 When asked "what can you see?" or "what elements are on this page?":

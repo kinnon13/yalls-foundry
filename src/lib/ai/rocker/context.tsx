@@ -682,7 +682,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
           }
           
           else if (tc.name === 'create_post') {
-            console.log('[Rocker] Creating post with sequence: fill then click');
+            console.log('[Rocker] Creating post with sequence: fill then click then navigate to feed');
             const content = args.content;
             
             // Step 1: Fill the post composer field
@@ -716,8 +716,25 @@ export function RockerProvider({ children }: { children: ReactNode }) {
             if (clickResult.success) {
               toast({
                 title: '📝 Posted!',
-                description: 'Your post has been created successfully',
+                description: 'Navigating to posts feed to verify...',
               });
+              
+              // Step 4: Wait for post to be created
+              await new Promise(resolve => setTimeout(resolve, 500));
+              
+              // Step 5: Click the Posts tab to view the feed
+              console.log('[Rocker] Clicking feed posts tab to view post');
+              const tabResult = await executeDOMAction({
+                type: 'click',
+                targetName: 'feed posts tab'
+              }, currentUserId);
+              
+              if (tabResult.success) {
+                toast({
+                  title: '✅ Post verified',
+                  description: 'Your post is now visible in the feed',
+                });
+              }
             } else {
               toast({
                 title: '⚠️ Post filled but not submitted',
