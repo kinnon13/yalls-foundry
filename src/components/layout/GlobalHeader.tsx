@@ -314,7 +314,7 @@ export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalH
                   Sign In
                 </Button>
               </Link>
-              <Link to="/signup">
+              <Link to="/login">
                 <Button 
                   size="sm"
                   data-rocker="sign up nav"

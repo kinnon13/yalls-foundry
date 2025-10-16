@@ -27,7 +27,7 @@ export default function Index() {
             </p>
             {!session && (
               <div className="flex gap-3 justify-center mt-4">
-                <Link to="/signup">
+                <Link to="/login">
                   <Button size="lg">Get Started</Button>
                 </Link>
                 <Link to="/login">

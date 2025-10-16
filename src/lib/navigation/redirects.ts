@@ -10,6 +10,9 @@ export const REDIRECT_RULES: Record<string, string> = {
   '/home': '/',
   '/post-feed': '/',
   
+  // Auth consolidation
+  '/signup': '/login',
+  
   // AI management → dashboard
   '/ai-management': '/dashboard?tab=ai',
   

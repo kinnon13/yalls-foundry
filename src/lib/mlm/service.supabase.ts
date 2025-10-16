@@ -218,7 +218,7 @@ export async function generateReferralCode(): Promise<string> {
  */
 export async function getMyReferralLink(): Promise<string> {
   const code = await generateReferralCode();
-  return `${window.location.origin}/signup?ref=${code}`;
+  return `${window.location.origin}/login?ref=${code}`;
 }
 
 /**

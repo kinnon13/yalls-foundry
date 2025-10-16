@@ -5,6 +5,7 @@
 ### Deleted Routes:
 - `/home` → Now `/` (duplicate removed)
 - `/post-feed` → Now `/` (duplicate removed)
+- `/signup` → Now `/login` (login page handles both login & signup via tabs)
 - `/ai-management` → Now `/dashboard?tab=ai`
 - `/profile` (without ID) → Redirects to user's own profile
 - `/consent` → Consolidated into signup form (single master checkbox)
@@ -29,7 +30,7 @@
 6. `/dashboard`
 7. `/admin/control-room`
 
-Plus auth routes: `/login`, `/signup`
+Plus single auth route: `/login` (handles both login & signup)
 
 **Admin Note**: Admin is already consolidated — only `/admin/control-room` exists as the single admin surface.
 

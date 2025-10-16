@@ -52,7 +52,7 @@ const Index = () => {
         <p className="text-xl text-muted-foreground">Your AI-powered equestrian community</p>
         
         <div className="flex gap-4 justify-center mt-8">
-          <Button onClick={() => navigate('/signup')} size="lg">
+          <Button onClick={() => navigate('/login')} size="lg">
             Create Account
           </Button>
           <Button onClick={() => navigate('/login')} variant="outline" size="lg">

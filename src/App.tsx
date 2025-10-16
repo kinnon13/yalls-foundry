@@ -15,7 +15,6 @@ import { RockerProvider } from '@/lib/ai/rocker/context';
 import Index from "./routes/index";
 import Search from "./routes/search";
 import Login from "./routes/login";
-import Signup from "./routes/signup";
 import Profile from "./routes/profile";
 import ControlRoom from "./routes/admin/control-room";
 import MarketplaceIndex from "./routes/marketplace/index";
@@ -54,9 +53,8 @@ const App = () => (
           />
           <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
 
-          {/* Auth Routes */}
+          {/* Auth Route (handles both login & signup via tabs) */}
           <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
 
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
