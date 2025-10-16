@@ -1605,6 +1605,45 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_events_2025_10_v2: {
+        Row: {
+          anonymous_id: string | null
+          contact_hint: Json | null
+          contact_id: string | null
+          created_at: string
+          id: string
+          props: Json
+          source: string
+          tenant_id: string
+          ts: string
+          type: string
+        }
+        Insert: {
+          anonymous_id?: string | null
+          contact_hint?: Json | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id: string
+          ts?: string
+          type: string
+        }
+        Update: {
+          anonymous_id?: string | null
+          contact_hint?: Json | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id?: string
+          ts?: string
+          type?: string
+        }
+        Relationships: []
+      }
       crm_events_2025_11: {
         Row: {
           contact_hint: Json | null
@@ -1638,6 +1677,45 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_events_2025_11_v2: {
+        Row: {
+          anonymous_id: string | null
+          contact_hint: Json | null
+          contact_id: string | null
+          created_at: string
+          id: string
+          props: Json
+          source: string
+          tenant_id: string
+          ts: string
+          type: string
+        }
+        Insert: {
+          anonymous_id?: string | null
+          contact_hint?: Json | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id: string
+          ts?: string
+          type: string
+        }
+        Update: {
+          anonymous_id?: string | null
+          contact_hint?: Json | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id?: string
+          ts?: string
+          type?: string
+        }
+        Relationships: []
+      }
       crm_events_2025_12: {
         Row: {
           contact_hint: Json | null
@@ -1662,6 +1740,45 @@ export type Database = {
         Update: {
           contact_hint?: Json | null
           contact_id?: string | null
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id?: string
+          ts?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      crm_events_2025_12_v2: {
+        Row: {
+          anonymous_id: string | null
+          contact_hint: Json | null
+          contact_id: string | null
+          created_at: string
+          id: string
+          props: Json
+          source: string
+          tenant_id: string
+          ts: string
+          type: string
+        }
+        Insert: {
+          anonymous_id?: string | null
+          contact_hint?: Json | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id: string
+          ts?: string
+          type: string
+        }
+        Update: {
+          anonymous_id?: string | null
+          contact_hint?: Json | null
+          contact_id?: string | null
+          created_at?: string
           id?: string
           props?: Json
           source?: string
