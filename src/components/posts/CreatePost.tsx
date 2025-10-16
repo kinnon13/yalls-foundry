@@ -114,8 +114,9 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
             onChange={(e) => setContent(e.target.value)}
             placeholder="What's on your mind?"
             className="min-h-[100px] resize-none"
-            data-rocker="post"
-            aria-label="Post content"
+            data-rocker="post field"
+            aria-label="Post field"
+            name="post-content"
             disabled={isSubmitting || uploading}
           />
           
