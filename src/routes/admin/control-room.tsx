@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Shield, TestTube, Code, FileCheck, Activity, 
-  MessageSquare, Settings, Home, Gauge, Search, Upload, Flag, AlertTriangle, TrendingUp, Hammer
+  MessageSquare, Settings, Home, Gauge, Search, Upload, Flag, AlertTriangle, TrendingUp, Hammer, Brain
 } from 'lucide-react';
 import { WithRole } from '@/lib/auth/guards';
 
@@ -35,6 +35,7 @@ import AIAnalyticsPanel from '@/routes/admin/panels/AIAnalyticsPanel';
 import KnowledgeBrowserPanel from '@/routes/admin/panels/KnowledgeBrowserPanel';
 import { Phase2VerificationPanel } from '@/routes/admin/panels/Phase2VerificationPanel';
 import { HardeningVerificationPanel } from '@/routes/admin/panels/HardeningVerificationPanel';
+import { SuperAIPanel } from '@/routes/admin/panels/SuperAIPanel';
 
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('scaling');
@@ -93,7 +94,11 @@ export default function ControlRoom() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Tab Navigation */}
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-16 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-17 lg:w-auto">
+              <TabsTrigger value="super-ai" className="gap-2">
+                <Brain className="h-4 w-4" />
+                <span className="hidden sm:inline">Super AI</span>
+              </TabsTrigger>
               <TabsTrigger value="scaling" className="gap-2">
                 <TrendingUp className="h-4 w-4" />
                 <span className="hidden sm:inline">1B Scale</span>
@@ -159,6 +164,11 @@ export default function ControlRoom() {
                 <span className="hidden sm:inline">Scale</span>
               </TabsTrigger>
             </TabsList>
+
+            {/* Super AI Tab */}
+            <TabsContent value="super-ai" className="space-y-6">
+              <SuperAIPanel />
+            </TabsContent>
 
             {/* Scaling Readiness Tab */}
             <TabsContent value="scaling" className="space-y-6">
@@ -262,7 +272,7 @@ export default function ControlRoom() {
           <div className="mt-12 pt-6 border-t">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div className="p-4 border rounded">
-                <div className="text-2xl font-bold">16</div>
+                <div className="text-2xl font-bold">17</div>
                 <div className="text-xs text-muted-foreground">Admin Panels</div>
               </div>
               <div className="p-4 border rounded bg-success/5">
