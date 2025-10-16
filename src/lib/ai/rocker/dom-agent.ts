@@ -257,7 +257,7 @@ export function findElement(targetName: string): HTMLElement | null {
 // ============= ACTIONS WITH LEARNING =============
 
 export async function clickElement(targetName: string, userId?: string): Promise<{ success: boolean; message: string }> {
-  console.log('[DOM Agent] Click:', targetName);
+  console.log('[DOM Agent] Click:', targetName, 'userId:', userId);
   
   const pastFailures = await getPastFailures('click', userId);
   if (pastFailures.length > 2) {
@@ -303,7 +303,7 @@ export async function clickElement(targetName: string, userId?: string): Promise
 }
 
 export async function fillField(targetName: string, value: string, userId?: string): Promise<{ success: boolean; message: string }> {
-  console.log('[DOM Agent] Fill:', targetName, '=', value);
+  console.log('[DOM Agent] Fill:', targetName, '=', value, 'userId:', userId);
   
   const pastFailures = await getPastFailures('fill', userId);
   if (pastFailures.length > 2) {

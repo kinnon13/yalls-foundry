@@ -2866,6 +2866,33 @@ export type Database = {
           },
         ]
       }
+      post_drafts: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          media_urls: string[] | null
+          user_id: string
+          visibility: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          media_urls?: string[] | null
+          user_id: string
+          visibility?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          media_urls?: string[] | null
+          user_id?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
       post_reshares: {
         Row: {
           commentary: string | null
@@ -2959,8 +2986,10 @@ export type Database = {
           body: string | null
           created_at: string | null
           id: string
+          idempotency_key: string | null
           kind: string
           media: Json | null
+          media_urls: string[] | null
           tenant_id: string
           updated_at: string | null
           visibility: string
@@ -2970,8 +2999,10 @@ export type Database = {
           body?: string | null
           created_at?: string | null
           id?: string
+          idempotency_key?: string | null
           kind: string
           media?: Json | null
+          media_urls?: string[] | null
           tenant_id?: string
           updated_at?: string | null
           visibility?: string
@@ -2981,8 +3012,10 @@ export type Database = {
           body?: string | null
           created_at?: string | null
           id?: string
+          idempotency_key?: string | null
           kind?: string
           media?: Json | null
+          media_urls?: string[] | null
           tenant_id?: string
           updated_at?: string | null
           visibility?: string
@@ -3507,6 +3540,24 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_post_rate_limits: {
+        Row: {
+          post_count: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          post_count?: number
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          post_count?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       geography_columns: {
@@ -3764,6 +3815,14 @@ export type Database = {
       }
       can_view_calendar: {
         Args: { calendar_owner_id: string; viewer_id: string }
+        Returns: boolean
+      }
+      check_voice_post_rate_limit: {
+        Args: {
+          p_max_posts?: number
+          p_user_id: string
+          p_window_seconds?: number
+        }
         Returns: boolean
       }
       claim_entity: {
@@ -4433,6 +4492,15 @@ export type Database = {
       revoke_sessions: {
         Args: { target_user_id?: string }
         Returns: Json
+      }
+      rpc_create_post: {
+        Args: {
+          p_content: string
+          p_idempotency_key: string
+          p_media_urls?: string[]
+          p_visibility?: string
+        }
+        Returns: string
       }
       search_entities: {
         Args: { p_limit?: number; p_query: string; p_tenant_id: string }
