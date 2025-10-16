@@ -5,6 +5,9 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { getBestSelector, upsertSelector, markOutcome, stableSelector } from './memory';
+import { createRoot } from 'react-dom/client';
+import { LearnModeOverlay } from '@/components/rocker/LearnModeOverlay';
 
 // ============= LEARNING INFRASTRUCTURE =============
 
@@ -332,15 +335,88 @@ function getAvailableItemsSnapshot(): string[] {
   }
   return items;
 }
-async function findElementWait(targetName: string, timeoutMs = 7000): Promise<HTMLElement | null> {
+
+/**
+ * Show Learn Mode overlay for user confirmation
+ */
+async function learnSelector(
+  targetName: string, 
+  candidates: HTMLElement[], 
+  route: string
+): Promise<HTMLElement | null> {
+  return new Promise((resolve) => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    
+    const cleanup = () => {
+      root.unmount();
+      container.remove();
+    };
+    
+    const handleAnswer = async (confirmed: boolean, el?: HTMLElement) => {
+      cleanup();
+      
+      if (confirmed && el) {
+        const selector = stableSelector(el);
+        const meta = {
+          tag: el.tagName.toLowerCase(),
+          hasId: !!el.id,
+          hasDataRocker: !!el.getAttribute('data-rocker')
+        };
+        
+        await upsertSelector(route, targetName, selector, meta);
+        console.log(`[Learn Mode] Confirmed: ${targetName} → ${selector}`);
+        resolve(el);
+      } else {
+        console.log(`[Learn Mode] Cancelled for: ${targetName}`);
+        resolve(null);
+      }
+    };
+    
+    root.render(
+      <LearnModeOverlay
+        candidates={candidates}
+        question={`Is this "${targetName}"?`}
+        onAnswer={handleAnswer}
+      />
+    );
+  });
+}
+
+async function findElementWait(
+  targetName: string, 
+  route: string,
+  timeoutMs = 7000
+): Promise<HTMLElement | null> {
+  // 1. Try memory first (fast path)
+  const memory = await getBestSelector(route, targetName);
+  if (memory) {
+    console.log(`[Memory] Using ${memory.source} selector for "${targetName}": ${memory.selector}`);
+    const el = document.querySelector<HTMLElement>(memory.selector);
+    if (el && isVisible(el)) {
+      await markOutcome(route, targetName, true);
+      return el;
+    } else {
+      console.warn(`[Memory] Selector failed: ${memory.selector}`);
+      await markOutcome(route, targetName, false);
+    }
+  }
+  
+  // 2. Try heuristic search with wait loop
   const start = performance.now();
   let lastList: string[] = [];
   while (performance.now() - start < timeoutMs) {
     const hits = collectCandidates(targetName);
-    if (hits.length) return hits[0];
+    if (hits.length) {
+      // If we have candidates, enter Learn Mode
+      const confirmed = await learnSelector(targetName, hits, route);
+      return confirmed;
+    }
     lastList = getAvailableItemsSnapshot();
     await new Promise(r => setTimeout(r, 120));
   }
+  
   console.warn('[Rocker] timeout finding', targetName, 'seen:', lastList);
   return null;
 }
@@ -353,7 +429,8 @@ export async function clickElement(targetName: string, userId?: string): Promise
     console.log(`[Learning] Found ${pastFailures.length} past click failures. Trying alternative approach.`);
   }
   
-  const el = await findElementWait(targetName, 7000) as HTMLElement | null;
+  const route = window.location.pathname;
+  const el = await findElementWait(targetName, route, 7000) as HTMLElement | null;
   if (!el) {
     const result = { 
       success: false, 
@@ -399,7 +476,8 @@ export async function fillField(targetName: string, value: string, userId?: stri
     console.log(`[Learning] Found ${pastFailures.length} past fill failures. Trying alternative.`);
   }
   
-  const elBase = await findElementWait(targetName, 7000) as (HTMLInputElement | HTMLTextAreaElement | HTMLElement | null);
+  const route = window.location.pathname;
+  const elBase = await findElementWait(targetName, route, 7000) as (HTMLInputElement | HTMLTextAreaElement | HTMLElement | null);
   if (!elBase) {
     const t = targetName.toLowerCase();
     if (t.includes('calendar') && t.includes('name') && (window as any).__openCreateCalendar) {

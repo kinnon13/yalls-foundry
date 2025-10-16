@@ -593,6 +593,89 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_selector_catalog: {
+        Row: {
+          id: string
+          meta: Json | null
+          route: string
+          score: number
+          selector: string
+          target_name: string
+          updated_at: string
+          votes: number
+        }
+        Insert: {
+          id?: string
+          meta?: Json | null
+          route: string
+          score?: number
+          selector: string
+          target_name: string
+          updated_at?: string
+          votes?: number
+        }
+        Update: {
+          id?: string
+          meta?: Json | null
+          route?: string
+          score?: number
+          selector?: string
+          target_name?: string
+          updated_at?: string
+          votes?: number
+        }
+        Relationships: []
+      }
+      ai_selector_memory: {
+        Row: {
+          failures: number
+          id: string
+          last_attempt_at: string | null
+          last_success_at: string | null
+          meta: Json | null
+          route: string
+          score: number
+          selector: string
+          successes: number
+          target_name: string
+          user_id: string
+        }
+        Insert: {
+          failures?: number
+          id?: string
+          last_attempt_at?: string | null
+          last_success_at?: string | null
+          meta?: Json | null
+          route: string
+          score?: number
+          selector: string
+          successes?: number
+          target_name: string
+          user_id: string
+        }
+        Update: {
+          failures?: number
+          id?: string
+          last_attempt_at?: string | null
+          last_success_at?: string | null
+          meta?: Json | null
+          route?: string
+          score?: number
+          selector?: string
+          successes?: number
+          target_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_selector_memory_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_sessions: {
         Row: {
           actor_role: string
@@ -3755,6 +3838,31 @@ export type Database = {
       }
       aggregate_user_patterns: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      ai_mem_get: {
+        Args: { p_route: string; p_target: string }
+        Returns: {
+          score: number
+          selector: string
+          source: string
+        }[]
+      }
+      ai_mem_mark: {
+        Args: { p_route: string; p_success: boolean; p_target: string }
+        Returns: undefined
+      }
+      ai_mem_promote: {
+        Args: { p_route: string; p_target: string }
+        Returns: undefined
+      }
+      ai_mem_upsert: {
+        Args: {
+          p_meta?: Json
+          p_route: string
+          p_selector: string
+          p_target: string
+        }
         Returns: undefined
       }
       binary_quantize: {
