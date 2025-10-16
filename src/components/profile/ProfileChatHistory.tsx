@@ -140,9 +140,9 @@ export function ProfileChatHistory() {
   }
 
   function handleOpenSession(sessionId: string) {
-    // Navigate to AI Management page with the session ID
+    // Navigate to dashboard AI tab with the session ID
     localStorage.setItem('rocker-load-session', sessionId);
-    navigate('/ai-management');
+    navigate('/dashboard?tab=ai');
   }
 
   function formatDate(dateString: string) {

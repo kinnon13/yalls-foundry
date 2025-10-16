@@ -24,7 +24,7 @@ export const rockerTools = [
       properties: {
         section: {
           type: "string",
-          enum: ["home", "marketplace", "calendar", "horses", "dashboard", "ai-management", "admin"],
+          enum: ["home", "marketplace", "calendar", "dashboard", "ai-management", "admin"],
           description: "The section to navigate to and explain"
         }
       },

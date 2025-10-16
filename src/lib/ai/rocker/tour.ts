@@ -74,7 +74,7 @@ export const platformTour: TourStop[] = [
     nextPrompt: 'Want to check out the AI management panel?'
   },
   {
-    path: '/ai-management',
+    path: '/dashboard?tab=ai',
     title: 'AI Management',
     description: 'Control what Rocker knows about you and manage AI interactions.',
     highlights: [

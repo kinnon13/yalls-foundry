@@ -195,11 +195,11 @@ export default function Profile() {
                 </div>
                 <div className="flex gap-2 pt-4">
                   <Button onClick={() => navigate('/dashboard')} data-rocker="dashboard profile button" aria-label="Go to Dashboard">Go to Dashboard</Button>
-                  <Button variant="outline" onClick={() => navigate('/calendar')} data-rocker="calendar profile button" aria-label="My Calendar">
+                  <Button variant="outline" onClick={() => navigate('/dashboard?tab=calendar')} data-rocker="calendar profile button" aria-label="My Calendar">
                     <Calendar className="h-4 w-4 mr-2" />
                     My Calendar
                   </Button>
-                  <Button variant="outline" onClick={() => navigate('/ai-management')} data-rocker="ai management button" aria-label="AI Management">
+                  <Button variant="outline" onClick={() => navigate('/dashboard?tab=ai')} data-rocker="ai management button" aria-label="AI Management">
                     <MessageSquare className="h-4 w-4 mr-2" />
                     AI Management
                   </Button>

@@ -640,10 +640,9 @@ export function RockerProvider({ children }: { children: ReactNode }) {
             const tourPaths: Record<string, string> = {
               home: '/',
               marketplace: '/marketplace',
-              calendar: '/calendar',
-              horses: '/horses',
+              calendar: '/dashboard?tab=calendar',
               dashboard: '/dashboard',
-              'ai-management': '/ai-management',
+              'ai-management': '/dashboard?tab=ai',
               admin: '/admin/control-room'
             };
             
