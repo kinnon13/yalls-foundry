@@ -461,13 +461,24 @@ export function RockerProvider({ children }: { children: ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      // Implement knowledge hierarchy:
+      // - user: sees only user conversations
+      // - admin: sees user + admin conversations
+      // - knower: sees ALL conversations
+      let query = supabase
         .from('rocker_conversations')
         .select('role, content, created_at, actor_role')
         .eq('user_id', user.id)
-        .eq('session_id', sessionId)
-        .eq('actor_role', actorRole)
-        .order('created_at', { ascending: true });
+        .eq('session_id', sessionId);
+
+      if (actorRole === 'user') {
+        query = query.eq('actor_role', 'user');
+      } else if (actorRole === 'admin') {
+        query = query.in('actor_role', ['user', 'admin']);
+      }
+      // For 'knower', don't filter by actor_role - see everything
+
+      const { data, error } = await query.order('created_at', { ascending: true });
 
       if (error) throw error;
 
@@ -483,7 +494,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
       console.error('[Rocker] Failed to load conversation', err);
       setError('Failed to load conversation');
     }
-  }, []);
+  }, [actorRole]);
 
   const createNewConversation = useCallback(async (): Promise<string | undefined> => {
     try {

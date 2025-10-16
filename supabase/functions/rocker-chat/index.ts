@@ -62,7 +62,7 @@ serve(async (req) => {
       actor_role === 'knower' ? 'knower' : 'user';
 
     // Build user context from profile, memory, and analytics
-    const userContext = await buildUserContext(supabaseClient, user.id, user.email, currentRoute);
+    const userContext = await buildUserContext(supabaseClient, user.id, user.email, currentRoute, actorRole);
 
     // Add role-specific system message
     const { USER_MODE_NOTICE, ADMIN_MODE_NOTICE, KNOWER_MODE_NOTICE } = await import('./prompts.ts');
@@ -77,26 +77,44 @@ serve(async (req) => {
     let conversationHistory: any[] = [];
     
     if (requestedSessionId) {
-      // Load specific session (all messages) - filtered by actor_role
-      const { data: sessionMessages } = await supabaseClient
+      // Load specific session with knowledge hierarchy:
+      // - user: sees only user messages
+      // - admin: sees user + admin messages  
+      // - knower: sees ALL messages
+      let query = supabaseClient
         .from('rocker_conversations')
         .select('role, content, created_at')
         .eq('user_id', user.id)
-        .eq('session_id', requestedSessionId)
-        .eq('actor_role', actorRole)
-        .order('created_at', { ascending: true });
+        .eq('session_id', requestedSessionId);
+      
+      if (actorRole === 'user') {
+        query = query.eq('actor_role', 'user');
+      } else if (actorRole === 'admin') {
+        query = query.in('actor_role', ['user', 'admin']);
+      }
+      // For 'knower', don't filter - see everything
+      
+      const { data: sessionMessages } = await query.order('created_at', { ascending: true });
       
       conversationHistory = (sessionMessages || []).map((msg: any) => ({
         role: msg.role,
         content: msg.content
       }));
     } else {
-      // Load recent messages for this role only (last 20 for context)
-      const { data: recentConversations } = await supabaseClient
+      // Load recent messages with hierarchy (last 20 for context)
+      let query = supabaseClient
         .from('rocker_conversations')
         .select('role, content')
-        .eq('user_id', user.id)
-        .eq('actor_role', actorRole)
+        .eq('user_id', user.id);
+      
+      if (actorRole === 'user') {
+        query = query.eq('actor_role', 'user');
+      } else if (actorRole === 'admin') {
+        query = query.in('actor_role', ['user', 'admin']);
+      }
+      // For 'knower', don't filter - see everything
+
+      const { data: recentConversations } = await query
         .order('created_at', { ascending: false })
         .limit(20);
 

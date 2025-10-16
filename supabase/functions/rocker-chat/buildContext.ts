@@ -4,12 +4,22 @@ export async function buildUserContext(
   supabaseClient: SupabaseClient,
   userId: string,
   userEmail?: string,
-  currentRoute?: string
+  currentRoute?: string,
+  actorRole?: 'user' | 'admin' | 'knower'
 ): Promise<string> {
   let context = `\n\n**CURRENT USER:**\n- User ID: ${userId}\n- Email: ${userEmail || 'Not provided'}`;
   
   if (currentRoute) {
     context += `\n- Current page route: ${currentRoute}`;
+  }
+  
+  if (actorRole) {
+    context += `\n- AI Role: ${actorRole}`;
+    if (actorRole === 'knower') {
+      context += ' (Super Admin - Full Knowledge Access)';
+    } else if (actorRole === 'admin') {
+      context += ' (Admin - User + Admin Knowledge)';
+    }
   }
 
   try {
