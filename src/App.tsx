@@ -59,6 +59,7 @@ const App = () => (
             <RockerProvider>
               <Routes>
               <Route path="/" element={<Index />} />
+          <Route path="/home" element={<Index />} />
           <Route path="/search" element={<Search />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
