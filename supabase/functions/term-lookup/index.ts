@@ -20,7 +20,8 @@ serve(async (req) => {
   log.startTimer();
 
   try {
-    const { term, action } = await req.json();
+    const body = await req.json();
+    const { term, action, source_type, source_url, title, summary, term_knowledge_id, vote } = body;
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -77,7 +78,6 @@ serve(async (req) => {
 
     // Accept a definition (user-provided or web-sourced)
     if (action === 'accept') {
-      const { source_type, source_url, title, summary } = await req.json();
       
       log.info('Accepting definition', { term });
       
@@ -117,7 +117,6 @@ serve(async (req) => {
 
     // Vote on a term
     if (action === 'vote') {
-      const { term_knowledge_id, vote } = await req.json();
       
       log.info('Voting on term', { term_knowledge_id, vote });
       
