@@ -2319,6 +2319,47 @@ export type Database = {
           },
         ]
       }
+      drafts: {
+        Row: {
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["draft_kind"]
+          payload: Json
+          profile_id: string | null
+          status: Database["public"]["Enums"]["draft_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["draft_kind"]
+          payload?: Json
+          profile_id?: string | null
+          status?: Database["public"]["Enums"]["draft_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["draft_kind"]
+          payload?: Json
+          profile_id?: string | null
+          status?: Database["public"]["Enums"]["draft_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drafts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dynamic_categories: {
         Row: {
           created_at: string
@@ -6088,6 +6129,8 @@ export type Database = {
         | "super_admin"
       calendar_role: "owner" | "writer" | "reader"
       calendar_type: "personal" | "business" | "horse" | "event" | "custom"
+      draft_kind: "post" | "listing" | "event"
+      draft_status: "draft" | "scheduled" | "published"
       entity_type:
         | "profile"
         | "horse"
@@ -6263,6 +6306,8 @@ export const Constants = {
       ],
       calendar_role: ["owner", "writer", "reader"],
       calendar_type: ["personal", "business", "horse", "event", "custom"],
+      draft_kind: ["post", "listing", "event"],
+      draft_status: ["draft", "scheduled", "published"],
       entity_type: [
         "profile",
         "horse",
