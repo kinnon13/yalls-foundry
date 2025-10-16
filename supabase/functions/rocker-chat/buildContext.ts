@@ -26,6 +26,56 @@ const ROUTE_NAMES: Record<string, string> = {
   '/admin/control-room': 'Admin Control Room'
 };
 
+// Page-specific capabilities and known element targets
+const PAGE_CAPABILITIES: Record<string, { description: string; actions: string[] }> = {
+  '/': {
+    description: 'Home feed with composer and quick actions',
+    actions: [
+      'Create a post: fill "post field" then click "post button"',
+      'Scan visible elements',
+      'Navigate to marketplace, calendar, profile'
+    ]
+  },
+  '/marketplace': {
+    description: 'Browse and filter marketplace listings',
+    actions: [
+      'Filter by category',
+      'Open a listing',
+      'Flag content',
+      'Request a new category'
+    ]
+  },
+  '/calendar': {
+    description: 'Personal calendar and events',
+    actions: [
+      'Create an event',
+      'View event details'
+    ]
+  },
+  '/admin/control-room': {
+    description: 'Admin diagnostics and controls',
+    actions: [
+      'Open Learning Dashboard',
+      'Run platform scans'
+    ]
+  }
+};
+
+function getPageCapabilities(route?: string): string | null {
+  if (!route) return null;
+  // Exact match first
+  if (PAGE_CAPABILITIES[route]) {
+    const cap = PAGE_CAPABILITIES[route];
+    return `Capabilities: ${cap.description}. Key actions: ${cap.actions.join('; ')}`;
+  }
+  // Dynamic routes: reuse base path
+  if (route.startsWith('/marketplace/')) return getPageCapabilities('/marketplace');
+  if (route.startsWith('/horses/')) return 'Capabilities: View horse details; open lineage; manage programs (if authorized).';
+  if (route.startsWith('/events/')) return 'Capabilities: View event details; RSVP (if available).';
+  if (route.startsWith('/business/')) return 'Capabilities: Manage business hub or settings depending on subpath.';
+  return null;
+}
+
 function getPageName(route?: string): string {
   if (!route) return 'Unknown Page';
   
@@ -63,6 +113,10 @@ export async function buildUserContext(
     context += `\n- Current page: ${pageName}`;
     if (pageName.includes('Page:')) {
       context += ` (route: ${currentRoute})`;
+    }
+    const pageCaps = getPageCapabilities(currentRoute);
+    if (pageCaps) {
+      context += `\n- ${pageCaps}`;
     }
   }
   
