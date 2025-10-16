@@ -1,5 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
@@ -13,6 +15,12 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const limited = await withRateLimit(req, 'generate-event-form', RateLimits.expensive);
+  if (limited) return limited;
+
+  const log = createLogger('generate-event-form');
+  log.startTimer();
+
   try {
     const { eventRules, formType, existingFields } = await req.json();
 
@@ -20,7 +28,7 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not configured');
     }
 
-    console.log('Generating form for:', { formType, eventRules });
+    log.info('Generating form for event', { formType });
 
     const systemPrompt = `You are an expert at designing equine event entry forms. Generate a structured form schema based on the event rules provided. Return ONLY valid JSON with this structure:
 {
@@ -85,7 +93,7 @@ Make it intuitive and complete.`;
         });
       }
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
+      log.error('OpenAI API error', null, { status: response.status, error: errorText });
       throw new Error('OpenAI API error');
     }
 
@@ -96,7 +104,7 @@ Make it intuitive and complete.`;
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in generate-event-form:', error);
+    log.error('Error generating event form', error);
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

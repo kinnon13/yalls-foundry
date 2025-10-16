@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +12,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const limited = await withRateLimit(req, 'text-to-speech', RateLimits.expensive);
+  if (limited) return limited;
+
+  const log = createLogger('text-to-speech');
+  log.startTimer();
 
   try {
     const { text, voice = 'alloy' } = await req.json();
@@ -39,7 +47,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI TTS error:', errorText);
+      log.error('OpenAI TTS error', null, { error: errorText });
       throw new Error('Failed to generate speech');
     }
 
@@ -64,7 +72,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error in text-to-speech:', error);
+    log.error('Text-to-speech error', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       {

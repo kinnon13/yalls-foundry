@@ -1,6 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +13,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const limited = await withRateLimit(req, 'rocker-proposals', RateLimits.standard);
+  if (limited) return limited;
+
+  const log = createLogger('rocker-proposals');
+  log.startTimer();
 
   try {
     const supabaseClient = createClient(
@@ -35,16 +43,16 @@ serve(async (req) => {
 
     switch (action) {
       case 'create_proposal':
-        return await createProposal(supabaseClient, user.id, params);
+        return await createProposal(supabaseClient, user.id, params, log);
       
       case 'approve_change':
-        return await approveChange(supabaseClient, user.id, params);
+        return await approveChange(supabaseClient, user.id, params, log);
       
       case 'commit_change':
-        return await commitChange(supabaseClient, user.id, params);
+        return await commitChange(supabaseClient, user.id, params, log);
       
       case 'list_proposals':
-        return await listProposals(supabaseClient, user.id, params);
+        return await listProposals(supabaseClient, user.id, params, log);
       
       default:
         return new Response(JSON.stringify({ error: 'Invalid action' }), {
@@ -53,7 +61,7 @@ serve(async (req) => {
         });
     }
   } catch (error) {
-    console.error('Error in rocker-proposals:', error);
+    log.error('Rocker proposals error', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
@@ -62,7 +70,7 @@ serve(async (req) => {
   }
 });
 
-async function createProposal(supabase: any, userId: string, params: any) {
+async function createProposal(supabase: any, userId: string, params: any, log: any) {
   const { tenant_id, target_scope, target_ref, change, approver_policy } = params;
 
   const proposalData = {
@@ -105,7 +113,7 @@ async function createProposal(supabase: any, userId: string, params: any) {
   });
 }
 
-async function approveChange(supabase: any, userId: string, params: any) {
+async function approveChange(supabase: any, userId: string, params: any, log: any) {
   const { proposal_id, decision, reason, role } = params;
 
   // Use atomic RPC to record approval
@@ -132,7 +140,7 @@ async function approveChange(supabase: any, userId: string, params: any) {
     });
 
     if (commitError) {
-      console.error('Commit error:', commitError);
+      log.error('Commit error', commitError);
     }
   }
 
@@ -141,7 +149,7 @@ async function approveChange(supabase: any, userId: string, params: any) {
   });
 }
 
-async function commitChange(supabase: any, userId: string, params: any) {
+async function commitChange(supabase: any, userId: string, params: any, log: any) {
   const { proposal_id } = params;
 
   // Use atomic RPC to commit change
@@ -162,7 +170,7 @@ async function commitChange(supabase: any, userId: string, params: any) {
   });
 }
 
-async function listProposals(supabase: any, userId: string, params: any) {
+async function listProposals(supabase: any, userId: string, params: any, log: any) {
   const { status, limit = 20 } = params;
 
   let query = supabase

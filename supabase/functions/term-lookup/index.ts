@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +12,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const limited = await withRateLimit(req, 'term-lookup', RateLimits.standard);
+  if (limited) return limited;
+
+  const log = createLogger('term-lookup');
+  log.startTimer();
 
   try {
     const { term, action } = await req.json();
@@ -31,7 +39,7 @@ serve(async (req) => {
 
     // Search for term
     if (action === 'search') {
-      console.log('[Term Lookup] Searching for:', term);
+      log.info('Searching for term', { term });
       
       // First check if we already have it
       const { data: existing } = await supabaseClient
@@ -71,7 +79,7 @@ serve(async (req) => {
     if (action === 'accept') {
       const { source_type, source_url, title, summary } = await req.json();
       
-      console.log('[Term Lookup] Accepting definition for:', term);
+      log.info('Accepting definition', { term });
       
       const { data: newTerm, error } = await supabaseClient
         .from('term_knowledge')
@@ -111,7 +119,7 @@ serve(async (req) => {
     if (action === 'vote') {
       const { term_knowledge_id, vote } = await req.json();
       
-      console.log('[Term Lookup] Voting on term:', term_knowledge_id, vote);
+      log.info('Voting on term', { term_knowledge_id, vote });
       
       // Upsert vote
       const { error: voteError } = await supabaseClient
@@ -153,7 +161,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('[Term Lookup] Error:', error);
+    log.error('Term lookup error', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

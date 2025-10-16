@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +12,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const limited = await withRateLimit(req, 'rocker-process-file', RateLimits.expensive);
+  if (limited) return limited;
+
+  const log = createLogger('rocker-process-file');
+  log.startTimer();
 
   try {
     const supabase = createClient(
@@ -29,7 +37,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Processing file: ${file.name}, type: ${fileType}`);
+    log.info('Processing file', { fileName: file.name, fileType });
 
     // Upload to storage first
     const fileName = `${userId}/${Date.now()}_${file.name}`;
@@ -38,7 +46,7 @@ serve(async (req) => {
       .upload(fileName, file);
 
     if (uploadError) {
-      console.error('Upload error:', uploadError);
+      log.error('Upload error', uploadError);
       return new Response(
         JSON.stringify({ error: 'Failed to upload file' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -82,7 +90,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error processing file:', error);
+    log.error('File processing error', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +12,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const limited = await withRateLimit(req, 'kb-related', RateLimits.standard);
+  if (limited) return limited;
+
+  const log = createLogger('kb-related');
+  log.startTimer();
 
   try {
     const url = new URL(req.url);
@@ -33,7 +41,7 @@ serve(async (req) => {
       }
     );
 
-    console.log('[KB Related] Finding related to:', uri);
+    log.info('Finding related items', { uri });
 
     // Get source item embedding
     const { data: sourceItem, error: sourceError } = await supabaseClient
@@ -67,14 +75,14 @@ serve(async (req) => {
     );
 
     if (relatedError) {
-      console.error('[KB Related] Error:', relatedError);
+      log.error('Related items search error', relatedError);
       throw relatedError;
     }
 
     // Filter out source item
     const filtered = related?.filter((item: any) => item.id !== sourceItem.id).slice(0, limit) || [];
 
-    console.log('[KB Related] Found', filtered.length, 'related items');
+    log.info('Related items found', { count: filtered.length });
 
     return new Response(
       JSON.stringify({ 
@@ -85,7 +93,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('[KB Related] Error:', error);
+    log.error('KB related error', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

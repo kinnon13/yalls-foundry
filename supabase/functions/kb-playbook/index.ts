@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +12,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const limited = await withRateLimit(req, 'kb-playbook', RateLimits.standard);
+  if (limited) return limited;
+
+  const log = createLogger('kb-playbook');
+  log.startTimer();
 
   try {
     const url = new URL(req.url);
@@ -35,7 +43,7 @@ serve(async (req) => {
 
     const { data: { user } } = await supabaseClient.auth.getUser();
 
-    console.log('[KB Playbook] Looking for:', intent, 'scope:', scope);
+    log.info('Looking for playbook', { intent, scope });
 
     // Build query with scope precedence: user > site > global
     let query = supabaseClient
@@ -57,12 +65,12 @@ serve(async (req) => {
     const { data: playbook, error } = await query.maybeSingle();
 
     if (error) {
-      console.error('[KB Playbook] Error:', error);
+      log.error('Playbook search error', error);
       throw error;
     }
 
     if (!playbook) {
-      console.log('[KB Playbook] Not found');
+      log.info('Playbook not found', { intent });
       return new Response(
         JSON.stringify({ 
           found: false,
@@ -72,7 +80,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('[KB Playbook] Found:', playbook.id, 'scope:', playbook.scope);
+    log.info('Playbook found', { id: playbook.id, scope: playbook.scope });
 
     return new Response(
       JSON.stringify({ 
@@ -83,7 +91,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('[KB Playbook] Error:', error);
+    log.error('KB playbook error', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

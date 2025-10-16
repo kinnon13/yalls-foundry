@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +12,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const limited = await withRateLimit(req, 'rocker-voice-session', RateLimits.expensive);
+  if (limited) return limited;
+
+  const log = createLogger('rocker-voice-session');
+  log.startTimer();
 
   try {
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
@@ -352,18 +360,18 @@ EXPORTS: export_data, request_category, submit_feedback
 
     if (!response.ok) {
       const error = await response.text();
-      console.error("OpenAI session error:", error);
+      log.error("OpenAI session error", null, { error });
       throw new Error(`Failed to create session: ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log("Session created successfully");
+    log.info("Session created successfully");
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error("Error:", error);
+    log.error("Voice session error", error);
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -7,6 +7,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,13 +20,19 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const limited = await withRateLimit(req, 'generate-suggestions', RateLimits.expensive);
+  if (limited) return limited;
+
+  const log = createLogger('generate-suggestions');
+  log.startTimer();
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
   try {
-    console.log("Generating platform suggestions from corrections and traces");
+    log.info("Generating platform suggestions from corrections and traces");
 
     // Fetch pending corrections
     const { data: corrections, error: correctionsError } = await supabase
@@ -89,7 +97,7 @@ serve(async (req) => {
       });
 
       if (!aiResponse.ok) {
-        console.error("OpenAI error:", await aiResponse.text());
+        log.error("OpenAI error", null, { error: await aiResponse.text() });
         continue;
       }
 
@@ -111,7 +119,7 @@ serve(async (req) => {
         .single();
 
       if (insertError) {
-        console.error("Error inserting suggestion:", insertError);
+        log.error("Error inserting suggestion", insertError);
         continue;
       }
 
@@ -136,7 +144,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Error generating suggestions:", error);
+    log.error("Error generating suggestions", error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),

@@ -7,6 +7,8 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +19,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const limited = await withRateLimit(req, 'moderate-memory', RateLimits.expensive);
+  if (limited) return limited;
+
+  const log = createLogger('moderate-memory');
+  log.startTimer();
 
   try {
     const { content } = await req.json();
@@ -103,7 +111,7 @@ Respond with:
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Lovable AI error:', response.status, errorText);
+      log.error('Lovable AI error', null, { status: response.status, error: errorText });
       
       // Fallback to basic keyword check if AI fails
       const lowerContent = content.toLowerCase();
@@ -142,7 +150,7 @@ Respond with:
     );
 
   } catch (error) {
-    console.error('Moderation error:', error);
+    log.error('Moderation error', error);
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Moderation failed',
