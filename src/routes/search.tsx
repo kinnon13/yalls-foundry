@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { SEOHelmet } from '@/lib/seo/helmet';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search as SearchIcon, Loader2 } from 'lucide-react';
+import { Search as SearchIcon, Loader2, ExternalLink, Flag, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Search() {
@@ -55,12 +55,22 @@ export default function Search() {
 
       if (searchCategory === 'all' || searchCategory === 'events') {
         const { data: events } = await supabase
-          .from('events')
+          .from('calendar_events')
           .select('*')
           .ilike('title', `%${searchQuery}%`)
           .limit(10);
         
         data = [...data, ...(events || []).map(e => ({ ...e, resultType: 'event' }))];
+      }
+
+      if (searchCategory === 'all' || searchCategory === 'users') {
+        const { data: users } = await supabase
+          .from('profiles')
+          .select('*')
+          .ilike('display_name', `%${searchQuery}%`)
+          .limit(10);
+        
+        data = [...data, ...(users || []).map(u => ({ ...u, name: u.display_name, resultType: 'user' }))];
       }
 
       setResults(data);
@@ -132,10 +142,63 @@ export default function Search() {
                             </span>
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="space-y-4">
                           <p className="text-sm text-muted-foreground">
                             {result.description || 'No description available'}
                           </p>
+                          
+                          {/* Action Buttons */}
+                          <div className="flex gap-2">
+                            {(result.resultType === 'horse' || result.resultType === 'business') && (
+                              <>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  asChild
+                                >
+                                  <Link to={`/profile/${result.id}`}>
+                                    <ExternalLink className="h-4 w-4 mr-1" />
+                                    View
+                                  </Link>
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  asChild
+                                >
+                                  <Link to={`/dashboard?tab=profiles&action=claim&id=${result.id}`}>
+                                    <Flag className="h-4 w-4 mr-1" />
+                                    Claim
+                                  </Link>
+                                </Button>
+                              </>
+                            )}
+                            
+                            {result.resultType === 'event' && (
+                              <>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  asChild
+                                >
+                                  <Link to={`/dashboard?tab=calendar&eventId=${result.id}`}>
+                                    <ExternalLink className="h-4 w-4 mr-1" />
+                                    View
+                                  </Link>
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  asChild
+                                >
+                                  <Link to={`/dashboard?tab=calendar&action=add&eventId=${result.id}`}>
+                                    <Calendar className="h-4 w-4 mr-1" />
+                                    Add to Calendar
+                                  </Link>
+                                </Button>
+                              </>
+                            )}
+                          </div>
                         </CardContent>
                       </Card>
                     ))}

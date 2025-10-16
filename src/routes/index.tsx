@@ -5,6 +5,7 @@ import { useSession } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
 import { SmartFeed } from '@/components/posts/SmartFeed';
 import { CreatePost } from '@/components/posts/CreatePost';
+import { UpcomingEventsRow } from '@/components/calendar/UpcomingEventsRow';
 import { useState } from 'react';
 
 export default function Index() {
@@ -40,6 +41,7 @@ export default function Index() {
           {session && (
             <div className="mt-4 space-y-6">
               <CreatePost onPostCreated={() => setRefreshKey(prev => prev + 1)} />
+              <UpcomingEventsRow />
               <SmartFeed key={refreshKey} />
             </div>
           )}

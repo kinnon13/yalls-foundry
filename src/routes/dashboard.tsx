@@ -5,13 +5,14 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   TrendingUp, Users, DollarSign, Award, Building2, User, 
-  BarChart3, Target, ShoppingCart, Calendar as CalendarIcon, Shield, Activity 
+  BarChart3, Target, ShoppingCart, Calendar as CalendarIcon, Shield, Activity, Settings 
 } from 'lucide-react';
 import { useSession } from '@/lib/auth/context';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,10 +30,15 @@ import { SuggestionsPanel } from '@/routes/admin/panels/SuggestionsPanel';
 import { FlagsPanel } from '@/routes/admin/panels/FlagsPanel';
 import { ScaleScorecard } from '@/lib/observability/ScaleScorecard';
 import { BusinessMetrics } from '@/components/business/BusinessMetrics';
+import { CalendarTab } from '@/components/dashboard/CalendarTab';
+import { MLMTab } from '@/components/dashboard/MLMTab';
+import { FeedLayoutSettings } from '@/components/posts/FeedLayoutSettings';
 
 export default function Dashboard() {
   const { session } = useSession();
   const { isAdmin, isLoading: adminCheckLoading } = useAdminCheck();
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'overview';
 
   // Fetch user profile
   const { data: profile } = useQuery({
@@ -174,17 +180,44 @@ export default function Dashboard() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="space-y-4">
+        <Tabs value={activeTab} className="space-y-4">
           <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="businesses">Businesses</TabsTrigger>
-            <TabsTrigger value="profiles">Profiles</TabsTrigger>
-            <TabsTrigger value="network">Network</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="overview" asChild>
+              <Link to="/dashboard?tab=overview">Overview</Link>
+            </TabsTrigger>
+            <TabsTrigger value="businesses" asChild>
+              <Link to="/dashboard?tab=businesses">Businesses</Link>
+            </TabsTrigger>
+            <TabsTrigger value="profiles" asChild>
+              <Link to="/dashboard?tab=profiles">Profiles</Link>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" asChild>
+              <Link to="/dashboard?tab=calendar">
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                Calendar
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="mlm" asChild>
+              <Link to="/dashboard?tab=mlm">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Network
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="settings" asChild>
+              <Link to="/dashboard?tab=settings">
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" asChild>
+              <Link to="/dashboard?tab=analytics">Analytics</Link>
+            </TabsTrigger>
             {isAdmin && !adminCheckLoading && (
-              <TabsTrigger value="control-room">
-                <Shield className="w-4 h-4 mr-2" />
-                Control Room
+              <TabsTrigger value="control-room" asChild>
+                <Link to="/dashboard?tab=control-room">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Control Room
+                </Link>
               </TabsTrigger>
             )}
           </TabsList>
@@ -408,67 +441,27 @@ export default function Dashboard() {
             </Card>
           </TabsContent>
 
-          {/* Network Tab */}
-          <TabsContent value="network" className="space-y-4">
-            {mlmStats ? (
-              <>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Team Size</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold">
-                        {mlmStats.total_downline_count}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {mlmStats.direct_referrals_count} direct referrals
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Personal Volume</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold">
-                        {formatCents(mlmStats.personal_volume_cents)}
-                      </div>
-                      <p className="text-sm text-muted-foreground">This period</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Team Volume</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold">
-                        {formatCents(mlmStats.team_volume_cents)}
-                      </div>
-                      <p className="text-sm text-muted-foreground">Total</p>
-                    </CardContent>
-                  </Card>
-                </div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Full MLM Dashboard</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Button asChild>
-                      <Link to="/mlm/dashboard">View Detailed Network Analytics</Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              </>
-            ) : (
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">
-                    Network features not yet activated for your account
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+          {/* Calendar Tab */}
+          <TabsContent value="calendar" className="space-y-4">
+            <CalendarTab />
+          </TabsContent>
+
+          {/* MLM Tab */}
+          <TabsContent value="mlm" className="space-y-4">
+            <MLMTab />
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Feed Settings</CardTitle>
+                <CardDescription>Customize your feed experience</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FeedLayoutSettings />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Analytics Tab */}

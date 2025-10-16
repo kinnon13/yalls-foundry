@@ -47,6 +47,7 @@ import { AndyPanel } from '@/routes/admin/panels/AndyPanel';
 import { PromotionPanel } from '@/routes/admin/panels/PromotionPanel';
 import AdminRockerPanel from '@/routes/admin/panels/AdminRockerPanel';
 import RockerLearningPanel from '@/routes/admin/panels/RockerLearningPanel';
+import { RockerLabelsPanel } from '@/routes/admin/panels/RockerLabelsPanel';
 
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -313,6 +314,7 @@ export default function ControlRoom() {
             {/* Admin Rocker Tab */}
             <TabsContent value="admin-rocker" className="space-y-6">
               <AdminRockerPanel />
+              <RockerLabelsPanel />
             </TabsContent>
 
             {/* Andy Panel - Only for Super Admins */}
