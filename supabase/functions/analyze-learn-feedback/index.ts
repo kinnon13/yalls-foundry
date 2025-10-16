@@ -36,10 +36,10 @@ serve(async (req) => {
 
     // Fetch feedback events from telemetry for this session
     const { data: feedbackEvents, error: feedbackError } = await supabase
-      .from('rocker_telemetry')
+      .from('ai_feedback')
       .select('*')
       .eq('session_id', sessionId)
-      .in('event_name', ['learn_feedback', 'learn_session', 'learn_cancelled'])
+      .eq('kind', 'dom_action')
       .order('created_at', { ascending: true });
 
     if (feedbackError) throw feedbackError;
@@ -49,13 +49,14 @@ serve(async (req) => {
     const learnings: any[] = [];
 
     for (const event of feedbackEvents || []) {
-      const payload = event.payload || {};
+      const meta = event.meta || {};
+      const feedbackText = event.message || '';
       
-      if (event.event_name === 'learn_feedback' || payload.outcome === 'feedback') {
-        const feedbackText = payload.feedbackText || payload.feedback || '';
-        const route = payload.route || '/';
-        const target = payload.target || '';
-        const attemptedSelector = payload.selector || '';
+      // Only process feedback-type events
+      if (meta.outcome === 'feedback' || event.action === 'learn_feedback') {
+        const route = event.route || '/';
+        const target = event.target || '';
+        const attemptedSelector = meta.selector || '';
 
         // Try to extract a corrected selector or element name
         let correctedTarget = null;

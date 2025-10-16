@@ -21,7 +21,8 @@ async function logActionResult(
   targetName: string,
   success: boolean,
   message: string,
-  userId?: string
+  userId?: string,
+  entityData?: { entityType?: string; entityId?: string; fieldName?: string }
 ) {
   try {
     // Ensure we have a user id; fetch from session if not provided
@@ -49,6 +50,10 @@ async function logActionResult(
           page: route,
           timestamp: new Date().toISOString(),
           available_elements: available,
+          // Track entity information for referencing specific posts/fields
+          entity_type: entityData?.entityType,
+          entity_id: entityData?.entityId,
+          field_name: entityData?.fieldName,
         },
       },
     });
@@ -364,6 +369,47 @@ function collectCandidates(targetName: string) {
   const ranked = rank([...best, ...good]);
   return ranked.filter(el => tokens.some(tok => tokenMatches(el, tok)));
 }
+
+/**
+ * Extract entity metadata from element context
+ * Looks for data attributes, form context, and URL patterns
+ */
+function extractEntityMetadata(el: HTMLElement, targetName: string): { entityType?: string; entityId?: string; fieldName?: string } {
+  const metadata: any = {};
+  
+  // Check for data-entity-* attributes
+  if (el.dataset.entityType) metadata.entityType = el.dataset.entityType;
+  if (el.dataset.entityId) metadata.entityId = el.dataset.entityId;
+  
+  // Infer from element properties
+  const name = el.getAttribute('name');
+  const id = el.getAttribute('id');
+  if (name) metadata.fieldName = name;
+  if (id && !metadata.fieldName) metadata.fieldName = id;
+  
+  // Infer entity type from route or element context
+  const route = window.location.pathname;
+  if (route.includes('/posts')) metadata.entityType = 'post';
+  else if (route.includes('/events')) metadata.entityType = 'event';
+  else if (route.includes('/profile')) metadata.entityType = 'profile';
+  else if (route.includes('/business')) metadata.entityType = 'business';
+  
+  // Check closest form for entity ID
+  const form = el.closest('form');
+  if (form) {
+    const formId = form.dataset.entityId || form.id;
+    if (formId && !metadata.entityId) metadata.entityId = formId;
+  }
+  
+  // Infer from target name
+  if (targetName.toLowerCase().includes('post')) {
+    metadata.entityType = metadata.entityType || 'post';
+    metadata.fieldName = metadata.fieldName || targetName;
+  }
+  
+  return metadata;
+}
+
 function getAvailableItemsSnapshot(): string[] {
   const items: string[] = [];
   for (const root of scopes()) {
@@ -532,7 +578,7 @@ async function findElementWait(
   return null;
 }
 
-export async function clickElement(targetName: string, userId?: string): Promise<{ success: boolean; message: string }> {
+export async function clickElement(targetName: string, userId?: string): Promise<{ success: boolean; message: string; entityData?: any }> {
   console.log('[DOM Agent] Click:', targetName, 'userId:', userId);
   
   const pastFailures = await getPastFailures('click', userId);
@@ -551,6 +597,9 @@ export async function clickElement(targetName: string, userId?: string): Promise
     await markOutcome(route, targetName, false);
     return result;
   }
+  
+  // Extract entity metadata from element or context
+  const entityData = extractEntityMetadata(el, targetName);
   
   el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   try {
@@ -580,12 +629,12 @@ export async function clickElement(targetName: string, userId?: string): Promise
   await upsertSelector(route, targetName, selector, { learned_via: 'click' });
   await markOutcome(route, targetName, true);
   
-  const result = { success: true, message: `Clicked "${targetName}"` };
-  await logActionResult('click', targetName, true, result.message, userId);
+  const result = { success: true, message: `Clicked "${targetName}"`, entityData };
+  await logActionResult('click', targetName, true, result.message, userId, entityData);
   return result;
 }
 
-export async function fillField(targetName: string, value: string, userId?: string): Promise<{ success: boolean; message: string }> {
+export async function fillField(targetName: string, value: string, userId?: string): Promise<{ success: boolean; message: string; entityData?: any }> {
   console.log('[DOM Agent] Fill:', targetName, '=', value, 'userId:', userId);
   
   const pastFailures = await getPastFailures('fill', userId);
@@ -626,6 +675,9 @@ export async function fillField(targetName: string, value: string, userId?: stri
     if (better) el = better as any;
   }
   
+  // Extract entity metadata
+  const entityData = extractEntityMetadata(el as HTMLElement, targetName);
+  
   (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
   (el as HTMLElement).focus();
   if ((el as any).isContentEditable) {
@@ -641,8 +693,8 @@ export async function fillField(targetName: string, value: string, userId?: stri
   await upsertSelector(route, targetName, selector, { learned_via: 'fill' });
   await markOutcome(route, targetName, true);
   
-  const result = { success: true, message: `Filled "${targetName}"` };
-  await logActionResult('fill', targetName, true, result.message, userId);
+  const result = { success: true, message: `Filled "${targetName}"`, entityData };
+  await logActionResult('fill', targetName, true, result.message, userId, entityData);
   
   await storeHypothesis(
     `fill_field_${targetName.toLowerCase().replace(/\s+/g, '_')}`,

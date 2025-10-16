@@ -84,7 +84,7 @@ serve(async (req) => {
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
-    console.error('[rocker-telemetry] error:', msg);
+    log.error('Telemetry error', { error: msg, stack: error instanceof Error ? error.stack : undefined });
     return new Response(JSON.stringify({ ok: false, error: msg }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
