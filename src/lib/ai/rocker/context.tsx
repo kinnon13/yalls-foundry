@@ -1173,9 +1173,12 @@ export function RockerProvider({ children }: { children: ReactNode }) {
         
         setMessages(prev => [...prev, assistantMessage]);
 
-        // Play TTS for Rocker's response if voice is authorized
+        // Play TTS for Rocker's response if voice is authorized AND not in active voice session
+        // (Voice session handles its own audio through OpenAI Realtime API)
         const voiceAuthorized = localStorage.getItem('rocker-voice-authorized');
-        if (voiceAuthorized === 'true' && result.content) {
+        const inVoiceSession = voiceRef.current !== null || voiceStatus !== 'disconnected';
+        
+        if (voiceAuthorized === 'true' && result.content && !inVoiceSession) {
           try {
             const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
               body: { 
