@@ -140,6 +140,7 @@ export function useRocker(mode: 'user' | 'admin' | 'super_admin' = 'user') {
               role: m.role,
               content: m.content
             })),
+            currentRoute: window.location.pathname,
             mode
           }),
           signal: abortControllerRef.current.signal
