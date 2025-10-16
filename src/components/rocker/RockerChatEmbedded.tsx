@@ -145,6 +145,7 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
           onClose={() => {}} // No-op for embedded
           hasMessages={messages.length > 0}
           isLoading={isLoading}
+          actorRole={actorRole}
         />
 
         <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>

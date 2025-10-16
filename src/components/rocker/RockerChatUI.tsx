@@ -34,6 +34,7 @@ export function RockerChatUI() {
     setIsOpen,
     loadConversation,
     createNewConversation,
+    actorRole,
   } = useRockerGlobal();
   
   const { session } = useSession();
@@ -169,20 +170,21 @@ export function RockerChatUI() {
       )}
       
       <div className="flex flex-col flex-1">
-        <ChatHeader
-          showSidebar={showSidebar}
-          onToggleSidebar={() => setShowSidebar(!showSidebar)}
-          isVoiceMode={isVoiceMode}
-          isAlwaysListening={isAlwaysListening}
-          voiceStatus={voiceStatus}
-          onToggleVoiceMode={toggleVoiceMode}
-          onToggleAlwaysListening={toggleAlwaysListening}
-          onClearMessages={clearMessages}
-          onMinimize={() => setIsMinimized(true)}
-          onClose={() => setIsOpen(false)}
-          hasMessages={messages.length > 0}
-          isLoading={isLoading}
-        />
+          <ChatHeader
+            showSidebar={showSidebar}
+            onToggleSidebar={() => setShowSidebar(!showSidebar)}
+            isVoiceMode={isVoiceMode}
+            isAlwaysListening={isAlwaysListening}
+            voiceStatus={voiceStatus}
+            onToggleVoiceMode={toggleVoiceMode}
+            onToggleAlwaysListening={toggleAlwaysListening}
+            onClearMessages={clearMessages}
+            onMinimize={() => setIsMinimized(true)}
+            onClose={() => setIsOpen(false)}
+            hasMessages={messages.length > 0}
+            isLoading={isLoading}
+            actorRole={actorRole}
+          />
 
         <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
           {messages.length === 0 && !isVoiceMode ? (

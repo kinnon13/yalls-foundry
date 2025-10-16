@@ -3,6 +3,7 @@ import { Menu, X, Minus, Trash2, Mic, MicOff, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils';
 import { RockerModeBanner } from './RockerModeBanner';
 import { RockerModeSwitcher } from './RockerModeSwitcher';
+import { AIRole, AI_PROFILES } from '@/lib/ai/rocker/config';
 
 interface ChatHeaderProps {
   showSidebar: boolean;
@@ -17,6 +18,7 @@ interface ChatHeaderProps {
   onClose: () => void;
   hasMessages: boolean;
   isLoading: boolean;
+  actorRole?: AIRole;
 }
 
 function openDebugPanel() {
@@ -44,8 +46,10 @@ export function ChatHeader({
   onMinimize,
   onClose,
   hasMessages,
-  isLoading
+  isLoading,
+  actorRole = 'user'
 }: ChatHeaderProps) {
+  const aiProfile = AI_PROFILES[actorRole];
   return (
     <div className="border-b border-border">
       <div className="flex items-center justify-between p-4">
@@ -60,12 +64,12 @@ export function ChatHeader({
           </Button>
           <img 
             src={new URL('@/assets/rocker-cowboy-avatar.jpeg', import.meta.url).href} 
-            alt="Rocker" 
+            alt={aiProfile.name} 
             className="h-10 w-10 rounded-full object-cover"
           />
           <div>
-            <h3 className="font-semibold">Rocker</h3>
-            <p className="text-xs text-muted-foreground">Your AI sidekick</p>
+            <h3 className="font-semibold">{aiProfile.name}</h3>
+            <p className="text-xs text-muted-foreground">{aiProfile.role}</p>
           </div>
           {isVoiceMode && (
             <span className={cn(

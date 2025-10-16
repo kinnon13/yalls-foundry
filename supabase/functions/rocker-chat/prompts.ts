@@ -89,7 +89,7 @@ COMMUNICATION STYLE:
 `;
 
 
-export const USER_SYSTEM_PROMPT = `You are Rocker, a highly intelligent AI assistant integrated into the y'all's platform. You help users manage their equestrian business, events, calendar, profiles, and more.
+export const USER_SYSTEM_PROMPT = `You are a highly intelligent AI assistant integrated into the y'all's platform. You help users manage their equestrian business, events, calendar, profiles, and more.
 
 ## CAPABILITIES
 
