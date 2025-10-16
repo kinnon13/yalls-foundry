@@ -30,17 +30,11 @@ serve(async (req) => {
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
     if (!stripeKey) {
       throw new Error('STRIPE_SECRET_KEY not configured');
     }
-
-    // Use account default API version (omit apiVersion)
-    const stripe = new Stripe(stripeKey, {
-      httpClient: Stripe.createFetchHttpClient(),
-    });
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Authenticate user
     const authHeader = req.headers.get('Authorization');
@@ -48,8 +42,21 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
+    // Use account default API version (omit apiVersion)
+    const stripe = new Stripe(stripeKey, {
+      httpClient: Stripe.createFetchHttpClient(),
+    });
+
+    // Admin client for privileged operations (bypasses RLS)
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // User-scoped client so auth.uid() works correctly in RPCs
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !user?.email) {
       throw new Error('Authentication failed');
@@ -63,8 +70,8 @@ serve(async (req) => {
 
     log.info('Creating checkout', { cartId: cart_id, userId: user.id });
 
-    // Start order via RPC (validates, creates order + line items)
-    const { data: orderData, error: orderError } = await supabase.rpc('order_start_from_cart', {
+    // Start order via user-scoped RPC so auth.uid() is populated correctly
+    const { data: orderData, error: orderError } = await supabaseUser.rpc('order_start_from_cart', {
       p_cart_id: cart_id,
       p_idempotency_key: idempotency_key,
     });
@@ -81,8 +88,8 @@ serve(async (req) => {
 
     const orderId = orderResult.order_id;
 
-    // Get order details
-    const { data: order, error: fetchError } = await supabase
+    // Get order details using admin client
+    const { data: order, error: fetchError } = await supabaseAdmin
       .from('orders')
       .select('total_cents, email')
       .eq('id', orderId)
@@ -112,8 +119,8 @@ serve(async (req) => {
       }
     );
 
-    // Update order with payment_intent_id
-    await supabase
+    // Update order with payment_intent_id using admin client
+    await supabaseAdmin
       .from('orders')
       .update({ payment_intent_id: paymentIntent.id })
       .eq('id', orderId);
