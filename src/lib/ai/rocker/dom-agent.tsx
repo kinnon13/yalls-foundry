@@ -35,6 +35,7 @@ async function logActionResult(
 
     const route = window.location.pathname;
     const sessionId = (window as any).__rockerSessionId || null;
+    const actorRole = (window as any).__rockerActorRole || 'user';
     const available = getAvailableElements().slice(0, 40);
 
     // Prepare row for direct insert fallback
@@ -46,6 +47,7 @@ async function logActionResult(
       success,
       message,
       session_id: sessionId ?? null,
+      actor_role: actorRole,
       kind: 'dom_action',
       payload: {},
       meta: {
@@ -69,6 +71,8 @@ async function logActionResult(
       const { error: insertError } = await supabase.from('ai_feedback').insert(insertRow as any);
       if (insertError) {
         console.warn('[Learning] Direct insert failed:', insertError);
+      } else {
+        // Notify realtime listeners (panel) by touching a channel via noop select (optional) or leave to realtime
       }
     }
   } catch (e) {

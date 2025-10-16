@@ -41,25 +41,15 @@ export default function RockerLearningPanel() {
   const loadLearningData = async () => {
     setLoading(true);
     try {
-      // Load failures (dom_action with success=false)
-      const { data: failureData } = await supabase
-        .from('ai_feedback')
-        .select('*')
-        .eq('kind', 'dom_action')
-        .eq('success', false)
-        .order('created_at', { ascending: false })
-        .limit(50);
+      // Fetch via secured backend API (edge function)
+      const { data, error } = await supabase.functions.invoke('admin-learning', { body: {} });
+      if (error) throw error;
 
-      setFailures(failureData || []);
+      const failures = (data?.failures ?? []) as any[];
+      const selectors = (data?.selectors ?? []) as any[];
 
-      // Load selector memory
-      const { data: memoryData } = await supabase
-        .from('ai_selector_memory')
-        .select('*')
-        .order('last_attempt_at', { ascending: false })
-        .limit(100);
-
-      setSelectorMemory(memoryData || []);
+      setFailures(failures);
+      setSelectorMemory(selectors);
     } catch (error) {
       console.error('Failed to load learning data:', error);
       toast({
