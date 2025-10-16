@@ -256,6 +256,95 @@ export function findElement(targetName: string): HTMLElement | null {
 
 // ============= ACTIONS WITH LEARNING =============
 
+// Robust element search helpers (normalization + scopes + wait)
+function normalize(s?: string) {
+  return (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+const SYNONYMS: Record<string, string[]> = {
+  'post field': ['post field','post input','composer','compose','status','post'],
+  'post button': ['post button','post','publish','share','submit'],
+};
+function isVisible(el: Element) {
+  const r = (el as HTMLElement).getBoundingClientRect();
+  const cs = window.getComputedStyle(el as Element);
+  return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none';
+}
+function* scopes(): Generator<Document|ShadowRoot> {
+  yield document;
+  for (const el of Array.from(document.querySelectorAll<HTMLElement>('*'))) {
+    const sr = (el as any).shadowRoot as ShadowRoot | null;
+    if (sr) yield sr;
+    if (el.tagName === 'IFRAME') {
+      try {
+        const d = (el as HTMLIFrameElement).contentDocument;
+        if (d) yield d;
+      } catch {}
+    }
+  }
+}
+function tokenMatches(el: Element, token: string) {
+  const t = normalize(token);
+  const rocker = normalize((el as HTMLElement).dataset?.rocker);
+  const aria   = normalize((el as HTMLElement).getAttribute?.('aria-label') || '');
+  const ph     = normalize((el as HTMLElement).getAttribute?.('placeholder') || '');
+  const text   = normalize((el.textContent || '').slice(0, 200));
+  return (
+    rocker === t || rocker.includes(t) ||
+    aria   === t || aria.includes(t)   ||
+    ph     === t || ph.includes(t)     ||
+    text   === t || text.includes(t)
+  );
+}
+function collectCandidates(targetName: string) {
+  const name = normalize(targetName);
+  const tokens = SYNONYMS[name] || [targetName];
+  const fieldSel = 'textarea,input,[contenteditable="true"]';
+  const btnSel   = 'button,[role="button"],a';
+  const best: HTMLElement[] = [];
+  const good: HTMLElement[] = [];
+  for (const root of scopes()) {
+    best.push(
+      ...Array.from(root.querySelectorAll<HTMLElement>('[data-rocker],[aria-label]'))
+            .filter(isVisible)
+    );
+    good.push(
+      ...Array.from(root.querySelectorAll<HTMLElement>(`${fieldSel},${btnSel}`))
+            .filter(isVisible)
+    );
+  }
+  const rank = (els: HTMLElement[]) => {
+    const fields = els.filter(el => el.matches('textarea,input,[contenteditable="true"]'));
+    const buttons = els.filter(el => el.matches('button,[role="button"],a'));
+    return name.includes('field') ? [...fields, ...buttons] : [...buttons, ...fields];
+  };
+  const ranked = rank([...best, ...good]);
+  return ranked.filter(el => tokens.some(tok => tokenMatches(el, tok)));
+}
+function getAvailableItemsSnapshot(): string[] {
+  const items: string[] = [];
+  for (const root of scopes()) {
+    for (const el of Array.from(root.querySelectorAll<HTMLElement>('[data-rocker],[aria-label],button,input,textarea,[contenteditable="true"]'))) {
+      if (!isVisible(el)) continue;
+      const label = el.dataset?.rocker || el.getAttribute('aria-label') || el.tagName.toLowerCase();
+      items.push(label);
+      if (items.length > 40) break;
+    }
+  }
+  return items;
+}
+async function findElementWait(targetName: string, timeoutMs = 7000): Promise<HTMLElement | null> {
+  const start = performance.now();
+  let lastList: string[] = [];
+  while (performance.now() - start < timeoutMs) {
+    const hits = collectCandidates(targetName);
+    if (hits.length) return hits[0];
+    lastList = getAvailableItemsSnapshot();
+    await new Promise(r => setTimeout(r, 120));
+  }
+  console.warn('[Rocker] timeout finding', targetName, 'seen:', lastList);
+  return null;
+}
+
 export async function clickElement(targetName: string, userId?: string): Promise<{ success: boolean; message: string }> {
   console.log('[DOM Agent] Click:', targetName, 'userId:', userId);
   
@@ -264,19 +353,11 @@ export async function clickElement(targetName: string, userId?: string): Promise
     console.log(`[Learning] Found ${pastFailures.length} past click failures. Trying alternative approach.`);
   }
   
-  let el = findElement(targetName);
-  if (!el) {
-    // Retry for a short period to account for navigation/render delays
-    const start = Date.now();
-    while (!el && Date.now() - start < 2000) {
-      await new Promise((r) => setTimeout(r, 120));
-      el = findElement(targetName);
-    }
-  }
+  const el = await findElementWait(targetName, 7000) as HTMLElement | null;
   if (!el) {
     const result = { 
       success: false, 
-      message: `Could not find "${targetName}". Available buttons: ${getAvailableButtons().join(', ')}` 
+      message: `Could not find "${targetName}". Available: ${getAvailableItemsSnapshot().join(', ')}` 
     };
     await logActionResult('click', targetName, false, result.message, userId);
     return result;
@@ -318,16 +399,8 @@ export async function fillField(targetName: string, value: string, userId?: stri
     console.log(`[Learning] Found ${pastFailures.length} past fill failures. Trying alternative.`);
   }
   
-  let el = findElement(targetName) as HTMLInputElement | HTMLTextAreaElement | null;
-  if (!el) {
-    // Retry for a short period to account for navigation/render delays
-    const start = Date.now();
-    while (!el && Date.now() - start < 2000) {
-      await new Promise((r) => setTimeout(r, 120));
-      el = findElement(targetName) as HTMLInputElement | HTMLTextAreaElement | null;
-    }
-  }
-  if (!el) {
+  const elBase = await findElementWait(targetName, 7000) as (HTMLInputElement | HTMLTextAreaElement | HTMLElement | null);
+  if (!elBase) {
     const t = targetName.toLowerCase();
     if (t.includes('calendar') && t.includes('name') && (window as any).__openCreateCalendar) {
       try { (window as any).__openCreateCalendar(); } catch {}
@@ -344,11 +417,12 @@ export async function fillField(targetName: string, value: string, userId?: stri
     }
     const result = { 
       success: false, 
-      message: `Could not find field "${targetName}". Available fields: ${getAvailableFields().join(', ')}` 
+      message: `Could not find field "${targetName}". Available fields: ${getAvailableItemsSnapshot().join(', ')}` 
     };
     await logActionResult('fill', targetName, false, result.message, userId);
     return result;
   }
+  let el = elBase as any;
   // If the found element isn't a field, try to locate a better match among inputs/textareas
   if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement) && !(el as any).isContentEditable) {
     const candidates = Array.from(document.querySelectorAll('textarea, input, [contenteditable="true"]')) as HTMLElement[];
@@ -370,7 +444,7 @@ export async function fillField(targetName: string, value: string, userId?: stri
   
   await storeHypothesis(
     `fill_field_${targetName.toLowerCase().replace(/\s+/g, '_')}`,
-    { selector: el.getAttribute('data-rocker') || el.id || el.name },
+    { selector: (el as HTMLElement).getAttribute('data-rocker') || (el as any).id || (el as any).name },
     { action: 'fill', target: targetName, timestamp: new Date().toISOString() },
     userId
   );

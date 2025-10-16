@@ -25,7 +25,7 @@ async function ensureComposer(userId?: string) {
   }
   // Try clicking an opener if present
   document.querySelector<HTMLElement>('[data-rocker="open post composer"]')?.click();
-  // Wait for hydration
+  // Wait for composer mount (longer window for hydration)
   await waitForElementByName('post field', 7000);
 }
 

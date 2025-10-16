@@ -110,6 +110,7 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
+            id="composer"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="What's on your mind?"
@@ -177,6 +178,7 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
               type="submit" 
               disabled={isSubmitting || uploading || (!content.trim() && !mediaFile)}
               data-rocker="post button"
+              aria-label="Post button"
             >
               <Send className="h-4 w-4 mr-2" />
               {uploading ? 'Uploading...' : isSubmitting ? 'Posting...' : 'Post'}
