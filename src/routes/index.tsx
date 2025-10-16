@@ -8,6 +8,9 @@ import { CreatePost } from '@/components/posts/CreatePost';
 import { UpcomingEventsRow } from '@/components/calendar/UpcomingEventsRow';
 import { CreateModalRouter } from '@/components/modals/CreateModalRouter';
 import { EventDetailModal } from '@/components/modals/EventDetailModal';
+import { CartModal } from '@/components/modals/CartModal';
+import { CheckoutModal } from '@/components/modals/CheckoutModal';
+import { OrderSuccessModal } from '@/components/modals/OrderSuccessModal';
 import { useState } from 'react';
 
 export default function Index() {
@@ -20,6 +23,9 @@ export default function Index() {
       <GlobalHeader />
       <CreateModalRouter />
       <EventDetailModal />
+      <CartModal />
+      <CheckoutModal />
+      <OrderSuccessModal />
       
       <main className="min-h-screen p-6">
         <div className="max-w-6xl mx-auto space-y-8">

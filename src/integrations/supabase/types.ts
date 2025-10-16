@@ -2813,6 +2813,24 @@ export type Database = {
           },
         ]
       }
+      idempotency_keys: {
+        Row: {
+          created_at: string
+          key: string
+          scope: string
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          scope: string
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          scope?: string
+        }
+        Relationships: []
+      }
       idempotency_log: {
         Row: {
           created_at: string
@@ -2934,6 +2952,41 @@ export type Database = {
           version?: number
         }
         Relationships: []
+      }
+      ledger_entries: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          notes: string | null
+          order_id: string
+          type: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id: string
+          type: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_entries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       live_streams: {
         Row: {
@@ -3153,6 +3206,103 @@ export type Database = {
           },
         ]
       }
+      order_line_items: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          order_id: string
+          qty: number
+          unit_price_cents: number
+          variant: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          order_id: string
+          qty: number
+          unit_price_cents: number
+          variant?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          order_id?: string
+          qty?: number
+          unit_price_cents?: number
+          variant?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_line_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          cart_id: string | null
+          created_at: string
+          currency: string
+          email: string
+          id: string
+          payment_intent_id: string | null
+          shipping_address: Json | null
+          shipping_cents: number
+          status: string
+          subtotal_cents: number
+          tax_cents: number
+          total_cents: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          cart_id?: string | null
+          created_at?: string
+          currency?: string
+          email: string
+          id?: string
+          payment_intent_id?: string | null
+          shipping_address?: Json | null
+          shipping_cents?: number
+          status?: string
+          subtotal_cents?: number
+          tax_cents?: number
+          total_cents?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          cart_id?: string | null
+          created_at?: string
+          currency?: string
+          email?: string
+          id?: string
+          payment_intent_id?: string | null
+          shipping_address?: Json | null
+          shipping_cents?: number
+          status?: string
+          subtotal_cents?: number
+          tax_cents?: number
+          total_cents?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_cart_id_fkey"
+            columns: ["cart_id"]
+            isOneToOne: false
+            referencedRelation: "shopping_carts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outbox: {
         Row: {
           attempts: number
@@ -3185,6 +3335,47 @@ export type Database = {
           topic?: string
         }
         Relationships: []
+      }
+      payments: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          intent_id: string
+          order_id: string
+          provider: string
+          raw: Json | null
+          status: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          intent_id: string
+          order_id: string
+          provider?: string
+          raw?: Json | null
+          status: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          intent_id?: string
+          order_id?: string
+          provider?: string
+          raw?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       playbooks: {
         Row: {
@@ -3585,6 +3776,71 @@ export type Database = {
           settled_at?: string | null
           status?: string
           total_amount_cents?: number
+        }
+        Relationships: []
+      }
+      shopping_cart_items: {
+        Row: {
+          cart_id: string
+          created_at: string
+          id: string
+          listing_id: string
+          price_cents: number
+          qty: number
+          variant: Json | null
+        }
+        Insert: {
+          cart_id: string
+          created_at?: string
+          id?: string
+          listing_id: string
+          price_cents: number
+          qty: number
+          variant?: Json | null
+        }
+        Update: {
+          cart_id?: string
+          created_at?: string
+          id?: string
+          listing_id?: string
+          price_cents?: number
+          qty?: number
+          variant?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_cart_items_cart_id_fkey"
+            columns: ["cart_id"]
+            isOneToOne: false
+            referencedRelation: "shopping_carts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopping_carts: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          session_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -4287,6 +4543,25 @@ export type Database = {
         Args: { calendar_owner_id: string; viewer_id: string }
         Returns: boolean
       }
+      cart_get: {
+        Args: { p_session_id?: string }
+        Returns: {
+          cart_id: string
+          item_id: string
+          listing_id: string
+          price_cents: number
+          qty: number
+          variant: Json
+        }[]
+      }
+      cart_merge_guest_to_user: {
+        Args: { p_session_id: string }
+        Returns: undefined
+      }
+      cart_upsert_item: {
+        Args: { p_listing_id: string; p_qty: number; p_session_id?: string }
+        Returns: string
+      }
       check_voice_post_rate_limit: {
         Args: {
           p_max_posts?: number
@@ -4790,6 +5065,13 @@ export type Database = {
       needs_kyc: {
         Args: { _business_id: string }
         Returns: boolean
+      }
+      order_start_from_cart: {
+        Args: { p_cart_id: string; p_idempotency_key: string }
+        Returns: {
+          client_secret: string
+          order_id: string
+        }[]
       }
       path: {
         Args: { "": unknown }
