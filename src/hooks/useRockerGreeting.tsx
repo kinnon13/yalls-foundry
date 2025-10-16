@@ -14,6 +14,10 @@ export const useRockerGreeting = (shouldGreet: boolean) => {
 
       hasGreeted.current = true;
       
+      // Skip greeting TTS if an active voice session is speaking
+      const voiceActive = (window as any).__rockerVoiceActive === true || localStorage.getItem('rocker-voice-active') === 'true';
+      if (voiceActive) return;
+      
       try {
         const { data, error } = await supabase.functions.invoke('text-to-speech', {
           body: { 

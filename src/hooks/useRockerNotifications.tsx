@@ -27,10 +27,10 @@ export const useRockerNotifications = (userId: string | undefined) => {
           const notifPayload = notification.payload || {};
           const metadata = notifPayload.metadata || {};
 
-          // Check if this should trigger TTS
-          if (metadata.should_speak && notifPayload.tts_message) {
+          // Check if this should trigger TTS (skip if voice session is active)
+          const voiceActive = (window as any).__rockerVoiceActive === true || localStorage.getItem('rocker-voice-active') === 'true';
+          if (metadata.should_speak && notifPayload.tts_message && !voiceActive) {
             console.log('[Rocker Notifications] Playing TTS:', notifPayload.tts_message);
-            
             try {
               const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
                 body: { 

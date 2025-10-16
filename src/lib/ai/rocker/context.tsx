@@ -458,6 +458,13 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     }
   }, [isAlwaysListening, createVoiceConnection, toast]);
 
+  // Expose voice active status globally for other modules to avoid double TTS
+  useEffect(() => {
+    const active = voiceStatus === 'connected';
+    try { localStorage.setItem('rocker-voice-active', active ? 'true' : 'false'); } catch {}
+    (window as any).__rockerVoiceActive = active;
+  }, [voiceStatus]);
+
   // Load an existing conversation into UI
   const loadConversation = useCallback(async (sessionId: string) => {
     try {
