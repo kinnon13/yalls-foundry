@@ -4364,7 +4364,9 @@ export type Database = {
         Returns: boolean
       }
       has_role: {
-        Args: { _role: string; _user_id: string }
+        Args:
+          | { _role: Database["public"]["Enums"]["app_role"]; _user_id: string }
+          | { _role: string; _user_id: string }
         Returns: boolean
       }
       has_site_opt_in: {
@@ -4388,11 +4390,15 @@ export type Database = {
         Returns: unknown
       }
       is_admin: {
-        Args: { p_user: string }
+        Args: { _user_id: string }
         Returns: boolean
       }
       is_biz_member: {
         Args: { _business_id: string; _min_role?: string; _user_id: string }
+        Returns: boolean
+      }
+      is_super_admin: {
+        Args: { _user_id: string }
         Returns: boolean
       }
       ivfflat_bit_support: {
@@ -5827,6 +5833,7 @@ export type Database = {
         | "breeder"
         | "owner"
         | "guest"
+        | "super_admin"
       calendar_role: "owner" | "writer" | "reader"
       calendar_type: "personal" | "business" | "horse" | "event" | "custom"
       entity_type:
@@ -6000,6 +6007,7 @@ export const Constants = {
         "breeder",
         "owner",
         "guest",
+        "super_admin",
       ],
       calendar_role: ["owner", "writer", "reader"],
       calendar_type: ["personal", "business", "horse", "event", "custom"],

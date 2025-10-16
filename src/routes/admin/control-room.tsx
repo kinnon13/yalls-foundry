@@ -41,6 +41,7 @@ import KnowledgeBrowserPanel from '@/routes/admin/panels/KnowledgeBrowserPanel';
 import { Phase2VerificationPanel } from '@/routes/admin/panels/Phase2VerificationPanel';
 import { HardeningVerificationPanel } from '@/routes/admin/panels/HardeningVerificationPanel';
 import { SuperAIPanel } from '@/routes/admin/panels/SuperAIPanel';
+import { RoleManagementPanel } from '@/routes/admin/panels/RoleManagementPanel';
 
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -161,6 +162,10 @@ export default function ControlRoom() {
                 <TabsTrigger value="flags" className="gap-2 data-[state=active]:bg-background">
                   <Flag className="h-4 w-4" />
                   <span>Feature Flags</span>
+                </TabsTrigger>
+                <TabsTrigger value="roles" className="gap-2 data-[state=active]:bg-background">
+                  <Shield className="h-4 w-4" />
+                  <span>Roles</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -335,6 +340,11 @@ export default function ControlRoom() {
             <TabsContent value="moderator" className="space-y-6">
               <ModeratorConsole />
               <EntitySearchPanel />
+            </TabsContent>
+
+            {/* Roles Tab */}
+            <TabsContent value="roles" className="space-y-6">
+              <RoleManagementPanel />
             </TabsContent>
           </Tabs>
         </main>
