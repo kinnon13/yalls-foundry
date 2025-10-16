@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Settings, Lock } from 'lucide-react';
-import { RockerChat } from '@/components/rocker/RockerChat';
+import { RockerChatEmbedded } from '@/components/rocker/RockerChatEmbedded';
 
 export default function AdminRockerPanel() {
   return (
@@ -29,7 +29,7 @@ export default function AdminRockerPanel() {
           </div>
           
           <div className="h-[600px]">
-            <RockerChat actorRole="admin" />
+            <RockerChatEmbedded actorRole="admin" />
           </div>
         </CardContent>
       </Card>

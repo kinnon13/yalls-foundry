@@ -12,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, User, MessageSquare, Brain, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { RockerChat } from '@/components/rocker/RockerChat';
+import { RockerChatEmbedded } from '@/components/rocker/RockerChatEmbedded';
 
 export function AndyPanel() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,7 +96,7 @@ export function AndyPanel() {
               </div>
               
               <div className="h-[600px]">
-                <RockerChat actorRole="knower" />
+                <RockerChatEmbedded actorRole="knower" />
               </div>
             </TabsContent>
 

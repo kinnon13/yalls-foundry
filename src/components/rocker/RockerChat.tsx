@@ -8,13 +8,14 @@ interface RockerChatProps {
 }
 
 export function RockerChat({ actorRole }: RockerChatProps = {}) {
-  const { setActorRole } = useRockerGlobal();
+  const { setActorRole, setIsOpen } = useRockerGlobal();
   
   useEffect(() => {
     if (actorRole) {
       setActorRole(actorRole);
+      setIsOpen(true); // Auto-open for specific roles
     }
-  }, [actorRole, setActorRole]);
+  }, [actorRole, setActorRole, setIsOpen]);
   
   return <RockerChatUI />;
 }
