@@ -5,17 +5,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { SEOHelmet } from '@/lib/seo/helmet';
 
 export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [consentAccepted, setConsentAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!consentAccepted) {
+      toast.error('Please accept the Terms & Privacy Policy to continue');
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -78,7 +86,24 @@ export default function Signup() {
                   Password must be at least 8 characters with 1 uppercase letter and 1 number
                 </p>
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
+              
+              <div className="flex items-start space-x-3 p-4 border rounded-lg bg-muted/5">
+                <Checkbox
+                  id="consent"
+                  checked={consentAccepted}
+                  onCheckedChange={(checked) => setConsentAccepted(checked as boolean)}
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="consent" className="font-medium cursor-pointer text-sm leading-tight">
+                    I agree to the Terms of Service, Privacy Policy, and allow platform communications (SMS, email, push notifications) and AI features
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    You can change these preferences anytime in Settings → Privacy
+                  </p>
+                </div>
+              </div>
+              
+              <Button type="submit" className="w-full" disabled={loading || !consentAccepted}>
                 {loading ? 'Creating account...' : 'Sign Up'}
               </Button>
             </form>

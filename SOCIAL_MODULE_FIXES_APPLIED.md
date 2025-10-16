@@ -7,6 +7,7 @@
 - `/post-feed` → Now `/` (duplicate removed)
 - `/ai-management` → Now `/dashboard?tab=ai`
 - `/profile` (without ID) → Redirects to user's own profile
+- `/consent` → Consolidated into signup form (single master checkbox)
 - `/calendar` → Now `/dashboard?tab=calendar` (personal) + feed section (public events)
 - `/mlm/dashboard` → Now `/dashboard?tab=mlm` (private)
 - `/mlm/tree` → Now `/dashboard?tab=mlm` (private)
@@ -28,7 +29,9 @@
 6. `/dashboard`
 7. `/admin/control-room`
 
-Plus auth routes: `/login`, `/signup`, `/consent`
+Plus auth routes: `/login`, `/signup`
+
+**Admin Note**: Admin is already consolidated — only `/admin/control-room` exists as the single admin surface.
 
 ## Feature Changes - ALL COMPLETE ✅
 
@@ -50,6 +53,13 @@ Plus auth routes: `/login`, `/signup`, `/consent`
 ### ✅ Admin Control Room:
 - **Rocker Labels Panel**: Toggle debug labels (admin-only)
 - Integrated into Admin Rocker tab
+- **Single Admin Surface**: Only `/admin/control-room` exists (already consolidated)
+
+### ✅ Consent Simplified:
+- **Master Checkbox**: Single consent checkbox in signup form
+- **Covers All**: Terms, Privacy, SMS, Email, Push, AI features in one agreement
+- **User-Friendly**: Reduces signup friction, settings changeable later in Settings → Privacy
+- **No Separate Page**: `/consent` route removed, integrated into signup
 
 ## Feature Changes
 
