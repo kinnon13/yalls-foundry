@@ -441,5 +441,60 @@ export const TOOL_DEFINITIONS = [
         }
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_user_conversations",
+      description: "Search and analyze conversations from users on the platform. Use to answer questions like 'what did you learn about user X today?' or 'what are people saying about Y?'. Respects privacy - regular admins can only see non-private conversations.",
+      parameters: {
+        type: "object",
+        properties: {
+          user_id: {
+            type: "string",
+            description: "Specific user ID to search conversations for (optional)"
+          },
+          query: {
+            type: "string",
+            description: "Search query for conversation content (optional)"
+          },
+          time_range: {
+            type: "string",
+            enum: ["today", "this_week", "this_month", "all_time"],
+            description: "Time range to search (default: today)"
+          },
+          limit: {
+            type: "number",
+            description: "Maximum number of conversations to return (default: 10)"
+          }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "analyze_conversation_insights",
+      description: "Get aggregated insights and learnings from conversations. Use to answer questions like 'what are the main topics people discuss?' or 'what patterns do you see?'. Returns anonymized insights.",
+      parameters: {
+        type: "object",
+        properties: {
+          topic: {
+            type: "string",
+            description: "Specific topic to analyze (optional)"
+          },
+          time_range: {
+            type: "string",
+            enum: ["today", "this_week", "this_month", "all_time"],
+            description: "Time range to analyze (default: this_week)"
+          },
+          insight_type: {
+            type: "string",
+            enum: ["topics", "trends", "user_interests", "common_questions", "all"],
+            description: "Type of insights to return (default: all)"
+          }
+        }
+      }
+    }
   }
 ];

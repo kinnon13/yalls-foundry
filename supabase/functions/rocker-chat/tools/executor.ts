@@ -110,7 +110,9 @@ export async function executeTool(
     'aggregate_patterns',
     'analyze_trends',
     'optimize_models',
-    'cross_user_insights'
+    'cross_user_insights',
+    'search_user_conversations',
+    'analyze_conversation_insights'
   ]);
 
   // Block admin tools in user mode
@@ -910,6 +912,185 @@ export async function executeTool(
           success: false,
           error: 'Developer tools are not yet implemented in this version'
         };
+
+      // ========== KNOWER ANALYTICS TOOLS ==========
+      case 'search_user_conversations': {
+        // Check if caller has permission to view conversations
+        const { data: isSuperAdmin } = await supabaseClient.rpc('is_super_admin', {
+          _user_id: userId
+        });
+
+        const { data: isAdmin } = await supabaseClient.rpc('has_role', {
+          _user_id: userId,
+          _role: 'admin'
+        });
+
+        let query = supabaseClient
+          .from('rocker_conversations')
+          .select('id, user_id, session_id, content, created_at, is_private, metadata')
+          .order('created_at', { ascending: false });
+
+        // Apply privacy filter for regular admins
+        if (!isSuperAdmin && isAdmin) {
+          query = query.eq('is_private', false);
+        }
+
+        // Filter by user if specified
+        if (args.user_id) {
+          query = query.eq('user_id', args.user_id);
+        }
+
+        // Apply time range filter
+        if (args.time_range) {
+          const now = new Date();
+          let startDate: Date;
+          
+          switch (args.time_range) {
+            case 'today':
+              startDate = new Date(now.setHours(0, 0, 0, 0));
+              break;
+            case 'this_week':
+              startDate = new Date(now.setDate(now.getDate() - 7));
+              break;
+            case 'this_month':
+              startDate = new Date(now.setMonth(now.getMonth() - 1));
+              break;
+            default:
+              startDate = new Date(0); // all_time
+          }
+          
+          query = query.gte('created_at', startDate.toISOString());
+        }
+
+        // Apply text search if query provided
+        if (args.query) {
+          query = query.ilike('content', `%${args.query}%`);
+        }
+
+        // Limit results
+        query = query.limit(args.limit || 10);
+
+        const { data: conversations, error } = await query;
+
+        if (error) {
+          return { success: false, error: error.message };
+        }
+
+        // Anonymize user IDs for regular admins
+        const results = conversations?.map((conv: any) => {
+          if (!isSuperAdmin && isAdmin) {
+            return {
+              ...conv,
+              user_id: `user_${conv.user_id.substring(0, 8)}`,
+              summary: conv.content.substring(0, 200) + (conv.content.length > 200 ? '...' : '')
+            };
+          }
+          return conv;
+        });
+
+        return {
+          success: true,
+          conversations: results || [],
+          count: results?.length || 0,
+          privacy_note: !isSuperAdmin && isAdmin ? 'Only non-private conversations shown. Some data may be hidden.' : null
+        };
+      }
+
+      case 'analyze_conversation_insights': {
+        // This tool aggregates anonymized insights from conversations
+        const { data: isSuperAdmin } = await supabaseClient.rpc('is_super_admin', {
+          _user_id: userId
+        });
+
+        const { data: isAdmin } = await supabaseClient.rpc('has_role', {
+          _user_id: userId,
+          _role: 'admin'
+        });
+
+        let query = supabaseClient
+          .from('rocker_conversations')
+          .select('content, created_at, metadata, actor_role');
+
+        // Regular admins only see non-private data
+        if (!isSuperAdmin && isAdmin) {
+          query = query.eq('is_private', false);
+        }
+
+        // Apply time range
+        if (args.time_range) {
+          const now = new Date();
+          let startDate: Date;
+          
+          switch (args.time_range) {
+            case 'today':
+              startDate = new Date(now.setHours(0, 0, 0, 0));
+              break;
+            case 'this_week':
+              startDate = new Date(now.setDate(now.getDate() - 7));
+              break;
+            case 'this_month':
+              startDate = new Date(now.setMonth(now.getMonth() - 1));
+              break;
+            default:
+              startDate = new Date(0);
+          }
+          
+          query = query.gte('created_at', startDate.toISOString());
+        }
+
+        // Filter by topic if specified
+        if (args.topic) {
+          query = query.ilike('content', `%${args.topic}%`);
+        }
+
+        const { data: conversations, error } = await query;
+
+        if (error) {
+          return { success: false, error: error.message };
+        }
+
+        // Analyze conversations for insights
+        const insights: any = {
+          total_conversations: conversations?.length || 0,
+          actor_breakdown: {} as Record<string, number>,
+          common_topics: [] as string[],
+          time_distribution: {} as Record<string, number>
+        };
+
+        // Count by actor role
+        conversations?.forEach((conv: any) => {
+          const role = conv.actor_role || 'unknown';
+          insights.actor_breakdown[role] = (insights.actor_breakdown[role] || 0) + 1;
+
+          // Group by day for time distribution
+          const day = new Date(conv.created_at).toISOString().split('T')[0];
+          insights.time_distribution[day] = (insights.time_distribution[day] || 0) + 1;
+        });
+
+        // Extract common keywords (simple frequency analysis)
+        const wordFreq: Record<string, number> = {};
+        conversations?.forEach((conv: any) => {
+          const words = conv.content.toLowerCase()
+            .split(/\s+/)
+            .filter((w: string) => w.length > 4); // Only words > 4 chars
+          
+          words.forEach((word: string) => {
+            wordFreq[word] = (wordFreq[word] || 0) + 1;
+          });
+        });
+
+        // Get top 10 common topics
+        insights.common_topics = Object.entries(wordFreq)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10)
+          .map(([word]) => word);
+
+        return {
+          success: true,
+          insights,
+          privacy_note: !isSuperAdmin && isAdmin ? 'Insights based on non-private conversations only' : null
+        };
+      }
 
       default:
         return { success: false, error: `Unknown tool: ${toolName}` };
