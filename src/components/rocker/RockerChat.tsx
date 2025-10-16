@@ -8,7 +8,7 @@ interface RockerChatProps {
 }
 
 export function RockerChat({ actorRole }: RockerChatProps = {}) {
-  const { setActorRole, setIsOpen } = useRockerGlobal();
+  const { setActorRole, setIsOpen, sendMessage } = useRockerGlobal();
   
   useEffect(() => {
     if (actorRole) {
@@ -16,6 +16,35 @@ export function RockerChat({ actorRole }: RockerChatProps = {}) {
       setIsOpen(true); // Auto-open for specific roles
     }
   }, [actorRole, setActorRole, setIsOpen]);
+  
+  useEffect(() => {
+    // Listen for failure feedback events
+    const handleFailureFeedback = (event: CustomEvent) => {
+      const { prompt, action, reason, route, entityData } = event.detail;
+      console.log('[RockerChat] Failure feedback triggered:', { action, reason, route });
+      
+      // Store failure context for the conversation
+      sessionStorage.setItem('rocker:failure-context', JSON.stringify({
+        action,
+        reason,
+        route,
+        entityData,
+        timestamp: new Date().toISOString()
+      }));
+      
+      // Auto-open chat and send the failure prompt
+      setIsOpen(true);
+      if (sendMessage) {
+        setTimeout(() => sendMessage(prompt), 100);
+      }
+    };
+    
+    window.addEventListener('rocker:failure-feedback', handleFailureFeedback as EventListener);
+    
+    return () => {
+      window.removeEventListener('rocker:failure-feedback', handleFailureFeedback as EventListener);
+    };
+  }, [sendMessage, setIsOpen]);
   
   return <RockerChatUI />;
 }

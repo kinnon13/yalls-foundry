@@ -183,10 +183,25 @@ export function useRocker(mode: 'user' | 'admin' | 'super_admin' = 'user') {
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim()) return;
 
+    // Check if there's a failure context to include
+    const failureContext = sessionStorage.getItem('rocker:failure-context');
+    let enhancedContent = content.trim();
+    
+    if (failureContext) {
+      try {
+        const context = JSON.parse(failureContext);
+        console.log('[Rocker] Including failure context:', context);
+        enhancedContent = `${content}\n\n[Failure Context: Action "${context.action}" failed because: ${context.reason}. Route: ${context.route}. Entity: ${JSON.stringify(context.entityData)}]`;
+        // Keep context for follow-up messages in this conversation
+      } catch (e) {
+        console.error('[Rocker] Error parsing failure context:', e);
+      }
+    }
+
     // Add user message immediately
     const userMessage: RockerMessage = {
       role: 'user',
-      content: content.trim(),
+      content: enhancedContent,
       timestamp: new Date()
     };
 
@@ -217,6 +232,8 @@ export function useRocker(mode: 'user' | 'admin' | 'super_admin' = 'user') {
             }
           });
           lastFailuresRef.current = [];
+          // Clear failure context after correction is logged
+          sessionStorage.removeItem('rocker:failure-context');
         }
       } catch (e) {
         console.warn('[Rocker] Failed to log user correction', e);

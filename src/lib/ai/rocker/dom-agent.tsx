@@ -634,12 +634,41 @@ export async function clickElement(targetName: string, userId?: string): Promise
   if (!verified.success) {
     await logActionResult('click', targetName, false, `Action completed but verification failed: ${verified.message}`, userId, entityData);
     await markOutcome(route, targetName, false);
+    
+    // Trigger conversational feedback about the failure
+    await triggerFailureFeedback(targetName, verified.message, route, entityData);
+    
     return { success: false, message: `Clicked "${targetName}" but ${verified.message}`, entityData };
   }
   
   const result = { success: true, message: `Clicked "${targetName}"`, entityData };
   await logActionResult('click', targetName, true, result.message, userId, entityData);
   return result;
+}
+
+/**
+ * Trigger a conversational feedback session when an action fails
+ */
+async function triggerFailureFeedback(
+  targetName: string,
+  failureReason: string,
+  route: string,
+  entityData?: { entityType?: string; entityId?: string; fieldName?: string }
+): Promise<void> {
+  try {
+    // Emit event to open chat and start failure discussion
+    window.dispatchEvent(new CustomEvent('rocker:failure-feedback', {
+      detail: {
+        action: targetName,
+        reason: failureReason,
+        route,
+        entityData,
+        prompt: `I tried to ${targetName} but ${failureReason}. Can you help me understand what went wrong?`
+      }
+    }));
+  } catch (error) {
+    console.error('[Failure Feedback] Error triggering feedback:', error);
+  }
 }
 
 /**
