@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
 import { SEOHelmet } from '@/lib/seo/helmet';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,6 +16,7 @@ import {
   MessageSquare, Settings, Home, Gauge, Search, Upload, Flag, AlertTriangle, TrendingUp, Hammer, Brain
 } from 'lucide-react';
 import { WithRole } from '@/lib/auth/guards';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
 
 // Import panel components
 import RLSScanner from '@/routes/admin/panels/RLSScanner';
@@ -40,6 +42,20 @@ import { SuperAIPanel } from '@/routes/admin/panels/SuperAIPanel';
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('scaling');
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const { isAdmin } = useAdminCheck();
+  
+  // Check if user is super admin (you can customize this check)
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  
+  useEffect(() => {
+    // For now, all admins can access. You can add email check here:
+    // const checkSuperAdmin = async () => {
+    //   const { data: { user } } = await supabase.auth.getUser();
+    //   setIsSuperAdmin(user?.email === 'your-email@domain.com');
+    // };
+    // checkSuperAdmin();
+    setIsSuperAdmin(isAdmin);
+  }, [isAdmin]);
 
   return (
     <WithRole 
@@ -95,10 +111,12 @@ export default function ControlRoom() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Tab Navigation */}
             <TabsList className="grid w-full grid-cols-4 lg:grid-cols-17 lg:w-auto">
-              <TabsTrigger value="super-ai" className="gap-2">
-                <Brain className="h-4 w-4" />
-                <span className="hidden sm:inline">Super AI</span>
-              </TabsTrigger>
+              {isSuperAdmin && (
+                <TabsTrigger value="super-ai" className="gap-2">
+                  <Brain className="h-4 w-4" />
+                  <span className="hidden sm:inline">Super AI</span>
+                </TabsTrigger>
+              )}
               <TabsTrigger value="scaling" className="gap-2">
                 <TrendingUp className="h-4 w-4" />
                 <span className="hidden sm:inline">1B Scale</span>
@@ -165,10 +183,12 @@ export default function ControlRoom() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Super AI Tab */}
-            <TabsContent value="super-ai" className="space-y-6">
-              <SuperAIPanel />
-            </TabsContent>
+            {/* Super AI Tab - Only for Super Admins */}
+            {isSuperAdmin && (
+              <TabsContent value="super-ai" className="space-y-6">
+                <SuperAIPanel />
+              </TabsContent>
+            )}
 
             {/* Scaling Readiness Tab */}
             <TabsContent value="scaling" className="space-y-6">

@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Upload, Link2, Trash2, Settings, Brain, BarChart3, 
   MessageSquare, Database, Shield, RefreshCw, Download,
-  AlertTriangle, TrendingUp, Users, Clock
+  AlertTriangle, TrendingUp, Users, Clock, Lightbulb
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { TeachingModeOverlay } from '@/components/rocker/TeachingModeOverlay';
 
 interface AIMetrics {
   total_conversations: number;
@@ -48,6 +49,7 @@ export function SuperAIPanel() {
   const [selectedAI, setSelectedAI] = useState<AIRole>('user');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [teachingMode, setTeachingMode] = useState(false);
   const { toast } = useToast();
 
   // Fetch analytics for all AIs
@@ -131,11 +133,26 @@ export function SuperAIPanel() {
             Complete control over all three AI personalities
           </p>
         </div>
-        <Button onClick={() => refetchMetrics()}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setTeachingMode(!teachingMode)}
+            variant={teachingMode ? "default" : "outline"}
+          >
+            <Lightbulb className="h-4 w-4 mr-2" />
+            {teachingMode ? 'Exit Teaching Mode' : 'Teaching Mode'}
+          </Button>
+          <Button onClick={() => refetchMetrics()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
+
+      {/* Teaching Mode Overlay */}
+      <TeachingModeOverlay 
+        isActive={teachingMode}
+        onClose={() => setTeachingMode(false)}
+      />
 
       {/* AI Selector Cards */}
       <div className="grid gap-4 md:grid-cols-3">
