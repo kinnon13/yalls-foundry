@@ -43,7 +43,7 @@ async function ensureComposer(userId?: string) {
 }
 
 // Helper to execute DOM actions from backend
-async function executeDOMAction(action: any) {
+async function executeDOMAction(action: any): Promise<{ success?: boolean; message?: string } | void> {
   console.log('[Rocker] Executing DOM action:', action);
   
   // Get userId from session
@@ -51,14 +51,16 @@ async function executeDOMAction(action: any) {
   const userId = session?.user?.id;
   
   switch (action.action) {
-    case 'dom_click':
-      await clickElement(action.element_name, userId);
-      break;
-      
-    case 'dom_fill':
-      await fillField(action.field_name, action.value, userId);
-      break;
-      
+    case 'dom_click': {
+      const res = await clickElement(action.element_name, userId);
+      return res;
+    }
+    
+    case 'dom_fill': {
+      const res = await fillField(action.field_name, action.value, userId);
+      return res;
+    }
+    
     case 'dom_create_post': {
       if (!userId) {
         console.warn('[Rocker] No user session for dom_create_post');
@@ -77,25 +79,27 @@ async function executeDOMAction(action: any) {
       if (!fillRes?.success) {
         console.warn('[Rocker] Fill failed, using clipboard fallback:', fillRes?.message);
         try { await navigator.clipboard.writeText(action.content ?? ''); } catch {}
+        return { success: false, message: fillRes?.message || 'Failed to locate post field' };
       } else {
         await delay(120);
-        await clickElement('post button', userId);
+        const clickRes = await clickElement('post button', userId);
+        return clickRes?.success ? { success: true, message: 'Post submitted' } : (clickRes || { success: false, message: 'Failed to click post button' });
       }
-      break;
     }
-      
-    case 'dom_scroll':
+    
+    case 'dom_scroll': {
       window.scrollBy({ 
         top: action.direction === 'down' ? window.innerHeight : -window.innerHeight,
         behavior: 'smooth'
       });
-      break;
-      
-    case 'dom_get_page_info':
-      // This would be handled server-side or return info to chat
+      return { success: true };
+    }
+    
+    case 'dom_get_page_info': {
       console.log('[Rocker] Getting page info...');
-      break;
-      
+      return { success: true };
+    }
+    
     case 'dom_get_page_elements': {
       const elementType = action.element_type || 'all';
       const buttons = Array.from(document.querySelectorAll('button')).map(btn => ({
@@ -138,11 +142,12 @@ async function executeDOMAction(action: any) {
           timestamp: new Date().toISOString()
         }));
       } catch {}
-      break;
+      return { success: true, message: `Captured ${elements.length} elements` };
     }
-      
+    
     default:
       console.warn('[Rocker] Unknown DOM action:', action.action);
+      return { success: false, message: 'Unknown DOM action' };
   }
 }
 
@@ -202,14 +207,14 @@ export function useRocker(mode: 'user' | 'admin' | 'super_admin' = 'user') {
             'Authorization': `Bearer ${session.access_token}`,
             'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
           },
-          body: JSON.stringify({
-            messages: [...messages, userMessage].map(m => ({
-              role: m.role,
-              content: m.content
-            })),
-            currentRoute: window.location.pathname,
-            mode
-          }),
+            body: JSON.stringify({
+              messages: [...messages, userMessage].map(m => ({
+                role: m.role,
+                content: m.content
+              })),
+              currentRoute: window.location.pathname,
+              actor_role: mode === 'admin' ? 'admin' : 'user'
+            }),
           signal: abortControllerRef.current.signal
         }
       );
@@ -232,11 +237,23 @@ export function useRocker(mode: 'user' | 'admin' | 'super_admin' = 'user') {
       }
       
       // Execute DOM actions if present
-      if (result.client_actions && Array.isArray(result.client_actions)) {
-        for (const clientAction of result.client_actions) {
-          await executeDOMAction(clientAction);
+        if (result.client_actions && Array.isArray(result.client_actions)) {
+          const failures: string[] = [];
+          for (const clientAction of result.client_actions) {
+            const actionRes = await executeDOMAction(clientAction);
+            if (actionRes && actionRes.success === false) {
+              const target = clientAction.element_name || clientAction.field_name || clientAction.target_name || clientAction.action;
+              failures.push(`${target}: ${actionRes.message || 'not found'}`);
+            }
+          }
+          if (failures.length > 0) {
+            setMessages(prev => [...prev, {
+              role: 'assistant',
+              content: `I couldn’t find some elements: ${failures.join('; ')}.\nPlease tell me the exact label or what it says on the button/field, or point me to it and I’ll learn it. I’ve logged this failure for training.`,
+              timestamp: new Date()
+            }]);
+          }
         }
-      }
       
       // Add tool execution feedback if present
       if (result.tool_calls && result.tool_calls.length > 0) {
