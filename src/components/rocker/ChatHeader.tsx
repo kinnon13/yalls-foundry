@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Menu, X, Minus, Trash2, Mic, MicOff } from 'lucide-react';
+import { Menu, X, Minus, Trash2, Mic, MicOff, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatHeaderProps {
@@ -15,6 +15,19 @@ interface ChatHeaderProps {
   onClose: () => void;
   hasMessages: boolean;
   isLoading: boolean;
+}
+
+function openDebugPanel() {
+  const width = 1000;
+  const height = 800;
+  const left = window.screen.width / 2 - width / 2;
+  const top = window.screen.height / 2 - height / 2;
+  
+  window.open(
+    '/rocker-debug',
+    'RockerDebug',
+    `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+  );
 }
 
 export function ChatHeader({
@@ -63,6 +76,14 @@ export function ChatHeader({
         )}
       </div>
       <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={openDebugPanel}
+          title="Open debug panel (new window)"
+        >
+          <ExternalLink className="h-4 w-4" />
+        </Button>
         <Button
           variant={isAlwaysListening ? "default" : "ghost"}
           size="icon"

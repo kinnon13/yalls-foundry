@@ -219,27 +219,51 @@ export type Database = {
       }
       ai_feedback: {
         Row: {
+          action: string | null
           created_at: string | null
           id: string
           kind: string | null
+          message: string | null
+          meta: Json | null
           payload: Json
+          route: string | null
+          screenshot_url: string | null
+          selector: string | null
           session_id: string | null
+          success: boolean | null
+          target: string | null
           user_id: string | null
         }
         Insert: {
+          action?: string | null
           created_at?: string | null
           id?: string
           kind?: string | null
+          message?: string | null
+          meta?: Json | null
           payload: Json
+          route?: string | null
+          screenshot_url?: string | null
+          selector?: string | null
           session_id?: string | null
+          success?: boolean | null
+          target?: string | null
           user_id?: string | null
         }
         Update: {
+          action?: string | null
           created_at?: string | null
           id?: string
           kind?: string | null
+          message?: string | null
+          meta?: Json | null
           payload?: Json
+          route?: string | null
+          screenshot_url?: string | null
+          selector?: string | null
           session_id?: string | null
+          success?: boolean | null
+          target?: string | null
           user_id?: string | null
         }
         Relationships: [
