@@ -174,14 +174,31 @@ This tracking structure ensures compliance with:
 
 ## Admin Access
 
-Super admins (`kinnonpeck@gmail.com` and others with `admin` role) can:
-- View all user identities and conversations
-- Export any user's complete history
+### Super Admin Capabilities
+Super admins (users with `super_admin` role) can:
+- View all user identities and conversations (including private ones)
+- Export any user's complete, unredacted history for legal purposes
 - Access audit logs for all actions
-- Respond to legal requests
+- Respond to legal requests and subpoenas
 - Investigate safety/abuse reports
+- Mark their own conversations as private (hidden from regular admins)
+- Grant temporary export access to regular admins for specific legal cases
 
-**Access is logged in `admin_audit_log` for oversight.**
+### Regular Admin Capabilities
+Regular admins (users with `admin` role) can:
+- View non-private conversations and data
+- Cannot access super admin private conversations
+- Can be granted temporary export permissions by super admins
+
+### Legal Data Export System
+The platform includes a dedicated legal data export system for compliance:
+- **Tool**: Admin Control Room → Super AI → Legal Export tab
+- **Access**: Super admins only
+- **Capabilities**: Export complete user data including private conversations
+- **Audit**: All exports are logged with admin ID, target user ID, timestamp, and reason
+- **Use Cases**: Subpoenas, court orders, legal discovery, law enforcement requests
+
+**All admin access is logged in `admin_audit_log` for oversight and accountability.**
 
 ## Questions?
 

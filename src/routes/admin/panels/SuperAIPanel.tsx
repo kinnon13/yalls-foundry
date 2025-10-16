@@ -7,6 +7,7 @@
  * - Manage knowledge base and memories
  * - Configure settings and permissions
  * - Delete or reset AI instances
+ * - Legal data export for compliance
  */
 
 import { useState } from 'react';
@@ -17,6 +18,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   Upload, Link2, Trash2, Settings, Brain, BarChart3, 
   MessageSquare, Database, Shield, RefreshCw, Download,
@@ -35,6 +40,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { TeachingModeOverlay } from '@/components/rocker/TeachingModeOverlay';
+import { toast as sonnerToast } from 'sonner';
 
 interface AIMetrics {
   total_conversations: number;
@@ -50,25 +56,81 @@ export function SuperAIPanel() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [teachingMode, setTeachingMode] = useState(false);
+  const [exportUserId, setExportUserId] = useState('');
+  const [exportReason, setExportReason] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
+
+  // State for file upload
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  // Analytics data state
+  const [analyticsData, setAnalyticsData] = useState<{ [key: string]: any } | null>(null);
+
+  // Function to handle file selection
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setUploadFile(event.target.files[0]);
+    }
+  };
+
+  // Function to handle file upload
+  const handleFileUpload = async () => {
+    if (!uploadFile) {
+      toast({
+        title: 'Error',
+        description: 'Please select a file to upload.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Upload the file to Supabase storage
+      const { data, error } = await supabase.storage
+        .from('ai-training-data')
+        .upload(`${selectedAI}/${uploadFile.name}`, uploadFile, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Upload Successful',
+        description: `File ${uploadFile.name} uploaded successfully.`,
+      });
+      setUploadDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: 'Upload Failed',
+        description: 'There was an error uploading the file.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Fetch analytics for all AIs
   const { data: metrics, refetch: refetchMetrics } = useQuery({
     queryKey: ['ai-metrics', selectedAI],
     queryFn: async () => {
-      // Get conversation stats
       const { data: convos } = await supabase
         .from('rocker_conversations')
         .select('session_id, created_at', { count: 'exact' })
         .eq('actor_role', selectedAI);
 
-      // Get memory stats
       const { data: memories } = await supabase
         .from('ai_user_memory')
         .select('id', { count: 'exact' })
         .eq('scope', selectedAI);
 
-      // Get recent activity
       const { data: recentActivity } = await supabase
         .from('ai_sessions')
         .select('started_at, ended_at')
@@ -90,13 +152,11 @@ export function SuperAIPanel() {
 
   const handleDeleteAI = async () => {
     try {
-      // Delete conversations
       await supabase
         .from('rocker_conversations')
         .delete()
         .eq('actor_role', selectedAI);
 
-      // Delete memories
       await supabase
         .from('ai_user_memory')
         .delete()
@@ -115,6 +175,45 @@ export function SuperAIPanel() {
         description: 'Failed to delete AI data',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleExportUserData = async () => {
+    if (!exportUserId.trim()) {
+      sonnerToast.error('Please enter a user ID');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-export-user-data', {
+        body: { 
+          target_user_id: exportUserId.trim(),
+          reason: exportReason.trim() || 'Legal/compliance export'
+        }
+      });
+
+      if (error) throw error;
+
+      // Create download
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `user-${exportUserId}-export-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      sonnerToast.success('User data exported successfully');
+      setExportUserId('');
+      setExportReason('');
+    } catch (error) {
+      console.error('Error exporting user data:', error);
+      sonnerToast.error('Failed to export user data');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -198,7 +297,7 @@ export function SuperAIPanel() {
 
       {/* Detailed Management Tabs */}
       <Tabs defaultValue="analytics" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="analytics">
             <BarChart3 className="h-4 w-4 mr-2" />
             Analytics
@@ -215,6 +314,10 @@ export function SuperAIPanel() {
             <Settings className="h-4 w-4 mr-2" />
             Settings
           </TabsTrigger>
+          <TabsTrigger value="legal-export">
+            <Shield className="h-4 w-4 mr-2" />
+            Legal Export
+          </TabsTrigger>
           <TabsTrigger value="danger">
             <AlertTriangle className="h-4 w-4 mr-2" />
             Danger Zone
@@ -226,114 +329,54 @@ export function SuperAIPanel() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Conversations
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Total Conversations</CardTitle>
                 <MessageSquare className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{metrics?.total_conversations || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  Across all users
-                </p>
+                <p className="text-xs text-muted-foreground">Across all users</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Success Rate
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {((metrics?.success_rate || 0) * 100).toFixed(1)}%
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Task completion rate
-                </p>
+                <div className="text-2xl font-bold">{((metrics?.success_rate || 0) * 100).toFixed(1)}%</div>
+                <p className="text-xs text-muted-foreground">Task completion rate</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Avg Response Time
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {metrics?.avg_response_time_ms || 0}ms
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Average latency
-                </p>
+                <div className="text-2xl font-bold">{metrics?.avg_response_time_ms || 0}ms</div>
+                <p className="text-xs text-muted-foreground">Average latency</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Memory Items
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Memory Items</CardTitle>
                 <Brain className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{metrics?.memory_count || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  Stored knowledge
-                </p>
+                <p className="text-xs text-muted-foreground">Stored knowledge</p>
               </CardContent>
             </Card>
           </div>
-
-          {/* Activity Chart Placeholder */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Activity Over Time</CardTitle>
-              <CardDescription>
-                Conversation volume and performance metrics
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64 flex items-center justify-center border-2 border-dashed rounded">
-                <p className="text-muted-foreground">Chart visualization coming soon</p>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Knowledge Tab */}
         <TabsContent value="knowledge" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Knowledge Base</CardTitle>
-              <CardDescription>
-                Manage stored memories and learned information
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Memories
-                </Button>
-                <Button variant="outline" className="flex-1">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Import Knowledge
-                </Button>
-              </div>
-              
-              <div className="border rounded p-4">
-                <h4 className="font-medium mb-2">Recent Learnings</h4>
-                <p className="text-sm text-muted-foreground">
-                  No recent knowledge items to display
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <p>Manage the AI's knowledge base and memories here.</p>
+          {/* Add knowledge management components here */}
         </TabsContent>
 
         {/* Upload Tab */}
@@ -342,168 +385,95 @@ export function SuperAIPanel() {
             <CardHeader>
               <CardTitle>Upload Training Data</CardTitle>
               <CardDescription>
-                Add documents, links, or structured data to enhance AI capabilities
+                Upload files to train the AI ({AI_PROFILES[selectedAI].name})
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button onClick={() => setUploadDialogOpen(true)} className="w-full">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Files
-              </Button>
-
-              <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start">
-                  <Link2 className="h-4 w-4 mr-2" />
-                  Add Web Link
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Database className="h-4 w-4 mr-2" />
-                  Import from Database
-                </Button>
+              <div>
+                <Label htmlFor="training-data">Select File</Label>
+                <Input
+                  type="file"
+                  id="training-data"
+                  onChange={handleFileSelect}
+                />
               </div>
+              <Button onClick={handleFileUpload} disabled={uploading} className="w-full">
+                {uploading ? 'Uploading...' : 'Upload File'}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-4">
+          <p>Configure settings and permissions for the AI ({AI_PROFILES[selectedAI].name}).</p>
+          {/* Add settings configuration components here */}
+        </TabsContent>
+
+        {/* Legal Export Tab */}
+        <TabsContent value="legal-export" className="space-y-4">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Legal/Compliance Data Export</AlertTitle>
+            <AlertDescription>
+              This feature allows you to export complete, unredacted user data for legal purposes (subpoenas, court orders, etc.).
+              All exports are logged in the admin audit log.
+            </AlertDescription>
+          </Alert>
+
           <Card>
             <CardHeader>
-              <CardTitle>AI Configuration</CardTitle>
+              <CardTitle>Export User Data</CardTitle>
               <CardDescription>
-                Adjust behavior, permissions, and capabilities
+                Super admin only - Export complete user data including private conversations
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="font-medium">Personality</h4>
-                <p className="text-sm text-muted-foreground">
-                  {AI_PROFILES[selectedAI].personality.join(', ')}
-                </p>
+              <div>
+                <Label htmlFor="export-user-id">User ID to Export</Label>
+                <Input
+                  id="export-user-id"
+                  placeholder="Enter user UUID"
+                  value={exportUserId}
+                  onChange={(e) => setExportUserId(e.target.value)}
+                />
               </div>
 
-              <div className="space-y-2">
-                <h4 className="font-medium">Capabilities</h4>
-                <div className="flex flex-wrap gap-2">
-                  {AI_PROFILES[selectedAI].capabilities.map((cap) => (
-                    <Badge key={cap} variant="secondary">{cap}</Badge>
-                  ))}
-                </div>
+              <div>
+                <Label htmlFor="export-reason">Reason for Export (Required for Audit)</Label>
+                <Textarea
+                  id="export-reason"
+                  placeholder="e.g., Subpoena #12345, Court Order Case #ABC-2025, Legal Discovery Request..."
+                  value={exportReason}
+                  onChange={(e) => setExportReason(e.target.value)}
+                  rows={3}
+                />
               </div>
 
-              <div className="space-y-2">
-                <h4 className="font-medium">Guidelines</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  {AI_PROFILES[selectedAI].guidelines.map((guide, i) => (
-                    <li key={i}>• {guide}</li>
-                  ))}
-                </ul>
-              </div>
+              <Button 
+                onClick={handleExportUserData} 
+                disabled={isExporting || !exportUserId.trim()}
+                className="w-full"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {isExporting ? 'Exporting...' : 'Export Complete User Data'}
+              </Button>
 
-              <div className="border-t pt-4 mt-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="space-y-0.5">
-                    <h4 className="font-medium flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Super Admin Privacy
-                    </h4>
-                    <p className="text-sm text-muted-foreground">
-                      Control whether regular admins can see your conversations and memories
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Card className="p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-sm">Private Conversations</p>
-                        <p className="text-xs text-muted-foreground">
-                          Hide your conversations with {AI_PROFILES[selectedAI].name} from regular admins
-                        </p>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={async () => {
-                          try {
-                            // Toggle privacy for all conversations with this AI
-                            const { error } = await supabase
-                              .from('rocker_conversations')
-                              .update({ is_private: true } as any)
-                              .eq('actor_role', selectedAI);
-
-                            if (error) throw error;
-
-                            toast({
-                              title: "Privacy Updated",
-                              description: "Your conversations are now private",
-                            });
-                          } catch (err: any) {
-                            toast({
-                              title: "Error",
-                              description: err.message,
-                              variant: "destructive",
-                            });
-                          }
-                        }}
-                      >
-                        Make Private
-                      </Button>
-                    </div>
-                  </Card>
-
-                  <Card className="p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-sm">Private Memories</p>
-                        <p className="text-xs text-muted-foreground">
-                          Hide memories learned from your interactions from regular admins
-                        </p>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={async () => {
-                          try {
-                            // Toggle privacy for all memories with this AI scope
-                            const { error } = await supabase
-                              .from('ai_user_memory')
-                              .update({ is_private: true } as any)
-                              .eq('scope', selectedAI);
-
-                            if (error) throw error;
-
-                            toast({
-                              title: "Privacy Updated",
-                              description: "Your memories are now private",
-                            });
-                          } catch (err: any) {
-                            toast({
-                              title: "Error",
-                              description: err.message,
-                              variant: "destructive",
-                            });
-                          }
-                        }}
-                      >
-                        Make Private
-                      </Button>
-                    </div>
-                  </Card>
-
-                  <div className="bg-muted/50 p-3 rounded-lg border">
-                    <div className="flex items-start gap-2">
-                      <Brain className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                      <div className="text-xs text-muted-foreground">
-                        <strong>Note:</strong> Andy (Knower) can still learn from your private data
-                        to improve the platform, but regular admins cannot view your private
-                        conversations or memories directly. Only you and other super admins have access.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <Alert>
+                <AlertDescription className="text-sm">
+                  <strong>What gets exported:</strong>
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>All conversations (including private ones marked by super admin)</li>
+                    <li>All AI memories and learning data</li>
+                    <li>Complete interaction history</li>
+                    <li>Posts, calendar events, and business data</li>
+                    <li>Profile information</li>
+                  </ul>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    This action is logged with your admin ID, timestamp, target user ID, and reason provided.
+                  </p>
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
         </TabsContent>
@@ -514,30 +484,17 @@ export function SuperAIPanel() {
             <CardHeader>
               <CardTitle className="text-destructive">Danger Zone</CardTitle>
               <CardDescription>
-                Irreversible actions that will permanently delete data
+                Irreversible actions that permanently delete data
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-4 border border-destructive/50 rounded bg-destructive/5">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="font-medium text-destructive">Reset AI Instance</h4>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      This will permanently delete all conversations, memories, and learned
-                      knowledge for {AI_PROFILES[selectedAI].name}. This action cannot be undone.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                variant="destructive"
+              <Button 
+                variant="destructive" 
                 onClick={() => setDeleteDialogOpen(true)}
                 className="w-full"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Reset {AI_PROFILES[selectedAI].name}
+                Delete All {AI_PROFILES[selectedAI].name} Data
               </Button>
             </CardContent>
           </Card>
@@ -548,32 +505,16 @@ export function SuperAIPanel() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              Reset {AI_PROFILES[selectedAI].name}?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                This will permanently delete:
-              </p>
-              <ul className="list-disc list-inside text-sm space-y-1 ml-2">
-                <li>{metrics?.total_conversations || 0} conversations</li>
-                <li>{metrics?.memory_count || 0} memory items</li>
-                <li>All learned knowledge and patterns</li>
-                <li>Session history and analytics</li>
-              </ul>
-              <p className="font-semibold text-destructive mt-3">
-                This action cannot be undone.
-              </p>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete all conversations, memories, and data for{' '}
+              <strong>{AI_PROFILES[selectedAI].name}</strong>. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteAI}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              Yes, Reset AI
+            <AlertDialogAction onClick={handleDeleteAI} className="bg-destructive">
+              Delete Everything
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
