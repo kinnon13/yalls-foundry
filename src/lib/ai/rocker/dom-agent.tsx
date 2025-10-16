@@ -711,15 +711,15 @@ export function getAvailableElements(): string[] {
   return [...getAvailableButtons(), ...getAvailableFields()];
 }
 
-export function executeDOMAction(action: DOMAction): { success: boolean; message: string; content?: string } {
-  console.log('[DOM Agent] Executing action:', action);
+export async function executeDOMAction(action: DOMAction, userId?: string): Promise<{ success: boolean; message: string; content?: string }> {
+  console.log('[DOM Agent] Executing action:', action, 'userId:', userId);
   
   switch (action.type) {
     case 'click':
-      return clickElement(action.targetName || action.selector || '') as any;
+      return await clickElement(action.targetName || action.selector || '', userId);
       
     case 'fill':
-      return fillField(action.targetName || action.selector || '', action.value || '') as any;
+      return await fillField(action.targetName || action.selector || '', action.value || '', userId);
       
     case 'submit':
       return submitForm(action.targetName);
@@ -757,12 +757,12 @@ export function executeDOMAction(action: DOMAction): { success: boolean; message
 
 if (typeof window !== 'undefined') {
   (window as any).__rockerDOMAgent = {
-    click: clickElement,
-    fill: fillField,
+    click: (target: string, userId?: string) => clickElement(target, userId),
+    fill: (target: string, value: string, userId?: string) => fillField(target, value, userId),
     submit: submitForm,
     read: readPageContent,
     getButtons: getAvailableButtons,
     getFields: getAvailableFields,
-    execute: executeDOMAction,
+    execute: (action: DOMAction, userId?: string) => executeDOMAction(action, userId),
   };
 }

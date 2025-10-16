@@ -123,7 +123,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
   }, [navigate, toast]);
 
   // Voice command handler
-  const handleVoiceCommand = useCallback((cmd: { 
+  const handleVoiceCommand = useCallback(async (cmd: { 
     type: 'navigate' | 'click_element' | 'fill_field' | 'create_post' | 'scroll_page' | 'create_horse';
     path?: string;
     element_name?: string;
@@ -151,10 +151,10 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     } 
     else if (cmd.type === 'click_element' && cmd.element_name) {
       console.log('[Rocker Context] Processing click command:', cmd.element_name);
-      const clickResult = executeDOMAction({
+      const clickResult = await executeDOMAction({
         type: 'click',
         targetName: cmd.element_name
-      });
+      }, currentUserId);
       toast({
         title: clickResult.success ? '✅ Clicked' : '❌ Click failed',
         description: clickResult.message,
@@ -163,11 +163,11 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     }
     else if (cmd.type === 'fill_field' && cmd.field_name && cmd.value) {
       console.log('[Rocker Context] Processing fill command:', cmd.field_name);
-      const fillResult = executeDOMAction({
+      const fillResult = await executeDOMAction({
         type: 'fill',
         targetName: cmd.field_name,
         value: cmd.value
-      });
+      }, currentUserId);
       toast({
         title: fillResult.success ? '✍️ Filled field' : '❌ Fill failed',
         description: fillResult.message,
@@ -178,12 +178,12 @@ export function RockerProvider({ children }: { children: ReactNode }) {
       console.log('[Rocker Context] Processing create post command');
       // For voice, we fill the post field instead of direct DB insert
       handleNavigation('/');
-      setTimeout(() => {
-        const result = executeDOMAction({
+      setTimeout(async () => {
+        const result = await executeDOMAction({
           type: 'fill',
           targetName: 'post',
           value: cmd.content!
-        });
+        }, currentUserId);
         if (result.success) {
           toast({
             title: '📝 Post ready',
@@ -644,10 +644,10 @@ export function RockerProvider({ children }: { children: ReactNode }) {
           
           // Handle DOM actions
           else if (tc.name === 'click_element') {
-            const clickResult = executeDOMAction({
+            const clickResult = await executeDOMAction({
               type: 'click',
               targetName: args.element_name
-            });
+            }, currentUserId);
             console.log('[Rocker] Click result:', clickResult);
             toast({
               title: clickResult.success ? '✅ Clicked' : '❌ Click failed',
@@ -657,11 +657,11 @@ export function RockerProvider({ children }: { children: ReactNode }) {
           }
           
           else if (tc.name === 'fill_field') {
-            const fillResult = executeDOMAction({
+            const fillResult = await executeDOMAction({
               type: 'fill',
               targetName: args.field_name,
               value: args.value
-            });
+            }, currentUserId);
             console.log('[Rocker] Fill result:', fillResult);
             toast({
               title: fillResult.success ? '✍️ Filled field' : '❌ Fill failed',
@@ -671,7 +671,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
           }
           
           else if (tc.name === 'get_page_info') {
-            const domResult = executeDOMAction({ type: 'read' });
+            const domResult = await executeDOMAction({ type: 'read' }, currentUserId);
             console.log('[Rocker] Page info:', domResult);
           }
           
