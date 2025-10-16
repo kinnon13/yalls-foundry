@@ -33,6 +33,7 @@ import { BusinessMetrics } from '@/components/business/BusinessMetrics';
 import { CalendarTab } from '@/components/dashboard/CalendarTab';
 import { MLMTab } from '@/components/dashboard/MLMTab';
 import { FeedLayoutSettings } from '@/components/posts/FeedLayoutSettings';
+import { ProfileSettingsTab } from '@/components/dashboard/ProfileSettingsTab';
 
 export default function Dashboard() {
   const { session } = useSession();
@@ -453,6 +454,8 @@ export default function Dashboard() {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-4">
+            <ProfileSettingsTab />
+            
             <Card>
               <CardHeader>
                 <CardTitle>Feed Settings</CardTitle>
