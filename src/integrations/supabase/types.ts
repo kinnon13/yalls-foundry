@@ -1130,6 +1130,36 @@ export type Database = {
           },
         ]
       }
+      ai_user_privacy: {
+        Row: {
+          created_at: string
+          hidden_from_admins: boolean | null
+          hidden_from_specific_admins: string[] | null
+          id: string
+          managed_by_super_admin: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hidden_from_admins?: boolean | null
+          hidden_from_specific_admins?: string[] | null
+          id?: string
+          managed_by_super_admin?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hidden_from_admins?: boolean | null
+          hidden_from_specific_admins?: string[] | null
+          id?: string
+          managed_by_super_admin?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       business_kpi_snapshots: {
         Row: {
           active_users: number | null
@@ -4569,6 +4599,10 @@ export type Database = {
       }
       is_super_admin: {
         Args: { _user_id: string }
+        Returns: boolean
+      }
+      is_user_hidden_from_admin: {
+        Args: { _admin_id: string; _user_id: string }
         Returns: boolean
       }
       ivfflat_bit_support: {

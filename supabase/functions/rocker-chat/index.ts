@@ -79,32 +79,48 @@ serve(async (req) => {
     if (requestedSessionId) {
       // Load specific session with knowledge hierarchy:
       // - user: sees only user messages
-      // - admin: sees user + admin messages  
+      // - admin: sees user + admin messages (respecting privacy)
       // - knower: sees ALL messages
       let query = supabaseClient
         .from('rocker_conversations')
-        .select('role, content, created_at')
+        .select('role, content, created_at, user_id')
         .eq('user_id', user.id)
         .eq('session_id', requestedSessionId);
       
       if (actorRole === 'user') {
         query = query.eq('actor_role', 'user');
       } else if (actorRole === 'admin') {
+        // Admins see user + admin conversations, but respect privacy
         query = query.in('actor_role', ['user', 'admin']);
       }
       // For 'knower', don't filter - see everything
       
-      const { data: sessionMessages } = await query.order('created_at', { ascending: true });
-      
-      conversationHistory = (sessionMessages || []).map((msg: any) => ({
-        role: msg.role,
-        content: msg.content
-      }));
+      let { data: sessionMessages } = await query.order('created_at', { ascending: true });
+
+      // Filter out messages from users hidden from this admin
+      if (actorRole === 'admin' && sessionMessages) {
+        const { data: isHidden } = await supabaseClient.rpc('is_user_hidden_from_admin', {
+          _user_id: user.id,
+          _admin_id: user.id
+        });
+        
+        if (!isHidden) {
+          conversationHistory = (sessionMessages || []).map((msg: any) => ({
+            role: msg.role,
+            content: msg.content
+          }));
+        }
+      } else {
+        conversationHistory = (sessionMessages || []).map((msg: any) => ({
+          role: msg.role,
+          content: msg.content
+        }));
+      }
     } else {
       // Load recent messages with hierarchy (last 20 for context)
       let query = supabaseClient
         .from('rocker_conversations')
-        .select('role, content')
+        .select('role, content, user_id')
         .eq('user_id', user.id);
       
       if (actorRole === 'user') {
@@ -118,10 +134,25 @@ serve(async (req) => {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      conversationHistory = (recentConversations || []).reverse().map((msg: any) => ({
-        role: msg.role,
-        content: msg.content
-      }));
+      // Filter out messages from hidden users for admins
+      if (actorRole === 'admin' && recentConversations) {
+        const { data: isHidden } = await supabaseClient.rpc('is_user_hidden_from_admin', {
+          _user_id: user.id,
+          _admin_id: user.id
+        });
+        
+        if (!isHidden) {
+          conversationHistory = (recentConversations || []).reverse().map((msg: any) => ({
+            role: msg.role,
+            content: msg.content
+          }));
+        }
+      } else {
+        conversationHistory = (recentConversations || []).reverse().map((msg: any) => ({
+          role: msg.role,
+          content: msg.content
+        }));
+      }
     }
 
     // Use provided session ID or create new one

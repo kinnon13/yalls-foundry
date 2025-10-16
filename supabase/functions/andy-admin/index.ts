@@ -42,7 +42,7 @@ serve(async (req) => {
       });
     }
 
-    const { action, user_id, reason } = await req.json();
+    const { action, user_id, reason, privacy_settings } = await req.json();
 
     // Super Admin access: skip audit logging per owner's preference
 
@@ -66,9 +66,21 @@ serve(async (req) => {
           return acc;
         }, {});
 
+        // Get privacy settings
+        const { data: privacySettings } = await supabaseClient
+          .from('ai_user_privacy')
+          .select('*')
+          .in('user_id', userIds);
+
+        const privacyMap = (privacySettings || []).reduce((acc: any, p: any) => {
+          acc[p.user_id] = p;
+          return acc;
+        }, {});
+
         const enriched = profiles?.map(p => ({
           ...p,
           memory_count: counts[p.user_id] || 0,
+          privacy: privacyMap[p.user_id] || null,
         }));
 
         return new Response(JSON.stringify({ users: enriched }), {
@@ -140,6 +152,27 @@ serve(async (req) => {
         return new Response(JSON.stringify({ analytics }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      }
+
+      case 'update_privacy': {
+        // Update privacy settings for a user
+        const { error: privacyError } = await supabaseClient
+          .from('ai_user_privacy')
+          .upsert({
+            user_id: user_id,
+            ...privacy_settings,
+            managed_by_super_admin: true,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id'
+          });
+
+        if (privacyError) throw privacyError;
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       default:

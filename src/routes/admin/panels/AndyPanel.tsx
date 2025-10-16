@@ -9,10 +9,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, User, MessageSquare, Brain, Lock } from 'lucide-react';
+import { Search, User, MessageSquare, Brain, Lock, Shield, ShieldOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerChatEmbedded } from '@/components/rocker/RockerChatEmbedded';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 export function AndyPanel() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,8 +37,6 @@ export function AndyPanel() {
   // View user details
   const viewUserMutation = useMutation({
     mutationFn: async ({ user_id, action }: { user_id: string; action: string }) => {
-
-
       const { data, error } = await supabase.functions.invoke('andy-admin', {
         body: { action, user_id },
       });
@@ -45,11 +45,32 @@ export function AndyPanel() {
     },
     onSuccess: () => {
       toast.success('Loaded');
-      
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to access user data');
     },
+  });
+
+  // Update privacy settings
+  const updatePrivacyMutation = useMutation({
+    mutationFn: async ({ user_id, settings }: { user_id: string; settings: any }) => {
+      const { data, error } = await supabase.functions.invoke('andy-admin', {
+        body: { 
+          action: 'update_privacy', 
+          user_id,
+          privacy_settings: settings
+        }
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Privacy settings updated");
+      queryClient.invalidateQueries({ queryKey: ['andy-users'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update privacy");
+    }
   });
 
   const users = usersData?.users || [];
@@ -175,11 +196,43 @@ export function AndyPanel() {
                                       action: 'view_memories',
                                     })
                                   }
-                                  
                                   variant="outline"
                                 >
                                   View Memories
                                 </Button>
+                              </div>
+
+                              <div className="border-t pt-4 mt-4">
+                                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                                  <Shield className="h-4 w-4" />
+                                  Privacy Settings
+                                </h4>
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <Label htmlFor={`hide-${user.user_id}`} className="text-sm">
+                                      Hide from all admins
+                                    </Label>
+                                    <Switch
+                                      id={`hide-${user.user_id}`}
+                                      checked={user.privacy?.hidden_from_admins || false}
+                                      onCheckedChange={(checked) => {
+                                        updatePrivacyMutation.mutate({
+                                          user_id: user.user_id,
+                                          settings: {
+                                            hidden_from_admins: checked,
+                                            hidden_from_specific_admins: user.privacy?.hidden_from_specific_admins || []
+                                          }
+                                        });
+                                      }}
+                                    />
+                                  </div>
+                                  {user.privacy?.hidden_from_admins && (
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <ShieldOff className="h-3 w-3" />
+                                      This user's data is hidden from all admins
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </DialogContent>
