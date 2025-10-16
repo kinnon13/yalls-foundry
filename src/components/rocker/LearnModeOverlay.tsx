@@ -27,6 +27,12 @@ export function LearnModeOverlay({ candidates, question, onAnswer }: LearnModeOv
       return;
     }
 
+    // Save focus to restore on cleanup
+    const prevActive = document.activeElement as HTMLElement | null;
+    
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     const handleKey = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
       
@@ -46,7 +52,10 @@ export function LearnModeOverlay({ candidates, question, onAnswer }: LearnModeOv
     };
 
     window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
+    return () => {
+      window.removeEventListener('keydown', handleKey);
+      prevActive?.focus?.();
+    };
   }, [candidates, currentIndex, onAnswer]);
 
   if (!mounted || candidates.length === 0) return null;
@@ -60,6 +69,7 @@ export function LearnModeOverlay({ candidates, question, onAnswer }: LearnModeOv
     <>
       {/* Highlight ring */}
       <div
+        className="learn-mode-highlight"
         style={{
           position: 'fixed',
           left: `${rect.left - 6}px`,
@@ -70,7 +80,7 @@ export function LearnModeOverlay({ candidates, question, onAnswer }: LearnModeOv
           borderRadius: '8px',
           boxShadow: '0 0 0 6px hsla(var(--primary), 0.25), 0 0 20px hsla(var(--primary), 0.4)',
           pointerEvents: 'none',
-          zIndex: 2147483646,
+          zIndex: 2147483647,
           animation: 'pulse 2s ease-in-out infinite'
         }}
       />
@@ -141,6 +151,19 @@ export function LearnModeOverlay({ candidates, question, onAnswer }: LearnModeOv
           50% { 
             transform: scale(1.02);
             opacity: 0.8;
+          }
+        }
+        
+        @media (prefers-reduced-motion: reduce) {
+          .learn-mode-highlight {
+            animation: none !important;
+          }
+        }
+        
+        @media (prefers-contrast: high) {
+          .learn-mode-highlight {
+            border-width: 4px !important;
+            box-shadow: 0 0 0 8px hsla(var(--primary), 0.4) !important;
           }
         }
       `}</style>

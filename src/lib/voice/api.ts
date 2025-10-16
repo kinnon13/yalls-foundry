@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { checkRateLimit } from '@/lib/ai/rocker/rate-limit';
 
 export interface PublishPostParams {
   content: string;
@@ -35,6 +36,7 @@ export async function checkVoicePostRateLimit(): Promise<boolean> {
 
 /**
  * Publish a post via voice command (idempotent)
+ * Includes both client-side and server-side rate limiting
  */
 export async function publishVoicePost({ 
   content, 
@@ -44,7 +46,16 @@ export async function publishVoicePost({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
-  // Check rate limit
+  // Client-side rate limit check (fast path)
+  const rateLimitKey = `voice_post:${user.id}`;
+  const rateCheck = checkRateLimit(rateLimitKey, 5, 60000);
+  
+  if (!rateCheck.allowed) {
+    const secondsRemaining = Math.ceil((rateCheck.resetAt - Date.now()) / 1000);
+    throw new Error(`Rate limit exceeded. Please wait ${secondsRemaining} seconds before posting again.`);
+  }
+
+  // Server-side rate limit check (authoritative)
   const withinLimit = await checkVoicePostRateLimit();
   if (!withinLimit) {
     throw new Error('Rate limit exceeded. Please wait before posting again.');

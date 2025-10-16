@@ -8,6 +8,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { getBestSelector, upsertSelector, markOutcome, stableSelector } from './memory';
 import { createRoot } from 'react-dom/client';
 import { LearnModeOverlay } from '@/components/rocker/LearnModeOverlay';
+import { logActionWithScreenshot } from './screenshot';
+import { logTelemetry } from './telemetry';
 
 // ============= LEARNING INFRASTRUCTURE =============
 
@@ -272,6 +274,12 @@ function isVisible(el: Element) {
   const cs = window.getComputedStyle(el as Element);
   return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none';
 }
+/**
+ * Generator function that yields all searchable DOM contexts:
+ * - Main document
+ * - Shadow roots
+ * - Same-origin iframes (cross-origin iframes are skipped for security)
+ */
 function* scopes(): Generator<Document|ShadowRoot> {
   yield document;
   for (const el of Array.from(document.querySelectorAll<HTMLElement>('*'))) {
@@ -281,7 +289,10 @@ function* scopes(): Generator<Document|ShadowRoot> {
       try {
         const d = (el as HTMLIFrameElement).contentDocument;
         if (d) yield d;
-      } catch {}
+      } catch (err) {
+        // Cross-origin iframe - skip silently for security
+        console.debug('[DOM Agent] Skipping cross-origin iframe:', el.getAttribute('src'));
+      }
     }
   }
 }
@@ -366,9 +377,43 @@ async function learnSelector(
         };
         
         await upsertSelector(route, targetName, selector, meta);
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        if (userId) {
+          await logActionWithScreenshot(
+            'learn_confirmed', 
+            targetName, 
+            true, 
+            `Learned: ${targetName} → ${selector}`, 
+            userId,
+            { selector, route, captureScreenshot: true }
+          );
+          await logTelemetry({ 
+            event_type: 'learn_session', 
+            route, 
+            target: targetName, 
+            metadata: { steps: 1, outcome: 'confirmed' } 
+          });
+        }
         console.log(`[Learn Mode] Confirmed: ${targetName} → ${selector}`);
         resolve(el);
       } else {
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        if (userId) {
+          await logActionWithScreenshot(
+            'learn_cancelled', 
+            targetName, 
+            false, 
+            'User cancelled learning', 
+            userId,
+            { route, captureScreenshot: false }
+          );
+          await logTelemetry({ 
+            event_type: 'learn_session', 
+            route, 
+            target: targetName, 
+            metadata: { steps: 1, outcome: 'cancelled' } 
+          });
+        }
         console.log(`[Learn Mode] Cancelled for: ${targetName}`);
         resolve(null);
       }
@@ -393,6 +438,7 @@ async function findElementWait(
   const memory = await getBestSelector(route, targetName);
   if (memory) {
     console.log(`[Memory] Using ${memory.source} selector for "${targetName}": ${memory.selector}`);
+    await logTelemetry({ event_type: 'memory_hit', route, target: targetName, source: memory.source });
     const el = document.querySelector<HTMLElement>(memory.selector);
     if (el && isVisible(el)) {
       await markOutcome(route, targetName, true);
@@ -400,6 +446,7 @@ async function findElementWait(
     } else {
       console.warn(`[Memory] Selector failed: ${memory.selector}`);
       await markOutcome(route, targetName, false);
+      await logTelemetry({ event_type: 'memory_miss', route, target: targetName, source: memory.source });
     }
   }
   
@@ -528,6 +575,37 @@ export async function fillField(targetName: string, value: string, userId?: stri
   );
   
   return result;
+}
+
+/**
+ * Ensure composer is ready before posting
+ * Handles different routes and waits for hydration
+ */
+async function ensureComposer(userId: string): Promise<void> {
+  const route = location.pathname;
+  
+  // Quick probe - already visible?
+  const quick = await findElementWait('post field', route, 500);
+  if (quick) return;
+  
+  // Try opening composer if control exists
+  const opener = document.querySelector<HTMLElement>('[data-rocker="open post composer"]');
+  if (opener) {
+    opener.click();
+    await new Promise(r => setTimeout(r, 300));
+  }
+  
+  // Fallback navigate if not on create route
+  if (!/\/create(\b|\/)/.test(route)) {
+    history.pushState({}, '', '/create');
+    await new Promise(r => setTimeout(r, 500));
+  }
+  
+  // Wait for hydration
+  const ready = await findElementWait('post field', location.pathname, 5000);
+  if (!ready) {
+    throw new Error('composer_not_ready');
+  }
 }
 
 export function submitForm(formName?: string): { success: boolean; message: string } {
