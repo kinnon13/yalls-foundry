@@ -264,7 +264,15 @@ export async function clickElement(targetName: string, userId?: string): Promise
     console.log(`[Learning] Found ${pastFailures.length} past click failures. Trying alternative approach.`);
   }
   
-  const el = findElement(targetName);
+  let el = findElement(targetName);
+  if (!el) {
+    // Retry for a short period to account for navigation/render delays
+    const start = Date.now();
+    while (!el && Date.now() - start < 2000) {
+      await new Promise((r) => setTimeout(r, 120));
+      el = findElement(targetName);
+    }
+  }
   if (!el) {
     const result = { 
       success: false, 
@@ -310,7 +318,15 @@ export async function fillField(targetName: string, value: string, userId?: stri
     console.log(`[Learning] Found ${pastFailures.length} past fill failures. Trying alternative.`);
   }
   
-  const el = findElement(targetName) as HTMLInputElement | HTMLTextAreaElement | null;
+  let el = findElement(targetName) as HTMLInputElement | HTMLTextAreaElement | null;
+  if (!el) {
+    // Retry for a short period to account for navigation/render delays
+    const start = Date.now();
+    while (!el && Date.now() - start < 2000) {
+      await new Promise((r) => setTimeout(r, 120));
+      el = findElement(targetName) as HTMLInputElement | HTMLTextAreaElement | null;
+    }
+  }
   if (!el) {
     const t = targetName.toLowerCase();
     if (t.includes('calendar') && t.includes('name') && (window as any).__openCreateCalendar) {
@@ -319,7 +335,7 @@ export async function fillField(targetName: string, value: string, userId?: stri
         const retry = findElement(targetName) as HTMLInputElement | HTMLTextAreaElement | null;
         if (retry) {
           retry.focus();
-          retry.value = value;
+          (retry as any).value = value;
           retry.dispatchEvent(new Event('input', { bubbles: true }));
           retry.dispatchEvent(new Event('change', { bubbles: true }));
         }
@@ -333,13 +349,22 @@ export async function fillField(targetName: string, value: string, userId?: stri
     await logActionResult('fill', targetName, false, result.message, userId);
     return result;
   }
+  // If the found element isn't a field, try to locate a better match among inputs/textareas
+  if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement) && !(el as any).isContentEditable) {
+    const candidates = Array.from(document.querySelectorAll('textarea, input, [contenteditable="true"]')) as HTMLElement[];
+    const better = fuzzyFind(candidates, targetName);
+    if (better) el = better as any;
+  }
   
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  el.focus();
-  el.value = value;
-  el.dispatchEvent(new Event('input', { bubbles: true }));
-  el.dispatchEvent(new Event('change', { bubbles: true }));
-  
+  (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
+  (el as HTMLElement).focus();
+  if ((el as any).isContentEditable) {
+    (el as any).innerText = value;
+  } else {
+    (el as any).value = value as any;
+  }
+  (el as HTMLElement).dispatchEvent(new Event('input', { bubbles: true }));
+  (el as HTMLElement).dispatchEvent(new Event('change', { bubbles: true }));
   const result = { success: true, message: `Filled "${targetName}"` };
   await logActionResult('fill', targetName, true, result.message, userId);
   
