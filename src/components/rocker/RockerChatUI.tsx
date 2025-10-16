@@ -16,6 +16,7 @@ import { Composer } from './Composer';
 import { CapabilityHighlighter } from './CapabilityHighlighter';
 import { useRockerGlobal } from '@/lib/ai/rocker/context';
 import { useSession } from '@/lib/auth/context';
+import { AI_PROFILES } from '@/lib/ai/rocker/config';
 
 export function RockerChatUI() {
   const {
@@ -38,6 +39,7 @@ export function RockerChatUI() {
   } = useRockerGlobal();
   
   const { session } = useSession();
+  const aiProfile = AI_PROFILES[actorRole || 'user'];
 
   const [isMinimized, setIsMinimized] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
@@ -146,11 +148,11 @@ export function RockerChatUI() {
         }}
         size="lg"
         className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 p-0 overflow-hidden"
-        aria-label="Open Rocker Chat"
+        aria-label={`Open ${aiProfile.name} Chat`}
       >
         <img 
           src={new URL('@/assets/rocker-cowboy-avatar.jpeg', import.meta.url).href}
-          alt="Rocker"
+          alt={aiProfile.name}
           className="h-full w-full object-cover"
         />
       </Button>
@@ -192,11 +194,11 @@ export function RockerChatUI() {
               <div className="flex flex-col items-center justify-center flex-1 text-center text-muted-foreground">
                 <img 
                   src={new URL('@/assets/rocker-cowboy.jpeg', import.meta.url).href}
-                  alt="Rocker"
+                  alt={aiProfile.name}
                   className="h-20 w-20 rounded-full mb-4 object-cover"
                 />
-                <p className="text-sm font-semibold">Hey there! I'm Rocker, your AI sidekick.</p>
-                <p className="text-xs mt-2">I can help you navigate, save posts, find content, create events, and more!</p>
+                <p className="text-sm font-semibold">Hey there! I'm {aiProfile.name}.</p>
+                <p className="text-xs mt-2">{aiProfile.role}</p>
               </div>
               <RockerQuickActions onSelectPrompt={handleQuickAction} />
             </div>

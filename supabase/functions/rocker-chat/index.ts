@@ -72,7 +72,7 @@ serve(async (req) => {
       USER_MODE_NOTICE;
 
     // Build system prompt with user context and role notice
-    const systemPrompt = USER_SYSTEM_PROMPT + userContext + roleNotice;
+    const systemPrompt = roleNotice + USER_SYSTEM_PROMPT + userContext;
     
     let conversationHistory: any[] = [];
     

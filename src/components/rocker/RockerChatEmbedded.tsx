@@ -14,7 +14,7 @@ import { Composer } from './Composer';
 import { CapabilityHighlighter } from './CapabilityHighlighter';
 import { useRockerGlobal } from '@/lib/ai/rocker/context';
 import { useSession } from '@/lib/auth/context';
-import type { AIRole } from '@/lib/ai/rocker/config';
+import { AIRole, AI_PROFILES } from '@/lib/ai/rocker/config';
 
 interface RockerChatEmbeddedProps {
   actorRole?: AIRole;
@@ -39,6 +39,7 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
   } = useRockerGlobal();
   
   const { session } = useSession();
+  const aiProfile = AI_PROFILES[actorRole || 'user'];
 
   const [showSidebar, setShowSidebar] = useState(true);
   const [currentSessionId, setCurrentSessionId] = useState<string>();
@@ -154,7 +155,7 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
               <div className="flex flex-col items-center justify-center flex-1 text-center text-muted-foreground">
                 <img 
                   src={new URL('@/assets/rocker-cowboy.jpeg', import.meta.url).href}
-                  alt="Rocker"
+                  alt={aiProfile.name}
                   className="h-20 w-20 rounded-full mb-4 object-cover"
                 />
                 <p className="text-sm font-semibold">Ready to assist you</p>
