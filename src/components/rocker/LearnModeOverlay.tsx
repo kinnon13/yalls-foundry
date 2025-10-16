@@ -40,6 +40,12 @@ export function LearnModeOverlay({ candidates, question, onAnswer }: LearnModeOv
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const handleKey = (e: KeyboardEvent) => {
+      // Don't intercept keys when typing in the feedback input
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        return;
+      }
+      
       const key = e.key.toLowerCase();
       
       if (key === 'y' || key === 'enter') {
