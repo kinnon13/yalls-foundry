@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,7 @@ import { RockerChat } from '@/components/rocker/RockerChat';
 export function AndyPanel() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [accessReason, setAccessReason] = useState('');
+  
   const queryClient = useQueryClient();
 
   // List users
@@ -34,19 +34,17 @@ export function AndyPanel() {
   // View user details
   const viewUserMutation = useMutation({
     mutationFn: async ({ user_id, action }: { user_id: string; action: string }) => {
-      if (!accessReason.trim()) {
-        throw new Error('Access reason required');
-      }
+
 
       const { data, error } = await supabase.functions.invoke('andy-admin', {
-        body: { action, user_id, reason: accessReason },
+        body: { action, user_id },
       });
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      toast.success('Access logged');
-      setAccessReason('');
+      toast.success('Loaded');
+      
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to access user data');
@@ -143,25 +141,10 @@ export function AndyPanel() {
                             <DialogHeader>
                               <DialogTitle>Access User Data - {user.display_name || 'Anonymous'}</DialogTitle>
                               <DialogDescription>
-                                🔒 All access is logged for audit compliance
+                                Super Admin access: no justification required.
                               </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4">
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium">
-                                  Access Reason <span className="text-red-500">*</span>
-                                </label>
-                                <Textarea
-                                  placeholder="Enter why you need to view this user's data (required for audit)..."
-                                  value={accessReason}
-                                  onChange={(e) => setAccessReason(e.target.value)}
-                                  rows={4}
-                                  className="border-primary/50 focus:border-primary"
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                  This will be permanently logged with your admin ID and timestamp
-                                </p>
-                              </div>
                               <div className="flex flex-wrap gap-2">
                                 <Button
                                   onClick={() =>
@@ -170,7 +153,6 @@ export function AndyPanel() {
                                       action: 'view_profile',
                                     })
                                   }
-                                  disabled={!accessReason.trim()}
                                 >
                                   View Profile
                                 </Button>
@@ -181,7 +163,6 @@ export function AndyPanel() {
                                       action: 'view_conversations',
                                     })
                                   }
-                                  disabled={!accessReason.trim()}
                                   variant="outline"
                                 >
                                   View Conversations
@@ -193,7 +174,7 @@ export function AndyPanel() {
                                       action: 'view_memories',
                                     })
                                   }
-                                  disabled={!accessReason.trim()}
+                                  
                                   variant="outline"
                                 >
                                   View Memories

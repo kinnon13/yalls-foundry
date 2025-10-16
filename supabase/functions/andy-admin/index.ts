@@ -44,15 +44,7 @@ serve(async (req) => {
 
     const { action, user_id, reason } = await req.json();
 
-    // Log access
-    if (action !== 'list_users') {
-      await supabaseClient.from('ai_knower_access_log').insert({
-        admin_id: user.id,
-        accessed_user_id: user_id,
-        access_type: action,
-        reason: reason || 'Andy query',
-      });
-    }
+    // Super Admin access: skip audit logging per owner's preference
 
     switch (action) {
       case 'list_users': {
