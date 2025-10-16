@@ -314,11 +314,20 @@ export async function executeTool(
         const inviteeName = args.invitee_name || 'them';
         const relationship = args.relationship || 'person';
         
+        // Create pre-filled message
+        const shareMessage = `Hey! I'm using y'all's and thought you might like it too. Join with my link and we can connect: ${inviteLink}`;
+        
+        // Create sharing URLs
+        const smsLink = `sms:?&body=${encodeURIComponent(shareMessage)}`;
+        const emailLink = `mailto:?subject=${encodeURIComponent("Join me on y'all's!")}&body=${encodeURIComponent(shareMessage)}`;
+        
         return {
           success: true,
           invite_link: inviteLink,
           referral_code: referralCode,
-          message: `Here's your personalized invite link for ${inviteeName}:\n\n${inviteLink}\n\nWhen ${inviteeName} signs up with this link:\n✓ You'll get credit as their referrer\n✓ You can connect and share memories together\n✓ They'll benefit from your family network\n\nYou can share this link via text, email, or however you'd like!`
+          sms_link: smsLink,
+          email_link: emailLink,
+          message: `Here's your personalized invite link for ${inviteeName}:\n\n${inviteLink}\n\nWhen ${inviteeName} signs up with this link:\n✓ You'll get credit as their referrer\n✓ You can connect and share memories together\n✓ They'll benefit from your family network\n\nReady to share? I can open:\n📱 [Text message](${smsLink})\n📧 [Email](${emailLink})\n\nOr just copy the link and share it however you'd like!`
         };
       }
 
