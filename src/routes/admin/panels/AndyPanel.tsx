@@ -133,19 +133,28 @@ export function AndyPanel() {
                           </DialogTrigger>
                           <DialogContent className="max-w-2xl">
                             <DialogHeader>
-                              <DialogTitle>Access User Data</DialogTitle>
+                              <DialogTitle>Access User Data - {user.display_name || 'Anonymous'}</DialogTitle>
                               <DialogDescription>
-                                All access is logged for audit. Provide a reason for viewing this data.
+                                🔒 All access is logged for audit compliance
                               </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4">
-                              <Textarea
-                                placeholder="Reason for access (required)..."
-                                value={accessReason}
-                                onChange={(e) => setAccessReason(e.target.value)}
-                                rows={3}
-                              />
-                              <div className="flex gap-2">
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium">
+                                  Access Reason <span className="text-red-500">*</span>
+                                </label>
+                                <Textarea
+                                  placeholder="Enter why you need to view this user's data (required for audit)..."
+                                  value={accessReason}
+                                  onChange={(e) => setAccessReason(e.target.value)}
+                                  rows={4}
+                                  className="border-primary/50 focus:border-primary"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  This will be permanently logged with your admin ID and timestamp
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
                                 <Button
                                   onClick={() =>
                                     viewUserMutation.mutate({
