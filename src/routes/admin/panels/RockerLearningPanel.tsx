@@ -92,6 +92,44 @@ export default function RockerLearningPanel() {
     }
   };
 
+  const testLearningSystem = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        toast({
+          title: 'Not Signed In',
+          description: 'You must be signed in to test the learning system',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Import the DOM agent functions
+      const { clickElement } = await import('@/lib/ai/rocker/dom-agent');
+      
+      // Try to click a non-existent element to generate a failure
+      await clickElement('nonexistent-test-button-12345', session.user.id);
+      
+      // Wait a bit for the log to be written
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Reload data
+      await loadLearningData();
+      
+      toast({
+        title: 'Test Complete',
+        description: 'Check the Failed Attempts tab for the test failure'
+      });
+    } catch (error) {
+      console.error('Test failed:', error);
+      toast({
+        title: 'Test Error',
+        description: 'Failed to run learning test',
+        variant: 'destructive'
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -107,12 +145,16 @@ export default function RockerLearningPanel() {
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button onClick={scanCurrentPage} variant="outline">
-                <Eye className="h-4 w-4 mr-2" />
-                Scan Current Page
+              <Button onClick={testLearningSystem} variant="secondary" size="sm">
+                <Brain className="h-4 w-4 mr-2" />
+                Test Learning
               </Button>
-              <Button onClick={loadLearningData} variant="outline" size="icon">
-                <RefreshCw className="h-4 w-4" />
+              <Button onClick={scanCurrentPage} variant="outline" size="sm">
+                <Eye className="h-4 w-4 mr-2" />
+                Scan Page
+              </Button>
+              <Button onClick={loadLearningData} variant="outline" size="icon" disabled={loading}>
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
             </div>
           </div>
@@ -132,9 +174,35 @@ export default function RockerLearningPanel() {
             </TabsList>
 
             <TabsContent value="failures" className="space-y-4 mt-4">
-              <div className="text-sm text-muted-foreground mb-4">
-                Recent DOM action failures that Rocker is learning from
-              </div>
+              {failures.length === 0 && (
+                <Card className="bg-muted/50">
+                  <CardContent className="p-6">
+                    <div className="text-center space-y-4">
+                      <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground" />
+                      <div>
+                        <h3 className="font-semibold mb-2">No Learning Data Yet</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          The learning system captures failures when Rocker attempts DOM actions. To generate learning data:
+                        </p>
+                        <ol className="text-sm text-left space-y-2 max-w-md mx-auto list-decimal list-inside">
+                          <li>Click "Test Learning" to generate a test failure</li>
+                          <li>Use Rocker to interact with the page (e.g., "click the post button")</li>
+                          <li>Failures are automatically logged when elements aren't found</li>
+                        </ol>
+                      </div>
+                      <Button onClick={testLearningSystem} variant="default">
+                        <Brain className="h-4 w-4 mr-2" />
+                        Generate Test Data
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {failures.length > 0 && (
+                <div className="text-sm text-muted-foreground mb-4">
+                  Recent DOM action failures that Rocker is learning from ({failures.length} total)
+                </div>
+              )}
               <ScrollArea className="h-[600px]">
                 <div className="space-y-3">
                   {failures.map((failure) => {
@@ -186,9 +254,28 @@ export default function RockerLearningPanel() {
             </TabsContent>
 
             <TabsContent value="memory" className="space-y-4 mt-4">
-              <div className="text-sm text-muted-foreground mb-4">
-                Learned selectors and their success rates
-              </div>
+              {selectorMemory.length === 0 && (
+                <Card className="bg-muted/50">
+                  <CardContent className="p-6">
+                    <div className="text-center space-y-4">
+                      <Brain className="h-12 w-12 mx-auto text-muted-foreground" />
+                      <div>
+                        <h3 className="font-semibold mb-2">No Selector Memory Yet</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Selector memory builds as Rocker successfully learns element locations. 
+                          This happens when you confirm elements during Learn Mode or when Rocker 
+                          finds elements consistently.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {selectorMemory.length > 0 && (
+                <div className="text-sm text-muted-foreground mb-4">
+                  Learned selectors and their success rates ({selectorMemory.length} total)
+                </div>
+              )}
               <ScrollArea className="h-[600px]">
                 <div className="space-y-3">
                   {selectorMemory.map((memory) => {
