@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Video } from 'lucide-react';
 import { resolveTenantId } from '@/lib/tenancy/context';
+import { useMediaPermissions } from '@/hooks/useMediaPermissions';
 
 interface StartStreamDialogProps {
   open: boolean;
@@ -25,10 +26,16 @@ export function StartStreamDialog({ open, onOpenChange, onStreamStarted }: Start
   const recordedChunksRef = useRef<Blob[]>([]);
   const streamIdRef = useRef<string | null>(null);
   const { toast } = useToast();
+  const { camera, microphone, refresh: refreshPerms } = useMediaPermissions();
 
   useEffect(() => {
     if (open) {
-      void requestCameraAccess();
+      void (async () => {
+        try {
+          await refreshPerms();
+        } catch {}
+        await requestCameraAccess();
+      })();
     } else {
       stopRecordingAndCamera();
       setCamError(null);
@@ -39,6 +46,18 @@ export function StartStreamDialog({ open, onOpenChange, onStreamStarted }: Start
   const requestCameraAccess = async () => {
     setCamError(null);
     try {
+      // Check browser permission state to avoid unnecessary prompts
+      if (camera === 'denied' || microphone === 'denied') {
+        const msg = 'Camera or microphone permission is blocked. Please allow access in your browser settings.';
+        setCamError(msg);
+        toast({
+          title: 'Permissions blocked',
+          description: 'Click Allow in your browser, or open in a new tab to grant access.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error('Camera API not available in this browser');
       }
@@ -253,7 +272,7 @@ export function StartStreamDialog({ open, onOpenChange, onStreamStarted }: Start
                   {camError ? 'Camera blocked. Please click Allow or open in a new tab.' : 'Requesting camera & mic access...'}
                 </p>
                 <div className="flex items-center gap-2">
-                  <Button size="sm" variant="secondary" onClick={requestCameraAccess}>Retry</Button>
+                  <Button size="sm" variant="secondary" onClick={() => { void refreshPerms(); void requestCameraAccess(); }}>Retry</Button>
                   <Button
                     size="sm"
                     variant="outline"

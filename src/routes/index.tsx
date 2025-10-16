@@ -46,15 +46,15 @@ export default function Index() {
               
               <Tabs defaultValue="media" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="media" className="gap-2">
+                  <TabsTrigger value="media" className="gap-2" data-rocker="feed media tab">
                     <Video className="h-4 w-4" />
                     Media
                   </TabsTrigger>
-                  <TabsTrigger value="text" className="gap-2">
+                  <TabsTrigger value="text" className="gap-2" data-rocker="feed posts tab">
                     <MessageCircle className="h-4 w-4" />
                     Posts
                   </TabsTrigger>
-                  <TabsTrigger value="live" className="gap-2">
+                  <TabsTrigger value="live" className="gap-2" data-rocker="feed live tab">
                     <Radio className="h-4 w-4" />
                     Live
                   </TabsTrigger>
