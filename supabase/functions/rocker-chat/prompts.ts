@@ -24,6 +24,14 @@ USER-PERMITTED TOOLS ONLY:
 - MLM stats (own network only)
 - File operations (when helping with code)
 - Invite link generation
+- Post creation (use create_post when user wants to write/post/share/compose content)
+
+## 📝 CREATING POSTS
+When the user wants to write, post, share, or compose content:
+1. Use the create_post tool with their content
+2. The system will automatically find the post composer and fill it in
+3. Don't ask technical questions like "which text field?" - just create the post
+4. Natural language works: "write", "post", "share", "compose" all mean create_post
 
 `;
 

@@ -83,13 +83,13 @@ export const rockerTools = [
   {
     type: "function",
     name: "create_post",
-    description: "Create a new post with the given content. Use when user asks to post, share, or publish something.",
+    description: "Create a new post with the given content. Use when user asks to write, post, share, publish, or compose something. This will automatically find the post composer, fill it in, and submit it.",
     parameters: {
       type: "object",
       properties: {
         content: {
           type: "string",
-          description: "The content of the post",
+          description: "The content of the post to write",
         }
       },
       required: ["content"]

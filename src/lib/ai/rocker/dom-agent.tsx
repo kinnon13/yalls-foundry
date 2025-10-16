@@ -601,8 +601,15 @@ async function ensureComposer(userId: string): Promise<void> {
     await new Promise(r => setTimeout(r, 500));
   }
   
-  // Wait for hydration
-  const ready = await findElementWait('post field', location.pathname, 5000);
+  // Wait for hydration - try multiple natural language terms
+  const terms = ['post box', 'post field', 'composer', 'write post', 'what\'s happening', 'share something'];
+  let ready: Element | null = null;
+  
+  for (const term of terms) {
+    ready = await findElementWait(term, location.pathname, 2000);
+    if (ready) break;
+  }
+  
   if (!ready) {
     throw new Error('composer_not_ready');
   }
