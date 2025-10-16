@@ -119,6 +119,7 @@ export function CreatePost({ onPostCreated, showRockerLabels = false }: CreatePo
               placeholder="What's on your mind?"
               className={`min-h-[100px] resize-none ${showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}`}
               data-rocker="post composer"
+              data-entity-type="post"
               aria-label="Write a post"
               name="post"
               disabled={isSubmitting || uploading}
@@ -210,6 +211,7 @@ export function CreatePost({ onPostCreated, showRockerLabels = false }: CreatePo
                 type="submit" 
                 disabled={isSubmitting || uploading || (!content.trim() && !mediaFile)}
                 data-rocker="post button"
+                data-entity-type="post"
                 aria-label="Post button"
                 className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
               >

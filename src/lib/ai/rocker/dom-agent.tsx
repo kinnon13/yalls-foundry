@@ -629,9 +629,60 @@ export async function clickElement(targetName: string, userId?: string): Promise
   await upsertSelector(route, targetName, selector, { learned_via: 'click' });
   await markOutcome(route, targetName, true);
   
+  // Verify outcome for critical actions
+  const verified = await verifyActionOutcome(targetName, entityData);
+  if (!verified.success) {
+    await logActionResult('click', targetName, false, `Action completed but verification failed: ${verified.message}`, userId, entityData);
+    await markOutcome(route, targetName, false);
+    return { success: false, message: `Clicked "${targetName}" but ${verified.message}`, entityData };
+  }
+  
   const result = { success: true, message: `Clicked "${targetName}"`, entityData };
   await logActionResult('click', targetName, true, result.message, userId, entityData);
   return result;
+}
+
+/**
+ * Verify that an action had the intended effect
+ * Currently checks for new posts after posting
+ */
+async function verifyActionOutcome(
+  targetName: string,
+  entityData?: { entityType?: string; entityId?: string; fieldName?: string }
+): Promise<{ success: boolean; message: string }> {
+  const target = targetName.toLowerCase();
+  
+  // Post button verification
+  if ((target.includes('post') && target.includes('button')) || target === 'post') {
+    if (entityData?.entityType === 'post') {
+      // Wait for post to appear
+      await new Promise(r => setTimeout(r, 1500));
+      
+      // Check for success indicators
+      const successToast = document.querySelector('[data-sonner-toast]');
+      if (successToast && successToast.textContent?.toLowerCase().includes('success')) {
+        return { success: true, message: 'Post created successfully' };
+      }
+      
+      // Check if composer was cleared (indicates success)
+      const composer = document.querySelector<HTMLTextAreaElement>('textarea[data-rocker*="post"]');
+      if (composer && composer.value === '') {
+        return { success: true, message: 'Composer cleared after posting' };
+      }
+      
+      // Check for error toast
+      const errorToast = document.querySelector('[data-sonner-toast][data-type="error"]');
+      if (errorToast) {
+        return { success: false, message: 'Error toast appeared - post may have failed' };
+      }
+      
+      // No clear success indicator
+      return { success: false, message: 'no confirmation that post was created' };
+    }
+  }
+  
+  // Default: assume success for non-critical actions
+  return { success: true, message: 'Action completed' };
 }
 
 export async function fillField(targetName: string, value: string, userId?: string): Promise<{ success: boolean; message: string; entityData?: any }> {
