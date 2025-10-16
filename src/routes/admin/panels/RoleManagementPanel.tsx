@@ -2,6 +2,7 @@
  * Role Management Panel - Super Admin & Admin Only
  * Allows super admins to grant/revoke any role
  * Allows admins to grant/revoke moderator role only
+ * Provides first-time bootstrap button to promote the current user to super_admin
  */
 
 import { useState } from 'react';
@@ -36,8 +37,26 @@ export function RoleManagementPanel() {
   
   const [targetUserId, setTargetUserId] = useState('');
   const [selectedRole, setSelectedRole] = useState<AppRole>('user');
+
+  // First-time bootstrap mutation (promote self to super_admin if none exist)
+  const bootstrapMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('bootstrap-super-admin', { body: {} });
+      if (error) throw error as any;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('You are now Super Admin');
+      queryClient.invalidateQueries({ queryKey: ['is-super-admin', session?.userId] });
+      queryClient.invalidateQueries({ queryKey: ['user-roles'] });
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || 'Failed to bootstrap super admin');
+    }
+  });
   
-  // Fetch all user roles
+  // Fetch all user roles (RLS will scope results based on caller privileges)
   const { data: userRoles, isLoading } = useQuery({
     queryKey: ['user-roles'],
     queryFn: async () => {
@@ -129,6 +148,21 @@ export function RoleManagementPanel() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* First-time bootstrap */}
+        {!isSuperAdmin && (
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              If this is your first-time setup and no super admin exists yet, click the button below to promote your current account.
+              <div className="mt-3">
+                <Button onClick={() => bootstrapMutation.mutate()} disabled={bootstrapMutation.isPending}>
+                  {bootstrapMutation.isPending ? 'Promoting…' : 'Make me Super Admin (first-time setup)'}
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Instructions */}
         <Alert>
           <Info className="h-4 w-4" />
@@ -136,12 +170,10 @@ export function RoleManagementPanel() {
             {isSuperAdmin ? (
               <>
                 As a super admin, you can grant any role. Only super admins can grant admin roles.
-                Get user IDs from the backend database.
+                Use the form below to grant roles by user ID.
               </>
             ) : (
-              <>
-                As an admin, you can only grant or revoke moderator roles.
-              </>
+              <>As an admin, you can only grant or revoke moderator roles.</>
             )}
           </AlertDescription>
         </Alert>
@@ -184,7 +216,7 @@ export function RoleManagementPanel() {
             disabled={grantRoleMutation.isPending}
             className="w-full"
           >
-            {grantRoleMutation.isPending ? 'Granting...' : 'Grant Role'}
+            {grantRoleMutation.isPending ? 'Granting…' : 'Grant Role'}
           </Button>
         </div>
         
@@ -242,8 +274,8 @@ export function RoleManagementPanel() {
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              No roles found. You need to manually insert your first super_admin role via the backend SQL editor.
-              Use: <code className="bg-muted px-1 py-0.5 rounded">
+              No roles found. You can use the first-time setup button above, or insert the first super_admin via the backend SQL editor:
+              <code className="block mt-2 bg-muted p-2 rounded text-xs">
                 INSERT INTO user_roles (user_id, role) VALUES ('your-user-id', 'super_admin');
               </code>
             </AlertDescription>
