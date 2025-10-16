@@ -1,6 +1,33 @@
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { clickElement, fillField } from '@/lib/ai/rocker/dom-agent';
+import { clickElement, fillField, findElement } from '@/lib/ai/rocker/dom-agent';
+
+// Helper utilities for DOM actions
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+async function waitForElementByName(name: string, timeoutMs = 7000) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const el = findElement(name);
+      if (el) return true;
+    } catch {}
+    await delay(150);
+  }
+  return false;
+}
+async function ensureComposer(userId?: string) {
+  // Fast path: already mounted
+  try { if (findElement('post field')) return; } catch {}
+  // Navigate to home if needed (composer lives on / for signed-in users)
+  if (location.pathname !== '/') {
+    history.pushState({}, '', '/');
+    await delay(300);
+  }
+  // Try clicking an opener if present
+  document.querySelector<HTMLElement>('[data-rocker="open post composer"]')?.click();
+  // Wait for hydration
+  await waitForElementByName('post field', 7000);
+}
 
 // Helper to execute DOM actions from backend
 async function executeDOMAction(action: any) {
@@ -19,12 +46,21 @@ async function executeDOMAction(action: any) {
       await fillField(action.field_name, action.value, userId);
       break;
       
-    case 'dom_create_post':
-      // Fill the post field and click the post button
-      await fillField('post field', action.content, userId);
-      await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
-      await clickElement('post button', userId);
+    case 'dom_create_post': {
+      if (!userId) {
+        console.warn('[Rocker] No user session for dom_create_post');
+      }
+      await ensureComposer(userId);
+      const fillRes = await fillField('post field', action.content, userId);
+      if (!fillRes?.success) {
+        console.warn('[Rocker] Fill failed, using clipboard fallback:', fillRes?.message);
+        try { await navigator.clipboard.writeText(action.content ?? ''); } catch {}
+      } else {
+        await delay(120);
+        await clickElement('post button', userId);
+      }
       break;
+    }
       
     case 'dom_scroll':
       window.scrollBy({ 
