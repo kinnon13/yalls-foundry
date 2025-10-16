@@ -34,6 +34,7 @@ export const REDIRECT_RULES: Record<string, string> = {
   // Events → search/dashboard
   '/events': '/search?category=events',
   '/events/create': '/dashboard?tab=events&action=create',
+  '/entities/unclaimed': '/search',
   
   // Business routes → dashboard
   '/business/:bizId/hub': '/dashboard?tab=business&id=:bizId',
@@ -56,7 +57,7 @@ export function getRedirectDestination(path: string): string | null {
     return REDIRECT_RULES[path];
   }
   
-  // Dynamic route matching (e.g., /horses/123 → /profile/123)
+  // Dynamic route matching
   if (path.startsWith('/horses/') && path !== '/horses/create') {
     const id = path.split('/')[2];
     return `/profile/${id}`;
@@ -64,7 +65,16 @@ export function getRedirectDestination(path: string): string | null {
   
   if (path.startsWith('/events/') && path !== '/events/create') {
     const id = path.split('/')[2];
-    return `/?eventId=${id}`; // Event modal over feed
+    return `/?eventId=${id}`;
+  }
+  
+  if (path.startsWith('/business/')) {
+    return '/dashboard';
+  }
+  
+  // Profile without ID → search
+  if (path === '/profile') {
+    return '/search';
   }
   
   return null;

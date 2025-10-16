@@ -12,6 +12,7 @@ import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
 import InactivityNudge from '@/components/rocker/InactivityNudge';
 import { RockerProvider } from '@/lib/ai/rocker/context';
+import { RedirectHandler } from '@/components/navigation/RedirectHandler';
 import Index from "./routes/index";
 import Search from "./routes/search";
 import Login from "./routes/login";
@@ -34,6 +35,7 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <RockerProvider>
+              <RedirectHandler />
               <Routes>
           {/* 7-Route Spine */}
           <Route path="/" element={<Index />} />

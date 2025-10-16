@@ -72,53 +72,36 @@ export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalH
                   className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
                 >
                   <Home className="h-4 w-4 mr-2" />
-                Home
-              </Button>
-            </Link>
-            {showRockerLabels && (
-              <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none z-10">
-                "home nav"
-              </Badge>
-            )}
-            </div>
-            {session && (
-              <div className="relative">
-                <Link to="/dashboard">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    data-rocker="dashboard nav"
-                    aria-label="Dashboard navigation"
-                    className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
-                  >
-                    Dashboard
-                  </Button>
-                </Link>
-                {showRockerLabels && (
-                  <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none z-10">
-                    "dashboard nav"
-                  </Badge>
-                )}
-              </div>
-            )}
-            <div className="relative">
-              <Link to="/horses">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  data-rocker="horses nav"
-                  aria-label="Horses navigation"
-                  className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
-                >
-                  Horses
+                  Home
                 </Button>
               </Link>
               {showRockerLabels && (
                 <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none z-10">
-                  "horses nav"
+                  "home nav"
                 </Badge>
               )}
             </div>
+            
+            <div className="relative">
+              <Link to="/search">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  data-rocker="search nav"
+                  aria-label="Search navigation"
+                  className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  Search
+                </Button>
+              </Link>
+              {showRockerLabels && (
+                <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none z-10">
+                  "search nav"
+                </Badge>
+              )}
+            </div>
+            
             <div className="relative">
               <Link to="/marketplace">
                 <Button 
@@ -138,85 +121,26 @@ export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalH
                 </Badge>
               )}
             </div>
-            <div className="relative">
-              <Link to="/events">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  data-rocker="events nav"
-                  aria-label="Events navigation"
-                  className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Events
-                </Button>
-              </Link>
-              {showRockerLabels && (
-                <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none z-10">
-                  "events nav"
-                </Badge>
-              )}
-            </div>
-            <div className="relative">
-              <Link to="/entities/unclaimed">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  data-rocker="claim nav" 
-                  aria-label="Claim navigation"
-                  className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  Claim
-                </Button>
-              </Link>
-              {showRockerLabels && (
-                <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none z-10">
-                  "claim nav"
-                </Badge>
-              )}
-            </div>
+            
             {session && (
-              <>
-                <div className="relative">
-                  <Link to="/calendar">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      data-rocker="calendar nav" 
-                      aria-label="Calendar navigation"
-                      className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Calendar
-                    </Button>
-                  </Link>
-                  {showRockerLabels && (
-                    <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none z-10">
-                      "calendar nav"
-                    </Badge>
-                  )}
-                </div>
-                <div className="relative">
-                  <Link to={`/business/${session.userId}/hub`}>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      data-rocker="business nav"
-                      aria-label="Business navigation"
-                      className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
-                    >
-                      <Building2 className="h-4 w-4 mr-2" />
-                      Business
-                    </Button>
-                  </Link>
-                  {showRockerLabels && (
-                    <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none z-10">
-                      "business nav"
-                    </Badge>
-                  )}
-                </div>
-              </>
+              <div className="relative">
+                <Link to="/dashboard">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    data-rocker="dashboard nav"
+                    aria-label="Dashboard navigation"
+                    className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
+                  >
+                    Dashboard
+                  </Button>
+                </Link>
+                {showRockerLabels && (
+                  <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none z-10">
+                    "dashboard nav"
+                  </Badge>
+                )}
+              </div>
             )}
           </nav>
         </div>
@@ -265,7 +189,7 @@ export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalH
           {session ? (
             <>
               <div className="relative">
-                <Link to="/profile">
+                <Link to={`/profile/${session.userId}`}>
                   <Button 
                     variant="ghost" 
                     size="sm" 
