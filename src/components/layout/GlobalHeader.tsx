@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSession } from '@/lib/auth/context';
+import { TourButton } from '@/components/rocker/TourButton';
 
 export function GlobalHeader() {
   const navigate = useNavigate();
@@ -123,6 +124,7 @@ export function GlobalHeader() {
 
         {/* User Actions */}
         <div className="flex items-center gap-2">
+          <TourButton />
           {session ? (
             <>
               <Link to="/profile">

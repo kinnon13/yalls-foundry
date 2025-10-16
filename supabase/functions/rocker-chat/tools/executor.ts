@@ -3,6 +3,88 @@
  * Handles all tool calls from the AI agent
  */
 
+const PLATFORM_TOUR = {
+  home: {
+    path: '/',
+    title: 'Home Dashboard',
+    description: 'Your central hub for all platform activities. From here you can access posts, marketplace, events, and connect with the community.',
+    highlights: [
+      'Feed of recent posts and updates',
+      'Quick navigation to all major features',
+      'Personalized content recommendations',
+      'Global header with search and profile access'
+    ]
+  },
+  marketplace: {
+    path: '/marketplace',
+    title: 'Marketplace',
+    description: 'Browse and discover items, services, and opportunities shared by the community.',
+    highlights: [
+      'Filter by categories and search',
+      'View detailed listings with images',
+      'Flag inappropriate content',
+      'Request new categories'
+    ]
+  },
+  calendar: {
+    path: '/calendar',
+    title: 'Calendar & Events',
+    description: 'Manage your schedule, create events, and coordinate with others.',
+    highlights: [
+      'View events in calendar format',
+      'Create and manage your events',
+      'RSVP to community events',
+      'Set reminders for important dates'
+    ]
+  },
+  horses: {
+    path: '/horses',
+    title: 'Horse Registry',
+    description: 'Comprehensive horse management and tracking system.',
+    highlights: [
+      'Register and claim horses',
+      'Track lineage and ownership',
+      'Manage incentive programs',
+      'View complete horse profiles'
+    ]
+  },
+  dashboard: {
+    path: '/dashboard',
+    title: 'Personal Dashboard',
+    description: 'Your personalized overview with AI-powered insights and quick actions.',
+    highlights: [
+      'Rocker AI assistant integration',
+      'Personalized suggestions',
+      'Quick access to your content',
+      'Activity overview'
+    ]
+  },
+  'ai-management': {
+    path: '/ai-management',
+    title: 'AI Management',
+    description: 'Control what Rocker knows about you and manage AI interactions.',
+    highlights: [
+      'View and manage your memories',
+      'Control data sharing preferences',
+      'See what Rocker has learned',
+      'Privacy controls for AI data'
+    ]
+  },
+  admin: {
+    path: '/admin/control-room',
+    title: 'Admin Control Room',
+    description: 'Comprehensive admin dashboard for platform management and diagnostics.',
+    highlights: [
+      'Feature flag management',
+      'Security scanning and RLS policies',
+      'Platform health monitoring',
+      'User feedback and moderation tools',
+      'Code audit and testing panels',
+      'AI analytics and insights'
+    ]
+  }
+};
+
 export async function executeTool(
   toolName: string,
   args: any,
@@ -13,6 +95,41 @@ export async function executeTool(
 
   try {
     switch (toolName) {
+      // ========== TOUR ==========
+      case 'start_tour': {
+        const tourOverview = Object.entries(PLATFORM_TOUR).map(([key, stop]) => 
+          `• **${stop.title}**: ${stop.description}`
+        ).join('\n');
+        
+        return {
+          success: true,
+          action: 'navigate',
+          path: '/',
+          message: `Welcome to the y'all's platform! Let me show you around.\n\n${tourOverview}\n\nI'll start at the Home Dashboard. Ready?`
+        };
+      }
+      
+      case 'navigate_to_tour_stop': {
+        const section = args.section;
+        const stop = PLATFORM_TOUR[section as keyof typeof PLATFORM_TOUR];
+        
+        if (!stop) {
+          return {
+            success: false,
+            error: `Tour stop "${section}" not found`
+          };
+        }
+        
+        const highlightsList = stop.highlights.map(h => `• ${h}`).join('\n');
+        
+        return {
+          success: true,
+          action: 'navigate',
+          path: stop.path,
+          message: `📍 **${stop.title}**\n\n${stop.description}\n\n**Key Features:**\n${highlightsList}\n\nWhat would you like to explore here?`
+        };
+      }
+      
       // ========== USER & IDENTITY ==========
       case 'get_current_user': {
         const { data: { user }, error: authError } = await supabaseClient.auth.getUser();

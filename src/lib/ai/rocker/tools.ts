@@ -7,6 +7,32 @@
 export const rockerTools = [
   {
     type: "function",
+    name: "start_tour",
+    description: "Start a guided tour of the platform. Use when user says 'show me around', 'give me a tour', or wants to learn about the platform.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  },
+  {
+    type: "function",
+    name: "navigate_to_tour_stop",
+    description: "Navigate to a specific section of the platform during the tour and explain it.",
+    parameters: {
+      type: "object",
+      properties: {
+        section: {
+          type: "string",
+          enum: ["home", "marketplace", "calendar", "horses", "dashboard", "ai-management", "admin"],
+          description: "The section to navigate to and explain"
+        }
+      },
+      required: ["section"]
+    }
+  },
+  {
+    type: "function",
     name: "navigate",
     description: "Navigate to a different page on the site. Use this when user asks to open, go to, or view a specific page.",
     parameters: {

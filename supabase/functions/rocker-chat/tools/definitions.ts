@@ -7,6 +7,35 @@ export const TOOL_DEFINITIONS = [
   {
     type: "function",
     function: {
+      name: "start_tour",
+      description: "Start a guided tour of the platform. Use when user says 'show me around', 'give me a tour', or wants to learn about the platform features.",
+      parameters: {
+        type: "object",
+        properties: {}
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "navigate_to_tour_stop",
+      description: "Navigate to and explain a specific section during the tour",
+      parameters: {
+        type: "object",
+        required: ["section"],
+        properties: {
+          section: {
+            type: "string",
+            enum: ["home", "marketplace", "calendar", "horses", "dashboard", "ai-management", "admin"],
+            description: "The platform section to visit and explain"
+          }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "navigate",
       description: "Navigate the user to a specific page in the application",
       parameters: {

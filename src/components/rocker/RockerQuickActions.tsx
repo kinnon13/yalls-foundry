@@ -1,4 +1,4 @@
-import { Bookmark, Share2, Search, Upload, Calendar } from 'lucide-react';
+import { Bookmark, Share2, Search, Upload, Calendar, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface QuickAction {
@@ -8,6 +8,7 @@ interface QuickAction {
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
+  { icon: Map, label: 'Tour', prompt: 'Show me around the platform!' },
   { icon: Search, label: 'Find', prompt: 'Find that post about...' },
   { icon: Bookmark, label: 'Save', prompt: 'Save this post' },
   { icon: Share2, label: 'Share', prompt: 'Reshare this post' },

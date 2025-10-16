@@ -574,6 +574,39 @@ export function RockerProvider({ children }: { children: ReactNode }) {
           const args = typeof tc.arguments === 'string' ? JSON.parse(tc.arguments) : tc.arguments;
           console.log('[Rocker] Tool call:', tc.name, args);
           
+          // Handle tour start
+          if (tc.name === 'start_tour') {
+            console.log('[Rocker] Starting platform tour');
+            handleNavigation('/');
+            toast({
+              title: '🎯 Tour Started',
+              description: 'Welcome! Let me show you around the platform',
+            });
+          }
+          
+          // Handle tour navigation
+          else if (tc.name === 'navigate_to_tour_stop') {
+            const tourPaths: Record<string, string> = {
+              home: '/',
+              marketplace: '/marketplace',
+              calendar: '/calendar',
+              horses: '/horses',
+              dashboard: '/dashboard',
+              'ai-management': '/ai-management',
+              admin: '/admin/control-room'
+            };
+            
+            const path = tourPaths[args.section];
+            if (path) {
+              console.log('[Rocker] Tour navigating to:', args.section);
+              handleNavigation(path);
+              toast({
+                title: `📍 ${args.section.charAt(0).toUpperCase() + args.section.slice(1)}`,
+                description: 'Exploring this section...',
+              });
+            }
+          }
+          
           // Handle navigation
           if (tc.name === 'navigate') {
             console.log('[Rocker] Navigation tool called:', args.path);
