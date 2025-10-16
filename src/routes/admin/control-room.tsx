@@ -24,7 +24,7 @@ import ScalingReadinessPanel from '@/routes/admin/panels/ScalingReadinessPanel';
 import AuthPanel from '@/routes/admin/panels/AuthPanel';
 import FeedbackInbox from '@/routes/admin/panels/FeedbackInbox';
 import { SuggestionsPanel } from '@/routes/admin/panels/SuggestionsPanel';
-import { FlagsPanel } from '@/routes/admin/panels/FlagsPanel';
+import { FeatureFlagsPanel } from '@/routes/admin/panels/FeatureFlagsPanel';
 import { EntitySearchPanel } from '@/routes/admin/panels/EntitySearchPanel';
 import { ScaleScorecard } from '@/lib/observability/ScaleScorecard';
 import { MediaUploadDialog } from '@/components/media/MediaUploadDialog';
@@ -216,9 +216,7 @@ export default function ControlRoom() {
 
             {/* Flags Tab */}
             <TabsContent value="flags" className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-1">
-                <FlagsPanel />
-              </div>
+              <FeatureFlagsPanel />
             </TabsContent>
 
             {/* Moderator Tab */}

@@ -2354,6 +2354,45 @@ export type Database = {
           },
         ]
       }
+      feature_flags: {
+        Row: {
+          category: string | null
+          config: Json | null
+          created_at: string | null
+          description: string | null
+          enabled: boolean | null
+          enabled_for_tenants: string[] | null
+          feature_key: string
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          config?: Json | null
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          enabled_for_tenants?: string[] | null
+          feature_key: string
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          config?: Json | null
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          enabled_for_tenants?: string[] | null
+          feature_key?: string
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       horse_feed: {
         Row: {
           caption: string | null
