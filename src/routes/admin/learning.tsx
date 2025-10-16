@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface OutcomeRow { action: string; target: string; success: boolean; created_at: string; user_id: string; route?: string | null; }
 interface MemoryRow { route: string; target_name: string; selector: string; score: number; successes: number; failures: number; last_success_at: string | null; }
+interface ComposerStatsRow { day: string; accept_rate: number; total: number; }
 
 export default function LearningDashboard() {
   const { session } = useSession();
@@ -20,6 +21,7 @@ export default function LearningDashboard() {
   const [recentOutcomes, setRecentOutcomes] = useState<OutcomeRow[]>([]);
   const [heatmap, setHeatmap] = useState<{ user_id: string; target: string; fails: number; succ: number }[]>([]);
   const [memory, setMemory] = useState<MemoryRow[]>([]);
+  const [composerStats, setComposerStats] = useState<ComposerStatsRow[]>([]);
   const [simulating, setSimulating] = useState(false);
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export default function LearningDashboard() {
       const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      const [outRes, weekRes, memRes] = await Promise.all([
+      const [outRes, weekRes, memRes, compRes] = await Promise.all([
         supabase
           .from('ai_feedback')
           .select('action,target,success,created_at,user_id,route')
@@ -48,6 +50,12 @@ export default function LearningDashboard() {
           .select('route,target_name,selector,score,successes,failures,last_success_at')
           .order('last_success_at', { ascending: false, nullsFirst: false })
           .limit(50),
+        supabase
+          .from('ai_feedback')
+          .select('created_at,success')
+          .eq('action', 'composer_suggestion')
+          .gte('created_at', weekAgo)
+          .order('created_at', { ascending: true }),
       ]);
 
       setRecentOutcomes((outRes.data as any) || []);
@@ -63,6 +71,24 @@ export default function LearningDashboard() {
       setHeatmap(Array.from(map.values()).sort((a, b) => b.fails - a.fails).slice(0, 30));
 
       setMemory((memRes.data as any) || []);
+
+      // Aggregate composer stats by day
+      const compData = (compRes.data as any) || [];
+      const dayMap = new Map<string, { accepts: number; total: number }>();
+      for (const r of compData) {
+        const day = new Date(r.created_at).toISOString().split('T')[0];
+        const entry = dayMap.get(day) || { accepts: 0, total: 0 };
+        entry.total++;
+        if (r.success) entry.accepts++;
+        dayMap.set(day, entry);
+      }
+      const stats = Array.from(dayMap.entries()).map(([day, { accepts, total }]) => ({
+        day,
+        accept_rate: total > 0 ? accepts / total : 0,
+        total
+      })).sort((a, b) => a.day.localeCompare(b.day));
+      setComposerStats(stats);
+
       setLoading(false);
     })();
   }, [session?.userId]);
@@ -93,6 +119,38 @@ export default function LearningDashboard() {
           <h1 className="text-3xl font-bold">Learning Dashboard</h1>
           <p className="text-muted-foreground">Track DOM action outcomes and selector learning in near real-time.</p>
         </header>
+
+        <section className="max-w-6xl mx-auto space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Composer Coach Acceptance Rate (7d)</CardTitle>
+              <CardDescription>Track how often users accept AI writing suggestions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <Skeleton className="h-32 w-full" />
+              ) : composerStats.length === 0 ? (
+                <p className="text-muted-foreground">No composer suggestions yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {composerStats.map((stat) => (
+                    <div key={stat.day} className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">{stat.day}</span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm font-medium">
+                          {(stat.accept_rate * 100).toFixed(1)}%
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          ({stat.total} suggestions)
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
 
         <section className="max-w-6xl mx-auto grid gap-6 md:grid-cols-2">
           <Card>

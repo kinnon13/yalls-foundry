@@ -29,6 +29,7 @@ export function useComposerAwareness() {
   const [composerState, setComposerState] = useState<ComposerState>({ isTyping: false });
   const [lastSuggestion, setLastSuggestion] = useState<SuggestionState>({});
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
+  const [lastSuggestTime, setLastSuggestTime] = useState(0);
   const { toast } = useToast();
 
   // Listen to typing events
@@ -60,6 +61,21 @@ export function useComposerAwareness() {
       const suggestionsEnabled = localStorage.getItem('rocker-suggestions-enabled') === 'true';
       if (!suggestionsEnabled) {
         console.log('[Composer Awareness] Suggestions disabled by user preference');
+        return;
+      }
+
+      // Rate limit: min 10s between suggestions
+      const now = Date.now();
+      if (now - lastSuggestTime < 10000) {
+        console.log('[Composer Awareness] Rate limited, skipping suggestion');
+        return;
+      }
+      setLastSuggestTime(now);
+
+      // Skip very short posts (< 5 words)
+      const wordCount = text.trim().split(/\s+/).length;
+      if (wordCount < 5) {
+        console.log('[Composer Awareness] Text too short, skipping suggestion');
         return;
       }
 
@@ -104,7 +120,7 @@ export function useComposerAwareness() {
 
     window.addEventListener('rocker:suggest', onSuggest);
     return () => window.removeEventListener('rocker:suggest', onSuggest);
-  }, [toast]);
+  }, [toast, lastSuggestTime]);
 
   // Helper to check if Rocker should pause
   const shouldPauseRocker = useCallback(() => {

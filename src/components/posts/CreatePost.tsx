@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { resolveTenantId } from '@/lib/tenancy/context';
 import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { useRockerTyping } from '@/hooks/useRockerTyping';
+import { useComposerAwareness } from '@/hooks/useComposerAwareness';
 
 interface CreatePostProps {
   onPostCreated?: () => void;
@@ -24,15 +25,52 @@ export function CreatePost({ onPostCreated, showRockerLabels = false }: CreatePo
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { uploadPostMedia, uploading } = useMediaUpload();
+  const { logSuggestionFeedback } = useComposerAwareness();
+  const [ghostHint, setGhostHint] = useState<string>('');
 
   // Enable Rocker typing detection
   // Set enableSuggestions: true if user opts into live coaching
   useRockerTyping(textareaRef, {
-    enableSuggestions: false, // Can be toggled via user preferences
+    enableSuggestions: localStorage.getItem('rocker-suggestions-enabled') === 'true',
     minChars: 20,
     idleMs: 1200,
     source: 'post-composer'
   });
+
+  // Ghost hint keyboard bindings
+  useEffect(() => {
+    const onHint = (e: any) => setGhostHint(e.detail?.suggestion || '');
+    
+    const onKey = (ev: KeyboardEvent) => {
+      if (!ghostHint || !textareaRef.current) return;
+      
+      if (ev.key === 'Tab') {
+        ev.preventDefault();
+        const el = textareaRef.current;
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        const newValue = el.value.slice(0, start) + ghostHint + el.value.slice(end);
+        setContent(newValue);
+        el.value = newValue;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        setGhostHint('');
+        logSuggestionFeedback(true);
+      }
+      
+      if (ev.key === 'Escape') {
+        setGhostHint('');
+        logSuggestionFeedback(false);
+      }
+    };
+
+    window.addEventListener('rocker:hint', onHint as any);
+    window.addEventListener('keydown', onKey);
+    
+    return () => {
+      window.removeEventListener('rocker:hint', onHint as any);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [ghostHint, logSuggestionFeedback]);
 
   const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -130,16 +168,25 @@ export function CreatePost({ onPostCreated, showRockerLabels = false }: CreatePo
               onChange={(e) => setContent(e.target.value)}
               placeholder="What's on your mind?"
               className={`min-h-[100px] resize-none ${showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}`}
-              data-rocker="post composer"
+              data-rocker="post field"
               data-entity-type="post"
               aria-label="Write a post"
               name="post"
               disabled={isSubmitting || uploading}
               title="Write your post here"
             />
+            {ghostHint && (
+              <div 
+                className="absolute bottom-2 left-2 right-2 text-sm text-muted-foreground bg-background/80 backdrop-blur-sm p-2 rounded border border-border"
+                role="status"
+                aria-live="polite"
+              >
+                💡 {ghostHint} <span className="text-xs">(Tab to insert, Esc to dismiss)</span>
+              </div>
+            )}
             {showRockerLabels && (
               <Badge className="absolute -bottom-8 left-0 bg-primary/90 pointer-events-none">
-                "post composer"
+                "post field"
               </Badge>
             )}
           </div>
