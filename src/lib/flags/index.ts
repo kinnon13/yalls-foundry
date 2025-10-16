@@ -17,6 +17,7 @@ export type FlagKey =
   | 'new_search' // experimental search
   | 'feed'       // feed UI
   | 'composer_coach' // live writing coach
+  | 'ai_rank'    // AI-powered search ranking and feed curation
   ;
 
 type Store = Partial<Record<FlagKey, boolean>>;
@@ -31,6 +32,7 @@ const ENV_DEFAULTS: Store = {
   new_search:(import.meta.env.VITE_FEATURE_NEW_SEARCH ?? 'off') === 'on',
   feed:     (import.meta.env.VITE_FEATURE_FEED ?? 'on') === 'on',
   composer_coach: (import.meta.env.VITE_FEATURE_COMPOSER_COACH ?? 'on') === 'on',
+  ai_rank:  (import.meta.env.VITE_FEATURE_AI_RANK ?? 'off') === 'on',
 };
 
 function load(): Store {
@@ -60,7 +62,7 @@ export function allFlags(): Record<string, boolean> {
   const o = load();
   const result: Record<string, boolean> = {};
   
-  const allKeys: FlagKey[] = ['feedback', 'ai', 'events', 'market', 'new_search', 'feed', 'composer_coach'];
+  const allKeys: FlagKey[] = ['feedback', 'ai', 'events', 'market', 'new_search', 'feed', 'composer_coach', 'ai_rank'];
   allKeys.forEach(key => {
     result[key] = getFlag(key);
   });

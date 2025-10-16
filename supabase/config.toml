@@ -136,3 +136,9 @@ verify_jwt = true
 [functions.rocker-telemetry]
 verify_jwt = true
 
+[functions.ai-rank-search]
+verify_jwt = true
+
+[functions.ai-curate-feed]
+verify_jwt = true
+
