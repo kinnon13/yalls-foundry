@@ -17,6 +17,7 @@ import { GoogleDriveService } from './integrations/google-drive';
 import { Button } from '@/components/ui/button';
 import { Mic } from 'lucide-react';
 import { useRockerNotifications } from '@/hooks/useRockerNotifications';
+import type { AIRole } from './config';
 
 interface RockerContextValue {
   // Chat state
@@ -29,8 +30,8 @@ interface RockerContextValue {
   createNewConversation: () => Promise<string | undefined>;
   
   // Mode control
-  actorRole: 'user' | 'admin';
-  setActorRole: (role: 'user' | 'admin') => void;
+  actorRole: AIRole;
+  setActorRole: (role: AIRole) => void;
   
   // Voice state
   isVoiceMode: boolean;
@@ -66,7 +67,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
   const abortControllerRef = useRef<AbortController | null>(null);
   
   // Mode control
-  const [actorRole, setActorRole] = useState<'user' | 'admin'>('user');
+  const [actorRole, setActorRole] = useState<AIRole>('user');
   
   // Voice state
   const [isVoiceMode, setIsVoiceMode] = useState(false);

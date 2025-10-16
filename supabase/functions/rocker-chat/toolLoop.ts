@@ -6,7 +6,7 @@ export async function executeToolLoop(
   toolCalls: any[],
   supabaseClient: SupabaseClient,
   userId: string,
-  actorRole: 'user' | 'admin' = 'user'
+  actorRole: 'user' | 'admin' | 'knower' = 'user'
 ): Promise<any[]> {
   const results: any[] = [];
 

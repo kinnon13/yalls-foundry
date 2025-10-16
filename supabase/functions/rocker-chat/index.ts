@@ -57,14 +57,19 @@ serve(async (req) => {
     const { messages, sessionId: requestedSessionId, currentRoute, actor_role } = body;
     
     // Default to 'user' mode unless explicitly set to 'admin'
-    const actorRole: 'user' | 'admin' = actor_role === 'admin' ? 'admin' : 'user';
+    const actorRole: 'user' | 'admin' | 'knower' = 
+      actor_role === 'admin' ? 'admin' :
+      actor_role === 'knower' ? 'knower' : 'user';
 
     // Build user context from profile, memory, and analytics
     const userContext = await buildUserContext(supabaseClient, user.id, user.email, currentRoute);
 
     // Add role-specific system message
-    const { USER_MODE_NOTICE, ADMIN_MODE_NOTICE } = await import('./prompts.ts');
-    const roleNotice = actorRole === 'admin' ? ADMIN_MODE_NOTICE : USER_MODE_NOTICE;
+    const { USER_MODE_NOTICE, ADMIN_MODE_NOTICE, KNOWER_MODE_NOTICE } = await import('./prompts.ts');
+    const roleNotice = 
+      actorRole === 'admin' ? ADMIN_MODE_NOTICE :
+      actorRole === 'knower' ? KNOWER_MODE_NOTICE :
+      USER_MODE_NOTICE;
 
     // Build system prompt with user context and role notice
     const systemPrompt = USER_SYSTEM_PROMPT + userContext + roleNotice;

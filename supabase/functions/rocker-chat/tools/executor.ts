@@ -90,28 +90,54 @@ export async function executeTool(
   args: any,
   supabaseClient: any,
   userId: string,
-  actorRole: 'user' | 'admin' = 'user'
+  actorRole: 'user' | 'admin' | 'knower' = 'user'
 ): Promise<any> {
   console.log(`[Tool: ${toolName}] [Mode: ${actorRole}]`, args);
 
-  // ADMIN TOOL GATING
+  // ADMIN-ONLY TOOL GATING
   const ADMIN_ONLY_TOOLS = new Set([
+    'read_raw_events',
+    'export_csv',
     'ban_user',
     'impersonate',
-    'export_raw_events',
-    'read_all_users',
-    'delete_user_data',
-    'modify_permissions'
+    'moderate_content',
+    'view_all_users',
+    'system_config'
+  ]);
+
+  // KNOWER-ONLY TOOL GATING
+  const KNOWER_ONLY_TOOLS = new Set([
+    'aggregate_patterns',
+    'analyze_trends',
+    'optimize_models',
+    'cross_user_insights'
   ]);
 
   // Block admin tools in user mode
   if (actorRole === 'user' && ADMIN_ONLY_TOOLS.has(toolName)) {
     return {
       success: false,
-      error: `🔒 Tool "${toolName}" requires admin mode. Please use the Admin Control Room to access admin functions.`
+      error: `Tool "${toolName}" requires admin role. Switch to Admin Mode in the Control Room to use this.`
     };
   }
 
+  // Block knower tools in user mode
+  if (actorRole === 'user' && KNOWER_ONLY_TOOLS.has(toolName)) {
+    return {
+      success: false,
+      error: `Tool "${toolName}" requires knower role. This is a system-level analytics function.`
+    };
+  }
+
+  // Block knower tools in admin mode (privacy separation)
+  if (actorRole === 'admin' && KNOWER_ONLY_TOOLS.has(toolName)) {
+    return {
+      success: false,
+      error: `Tool "${toolName}" is only available in Knower (Andy) mode for privacy-preserving analytics.`
+    };
+  }
+
+  // Tool implementations start here
   try {
     switch (toolName) {
       // ========== TOUR ==========
