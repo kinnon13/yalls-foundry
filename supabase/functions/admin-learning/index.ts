@@ -39,26 +39,19 @@ serve(async (req) => {
     }
 
     const now = new Date();
-    const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Recent outcomes (24h)
+    // Recent outcomes (7 days for learning dashboard)
     const { data: recent, error: recentErr } = await supabase
-      .from('ai_feedback')
-      .select('*')
-      .gte('created_at', dayAgo)
-      .order('created_at', { ascending: false })
-      .limit(500);
-    if (recentErr) throw recentErr;
-
-    // Weekly outcomes (7d)
-    const { data: week, error: weekErr } = await supabase
       .from('ai_feedback')
       .select('*')
       .gte('created_at', weekAgo)
       .order('created_at', { ascending: false })
-      .limit(2000);
-    if (weekErr) throw weekErr;
+      .limit(500);
+    if (recentErr) throw recentErr;
+
+    // Weekly outcomes (same as recent for now)
+    const week = recent;
 
     // Selector memory
     const { data: selectors, error: selErr } = await supabase
@@ -76,7 +69,7 @@ serve(async (req) => {
       action: 'learning_admin_fetch',
       target: 'learning_dashboard',
       reason: 'Admin fetched learning dashboard data',
-      metadata: { dayAgo, weekAgo }
+      metadata: { weekAgo }
     });
 
     return new Response(JSON.stringify({

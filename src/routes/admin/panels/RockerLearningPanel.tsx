@@ -229,38 +229,69 @@ export default function RockerLearningPanel() {
               <ScrollArea className="h-[600px]">
                 <div className="space-y-3">
                   {failures.map((failure) => {
-                    const payload = failure.payload as any;
+                    const meta = failure.meta as any;
+                    const availableElements = meta?.available_elements || [];
                     return (
                       <Card key={failure.id}>
                         <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-2 flex-1">
-                              <div className="flex items-center gap-2">
-                                <XCircle className="h-4 w-4 text-destructive" />
-                                <span className="font-semibold">{payload?.action}</span>
-                                <Badge variant="destructive">Failed</Badge>
-                              </div>
-                              <div className="text-sm">
-                                <div><strong>Target:</strong> {payload?.target}</div>
-                                <div><strong>Message:</strong> {payload?.message}</div>
-                                <div><strong>Page:</strong> {payload?.page}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {new Date(failure.created_at).toLocaleString()}
+                          <div className="space-y-3">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-2 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <XCircle className="h-4 w-4 text-destructive" />
+                                  <span className="font-semibold">{failure.action}</span>
+                                  <Badge variant="destructive">Failed</Badge>
                                 </div>
-                              </div>
-                              {payload?.available_elements && (
-                                <details className="text-xs">
-                                  <summary className="cursor-pointer text-muted-foreground">
-                                    Available elements ({payload.available_elements.length})
-                                  </summary>
-                                  <div className="mt-2 space-y-1 pl-4">
-                                    {payload.available_elements.map((el: string, i: number) => (
-                                      <div key={i} className="font-mono">{el}</div>
-                                    ))}
+                                <div className="text-sm space-y-1">
+                                  <div><strong>Target:</strong> {failure.target}</div>
+                                  <div><strong>Message:</strong> {failure.message}</div>
+                                  <div><strong>Page:</strong> {failure.route}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {new Date(failure.created_at).toLocaleString()}
                                   </div>
-                                </details>
-                              )}
+                                </div>
+                                {availableElements.length > 0 && (
+                                  <details className="text-xs">
+                                    <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                                      Available elements ({availableElements.length})
+                                    </summary>
+                                    <div className="mt-2 space-y-1 pl-4 max-h-40 overflow-auto">
+                                      {availableElements.map((el: string, i: number) => (
+                                        <div key={i} className="font-mono text-xs bg-muted/50 px-2 py-1 rounded">{el}</div>
+                                      ))}
+                                    </div>
+                                  </details>
+                                )}
+                              </div>
                             </div>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={async () => {
+                                // Open Rocker chat with pre-populated context about this failure
+                                const context = `I see you failed to ${failure.action} "${failure.target}" on ${failure.route}. The error was: ${failure.message}. ${availableElements.length > 0 ? `Available elements were: ${availableElements.slice(0, 10).join(', ')}` : ''} Can you help me understand what went wrong and how to fix it?`;
+                                
+                                // Navigate to admin rocker panel or open chat with this context
+                                const chatPanel = document.querySelector('[data-rocker-chat]');
+                                if (chatPanel) {
+                                  // If chat is visible, populate it
+                                  const textarea = chatPanel.querySelector('textarea');
+                                  if (textarea) {
+                                    (textarea as HTMLTextAreaElement).value = context;
+                                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                                  }
+                                } else {
+                                  toast({
+                                    title: 'Failure Context Copied',
+                                    description: 'Open Admin Rocker to discuss this failure'
+                                  });
+                                  navigator.clipboard.writeText(context);
+                                }
+                              }}
+                            >
+                              <Brain className="h-3 w-3 mr-2" />
+                              Discuss with Rocker
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
