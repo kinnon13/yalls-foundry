@@ -68,6 +68,8 @@ serve(async (req) => {
       .limit(500);
     if (selErr) throw selErr;
 
+    const failures = (recent || []).filter((r: any) => (r.success === false) && (!r.kind || r.kind === 'telemetry' || r.kind === 'dom_action'));
+
     // Audit the access
     await supabase.from('admin_audit').insert({
       admin_id: user.id,
@@ -81,7 +83,7 @@ serve(async (req) => {
       recent,
       week,
       selectors,
-      failures: (recent || []).filter((r: any) => r.kind === 'dom_action' && r.success === false)
+      failures
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error) {
     const msg = error instanceof Error ? error.message : (typeof error === 'object' ? JSON.stringify(error) : String(error));

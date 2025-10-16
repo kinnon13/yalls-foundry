@@ -48,7 +48,7 @@ async function logActionResult(
       message,
       session_id: sessionId ?? null,
       actor_role: actorRole,
-      kind: 'dom_action',
+      kind: 'telemetry',
       payload: {},
       meta: {
         page: route,

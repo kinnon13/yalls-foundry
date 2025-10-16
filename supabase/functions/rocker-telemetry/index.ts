@@ -66,7 +66,7 @@ serve(async (req) => {
       success,
       message: message ? String(message).slice(0, 1000) : null,
       session_id: session_id ?? null,
-      kind: 'dom_action',
+      kind: 'telemetry',
       payload: {},
       meta: {
         ...(meta || {}),
