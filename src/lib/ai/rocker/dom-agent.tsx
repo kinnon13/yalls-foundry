@@ -425,12 +425,22 @@ async function learnSelector(
             userId,
             { route, captureScreenshot: true }
           );
+          const sessionId = (window as any).__rockerSessionId || 'unknown';
           await logTelemetry({ 
             event_type: 'learn_session', 
             route, 
             target: targetName, 
-            metadata: { outcome: 'feedback', text: result.feedbackText || '' }
+            metadata: { 
+              outcome: 'feedback', 
+              text: result.feedbackText || '',
+              session_id: sessionId
+            }
           });
+          
+          // Trigger background feedback analysis
+          supabase.functions.invoke('analyze-learn-feedback', {
+            body: { sessionId }
+          }).catch(err => console.error('[Learn Mode] Feedback analysis failed:', err));
         }
         console.log(`[Learn Mode] Feedback for ${targetName}:`, result.feedbackText);
         resolve(null);
