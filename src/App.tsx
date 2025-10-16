@@ -13,6 +13,7 @@ import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
 import InactivityNudge from '@/components/rocker/InactivityNudge';
 import { RockerProvider } from '@/lib/ai/rocker/context';
 import { RedirectHandler } from '@/components/navigation/RedirectHandler';
+import PreviewRoutes from '@/preview/PreviewRoutes';
 import Index from "./routes/index";
 import Search from "./routes/search";
 import Login from "./routes/login";
@@ -66,6 +67,9 @@ const App = () => (
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
               </Routes>
+
+              {/* Preview Routes (dev/staging only) */}
+              <PreviewRoutes />
 
               {FEEDBACK_ENABLED && <FeedbackWidget />}
               <InactivityNudge />

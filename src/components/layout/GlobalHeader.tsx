@@ -14,6 +14,7 @@ import { TourButton } from '@/components/rocker/TourButton';
 import { Badge } from '@/components/ui/badge';
 import { useEffect } from 'react';
 import { useCartCount } from '@/hooks/useCartCount';
+import { PreviewDropdown } from '@/components/layout/PreviewDropdown';
 
 interface GlobalHeaderProps {
   showRockerLabels?: boolean;
@@ -189,6 +190,9 @@ export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalH
         {/* User Actions */}
         <div className="flex items-center gap-2">
           <TourButton />
+          
+          {/* Preview Dropdown (dev/staging only) */}
+          <PreviewDropdown />
           
           {/* Cart Icon */}
           <div className="relative">
