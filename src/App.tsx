@@ -17,7 +17,6 @@ import Search from "./routes/search";
 import Login from "./routes/login";
 import Signup from "./routes/signup";
 import ConsentPage from "./routes/consent";
-import AIManagement from "./routes/ai-management";
 import Profile from "./routes/profile";
 import ControlRoom from "./routes/admin/control-room";
 import MarketplaceIndex from "./routes/marketplace/index";
