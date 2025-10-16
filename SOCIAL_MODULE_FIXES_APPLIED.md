@@ -3,6 +3,10 @@
 ## Routes Consolidated (7-Route Spine Enforced)
 
 ### Deleted Routes:
+- `/home` → Now `/` (duplicate removed)
+- `/post-feed` → Now `/` (duplicate removed)
+- `/ai-management` → Now `/dashboard?tab=ai`
+- `/profile` (without ID) → Redirects to user's own profile
 - `/calendar` → Now `/dashboard?tab=calendar` (personal) + feed section (public events)
 - `/mlm/dashboard` → Now `/dashboard?tab=mlm` (private)
 - `/mlm/tree` → Now `/dashboard?tab=mlm` (private)
@@ -15,7 +19,7 @@
 - `/business/:bizId/*` → All moved to `/dashboard?tab=business&id=:bizId`
 - `/posts/saved` → Now `/dashboard?tab=saved`
 
-### Remaining Public Routes (7 Total):
+### Final Public Routes (7 Total):
 1. `/` (feed)
 2. `/search`
 3. `/marketplace`

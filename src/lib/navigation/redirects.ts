@@ -6,6 +6,13 @@
  */
 
 export const REDIRECT_RULES: Record<string, string> = {
+  // Duplicate feed routes → canonical
+  '/home': '/',
+  '/post-feed': '/',
+  
+  // AI management → dashboard
+  '/ai-management': '/dashboard?tab=ai',
+  
   // Calendar consolidation
   '/calendar': '/dashboard?tab=calendar',
   

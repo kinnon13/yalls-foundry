@@ -38,20 +38,12 @@ const App = () => (
           <AuthProvider>
             <RockerProvider>
               <Routes>
-              <Route path="/" element={<Index />} />
-          <Route path="/home" element={<Index />} />
-          <Route path="/post-feed" element={<Index />} />
+          {/* 7-Route Spine */}
+          <Route path="/" element={<Index />} />
           <Route path="/search" element={<Search />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/consent" element={<ConsentPage />} />
-          <Route path="/ai-management" element={<RequireAuth><AIManagement /></RequireAuth>} />
-          
-          {/* Marketplace Routes */}
           <Route path="/marketplace" element={<MarketplaceIndex />} />
           <Route path="/marketplace/:id" element={<ListingDetail />} />
-
-          {/* Dashboard */}
+          <Route path="/profile/:id" element={<Profile />} />
           <Route
             path="/dashboard"
             element={
@@ -62,14 +54,15 @@ const App = () => (
               </RequireAuth>
             }
           />
-
-          {/* Profile */}
-          <Route path="/profile/:id" element={<Profile />} />
-          <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-
-          {/* Admin */}
           <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
-              <Route path="*" element={<NotFound />} />
+
+          {/* Auth Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/consent" element={<ConsentPage />} />
+
+          {/* Catch-all */}
+          <Route path="*" element={<NotFound />} />
               </Routes>
 
               {FEEDBACK_ENABLED && <FeedbackWidget />}
