@@ -160,17 +160,18 @@ async function writeMemory(supabase: any, userId: string, tenantId: string, entr
       updated_at: new Date().toISOString(),
     }, { onConflict: 'tenant_id,user_id' });
 
-  const memoryData = {
-    user_id: userId,
-    tenant_id: entry.tenant_id || tenantId,
-    type: entry.type,
-    key: entry.key,
-    value: entry.value,
-    confidence: entry.confidence || 0.8,
-    source: entry.source || 'chat',
-    tags: entry.tags || [],
-    expires_at: entry.expires_at || null,
-  };
+    const memoryData = {
+      user_id: userId,
+      tenant_id: entry.tenant_id || tenantId,
+      type: entry.type,
+      key: entry.key,
+      value: entry.value,
+      confidence: entry.confidence || 0.8,
+      source: entry.source || 'chat',
+      scope: 'user', // Set scope based on who is writing
+      tags: entry.tags || [],
+      expires_at: entry.expires_at || null,
+    };
 
   // Generate embedding for the value
   const valueText = typeof entry.value === 'string' ? entry.value : JSON.stringify(entry.value);

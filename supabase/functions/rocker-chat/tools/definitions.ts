@@ -1,6 +1,6 @@
 /**
  * Tool definitions for OpenAI function calling
- * Describes all available tools Rocker can use
+ * Describes all available tools the AI can use across different modes
  */
 
 export const TOOL_DEFINITIONS = [
