@@ -13,10 +13,12 @@ export function LiveFeed() {
   const [streams, setStreams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showStartDialog, setShowStartDialog] = useState(false);
+  const [activeStream, setActiveStream] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     loadStreams();
+    checkActiveStream();
     
     // Subscribe to realtime updates
     const channel = supabase
@@ -28,7 +30,10 @@ export function LiveFeed() {
           schema: 'public',
           table: 'live_streams'
         },
-        () => loadStreams()
+        () => {
+          loadStreams();
+          checkActiveStream();
+        }
       )
       .subscribe();
 
@@ -36,6 +41,26 @@ export function LiveFeed() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const checkActiveStream = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('live_streams')
+        .select('*')
+        .eq('streamer_id', user.id)
+        .eq('status', 'live')
+        .single();
+
+      if (!error && data) {
+        setActiveStream(data);
+      }
+    } catch (error) {
+      // No active stream
+    }
+  };
 
   const loadStreams = async () => {
     try {
@@ -78,6 +103,37 @@ export function LiveFeed() {
     setShowStartDialog(true);
   };
 
+  const endStream = async () => {
+    if (!activeStream) return;
+
+    try {
+      const { error } = await supabase
+        .from('live_streams')
+        .update({
+          status: 'ended',
+          ended_at: new Date().toISOString(),
+        })
+        .eq('id', activeStream.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Stream ended',
+        description: 'Your live stream has ended',
+      });
+
+      setActiveStream(null);
+      loadStreams();
+    } catch (error) {
+      console.error('Error ending stream:', error);
+      toast({
+        title: 'Failed to end stream',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -91,11 +147,40 @@ export function LiveFeed() {
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">Live Now</h2>
-          <Button onClick={startStream}>
-            <Radio className="h-4 w-4 mr-2" />
-            Go Live
-          </Button>
+          {activeStream ? (
+            <Button onClick={endStream} variant="destructive">
+              <Radio className="h-4 w-4 mr-2 animate-pulse" />
+              End Stream
+            </Button>
+          ) : (
+            <Button onClick={startStream}>
+              <Radio className="h-4 w-4 mr-2" />
+              Go Live
+            </Button>
+          )}
         </div>
+
+        {activeStream && (
+          <Card className="border-primary">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <Badge variant="destructive" className="animate-pulse">
+                  <Radio className="h-3 w-3 mr-1" />
+                  YOU ARE LIVE
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Viewers: {activeStream.viewer_count}
+                </span>
+              </div>
+              <CardTitle className="mt-2">{activeStream.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Your stream is live. Viewers can now see your content.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
       {streams.length === 0 ? (
         <Card>
@@ -159,7 +244,10 @@ export function LiveFeed() {
       <StartStreamDialog
         open={showStartDialog}
         onOpenChange={setShowStartDialog}
-        onStreamStarted={loadStreams}
+        onStreamStarted={() => {
+          loadStreams();
+          checkActiveStream();
+        }}
       />
     </>
   );
