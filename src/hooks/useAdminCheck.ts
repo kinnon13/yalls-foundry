@@ -14,9 +14,8 @@ export function useAdminCheck() {
     queryFn: async () => {
       if (!session?.userId) return false;
       
-      const { data, error } = await supabase.rpc('has_role', {
+      const { data, error } = await supabase.rpc('is_admin', {
         _user_id: session.userId,
-        _role: 'admin',
       });
 
       if (error) {

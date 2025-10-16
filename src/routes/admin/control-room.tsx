@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { SEOHelmet } from '@/lib/seo/helmet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -58,9 +59,26 @@ export default function ControlRoom() {
             <Shield className="h-16 w-16 mx-auto text-muted-foreground" />
             <h1 className="text-2xl font-bold">Access Denied</h1>
             <p className="text-muted-foreground">You need admin privileges to access the Control Room.</p>
-            <Link to="/">
-              <Button>Go Home</Button>
-            </Link>
+            <div className="flex items-center justify-center gap-3">
+              <Link to="/">
+                <Button>Go Home</Button>
+              </Link>
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    const { data, error } = await supabase.functions.invoke('bootstrap-super-admin', { body: {} });
+                    if (error || (data as any)?.error) return alert('Bootstrap failed.');
+                    window.location.reload();
+                  } catch (_) {
+                    alert('Bootstrap failed.');
+                  }
+                }}
+              >
+                Make me Super Admin
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">First-time setup only: promotes the current account if no super admin exists.</p>
           </div>
         </div>
       }
