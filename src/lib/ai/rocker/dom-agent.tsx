@@ -283,7 +283,9 @@ function normalize(s?: string) {
   return (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
 }
 const SYNONYMS: Record<string, string[]> = {
-  'post field': ['post field','post input','composer','compose','status','post'],
+  'post field': ['post field','post input','post composer','composer','compose','status','post'],
+  'post composer': ['post field','post input','post composer','composer','compose','status','post'],
+  'post composer field': ['post field','post input','post composer','composer','compose','status','post'],
   'post button': ['post button','post','publish','share','submit'],
 };
 function isVisible(el: Element) {
@@ -328,7 +330,18 @@ function tokenMatches(el: Element, token: string) {
 }
 function collectCandidates(targetName: string) {
   const name = normalize(targetName);
-  const tokens = SYNONYMS[name] || [targetName];
+  // Try exact match first, then partial match for multi-word targets
+  let tokens = SYNONYMS[name];
+  if (!tokens) {
+    // Check if any synonym key is contained in the target name or vice versa
+    for (const [key, syns] of Object.entries(SYNONYMS)) {
+      if (name.includes(key) || key.includes(name)) {
+        tokens = syns;
+        break;
+      }
+    }
+  }
+  if (!tokens) tokens = [targetName];
   const fieldSel = 'textarea,input,[contenteditable="true"]';
   const btnSel   = 'button,[role="button"],a';
   const best: HTMLElement[] = [];
