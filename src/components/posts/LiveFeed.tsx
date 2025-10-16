@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Radio, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { resolveTenantId } from '@/lib/tenancy/context';
+import { StartStreamDialog } from './StartStreamDialog';
 
 export function LiveFeed() {
   const [streams, setStreams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showStartDialog, setShowStartDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -64,24 +66,16 @@ export function LiveFeed() {
   };
 
   const startStream = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: 'Authentication required',
-          description: 'Please sign in to start streaming',
-          variant: 'destructive',
-        });
-        return;
-      }
-
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       toast({
-        title: 'Coming soon!',
-        description: 'Live streaming will be available soon',
+        title: 'Authentication required',
+        description: 'Please sign in to start streaming',
+        variant: 'destructive',
       });
-    } catch (error) {
-      console.error('Error starting stream:', error);
+      return;
     }
+    setShowStartDialog(true);
   };
 
   if (loading) {
@@ -93,14 +87,15 @@ export function LiveFeed() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Live Now</h2>
-        <Button onClick={startStream}>
-          <Radio className="h-4 w-4 mr-2" />
-          Go Live
-        </Button>
-      </div>
+    <>
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Live Now</h2>
+          <Button onClick={startStream}>
+            <Radio className="h-4 w-4 mr-2" />
+            Go Live
+          </Button>
+        </div>
 
       {streams.length === 0 ? (
         <Card>
@@ -159,6 +154,13 @@ export function LiveFeed() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+
+      <StartStreamDialog
+        open={showStartDialog}
+        onOpenChange={setShowStartDialog}
+        onStreamStarted={loadStreams}
+      />
+    </>
   );
 }
