@@ -43,6 +43,8 @@ import { Phase2VerificationPanel } from '@/routes/admin/panels/Phase2Verificatio
 import { HardeningVerificationPanel } from '@/routes/admin/panels/HardeningVerificationPanel';
 import { SuperAIPanel } from '@/routes/admin/panels/SuperAIPanel';
 import { RoleManagementPanel } from '@/routes/admin/panels/RoleManagementPanel';
+import { AndyPanel } from '@/routes/admin/panels/AndyPanel';
+import { PromotionPanel } from '@/routes/admin/panels/PromotionPanel';
 
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -139,6 +141,18 @@ export default function ControlRoom() {
                   <TabsTrigger value="super-ai" className="gap-2 data-[state=active]:bg-background">
                     <Brain className="h-4 w-4" />
                     <span>Super AI</span>
+                  </TabsTrigger>
+                )}
+                {isSuperAdmin && (
+                  <TabsTrigger value="andy" className="gap-2 data-[state=active]:bg-background">
+                    <Brain className="h-4 w-4" />
+                    <span>Andy</span>
+                  </TabsTrigger>
+                )}
+                {isSuperAdmin && (
+                  <TabsTrigger value="promotions" className="gap-2 data-[state=active]:bg-background">
+                    <TrendingUp className="h-4 w-4" />
+                    <span>Promotions</span>
                   </TabsTrigger>
                 )}
                 <TabsTrigger value="ai-analytics" className="gap-2 data-[state=active]:bg-background">
@@ -294,6 +308,20 @@ export default function ControlRoom() {
             {isSuperAdmin && (
               <TabsContent value="super-ai" className="space-y-6">
                 <SuperAIPanel />
+              </TabsContent>
+            )}
+
+            {/* Andy Panel - Only for Super Admins */}
+            {isSuperAdmin && (
+              <TabsContent value="andy" className="space-y-6">
+                <AndyPanel />
+              </TabsContent>
+            )}
+
+            {/* Promotions Panel - Only for Super Admins */}
+            {isSuperAdmin && (
+              <TabsContent value="promotions" className="space-y-6">
+                <PromotionPanel />
               </TabsContent>
             )}
 

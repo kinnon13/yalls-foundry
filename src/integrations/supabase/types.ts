@@ -480,6 +480,75 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_knower_access_log: {
+        Row: {
+          access_type: string
+          accessed_user_id: string
+          admin_id: string
+          created_at: string
+          id: string
+          reason: string
+        }
+        Insert: {
+          access_type: string
+          accessed_user_id: string
+          admin_id: string
+          created_at?: string
+          id?: string
+          reason: string
+        }
+        Update: {
+          access_type?: string
+          accessed_user_id?: string
+          admin_id?: string
+          created_at?: string
+          id?: string
+          reason?: string
+        }
+        Relationships: []
+      }
+      ai_messages: {
+        Row: {
+          body: Json
+          correlation_id: string | null
+          created_at: string | null
+          from_actor: string
+          from_user_id: string | null
+          id: string
+          read_at: string | null
+          subject: string | null
+          tenant_id: string
+          to_actor: string
+          to_user_id: string | null
+        }
+        Insert: {
+          body: Json
+          correlation_id?: string | null
+          created_at?: string | null
+          from_actor: string
+          from_user_id?: string | null
+          id?: string
+          read_at?: string | null
+          subject?: string | null
+          tenant_id: string
+          to_actor: string
+          to_user_id?: string | null
+        }
+        Update: {
+          body?: Json
+          correlation_id?: string | null
+          created_at?: string | null
+          from_actor?: string
+          from_user_id?: string | null
+          id?: string
+          read_at?: string | null
+          subject?: string | null
+          tenant_id?: string
+          to_actor?: string
+          to_user_id?: string | null
+        }
+        Relationships: []
+      }
       ai_model_registry: {
         Row: {
           created_at: string | null
@@ -610,6 +679,86 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ai_promotion_audit: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: number
+          notes: string | null
+          promotion_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          id?: number
+          notes?: string | null
+          promotion_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: number
+          notes?: string | null
+          promotion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_promotion_audit_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "ai_promotion_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_promotion_queue: {
+        Row: {
+          approver_id: string | null
+          created_at: string
+          from_scope: string
+          id: string
+          payload: Json
+          proposer_id: string
+          reason: string | null
+          reviewed_at: string | null
+          source_ref: Json
+          status: string
+          tenant_id: string
+          to_scope: string
+        }
+        Insert: {
+          approver_id?: string | null
+          created_at?: string
+          from_scope: string
+          id?: string
+          payload: Json
+          proposer_id: string
+          reason?: string | null
+          reviewed_at?: string | null
+          source_ref: Json
+          status?: string
+          tenant_id: string
+          to_scope: string
+        }
+        Update: {
+          approver_id?: string | null
+          created_at?: string
+          from_scope?: string
+          id?: string
+          payload?: Json
+          proposer_id?: string
+          reason?: string | null
+          reviewed_at?: string | null
+          source_ref?: Json
+          status?: string
+          tenant_id?: string
+          to_scope?: string
+        }
+        Relationships: []
       }
       ai_proposals: {
         Row: {
@@ -3900,6 +4049,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      ai_approve: {
+        Args: {
+          p_admin: string
+          p_decision: string
+          p_id: string
+          p_notes: string
+        }
+        Returns: undefined
+      }
       ai_mem_get: {
         Args: { p_route: string; p_target: string }
         Returns: {
@@ -3924,6 +4082,18 @@ export type Database = {
           p_target: string
         }
         Returns: undefined
+      }
+      ai_propose: {
+        Args: {
+          p_from: string
+          p_payload: Json
+          p_proposer: string
+          p_reason: string
+          p_source: Json
+          p_tenant: string
+          p_to: string
+        }
+        Returns: string
       }
       binary_quantize: {
         Args: { "": string } | { "": unknown }
