@@ -5,7 +5,6 @@
  */
 
 import { useCallback, useRef, useState } from 'react';
-import '@/types/speech.d.ts';
 
 interface UseSpeechOptions {
   onTranscript: (text: string, isFinal: boolean) => void;
