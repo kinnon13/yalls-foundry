@@ -54,6 +54,24 @@ serve(async (req) => {
     
     const tenantId = profile?.tenant_id || user.id;
 
+    // Ensure consent exists (required for RLS)
+    log.info('Ensuring user consent exists');
+    const { error: consentErr } = await supabaseClient
+      .from('ai_user_consent')
+      .upsert({
+        tenant_id: tenantId,
+        user_id: user.id,
+        site_opt_in: true,
+        policy_version: 'v1',
+        consented_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'tenant_id,user_id' });
+    
+    if (consentErr) {
+      log.error('Consent upsert failed', consentErr);
+      throw new Error(`Failed to ensure consent: ${consentErr.message}`);
+    }
+
     // Get all user conversations
     const { data: conversations, error: convErr } = await supabaseClient
       .from('rocker_conversations')
