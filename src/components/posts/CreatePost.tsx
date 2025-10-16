@@ -125,7 +125,7 @@ export function CreatePost({ onPostCreated, showRockerLabels = false }: CreatePo
               title="Write your post here"
             />
             {showRockerLabels && (
-              <Badge className="absolute -top-8 left-0 bg-primary/90 pointer-events-none">
+              <Badge className="absolute -bottom-8 left-0 bg-primary/90 pointer-events-none">
                 "post composer"
               </Badge>
             )}
@@ -158,30 +158,51 @@ export function CreatePost({ onPostCreated, showRockerLabels = false }: CreatePo
                 accept="image/*,video/*"
                 onChange={handleMediaSelect}
                 className="hidden"
+                data-rocker="media file input"
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isSubmitting || uploading || !!mediaFile}
-              >
-                <Image className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => {
-                  if (fileInputRef.current) {
-                    fileInputRef.current.accept = 'video/*';
-                    fileInputRef.current.click();
-                  }
-                }}
-                disabled={isSubmitting || uploading || !!mediaFile}
-              >
-                <Video className="h-4 w-4" />
-              </Button>
+              <div className="relative">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSubmitting || uploading || !!mediaFile}
+                  data-rocker="upload image button"
+                  aria-label="Upload image"
+                  className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
+                >
+                  <Image className="h-4 w-4" />
+                </Button>
+                {showRockerLabels && (
+                  <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none">
+                    "upload image"
+                  </Badge>
+                )}
+              </div>
+              <div className="relative">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    if (fileInputRef.current) {
+                      fileInputRef.current.accept = 'video/*';
+                      fileInputRef.current.click();
+                    }
+                  }}
+                  disabled={isSubmitting || uploading || !!mediaFile}
+                  data-rocker="upload video button"
+                  aria-label="Upload video"
+                  className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
+                >
+                  <Video className="h-4 w-4" />
+                </Button>
+                {showRockerLabels && (
+                  <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none">
+                    "upload video"
+                  </Badge>
+                )}
+              </div>
             </div>
             
             <div className="relative inline-block">

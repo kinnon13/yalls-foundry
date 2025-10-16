@@ -67,7 +67,7 @@ export default function Index() {
                     </Button>
                   </Link>
                   {showRockerLabels && (
-                    <Badge className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 pointer-events-none">
+                    <Badge className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 pointer-events-none">
                       "sign up homepage"
                     </Badge>
                   )}
@@ -86,7 +86,7 @@ export default function Index() {
                     </Button>
                   </Link>
                   {showRockerLabels && (
-                    <Badge className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 pointer-events-none">
+                    <Badge className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 pointer-events-none">
                       "sign in login homepage"
                     </Badge>
                   )}
