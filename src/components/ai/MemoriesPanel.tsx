@@ -39,6 +39,8 @@ interface Memory {
 type SortOption = 'recent' | 'frequent' | 'oldest' | 'confidence';
 type HeatFilter = 'all' | 'hot' | 'warm' | 'cold';
 
+import { BackfillMemoriesButton } from './BackfillMemoriesButton';
+
 export function MemoriesPanel() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -275,9 +277,12 @@ export function MemoriesPanel() {
     <div className="grid grid-cols-12 gap-4 h-[calc(100vh-200px)]">
       {/* Left: Namespaces */}
       <Card className="col-span-2 p-4 bg-card/50">
-        <h3 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">
-          Namespaces
-        </h3>
+        <div className="mb-3">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            Namespaces
+          </h3>
+          <BackfillMemoriesButton />
+        </div>
         <ScrollArea className="h-[calc(100%-2rem)]">
           <div className="space-y-1">
             {namespaces.map(ns => (

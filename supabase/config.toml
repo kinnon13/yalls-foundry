@@ -22,6 +22,9 @@ verify_jwt = false
 [functions.aggregate-learnings]
 verify_jwt = false
 
+[functions.analyze-memories]
+verify_jwt = true
+
 [functions.analyze-traces]
 verify_jwt = false
 
