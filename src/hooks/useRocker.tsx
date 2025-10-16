@@ -174,6 +174,11 @@ export function useRocker(mode: 'user' | 'admin' | 'super_admin' = 'user') {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const lastFailuresRef = useRef<string[]>([]);
+  const isCorrectionMessage = useCallback((text: string) => {
+    const t = text.toLowerCase();
+    return /\bwrong\b|\bnot the right\b|\bnot that\b|\buse .* instead\b|\bother (button|field)\b|\bthat’s not it\b/.test(t);
+  }, []);
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim()) return;
@@ -196,6 +201,25 @@ export function useRocker(mode: 'user' | 'admin' | 'super_admin' = 'user') {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Not authenticated');
+      }
+
+      // If the user is correcting a failed attempt, log it immediately
+      try {
+        if (isCorrectionMessage(content) && lastFailuresRef.current.length > 0) {
+          await supabase.from('ai_feedback').insert({
+            user_id: session.user.id,
+            kind: 'user_correction',
+            payload: {
+              correction_text: content.trim(),
+              targets: lastFailuresRef.current,
+              page: window.location.pathname,
+              timestamp: new Date().toISOString()
+            }
+          });
+          lastFailuresRef.current = [];
+        }
+      } catch (e) {
+        console.warn('[Rocker] Failed to log user correction', e);
       }
 
       const response = await fetch(
@@ -237,23 +261,24 @@ export function useRocker(mode: 'user' | 'admin' | 'super_admin' = 'user') {
       }
       
       // Execute DOM actions if present
-        if (result.client_actions && Array.isArray(result.client_actions)) {
-          const failures: string[] = [];
-          for (const clientAction of result.client_actions) {
-            const actionRes = await executeDOMAction(clientAction);
-            if (actionRes && actionRes.success === false) {
-              const target = clientAction.element_name || clientAction.field_name || clientAction.target_name || clientAction.action;
-              failures.push(`${target}: ${actionRes.message || 'not found'}`);
-            }
-          }
-          if (failures.length > 0) {
-            setMessages(prev => [...prev, {
-              role: 'assistant',
-              content: `I couldn’t find some elements: ${failures.join('; ')}.\nPlease tell me the exact label or what it says on the button/field, or point me to it and I’ll learn it. I’ve logged this failure for training.`,
-              timestamp: new Date()
-            }]);
+      if (result.client_actions && Array.isArray(result.client_actions)) {
+        const failures: string[] = [];
+        for (const clientAction of result.client_actions) {
+          const actionRes = await executeDOMAction(clientAction);
+          if (actionRes && actionRes.success === false) {
+            const target = clientAction.element_name || clientAction.field_name || clientAction.target_name || clientAction.action;
+            failures.push(`${target}: ${actionRes.message || 'not found'}`);
+            try { lastFailuresRef.current.push(target); } catch {}
           }
         }
+        if (failures.length > 0) {
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: `I couldn’t find some elements: ${failures.join('; ')}.\nPlease tell me the exact label or what it says on the button/field, or point me to it and I’ll learn it. I’ve logged this failure for training.`,
+            timestamp: new Date()
+          }]);
+        }
+      }
       
       // Add tool execution feedback if present
       if (result.tool_calls && result.tool_calls.length > 0) {

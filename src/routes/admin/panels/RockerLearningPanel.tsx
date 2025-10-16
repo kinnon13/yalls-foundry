@@ -29,6 +29,15 @@ export default function RockerLearningPanel() {
     loadLearningData();
   }, []);
 
+  // Live updates when learning data changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('ai_learning')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ai_feedback' }, loadLearningData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ai_selector_memory' }, loadLearningData)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
   const loadLearningData = async () => {
     setLoading(true);
     try {
@@ -130,6 +139,26 @@ export default function RockerLearningPanel() {
     }
   };
 
+  const runQuickAudit = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        toast({ title: 'Not Signed In', description: 'Sign in to run audits', variant: 'destructive' });
+        return;
+      }
+      const { clickElement } = await import('@/lib/ai/rocker/dom-agent');
+      const targets = ['post field', 'post button', 'write a post', 'composer'];
+      for (const t of targets) {
+        try { await clickElement(t, session.user.id); } catch {}
+      }
+      toast({ title: 'Audit Triggered', description: 'Attempted to locate key elements. Check failures below.' });
+      await new Promise(r => setTimeout(r, 800));
+      await loadLearningData();
+    } catch (error) {
+      console.error('Audit failed:', error);
+      toast({ title: 'Audit Error', description: 'Failed to run quick audit', variant: 'destructive' });
+    }
+  };
   return (
     <div className="space-y-6">
       <Card>
@@ -148,6 +177,9 @@ export default function RockerLearningPanel() {
               <Button onClick={testLearningSystem} variant="secondary" size="sm">
                 <Brain className="h-4 w-4 mr-2" />
                 Test Learning
+              </Button>
+              <Button onClick={runQuickAudit} variant="outline" size="sm">
+                Audit Page
               </Button>
               <Button onClick={scanCurrentPage} variant="outline" size="sm">
                 <Eye className="h-4 w-4 mr-2" />
