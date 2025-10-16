@@ -14,6 +14,7 @@ import {
   Shield, TestTube, Code, FileCheck, Activity, 
   MessageSquare, Settings, Home, Gauge, Search, Upload, Flag, AlertTriangle, TrendingUp, Hammer
 } from 'lucide-react';
+import { WithRole } from '@/lib/auth/guards';
 
 // Import panel components
 import RLSScanner from '@/routes/admin/panels/RLSScanner';
@@ -39,12 +40,27 @@ export default function ControlRoom() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   return (
-    <>
-      <SEOHelmet 
-        title="Control Room" 
-        description="Admin dashboard for diagnostics, testing, and platform monitoring" 
-      />
+    <WithRole 
+      roles={['admin']} 
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <Shield className="h-16 w-16 mx-auto text-muted-foreground" />
+            <h1 className="text-2xl font-bold">Access Denied</h1>
+            <p className="text-muted-foreground">You need admin privileges to access the Control Room.</p>
+            <Link to="/">
+              <Button>Go Home</Button>
+            </Link>
+          </div>
+        </div>
+      }
+    >
       <div className="min-h-screen bg-background">
+        <SEOHelmet 
+          title="Control Room" 
+          description="Admin dashboard for diagnostics, testing, and platform monitoring" 
+        />
+        
         {/* Header */}
         <header className="border-b bg-card sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -260,6 +276,6 @@ export default function ControlRoom() {
           onOpenChange={setUploadDialogOpen}
         />
       </div>
-    </>
+    </WithRole>
   );
 }
