@@ -532,6 +532,12 @@ export function RockerProvider({ children }: { children: ReactNode }) {
   // Send message to Rocker
   const sendMessage = useCallback(async (content: string, sessionId?: string) => {
     if (!content.trim()) return {};
+    
+    // Prevent duplicate sends
+    if (isLoading) {
+      console.log('[Rocker] Already processing a message, ignoring duplicate send');
+      return {};
+    }
 
     const userMessage: RockerMessage = {
       role: 'user',
