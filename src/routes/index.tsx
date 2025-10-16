@@ -3,24 +3,16 @@ import { SEOHelmet } from '@/lib/seo/helmet';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { useSession } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TikTokFeed } from '@/components/posts/TikTokFeed';
-import { TwitterFeed } from '@/components/posts/TwitterFeed';
-import { LiveFeed } from '@/components/posts/LiveFeed';
-import { CreatePost } from '@/components/posts/CreatePost';
-import { useState, useEffect } from 'react';
-import { Video, MessageCircle, Radio, Eye, EyeOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { SmartFeed } from '@/components/posts/SmartFeed';
+import { CreatePost } from '@/components/posts/CreatePost';
+import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function Index() {
   const { session } = useSession();
   const [refreshKey, setRefreshKey] = useState(0);
   const [showRockerLabels, setShowRockerLabels] = useState(false);
-
-  // Persist label state
-  useEffect(() => {
-    localStorage.setItem('show-rocker-labels', showRockerLabels.toString());
-  }, [showRockerLabels]);
 
   return (
     <>
@@ -95,83 +87,15 @@ export default function Index() {
             )}
           </div>
 
-          {/* Feed Tabs */}
+          {/* Feed Section */}
           {session && (
             <div className="mt-4 space-y-6" data-rocker="community feed section">
-              {showRockerLabels && (
-                <Badge className="mb-2 bg-secondary/90 pointer-events-none">
-                  Section: "community feed section"
-                </Badge>
-              )}
-              
               <CreatePost 
                 onPostCreated={() => setRefreshKey(prev => prev + 1)} 
                 showRockerLabels={showRockerLabels}
               />
               
-              <Tabs defaultValue="media" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <div className="relative">
-                    <TabsTrigger 
-                      value="media" 
-                      className={`gap-2 ${showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}`}
-                      data-rocker="feed media tab"
-                    >
-                      <Video className="h-4 w-4" />
-                      Media
-                    </TabsTrigger>
-                    {showRockerLabels && (
-                      <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none">
-                        "feed media tab"
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="relative">
-                    <TabsTrigger 
-                      value="text" 
-                      className={`gap-2 ${showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}`}
-                      data-rocker="feed posts tab"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      Posts
-                    </TabsTrigger>
-                    {showRockerLabels && (
-                      <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none">
-                        "feed posts tab"
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="relative">
-                    <TabsTrigger 
-                      value="live" 
-                      className={`gap-2 ${showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}`}
-                      data-rocker="feed live tab"
-                    >
-                      <Radio className="h-4 w-4" />
-                      Live
-                    </TabsTrigger>
-                    {showRockerLabels && (
-                      <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none">
-                        "feed live tab"
-                      </Badge>
-                    )}
-                  </div>
-                </TabsList>
-                
-                <TabsContent value="media" className="mt-6">
-                  <TikTokFeed key={refreshKey} />
-                </TabsContent>
-                
-                <TabsContent value="text" className="mt-6">
-                  <TwitterFeed key={refreshKey} />
-                </TabsContent>
-                
-                <TabsContent value="live" className="mt-6">
-                  <LiveFeed />
-                </TabsContent>
-              </Tabs>
+              <SmartFeed key={refreshKey} />
             </div>
           )}
         </div>

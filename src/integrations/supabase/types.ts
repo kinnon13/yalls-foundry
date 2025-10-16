@@ -3761,6 +3761,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_feed_preferences: {
+        Row: {
+          boosted_topics: string[] | null
+          boosted_users: string[] | null
+          created_at: string
+          facebook_interactions: number | null
+          feed_layout: string
+          hidden_topics: string[] | null
+          hidden_users: string[] | null
+          id: string
+          instagram_interactions: number | null
+          tenant_id: string
+          tiktok_interactions: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          boosted_topics?: string[] | null
+          boosted_users?: string[] | null
+          created_at?: string
+          facebook_interactions?: number | null
+          feed_layout?: string
+          hidden_topics?: string[] | null
+          hidden_users?: string[] | null
+          id?: string
+          instagram_interactions?: number | null
+          tenant_id: string
+          tiktok_interactions?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          boosted_topics?: string[] | null
+          boosted_users?: string[] | null
+          created_at?: string
+          facebook_interactions?: number | null
+          feed_layout?: string
+          hidden_topics?: string[] | null
+          hidden_users?: string[] | null
+          id?: string
+          instagram_interactions?: number | null
+          tenant_id?: string
+          tiktok_interactions?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
