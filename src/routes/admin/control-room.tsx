@@ -45,6 +45,7 @@ import { SuperAIPanel } from '@/routes/admin/panels/SuperAIPanel';
 import { RoleManagementPanel } from '@/routes/admin/panels/RoleManagementPanel';
 import { AndyPanel } from '@/routes/admin/panels/AndyPanel';
 import { PromotionPanel } from '@/routes/admin/panels/PromotionPanel';
+import AdminRockerPanel from '@/routes/admin/panels/AdminRockerPanel';
 
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -137,23 +138,21 @@ export default function ControlRoom() {
                   <Gauge className="h-4 w-4" />
                   <span>Overview</span>
                 </TabsTrigger>
+                <TabsTrigger value="admin-rocker" className="gap-2 data-[state=active]:bg-background">
+                  <Settings className="h-4 w-4" />
+                  <span>Admin Rocker</span>
+                </TabsTrigger>
                 {isSuperAdmin && (
-                  <TabsTrigger value="super-ai" className="gap-2 data-[state=active]:bg-background">
-                    <Brain className="h-4 w-4" />
-                    <span>Super AI</span>
-                  </TabsTrigger>
-                )}
-                {isSuperAdmin && (
-                  <TabsTrigger value="andy" className="gap-2 data-[state=active]:bg-background">
-                    <Brain className="h-4 w-4" />
-                    <span>Andy</span>
-                  </TabsTrigger>
-                )}
-                {isSuperAdmin && (
-                  <TabsTrigger value="promotions" className="gap-2 data-[state=active]:bg-background">
-                    <TrendingUp className="h-4 w-4" />
-                    <span>Promotions</span>
-                  </TabsTrigger>
+                  <>
+                    <TabsTrigger value="andy" className="gap-2 data-[state=active]:bg-background">
+                      <Brain className="h-4 w-4" />
+                      <span>Andy</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="promotions" className="gap-2 data-[state=active]:bg-background">
+                      <TrendingUp className="h-4 w-4" />
+                      <span>Promotions</span>
+                    </TabsTrigger>
+                  </>
                 )}
                 <TabsTrigger value="ai-analytics" className="gap-2 data-[state=active]:bg-background">
                   <Activity className="h-4 w-4" />
@@ -304,12 +303,10 @@ export default function ControlRoom() {
               <ScaleScorecard />
             </TabsContent>
 
-            {/* Super AI Tab - Only for Super Admins */}
-            {isSuperAdmin && (
-              <TabsContent value="super-ai" className="space-y-6">
-                <SuperAIPanel />
-              </TabsContent>
-            )}
+            {/* Admin Rocker Tab */}
+            <TabsContent value="admin-rocker" className="space-y-6">
+              <AdminRockerPanel />
+            </TabsContent>
 
             {/* Andy Panel - Only for Super Admins */}
             {isSuperAdmin && (

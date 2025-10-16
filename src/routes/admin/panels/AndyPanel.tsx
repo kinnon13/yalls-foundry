@@ -1,23 +1,17 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Brain, Search, Users, MessageSquare, Database, TrendingUp } from 'lucide-react';
-import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Search, User, MessageSquare, Brain, Lock } from 'lucide-react';
+import { toast } from 'sonner';
+import { RockerChat } from '@/components/rocker/RockerChat';
 
 export function AndyPanel() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,30 +62,44 @@ export function AndyPanel() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-purple-500" />
-            <CardTitle>Andy - Global Intelligence Layer</CardTitle>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5" />
+            Andy - Super AI Knowledge System
+          </CardTitle>
           <CardDescription>
-            Aggregate knowledge across all users. Access requires audit trail.
+            Chat privately with Andy and access cross-platform knowledge
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="users" className="w-full">
-            <TabsList>
+          <Tabs defaultValue="chat" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="chat">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Private Chat
+              </TabsTrigger>
               <TabsTrigger value="users">
-                <Users className="h-4 w-4 mr-2" />
-                Users
-              </TabsTrigger>
-              <TabsTrigger value="knowledge">
-                <Database className="h-4 w-4 mr-2" />
-                Global Knowledge
-              </TabsTrigger>
-              <TabsTrigger value="trends">
-                <TrendingUp className="h-4 w-4 mr-2" />
-                Trends
+                <User className="h-4 w-4 mr-2" />
+                User Data
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="chat" className="space-y-4">
+              <div className="rounded-lg border border-primary/20 bg-accent/50 p-4">
+                <div className="flex items-start gap-3">
+                  <Lock className="h-5 w-5 text-primary mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Private Super Admin Chat</p>
+                    <p className="text-xs text-muted-foreground">
+                      Your conversations with Andy are completely private and stored securely. No other admins can access this data.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="h-[600px]">
+                <RockerChat actorRole="knower" />
+              </div>
+            </TabsContent>
 
             <TabsContent value="users" className="space-y-4">
               <div className="flex items-center gap-4">
@@ -199,28 +207,6 @@ export function AndyPanel() {
                   ))}
                 </div>
               </ScrollArea>
-            </TabsContent>
-
-            <TabsContent value="knowledge">
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground">
-                    Global knowledge aggregation coming soon. This will show anonymized patterns and
-                    insights across all users.
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="trends">
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground">
-                    Trend analysis coming soon. This will show usage patterns, popular features, and
-                    behavioral insights.
-                  </p>
-                </CardContent>
-              </Card>
             </TabsContent>
           </Tabs>
         </CardContent>
