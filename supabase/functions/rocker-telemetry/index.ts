@@ -67,6 +67,7 @@ serve(async (req) => {
       message: message ? String(message).slice(0, 1000) : null,
       session_id: session_id ?? null,
       kind: 'dom_action',
+      payload: {},
       meta: {
         ...(meta || {}),
         actor_role: actor_role || 'user',
@@ -83,7 +84,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
+    const msg = error instanceof Error ? error.message : (typeof error === 'object' ? JSON.stringify(error) : String(error));
     log.error('Telemetry error', { error: msg, stack: error instanceof Error ? error.stack : undefined });
     return new Response(JSON.stringify({ ok: false, error: msg }), {
       status: 500,
