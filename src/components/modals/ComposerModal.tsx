@@ -47,8 +47,26 @@ export default function ComposerModal({ context, onSaved, onPublished, onClose }
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(draftId);
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [lastSave, setLastSave] = useState<number>(Date.now());
 
   const debouncedText = useDebounced(payload.text, 3000);
+
+  // Offline queue for resilience
+  useEffect(() => {
+    if (payload.text && currentDraftId) {
+      localStorage.setItem(`draft_${currentDraftId}`, JSON.stringify(payload));
+    }
+  }, [payload, currentDraftId]);
+
+  // Max interval autosave (15s)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (Date.now() - lastSave > 15000 && payload.text && session?.userId) {
+        saveDraft();
+      }
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [lastSave, payload.text, session?.userId]);
 
   // Load draft if resuming
   useEffect(() => {
@@ -120,6 +138,7 @@ export default function ComposerModal({ context, onSaved, onPublished, onClose }
           onSaved(data.id);
         }
       }
+      setLastSave(Date.now());
     } catch (error) {
       console.error('Error saving draft:', error);
     } finally {

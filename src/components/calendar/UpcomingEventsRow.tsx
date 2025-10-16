@@ -185,7 +185,9 @@ export function UpcomingEventsRow() {
             </Button>
           )}
           <Button variant="outline" size="sm" asChild>
-            <Link to="/search?type=event">View All</Link>
+            <Link to={`/search?type=event&scope=${showFromFollows ? 'follows' : 'public'}`}>
+              View All
+            </Link>
           </Button>
         </div>
       </div>
@@ -199,8 +201,14 @@ export function UpcomingEventsRow() {
               <Card
                 key={event.id}
                 className="flex-shrink-0 w-[300px] p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => {
+                  const url = new URL(window.location.href);
+                  url.searchParams.set('eventId', event.id);
+                  url.searchParams.set('from', showFromFollows ? 'follows' : 'public');
+                  window.history.replaceState({}, '', url);
+                }}
               >
-                <Link to={`/?eventId=${event.id}`}>
+                <div>
                   <div className="flex items-start justify-between mb-2">
                     <Badge variant="outline" className="mb-2">
                       {format(new Date(event.start_at), 'MMM d')}
@@ -230,7 +238,7 @@ export function UpcomingEventsRow() {
                       <span className="line-clamp-1">{event.location.name}</span>
                     </div>
                   )}
-                </Link>
+                </div>
 
                 <Button
                   size="sm"

@@ -5,7 +5,7 @@
  * Contract: ?modal=create_post|create_listing|create_event&context=source:{feed|profile:<id>}
  */
 
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -34,6 +34,8 @@ export function CreateModalRouter() {
     searchParams.delete('context');
     searchParams.delete('draftId');
     setSearchParams(searchParams, { replace: true });
+    // Return focus to body
+    document.body.focus();
   };
 
   const handleSaved = (draftId: string) => {
@@ -48,11 +50,24 @@ export function CreateModalRouter() {
 
   const isOpen = modal?.startsWith('create_');
 
+  // Lock body scroll when modal open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent 
         className="max-w-2xl max-h-[90vh] overflow-y-auto"
         onEscapeKeyDown={handleClose}
+        onPointerDownOutside={handleClose}
       >
         <Suspense fallback={<LoadingSkeleton />}>
           {modal === 'create_post' && (

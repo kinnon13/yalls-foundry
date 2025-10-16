@@ -7,6 +7,7 @@ import { SmartFeed } from '@/components/posts/SmartFeed';
 import { CreatePost } from '@/components/posts/CreatePost';
 import { UpcomingEventsRow } from '@/components/calendar/UpcomingEventsRow';
 import { CreateModalRouter } from '@/components/modals/CreateModalRouter';
+import { EventDetailModal } from '@/components/modals/EventDetailModal';
 import { useState } from 'react';
 
 export default function Index() {
@@ -18,6 +19,7 @@ export default function Index() {
       <SEOHelmet title="Home" description="yalls.ai - Connecting equestrian communities with profiles, events, and marketplace" />
       <GlobalHeader />
       <CreateModalRouter />
+      <EventDetailModal />
       
       <main className="min-h-screen p-6">
         <div className="max-w-6xl mx-auto space-y-8">

@@ -2672,7 +2672,9 @@ export type Database = {
           description: string | null
           ends_at: string | null
           event_type: string
+          host_profile_id: string | null
           id: string
+          location: Json | null
           slug: string
           starts_at: string
           title: string
@@ -2685,7 +2687,9 @@ export type Database = {
           description?: string | null
           ends_at?: string | null
           event_type: string
+          host_profile_id?: string | null
           id?: string
+          location?: Json | null
           slug: string
           starts_at: string
           title: string
@@ -2698,7 +2702,9 @@ export type Database = {
           description?: string | null
           ends_at?: string | null
           event_type?: string
+          host_profile_id?: string | null
           id?: string
+          location?: Json | null
           slug?: string
           starts_at?: string
           title?: string
@@ -2710,6 +2716,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_host_profile_id_fkey"
+            columns: ["host_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -4565,6 +4578,22 @@ export type Database = {
       geomfromewkt: {
         Args: { "": string }
         Returns: unknown
+      }
+      get_event_viewable: {
+        Args: { p_event_id: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          description: string
+          end_at: string
+          host_avatar: string
+          host_name: string
+          host_profile_id: string
+          id: string
+          location: Json
+          start_at: string
+          title: string
+        }[]
       }
       get_knowledge_scope_filter: {
         Args: { p_tenant_id?: string; p_user_id: string }
