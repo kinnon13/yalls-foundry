@@ -63,6 +63,21 @@ export const rockerTools = [
   },
   {
     type: "function",
+    name: "get_page_elements",
+    description: "Get a detailed list of all interactive elements (buttons, links, form fields) on the current page. Use when admin asks to see what elements you can interact with or to audit the page structure.",
+    parameters: {
+      type: "object",
+      properties: {
+        element_type: {
+          type: "string",
+          enum: ["all", "buttons", "fields", "links"],
+          description: "Type of elements to list (default: all)"
+        }
+      }
+    }
+  },
+  {
+    type: "function",
     name: "fill_field",
     description: "Fill in a form field with text. Use when user provides content to enter into a field.",
     parameters: {
@@ -70,7 +85,7 @@ export const rockerTools = [
       properties: {
         field_name: {
           type: "string",
-          description: "Natural description of the field (e.g., 'title', 'description', 'comment', 'message')",
+          description: "Natural description of the field (e.g., 'title', 'description', 'comment', 'message', 'post', 'composer')",
         },
         value: {
           type: "string",

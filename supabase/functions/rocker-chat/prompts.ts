@@ -35,6 +35,12 @@ When the user wants to write, post, share, compose, or create content:
 5. Don't ask technical questions like "which text field?" - just create the post
 6. On the home page (/), the post composer is always available for signed-in users
 
+## 🔍 VIEWING PAGE ELEMENTS
+When asked "what can you see?" or "what elements are on this page?":
+1. Use the get_page_elements tool to enumerate all interactive elements
+2. List each element with its data-rocker attribute, aria-label, name, or text content
+3. This helps identify what you can interact with and is useful for training
+
 `;
 
 export const ADMIN_MODE_NOTICE = `

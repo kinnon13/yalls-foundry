@@ -96,6 +96,51 @@ async function executeDOMAction(action: any) {
       console.log('[Rocker] Getting page info...');
       break;
       
+    case 'dom_get_page_elements': {
+      const elementType = action.element_type || 'all';
+      const buttons = Array.from(document.querySelectorAll('button')).map(btn => ({
+        type: 'button',
+        text: btn.textContent?.trim(),
+        'data-rocker': btn.getAttribute('data-rocker'),
+        'aria-label': btn.getAttribute('aria-label'),
+        id: btn.id
+      }));
+      
+      const fields = Array.from(document.querySelectorAll('input, textarea, select')).map(field => ({
+        type: field.tagName.toLowerCase(),
+        name: field.getAttribute('name'),
+        placeholder: field.getAttribute('placeholder'),
+        'data-rocker': field.getAttribute('data-rocker'),
+        'aria-label': field.getAttribute('aria-label'),
+        id: field.id
+      }));
+      
+      const links = Array.from(document.querySelectorAll('a')).map(link => ({
+        type: 'link',
+        text: link.textContent?.trim(),
+        href: link.getAttribute('href'),
+        'aria-label': link.getAttribute('aria-label')
+      }));
+      
+      let elements: any[] = [];
+      if (elementType === 'buttons') elements = buttons;
+      else if (elementType === 'fields') elements = fields;
+      else if (elementType === 'links') elements = links;
+      else elements = [...buttons, ...fields, ...links];
+      
+      console.log('[Rocker] Page elements:', elements);
+      
+      // Store this info in localStorage so backend can access it
+      try {
+        localStorage.setItem('__rocker_page_elements', JSON.stringify({
+          route: window.location.pathname,
+          elements,
+          timestamp: new Date().toISOString()
+        }));
+      } catch {}
+      break;
+    }
+      
     default:
       console.warn('[Rocker] Unknown DOM action:', action.action);
   }

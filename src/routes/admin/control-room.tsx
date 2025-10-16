@@ -46,6 +46,7 @@ import { RoleManagementPanel } from '@/routes/admin/panels/RoleManagementPanel';
 import { AndyPanel } from '@/routes/admin/panels/AndyPanel';
 import { PromotionPanel } from '@/routes/admin/panels/PromotionPanel';
 import AdminRockerPanel from '@/routes/admin/panels/AdminRockerPanel';
+import RockerLearningPanel from '@/routes/admin/panels/RockerLearningPanel';
 
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -198,6 +199,10 @@ export default function ControlRoom() {
                   <Shield className="h-4 w-4" />
                   <span>Roles</span>
                 </TabsTrigger>
+                <TabsTrigger value="learning" className="gap-2 data-[state=active]:bg-background">
+                  <Brain className="h-4 w-4" />
+                  <span>Learning</span>
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -209,7 +214,7 @@ export default function ControlRoom() {
                     <CardTitle className="text-sm font-medium text-muted-foreground">Total Panels</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold">17</div>
+                    <div className="text-3xl font-bold">18</div>
                     <p className="text-xs text-muted-foreground mt-1">Admin tools available</p>
                   </CardContent>
                 </Card>
@@ -390,6 +395,11 @@ export default function ControlRoom() {
             {/* Roles Tab */}
             <TabsContent value="roles" className="space-y-6">
               <RoleManagementPanel />
+            </TabsContent>
+
+            {/* Learning Tab */}
+            <TabsContent value="learning" className="space-y-6">
+              <RockerLearningPanel />
             </TabsContent>
           </Tabs>
         </main>

@@ -893,6 +893,15 @@ export async function executeTool(
         };
       }
 
+      case 'get_page_elements': {
+        return {
+          success: true,
+          action: 'dom_get_page_elements',
+          element_type: args.element_type || 'all',
+          message: 'Scanning page for interactive elements...'
+        };
+      }
+
       case 'scroll_page': {
         return {
           success: true,

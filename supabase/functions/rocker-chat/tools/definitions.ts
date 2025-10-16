@@ -36,6 +36,23 @@ export const TOOL_DEFINITIONS = [
   {
     type: "function",
     function: {
+      name: "get_page_elements",
+      description: "Get a detailed list of all interactive elements (buttons, links, form fields) on the current page with their attributes. Use when asked to see what elements are available or to audit page structure.",
+      parameters: {
+        type: "object",
+        properties: {
+          element_type: {
+            type: "string",
+            enum: ["all", "buttons", "fields", "links"],
+            description: "Type of elements to list (default: all)"
+          }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "navigate",
       description: "Navigate the user to a specific page in the application",
       parameters: {
