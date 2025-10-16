@@ -416,5 +416,30 @@ export const TOOL_DEFINITIONS = [
         }
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "generate_invite_link",
+      description: "Generate a personalized invite link with affiliate tracking for family/friends. Use when user mentions someone who doesn't have a profile and would benefit from joining. The link includes the user's referral code so they get credit and can connect memories.",
+      parameters: {
+        type: "object",
+        required: ["invitee_name", "relationship"],
+        properties: {
+          invitee_name: {
+            type: "string",
+            description: "Name of the person being invited (e.g., 'Clay Peck', 'Mom')"
+          },
+          relationship: {
+            type: "string",
+            description: "Relationship to user (e.g., 'father', 'mother', 'friend')"
+          },
+          message: {
+            type: "string",
+            description: "Optional custom message to include with the invite"
+          }
+        }
+      }
+    }
   }
 ];

@@ -304,6 +304,24 @@ export async function executeTool(
         };
       }
 
+      case 'generate_invite_link': {
+        // Generate referral code from user ID
+        const referralCode = userId.slice(0, 8).toUpperCase();
+        
+        // Create invite link with referral tracking
+        const inviteLink = `${Deno.env.get('VITE_SUPABASE_URL')?.replace('//', '//app.')}/signup?ref=${referralCode}`;
+        
+        const inviteeName = args.invitee_name || 'them';
+        const relationship = args.relationship || 'person';
+        
+        return {
+          success: true,
+          invite_link: inviteLink,
+          referral_code: referralCode,
+          message: `Here's your personalized invite link for ${inviteeName}:\n\n${inviteLink}\n\nWhen ${inviteeName} signs up with this link:\n✓ You'll get credit as their referrer\n✓ You can connect and share memories together\n✓ They'll benefit from your family network\n\nYou can share this link via text, email, or however you'd like!`
+        };
+      }
+
       // ========== CALENDAR ==========
       case 'create_calendar_event': {
         // Get or create personal calendar
