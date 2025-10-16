@@ -41,11 +41,12 @@ export default function RockerLearningPanel() {
   const loadLearningData = async () => {
     setLoading(true);
     try {
-      // Load failures
+      // Load failures (dom_action with success=false)
       const { data: failureData } = await supabase
         .from('ai_feedback')
         .select('*')
-        .eq('kind', 'dom_failure')
+        .eq('kind', 'dom_action')
+        .eq('success', false)
         .order('created_at', { ascending: false })
         .limit(50);
 
