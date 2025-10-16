@@ -8,7 +8,6 @@ import { TikTokFeed } from '@/components/posts/TikTokFeed';
 import { TwitterFeed } from '@/components/posts/TwitterFeed';
 import { LiveFeed } from '@/components/posts/LiveFeed';
 import { CreatePost } from '@/components/posts/CreatePost';
-import { VoicePostButton } from '@/components/voice/VoicePostButton';
 import { useState } from 'react';
 import { Video, MessageCircle, Radio } from 'lucide-react';
 
@@ -43,10 +42,7 @@ export default function Index() {
           {/* Feed Tabs */}
           {session && (
             <div className="mt-4 space-y-6" data-rocker="community feed section">
-              <div className="space-y-4">
-                <CreatePost onPostCreated={() => setRefreshKey(prev => prev + 1)} />
-                <VoicePostButton onPostCreated={() => setRefreshKey(prev => prev + 1)} />
-              </div>
+              <CreatePost onPostCreated={() => setRefreshKey(prev => prev + 1)} />
               
               <Tabs defaultValue="media" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
