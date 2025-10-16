@@ -143,10 +143,10 @@ export default function CreateEventModal({ context, onSaved, onPublished, onClos
         ? context.source.replace('profile:', '')
         : session.userId;
 
-      // @ts-expect-error - events table updated in migration
+      // Use direct query to bypass type checking until types regenerate
       const { data, error } = await supabase
         .from('events')
-        .insert({
+        .insert([{
           host_profile_id: profileId,
           title: payload.title,
           description: payload.description,
@@ -154,7 +154,7 @@ export default function CreateEventModal({ context, onSaved, onPublished, onClos
           end_at: payload.end_at || payload.start_at,
           visibility: payload.visibility,
           location: payload.location
-        })
+        } as any])
         .select()
         .single();
 
@@ -163,7 +163,7 @@ export default function CreateEventModal({ context, onSaved, onPublished, onClos
       if (currentDraftId) {
         await supabase
           .from('drafts')
-          .update({ status: 'published' })
+          .update({ status: 'published' } as any)
           .eq('id', currentDraftId);
       }
 
