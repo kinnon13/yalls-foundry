@@ -13,7 +13,9 @@ import { ConversationSidebar } from './ConversationSidebar';
 import { ChatHeader } from './ChatHeader';
 import { MessageList } from './MessageList';
 import { Composer } from './Composer';
+import { CapabilityHighlighter } from './CapabilityHighlighter';
 import { useRockerGlobal } from '@/lib/ai/rocker/context';
+import { useSession } from '@/lib/auth/context';
 
 export function RockerChatUI() {
   const {
@@ -33,6 +35,8 @@ export function RockerChatUI() {
     loadConversation,
     createNewConversation,
   } = useRockerGlobal();
+  
+  const { session } = useSession();
 
   const [isMinimized, setIsMinimized] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
@@ -226,6 +230,8 @@ export function RockerChatUI() {
           onUrlAnalyze={(url) => sendMessage(`Fetch and analyze this URL: ${url}`, currentSessionId)}
         />
       </div>
+      
+      {session?.userId && <CapabilityHighlighter userId={session.userId} />}
     </div>
   );
 }
