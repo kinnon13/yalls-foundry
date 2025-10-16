@@ -145,19 +145,27 @@ export function LiveFeed() {
   return (
     <>
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between gap-2">
           <h2 className="text-2xl font-bold">Live Now</h2>
-          {activeStream ? (
-            <Button onClick={endStream} variant="destructive">
-              <Radio className="h-4 w-4 mr-2 animate-pulse" />
-              End Stream
+          <div className="flex items-center gap-2">
+            {activeStream ? (
+              <Button onClick={endStream} variant="destructive">
+                <Radio className="h-4 w-4 mr-2 animate-pulse" />
+                End Stream
+              </Button>
+            ) : (
+              <Button onClick={startStream}>
+                <Radio className="h-4 w-4 mr-2" />
+                Go Live
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              onClick={() => window.open(window.location.href, '_blank', 'noopener')}
+            >
+              Open in new tab
             </Button>
-          ) : (
-            <Button onClick={startStream}>
-              <Radio className="h-4 w-4 mr-2" />
-              Go Live
-            </Button>
-          )}
+          </div>
         </div>
 
         {activeStream && (

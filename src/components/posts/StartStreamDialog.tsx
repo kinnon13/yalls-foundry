@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Video, VideoOff, Loader2 } from 'lucide-react';
+import { Loader2, Video } from 'lucide-react';
 import { resolveTenantId } from '@/lib/tenancy/context';
 
 interface StartStreamDialogProps {
@@ -18,43 +18,59 @@ export function StartStreamDialog({ open, onOpenChange, onStreamStarted }: Start
   const [title, setTitle] = useState('');
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isStarting, setIsStarting] = useState(false);
+  const [camError, setCamError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
-      requestCameraAccess();
+      void requestCameraAccess();
     } else {
       stopCamera();
+      setCamError(null);
+      setTitle('');
     }
   }, [open]);
 
   const requestCameraAccess = async () => {
+    setCamError(null);
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Camera API not available in this browser');
+      }
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720 },
-        audio: true
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+        audio: true,
       });
-      
+
       setStream(mediaStream);
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        // Attempt to play explicitly (Safari/iOS)
+        try {
+          await videoRef.current.play();
+        } catch (e) {
+          // Autoplay might require user gesture; will play once user interacts
+          console.debug('Video play() deferred until user interaction');
+        }
       }
     } catch (error) {
       console.error('Camera access error:', error);
+      const message = error instanceof Error ? error.message : 'Unknown error requesting camera';
+      setCamError(message);
       toast({
-        title: 'Camera access denied',
-        description: 'Please allow camera access to start streaming',
+        title: 'Camera access blocked',
+        description: 'Click Allow in your browser. If you are in a preview frame, open the app in a new tab.',
         variant: 'destructive',
       });
-      onOpenChange(false);
     }
   };
 
   const stopCamera = () => {
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
   };
@@ -72,7 +88,7 @@ export function StartStreamDialog({ open, onOpenChange, onStreamStarted }: Start
     try {
       setIsStarting(true);
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         throw new Error('Not authenticated');
       }
@@ -92,13 +108,10 @@ export function StartStreamDialog({ open, onOpenChange, onStreamStarted }: Start
 
       if (error) throw error;
 
-      toast({
-        title: 'Stream started!',
-        description: 'You are now live',
-      });
+      toast({ title: 'Stream started!', description: 'You are now live' });
 
+      // Keep the dialog open so users see their camera preview
       onStreamStarted?.();
-      onOpenChange(false);
     } catch (error) {
       console.error('Error starting stream:', error);
       toast({
@@ -113,7 +126,7 @@ export function StartStreamDialog({ open, onOpenChange, onStreamStarted }: Start
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[640px]">
         <DialogHeader>
           <DialogTitle>Start Live Stream</DialogTitle>
         </DialogHeader>
@@ -129,8 +142,21 @@ export function StartStreamDialog({ open, onOpenChange, onStreamStarted }: Start
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="flex flex-col gap-3 items-center justify-center h-full text-center p-6">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  {camError ? 'Camera blocked. Please click Allow or open in a new tab.' : 'Requesting camera & mic access...'}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="secondary" onClick={requestCameraAccess}>Retry</Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(window.location.href, '_blank', 'noopener')}
+                  >
+                    Open in new tab
+                  </Button>
+                </div>
               </div>
             )}
           </div>
@@ -146,30 +172,32 @@ export function StartStreamDialog({ open, onOpenChange, onStreamStarted }: Start
             />
           </div>
 
-          <div className="flex gap-2 justify-end">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isStarting}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleStartStream}
-              disabled={!stream || isStarting}
-            >
-              {isStarting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Starting...
-                </>
-              ) : (
-                <>
-                  <Video className="h-4 w-4 mr-2" />
-                  Go Live
-                </>
-              )}
-            </Button>
+          <div className="flex flex-wrap gap-2 justify-between items-center">
+            <p className="text-xs text-muted-foreground">
+              If camera access fails in preview, try Open in new tab.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isStarting}
+              >
+                Close
+              </Button>
+              <Button onClick={handleStartStream} disabled={!stream || isStarting}>
+                {isStarting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Starting...
+                  </>
+                ) : (
+                  <>
+                    <Video className="h-4 w-4 mr-2" />
+                    Go Live
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
