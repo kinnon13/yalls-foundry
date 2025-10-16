@@ -5,14 +5,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Send, Image, Video, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { resolveTenantId } from '@/lib/tenancy/context';
 import { useMediaUpload } from '@/hooks/useMediaUpload';
 
 interface CreatePostProps {
   onPostCreated?: () => void;
+  showRockerLabels?: boolean;
 }
 
-export function CreatePost({ onPostCreated }: CreatePostProps) {
+export function CreatePost({ onPostCreated, showRockerLabels = false }: CreatePostProps) {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -109,18 +111,25 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
     <Card>
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Textarea
-            id="composer"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="What's on your mind?"
-            className="min-h-[100px] resize-none"
-            data-rocker="post composer"
-            aria-label="Write a post"
-            name="post"
-            disabled={isSubmitting || uploading}
-            title="Write your post here"
-          />
+          <div className="relative">
+            <Textarea
+              id="composer"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="What's on your mind?"
+              className={`min-h-[100px] resize-none ${showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}`}
+              data-rocker="post composer"
+              aria-label="Write a post"
+              name="post"
+              disabled={isSubmitting || uploading}
+              title="Write your post here"
+            />
+            {showRockerLabels && (
+              <Badge className="absolute -top-8 left-0 bg-primary/90">
+                "post composer"
+              </Badge>
+            )}
+          </div>
           
           {mediaPreview && (
             <div className="relative rounded-lg overflow-hidden">
@@ -175,15 +184,23 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
               </Button>
             </div>
             
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || uploading || (!content.trim() && !mediaFile)}
-              data-rocker="post button"
-              aria-label="Post button"
-            >
-              <Send className="h-4 w-4 mr-2" />
-              {uploading ? 'Uploading...' : isSubmitting ? 'Posting...' : 'Post'}
-            </Button>
+            <div className="relative inline-block">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || uploading || (!content.trim() && !mediaFile)}
+                data-rocker="post button"
+                aria-label="Post button"
+                className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
+              >
+                <Send className="h-4 w-4 mr-2" />
+                {uploading ? 'Uploading...' : isSubmitting ? 'Posting...' : 'Post'}
+              </Button>
+              {showRockerLabels && (
+                <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs">
+                  "post button"
+                </Badge>
+              )}
+            </div>
           </div>
         </form>
       </CardContent>
