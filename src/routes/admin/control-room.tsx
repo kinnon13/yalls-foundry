@@ -288,10 +288,12 @@ export default function ControlRoom() {
                         <span className="text-sm">Admin Rocker</span>
                         <Badge className="bg-blue-500">Active</Badge>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Andy (Knower)</span>
-                        <Badge className="bg-purple-500">Learning</Badge>
-                      </div>
+                      {isSuperAdmin && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Andy (Knower)</span>
+                          <Badge className="bg-purple-500">Learning</Badge>
+                        </div>
+                      )}
                     </div>
                     <Button variant="outline" className="w-full" onClick={() => setActiveTab('ai-analytics')}>
                       View AI Analytics
