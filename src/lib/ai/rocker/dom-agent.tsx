@@ -473,7 +473,10 @@ async function findElementWait(
   while (performance.now() - start < timeoutMs) {
     const hits = collectCandidates(targetName);
     if (hits.length) {
-      // If we have candidates, enter Learn Mode
+      // If we have candidates, optionally bypass Learn Mode (for automated tool flows)
+      if ((window as any).__rockerSuppressLearn === true) {
+        return hits[0];
+      }
       const confirmed = await learnSelector(targetName, hits, route);
       return confirmed;
     }

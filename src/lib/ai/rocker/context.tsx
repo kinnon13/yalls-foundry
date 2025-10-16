@@ -685,61 +685,68 @@ export function RockerProvider({ children }: { children: ReactNode }) {
             console.log('[Rocker] Creating post with sequence: fill then click then navigate to feed');
             const content = args.content;
             
-            // Step 1: Fill the post composer field
-            const fillResult = await executeDOMAction({
-              type: 'fill',
-              targetName: 'post composer',
-              value: content
-            }, currentUserId);
-            
-            if (!fillResult.success) {
-              toast({
-                title: '❌ Failed to fill post',
-                description: fillResult.message,
-                variant: 'destructive',
-              });
-              console.error('[Rocker] Failed to fill post field:', fillResult);
-              continue;
-            }
-            
-            console.log('[Rocker] Post field filled, now clicking post button');
-            
-            // Step 2: Wait a moment for the field to update
-            await new Promise(resolve => setTimeout(resolve, 300));
-            
-            // Step 3: Click the post button
-            const clickResult = await executeDOMAction({
-              type: 'click',
-              targetName: 'post button'
-            }, currentUserId);
-            
-            if (clickResult.success) {
-              toast({
-                title: '📝 Posted!',
-                description: 'Navigating to posts feed to verify...',
-              });
-              
-              // Step 4: Wait for post to be created
-              await new Promise(resolve => setTimeout(resolve, 500));
-              
-              // Step 5: Click the Posts tab to view the feed
-              console.log('[Rocker] Clicking feed posts tab to view post');
-              const tabResult = await executeDOMAction({
-                type: 'click',
-                targetName: 'feed posts tab'
+            // Temporarily suppress Learn Mode for automated DOM actions
+            const prevSuppress = (window as any).__rockerSuppressLearn;
+            (window as any).__rockerSuppressLearn = true;
+            try {
+              // Step 1: Fill the post composer field
+              const fillResult = await executeDOMAction({
+                type: 'fill',
+                targetName: 'post composer',
+                value: content
               }, currentUserId);
               
-              if (tabResult.success) {
+              if (!fillResult.success) {
                 toast({
-                  title: '✅ Post verified',
-                  description: 'Your post is now visible in the feed',
+                  title: '❌ Failed to fill post',
+                  description: fillResult.message,
+                  variant: 'destructive',
+                });
+                console.error('[Rocker] Failed to fill post field:', fillResult);
+                continue;
+              }
+              
+              console.log('[Rocker] Post field filled, now clicking post button');
+              
+              // Step 2: Wait a moment for the field to update
+              await new Promise(resolve => setTimeout(resolve, 350));
+              
+              // Step 3: Click the post button
+              const clickResult = await executeDOMAction({
+                type: 'click',
+                targetName: 'post button'
+              }, currentUserId);
+              
+              if (clickResult.success) {
+                toast({
+                  title: '📝 Posted!',
+                  description: 'Navigating to posts feed to verify...',
+                });
+                
+                // Step 4: Wait for post to be created and feeds to refresh
+                await new Promise(resolve => setTimeout(resolve, 700));
+                
+                // Step 5: Click the Posts tab to view the feed
+                console.log('[Rocker] Clicking feed posts tab to view post');
+                const tabResult = await executeDOMAction({
+                  type: 'click',
+                  targetName: 'feed posts tab'
+                }, currentUserId);
+                
+                if (tabResult.success) {
+                  toast({
+                    title: '✅ Post verified',
+                    description: 'Your post is now visible in the feed',
+                  });
+                }
+              } else {
+                toast({
+                  title: '⚠️ Post filled but not submitted',
+                  description: 'The content is in the composer. You may need to click Post manually.',
                 });
               }
-            } else {
-              toast({
-                title: '⚠️ Post filled but not submitted',
-                description: 'The content is in the composer. You may need to click Post manually.',
-              });
+            } finally {
+              (window as any).__rockerSuppressLearn = prevSuppress;
             }
           }
           
