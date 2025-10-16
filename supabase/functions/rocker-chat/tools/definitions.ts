@@ -80,7 +80,7 @@ export const TOOL_DEFINITIONS = [
           },
           type: {
             type: "string",
-            enum: ["preference", "fact", "goal", "note"],
+            enum: ["preference", "fact", "goal", "note", "family", "family_member", "personal_info", "interest", "hobby", "skill", "project", "project_context", "relationship", "notification_preference"],
             description: "Category of the memory"
           }
         }
@@ -297,23 +297,23 @@ export const TOOL_DEFINITIONS = [
     type: "function",
     function: {
       name: "create_or_find_profile",
-      description: "Create or find a profile for a person, horse, or business. Creates unclaimed profiles for people mentioned who don't have accounts yet. Use this proactively when users mention people in conversation.",
+      description: "Create or find a PUBLIC platform profile for trainers, horses, or businesses. DO NOT use for family members or personal relationships - those belong in memory only. Only use when the person/entity should have a discoverable profile on yalls.ai",
       parameters: {
         type: "object",
         required: ["name", "entity_type"],
         properties: {
           name: {
             type: "string",
-            description: "Name of the person, horse, or business"
+            description: "Name of the trainer/professional, horse, or business"
           },
           entity_type: {
             type: "string",
             enum: ["user", "horse", "business"],
-            description: "Type of entity"
+            description: "Type of entity - use 'user' only for trainers/professionals with public profiles"
           },
           relationship: {
             type: "string",
-            description: "How this entity relates to the user (e.g., 'mother', 'trainer', 'owns this horse')"
+            description: "Professional relationship to user (e.g., 'trainer', 'farrier', 'vet')"
           },
           contact_info: {
             type: "object",
