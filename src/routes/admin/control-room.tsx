@@ -18,7 +18,6 @@ import {
   Shield, TestTube, Code, FileCheck, Activity, 
   MessageSquare, Settings, Home, Gauge, Search, Upload, Flag, AlertTriangle, TrendingUp, Hammer, Brain
 } from 'lucide-react';
-import { WithRole } from '@/lib/auth/guards';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
 
@@ -53,43 +52,56 @@ import { CapabilityBrowserPanel } from '@/routes/admin/panels/CapabilityBrowserP
 export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('overview');
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const { isAdmin } = useAdminCheck();
+  const { isAdmin, isLoading } = useAdminCheck();
   const { isSuperAdmin } = useSuperAdminCheck();
 
-  return (
-    <WithRole 
-      roles={['admin']} 
-      fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <Shield className="h-16 w-16 mx-auto text-muted-foreground" />
-            <h1 className="text-2xl font-bold">Access Denied</h1>
-            <p className="text-muted-foreground">You need admin privileges to access the Control Room.</p>
-            <div className="flex items-center justify-center gap-3">
-              <Link to="/">
-                <Button>Go Home</Button>
-              </Link>
-              <Button
-                variant="outline"
-                onClick={async () => {
-                  try {
-                    const { data, error } = await supabase.functions.invoke('bootstrap-super-admin', { body: {} });
-                    if (error || (data as any)?.error) return alert('Bootstrap failed.');
-                    window.location.reload();
-                  } catch (_) {
-                    alert('Bootstrap failed.');
-                  }
-                }}
-              >
-                Make me Super Admin
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">First-time setup only: promotes the current account if no super admin exists.</p>
-          </div>
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Activity className="h-16 w-16 mx-auto text-muted-foreground animate-pulse" />
+          <p className="text-muted-foreground">Loading...</p>
         </div>
-      }
-    >
-      <div className="min-h-screen bg-background">
+      </div>
+    );
+  }
+
+  // Show access denied if not admin
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Shield className="h-16 w-16 mx-auto text-muted-foreground" />
+          <h1 className="text-2xl font-bold">Access Denied</h1>
+          <p className="text-muted-foreground">You need admin privileges to access the Control Room.</p>
+          <div className="flex items-center justify-center gap-3">
+            <Link to="/">
+              <Button>Go Home</Button>
+            </Link>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const { data, error } = await supabase.functions.invoke('bootstrap-super-admin', { body: {} });
+                  if (error || (data as any)?.error) return alert('Bootstrap failed.');
+                  window.location.reload();
+                } catch (_) {
+                  alert('Bootstrap failed.');
+                }
+              }}
+            >
+              Make me Super Admin
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">First-time setup only: promotes the current account if no super admin exists.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
         <SEOHelmet 
           title="Control Room" 
           description="Admin dashboard for diagnostics, testing, and platform monitoring" 
@@ -421,6 +433,5 @@ export default function ControlRoom() {
           onOpenChange={setUploadDialogOpen}
         />
       </div>
-    </WithRole>
   );
 }
