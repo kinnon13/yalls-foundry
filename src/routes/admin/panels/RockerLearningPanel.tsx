@@ -268,24 +268,34 @@ export default function RockerLearningPanel() {
                               size="sm" 
                               variant="outline"
                               onClick={async () => {
-                                // Open Rocker chat with pre-populated context about this failure
+                                // Build the failure context message
                                 const context = `I see you failed to ${failure.action} "${failure.target}" on ${failure.route}. The error was: ${failure.message}. ${availableElements.length > 0 ? `Available elements were: ${availableElements.slice(0, 10).join(', ')}` : ''} Can you help me understand what went wrong and how to fix it?`;
                                 
-                                // Navigate to admin rocker panel or open chat with this context
-                                const chatPanel = document.querySelector('[data-rocker-chat]');
-                                if (chatPanel) {
-                                  // If chat is visible, populate it
-                                  const textarea = chatPanel.querySelector('textarea');
-                                  if (textarea) {
-                                    (textarea as HTMLTextAreaElement).value = context;
-                                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                                  }
+                                // Switch to Admin Rocker tab
+                                const adminRockerTab = Array.from(document.querySelectorAll('button[role="tab"]')).find(
+                                  (tab) => tab.textContent?.includes('Admin Rocker')
+                                ) as HTMLButtonElement;
+                                
+                                if (adminRockerTab) {
+                                  adminRockerTab.click();
+                                  
+                                  // Send the message to Admin Rocker after tab switch
+                                  setTimeout(() => {
+                                    window.dispatchEvent(new CustomEvent('rocker-send-message', {
+                                      detail: { message: context }
+                                    }));
+                                    
+                                    toast({
+                                      title: 'Sent to Admin Rocker',
+                                      description: 'The failure details have been sent to Admin Rocker for discussion'
+                                    });
+                                  }, 200);
                                 } else {
                                   toast({
-                                    title: 'Failure Context Copied',
-                                    description: 'Open Admin Rocker to discuss this failure'
+                                    title: 'Error',
+                                    description: 'Could not find Admin Rocker tab. Make sure you are on the Control Room page.',
+                                    variant: 'destructive'
                                   });
-                                  navigator.clipboard.writeText(context);
                                 }
                               }}
                             >

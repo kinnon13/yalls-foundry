@@ -76,12 +76,24 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
       }
     };
 
+    const handleSendMessage = async (e: CustomEvent) => {
+      const message = e.detail?.message;
+      if (message) {
+        const response = await sendMessage(message, currentSessionId);
+        if (response?.sessionId && !currentSessionId) {
+          setCurrentSessionId(response.sessionId);
+        }
+      }
+    };
+
     window.addEventListener('rocker-load-session' as any, handleLoadSession);
+    window.addEventListener('rocker-send-message' as any, handleSendMessage);
     
     return () => {
       window.removeEventListener('rocker-load-session' as any, handleLoadSession);
+      window.removeEventListener('rocker-send-message' as any, handleSendMessage);
     };
-  }, [loadConversation]);
+  }, [loadConversation, sendMessage, currentSessionId]);
 
   // Save preferences
   useEffect(() => {
