@@ -25,7 +25,7 @@ export default function Index() {
       {/* Rocker Label Toggle */}
       <Button
         onClick={() => setShowRockerLabels(!showRockerLabels)}
-        className="fixed top-20 right-4 z-50 gap-2 shadow-lg"
+        className="fixed top-20 right-4 z-50 gap-2 shadow-lg pointer-events-auto"
         variant={showRockerLabels ? "default" : "outline"}
         size="sm"
       >
@@ -37,7 +37,7 @@ export default function Index() {
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Main container label */}
           {showRockerLabels && (
-            <Badge className="fixed top-32 right-4 z-50 bg-primary/90">
+            <Badge className="fixed top-32 right-4 z-40 bg-primary/90 pointer-events-none">
               Main: "homepage main feed"
             </Badge>
           )}
@@ -62,7 +62,7 @@ export default function Index() {
                     </Button>
                   </Link>
                   {showRockerLabels && (
-                    <Badge className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90">
+                    <Badge className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 pointer-events-none">
                       "sign up homepage"
                     </Badge>
                   )}
@@ -81,7 +81,7 @@ export default function Index() {
                     </Button>
                   </Link>
                   {showRockerLabels && (
-                    <Badge className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90">
+                    <Badge className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 pointer-events-none">
                       "sign in login homepage"
                     </Badge>
                   )}
@@ -94,7 +94,7 @@ export default function Index() {
           {session && (
             <div className="mt-4 space-y-6" data-rocker="community feed section">
               {showRockerLabels && (
-                <Badge className="mb-2 bg-secondary/90">
+                <Badge className="mb-2 bg-secondary/90 pointer-events-none">
                   Section: "community feed section"
                 </Badge>
               )}
@@ -116,7 +116,7 @@ export default function Index() {
                       Media
                     </TabsTrigger>
                     {showRockerLabels && (
-                      <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs">
+                      <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none">
                         "feed media tab"
                       </Badge>
                     )}
@@ -132,7 +132,7 @@ export default function Index() {
                       Posts
                     </TabsTrigger>
                     {showRockerLabels && (
-                      <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs">
+                      <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none">
                         "feed posts tab"
                       </Badge>
                     )}
@@ -148,7 +148,7 @@ export default function Index() {
                       Live
                     </TabsTrigger>
                     {showRockerLabels && (
-                      <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs">
+                      <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none">
                         "feed live tab"
                       </Badge>
                     )}

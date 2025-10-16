@@ -125,7 +125,7 @@ export function CreatePost({ onPostCreated, showRockerLabels = false }: CreatePo
               title="Write your post here"
             />
             {showRockerLabels && (
-              <Badge className="absolute -top-8 left-0 bg-primary/90">
+              <Badge className="absolute -top-8 left-0 bg-primary/90 pointer-events-none">
                 "post composer"
               </Badge>
             )}
@@ -196,7 +196,7 @@ export function CreatePost({ onPostCreated, showRockerLabels = false }: CreatePo
                 {uploading ? 'Uploading...' : isSubmitting ? 'Posting...' : 'Post'}
               </Button>
               {showRockerLabels && (
-                <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs">
+                <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none">
                   "post button"
                 </Badge>
               )}

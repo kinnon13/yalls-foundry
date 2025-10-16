@@ -41,33 +41,67 @@ export function GlobalHeader() {
           
           <nav className="hidden md:flex items-center gap-4">
             <Link to="/">
-              <Button variant="ghost" size="sm">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                data-rocker="home nav"
+                aria-label="Home navigation"
+              >
                 <Home className="h-4 w-4 mr-2" />
                 Home
               </Button>
             </Link>
             {session && (
               <Link to="/dashboard">
-                <Button variant="ghost" size="sm">Dashboard</Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  data-rocker="dashboard nav"
+                  aria-label="Dashboard navigation"
+                >
+                  Dashboard
+                </Button>
               </Link>
             )}
             <Link to="/horses">
-              <Button variant="ghost" size="sm">Horses</Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                data-rocker="horses nav"
+                aria-label="Horses navigation"
+              >
+                Horses
+              </Button>
             </Link>
             <Link to="/marketplace">
-              <Button variant="ghost" size="sm">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                data-rocker="marketplace nav"
+                aria-label="Marketplace navigation"
+              >
                 <ShoppingBag className="h-4 w-4 mr-2" />
                 Marketplace
               </Button>
             </Link>
             <Link to="/events">
-              <Button variant="ghost" size="sm">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                data-rocker="events nav"
+                aria-label="Events navigation"
+              >
                 <Calendar className="h-4 w-4 mr-2" />
                 Events
               </Button>
             </Link>
             <Link to="/entities/unclaimed">
-              <Button variant="ghost" size="sm" data-rocker="unclaimed entities browse claim" aria-label="Browse Unclaimed">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                data-rocker="claim nav" 
+                aria-label="Claim navigation"
+              >
                 <Zap className="h-4 w-4 mr-2" />
                 Claim
               </Button>
@@ -75,13 +109,23 @@ export function GlobalHeader() {
             {session && (
               <>
                 <Link to="/calendar">
-                  <Button variant="ghost" size="sm" data-rocker="calendar tab open calendar page calendar nav" aria-label="Calendar Tab">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    data-rocker="calendar nav" 
+                    aria-label="Calendar navigation"
+                  >
                     <Calendar className="h-4 w-4 mr-2" />
                     Calendar
                   </Button>
                 </Link>
                 <Link to={`/business/${session.userId}/hub`}>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    data-rocker="business nav"
+                    aria-label="Business navigation"
+                  >
                     <Building2 className="h-4 w-4 mr-2" />
                     Business
                   </Button>
@@ -116,6 +160,8 @@ export function GlobalHeader() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pr-8"
+                data-rocker="search input"
+                aria-label="Search input"
               />
               <Search className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             </div>
@@ -128,22 +174,47 @@ export function GlobalHeader() {
           {session ? (
             <>
               <Link to="/profile">
-                <Button variant="ghost" size="sm" data-rocker="profile profile page open profile profile nav" aria-label="Open Profile">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  data-rocker="profile nav" 
+                  aria-label="Profile navigation"
+                >
                   <User className="h-4 w-4 mr-2" />
                   Profile
                 </Button>
               </Link>
               <Link to="/login">
-                <Button variant="outline" size="sm" data-rocker="sign out logout" aria-label="Sign Out">Sign Out</Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  data-rocker="sign out" 
+                  aria-label="Sign out"
+                >
+                  Sign Out
+                </Button>
               </Link>
             </>
           ) : (
             <>
               <Link to="/login">
-                <Button variant="ghost" size="sm">Sign In</Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  data-rocker="sign in nav"
+                  aria-label="Sign in navigation"
+                >
+                  Sign In
+                </Button>
               </Link>
               <Link to="/signup">
-                <Button size="sm">Sign Up</Button>
+                <Button 
+                  size="sm"
+                  data-rocker="sign up nav"
+                  aria-label="Sign up navigation"
+                >
+                  Sign Up
+                </Button>
               </Link>
             </>
           )}
