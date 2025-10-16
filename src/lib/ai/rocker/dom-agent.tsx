@@ -37,29 +37,39 @@ async function logActionResult(
     const sessionId = (window as any).__rockerSessionId || null;
     const available = getAvailableElements().slice(0, 40);
 
-    const { error } = await supabase.functions.invoke('rocker-telemetry', {
-      body: {
-        user_id: uid,
-        route,
-        action,
-        target: targetName,
-        success,
-        message,
-        session_id: sessionId,
-        meta: {
-          page: route,
-          timestamp: new Date().toISOString(),
-          available_elements: available,
-          // Track entity information for referencing specific posts/fields
-          entity_type: entityData?.entityType,
-          entity_id: entityData?.entityId,
-          field_name: entityData?.fieldName,
-        },
+    // Prepare row for direct insert fallback
+    const insertRow = {
+      user_id: uid,
+      route,
+      action,
+      target: targetName,
+      success,
+      message,
+      session_id: sessionId ?? null,
+      kind: 'dom_action',
+      payload: {},
+      meta: {
+        page: route,
+        timestamp: new Date().toISOString(),
+        available_elements: available,
+        // Track entity information for referencing specific posts/fields
+        entity_type: entityData?.entityType,
+        entity_id: entityData?.entityId,
+        field_name: entityData?.fieldName,
       },
+    } as const;
+
+    // Try edge function first (server-side enrichment + auth validation)
+    const { data: fnData, error: fnError } = await supabase.functions.invoke('rocker-telemetry', {
+      body: insertRow,
     });
 
-    if (error) {
-      console.warn('[Learning] Telemetry function error:', error);
+    if (fnError || (fnData && (fnData as any).error)) {
+      console.warn('[Learning] Telemetry function error, falling back to direct insert:', fnError || (fnData as any).error);
+      const { error: insertError } = await supabase.from('ai_feedback').insert(insertRow as any);
+      if (insertError) {
+        console.warn('[Learning] Direct insert failed:', insertError);
+      }
     }
   } catch (e) {
     console.warn('[Learning] Failed to log action result:', e);
