@@ -54,10 +54,10 @@ serve(async (req) => {
 
     const reqClone = req.clone();
     const body = await reqClone.json();
-    const { messages, sessionId: requestedSessionId } = body;
+    const { messages, sessionId: requestedSessionId, currentRoute } = body;
 
     // Build user context from profile, memory, and analytics
-    const userContext = await buildUserContext(supabaseClient, user.id, user.email);
+    const userContext = await buildUserContext(supabaseClient, user.id, user.email, currentRoute);
 
     // Build system prompt with user context
     const systemPrompt = USER_SYSTEM_PROMPT + userContext;

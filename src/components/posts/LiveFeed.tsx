@@ -119,7 +119,7 @@ export function LiveFeed() {
 
       toast({
         title: 'Stream ended',
-        description: 'Your live stream has ended',
+        description: 'Recording saved. Processing upload...',
       });
 
       setActiveStream(null);

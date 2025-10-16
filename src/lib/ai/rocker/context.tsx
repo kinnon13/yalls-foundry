@@ -544,7 +544,8 @@ export function RockerProvider({ children }: { children: ReactNode }) {
               content: m.content
             })),
             sessionId: sessionId,
-            mode: 'user'
+            mode: 'user',
+            currentRoute: window.location.pathname
           }),
           signal: abortControllerRef.current.signal
         }

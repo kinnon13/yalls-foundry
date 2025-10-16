@@ -3,9 +3,14 @@ import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 export async function buildUserContext(
   supabaseClient: SupabaseClient,
   userId: string,
-  userEmail?: string
+  userEmail?: string,
+  currentRoute?: string
 ): Promise<string> {
   let context = `\n\n**CURRENT USER:**\n- User ID: ${userId}\n- Email: ${userEmail || 'Not provided'}`;
+  
+  if (currentRoute) {
+    context += `\n- Current page route: ${currentRoute}`;
+  }
 
   try {
     const { data: profile } = await supabaseClient
