@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RockerMessageActions } from './RockerMessageActions';
+import { AI_PROFILES, AIRole } from '@/lib/ai/rocker/config';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -20,6 +21,7 @@ interface MessageListProps {
   voiceStatus: 'connected' | 'connecting' | 'disconnected';
   voiceTranscript: string;
   isAlwaysListening: boolean;
+  actorRole?: AIRole;
 }
 
 export function MessageList({
@@ -28,8 +30,10 @@ export function MessageList({
   isVoiceMode,
   voiceStatus,
   voiceTranscript,
-  isAlwaysListening
+  isAlwaysListening,
+  actorRole
 }: MessageListProps) {
+  const aiProfile = AI_PROFILES[actorRole || 'user'];
   return (
     <div className="space-y-4">
       {isVoiceMode && (
@@ -40,7 +44,7 @@ export function MessageList({
           )}>
             <img 
               src={new URL('@/assets/rocker-cowboy-avatar.jpeg', import.meta.url).href}
-              alt="Rocker listening"
+              alt={`${aiProfile.name} listening`}
               className="h-16 w-16 rounded-full object-cover"
             />
           </div>
@@ -49,7 +53,7 @@ export function MessageList({
           </p>
           <p className="text-xs text-muted-foreground">
             {isAlwaysListening 
-              ? 'Say "Hey Rocker" or type below' 
+              ? `Say "Hey ${aiProfile.name}" or type below`
               : 'Speak or type your message'}
           </p>
           {voiceTranscript && (
@@ -71,7 +75,7 @@ export function MessageList({
         >
           {message.role === 'assistant' && (
             <Avatar className="w-8 h-8 flex-shrink-0">
-              <AvatarImage src={new URL('@/assets/rocker-cowboy.jpeg', import.meta.url).href} alt="Rocker" />
+              <AvatarImage src={new URL('@/assets/rocker-cowboy.jpeg', import.meta.url).href} alt={aiProfile.name} />
               <AvatarFallback>AI</AvatarFallback>
             </Avatar>
           )}

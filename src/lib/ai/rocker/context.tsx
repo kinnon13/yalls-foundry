@@ -17,7 +17,7 @@ import { GoogleDriveService } from './integrations/google-drive';
 import { Button } from '@/components/ui/button';
 import { Mic } from 'lucide-react';
 import { useRockerNotifications } from '@/hooks/useRockerNotifications';
-import type { AIRole } from './config';
+import { AI_PROFILES, type AIRole } from './config';
 
 interface RockerContextValue {
   // Chat state
@@ -342,7 +342,9 @@ export function RockerProvider({ children }: { children: ReactNode }) {
         
         toast({
           title: "Voice mode active",
-          description: isAlwaysListening ? "Say 'Hey Rocker' to get my attention" : "Start speaking to Rocker!",
+          description: isAlwaysListening
+            ? `Say 'Hey ${AI_PROFILES[actorRole || 'user'].name}' to get my attention`
+            : `Start speaking to ${AI_PROFILES[actorRole || 'user'].name}!`,
         });
       } catch (error) {
         console.error('Error starting voice mode:', error);
@@ -432,7 +434,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
         
         toast({
           title: 'Wake word activated',
-          description: "Say 'Hey Rocker' to start a conversation anywhere on the site",
+          description: `Say 'Hey ${AI_PROFILES[actorRole || 'user'].name}' to start a conversation anywhere on the site`,
         });
       } catch (error) {
         console.error('[Rocker] Error starting wake word mode:', error);
@@ -1222,7 +1224,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium">Activate voice mode</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Click to enable "Hey Rocker" wake word
+              Click to enable "Hey {AI_PROFILES[actorRole || 'user'].name}" wake word
             </p>
           </div>
           <Button 
@@ -1235,7 +1237,8 @@ export function RockerProvider({ children }: { children: ReactNode }) {
                 await toggleAlwaysListening();
                 toast({
                   title: "Voice activated!",
-                  description: "Say 'Hey Rocker' to start a conversation",
+                  description: `Say 'Hey ${AI_PROFILES[actorRole || 'user'].name}' to start a conversation`,
+                });
                 });
               } catch (error: any) {
                 console.error('[Rocker] Activation failed:', error);

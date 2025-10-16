@@ -171,6 +171,7 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
               voiceStatus={voiceStatus}
               voiceTranscript={voiceTranscript}
               isAlwaysListening={isAlwaysListening}
+              actorRole={actorRole}
             />
           )}
         </ScrollArea>
