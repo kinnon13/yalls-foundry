@@ -501,6 +501,7 @@ export async function clickElement(targetName: string, userId?: string): Promise
       message: `Could not find "${targetName}". Available: ${getAvailableItemsSnapshot().join(', ')}` 
     };
     await logActionResult('click', targetName, false, result.message, userId);
+    await markOutcome(route, targetName, false);
     return result;
   }
   
@@ -526,6 +527,11 @@ export async function clickElement(targetName: string, userId?: string): Promise
   if ((t.includes('new collection') || t.includes('create collection')) && (window as any).__openCreateCollection) {
     try { (window as any).__openCreateCollection(); } catch {}
   }
+  
+  // Learn from success: store selector + mark success
+  const selector = stableSelector(el);
+  await upsertSelector(route, targetName, selector, { learned_via: 'click' });
+  await markOutcome(route, targetName, true);
   
   const result = { success: true, message: `Clicked "${targetName}"` };
   await logActionResult('click', targetName, true, result.message, userId);
@@ -562,6 +568,7 @@ export async function fillField(targetName: string, value: string, userId?: stri
       message: `Could not find field "${targetName}". Available fields: ${getAvailableItemsSnapshot().join(', ')}` 
     };
     await logActionResult('fill', targetName, false, result.message, userId);
+    await markOutcome(route, targetName, false);
     return result;
   }
   let el = elBase as any;
@@ -581,6 +588,12 @@ export async function fillField(targetName: string, value: string, userId?: stri
   }
   (el as HTMLElement).dispatchEvent(new Event('input', { bubbles: true }));
   (el as HTMLElement).dispatchEvent(new Event('change', { bubbles: true }));
+  
+  // Learn from success: store selector + mark success
+  const selector = stableSelector(el as HTMLElement);
+  await upsertSelector(route, targetName, selector, { learned_via: 'fill' });
+  await markOutcome(route, targetName, true);
+  
   const result = { success: true, message: `Filled "${targetName}"` };
   await logActionResult('fill', targetName, true, result.message, userId);
   

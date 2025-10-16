@@ -40,6 +40,7 @@ import Calendar from "./routes/calendar";
 import UnclaimedEntities from "./routes/entities/unclaimed";
 import NotFound from "./pages/NotFound";
 import RockerDebugRoute from "./routes/rocker-debug";
+import LearningDashboard from "./routes/admin/learning";
 
 // Lazy load MLM routes
 const Dashboard = lazy(() => import('./routes/dashboard'));
@@ -121,6 +122,7 @@ const App = () => (
               <Route path="/entities/unclaimed" element={<UnclaimedEntities />} />
               <Route path="/rocker-debug" element={<RequireAuth><RockerDebugRoute /></RequireAuth>} />
               <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
+              <Route path="/admin/learning" element={<RequireAuth><LearningDashboard /></RequireAuth>} />
               <Route path="*" element={<NotFound />} />
               </Routes>
 

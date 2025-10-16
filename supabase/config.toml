@@ -133,3 +133,6 @@ verify_jwt = true
 [functions.chat-store]
 verify_jwt = true
 
+[functions.rocker-telemetry]
+verify_jwt = true
+
