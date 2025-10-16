@@ -781,6 +781,54 @@ export async function executeTool(
         };
       }
 
+      // ========== DOM AGENT TOOLS ==========
+      case 'click_element': {
+        return {
+          success: true,
+          action: 'dom_click',
+          element_name: args.element_name,
+          message: `Clicking "${args.element_name}"...`
+        };
+      }
+
+      case 'fill_field': {
+        return {
+          success: true,
+          action: 'dom_fill',
+          field_name: args.field_name,
+          value: args.value,
+          message: `Filling "${args.field_name}" with "${args.value}"...`
+        };
+      }
+
+      case 'create_post': {
+        // Use DOM agent to fill and click
+        return {
+          success: true,
+          action: 'dom_create_post',
+          content: args.content,
+          message: `Creating post: "${args.content.substring(0, 50)}${args.content.length > 50 ? '...' : ''}"`
+        };
+      }
+
+      case 'get_page_info': {
+        return {
+          success: true,
+          action: 'dom_get_page_info',
+          message: 'Reading page content...'
+        };
+      }
+
+      case 'scroll_page': {
+        return {
+          success: true,
+          action: 'dom_scroll',
+          direction: args.direction,
+          amount: args.amount || 'screen',
+          message: `Scrolling ${args.direction}...`
+        };
+      }
+
       // ========== FILE OPERATIONS (DEVELOPER TOOLS) ==========
       case 'read_file':
       case 'edit_file':

@@ -247,7 +247,26 @@ serve(async (req) => {
         }
 
         // Track which tools were called - include arguments for frontend execution
+        const toolResultsWithActions: any[] = [];
+        
         if (conversationMessages.some(m => m.role === 'tool')) {
+          const toolMessages = conversationMessages.filter(m => m.role === 'tool');
+          
+          for (const toolMsg of toolMessages) {
+            try {
+              const result = JSON.parse(toolMsg.content);
+              if (result.action) {
+                // This is a DOM action that needs to be executed on the frontend
+                toolResultsWithActions.push({
+                  action: result.action,
+                  ...result
+                });
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+          
           response.tool_calls = conversationMessages
             .filter(m => m.role === 'assistant' && m.tool_calls)
             .flatMap(m => m.tool_calls || [])
@@ -255,6 +274,11 @@ serve(async (req) => {
               name: tc.function.name,
               arguments: tc.function.arguments 
             }));
+        }
+        
+        // Include DOM actions that need to be executed on client
+        if (toolResultsWithActions.length > 0) {
+          response.client_actions = toolResultsWithActions;
         }
 
         return new Response(

@@ -1,5 +1,47 @@
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { clickElement, fillField } from '@/lib/ai/rocker/dom-agent';
+
+// Helper to execute DOM actions from backend
+async function executeDOMAction(action: any) {
+  console.log('[Rocker] Executing DOM action:', action);
+  
+  // Get userId from session
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  
+  switch (action.action) {
+    case 'dom_click':
+      await clickElement(action.element_name, userId);
+      break;
+      
+    case 'dom_fill':
+      await fillField(action.field_name, action.value, userId);
+      break;
+      
+    case 'dom_create_post':
+      // Fill the post field and click the post button
+      await fillField('post field', action.content, userId);
+      await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+      await clickElement('post button', userId);
+      break;
+      
+    case 'dom_scroll':
+      window.scrollBy({ 
+        top: action.direction === 'down' ? window.innerHeight : -window.innerHeight,
+        behavior: 'smooth'
+      });
+      break;
+      
+    case 'dom_get_page_info':
+      // This would be handled server-side or return info to chat
+      console.log('[Rocker] Getting page info...');
+      break;
+      
+    default:
+      console.warn('[Rocker] Unknown DOM action:', action.action);
+  }
+}
 
 export interface RockerMessage {
   role: 'user' | 'assistant' | 'system';
@@ -83,6 +125,13 @@ export function useRocker(mode: 'user' | 'admin' | 'super_admin' = 'user') {
       
       if (result.error) {
         throw new Error(result.error);
+      }
+      
+      // Execute DOM actions if present
+      if (result.client_actions && Array.isArray(result.client_actions)) {
+        for (const clientAction of result.client_actions) {
+          await executeDOMAction(clientAction);
+        }
       }
       
       // Add tool execution feedback if present
