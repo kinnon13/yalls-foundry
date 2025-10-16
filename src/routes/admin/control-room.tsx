@@ -26,6 +26,7 @@ import AuthPanel from '@/routes/admin/panels/AuthPanel';
 import FeedbackInbox from '@/routes/admin/panels/FeedbackInbox';
 import { SuggestionsPanel } from '@/routes/admin/panels/SuggestionsPanel';
 import { FeatureFlagsPanel } from '@/routes/admin/panels/FeatureFlagsPanel';
+import { TourSchedulePanel } from '@/routes/admin/panels/TourSchedulePanel';
 import { EntitySearchPanel } from '@/routes/admin/panels/EntitySearchPanel';
 import { ScaleScorecard } from '@/lib/observability/ScaleScorecard';
 import { MediaUploadDialog } from '@/components/media/MediaUploadDialog';
@@ -92,7 +93,7 @@ export default function ControlRoom() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Tab Navigation */}
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-15 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-16 lg:w-auto">
               <TabsTrigger value="scaling" className="gap-2">
                 <TrendingUp className="h-4 w-4" />
                 <span className="hidden sm:inline">1B Scale</span>
@@ -144,6 +145,10 @@ export default function ControlRoom() {
               <TabsTrigger value="flags" className="gap-2">
                 <Flag className="h-4 w-4" />
                 <span className="hidden sm:inline">Flags</span>
+              </TabsTrigger>
+              <TabsTrigger value="tours" className="gap-2">
+                <Activity className="h-4 w-4" />
+                <span className="hidden sm:inline">Tours</span>
               </TabsTrigger>
               <TabsTrigger value="moderator" className="gap-2">
                 <Shield className="h-4 w-4" />
@@ -235,6 +240,11 @@ export default function ControlRoom() {
               <FeatureFlagsPanel />
             </TabsContent>
 
+            {/* Tours Tab */}
+            <TabsContent value="tours" className="space-y-6">
+              <TourSchedulePanel />
+            </TabsContent>
+
             {/* Moderator Tab */}
             <TabsContent value="moderator" className="space-y-6">
               <div className="grid gap-6 lg:grid-cols-1">
@@ -252,7 +262,7 @@ export default function ControlRoom() {
           <div className="mt-12 pt-6 border-t">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div className="p-4 border rounded">
-                <div className="text-2xl font-bold">15</div>
+                <div className="text-2xl font-bold">16</div>
                 <div className="text-xs text-muted-foreground">Admin Panels</div>
               </div>
               <div className="p-4 border rounded bg-success/5">
