@@ -9,11 +9,13 @@ import { TwitterFeed } from '@/components/posts/TwitterFeed';
 import { LiveFeed } from '@/components/posts/LiveFeed';
 import { CreatePost } from '@/components/posts/CreatePost';
 import { useState } from 'react';
-import { Video, MessageCircle, Radio } from 'lucide-react';
+import { Video, MessageCircle, Radio, BarChart3 } from 'lucide-react';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
 
 export default function Index() {
   const { session } = useSession();
   const [refreshKey, setRefreshKey] = useState(0);
+  const { isAdmin } = useAdminCheck();
 
   return (
     <>
@@ -34,6 +36,16 @@ export default function Index() {
                 </Link>
                 <Link to="/login">
                   <Button variant="outline" size="lg" data-rocker="sign in login homepage" aria-label="Sign In">Sign In</Button>
+                </Link>
+              </div>
+            )}
+            {isAdmin && (
+              <div className="mt-4">
+                <Link to="/admin/learning">
+                  <Button variant="outline" size="sm" className="gap-2" data-rocker="learning dashboard link">
+                    <BarChart3 className="h-4 w-4" />
+                    Learning Dashboard
+                  </Button>
                 </Link>
               </div>
             )}
