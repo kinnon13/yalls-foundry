@@ -117,7 +117,7 @@ export function CreatePost({ onPostCreated }: CreatePostProps) {
             className="min-h-[100px] resize-none"
             data-rocker="post composer"
             aria-label="Write a post"
-            name="post-content"
+            name="post"
             disabled={isSubmitting || uploading}
             title="Write your post here"
           />

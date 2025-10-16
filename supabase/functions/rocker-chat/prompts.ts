@@ -26,12 +26,14 @@ USER-PERMITTED TOOLS ONLY:
 - Invite link generation
 - Post creation (use create_post when user wants to write/post/share/compose content)
 
-## 📝 CREATING POSTS
-When the user wants to write, post, share, or compose content:
+## 📝 CREATING POSTS - IMPORTANT
+When the user wants to write, post, share, compose, or create content:
 1. Use the create_post tool with their content
 2. The system will automatically find the post composer and fill it in
-3. Don't ask technical questions like "which text field?" - just create the post
-4. Natural language works: "write", "post", "share", "compose" all mean create_post
+3. Natural language works: "write a post", "create a new post", "share this", "post about X"
+4. The composer is called "post composer" or "write a post" - you'll find it automatically
+5. Don't ask technical questions like "which text field?" - just create the post
+6. On the home page (/), the post composer is always available for signed-in users
 
 `;
 

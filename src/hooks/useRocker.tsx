@@ -16,17 +16,30 @@ async function waitForElementByName(name: string, timeoutMs = 7000) {
   return false;
 }
 async function ensureComposer(userId?: string) {
+  // Try all natural language terms for the post composer
+  const terms = ['post composer', 'write a post', 'post field', 'composer', 'what\'s on your mind'];
+  
   // Fast path: already mounted
-  try { if (findElement('post field')) return; } catch {}
+  for (const term of terms) {
+    try { 
+      if (findElement(term)) return; 
+    } catch {}
+  }
+  
   // Navigate to home if needed (composer lives on / for signed-in users)
   if (location.pathname !== '/') {
     history.pushState({}, '', '/');
     await delay(300);
   }
+  
   // Try clicking an opener if present
   document.querySelector<HTMLElement>('[data-rocker="open post composer"]')?.click();
-  // Wait for composer mount (longer window for hydration)
-  await waitForElementByName('post field', 7000);
+  
+  // Wait for composer mount (longer window for hydration) - try all terms
+  for (const term of terms) {
+    const found = await waitForElementByName(term, 2000);
+    if (found) return;
+  }
 }
 
 // Helper to execute DOM actions from backend
@@ -51,7 +64,16 @@ async function executeDOMAction(action: any) {
         console.warn('[Rocker] No user session for dom_create_post');
       }
       await ensureComposer(userId);
-      const fillRes = await fillField('post field', action.content, userId);
+      
+      // Try all natural language terms for the post field
+      const terms = ['post composer', 'write a post', 'post field', 'composer'];
+      let fillRes: any = null;
+      
+      for (const term of terms) {
+        fillRes = await fillField(term, action.content, userId);
+        if (fillRes?.success) break;
+      }
+      
       if (!fillRes?.success) {
         console.warn('[Rocker] Fill failed, using clipboard fallback:', fillRes?.message);
         try { await navigator.clipboard.writeText(action.content ?? ''); } catch {}
