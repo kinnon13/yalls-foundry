@@ -5,6 +5,7 @@
  */
 
 export type Role =
+  | 'super_admin'
   | 'admin'
   | 'moderator'
   | 'business_owner'
@@ -22,6 +23,11 @@ export type Subject = 'profile' | 'profile.claim' | 'admin.area';
  * Defines which actions each role can perform on each subject
  */
 const matrix: Record<Role, Partial<Record<Subject, Action[]>>> = {
+  super_admin: {
+    'admin.area': ['read', 'create', 'update', 'delete'],
+    profile: ['read', 'create', 'update', 'delete'],
+    'profile.claim': ['claim'],
+  },
   admin: {
     'admin.area': ['read', 'update', 'delete'],
     profile: ['read', 'create', 'update', 'delete'],

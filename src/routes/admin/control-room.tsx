@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { WithRole } from '@/lib/auth/guards';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
 
 // Import panel components
 import RLSScanner from '@/routes/admin/panels/RLSScanner';
@@ -43,19 +44,7 @@ export default function ControlRoom() {
   const [activeTab, setActiveTab] = useState('scaling');
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const { isAdmin } = useAdminCheck();
-  
-  // Check if user is super admin (you can customize this check)
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  
-  useEffect(() => {
-    // For now, all admins can access. You can add email check here:
-    // const checkSuperAdmin = async () => {
-    //   const { data: { user } } = await supabase.auth.getUser();
-    //   setIsSuperAdmin(user?.email === 'your-email@domain.com');
-    // };
-    // checkSuperAdmin();
-    setIsSuperAdmin(isAdmin);
-  }, [isAdmin]);
+  const { isSuperAdmin } = useSuperAdminCheck();
 
   return (
     <WithRole 

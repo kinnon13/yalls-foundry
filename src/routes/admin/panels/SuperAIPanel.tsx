@@ -399,6 +399,111 @@ export function SuperAIPanel() {
                   ))}
                 </ul>
               </div>
+
+              <div className="border-t pt-4 mt-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="space-y-0.5">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Super Admin Privacy
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Control whether regular admins can see your conversations and memories
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Card className="p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm">Private Conversations</p>
+                        <p className="text-xs text-muted-foreground">
+                          Hide your conversations with {AI_PROFILES[selectedAI].name} from regular admins
+                        </p>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            // Toggle privacy for all conversations with this AI
+                            const { error } = await supabase
+                              .from('rocker_conversations')
+                              .update({ is_private: true } as any)
+                              .eq('actor_role', selectedAI);
+
+                            if (error) throw error;
+
+                            toast({
+                              title: "Privacy Updated",
+                              description: "Your conversations are now private",
+                            });
+                          } catch (err: any) {
+                            toast({
+                              title: "Error",
+                              description: err.message,
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        Make Private
+                      </Button>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm">Private Memories</p>
+                        <p className="text-xs text-muted-foreground">
+                          Hide memories learned from your interactions from regular admins
+                        </p>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            // Toggle privacy for all memories with this AI scope
+                            const { error } = await supabase
+                              .from('ai_user_memory')
+                              .update({ is_private: true } as any)
+                              .eq('scope', selectedAI);
+
+                            if (error) throw error;
+
+                            toast({
+                              title: "Privacy Updated",
+                              description: "Your memories are now private",
+                            });
+                          } catch (err: any) {
+                            toast({
+                              title: "Error",
+                              description: err.message,
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        Make Private
+                      </Button>
+                    </div>
+                  </Card>
+
+                  <div className="bg-muted/50 p-3 rounded-lg border">
+                    <div className="flex items-start gap-2">
+                      <Brain className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                      <div className="text-xs text-muted-foreground">
+                        <strong>Note:</strong> Andy (Knower) can still learn from your private data
+                        to improve the platform, but regular admins cannot view your private
+                        conversations or memories directly. Only you and other super admins have access.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
