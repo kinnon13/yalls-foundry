@@ -13,15 +13,16 @@ export type PreviewItem = {
 };
 
 // Lazy pages (stubs only; no money moves here)
-const PayCheckout      = lazy(() => import('./screens/pay/CheckoutPreview'));
-const PayOnboarding    = lazy(() => import('./screens/pay/OnboardingPreview'));
-const PayPayouts       = lazy(() => import('./screens/pay/PayoutsPreview'));
-const PayLabels        = lazy(() => import('./screens/pay/LabelsPreview'));
-const AdminRisk        = lazy(() => import('./screens/admin/RiskPreview'));
-const AdminCapabilities= lazy(() => import('./screens/admin/CapabilitiesPreview'));
-const DataExports      = lazy(() => import('./screens/data/ExportsPreview'));
-const DataReports      = lazy(() => import('./screens/data/ReportsPreview'));
-const AppOrdersRead    = lazy(() => import('./screens/app/OrdersReadOnlyPreview'));
+// Named chunks for optional exclusion from prod bundle
+const PayCheckout       = lazy(() => import(/* webpackChunkName: "preview-pay-checkout" */ './screens/pay/CheckoutPreview'));
+const PayOnboarding     = lazy(() => import(/* webpackChunkName: "preview-pay-onboarding" */ './screens/pay/OnboardingPreview'));
+const PayPayouts        = lazy(() => import(/* webpackChunkName: "preview-pay-payouts" */ './screens/pay/PayoutsPreview'));
+const PayLabels         = lazy(() => import(/* webpackChunkName: "preview-pay-labels" */ './screens/pay/LabelsPreview'));
+const AdminRisk         = lazy(() => import(/* webpackChunkName: "preview-admin-risk" */ './screens/admin/RiskPreview'));
+const AdminCapabilities = lazy(() => import(/* webpackChunkName: "preview-admin-capabilities" */ './screens/admin/CapabilitiesPreview'));
+const DataExports       = lazy(() => import(/* webpackChunkName: "preview-data-exports" */ './screens/data/ExportsPreview'));
+const DataReports       = lazy(() => import(/* webpackChunkName: "preview-data-reports" */ './screens/data/ReportsPreview'));
+const AppOrdersRead     = lazy(() => import(/* webpackChunkName: "preview-app-orders" */ './screens/app/OrdersReadOnlyPreview'));
 
 export const PREVIEW_ITEMS: PreviewItem[] = [
   // Pay

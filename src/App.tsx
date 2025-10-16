@@ -14,6 +14,7 @@ import InactivityNudge from '@/components/rocker/InactivityNudge';
 import { RockerProvider } from '@/lib/ai/rocker/context';
 import { RedirectHandler } from '@/components/navigation/RedirectHandler';
 import PreviewRoutes from '@/preview/PreviewRoutes';
+import { PreviewMessageListener } from '@/components/preview/PreviewMessageListener';
 import Index from "./routes/index";
 import Search from "./routes/search";
 import Login from "./routes/login";
@@ -70,6 +71,9 @@ const App = () => (
 
               {/* Preview Routes (dev/staging only) */}
               <PreviewRoutes />
+
+              {/* Preview message handler */}
+              <PreviewMessageListener />
 
               {FEEDBACK_ENABLED && <FeedbackWidget />}
               <InactivityNudge />

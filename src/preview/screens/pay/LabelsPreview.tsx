@@ -3,11 +3,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Package } from 'lucide-react';
 import { toast } from 'sonner';
+import { sendPreviewMessage } from '@/preview/usePreviewMessage';
 
 export default function LabelsPreview() {
   const handleBuyLabel = () => {
     toast.success('Label purchased (preview only)');
-    window.opener?.postMessage({ type: 'LABEL_PURCHASED', source: 'pay-preview', at: Date.now() }, '*');
+    sendPreviewMessage({
+      type: 'LABEL_PURCHASED',
+      source: 'pay-preview',
+      orderId: `ord_preview_${Date.now()}`,
+      carrier: 'USPS',
+      tracking: `PREVIEW${Date.now()}`
+    });
   };
 
   const mockLabels = [
@@ -17,11 +24,14 @@ export default function LabelsPreview() {
 
   return (
     <div className="min-h-screen bg-background p-6">
+      <div className="fixed top-4 right-4 bg-yellow-500 text-black px-3 py-1 text-xs font-bold uppercase tracking-wider rotate-12 shadow-lg z-50">
+        Preview
+      </div>
       <div className="max-w-4xl mx-auto space-y-6">
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Preview stub for shipping labels. Buy/verify labels; unlocks commissions.
+            Preview of pay.yalls.ai shipping labels. Mock purchase unlocks commissions in main app.
           </AlertDescription>
         </Alert>
 

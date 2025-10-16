@@ -18,7 +18,7 @@ export interface CSPDirectives {
 /**
  * Generate CSP directives based on environment
  */
-export function generateCSP(): string {
+export function generateCSP(isPreview = false): string {
   const directives: CSPDirectives = {
     'default-src': ["'self'"],
     'script-src': [
@@ -28,12 +28,17 @@ export function generateCSP(): string {
     'style-src': ["'self'", "'unsafe-inline'"], // Tailwind requires unsafe-inline
     'img-src': ["'self'", 'data:', 'https:'],
     'font-src': ["'self'", 'data:'],
-    'connect-src': ["'self'", config.VITE_SUPABASE_URL],
+    'connect-src': [
+      "'self'", 
+      config.VITE_SUPABASE_URL,
+      // Preview routes: restrict external calls
+      ...(isPreview ? [] : [])
+    ],
     'media-src': ["'self'"],
     'object-src': ["'none'"],
-    'frame-src': ["'none'"],
+    'frame-src': isPreview ? ["'none'"] : ["'none'"],
     'base-uri': ["'self'"],
-    'form-action': ["'self'"],
+    'form-action': isPreview ? ["'none'"] : ["'self'"], // Block form submissions in previews
     'frame-ancestors': ["'none'"],
     'upgrade-insecure-requests': [],
   };

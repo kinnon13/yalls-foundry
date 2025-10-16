@@ -4,19 +4,29 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { sendPreviewMessage } from '@/preview/usePreviewMessage';
 
 export default function CheckoutPreview() {
   const send = useCallback((type: 'PAYMENT_SUCCESS' | 'PAYMENT_FAIL') => {
-    window.opener?.postMessage({ type, source: 'pay-preview', at: Date.now() }, '*');
+    const orderId = `ord_preview_${Date.now()}`;
+    sendPreviewMessage({ 
+      source: 'pay-preview', 
+      type, 
+      orderId,
+      ...(type === 'PAYMENT_SUCCESS' && { intentId: `pi_preview_${Date.now()}` })
+    });
   }, []);
 
   return (
     <div className="min-h-screen bg-background p-6">
+      <div className="fixed top-4 right-4 bg-yellow-500 text-black px-3 py-1 text-xs font-bold uppercase tracking-wider rotate-12 shadow-lg z-50">
+        Preview
+      </div>
       <div className="max-w-2xl mx-auto space-y-6">
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            This is a preview stub for pay.yalls.ai hosted checkout. No real charges occur here.
+            Preview of pay.yalls.ai hosted checkout. No charges occur here. Messages sent to opener via secure postMessage.
           </AlertDescription>
         </Alert>
 

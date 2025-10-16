@@ -13,11 +13,14 @@ export default function RiskPreview() {
 
   return (
     <div className="min-h-screen bg-background p-6">
+      <div className="fixed top-4 right-4 bg-yellow-500 text-black px-3 py-1 text-xs font-bold uppercase tracking-wider rotate-12 shadow-lg z-50">
+        Preview
+      </div>
       <div className="max-w-6xl mx-auto space-y-6">
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Preview stub for admin.yalls.ai risk management. Queue, flags, actions — read-only mock.
+            Preview of admin.yalls.ai risk management. Queue, flags, actions — read-only mock.
           </AlertDescription>
         </Alert>
 
