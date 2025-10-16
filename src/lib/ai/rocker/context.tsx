@@ -571,7 +571,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
         console.log('[Rocker] Processing tool calls:', result.tool_calls);
         
         for (const tc of result.tool_calls) {
-          const args = typeof tc.arguments === 'string' ? JSON.parse(tc.arguments) : tc.arguments;
+          const args = typeof tc.arguments === 'string' ? JSON.parse(tc.arguments) : (tc.arguments || {});
           console.log('[Rocker] Tool call:', tc.name, args);
           
           // Handle tour start
@@ -598,17 +598,19 @@ export function RockerProvider({ children }: { children: ReactNode }) {
             
             const path = tourPaths[args.section];
             if (path) {
-              console.log('[Rocker] Tour navigating to:', args.section);
+              console.log('[Rocker] Tour navigating to:', args.section, 'path:', path);
               handleNavigation(path);
               toast({
-                title: `📍 ${args.section.charAt(0).toUpperCase() + args.section.slice(1)}`,
-                description: 'Exploring this section...',
+                title: `📍 Tour`,
+                description: `Navigating to ${args.section}...`,
               });
+            } else {
+              console.warn('[Rocker] Unknown tour section:', args.section);
             }
           }
           
           // Handle navigation
-          if (tc.name === 'navigate') {
+          else if (tc.name === 'navigate') {
             console.log('[Rocker] Navigation tool called:', args.path);
             handleNavigation(args.path);
             toast({

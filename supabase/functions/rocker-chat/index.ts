@@ -246,12 +246,15 @@ serve(async (req) => {
           response.navigationPath = navArgs.path;
         }
 
-        // Track which tools were called
+        // Track which tools were called - include arguments for frontend execution
         if (conversationMessages.some(m => m.role === 'tool')) {
           response.tool_calls = conversationMessages
             .filter(m => m.role === 'assistant' && m.tool_calls)
             .flatMap(m => m.tool_calls || [])
-            .map((tc: any) => ({ name: tc.function.name }));
+            .map((tc: any) => ({ 
+              name: tc.function.name,
+              arguments: tc.function.arguments 
+            }));
         }
 
         return new Response(
