@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Search, User, ShoppingBag, Calendar, Home, Building2, Zap } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Search, User, ShoppingBag, Calendar, Home, Building2, Zap, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -13,6 +13,7 @@ import { useSession } from '@/lib/auth/context';
 import { TourButton } from '@/components/rocker/TourButton';
 import { Badge } from '@/components/ui/badge';
 import { useEffect } from 'react';
+import { useCartCount } from '@/hooks/useCartCount';
 
 interface GlobalHeaderProps {
   showRockerLabels?: boolean;
@@ -21,9 +22,11 @@ interface GlobalHeaderProps {
 export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalHeaderProps = {}) {
   const navigate = useNavigate();
   const { session } = useSession();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchCategory, setSearchCategory] = useState<'all' | 'horses' | 'businesses' | 'events' | 'users'>('all');
   const [showRockerLabels, setShowRockerLabels] = useState(propShowRockerLabels ?? false);
+  const { data: cartCount = 0 } = useCartCount();
 
   // Listen to localStorage changes for label state
   useEffect(() => {
@@ -186,6 +189,38 @@ export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalH
         {/* User Actions */}
         <div className="flex items-center gap-2">
           <TourButton />
+          
+          {/* Cart Icon */}
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const params = new URLSearchParams(searchParams);
+                params.set('modal', 'cart');
+                setSearchParams(params);
+              }}
+              data-rocker="cart nav"
+              aria-label="Shopping cart"
+              className={`relative ${showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}`}
+            >
+              <ShoppingCart className="h-4 w-4" />
+              {cartCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                >
+                  {cartCount}
+                </Badge>
+              )}
+            </Button>
+            {showRockerLabels && (
+              <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none z-10">
+                "cart nav"
+              </Badge>
+            )}
+          </div>
+
           {session ? (
             <>
               <div className="relative">

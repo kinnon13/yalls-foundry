@@ -72,20 +72,48 @@ export function CheckoutModal() {
   const handlePay = async () => {
     setLoading(true);
     try {
-      // Create order and get payment intent
+      // Get cart ID from session
       const sessionId = getCartSessionId();
-      const idempotencyKey = `checkout_${Date.now()}_${Math.random()}`;
+      if (!sessionId) {
+        throw new Error('No cart session found');
+      }
+
+      // Get cart ID
+      const { data: cartData } = await supabase.rpc('cart_get', { 
+        p_session_id: sessionId 
+      }) as any;
+
+      if (!cartData || cartData.length === 0) {
+        throw new Error('Cart is empty');
+      }
+
+      const cartId = cartData[0].cart_id;
+      const idempotencyKey = `checkout_${cartId}_${Date.now()}`;
+
+      // Create checkout session (creates order + PaymentIntent)
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: { cart_id: cartId, idempotency_key: idempotencyKey },
+      });
+
+      if (error) throw error;
+
+      const { order_id, client_secret } = data;
+
+      if (!client_secret) {
+        throw new Error('No payment client secret returned');
+      }
+
+      // TODO: Initialize Stripe Elements with client_secret and handle payment
+      // For now, simulate success
+      toast.success('Order created! Payment integration coming soon.');
       
-      // This would call order_start_from_cart RPC
-      toast.success('Payment processing - integration coming soon');
-      
-      // On success, show order success modal
+      // Show success modal
       searchParams.set('modal', 'order_success');
-      searchParams.set('orderId', 'temp-order-id');
+      searchParams.set('orderId', order_id);
       setSearchParams(searchParams, { replace: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Checkout failed:', error);
-      toast.error('Checkout failed');
+      toast.error(error.message || 'Checkout failed');
     } finally {
       setLoading(false);
     }

@@ -4,8 +4,9 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getListingById, addToCart } from '@/lib/marketplace/service.supabase';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { getListingById, addToCart } from '@/lib/marketplace/service';
+import { getCartSessionId } from '@/lib/cart/session';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ import { usePersonalization } from '@/hooks/usePersonalization';
 export default function ListingDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(1);
   const { trackInteraction } = usePersonalization();
@@ -31,7 +33,7 @@ export default function ListingDetail() {
       // Track view
       if (listing) {
         trackInteraction('view', 'marketplace_listings', listing.id, {
-          category: listing.category,
+          category: listing.category_id,
         });
       }
       return listing;
@@ -40,10 +42,23 @@ export default function ListingDetail() {
   });
 
   const addToCartMutation = useMutation({
-    mutationFn: (qty: number) => addToCart(id!, qty),
+    mutationFn: async (qty: number) => {
+      const sessionId = getCartSessionId();
+      if (!sessionId) throw new Error('No session');
+      return addToCart(id!, qty, sessionId);
+    },
     onSuccess: () => {
-      toast.success('Added to cart!');
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      toast.success('Added to cart!', {
+        action: {
+          label: 'View Cart',
+          onClick: () => {
+            const params = new URLSearchParams(searchParams);
+            params.set('modal', 'cart');
+            setSearchParams(params);
+          },
+        },
+      });
+      queryClient.invalidateQueries({ queryKey: ['cart-count'] });
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to add to cart');
@@ -135,7 +150,7 @@ export default function ListingDetail() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <p className="text-4xl font-bold">{formatPrice(listing.base_price_cents)}</p>
+                <p className="text-4xl font-bold">{formatPrice(listing.price_cents)}</p>
               </div>
 
               {listing.description && (
@@ -145,12 +160,12 @@ export default function ListingDetail() {
                 </div>
               )}
 
-              {listing.tags && listing.tags.length > 0 && (
+              {listing.attributes && Object.keys(listing.attributes).length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-2">Tags</h3>
+                  <h3 className="font-semibold mb-2">Details</h3>
                   <div className="flex gap-2 flex-wrap">
-                    {listing.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary">{tag}</Badge>
+                    {Object.entries(listing.attributes as Record<string, any>).map(([key, value]) => (
+                      <Badge key={key} variant="secondary">{key}: {value}</Badge>
                     ))}
                   </div>
                 </div>

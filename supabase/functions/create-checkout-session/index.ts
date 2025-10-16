@@ -1,8 +1,14 @@
+/**
+ * Create Checkout Session
+ * 
+ * Creates order and Stripe PaymentIntent for cart checkout
+ */
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import Stripe from 'https://esm.sh/stripe@17.5.0?target=deno';
 import { withRateLimit, RateLimits } from '../_shared/rate-limit-wrapper.ts';
 import { createLogger } from '../_shared/logger.ts';
-import { withIdempotency, buildKey, hashObject } from '../_shared/idempotency.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,123 +20,114 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const limited = await withRateLimit(req, 'create-checkout', RateLimits.auth);
+  if (limited) return limited;
+
   const log = createLogger('create-checkout-session');
   log.startTimer();
 
-  // Apply rate limiting
-  const limited = await withRateLimit(req, 'create-checkout-session', RateLimits.auth);
-  if (limited) return limited;
-
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
     if (!stripeKey) {
       throw new Error('STRIPE_SECRET_KEY not configured');
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Use account default API version (omit apiVersion)
+    const stripe = new Stripe(stripeKey, {
+      httpClient: Stripe.createFetchHttpClient(),
+    });
 
-    // Get authenticated user
-    const authHeader = req.headers.get('Authorization')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Authenticate user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
-    if (authError || !user) {
-      throw new Error('Not authenticated');
+    if (authError || !user?.email) {
+      throw new Error('Authentication failed');
     }
 
-    const { cartItems } = await req.json();
+    const { cart_id, idempotency_key } = await req.json();
 
-    if (!cartItems || cartItems.length === 0) {
-      throw new Error('Cart is empty');
+    if (!cart_id || !idempotency_key) {
+      throw new Error('Missing cart_id or idempotency_key');
     }
 
-    // Build idempotency key from cart contents
-    const cartHash = await hashObject(cartItems);
-    const idemKey = buildKey({
-      u: user.id,
-      h: cartHash
+    log.info('Creating checkout', { cartId: cart_id, userId: user.id });
+
+    // Start order via RPC (validates, creates order + line items)
+    const { data: orderData, error: orderError } = await supabase.rpc('order_start_from_cart', {
+      p_cart_id: cart_id,
+      p_idempotency_key: idempotency_key,
     });
-
-    // Execute checkout with idempotency protection
-    const { result, cached } = await withIdempotency(
-      `checkout:${idemKey}`,
-      async () => {
-
-    // Calculate total
-    const total = cartItems.reduce((sum: number, item: any) => {
-      return sum + (item.listing.price_cents * item.quantity);
-    }, 0);
-
-    // Create Stripe PaymentIntent
-    const stripeResponse = await fetch('https://api.stripe.com/v1/payment_intents', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${stripeKey}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        amount: total.toString(),
-        currency: 'usd',
-        'metadata[user_id]': user.id,
-        'metadata[idempotency_key]': idemKey,
-      }).toString(),
-    });
-
-    if (!stripeResponse.ok) {
-      const errorText = await stripeResponse.text();
-      log.error('Stripe error', { errorText });
-      throw new Error('Failed to create payment intent');
-    }
-
-    const paymentIntent = await stripeResponse.json();
-
-    // Create order record (pending)
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .insert({
-        buyer_user_id: user.id,
-        total_cents: total,
-        payment_status: 'pending',
-        payment_intent_id: paymentIntent.id,
-        created_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
 
     if (orderError) {
-      log.error('Order creation error', orderError);
-      throw new Error('Failed to create order');
+      log.error('Order start failed', orderError);
+      throw new Error(orderError.message || 'Failed to create order');
     }
 
-    // Create line items
-    const lineItems = cartItems.map((item: any) => ({
-      order_id: order.id,
-      listing_id: item.listing.id,
-      seller_business_id: item.listing.seller_business_id,
-      quantity: item.quantity,
-      price_cents: item.listing.price_cents,
-    }));
-
-    const { error: lineItemsError } = await supabase
-      .from('order_line_items')
-      .insert(lineItems);
-
-    if (lineItemsError) {
-      log.error('Line items error', lineItemsError);
+    const [orderResult] = orderData as any[];
+    if (!orderResult?.order_id) {
+      throw new Error('No order_id returned');
     }
 
-        return {
-          orderId: order.id,
-          clientSecret: paymentIntent.client_secret,
-        };
+    const orderId = orderResult.order_id;
+
+    // Get order details
+    const { data: order, error: fetchError } = await supabase
+      .from('orders')
+      .select('total_cents, email')
+      .eq('id', orderId)
+      .single();
+
+    if (fetchError || !order) {
+      log.error('Failed to fetch order', fetchError);
+      throw new Error('Failed to fetch order');
+    }
+
+    // Create Stripe PaymentIntent with idempotency
+    const paymentIntent = await stripe.paymentIntents.create(
+      {
+        amount: order.total_cents,
+        currency: 'usd',
+        receipt_email: order.email,
+        metadata: {
+          order_id: orderId,
+          user_id: user.id,
+        },
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      },
+      {
+        idempotencyKey: idempotency_key,
       }
     );
 
+    // Update order with payment_intent_id
+    await supabase
+      .from('orders')
+      .update({ payment_intent_id: paymentIntent.id })
+      .eq('id', orderId);
+
+    log.info('Checkout session created', {
+      orderId,
+      paymentIntentId: paymentIntent.id,
+    });
+
     return new Response(
-      JSON.stringify({ ...result, cached }),
+      JSON.stringify({
+        order_id: orderId,
+        client_secret: paymentIntent.client_secret,
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }

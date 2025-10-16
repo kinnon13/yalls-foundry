@@ -4582,6 +4582,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      decrement_listing_stock: {
+        Args: { p_listing_id: string; p_qty: number }
+        Returns: undefined
+      }
       delete_account_prepare: {
         Args: Record<PropertyKey, never>
         Returns: Json
