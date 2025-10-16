@@ -39,7 +39,7 @@ export async function getListingById(id: string) {
     .maybeSingle();
 
   if (error) throw error;
-  return data;
+  return data as any;
 }
 
 export async function createListing(listing: {
@@ -68,7 +68,7 @@ export async function createListing(listing: {
 export async function publishListing(id: string) {
   const { data, error } = await supabase
     .from('marketplace_listings' as any)
-    .update({ status: 'active' })
+    .update({ status: 'active' } as any)
     .eq('id', id)
     .select()
     .single();
