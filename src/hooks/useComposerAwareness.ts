@@ -57,6 +57,14 @@ export function useComposerAwareness() {
       
       console.log('[Composer Awareness] Suggestion requested:', source, text?.length);
 
+      // Check if feature is enabled globally (admin flag)
+      const { getFlag } = await import('@/lib/flags');
+      const featureEnabled = getFlag('composer_coach');
+      if (!featureEnabled) {
+        console.log('[Composer Awareness] Composer coach disabled globally');
+        return;
+      }
+
       // Check if user has enabled suggestions via localStorage (no DB needed)
       const suggestionsEnabled = localStorage.getItem('rocker-suggestions-enabled') === 'true';
       if (!suggestionsEnabled) {
