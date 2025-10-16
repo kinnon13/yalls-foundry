@@ -691,6 +691,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
             (window as any).__rockerSuppressLearn = true;
             try {
               // Step 1: Fill the post composer field
+              console.log('[Rocker] Step 1: Filling post composer field');
               const fillResult = await executeDOMAction({
                 type: 'fill',
                 targetName: 'post composer',
@@ -707,12 +708,26 @@ export function RockerProvider({ children }: { children: ReactNode }) {
                 continue;
               }
               
-              console.log('[Rocker] Post field filled, now clicking post button');
+              // Step 2: Wait and verify the field has content
+              console.log('[Rocker] Step 2: Waiting for field to be populated');
+              await new Promise(resolve => setTimeout(resolve, 800));
               
-              // Step 2: Wait a moment for the field to update
-              await new Promise(resolve => setTimeout(resolve, 350));
+              // Verify content is in the field
+              const composer = document.querySelector('[data-rocker="post composer"]') as HTMLTextAreaElement;
+              if (!composer?.value || composer.value.trim() === '') {
+                console.error('[Rocker] Field is empty after fill, aborting');
+                toast({
+                  title: '❌ Post field empty',
+                  description: 'Content did not populate correctly',
+                  variant: 'destructive',
+                });
+                continue;
+              }
+              
+              console.log('[Rocker] Field verified, content length:', composer.value.length);
               
               // Step 3: Click the post button
+              console.log('[Rocker] Step 3: Clicking post button');
               const clickResult = await executeDOMAction({
                 type: 'click',
                 targetName: 'post button'
@@ -724,11 +739,12 @@ export function RockerProvider({ children }: { children: ReactNode }) {
                   description: 'Navigating to posts feed to verify...',
                 });
                 
-                // Step 4: Wait for post to be created and feeds to refresh
-                await new Promise(resolve => setTimeout(resolve, 700));
+                // Step 4: Wait for post to be created and saved
+                console.log('[Rocker] Step 4: Waiting for post to be saved');
+                await new Promise(resolve => setTimeout(resolve, 1200));
                 
                 // Step 5: Click the Posts tab to view the feed
-                console.log('[Rocker] Clicking feed posts tab to view post');
+                console.log('[Rocker] Step 5: Clicking feed posts tab');
                 const tabResult = await executeDOMAction({
                   type: 'click',
                   targetName: 'feed posts tab'
@@ -739,11 +755,13 @@ export function RockerProvider({ children }: { children: ReactNode }) {
                     title: '✅ Post verified',
                     description: 'Your post is now visible in the feed',
                   });
+                } else {
+                  console.warn('[Rocker] Could not click feed tab:', tabResult.message);
                 }
               } else {
                 toast({
                   title: '⚠️ Post filled but not submitted',
-                  description: 'The content is in the composer. You may need to click Post manually.',
+                  description: 'The content is in the composer. Click Post manually.',
                 });
               }
             } finally {

@@ -6,15 +6,27 @@
 
 import { Button } from '@/components/ui/button';
 import { Map } from 'lucide-react';
-import { useRockerGlobal } from '@/lib/ai/rocker/context';
 import { useToast } from '@/hooks/use-toast';
 
 export function TourButton() {
   const { toast } = useToast();
 
   const startTour = async () => {
-    // Tell Rocker to start the tour without requiring context hook
-    window.dispatchEvent(new CustomEvent('rocker-start-tour'));
+    const rockerButton = document.querySelector('[data-rocker="rocker chat assistant"]') as HTMLButtonElement;
+    if (rockerButton) {
+      rockerButton.click();
+      setTimeout(() => {
+        const composer = document.querySelector('[data-rocker="message composer"]') as HTMLTextAreaElement;
+        if (composer) {
+          composer.value = 'Show me around the platform - give me a complete tour!';
+          composer.dispatchEvent(new Event('input', { bubbles: true }));
+          setTimeout(() => {
+            const sendBtn = document.querySelector('[data-rocker="send message"]') as HTMLButtonElement;
+            if (sendBtn) sendBtn.click();
+          }, 200);
+        }
+      }, 300);
+    }
     toast({
       title: 'Tour Started',
       description: 'Rocker will guide you through all features',
