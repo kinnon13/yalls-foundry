@@ -1554,7 +1554,7 @@ export type Database = {
           id?: string
           props?: Json
           source?: string
-          tenant_id?: string
+          tenant_id: string
           ts?: string
           type: string
         }
@@ -1920,6 +1920,45 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_events_old: {
+        Row: {
+          anonymous_id: string | null
+          contact_hint: Json | null
+          contact_id: string | null
+          created_at: string
+          id: string
+          props: Json
+          source: string
+          tenant_id: string
+          ts: string
+          type: string
+        }
+        Insert: {
+          anonymous_id?: string | null
+          contact_hint?: Json | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id?: string
+          ts?: string
+          type: string
+        }
+        Update: {
+          anonymous_id?: string | null
+          contact_hint?: Json | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          props?: Json
+          source?: string
+          tenant_id?: string
+          ts?: string
+          type?: string
+        }
+        Relationships: []
+      }
       crm_events_partitioned: {
         Row: {
           contact_hint: Json | null
@@ -1960,45 +1999,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      crm_events_v2: {
-        Row: {
-          anonymous_id: string | null
-          contact_hint: Json | null
-          contact_id: string | null
-          created_at: string
-          id: string
-          props: Json
-          source: string
-          tenant_id: string
-          ts: string
-          type: string
-        }
-        Insert: {
-          anonymous_id?: string | null
-          contact_hint?: Json | null
-          contact_id?: string | null
-          created_at?: string
-          id?: string
-          props?: Json
-          source?: string
-          tenant_id: string
-          ts?: string
-          type: string
-        }
-        Update: {
-          anonymous_id?: string | null
-          contact_hint?: Json | null
-          contact_id?: string | null
-          created_at?: string
-          id?: string
-          props?: Json
-          source?: string
-          tenant_id?: string
-          ts?: string
-          type?: string
-        }
-        Relationships: []
       }
       dynamic_categories: {
         Row: {
