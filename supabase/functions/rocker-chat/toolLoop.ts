@@ -5,7 +5,8 @@ export async function executeToolLoop(
   messages: any[],
   toolCalls: any[],
   supabaseClient: SupabaseClient,
-  userId: string
+  userId: string,
+  actorRole: 'user' | 'admin' = 'user'
 ): Promise<any[]> {
   const results: any[] = [];
 
@@ -13,7 +14,7 @@ export async function executeToolLoop(
     const toolName = toolCall.function.name;
     const toolArgs = JSON.parse(toolCall.function.arguments);
 
-    const result = await executeTool(toolName, toolArgs, supabaseClient, userId);
+    const result = await executeTool(toolName, toolArgs, supabaseClient, userId, actorRole);
 
     results.push({
       role: 'tool',

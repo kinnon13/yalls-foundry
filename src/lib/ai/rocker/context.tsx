@@ -28,6 +28,10 @@ interface RockerContextValue {
   loadConversation: (sessionId: string) => Promise<void>;
   createNewConversation: () => Promise<string | undefined>;
   
+  // Mode control
+  actorRole: 'user' | 'admin';
+  setActorRole: (role: 'user' | 'admin') => void;
+  
   // Voice state
   isVoiceMode: boolean;
   isAlwaysListening: boolean;
@@ -60,6 +64,9 @@ export function RockerProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  
+  // Mode control
+  const [actorRole, setActorRole] = useState<'user' | 'admin'>('user');
   
   // Voice state
   const [isVoiceMode, setIsVoiceMode] = useState(false);
@@ -455,9 +462,10 @@ export function RockerProvider({ children }: { children: ReactNode }) {
 
       const { data, error } = await supabase
         .from('rocker_conversations')
-        .select('role, content, created_at')
+        .select('role, content, created_at, actor_role')
         .eq('user_id', user.id)
         .eq('session_id', sessionId)
+        .eq('actor_role', actorRole)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -544,7 +552,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
               content: m.content
             })),
             sessionId: sessionId,
-            mode: 'user',
+            actor_role: actorRole,
             currentRoute: window.location.pathname
           }),
           signal: abortControllerRef.current.signal
@@ -1177,6 +1185,8 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     clearMessages,
     loadConversation,
     createNewConversation,
+    actorRole,
+    setActorRole,
     isVoiceMode,
     isAlwaysListening,
     voiceStatus,

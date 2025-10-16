@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          id: number
+          metadata: Json | null
+          reason: string | null
+          target: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          id?: number
+          metadata?: Json | null
+          reason?: string | null
+          target?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          id?: number
+          metadata?: Json | null
+          reason?: string | null
+          target?: string | null
+        }
+        Relationships: []
+      }
       admin_audit_log: {
         Row: {
           action: string
@@ -870,6 +900,7 @@ export type Database = {
           pinned: boolean | null
           provenance: Json | null
           safety_category: string | null
+          scope: string | null
           sensitivity: string | null
           shared_with: string[] | null
           source: string
@@ -897,6 +928,7 @@ export type Database = {
           pinned?: boolean | null
           provenance?: Json | null
           safety_category?: string | null
+          scope?: string | null
           sensitivity?: string | null
           shared_with?: string[] | null
           source?: string
@@ -924,6 +956,7 @@ export type Database = {
           pinned?: boolean | null
           provenance?: Json | null
           safety_category?: string | null
+          scope?: string | null
           sensitivity?: string | null
           shared_with?: string[] | null
           source?: string
@@ -3228,6 +3261,7 @@ export type Database = {
       }
       rocker_conversations: {
         Row: {
+          actor_role: string | null
           content: string
           created_at: string
           id: string
@@ -3237,6 +3271,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          actor_role?: string | null
           content: string
           created_at?: string
           id?: string
@@ -3246,6 +3281,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          actor_role?: string | null
           content?: string
           created_at?: string
           id?: string

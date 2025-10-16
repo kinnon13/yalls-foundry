@@ -89,9 +89,28 @@ export async function executeTool(
   toolName: string,
   args: any,
   supabaseClient: any,
-  userId: string
+  userId: string,
+  actorRole: 'user' | 'admin' = 'user'
 ): Promise<any> {
-  console.log(`[Tool: ${toolName}]`, args);
+  console.log(`[Tool: ${toolName}] [Mode: ${actorRole}]`, args);
+
+  // ADMIN TOOL GATING
+  const ADMIN_ONLY_TOOLS = new Set([
+    'ban_user',
+    'impersonate',
+    'export_raw_events',
+    'read_all_users',
+    'delete_user_data',
+    'modify_permissions'
+  ]);
+
+  // Block admin tools in user mode
+  if (actorRole === 'user' && ADMIN_ONLY_TOOLS.has(toolName)) {
+    return {
+      success: false,
+      error: `🔒 Tool "${toolName}" requires admin mode. Please use the Admin Control Room to access admin functions.`
+    };
+  }
 
   try {
     switch (toolName) {

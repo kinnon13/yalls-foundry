@@ -54,23 +54,31 @@ serve(async (req) => {
 
     const reqClone = req.clone();
     const body = await reqClone.json();
-    const { messages, sessionId: requestedSessionId, currentRoute } = body;
+    const { messages, sessionId: requestedSessionId, currentRoute, actor_role } = body;
+    
+    // Default to 'user' mode unless explicitly set to 'admin'
+    const actorRole: 'user' | 'admin' = actor_role === 'admin' ? 'admin' : 'user';
 
     // Build user context from profile, memory, and analytics
     const userContext = await buildUserContext(supabaseClient, user.id, user.email, currentRoute);
 
-    // Build system prompt with user context
-    const systemPrompt = USER_SYSTEM_PROMPT + userContext;
+    // Add role-specific system message
+    const { USER_MODE_NOTICE, ADMIN_MODE_NOTICE } = await import('./prompts.ts');
+    const roleNotice = actorRole === 'admin' ? ADMIN_MODE_NOTICE : USER_MODE_NOTICE;
+
+    // Build system prompt with user context and role notice
+    const systemPrompt = USER_SYSTEM_PROMPT + userContext + roleNotice;
     
     let conversationHistory: any[] = [];
     
     if (requestedSessionId) {
-      // Load specific session (all messages)
+      // Load specific session (all messages) - filtered by actor_role
       const { data: sessionMessages } = await supabaseClient
         .from('rocker_conversations')
         .select('role, content, created_at')
         .eq('user_id', user.id)
         .eq('session_id', requestedSessionId)
+        .eq('actor_role', actorRole)
         .order('created_at', { ascending: true });
       
       conversationHistory = (sessionMessages || []).map((msg: any) => ({
@@ -78,11 +86,12 @@ serve(async (req) => {
         content: msg.content
       }));
     } else {
-      // Load recent messages across all sessions (last 20 for context)
+      // Load recent messages for this role only (last 20 for context)
       const { data: recentConversations } = await supabaseClient
         .from('rocker_conversations')
         .select('role, content')
         .eq('user_id', user.id)
+        .eq('actor_role', actorRole)
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -105,6 +114,7 @@ serve(async (req) => {
           session_id: sessionId,
           role: 'user',
           content: lastUserMessage.content,
+          actor_role: actorRole,
           metadata: { timestamp: new Date().toISOString() }
         });
       
@@ -178,7 +188,8 @@ serve(async (req) => {
           conversationMessages,
           assistantMessage.tool_calls,
           supabaseClient,
-          user.id
+          user.id,
+          actorRole
         );
         conversationMessages.push(...toolResults);
         continue;
@@ -191,6 +202,7 @@ serve(async (req) => {
             session_id: sessionId,
             role: 'assistant',
             content: assistantMessage.content,
+            actor_role: actorRole,
             metadata: {
               timestamp: new Date().toISOString(),
               iterations
