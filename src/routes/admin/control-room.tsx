@@ -10,6 +10,8 @@ import { Link } from 'react-router-dom';
 import { useEffect } from 'react';
 import { SEOHelmet } from '@/lib/seo/helmet';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Shield, TestTube, Code, FileCheck, Activity, 
@@ -41,7 +43,7 @@ import { HardeningVerificationPanel } from '@/routes/admin/panels/HardeningVerif
 import { SuperAIPanel } from '@/routes/admin/panels/SuperAIPanel';
 
 export default function ControlRoom() {
-  const [activeTab, setActiveTab] = useState('scaling');
+  const [activeTab, setActiveTab] = useState('overview');
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const { isAdmin } = useAdminCheck();
   const { isSuperAdmin } = useSuperAdminCheck();
@@ -69,108 +71,201 @@ export default function ControlRoom() {
         />
         
         {/* Header */}
-        <header className="border-b bg-card sticky top-0 z-40">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <Activity className="h-6 w-6" />
-                Control Room
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Platform diagnostics, testing, and monitoring
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button onClick={() => setUploadDialogOpen(true)} size="sm" className="gap-2">
-                <Upload className="h-4 w-4" />
-                Upload with Rocker
-              </Button>
-              <Link to="/">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Home className="h-4 w-4" />
-                  Back to Home
+        <header className="border-b bg-gradient-to-r from-background via-primary/5 to-background sticky top-0 z-40 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-6 py-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h1 className="text-3xl font-bold flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Activity className="h-6 w-6 text-primary" />
+                  </div>
+                  Control Room
+                </h1>
+                <p className="text-muted-foreground">
+                  Enterprise-grade admin dashboard for platform management
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button onClick={() => setUploadDialogOpen(true)} size="default" variant="outline" className="gap-2">
+                  <Upload className="h-4 w-4" />
+                  Upload Media
                 </Button>
-              </Link>
+                <Link to="/">
+                  <Button variant="ghost" size="default" className="gap-2">
+                    <Home className="h-4 w-4" />
+                    Home
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-6 py-8">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
             {/* Tab Navigation */}
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-17 lg:w-auto">
-              {isSuperAdmin && (
-                <TabsTrigger value="super-ai" className="gap-2">
-                  <Brain className="h-4 w-4" />
-                  <span className="hidden sm:inline">Super AI</span>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  Quick Navigation
+                </h2>
+              </div>
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 h-auto p-1 bg-muted/50">
+                <TabsTrigger value="overview" className="gap-2 data-[state=active]:bg-background">
+                  <Gauge className="h-4 w-4" />
+                  <span>Overview</span>
                 </TabsTrigger>
-              )}
-              <TabsTrigger value="scaling" className="gap-2">
-                <TrendingUp className="h-4 w-4" />
-                <span className="hidden sm:inline">1B Scale</span>
-              </TabsTrigger>
-              <TabsTrigger value="hardening" className="gap-2">
-                <Hammer className="h-4 w-4" />
-                <span className="hidden sm:inline">Hardening</span>
-              </TabsTrigger>
-              <TabsTrigger value="audit" className="gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                <span className="hidden sm:inline">Audit</span>
-              </TabsTrigger>
-              <TabsTrigger value="ai-analytics" className="gap-2">
-                <Activity className="h-4 w-4" />
-                <span className="hidden sm:inline">Analytics</span>
-              </TabsTrigger>
-              <TabsTrigger value="knowledge" className="gap-2">
-                <FileCheck className="h-4 w-4" />
-                <span className="hidden sm:inline">Knowledge</span>
-              </TabsTrigger>
-              <TabsTrigger value="security" className="gap-2">
-                <Shield className="h-4 w-4" />
-                <span className="hidden sm:inline">Security</span>
-              </TabsTrigger>
-              <TabsTrigger value="tests" className="gap-2">
-                <TestTube className="h-4 w-4" />
-                <span className="hidden sm:inline">Tests</span>
-              </TabsTrigger>
-              <TabsTrigger value="code" className="gap-2">
-                <Code className="h-4 w-4" />
-                <span className="hidden sm:inline">Code</span>
-              </TabsTrigger>
-              <TabsTrigger value="auth" className="gap-2">
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Auth</span>
-              </TabsTrigger>
-              <TabsTrigger value="search" className="gap-2">
-                <Search className="h-4 w-4" />
-                <span className="hidden sm:inline">Search</span>
-              </TabsTrigger>
-              <TabsTrigger value="feedback" className="gap-2">
-                <MessageSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">Feedback</span>
-              </TabsTrigger>
-              <TabsTrigger value="suggestions" className="gap-2">
-                <FileCheck className="h-4 w-4" />
-                <span className="hidden sm:inline">AI</span>
-              </TabsTrigger>
-              <TabsTrigger value="flags" className="gap-2">
-                <Flag className="h-4 w-4" />
-                <span className="hidden sm:inline">Flags</span>
-              </TabsTrigger>
-              <TabsTrigger value="tours" className="gap-2">
-                <Activity className="h-4 w-4" />
-                <span className="hidden sm:inline">Tours</span>
-              </TabsTrigger>
-              <TabsTrigger value="moderator" className="gap-2">
-                <Shield className="h-4 w-4" />
-                <span className="hidden sm:inline">Moderator</span>
-              </TabsTrigger>
-              <TabsTrigger value="scale" className="gap-2">
-                <Gauge className="h-4 w-4" />
-                <span className="hidden sm:inline">Scale</span>
-              </TabsTrigger>
-            </TabsList>
+                {isSuperAdmin && (
+                  <TabsTrigger value="super-ai" className="gap-2 data-[state=active]:bg-background">
+                    <Brain className="h-4 w-4" />
+                    <span>Super AI</span>
+                  </TabsTrigger>
+                )}
+                <TabsTrigger value="ai-analytics" className="gap-2 data-[state=active]:bg-background">
+                  <Activity className="h-4 w-4" />
+                  <span>AI Analytics</span>
+                </TabsTrigger>
+                <TabsTrigger value="security" className="gap-2 data-[state=active]:bg-background">
+                  <Shield className="h-4 w-4" />
+                  <span>Security</span>
+                </TabsTrigger>
+                <TabsTrigger value="scaling" className="gap-2 data-[state=active]:bg-background">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Scaling</span>
+                </TabsTrigger>
+                <TabsTrigger value="moderator" className="gap-2 data-[state=active]:bg-background">
+                  <Flag className="h-4 w-4" />
+                  <span>Moderator</span>
+                </TabsTrigger>
+                <TabsTrigger value="knowledge" className="gap-2 data-[state=active]:bg-background">
+                  <FileCheck className="h-4 w-4" />
+                  <span>Knowledge</span>
+                </TabsTrigger>
+                <TabsTrigger value="tests" className="gap-2 data-[state=active]:bg-background">
+                  <TestTube className="h-4 w-4" />
+                  <span>Tests</span>
+                </TabsTrigger>
+                <TabsTrigger value="code" className="gap-2 data-[state=active]:bg-background">
+                  <Code className="h-4 w-4" />
+                  <span>Code Search</span>
+                </TabsTrigger>
+                <TabsTrigger value="feedback" className="gap-2 data-[state=active]:bg-background">
+                  <MessageSquare className="h-4 w-4" />
+                  <span>Feedback</span>
+                </TabsTrigger>
+                <TabsTrigger value="auth" className="gap-2 data-[state=active]:bg-background">
+                  <Settings className="h-4 w-4" />
+                  <span>Auth</span>
+                </TabsTrigger>
+                <TabsTrigger value="flags" className="gap-2 data-[state=active]:bg-background">
+                  <Flag className="h-4 w-4" />
+                  <span>Feature Flags</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            {/* Overview Tab */}
+            <TabsContent value="overview" className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Total Panels</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold">17</div>
+                    <p className="text-xs text-muted-foreground mt-1">Admin tools available</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Phase 1</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-green-600">100%</div>
+                    <p className="text-xs text-muted-foreground mt-1">Complete ✓</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Max Users</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold">~100K</div>
+                    <p className="text-xs text-muted-foreground mt-1">Current capacity</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Target Scale</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-purple-600">1B</div>
+                    <p className="text-xs text-muted-foreground mt-1">Users planned</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5" />
+                      Platform Status
+                    </CardTitle>
+                    <CardDescription>Current system health and readiness</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Scaling Readiness</span>
+                      <Badge variant="secondary">Phase 2</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Security Hardening</span>
+                      <Badge className="bg-green-500">Complete</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">RLS Policies</span>
+                      <Badge className="bg-green-500">Verified</Badge>
+                    </div>
+                    <Button variant="outline" className="w-full" onClick={() => setActiveTab('scaling')}>
+                      View Scaling Details
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Brain className="h-5 w-5" />
+                      AI Systems
+                    </CardTitle>
+                    <CardDescription>Active AI personalities and tools</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Rocker (User AI)</span>
+                        <Badge className="bg-blue-500">Active</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Admin Rocker</span>
+                        <Badge className="bg-blue-500">Active</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Andy (Knower)</span>
+                        <Badge className="bg-purple-500">Learning</Badge>
+                      </div>
+                    </div>
+                    <Button variant="outline" className="w-full" onClick={() => setActiveTab('ai-analytics')}>
+                      View AI Analytics
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <ScaleScorecard />
+            </TabsContent>
 
             {/* Super AI Tab - Only for Super Admins */}
             {isSuperAdmin && (
@@ -183,16 +278,7 @@ export default function ControlRoom() {
             <TabsContent value="scaling" className="space-y-6">
               <Phase2VerificationPanel />
               <ScalingReadinessPanel />
-            </TabsContent>
-
-            {/* Hardening Tab */}
-            <TabsContent value="hardening" className="space-y-6">
               <HardeningVerificationPanel />
-            </TabsContent>
-
-            {/* Code Audit Tab */}
-            <TabsContent value="audit" className="space-y-6">
-              <CodeAuditPanel />
             </TabsContent>
 
             {/* AI Analytics Tab */}
@@ -233,71 +319,24 @@ export default function ControlRoom() {
               </div>
             </TabsContent>
 
-            {/* Search Tab */}
-            <TabsContent value="search" className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-1">
-                <EntitySearchPanel />
-              </div>
-            </TabsContent>
-
             {/* Feedback Tab */}
             <TabsContent value="feedback" className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-1">
-                <FeedbackInbox />
-              </div>
-            </TabsContent>
-
-            {/* Suggestions Tab */}
-            <TabsContent value="suggestions" className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-1">
-                <SuggestionsPanel />
-              </div>
+              <FeedbackInbox />
+              <SuggestionsPanel />
             </TabsContent>
 
             {/* Flags Tab */}
             <TabsContent value="flags" className="space-y-6">
               <FeatureFlagsPanel />
-            </TabsContent>
-
-            {/* Tours Tab */}
-            <TabsContent value="tours" className="space-y-6">
               <TourSchedulePanel />
             </TabsContent>
 
             {/* Moderator Tab */}
             <TabsContent value="moderator" className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-1">
-                <ModeratorConsole />
-              </div>
-            </TabsContent>
-
-            {/* Scale Tab */}
-            <TabsContent value="scale" className="space-y-6">
-              <ScaleScorecard />
+              <ModeratorConsole />
+              <EntitySearchPanel />
             </TabsContent>
           </Tabs>
-
-          {/* Quick Stats Footer */}
-          <div className="mt-12 pt-6 border-t">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div className="p-4 border rounded">
-                <div className="text-2xl font-bold">17</div>
-                <div className="text-xs text-muted-foreground">Admin Panels</div>
-              </div>
-              <div className="p-4 border rounded bg-success/5">
-                <div className="text-2xl font-bold text-success">100%</div>
-                <div className="text-xs text-muted-foreground">Phase 1 Complete ✓</div>
-              </div>
-              <div className="p-4 border rounded">
-                <div className="text-2xl font-bold">~100K</div>
-                <div className="text-xs text-muted-foreground">Max Users (Current)</div>
-              </div>
-              <div className="p-4 border rounded bg-primary/5">
-                <div className="text-2xl font-bold text-primary">1B</div>
-                <div className="text-xs text-muted-foreground">Scale Target</div>
-              </div>
-            </div>
-          </div>
         </main>
 
         <MediaUploadDialog 
