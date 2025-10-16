@@ -23,22 +23,39 @@ async function logActionResult(
   message: string,
   userId?: string
 ) {
-  if (!userId) return;
-  
   try {
-    await supabase.from('ai_feedback').insert({
-      session_id: (window as any).__rockerSessionId || null,
-      user_id: userId,
-      kind: success ? 'dom_success' : 'dom_failure',
-      payload: {
+    // Ensure we have a user id; fetch from session if not provided
+    let uid = userId;
+    if (!uid) {
+      const { data: { session } } = await supabase.auth.getSession();
+      uid = session?.user?.id;
+    }
+    if (!uid) throw new Error('No user id for telemetry');
+
+    const route = window.location.pathname;
+    const sessionId = (window as any).__rockerSessionId || null;
+    const available = getAvailableElements().slice(0, 40);
+
+    const { error } = await supabase.functions.invoke('rocker-telemetry', {
+      body: {
+        user_id: uid,
+        route,
         action,
         target: targetName,
+        success,
         message,
-        timestamp: new Date().toISOString(),
-        page: window.location.pathname,
-        available_elements: getAvailableElements().slice(0, 20)
-      }
+        session_id: sessionId,
+        meta: {
+          page: route,
+          timestamp: new Date().toISOString(),
+          available_elements: available,
+        },
+      },
     });
+
+    if (error) {
+      console.warn('[Learning] Telemetry function error:', error);
+    }
   } catch (e) {
     console.warn('[Learning] Failed to log action result:', e);
   }
