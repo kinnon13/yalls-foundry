@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Mic } from 'lucide-react';
 import { useRockerNotifications } from '@/hooks/useRockerNotifications';
 import { AI_PROFILES, type AIRole } from './config';
+import { useComposerAwareness } from '@/hooks/useComposerAwareness';
 
 interface RockerContextValue {
   // Chat state
@@ -44,6 +45,16 @@ interface RockerContextValue {
   // UI state
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  
+  // Composer awareness
+  composerState: {
+    isTyping: boolean;
+    lastSource?: string;
+    lastLength?: number;
+    lastSuggestion?: string;
+    isLoadingSuggestion: boolean;
+    shouldPauseRocker: () => boolean;
+  };
 }
 
 const RockerContext = createContext<RockerContextValue | null>(null);
@@ -82,6 +93,9 @@ export function RockerProvider({ children }: { children: ReactNode }) {
   
   // UI state
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Composer awareness - make Rocker aware when user is typing
+  const composerAwareness = useComposerAwareness();
   
   // Get current user for notifications
   const [currentUserId, setCurrentUserId] = useState<string | undefined>();
@@ -1305,6 +1319,14 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     toggleAlwaysListening,
     isOpen,
     setIsOpen,
+    composerState: {
+      isTyping: composerAwareness.isTyping,
+      lastSource: composerAwareness.lastSource,
+      lastLength: composerAwareness.lastLength,
+      lastSuggestion: composerAwareness.lastSuggestion,
+      isLoadingSuggestion: composerAwareness.isLoadingSuggestion,
+      shouldPauseRocker: composerAwareness.shouldPauseRocker,
+    },
   };
 
   return (

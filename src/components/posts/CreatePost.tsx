@@ -8,6 +8,7 @@ import { Send, Image, Video, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { resolveTenantId } from '@/lib/tenancy/context';
 import { useMediaUpload } from '@/hooks/useMediaUpload';
+import { useRockerTyping } from '@/hooks/useRockerTyping';
 
 interface CreatePostProps {
   onPostCreated?: () => void;
@@ -19,9 +20,19 @@ export function CreatePost({ onPostCreated, showRockerLabels = false }: CreatePo
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { uploadPostMedia, uploading } = useMediaUpload();
+
+  // Enable Rocker typing detection
+  // Set enableSuggestions: true if user opts into live coaching
+  useRockerTyping(textareaRef, {
+    enableSuggestions: false, // Can be toggled via user preferences
+    minChars: 20,
+    idleMs: 1200,
+    source: 'post-composer'
+  });
 
   const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -113,6 +124,7 @@ export function CreatePost({ onPostCreated, showRockerLabels = false }: CreatePo
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
             <Textarea
+              ref={textareaRef}
               id="composer"
               value={content}
               onChange={(e) => setContent(e.target.value)}
