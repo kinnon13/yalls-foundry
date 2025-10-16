@@ -5811,6 +5811,15 @@ export type Database = {
         | "policy"
         | "schema"
         | "relationship"
+        | "family"
+        | "family_member"
+        | "personal_info"
+        | "interest"
+        | "hobby"
+        | "skill"
+        | "project"
+        | "project_context"
+        | "notification_preference"
       recurrence_freq: "daily" | "weekly" | "monthly" | "yearly"
     }
     CompositeTypes: {
@@ -5977,6 +5986,15 @@ export const Constants = {
         "policy",
         "schema",
         "relationship",
+        "family",
+        "family_member",
+        "personal_info",
+        "interest",
+        "hobby",
+        "skill",
+        "project",
+        "project_context",
+        "notification_preference",
       ],
       recurrence_freq: ["daily", "weekly", "monthly", "yearly"],
     },

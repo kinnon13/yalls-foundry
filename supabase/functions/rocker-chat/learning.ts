@@ -15,18 +15,8 @@ export async function extractLearningsFromConversation(
     console.log(`[Learning] Starting extraction for user ${userId}`);
     console.log(`[Learning] Message: "${userMessage.substring(0, 150)}..."`);
     
-    // Get tenant from user context or default to user_id
-    const { data: profile, error: profileErr } = await supabaseClient
-      .from('profiles')
-      .select('tenant_id, user_id')
-      .eq('user_id', userId)
-      .maybeSingle();
-    
-    if (profileErr) {
-      console.error('[Learning] Profile fetch error:', profileErr);
-    }
-    
-    const tenantId = profile?.tenant_id || userId;
+    // Use user_id as tenant_id (profiles table doesn't have tenant_id)
+    const tenantId = userId;
     console.log(`[Learning] Using tenant_id: ${tenantId}`);
     // Ensure consent exists
     const { error: consentErr } = await supabaseClient

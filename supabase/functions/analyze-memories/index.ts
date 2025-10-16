@@ -45,14 +45,8 @@ serve(async (req) => {
       });
     }
 
-    // Get user's tenant
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('tenant_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    
-    const tenantId = profile?.tenant_id || user.id;
+    // Use user_id as tenant_id (profiles table doesn't have tenant_id)
+    const tenantId = user.id;
 
     // Ensure consent exists (required for RLS)
     log.info('Ensuring user consent exists');
