@@ -12,7 +12,7 @@ function isMissingFunction(err?: { code?: string; message?: string }) {
 }
 
 export async function callRPC<T>(name: string, params: Record<string, any>): Promise<T> {
-  const { data, error } = await supabase.rpc(name, params);
+  const { data, error } = await supabase.rpc(name as any, params);
   if (error) {
     if (isMissingFunction(error)) throw new MissingRpcError(name);
     throw error;
