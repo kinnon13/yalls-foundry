@@ -98,10 +98,10 @@
       "id": "notification_lanes",
       "area": "notifications",
       "title": "Notification Lanes",
-      "status": "full-ui",
+      "status": "wired",
       "routes": ["/notifications"],
       "components": ["src/components/notifications/LaneDrawer.tsx", "src/components/notifications/NotificationItem.tsx"],
-      "rpc": ["notifications_list", "notifications_mark_read", "notifications_mark_all_read", "notifications_counts"],
+      "rpc": ["notifications_list", "notifications_mark_read", "notifications_mark_all_read", "notifications_counts", "notification_enqueue_test"],
       "flags": ["notification_lanes"],
       "docs": "docs/features/notification-lanes.md",
       "tests": {
@@ -110,13 +110,13 @@
       },
       "owner": "platform",
       "severity": "p0",
-      "notes": "Priority/Social/System lanes"
+      "notes": "Priority/Social/System lanes - DB-backed with full RPC"
     },
     {
       "id": "notification_prefs",
       "area": "notifications",
       "title": "Notification Preferences",
-      "status": "full-ui",
+      "status": "wired",
       "routes": ["/settings/notifications"],
       "components": ["src/routes/settings/notifications.tsx"],
       "rpc": ["notification_prefs_get", "notification_prefs_update"],
@@ -128,15 +128,15 @@
       },
       "owner": "platform",
       "severity": "p0",
-      "notes": "Channels, quiet hours, daily cap"
+      "notes": "Channels, quiet hours, daily cap - Persists to DB"
     },
     {
       "id": "notification_digest",
       "area": "notifications",
       "title": "Notification Digest",
-      "status": "full-ui",
+      "status": "wired",
       "routes": ["/settings/notifications"],
-      "components": ["src/components/notifications/DigestPreview.tsx"],
+      "components": ["src/components/notifications/DigestPreview.tsx", "supabase/functions/process-mail-outbox/index.ts"],
       "rpc": ["notification_digest_preview", "notification_digest_send_test"],
       "flags": ["notification_digest"],
       "docs": "docs/features/notification-digest.md",
@@ -146,7 +146,7 @@
       },
       "owner": "platform",
       "severity": "p1",
-      "notes": "Daily/weekly email summaries"
+      "notes": "Daily/weekly email summaries - Queues to mail_outbox"
     },
     {
       "id": "composer_core",
