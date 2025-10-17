@@ -14,19 +14,15 @@ const Index = () => {
       setIsLoggedIn(!!session);
       setLoading(false);
       
-      // Redirect if already logged in
-      if (session) {
-        navigate('/dashboard');
-      }
+      // If already logged in, show dashboard button instead of redirecting
+      // (We no longer auto-redirect to avoid unexpected navigation)
+
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session);
-      if (session) {
-        navigate('/dashboard');
-      }
     });
 
     return () => subscription.unsubscribe();
@@ -52,12 +48,20 @@ const Index = () => {
         <p className="text-xl text-muted-foreground">Your AI-powered equestrian community</p>
         
         <div className="flex gap-4 justify-center mt-8">
-          <Button onClick={() => navigate('/login')} size="lg">
-            Create Account
-          </Button>
-          <Button onClick={() => navigate('/login')} variant="outline" size="lg">
-            Sign In
-          </Button>
+          {isLoggedIn ? (
+            <Button onClick={() => navigate('/dashboard')} size="lg">
+              Go to Dashboard
+            </Button>
+          ) : (
+            <>
+              <Button onClick={() => navigate('/login')} size="lg">
+                Create Account
+              </Button>
+              <Button onClick={() => navigate('/login')} variant="outline" size="lg">
+                Sign In
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
