@@ -38,10 +38,14 @@ export default function ProfileFavoritesPage() {
   }
 
   return (
-    <div className="container py-8">
+    <section 
+      role="region" 
+      aria-label="Favorites" 
+      className="container py-8"
+    >
       <header className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Heart className="w-8 h-8" />
+          <Heart className="w-8 h-8" aria-hidden="true" />
           Favorites
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -96,7 +100,7 @@ export default function ProfileFavoritesPage() {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+    </section>
   );
 }
 

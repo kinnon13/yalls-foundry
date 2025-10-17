@@ -38,10 +38,14 @@ export default function ProfileRepostsPage() {
   }
 
   return (
-    <div className="container py-8">
+    <section 
+      role="region" 
+      aria-label="Reposts" 
+      className="container py-8"
+    >
       <header className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Repeat2 className="w-8 h-8" />
+          <Repeat2 className="w-8 h-8" aria-hidden="true" />
           Reposts
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -73,6 +77,6 @@ export default function ProfileRepostsPage() {
           </li>
         ))}
       </ul>
-    </div>
+    </section>
   );
 }
