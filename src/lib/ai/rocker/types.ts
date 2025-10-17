@@ -3,7 +3,7 @@
  * Unified types for billion-user scale
  */
 
-export type VoiceStatus = 'connecting' | 'connected' | 'disconnected';
+export type VoiceStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
 export type AIRole = 'user' | 'rocker' | 'admin' | 'system';
 

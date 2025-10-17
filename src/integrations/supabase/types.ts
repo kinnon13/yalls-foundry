@@ -8697,6 +8697,18 @@ export type Database = {
         Args: { action_name: string }
         Returns: boolean
       }
+      reservation_check_in: {
+        Args: { p_qr: string }
+        Returns: boolean
+      }
+      reservation_issue_qr: {
+        Args: { p_res_id: string }
+        Returns: string
+      }
+      reservations_export_csv: {
+        Args: { p_event_id: string }
+        Returns: string
+      }
       resolve_tenant_id: {
         Args: Record<PropertyKey, never>
         Returns: string
