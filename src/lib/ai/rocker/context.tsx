@@ -15,7 +15,7 @@ import type { RockerMessage } from '@/hooks/useRocker';
 import { executeDOMAction } from './dom-agent';
 import { GoogleDriveService } from './integrations/google-drive';
 import { Button } from '@/components/ui/button';
-import { Mic } from 'lucide-react';
+import { Mic, X } from 'lucide-react';
 import { useRockerNotifications } from '@/hooks/useRockerNotifications';
 import { AI_PROFILES, type AIRole } from './config';
 import { useComposerAwareness } from '@/hooks/useComposerAwareness';
@@ -85,6 +85,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
   const [isAlwaysListening, setIsAlwaysListening] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
   const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [voiceBannerDismissed, setVoiceBannerDismissed] = useState(false);
   const voiceRef = useRef<RealtimeVoice | null>(null);
   const initializingRef = useRef(false);
   
@@ -1333,7 +1334,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
       {children}
       
       {/* Microphone activation banner */}
-      {voiceStatus === 'disconnected' && !initializingRef.current && !isAlwaysListening && (
+      {voiceStatus === 'disconnected' && !initializingRef.current && !isAlwaysListening && !voiceBannerDismissed && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-card border border-primary/20 rounded-lg shadow-lg p-4 max-w-md flex items-center gap-3 z-50 animate-in slide-in-from-bottom">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
             <Mic className="h-5 w-5 text-primary" />
@@ -1375,6 +1376,14 @@ export function RockerProvider({ children }: { children: ReactNode }) {
             }}
           >
             Activate
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="shrink-0 h-8 w-8"
+            onClick={() => setVoiceBannerDismissed(true)}
+          >
+            <X className="h-4 w-4" />
           </Button>
         </div>
       )}
