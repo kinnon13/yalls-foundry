@@ -1626,6 +1626,57 @@ export type Database = {
         }
         Relationships: []
       }
+      claim_bounties: {
+        Row: {
+          amount_cents: number
+          claim_id: string
+          contributor_user_id: string
+          created_at: string
+          entity_id: string
+          id: string
+          status: string
+          window_days: number
+          within_window: boolean
+        }
+        Insert: {
+          amount_cents?: number
+          claim_id: string
+          contributor_user_id: string
+          created_at?: string
+          entity_id: string
+          id?: string
+          status?: string
+          window_days: number
+          within_window: boolean
+        }
+        Update: {
+          amount_cents?: number
+          claim_id?: string
+          contributor_user_id?: string
+          created_at?: string
+          entity_id?: string
+          id?: string
+          status?: string
+          window_days?: number
+          within_window?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_bounties_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "entity_claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_bounties_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       claim_events: {
         Row: {
           actor_user_id: string
@@ -1784,6 +1835,36 @@ export type Database = {
           resolved_at?: string | null
           resolved_by?: string | null
           status?: string
+        }
+        Relationships: []
+      }
+      contributors: {
+        Row: {
+          bounties_logged_cents: number
+          created_at: string
+          entities_claimed: number
+          entities_created: number
+          trust_score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bounties_logged_cents?: number
+          created_at?: string
+          entities_claimed?: number
+          entities_created?: number
+          trust_score?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bounties_logged_cents?: number
+          created_at?: string
+          entities_claimed?: number
+          entities_created?: number
+          trust_score?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -2466,6 +2547,122 @@ export type Database = {
             columns: ["parent_category_id"]
             isOneToOne: false
             referencedRelation: "dynamic_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entities: {
+        Row: {
+          contributor_window_days: number
+          created_at: string
+          created_by_user_id: string | null
+          display_name: string
+          handle: string | null
+          id: string
+          kind: Database["public"]["Enums"]["entity_kind"]
+          metadata: Json
+          name_key: string | null
+          owner_user_id: string | null
+          provenance: Json
+          status: Database["public"]["Enums"]["entity_status"]
+          updated_at: string
+          window_expires_at: string | null
+        }
+        Insert: {
+          contributor_window_days?: number
+          created_at?: string
+          created_by_user_id?: string | null
+          display_name: string
+          handle?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["entity_kind"]
+          metadata?: Json
+          name_key?: string | null
+          owner_user_id?: string | null
+          provenance?: Json
+          status?: Database["public"]["Enums"]["entity_status"]
+          updated_at?: string
+          window_expires_at?: string | null
+        }
+        Update: {
+          contributor_window_days?: number
+          created_at?: string
+          created_by_user_id?: string | null
+          display_name?: string
+          handle?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["entity_kind"]
+          metadata?: Json
+          name_key?: string | null
+          owner_user_id?: string | null
+          provenance?: Json
+          status?: Database["public"]["Enums"]["entity_status"]
+          updated_at?: string
+          window_expires_at?: string | null
+        }
+        Relationships: []
+      }
+      entity_claims: {
+        Row: {
+          claimant_user_id: string
+          claimed_at: string
+          contact_target: string | null
+          created_at: string
+          entity_id: string
+          evidence: Json
+          first_seen_at: string | null
+          id: string
+          method: Database["public"]["Enums"]["claim_method"]
+          reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["claim_status"]
+          token_expires_at: string | null
+          token_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          claimant_user_id: string
+          claimed_at?: string
+          contact_target?: string | null
+          created_at?: string
+          entity_id: string
+          evidence?: Json
+          first_seen_at?: string | null
+          id?: string
+          method: Database["public"]["Enums"]["claim_method"]
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["claim_status"]
+          token_expires_at?: string | null
+          token_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          claimant_user_id?: string
+          claimed_at?: string
+          contact_target?: string | null
+          created_at?: string
+          entity_id?: string
+          evidence?: Json
+          first_seen_at?: string | null
+          id?: string
+          method?: Database["public"]["Enums"]["claim_method"]
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["claim_status"]
+          token_expires_at?: string | null
+          token_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_claims_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
             referencedColumns: ["id"]
           },
         ]
@@ -4140,6 +4337,24 @@ export type Database = {
           },
         ]
       }
+      time_windows: {
+        Row: {
+          days: number
+          description: string
+          key: string
+        }
+        Insert: {
+          days: number
+          description: string
+          key: string
+        }
+        Update: {
+          days?: number
+          description?: string
+          key?: string
+        }
+        Relationships: []
+      }
       tour_schedules: {
         Row: {
           created_at: string
@@ -4711,6 +4926,30 @@ export type Database = {
         }
         Returns: boolean
       }
+      citext: {
+        Args: { "": boolean } | { "": string } | { "": unknown }
+        Returns: string
+      }
+      citext_hash: {
+        Args: { "": string }
+        Returns: number
+      }
+      citextin: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      citextout: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      citextrecv: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      citextsend: {
+        Args: { "": string }
+        Returns: string
+      }
       claim_entity: {
         Args: { entity_id: string }
         Returns: Json
@@ -4722,6 +4961,10 @@ export type Database = {
       cleanup_expired_memories: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      contributor_window_status: {
+        Args: { p_entity_id: string }
+        Returns: Json
       }
       decrement_listing_stock: {
         Args: { p_listing_id: string; p_qty: number }
@@ -4760,6 +5003,33 @@ export type Database = {
       }
       enablelongtransactions: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      entity_claim_approve: {
+        Args: { p_claim_id: string }
+        Returns: Json
+      }
+      entity_claim_reject: {
+        Args: { p_claim_id: string; p_reason: string }
+        Returns: undefined
+      }
+      entity_claim_start: {
+        Args: {
+          p_contact_target?: string
+          p_entity_id: string
+          p_method: Database["public"]["Enums"]["claim_method"]
+        }
+        Returns: string
+      }
+      entity_create_unclaimed: {
+        Args: {
+          p_contributor_user_id?: string
+          p_display_name: string
+          p_handle?: string
+          p_kind: Database["public"]["Enums"]["entity_kind"]
+          p_provenance?: Json
+          p_window_key?: string
+        }
         Returns: string
       }
       equals: {
@@ -5464,6 +5734,10 @@ export type Database = {
       show_trgm: {
         Args: { "": string }
         Returns: string[]
+      }
+      slugify: {
+        Args: { p_text: string }
+        Returns: string
       }
       sparsevec_out: {
         Args: { "": unknown }
@@ -6602,8 +6876,12 @@ export type Database = {
         | "super_admin"
       calendar_role: "owner" | "writer" | "reader"
       calendar_type: "personal" | "business" | "horse" | "event" | "custom"
+      claim_method: "email" | "sms" | "manual"
+      claim_status: "pending" | "approved" | "rejected" | "canceled"
       draft_kind: "post" | "listing" | "event"
       draft_status: "draft" | "scheduled" | "published"
+      entity_kind: "person" | "business" | "horse" | "event"
+      entity_status: "unclaimed" | "claimed" | "verified"
       entity_type:
         | "profile"
         | "horse"
@@ -6780,8 +7058,12 @@ export const Constants = {
       ],
       calendar_role: ["owner", "writer", "reader"],
       calendar_type: ["personal", "business", "horse", "event", "custom"],
+      claim_method: ["email", "sms", "manual"],
+      claim_status: ["pending", "approved", "rejected", "canceled"],
       draft_kind: ["post", "listing", "event"],
       draft_status: ["draft", "scheduled", "published"],
+      entity_kind: ["person", "business", "horse", "event"],
+      entity_status: ["unclaimed", "claimed", "verified"],
       entity_type: [
         "profile",
         "horse",

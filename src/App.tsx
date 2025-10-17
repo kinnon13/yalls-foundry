@@ -29,6 +29,8 @@ import NotFound from "./pages/NotFound";
 const Dashboard = lazy(() => import('./routes/dashboard'));
 const AISettings = lazy(() => import('./routes/settings/ai'));
 const AIActivity = lazy(() => import('./routes/ai/activity'));
+const ClaimEntity = lazy(() => import('./routes/claim/[entityId]'));
+const AdminClaims = lazy(() => import('./routes/admin/claims'));
 
 const queryClient = new QueryClient();
 const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on';
@@ -82,6 +84,28 @@ const App = () => (
               <RequireAuth>
                 <Suspense fallback={<div>Loading...</div>}>
                   <AIActivity />
+                </Suspense>
+              </RequireAuth>
+            }
+          />
+
+          {/* Entity Claim Routes */}
+          <Route
+            path="/claim/:entityId"
+            element={
+              <RequireAuth>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <ClaimEntity />
+                </Suspense>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/claims"
+            element={
+              <RequireAuth>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <AdminClaims />
                 </Suspense>
               </RequireAuth>
             }
