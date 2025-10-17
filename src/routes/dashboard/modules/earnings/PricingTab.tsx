@@ -22,6 +22,7 @@ type PriceTest = {
   started_at: string | null;
   ended_at: string | null;
   winner_variant: string | null;
+  price_test_variants?: PriceVariant[];
 };
 
 type PriceVariant = {
@@ -31,45 +32,59 @@ type PriceVariant = {
   price_cents: number;
 };
 
+// Helper to bypass type inference issues
+async function queryListings(userId: string) {
+  const result = await (supabase as any)
+    .from('marketplace_listings')
+    .select('id, title, price_cents')
+    .eq('seller_user_id', userId)
+    .eq('status', 'active');
+  if (result.error) throw result.error;
+  return result.data || [];
+}
+
+async function queryPriceTests(userId: string) {
+  const result = await (supabase as any)
+    .from('price_tests')
+    .select('*')
+    .eq('owner_user_id', userId)
+    .order('created_at', { ascending: false });
+  if (result.error) throw result.error;
+  return result.data || [];
+}
+
+async function queryPriceVariants(testId: string) {
+  const result = await (supabase as any)
+    .from('price_test_variants')
+    .select('*')
+    .eq('test_id', testId);
+  return result.data || [];
+}
+
 export function PricingTab() {
   const { session } = useSession();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [selectedListing, setSelectedListing] = useState<string>('');
 
-  const { data: listings } = useQuery<Array<{ id: string; title: string; price_cents: number }>>({
+  const { data: listings } = useQuery({
     queryKey: ['user-listings', session?.userId],
     queryFn: async () => {
       if (!session?.userId) return [];
-      const { data, error } = await supabase
-        .from('marketplace_listings')
-        .select('id, title, price_cents')
-        .eq('seller_user_id', session.userId)
-        .eq('status', 'active');
-      if (error) throw error;
-      return data || [];
+      return await queryListings(session.userId);
     },
     enabled: !!session?.userId,
   });
 
-  const { data: tests } = useQuery<any[]>({
+  const { data: tests } = useQuery<PriceTest[]>({
     queryKey: ['price-tests', session?.userId],
     queryFn: async () => {
       if (!session?.userId) return [];
-      const { data: testData } = await supabase
-        .from('price_tests')
-        .select('id, listing_id, status, started_at, ended_at, winner_variant, created_at')
-        .eq('owner_user_id', session.userId)
-        .order('created_at', { ascending: false });
+      const testData = await queryPriceTests(session.userId);
       
-      if (!testData) return [];
-      
-      const testsWithVariants = await Promise.all(testData.map(async (test) => {
-        const { data: variants } = await supabase
-          .from('price_test_variants')
-          .select('id, test_id, variant_key, price_cents')
-          .eq('test_id', test.id);
-        return { ...test, price_test_variants: variants || [] };
+      const testsWithVariants = await Promise.all(testData.map(async (test: any) => {
+        const variants = await queryPriceVariants(test.id);
+        return { ...test, price_test_variants: variants };
       }));
       
       return testsWithVariants;
@@ -81,7 +96,7 @@ export function PricingTab() {
     queryKey: ['price-suggestions', selectedListing],
     queryFn: async () => {
       if (!selectedListing) return null;
-      const { data, error } = await supabase.rpc('get_price_suggestions', {
+      const { data, error } = await (supabase as any).rpc('get_price_suggestions', {
         p_listing_id: selectedListing,
       });
       if (error) throw error;
@@ -92,7 +107,7 @@ export function PricingTab() {
 
   const startTest = useMutation({
     mutationFn: async (params: { listing_id: string; variants: Array<{ variant: string; price_cents: number }> }) => {
-      const { data, error } = await supabase.rpc('start_price_test', {
+      const { data, error } = await (supabase as any).rpc('start_price_test', {
         p_listing_id: params.listing_id,
         p_variants: params.variants,
       });
@@ -108,7 +123,7 @@ export function PricingTab() {
 
   const endTest = useMutation({
     mutationFn: async (params: { test_id: string; winner?: string }) => {
-      const { data, error } = await supabase.rpc('end_price_test', {
+      const { data, error } = await (supabase as any).rpc('end_price_test', {
         p_test_id: params.test_id,
         p_winner: params.winner || null,
       });
@@ -151,7 +166,7 @@ export function PricingTab() {
                   <SelectValue placeholder="Choose a listing" />
                 </SelectTrigger>
                 <SelectContent>
-                  {listings?.map(l => (
+                  {listings?.map((l: any) => (
                     <SelectItem key={l.id} value={l.id}>
                       {l.title} (${(l.price_cents / 100).toFixed(2)})
                     </SelectItem>
@@ -252,7 +267,7 @@ function PriceVariantInput({ label, defaultValue }: { label: string; defaultValu
   );
 }
 
-function TestCard({ test, onEnd }: { test: PriceTest & { price_test_variants: PriceVariant[] }; onEnd?: (winner: string) => void }) {
+function TestCard({ test, onEnd }: { test: PriceTest; onEnd?: (winner: string) => void }) {
   return (
     <Card>
       <CardHeader>
@@ -285,7 +300,7 @@ function TestCard({ test, onEnd }: { test: PriceTest & { price_test_variants: Pr
             variant="outline"
             size="sm"
             className="w-full"
-            onClick={() => onEnd(test.price_test_variants[0]?.variant_key)}
+            onClick={() => onEnd(test.price_test_variants?.[0]?.variant_key || 'A')}
           >
             <StopCircle className="w-4 h-4 mr-2" />
             End Test
