@@ -121,7 +121,7 @@ export default function ApprovalsPage() {
 
   if (!entities || entities.length === 0) {
     return (
-      <div className="container max-w-4xl py-8">
+      <div>
         <h1 className="text-3xl font-bold mb-6">Approvals</h1>
         <p className="text-muted-foreground">You don't own any entities yet.</p>
       </div>
@@ -129,7 +129,7 @@ export default function ApprovalsPage() {
   }
 
   return (
-    <div className="container max-w-4xl py-8">
+    <div>
       <h1 className="text-3xl font-bold mb-6">Approvals</h1>
 
       <Tabs defaultValue="pending">

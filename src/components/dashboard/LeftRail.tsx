@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { 
   LayoutDashboard, Building2, User, Building, Trophy, 
-  Calendar, ShoppingBag, DollarSign, Settings 
+  Calendar, ShoppingBag, DollarSign, Settings, CheckSquare
 } from 'lucide-react';
 
-type Module = 'overview' | 'accounts' | 'stallions' | 'farm-ops' | 'incentives' | 'events' | 'orders' | 'earnings' | 'settings';
+type Module = 'overview' | 'accounts' | 'stallions' | 'farm-ops' | 'incentives' | 'events' | 'orders' | 'earnings' | 'approvals' | 'settings';
 
 interface LeftRailProps {
   activeModule: Module;
@@ -25,6 +25,7 @@ const modules = [
   { id: 'events', label: 'Events', icon: Calendar },
   { id: 'orders', label: 'Orders', icon: ShoppingBag },
   { id: 'earnings', label: 'Earnings', icon: DollarSign },
+  { id: 'approvals', label: 'Approvals', icon: CheckSquare },
   { id: 'settings', label: 'Settings', icon: Settings },
 ] as const;
 

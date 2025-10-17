@@ -16,8 +16,9 @@ import { Events } from './modules/Events';
 import { Orders } from './modules/Orders';
 import { Earnings } from './modules/Earnings';
 import { Settings } from './modules/Settings';
+import Approvals from './approvals';
 
-type Module = 'overview' | 'accounts' | 'stallions' | 'farm-ops' | 'incentives' | 'events' | 'orders' | 'earnings' | 'settings';
+type Module = 'overview' | 'accounts' | 'stallions' | 'farm-ops' | 'incentives' | 'events' | 'orders' | 'earnings' | 'approvals' | 'settings';
 
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -44,6 +45,7 @@ export default function Dashboard() {
             {module === 'events' && <Events />}
             {module === 'orders' && <Orders />}
             {module === 'earnings' && <Earnings />}
+            {module === 'approvals' && <Approvals />}
             {module === 'settings' && <Settings />}
           </div>
         </main>
