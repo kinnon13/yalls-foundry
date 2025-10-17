@@ -525,6 +525,91 @@
       "owner": "platform",
       "severity": "p1",
       "notes": "Tone/style preferences"
+    },
+    {
+      "id": "discover",
+      "area": "discovery",
+      "title": "Discover Feed",
+      "status": "full-ui",
+      "routes": ["/discover", "/discover-v2", "/discover/index"],
+      "components": ["src/routes/discover.tsx", "src/routes/discover-v2.tsx", "src/routes/discover/index.tsx"],
+      "rpc": [],
+      "flags": ["discover"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p0",
+      "notes": "3 variations: Mixed feed, Shopping facets, TikTok scroller",
+      "subFeatures": ["discover_for_you", "discover_trending", "discover_latest", "discover_shopping"]
+    },
+    {
+      "id": "messages",
+      "area": "messaging",
+      "title": "Direct Messages",
+      "status": "full-ui",
+      "routes": ["/messages", "/messages/:id"],
+      "components": ["src/routes/messages/index.tsx"],
+      "rpc": [],
+      "flags": ["messages"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p0",
+      "notes": "Full chat/DM system with threads",
+      "subFeatures": ["message_send", "message_thread", "message_notifications", "message_search"]
+    },
+    {
+      "id": "platform_tour",
+      "area": "platform",
+      "title": "Platform Tour",
+      "status": "full-ui",
+      "routes": [],
+      "components": [
+        "src/components/rocker/TourButton.tsx",
+        "src/lib/ai/rocker/tour.ts",
+        "src/lib/ai/rocker/tools/tour.ts",
+        "src/routes/admin/panels/TourSchedulePanel.tsx"
+      ],
+      "rpc": [],
+      "flags": ["platform_tour"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "platform",
+      "severity": "p1",
+      "notes": "Guided platform tour with Rocker AI + scheduling",
+      "subFeatures": ["tour_start", "tour_navigate", "tour_schedule", "tour_customize"]
+    },
+    {
+      "id": "preview_system",
+      "area": "platform",
+      "title": "Preview System",
+      "status": "full-ui",
+      "routes": ["/preview/:id"],
+      "components": [
+        "src/preview/registry.tsx",
+        "src/components/preview/PreviewMessageListener.tsx",
+        "src/preview/screens/pay/OnboardingPreview.tsx"
+      ],
+      "rpc": [],
+      "flags": ["preview_system"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "platform",
+      "severity": "p2",
+      "notes": "Preview screens for testing flows (KYC, onboarding, etc.)",
+      "subFeatures": ["preview_registry", "preview_messaging", "preview_pay"]
     }
   ]
 }
