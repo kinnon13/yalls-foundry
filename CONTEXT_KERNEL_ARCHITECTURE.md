@@ -225,14 +225,94 @@ LIMIT 100;
 ## Security Notes
 
 - ✅ All kernels protected by RLS (user can only see their own)
-- ✅ Feature access gated by entitlements
+- ✅ Feature access gated by entitlements (plan + override + age)
 - ✅ Context data validated before kernel creation
+- ✅ Idempotent spawning via `context_key` unique constraint
+- ✅ Age gating enforced via `age_ok()` function (≥13 years)
 - ✅ Admin override via `admin_create_kernel_context()`
 - ✅ Audit trail via `ai_action_ledger`
 
-## Performance
+## Performance & Hardening
 
-- Indexed queries on `(user_id, kernel_type)`
-- Batch kernel creation in triggers
-- Client-side cache (60s stale, 120s refetch)
-- Paginated kernel list if user has 100+ active contexts
+### De-duplication
+- **`context_key`** (generated column): `COALESCE(context_data->>'entry_id', context_entity_id::text)`
+- Unique constraint: `(user_id, kernel_type, context_key)`
+- Triggers use `ON CONFLICT DO UPDATE` to refresh existing kernels (idempotent)
+
+### Pagination
+- Cursor-based pagination via `get_user_kernels(p_limit, p_cursor)`
+- Default limit: 24 kernels per page
+- `next_cursor` field enables "Load More" without full table scans
+- Prevents UI lag for users with 100+ active contexts
+
+### TTL & Hygiene
+- `expires_at` column for automatic expiration
+- `cleanup_expired_kernels()` function purges expired rows
+- Run via cron/scheduler daily
+- Keeps table lean (<10k rows per user)
+
+### Observability
+- **Standardized events**: `kernel_render`, `kernel_open`, `kernel_spawn`, `kernel_action`
+- **Logged to**: `rpc_observations` table
+- **Meta keys**: `{ type: kernel_type, source, outcome, surface: 'kernel' }`
+- **Metrics**: `kernel_metrics(p_window_minutes)` for p95 latency + error rates
+
+### Smoke Checks
+```sql
+-- Verify no duplicates
+SELECT kernel_type, context_key, COUNT(*)
+FROM kernel_contexts
+GROUP BY 1,2 HAVING COUNT(*)>1;
+
+-- Check pagination performance
+EXPLAIN ANALYZE SELECT * FROM get_user_kernels(auth.uid(), 24, NULL);
+
+-- View telemetry
+SELECT rpc_name, COUNT(*), ROUND(AVG(duration_ms)::numeric,2) avg_ms
+FROM rpc_observations
+WHERE rpc_name IN ('kernel_render','kernel_open','kernel_spawn')
+  AND created_at > now()-interval '1 hour'
+GROUP BY 1;
+
+-- Backfill existing data
+SELECT backfill_kernels();
+```
+
+## Kernel Type Registry
+
+**New**: `contextKernelTypes` in `contextUtils.ts` provides type-safe mapping:
+
+```ts
+export const contextKernelTypes = {
+  incentive_entry: {
+    featureId: 'incentives',
+    propMap: (ctx) => ({
+      program: ctx.class_id,
+      horse: ctx.horse_id,
+      mode: 'enter' as const,
+    }),
+  },
+  team_workspace: {
+    featureId: 'work_packages',
+    propMap: (ctx) => ({
+      project: ctx.business_id,
+      role: ctx.role,
+      range: 'week' as const,
+    }),
+  },
+} as const;
+
+// Usage:
+openKernel({
+  kernelType: 'incentive_entry',
+  contextData: { entry_id: '...', class_id: '...', status: 'pending' },
+  returnTo: '/dashboard'
+})
+// Resolves to: ?f=incentives&fx.incentives.program=...&fx.incentives.mode=enter
+```
+
+## Indexed Queries
+- `(user_id, kernel_type, context_key)` - uniqueness + fast lookups
+- `(user_id, priority, created_at)` - paginated sorting
+- `(expires_at)` - cleanup performance
+- Batch kernel creation in triggers (single INSERT per event)

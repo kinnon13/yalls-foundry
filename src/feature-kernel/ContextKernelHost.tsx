@@ -14,6 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { openKernel } from './contextUtils';
+import { useState } from 'react';
 
 interface KernelContext {
   kernel_id: string;
@@ -23,6 +25,7 @@ interface KernelContext {
   source: string;
   priority: number;
   entity_display_name: string | null;
+  next_cursor?: string;
 }
 
 const kernelTypeLabels: Record<string, { title: string; description: string }> = {
@@ -49,14 +52,39 @@ const kernelTypeLabels: Record<string, { title: string; description: string }> =
 };
 
 export function ContextKernelHost() {
+  const [cursor, setCursor] = useState<string | null>(null);
+  
   const { data: kernels = [], isLoading } = useQuery({
-    queryKey: ['user-kernels'],
+    queryKey: ['user-kernels', cursor],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .rpc('get_user_kernels');
+      const { data, error } = await (supabase as any).rpc('get_user_kernels', {
+        p_user_id: (await supabase.auth.getUser()).data.user?.id,
+        p_limit: 24,
+        p_cursor: cursor ? parseInt(cursor) : null,
+      });
       
       if (error) throw error;
-      return (data || []) as KernelContext[];
+      
+      // Log kernel renders for observability
+      const kernelData = (data || []) as KernelContext[];
+      kernelData.forEach((kernel) => {
+        (supabase as any)
+          .rpc('rpc_observe', {
+            p_rpc_name: 'kernel_render',
+            p_duration_ms: 0,
+            p_status: 'ok',
+            p_error_code: null,
+            p_meta: {
+              type: kernel.kernel_type,
+              source: kernel.source,
+              outcome: 'shown',
+              surface: 'kernel',
+            },
+          })
+          .catch(() => void 0);
+      });
+      
+      return kernelData;
     },
     staleTime: 30_000,
     refetchInterval: 60_000,
@@ -75,23 +103,14 @@ export function ContextKernelHost() {
   }
 
   const handleOpenKernel = (kernel: KernelContext) => {
-    // Build feature URL with context
-    const params = new URLSearchParams({
-      f: kernel.kernel_type,
-      ctx: kernel.kernel_id,
+    openKernel({
+      kernelType: kernel.kernel_type,
+      contextData: kernel.context_data,
+      returnTo: window.location.pathname + window.location.search,
     });
-    
-    // Add context-specific params
-    if (kernel.context_data) {
-      Object.entries(kernel.context_data).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
-          params.append(key, String(value));
-        }
-      });
-    }
-    
-    window.location.href = `/dashboard?${params.toString()}`;
   };
+
+  const hasNextPage = kernels.length > 0 && kernels[kernels.length - 1]?.next_cursor;
 
   return (
     <div className="space-y-4">
@@ -165,6 +184,17 @@ export function ContextKernelHost() {
           );
         })}
       </div>
+      
+      {hasNextPage && (
+        <div className="flex justify-center pt-4">
+          <Button
+            variant="outline"
+            onClick={() => setCursor(kernels[kernels.length - 1].next_cursor!)}
+          >
+            Load More
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -231,3 +231,67 @@ export function buildDeepLink(options: {
   
   return url.toString();
 }
+
+/**
+ * Kernel type registry - maps kernel_type to feature configuration
+ */
+export const contextKernelTypes = {
+  incentive_entry: {
+    featureId: 'incentives',
+    propMap: (ctx: Record<string, any>) => ({
+      program: ctx.class_id,
+      horse: ctx.horse_id,
+      mode: 'enter' as const,
+    }),
+  },
+  team_workspace: {
+    featureId: 'work_packages',
+    propMap: (ctx: Record<string, any>) => ({
+      project: ctx.business_id,
+      role: ctx.role,
+      range: 'week' as const,
+    }),
+  },
+} as const;
+
+export type KernelType = keyof typeof contextKernelTypes;
+
+/**
+ * Open a kernel by type and context data
+ * Automatically resolves to the correct feature and props
+ */
+export function openKernel(options: {
+  kernelType: string;
+  contextData: Record<string, any>;
+  returnTo?: string;
+}) {
+  const kernelConfig = contextKernelTypes[options.kernelType as KernelType];
+  
+  if (!kernelConfig) {
+    console.warn(`Unknown kernel type: ${options.kernelType}`);
+    return;
+  }
+
+  const props = kernelConfig.propMap(options.contextData);
+  
+  openFeaturesViaURL({
+    features: [kernelConfig.featureId],
+    props: { [kernelConfig.featureId]: props },
+    returnTo: options.returnTo,
+  });
+
+  // Observability
+  (supabase as any)
+    .rpc('rpc_observe', {
+      p_rpc_name: 'kernel_open',
+      p_duration_ms: 0,
+      p_status: 'ok',
+      p_error_code: null,
+      p_meta: {
+        type: options.kernelType,
+        feature: kernelConfig.featureId,
+        surface: 'kernel',
+      },
+    })
+    .catch(() => void 0);
+}
