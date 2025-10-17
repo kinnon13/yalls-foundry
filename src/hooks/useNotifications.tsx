@@ -26,7 +26,7 @@ export function useNotifications() {
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['notifications', session?.userId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('notifications')
         .select('*')
         .eq('user_id', session?.userId!)
@@ -44,7 +44,7 @@ export function useNotifications() {
 
   const markRead = useMutation({
     mutationFn: async (notifId: string) => {
-      const { error } = await supabase.rpc('notif_mark_read', {
+      const { error } = await (supabase as any).rpc('notif_mark_read', {
         p_notif_id: notifId,
       });
       if (error) throw error;
@@ -56,7 +56,7 @@ export function useNotifications() {
 
   const markAllRead = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc('notif_mark_all_read');
+      const { error } = await (supabase as any).rpc('notif_mark_all_read');
       if (error) throw error;
     },
     onSuccess: () => {

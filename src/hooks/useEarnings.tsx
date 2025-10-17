@@ -31,7 +31,7 @@ export function useEarnings() {
   const { data: ledger, isLoading: ledgerLoading } = useQuery({
     queryKey: ['earnings-ledger', session?.userId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('earnings_ledger')
         .select('*')
         .eq('user_id', session?.userId!)
@@ -59,7 +59,7 @@ export function useEarnings() {
   const { data: events = [], isLoading: eventsLoading } = useQuery({
     queryKey: ['earnings-events', session?.userId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('earnings_events')
         .select('*')
         .eq('user_id', session?.userId!)
@@ -74,7 +74,7 @@ export function useEarnings() {
 
   const recompute = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.rpc('earnings_recompute', {
+      const { data, error } = await (supabase as any).rpc('earnings_recompute', {
         p_user_id: session?.userId!,
       });
       if (error) throw error;

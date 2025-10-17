@@ -20,7 +20,7 @@ export async function enqueueJob({
   maxAttempts = 3,
   scheduleFor = new Date(),
 }: JobPayload): Promise<string> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('worker_jobs')
     .insert({
       job_type: jobType,
@@ -36,7 +36,7 @@ export async function enqueueJob({
   if (error) {
     // If duplicate idempotency key, return existing job
     if (error.code === '23505') {
-      const { data: existing } = await supabase
+      const { data: existing } = await (supabase as any)
         .from('worker_jobs')
         .select('id')
         .eq('idempotency_key', idempotencyKey!)
@@ -51,7 +51,7 @@ export async function enqueueJob({
 }
 
 export async function getJobStatus(jobId: string): Promise<string | null> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('worker_jobs')
     .select('status')
     .eq('id', jobId)

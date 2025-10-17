@@ -14,28 +14,28 @@ export default function WorkersAdmin() {
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ['worker-jobs'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('worker_jobs')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(200);
 
       if (error) throw error;
-      return data;
+      return data as any[];
     },
   });
 
   const { data: dlq = [] } = useQuery({
     queryKey: ['dead-letter-queue'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('dead_letter_queue')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 
       if (error) throw error;
-      return data;
+      return data as any[];
     },
   });
 
