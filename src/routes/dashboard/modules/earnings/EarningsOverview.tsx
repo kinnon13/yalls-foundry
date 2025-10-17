@@ -8,7 +8,7 @@ import { useSession } from '@/lib/auth/context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, TrendingUp, Users, Target, Zap, Play, Send, AlertTriangle } from 'lucide-react';
+import { DollarSign, TrendingUp, Users, Target, Zap, Play, Send, AlertTriangle, Award } from 'lucide-react';
 
 export function EarningsOverview() {
   const { session } = useSession();
@@ -65,6 +65,48 @@ export function EarningsOverview() {
       <div>
         <h2 className="text-2xl font-bold">Earnings Overview</h2>
         <p className="text-sm text-muted-foreground">Track revenue, commissions, and growth tools</p>
+      </div>
+
+      {/* Revenue Metrics Grid */}
+      <div className="grid gap-4 md:grid-cols-3 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Promotion Revenue</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">$0.00</div>
+            <p className="text-xs text-muted-foreground">
+              Revenue from active promotions
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Campaign CTR</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">0%</div>
+            <p className="text-xs text-muted-foreground">
+              Click-through rate for campaigns
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Price Test Uplift</CardTitle>
+            <Award className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+0%</div>
+            <p className="text-xs text-muted-foreground">
+              Average conversion uplift
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Revenue Tools */}

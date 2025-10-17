@@ -122,17 +122,24 @@ export function PricingTab() {
   });
 
   const endTest = useMutation({
-    mutationFn: async (params: { test_id: string; winner?: string }) => {
+    mutationFn: async (testId: string) => {
       const { data, error } = await (supabase as any).rpc('end_price_test', {
-        p_test_id: params.test_id,
-        p_winner: params.winner || null,
+        p_test_id: testId,
       });
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['price-tests'] });
-      toast.success('Price test ended');
+      const winner = data?.winner || 'inconclusive';
+      const orders = data?.orders || 0;
+      const revenue = data?.revenue_cents || 0;
+      
+      toast.success(
+        winner === 'inconclusive'
+          ? 'Price test ended - not enough data to determine winner'
+          : `Winner: Variant ${winner} (${orders} orders, $${(revenue / 100).toFixed(2)} revenue)`
+      );
     },
   });
 
@@ -223,7 +230,7 @@ export function PricingTab() {
             <TestCard
               key={test.id}
               test={test}
-              onEnd={(winner) => endTest.mutate({ test_id: test.id, winner })}
+              onEnd={(testId) => endTest.mutate(testId)}
             />
           ))}
           {running.length === 0 && (
@@ -267,7 +274,7 @@ function PriceVariantInput({ label, defaultValue }: { label: string; defaultValu
   );
 }
 
-function TestCard({ test, onEnd }: { test: PriceTest; onEnd?: (winner: string) => void }) {
+function TestCard({ test, onEnd }: { test: PriceTest; onEnd?: (testId: string) => void }) {
   return (
     <Card>
       <CardHeader>
@@ -300,10 +307,11 @@ function TestCard({ test, onEnd }: { test: PriceTest; onEnd?: (winner: string) =
             variant="outline"
             size="sm"
             className="w-full"
-            onClick={() => onEnd(test.price_test_variants?.[0]?.variant_key || 'A')}
+            onClick={() => onEnd(test.id)}
+            disabled={!test.price_test_variants || test.price_test_variants.length === 0}
           >
             <StopCircle className="w-4 h-4 mr-2" />
-            End Test
+            End Test & Declare Winner
           </Button>
         )}
       </CardContent>

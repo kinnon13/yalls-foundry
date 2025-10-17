@@ -102,9 +102,19 @@ export function CampaignsTab() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (count) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      toast.success(`Campaign scheduled - ${count} messages queued`);
+      const queued = data?.queued || 0;
+      const skippedConsent = data?.skipped_consent || 0;
+      const skippedNull = data?.skipped_null_contact || 0;
+      
+      toast.success(
+        `Campaign scheduled! ${queued} messages queued${
+          skippedConsent + skippedNull > 0 
+            ? `. Skipped: ${skippedConsent} (no consent), ${skippedNull} (no contact)` 
+            : ''
+        }`
+      );
     },
   });
 

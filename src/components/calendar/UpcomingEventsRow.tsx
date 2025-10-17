@@ -17,6 +17,16 @@ import { format } from 'date-fns';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
+type CalendarEvent = {
+  id: string;
+  title: string;
+  starts_at: string;
+  ends_at?: string | null;
+  location?: any;
+  event_type?: string | null;
+  created_by?: string;
+};
+
 interface Event {
   id: string;
   title: string;
@@ -64,14 +74,16 @@ export function UpcomingEventsRow() {
   });
 
   // Fetch user's saved calendar events
-  const { data: savedEvents } = useQuery({
+  const { data: savedEvents } = useQuery<Set<string>>({
     queryKey: ['calendar-events', session?.userId],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('calendar_events')
-        .select('id, title, starts_at, ends_at, location, event_type')
+        .select('id, title, starts_at, ends_at, location, event_type, created_by')
         .eq('created_by', session!.userId);
-      return new Set((data || []).map(e => e.id));
+      if (error) throw error;
+      const events = (data || []) as CalendarEvent[];
+      return new Set(events.filter(e => new Date(e.starts_at) >= new Date()).map(e => e.id));
     },
     enabled: !!session?.userId
   });
