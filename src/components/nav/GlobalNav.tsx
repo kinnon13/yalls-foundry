@@ -20,9 +20,9 @@ const iconMap = {
 };
 
 const NAV_ITEMS = [
-  { key: 'home', label: 'Home', path: '/feed', icon: 'Home' },
+  { key: 'home', label: 'Home', path: '/', icon: 'Home' },
   { key: 'discover', label: 'Discover', path: '/discover', icon: 'Compass' },
-  { key: 'dashboard', label: 'Dashboard', path: '/dashboard-v2', icon: 'LayoutDashboard', requireAuth: true },
+  { key: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: 'LayoutDashboard', requireAuth: true },
   { key: 'messages', label: 'Messages', path: '/messages', icon: 'MessageSquare', requireAuth: true },
 ];
 
