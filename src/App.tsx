@@ -31,6 +31,10 @@ const AISettings = lazy(() => import('./routes/settings/ai'));
 const AIActivity = lazy(() => import('./routes/ai/activity'));
 const EntitiesList = lazy(() => import('./routes/entities/index'));
 const EntityDetail = lazy(() => import('./routes/entities/[id]'));
+const Feed = lazy(() => import('./routes/feed/index'));
+const Messages = lazy(() => import('./routes/messages/index'));
+const CRM = lazy(() => import('./routes/crm/index'));
+const CRM = lazy(() => import('./routes/crm/index'));
 const ClaimEntity = lazy(() => import('./routes/claim/[entityId]'));
 const AdminClaims = lazy(() => import('./routes/admin/claims'));
 
