@@ -1,15 +1,32 @@
-import { useEffect } from 'react';
-import { usePreviewMessage, type PreviewEvent } from '@/preview/usePreviewMessage';
+import { usePreviewMessage } from '@/preview/usePreviewMessage';
+import type { PreviewEvent } from '@/preview/schema';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Global listener for preview hand-off messages
- * Mount this once in App.tsx to handle all preview interactions
+ * Global listener for preview messages with server-side audit trail
+ * Validates + audits all preview interactions
  */
 export function PreviewMessageListener() {
-  usePreviewMessage((event: PreviewEvent) => {
-    console.log('[PreviewMessage] Received:', event);
+  usePreviewMessage(async (event: PreviewEvent) => {
+    console.log('[PreviewMessage] Validated event:', event);
 
+    // Audit to server (fail silently - don't block UI)
+    try {
+      await supabase.functions.invoke('audit-preview-event', {
+        body: {
+          event_type: event.type,
+          source: event.source,
+          payload: event,
+          route: window.location.pathname,
+          user_agent: navigator.userAgent,
+        },
+      });
+    } catch (auditError) {
+      console.error('[PreviewMessage] Audit failed:', auditError);
+    }
+
+    // Handle by source
     switch (event.source) {
       case 'pay-preview':
         handlePayMessage(event);
@@ -23,10 +40,13 @@ export function PreviewMessageListener() {
       case 'app-preview':
         handleAppMessage(event);
         break;
+      case 'preview-security':
+        handleSecurityEvent(event);
+        break;
     }
   });
 
-  return null; // No UI
+  return null;
 }
 
 function handlePayMessage(event: PreviewEvent) {
@@ -93,4 +113,22 @@ function handleAppMessage(event: PreviewEvent) {
     title: 'App Action (Preview)',
     description: `${event.type} received`,
   });
+}
+
+function handleSecurityEvent(event: PreviewEvent) {
+  if (event.source !== 'preview-security') return;
+  
+  if (event.type === 'BLOCKED_WRITE') {
+    toast({
+      title: '🛡️ Write Blocked (Preview)',
+      description: `${event.method} to ${event.url || 'unknown'} was blocked`,
+      variant: 'destructive',
+    });
+    
+    console.warn('[PreviewSecurity] Blocked write attempt:', {
+      method: event.method,
+      url: event.url,
+      timestamp: event.timestamp,
+    });
+  }
 }
