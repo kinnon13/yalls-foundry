@@ -11,21 +11,25 @@ interface ReelEventProps {
 }
 
 export function ReelEvent({ reel, onRSVP }: ReelEventProps) {
-  const formattedDate = reel.starts_at 
+  const dateStr = reel.starts_at 
     ? new Date(reel.starts_at).toLocaleDateString('en-US', {
         weekday: 'short',
         month: 'short',
         day: 'numeric',
         year: 'numeric'
       })
-    : 'Date TBA';
+    : null;
 
-  const formattedTime = reel.starts_at
+  const timeStr = reel.starts_at
     ? new Date(reel.starts_at).toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit'
       })
-    : '';
+    : null;
+
+  const locationDisplay = typeof reel.location === 'string' 
+    ? reel.location 
+    : reel.location?.name || null;
 
   const handleRSVP = () => {
     logUsageEvent({
@@ -66,23 +70,14 @@ export function ReelEvent({ reel, onRSVP }: ReelEventProps) {
             <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 backdrop-blur-sm transition-all duration-200 hover:bg-background/70">
               <Calendar className="h-5 w-5 text-primary" />
               <div>
-                <p className="font-medium">{formattedDate}</p>
-                {formattedTime && (
-                  <p className="text-sm text-muted-foreground">{formattedTime}</p>
-                )}
+                <p className="font-medium">{dateStr || 'Date TBA'}</p>
+                <div className="text-sm text-muted-foreground">
+                  {timeStr && <span>{timeStr}</span>}
+                  {locationDisplay && timeStr && <span> • </span>}
+                  {locationDisplay && <span>{locationDisplay}</span>}
+                </div>
               </div>
             </div>
-
-            {reel.location && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 backdrop-blur-sm transition-all duration-200 hover:bg-background/70">
-                <MapPin className="h-5 w-5 text-primary" />
-                <p className="text-foreground">
-                  {typeof reel.location === 'string' 
-                    ? reel.location 
-                    : reel.location?.name || 'Location TBA'}
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Actions */}

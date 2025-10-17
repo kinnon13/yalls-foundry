@@ -22,10 +22,10 @@ export function TikTokScroller({
   onLoadMore,
   onItemView 
 }: TikTokScrollerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const observerRef = useRef<IntersectionObserver | null>(null);
-  const impressedItemsRef = useRef(new Set<string>());
+  const impressedItemsRef = useRef<Set<string>>(new Set());
   const dwellCleanupRef = useRef<(() => void) | null>(null);
 
   // Set up intersection observer for tracking visible item
