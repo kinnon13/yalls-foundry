@@ -15,10 +15,11 @@ export function Earnings() {
   const { session } = useSession();
 
   // Mock tier for now (would come from mlm_user_stats in real app)
-  const tierCapture: number = 1; // Default: Free tier (1% / 2.5% / 4%)
+  type TierCapture = 1 | 2.5 | 4;
+  const tierCapture = 1 as TierCapture; // Default: Free tier
 
-  const maxTier = 4;
-  const missedPercent = maxTier - tierCapture;
+  const maxTier: TierCapture = 4;
+  const missedPercent = Math.max(0, maxTier - tierCapture);
 
   // Mock earnings data (in real app, would come from commissions/payouts tables)
   const mockEarnings = {
@@ -28,7 +29,7 @@ export function Earnings() {
     eligible_cents: 100000,
   };
 
-  const missedCents = (mockEarnings.eligible_cents * missedPercent) / 100;
+  const missedCents = Math.round((mockEarnings.eligible_cents * missedPercent) / 100);
 
   return (
     <div className="space-y-6">

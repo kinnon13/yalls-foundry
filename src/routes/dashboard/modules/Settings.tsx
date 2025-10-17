@@ -29,7 +29,7 @@ export function Settings() {
         .select('*')
         .eq('user_id', session?.userId)
         .maybeSingle();
-      return data;
+      return data ?? null;
     },
     enabled: !!session?.userId,
   });
@@ -42,7 +42,7 @@ export function Settings() {
         .select('*')
         .eq('user_id', session?.userId)
         .maybeSingle();
-      return data;
+      return data ?? null;
     },
     enabled: !!session?.userId,
   });
@@ -141,7 +141,7 @@ export function Settings() {
                 <div>
                   <Label>Quiet Hours</Label>
                   <p className="text-sm text-muted-foreground">
-                    Current: {(aiConsent?.quiet_hours as string) || 'None set'}
+                    Current: {(aiConsent?.quiet_hours ? String(aiConsent.quiet_hours) : 'None set')}
                   </p>
                 </div>
                 <div>
