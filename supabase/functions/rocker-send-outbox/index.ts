@@ -176,13 +176,20 @@ serve(async (req) => {
         console.error(`[Outbox] Failed to send ${row.id}:`, e);
         results.failed++;
 
-        // Mark as failed, allow retry if attempts < 3
-        const status = row.attempt_count >= 2 ? "failed" : "queued";
+        // Exponential backoff: 5min, 10min, 20min
+        const maxRetries = 3;
+        const status = row.attempt_count >= maxRetries ? "failed" : "queued";
+        
+        // Compute next retry time with exponential backoff
+        const nextRetryDelayMs = Math.pow(2, row.attempt_count) * 5 * 60 * 1000;
+        const nextScheduledAt = new Date(Date.now() + nextRetryDelayMs).toISOString();
+
         await supabase
           .from("rocker_outbox")
           .update({
             status,
             error: String(e),
+            ...(status === "queued" && { scheduled_at: nextScheduledAt }),
           })
           .eq("id", row.id);
       }
