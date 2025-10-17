@@ -39,7 +39,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Events', path: '/dashboard/events', icon: <Calendar size={20} /> },
   { label: 'Orders', path: '/dashboard/orders', icon: <ShoppingCart size={20} /> },
   { label: 'Earnings', path: '/dashboard/earnings', icon: <DollarSign size={20} /> },
-  { label: 'Messages', path: '/messages', icon: <MessageSquare size={20} />, badge: true },
+   { label: 'Messages', path: '/dashboard/messages', icon: <MessageSquare size={20} />, badge: true },
   { label: 'Approvals', path: '/dashboard/approvals', icon: <CheckCircle size={20} />, badge: true },
   { label: 'Settings', path: '/dashboard/settings', icon: <Settings size={20} /> },
 ];

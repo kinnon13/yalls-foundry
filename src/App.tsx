@@ -120,6 +120,7 @@ const App = () => (
             <Route path="business" element={<Suspense fallback={<div>Loading...</div>}><DashboardBusiness /></Suspense>} />
             <Route path="settings" element={<Suspense fallback={<div>Loading...</div>}><DashboardSettings /></Suspense>} />
             <Route path="earnings" element={<Suspense fallback={<div>Loading...</div>}><Earnings /></Suspense>} />
+            <Route path="messages" element={<Suspense fallback={<div>Loading...</div>}><Messages /></Suspense>} />
           </Route>
           <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
           <Route path="/discover" element={<Suspense fallback={<div>Loading...</div>}><Discover /></Suspense>} />
