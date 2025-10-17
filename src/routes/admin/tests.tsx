@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { features as allFeatures } from '@/lib/featuresData';
+import { allFeatures } from '@/lib/features';
 import { Badge } from '@/components/ui/badge';
 import { TestTube, CheckCircle, XCircle } from 'lucide-react';
 

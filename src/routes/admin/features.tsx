@@ -5,13 +5,12 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { features as allFeatures } from '@/lib/featuresData';
+import { allFeatures, validateGoldPath, GOLD_PATH_FEATURES, getFeatureStats } from '@/lib/features';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, FileText, TestTube, Code, AlertCircle, Star, Shield, Edit2, Save, X, CheckCircle2, XCircle, Clock } from 'lucide-react';
-import { validateGoldPath, GOLD_PATH_FEATURES, getFeatureStats } from '@/lib/featureGuards';
 import { Link } from 'react-router-dom';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';

@@ -8,8 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, AlertCircle, Play, RefreshCw } from 'lucide-react';
-import { getFeatureStats, validateGoldPath, GOLD_PATH_FEATURES } from '@/lib/featureGuards';
-import { features as allFeatures } from '@/lib/featuresData';
+import { allFeatures, getFeatureStats, validateGoldPath, GOLD_PATH_FEATURES, isProd } from '@/lib/features';
 
 interface AuditResult {
   check: string;
@@ -50,10 +49,8 @@ export default function AuditPage() {
 
     // 3. Shell leakage check
     const shellFeatures = allFeatures.filter(f => f.status === 'shell');
-    const hasGuards = shellFeatures.every(f => {
-      // Check if routes have dev guards (simplified - in real impl, check actual route files)
-      return f.routes.length === 0 || import.meta.env.DEV;
-    });
+    const shellInProd = isProd ? shellFeatures.filter(f => f.routes.length > 0).length : 0;
+    const hasGuards = shellInProd === 0;
     auditResults.push({
       check: 'Shell Features Protected',
       category: 'critical',
@@ -66,7 +63,7 @@ export default function AuditPage() {
     const withE2E = allFeatures.filter(f => f.tests.e2e.length > 0).length;
     const withUnit = allFeatures.filter(f => f.tests.unit.length > 0).length;
     const withAny = allFeatures.filter(f => f.tests.e2e.length > 0 || f.tests.unit.length > 0).length;
-    const coveragePct = (withAny / allFeatures.length) * 100;
+    const coveragePct = (withAny / Math.max(1, allFeatures.length)) * 100;
     
     auditResults.push({
       check: 'Test Coverage',
@@ -82,7 +79,7 @@ export default function AuditPage() {
 
     // 5. Documentation coverage
     const withDocs = allFeatures.filter(f => f.docs && f.docs.length > 0).length;
-    const docsPct = (withDocs / allFeatures.length) * 100;
+    const docsPct = (withDocs / Math.max(1, allFeatures.length)) * 100;
     
     auditResults.push({
       check: 'Documentation Coverage',
@@ -94,7 +91,7 @@ export default function AuditPage() {
 
     // 6. Owner assignment
     const withOwner = allFeatures.filter(f => f.owner && f.owner.length > 0).length;
-    const ownerPct = (withOwner / allFeatures.length) * 100;
+    const ownerPct = (withOwner / Math.max(1, allFeatures.length)) * 100;
     
     auditResults.push({
       check: 'Owner Assignment',
@@ -106,7 +103,7 @@ export default function AuditPage() {
 
     // 7. Severity classification
     const withSeverity = allFeatures.filter(f => f.severity && ['p0', 'p1', 'p2'].includes(f.severity)).length;
-    const severityPct = (withSeverity / allFeatures.length) * 100;
+    const severityPct = (withSeverity / Math.max(1, allFeatures.length)) * 100;
     
     auditResults.push({
       check: 'Severity Classification',
@@ -121,7 +118,7 @@ export default function AuditPage() {
     const areaChecks = Object.entries(byArea).map(([area, counts]): AuditResult => {
       const total = (counts.shell || 0) + (counts['full-ui'] || 0) + (counts.wired || 0);
       const ready = (counts['full-ui'] || 0) + (counts.wired || 0);
-      const pct = (ready / total) * 100;
+      const pct = (ready / Math.max(1, total)) * 100;
       
       return {
         check: `${area.charAt(0).toUpperCase() + area.slice(1)} Area`,
