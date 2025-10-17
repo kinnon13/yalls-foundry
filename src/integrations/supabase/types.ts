@@ -3967,6 +3967,36 @@ export type Database = {
           },
         ]
       }
+      favorites: {
+        Row: {
+          created_at: string
+          fav_type: string
+          id: string
+          note: string | null
+          ref_id: string
+          tags: string[] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fav_type: string
+          id?: string
+          note?: string | null
+          ref_id: string
+          tags?: string[] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fav_type?: string
+          id?: string
+          note?: string | null
+          ref_id?: string
+          tags?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       feature_catalog: {
         Row: {
           id: string
@@ -4520,6 +4550,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      linked_accounts: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          handle: string
+          id: string
+          metadata: Json | null
+          profile_url: string | null
+          proof_data: Json | null
+          proof_url: string | null
+          provider: string
+          updated_at: string
+          user_id: string
+          verification_method: string | null
+          verified: boolean | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          handle: string
+          id?: string
+          metadata?: Json | null
+          profile_url?: string | null
+          proof_data?: Json | null
+          proof_url?: string | null
+          provider: string
+          updated_at?: string
+          user_id: string
+          verification_method?: string | null
+          verified?: boolean | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          handle?: string
+          id?: string
+          metadata?: Json | null
+          profile_url?: string | null
+          proof_data?: Json | null
+          proof_url?: string | null
+          provider?: string
+          updated_at?: string
+          user_id?: string
+          verification_method?: string | null
+          verified?: boolean | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
       }
       listing_taxonomy: {
         Row: {
@@ -5747,6 +5831,48 @@ export type Database = {
           },
         ]
       }
+      profile_badges: {
+        Row: {
+          badge_id: string
+          badge_type: string
+          description: string | null
+          display_name: string
+          display_order: number | null
+          earned_at: string
+          icon_url: string | null
+          id: string
+          metadata: Json | null
+          user_id: string
+          visible: boolean | null
+        }
+        Insert: {
+          badge_id: string
+          badge_type: string
+          description?: string | null
+          display_name: string
+          display_order?: number | null
+          earned_at?: string
+          icon_url?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id: string
+          visible?: boolean | null
+        }
+        Update: {
+          badge_id?: string
+          badge_type?: string
+          description?: string | null
+          display_name?: string
+          display_order?: number | null
+          earned_at?: string
+          icon_url?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+          visible?: boolean | null
+        }
+        Relationships: []
+      }
       profile_pins: {
         Row: {
           created_at: string
@@ -5974,6 +6100,51 @@ export type Database = {
           window_start?: string
         }
         Relationships: []
+      }
+      reposts: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          repost_post_id: string
+          source_post_id: string
+          targets: string[] | null
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          repost_post_id: string
+          source_post_id: string
+          targets?: string[] | null
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          repost_post_id?: string
+          source_post_id?: string
+          targets?: string[] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reposts_repost_post_id_fkey"
+            columns: ["repost_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reposts_source_post_id_fkey"
+            columns: ["source_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       result_flags: {
         Row: {
@@ -7538,6 +7709,17 @@ export type Database = {
         }
         Returns: string
       }
+      badge_grant: {
+        Args: {
+          p_badge_id: string
+          p_badge_type: string
+          p_description?: string
+          p_display_name: string
+          p_metadata?: Json
+          p_user_id: string
+        }
+        Returns: string
+      }
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
@@ -7808,6 +7990,33 @@ export type Database = {
       equals: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
+      }
+      favorite_toggle: {
+        Args: {
+          p_fav_type: string
+          p_note?: string
+          p_ref_id: string
+          p_tags?: string[]
+        }
+        Returns: Json
+      }
+      favorites_check: {
+        Args: { p_items: Json }
+        Returns: {
+          is_favorited: boolean
+          ref_id: string
+        }[]
+      }
+      favorites_list: {
+        Args: { p_fav_type?: string; p_limit?: number; p_offset?: number }
+        Returns: {
+          created_at: string
+          fav_type: string
+          id: string
+          note: string
+          ref_id: string
+          tags: string[]
+        }[]
       }
       feed_fusion_home: {
         Args:
@@ -8355,6 +8564,25 @@ export type Database = {
         Args: { "": string } | { "": unknown } | { "": unknown }
         Returns: unknown
       }
+      linked_account_upsert: {
+        Args: {
+          p_display_name?: string
+          p_handle: string
+          p_metadata?: Json
+          p_profile_url?: string
+          p_proof_url?: string
+          p_provider: string
+        }
+        Returns: string
+      }
+      linked_account_verify: {
+        Args: {
+          p_account_id: string
+          p_proof_data?: Json
+          p_verification_method: string
+        }
+        Returns: Json
+      }
       log_usage_event_v2: {
         Args: {
           p_duration_ms?: number
@@ -8514,6 +8742,16 @@ export type Database = {
         Args: { p_entity_id: string; p_post_id: string }
         Returns: Json
       }
+      post_attribution_chain: {
+        Args: { p_post_id: string }
+        Returns: {
+          author_id: string
+          created_at: string
+          level: number
+          post_id: string
+          repost_count: number
+        }[]
+      }
       post_create: {
         Args: {
           p_body: string
@@ -8538,11 +8776,17 @@ export type Database = {
         Returns: Json
       }
       post_repost: {
-        Args: {
-          p_by_entity_id: string
-          p_original_post_id: string
-          p_target_entity_ids?: string[]
-        }
+        Args:
+          | {
+              p_by_entity_id: string
+              p_original_post_id: string
+              p_target_entity_ids?: string[]
+            }
+          | {
+              p_caption?: string
+              p_source_post_id: string
+              p_target_entity_ids?: string[]
+            }
         Returns: string
       }
       post_target_approve: {
@@ -8692,6 +8936,19 @@ export type Database = {
       reorder_pins: {
         Args: { p_pin_positions: Json; p_profile_id: string }
         Returns: undefined
+      }
+      reposts_list: {
+        Args: { p_limit?: number; p_offset?: number; p_user_id?: string }
+        Returns: {
+          caption: string
+          created_at: string
+          repost_count: number
+          repost_id: string
+          repost_post_id: string
+          source_author_id: string
+          source_body: string
+          source_post_id: string
+        }[]
       }
       requires_step_up: {
         Args: { action_name: string }
