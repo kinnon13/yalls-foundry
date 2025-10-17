@@ -1,11 +1,12 @@
-import { Suspense, lazy, useMemo } from 'react';
+import { Suspense, lazy, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import FeatureHost from '@/feature-kernel/Host';
 import { DebugOverlay } from '@/feature-kernel/DebugOverlay';
-import type { ModuleKey } from '@/lib/dashUrl';
+import { FeatureErrorBoundary } from '@/feature-kernel/ErrorBoundary';
+import { coerceModule, type ModuleKey } from '@/lib/dashUrl';
 
 const panels = {
   overview: lazy(() => import('./overview')),
@@ -22,13 +23,43 @@ const panels = {
   settings: lazy(() => import('./settings')),
 } as const;
 
+function PanelSkeleton() {
+  return (
+    <div className="p-6 animate-pulse">
+      <div className="h-8 bg-muted rounded w-1/3 mb-4"></div>
+      <div className="h-4 bg-muted rounded w-full mb-2"></div>
+      <div className="h-4 bg-muted rounded w-5/6"></div>
+    </div>
+  );
+}
+
 export default function DashboardLayout() {
   const isMobile = useIsMobile();
   const [sp] = useSearchParams();
-  const m = (sp.get('m') as ModuleKey) || 'overview';
+  const rawModule = sp.get('m');
+  const m = coerceModule(rawModule);
   const f = sp.get('f'); // feature list
   
   const Panel = useMemo(() => panels[m] ?? panels.overview, [m]);
+
+  // Update document title and focus on module change
+  useEffect(() => {
+    const titles: Record<ModuleKey, string> = {
+      overview: 'Dashboard Overview',
+      business: 'Business Management',
+      producers: 'Producers',
+      incentives: 'Incentives',
+      stallions: 'Stallions',
+      farm_ops: 'Farm Operations',
+      events: 'Events',
+      orders: 'Orders',
+      earnings: 'Earnings',
+      messages: 'Messages',
+      approvals: 'Approvals',
+      settings: 'Settings',
+    };
+    document.title = titles[m] || 'Dashboard';
+  }, [m]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -39,9 +70,11 @@ export default function DashboardLayout() {
           {f ? (
             <FeatureHost />
           ) : (
-            <Suspense fallback={<div className="p-6 text-muted-foreground">Loading...</div>}>
-              <Panel />
-            </Suspense>
+            <FeatureErrorBoundary featureId={`dashboard.${m}`}>
+              <Suspense fallback={<PanelSkeleton />}>
+                <Panel />
+              </Suspense>
+            </FeatureErrorBoundary>
           )}
         </main>
       </div>

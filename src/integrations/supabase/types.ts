@@ -6950,6 +6950,10 @@ export type Database = {
         Args: { entity_id: string }
         Returns: Json
       }
+      claim_profile: {
+        Args: { p_profile_id: string }
+        Returns: boolean
+      }
       class_upsert: {
         Args: { p_event_id: string; p_payload: Json }
         Returns: string
@@ -7968,6 +7972,15 @@ export type Database = {
           metadata: Json
           name: string
           similarity_score: number
+        }[]
+      }
+      search_unclaimed_profiles: {
+        Args: { p_limit?: number; p_type: string }
+        Returns: {
+          description: string
+          entity_type: string
+          id: string
+          name: string
         }[]
       }
       set_limit: {

@@ -4,19 +4,26 @@
  * All dashboard navigation uses query params on /dashboard
  */
 
-export type ModuleKey = 
-  | 'overview'
-  | 'business'
-  | 'producers'
-  | 'incentives'
-  | 'stallions'
-  | 'farm_ops'
-  | 'events'
-  | 'orders'
-  | 'earnings'
-  | 'messages'
-  | 'approvals'
-  | 'settings';
+export const MODULES = [
+  'overview',
+  'business',
+  'producers',
+  'incentives',
+  'stallions',
+  'farm_ops',
+  'events',
+  'orders',
+  'earnings',
+  'messages',
+  'approvals',
+  'settings'
+] as const;
+
+export type ModuleKey = typeof MODULES[number];
+
+export function coerceModule(v: string | null): ModuleKey {
+  return (MODULES as readonly string[]).includes(v ?? '') ? (v as ModuleKey) : 'overview';
+}
 
 export function buildDashUrl(params: Record<string, string | null | undefined>): string {
   const sp = new URLSearchParams();

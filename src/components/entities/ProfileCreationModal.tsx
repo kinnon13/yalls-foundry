@@ -15,8 +15,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { emitRockerEvent } from '@/lib/ai/rocker/bus';
+import { rpcWithObs } from '@/lib/supaRpc';
 
 type EntityType = 'horse' | 'business' | 'owner' | 'stable' | 'breeder' | 'rider' | 'event' | 'profile';
+
+interface UnclaimedProfile {
+  id: string;
+  name: string;
+  entity_type: string;
+  description: string | null;
+}
 
 interface ProfileType {
   type: EntityType;
@@ -91,28 +99,20 @@ export function ProfileCreationModal() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch unclaimed profiles when a type is selected
-  const { data: unclaimedProfiles = [], isLoading: loadingUnclaimed, error: unclaimedError } = useQuery({
+  const { data: unclaimedProfiles = [], isLoading: loadingUnclaimed, error: unclaimedError } = useQuery<UnclaimedProfile[]>({
     queryKey: ['unclaimed-profiles', selectedType],
     queryFn: async () => {
       if (!selectedType) return [];
       
-      console.log('Fetching unclaimed profiles for type:', selectedType);
+      const { data, error } = await rpcWithObs(
+        'search_unclaimed_profiles',
+        { p_type: selectedType, p_limit: 20 },
+        { surface: 'profile_modal', module: 'business' }
+      );
       
-      const { data, error } = await supabase
-        .from('entity_profiles')
-        .select('id, name, entity_type, description')
-        .eq('entity_type', selectedType)
-        .eq('is_claimed', false)
-        .order('name')
-        .limit(20);
+      if (error) throw error;
       
-      if (error) {
-        console.error('Error fetching unclaimed profiles:', error);
-        throw error;
-      }
-      
-      console.log(`Found ${data?.length || 0} unclaimed profiles for type ${selectedType}`);
-      return data || [];
+      return (data as UnclaimedProfile[]) || [];
     },
     enabled: !!selectedType && isOpen,
   });
@@ -201,15 +201,17 @@ export function ProfileCreationModal() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { error } = await supabase
-        .from('entity_profiles')
-        .update({ 
-          is_claimed: true,
-          owner_id: user.id 
-        })
-        .eq('id', profileId);
+      const { data: claimed, error } = await rpcWithObs(
+        'claim_profile',
+        { p_profile_id: profileId },
+        { surface: 'profile_modal', module: 'business' }
+      );
 
       if (error) throw error;
+
+      if (!claimed) {
+        throw new Error('Profile already claimed by another user');
+      }
 
       // Log to Rocker
       await emitRockerEvent(
