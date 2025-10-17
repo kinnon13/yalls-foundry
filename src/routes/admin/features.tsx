@@ -10,9 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, FileText, TestTube, Code, AlertCircle, Star, Shield } from 'lucide-react';
+import { ExternalLink, FileText, TestTube, Code, AlertCircle, Star, Shield, Edit2, Save, X, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { validateGoldPath, GOLD_PATH_FEATURES, getFeatureStats } from '@/lib/featureGuards';
 import { Link } from 'react-router-dom';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 type FeatureStatus = 'shell' | 'full-ui' | 'wired';
 type FeatureArea = 'profile' | 'notifications' | 'composer' | 'events' | 'producer' | 'earnings' | 'ai';
@@ -33,11 +35,22 @@ const AREA_LABELS: Record<FeatureArea, string> = {
   ai: 'AI',
 };
 
+interface EditingFeature {
+  id: string;
+  status: FeatureStatus;
+  owner: string;
+  notes: string;
+  severity: string;
+}
+
 export default function FeaturesAdminPage() {
   const [search, setSearch] = useState('');
   const [areaFilter, setAreaFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
+  const [severityFilter, setSeverityFilter] = useState<string>('all');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<EditingFeature | null>(null);
 
   const features = featuresData.features;
   const goldPath = validateGoldPath();
@@ -53,9 +66,52 @@ export default function FeaturesAdminPage() {
       const matchesArea = areaFilter === 'all' || f.area === areaFilter;
       const matchesStatus = statusFilter === 'all' || f.status === statusFilter;
       const matchesOwner = ownerFilter === 'all' || f.owner === ownerFilter;
-      return matchesSearch && matchesArea && matchesStatus && matchesOwner;
+      const matchesSeverity = severityFilter === 'all' || f.severity === severityFilter;
+      return matchesSearch && matchesArea && matchesStatus && matchesOwner && matchesSeverity;
     });
-  }, [features, search, areaFilter, statusFilter, ownerFilter]);
+  }, [features, search, areaFilter, statusFilter, ownerFilter, severityFilter]);
+
+  const startEdit = (feature: any) => {
+    setEditingId(feature.id);
+    setEditForm({
+      id: feature.id,
+      status: feature.status,
+      owner: feature.owner,
+      notes: feature.notes,
+      severity: feature.severity
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm(null);
+  };
+
+  const saveEdit = () => {
+    if (!editForm) return;
+    
+    // In a real implementation, this would persist to features.json via an API
+    // For now, just show a toast
+    toast.success(`Updated ${editForm.id}`, {
+      description: 'Changes saved successfully. Note: In production, this would persist to features.json via backend.'
+    });
+    
+    console.log('Save changes:', editForm);
+    setEditingId(null);
+    setEditForm(null);
+  };
+
+  const getCompletionCriteria = (feature: any) => {
+    const criteria = [
+      { label: 'Routes', met: feature.routes.length > 0 },
+      { label: 'Components', met: feature.components.length > 0 },
+      { label: 'Docs', met: !!feature.docs },
+      { label: 'Tests', met: feature.tests.e2e.length > 0 || feature.tests.unit.length > 0 },
+      { label: 'Owner', met: !!feature.owner },
+      { label: 'Severity', met: !!feature.severity }
+    ];
+    return criteria;
+  };
 
   // Summary stats
   const totalFeatures = features.length;
@@ -180,7 +236,7 @@ export default function FeaturesAdminPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <Input
           placeholder="Search features..."
           value={search}
@@ -209,6 +265,17 @@ export default function FeaturesAdminPage() {
             <SelectItem value="wired">Wired</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={severityFilter} onValueChange={setSeverityFilter}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Severity" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Severity</SelectItem>
+            <SelectItem value="p0">P0</SelectItem>
+            <SelectItem value="p1">P1</SelectItem>
+            <SelectItem value="p2">P2</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={ownerFilter} onValueChange={setOwnerFilter}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Owner" />
@@ -229,10 +296,10 @@ export default function FeaturesAdminPage() {
               <th className="text-left p-3 font-medium w-8"></th>
               <th className="text-left p-3 font-medium">Feature</th>
               <th className="text-left p-3 font-medium">Status</th>
+              <th className="text-left p-3 font-medium">Severity</th>
               <th className="text-left p-3 font-medium">Owner</th>
-              <th className="text-left p-3 font-medium">Routes</th>
-              <th className="text-left p-3 font-medium">Components</th>
-              <th className="text-left p-3 font-medium">Tests</th>
+              <th className="text-left p-3 font-medium">Completion</th>
+              <th className="text-left p-3 font-medium">Coverage</th>
               <th className="text-left p-3 font-medium">Actions</th>
             </tr>
           </thead>
@@ -240,6 +307,9 @@ export default function FeaturesAdminPage() {
             {filtered.map((feature) => {
               const isGoldPath = GOLD_PATH_FEATURES.includes(feature.id);
               const isShellInProd = isProd && feature.status === 'shell' && feature.routes.length > 0;
+              const isEditing = editingId === feature.id;
+              const criteria = getCompletionCriteria(feature);
+              const completionPct = (criteria.filter(c => c.met).length / criteria.length) * 100;
               
               return (
                 <tr key={feature.id} className="border-b hover:bg-muted/30">
@@ -261,65 +331,167 @@ export default function FeaturesAdminPage() {
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground">{feature.id}</div>
+                      {isEditing && editForm && (
+                        <div className="mt-2 space-y-2">
+                          <Textarea
+                            placeholder="Notes..."
+                            value={editForm.notes}
+                            onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                            className="text-xs"
+                            rows={2}
+                          />
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="p-3">
-                    <Badge className={STATUS_COLORS[feature.status as FeatureStatus]}>
-                      {feature.status}
-                    </Badge>
+                    {isEditing && editForm ? (
+                      <Select
+                        value={editForm.status}
+                        onValueChange={(v) => setEditForm({ ...editForm, status: v as FeatureStatus })}
+                      >
+                        <SelectTrigger className="w-28 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="shell">Shell</SelectItem>
+                          <SelectItem value="full-ui">Full UI</SelectItem>
+                          <SelectItem value="wired">Wired</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge className={STATUS_COLORS[feature.status as FeatureStatus]}>
+                        {feature.status}
+                      </Badge>
+                    )}
                   </td>
-                  <td className="p-3 text-sm">{feature.owner}</td>
-                  <td className="p-3 text-sm">{feature.routes.length}</td>
-                  <td className="p-3 text-sm">{feature.components.length}</td>
-                  <td className="p-3 text-sm">
-                    {feature.tests.e2e.length + feature.tests.unit.length}
+                  <td className="p-3">
+                    {isEditing && editForm ? (
+                      <Select
+                        value={editForm.severity}
+                        onValueChange={(v) => setEditForm({ ...editForm, severity: v })}
+                      >
+                        <SelectTrigger className="w-20 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="p0">P0</SelectItem>
+                          <SelectItem value="p1">P1</SelectItem>
+                          <SelectItem value="p2">P2</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge variant={feature.severity === 'p0' ? 'destructive' : 'outline'}>
+                        {feature.severity?.toUpperCase() || 'N/A'}
+                      </Badge>
+                    )}
                   </td>
-                <td className="p-3">
-                  <div className="flex items-center gap-2">
-                    {feature.routes[0] && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        asChild
-                        aria-label="Open route"
-                      >
-                        <a href={feature.routes[0]} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      </Button>
+                  <td className="p-3">
+                    {isEditing && editForm ? (
+                      <Input
+                        value={editForm.owner}
+                        onChange={(e) => setEditForm({ ...editForm, owner: e.target.value })}
+                        className="w-24 h-8 text-sm"
+                      />
+                    ) : (
+                      <span className="text-sm">{feature.owner}</span>
                     )}
-                    {feature.docs && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        asChild
-                        aria-label="View docs"
-                      >
-                        <a href={`/${feature.docs}`} target="_blank" rel="noopener noreferrer">
-                          <FileText className="h-4 w-4" />
-                        </a>
-                      </Button>
-                    )}
-                    {(feature.tests.e2e.length > 0 || feature.tests.unit.length > 0) && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        aria-label="View tests"
-                      >
-                        <TestTube className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {feature.components.length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        aria-label="View components"
-                      >
-                        <Code className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </td>
+                  </td>
+                  <td className="p-3">
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground">{completionPct.toFixed(0)}%</div>
+                      <div className="flex gap-1">
+                        {criteria.map((c, i) => (
+                          <span key={i} title={c.label}>
+                            {c.met ? (
+                              <CheckCircle2 className="h-3 w-3 text-green-600" />
+                            ) : (
+                              <XCircle className="h-3 w-3 text-gray-300" />
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-3">
+                    <div className="space-y-1">
+                      <div className="flex gap-1">
+                        <Badge variant="outline" className="text-xs px-1">
+                          R: {feature.routes.length}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs px-1">
+                          C: {feature.components.length}
+                        </Badge>
+                      </div>
+                      <div className="flex gap-1">
+                        <Badge variant={feature.tests.e2e.length > 0 ? 'default' : 'outline'} className="text-xs px-1">
+                          E2E: {feature.tests.e2e.length}
+                        </Badge>
+                        <Badge variant={feature.tests.unit.length > 0 ? 'default' : 'outline'} className="text-xs px-1">
+                          U: {feature.tests.unit.length}
+                        </Badge>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-3">
+                    <div className="flex items-center gap-1">
+                      {isEditing ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={saveEdit}
+                            aria-label="Save changes"
+                          >
+                            <Save className="h-4 w-4 text-green-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={cancelEdit}
+                            aria-label="Cancel edit"
+                          >
+                            <X className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => startEdit(feature)}
+                            aria-label="Edit feature"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          {feature.routes[0] && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              asChild
+                              aria-label="Open route"
+                            >
+                              <a href={feature.routes[0]} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </Button>
+                          )}
+                          {feature.docs && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              asChild
+                              aria-label="View docs"
+                            >
+                              <a href={`/${feature.docs}`} target="_blank" rel="noopener noreferrer">
+                                <FileText className="h-3 w-3" />
+                              </a>
+                            </Button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </td>
               </tr>
               );
             })}
