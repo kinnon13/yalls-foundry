@@ -5,6 +5,7 @@ import { ReelPost } from './ReelPost';
 import { ReelListing } from './ReelListing';
 import { ReelEvent } from './ReelEvent';
 import { Loader2 } from 'lucide-react';
+import { logUsageEvent, createDwellTimer } from '@/lib/telemetry/usageEvents';
 
 interface TikTokScrollerProps {
   items: FeedItem[];
@@ -24,6 +25,8 @@ export function TikTokScroller({
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const impressedItemsRef = useRef(new Set<string>());
+  const dwellCleanupRef = useRef<(() => void) | null>(null);
 
   // Set up intersection observer for tracking visible item
   useEffect(() => {
@@ -42,9 +45,34 @@ export function TikTokScroller({
               onItemView(item);
             }
 
+            // Log impression (first view only)
+            const itemKey = `${item.kind}-${item.id}`;
+            if (item && !impressedItemsRef.current.has(itemKey)) {
+              impressedItemsRef.current.add(itemKey);
+              logUsageEvent({
+                eventType: 'impression',
+                itemType: item.kind,
+                itemId: item.id
+              });
+            }
+
+            // Start dwell timer
+            if (dwellCleanupRef.current) {
+              dwellCleanupRef.current();
+            }
+            if (item) {
+              dwellCleanupRef.current = createDwellTimer(item);
+            }
+
             // Load more when near end
             if (index >= items.length - 2 && hasMore && onLoadMore && !isLoading) {
               onLoadMore();
+            }
+          } else {
+            // Item scrolled out of view - log dwell if active
+            if (dwellCleanupRef.current) {
+              dwellCleanupRef.current();
+              dwellCleanupRef.current = null;
             }
           }
         });

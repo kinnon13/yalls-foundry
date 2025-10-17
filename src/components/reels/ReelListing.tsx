@@ -4,6 +4,7 @@ import { ShoppingCart, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
+import { logUsageEvent } from '@/lib/telemetry/usageEvents';
 
 interface ReelListingProps {
   reel: ListingFeedItem;
@@ -14,6 +15,16 @@ export function ReelListing({ reel, onAddToCart }: ReelListingProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const media = reel.media || [];
   const currentMedia = media[currentIndex];
+
+  const handleAddToCart = () => {
+    logUsageEvent({
+      eventType: 'add_to_cart',
+      itemType: 'listing',
+      itemId: reel.id,
+      payload: { price_cents: reel.price_cents }
+    });
+    onAddToCart?.();
+  };
 
   return (
     <article className="relative h-[80vh] w-full overflow-hidden rounded-xl bg-neutral-950 text-white">
@@ -79,7 +90,7 @@ export function ReelListing({ reel, onAddToCart }: ReelListingProps) {
         <div className="flex gap-3">
           <Button
             className="flex-1 bg-white text-black hover:bg-white/90 gap-2"
-            onClick={onAddToCart}
+            onClick={handleAddToCart}
           >
             <ShoppingCart className="h-4 w-4" />
             Add to Cart

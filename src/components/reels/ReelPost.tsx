@@ -3,6 +3,7 @@ import { PostFeedItem } from '@/types/feed';
 import { Heart, Repeat2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { logUsageEvent } from '@/lib/telemetry/usageEvents';
 
 interface ReelPostProps {
   reel: PostFeedItem;
@@ -14,6 +15,16 @@ interface ReelPostProps {
 export function ReelPost({ reel, onLike, onRepost, onComment }: ReelPostProps) {
   const firstMedia = reel.media?.[0];
   const isVideo = firstMedia?.type === 'video';
+
+  const handleInteraction = (action: 'like' | 'repost' | 'comment', callback?: () => void) => {
+    logUsageEvent({
+      eventType: 'click',
+      itemType: 'post',
+      itemId: reel.id,
+      payload: { action }
+    });
+    callback?.();
+  };
 
   return (
     <article className="relative h-[80vh] w-full overflow-hidden rounded-xl bg-neutral-950 text-white">
@@ -74,7 +85,7 @@ export function ReelPost({ reel, onLike, onRepost, onComment }: ReelPostProps) {
             size="sm"
             variant="ghost"
             className="text-white hover:bg-white/10 gap-2"
-            onClick={onLike}
+            onClick={() => handleInteraction('like', onLike)}
           >
             <Heart className="h-4 w-4" />
             Like
@@ -83,7 +94,7 @@ export function ReelPost({ reel, onLike, onRepost, onComment }: ReelPostProps) {
             size="sm"
             variant="ghost"
             className="text-white hover:bg-white/10 gap-2"
-            onClick={onRepost}
+            onClick={() => handleInteraction('repost', onRepost)}
           >
             <Repeat2 className="h-4 w-4" />
             Repost
@@ -92,7 +103,7 @@ export function ReelPost({ reel, onLike, onRepost, onComment }: ReelPostProps) {
             size="sm"
             variant="ghost"
             className="text-white hover:bg-white/10 gap-2"
-            onClick={onComment}
+            onClick={() => handleInteraction('comment', onComment)}
           >
             <MessageCircle className="h-4 w-4" />
             Comment

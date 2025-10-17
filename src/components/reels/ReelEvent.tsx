@@ -3,6 +3,7 @@ import { EventFeedItem } from '@/types/feed';
 import { Calendar, MapPin, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { logUsageEvent } from '@/lib/telemetry/usageEvents';
 
 interface ReelEventProps {
   reel: EventFeedItem;
@@ -25,6 +26,16 @@ export function ReelEvent({ reel, onRSVP }: ReelEventProps) {
         minute: '2-digit'
       })
     : '';
+
+  const handleRSVP = () => {
+    logUsageEvent({
+      eventType: 'rsvp',
+      itemType: 'event',
+      itemId: reel.id,
+      payload: { starts_at: reel.starts_at }
+    });
+    onRSVP?.();
+  };
 
   return (
     <article className="relative h-[80vh] w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary/20 to-neutral-950 text-white">
@@ -78,7 +89,7 @@ export function ReelEvent({ reel, onRSVP }: ReelEventProps) {
           <div className="space-y-3">
             <Button
               className="w-full bg-white text-black hover:bg-white/90"
-              onClick={onRSVP}
+              onClick={handleRSVP}
             >
               RSVP Now
             </Button>
