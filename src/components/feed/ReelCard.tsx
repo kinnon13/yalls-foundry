@@ -2,76 +2,102 @@
  * ReelCard - Full-bleed post card with media, author chip, and actions
  */
 
-import { Card } from '@/components/ui/card';
+import { PostFeedItem } from '@/types/feed';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Heart, MessageCircle, Share2, Repeat2 } from 'lucide-react';
-import type { PostFeedItem } from '@/types/feed';
+import { logClick } from '@/lib/telemetry/usage';
 
 interface ReelCardProps {
   post: PostFeedItem;
 }
 
 export function ReelCard({ post }: ReelCardProps) {
-  const hasMedia = post.media && post.media.length > 0;
+  const handleAction = (action: string) => {
+    logClick('feed_reel', 'post', post.id);
+    console.log(`[ReelCard] ${action}:`, post.id);
+  };
 
   return (
-    <Card className="overflow-hidden border-0 shadow-lg rounded-2xl">
+    <div className="relative flex flex-col h-screen w-full bg-background">
       {/* Media */}
-      {hasMedia && (
-        <div className="relative aspect-[9/16] bg-muted">
-          <img
-            src={post.media[0].url}
-            alt=""
+      {post.media && post.media.length > 0 && (
+        <div className="absolute inset-0 -z-10">
+          <img 
+            src={post.media[0].url} 
+            alt="" 
             className="w-full h-full object-cover"
           />
-          {post.labels && post.labels.length > 0 && (
-            <div className="absolute top-4 right-4 flex gap-2">
-              {post.labels.map((label) => (
-                <span
-                  key={label}
-                  className="px-2 py-1 bg-black/60 text-white text-xs rounded-full"
-                >
-                  {label.replace('_', ' ')}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
-      {/* Content */}
-      <div className="p-4 space-y-4">
-        {/* Author chip */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary/10" />
-          <span className="text-sm font-medium">
-            {post.author_user_id?.substring(0, 8)}
-          </span>
+      {/* Content Overlay */}
+      <div className="flex-1 flex flex-col justify-end p-4 bg-gradient-to-t from-background/90 to-transparent">
+        {/* Author Chip */}
+        <div className="flex items-center gap-3 mb-4">
+          <Avatar className="h-10 w-10 border-2 border-background">
+            <AvatarImage src="" alt="" />
+            <AvatarFallback>U</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {post.author_user_id ? `User ${post.author_user_id.slice(0, 8)}` : 'Anonymous'}
+            </p>
+            {post.labels && post.labels.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {post.labels.includes('repost') ? '🔁 Reposted' : ''}
+                {post.labels.includes('auto') ? '✨ Auto-shared' : ''}
+                {post.labels.includes('cross_post') ? '🔀 Cross-posted' : ''}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Body */}
-        <p className="text-sm leading-relaxed">{post.body}</p>
+        <p className="text-sm text-foreground mb-4 line-clamp-3">
+          {post.body}
+        </p>
 
         {/* Actions */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" className="gap-2">
-            <Heart className="w-4 h-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleAction('like')}
+            className="gap-2"
+          >
+            <Heart className="h-4 w-4" />
             <span className="text-xs">Like</span>
           </Button>
-          <Button variant="ghost" size="sm" className="gap-2">
-            <MessageCircle className="w-4 h-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleAction('comment')}
+            className="gap-2"
+          >
+            <MessageCircle className="h-4 w-4" />
             <span className="text-xs">Comment</span>
           </Button>
-          <Button variant="ghost" size="sm" className="gap-2">
-            <Repeat2 className="w-4 h-4" />
-            <span className="text-xs">Repost</span>
-          </Button>
-          <Button variant="ghost" size="sm" className="gap-2">
-            <Share2 className="w-4 h-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleAction('share')}
+            className="gap-2"
+          >
+            <Share2 className="h-4 w-4" />
             <span className="text-xs">Share</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleAction('repost')}
+            className="gap-2"
+          >
+            <Repeat2 className="h-4 w-4" />
+            <span className="text-xs">Repost</span>
           </Button>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }

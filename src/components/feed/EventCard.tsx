@@ -1,43 +1,73 @@
 /**
- * EventCard - Event with date/time chip, location, RSVP
+ * EventCard - Event card with date/time, location, and RSVP
  */
 
-import { Card } from '@/components/ui/card';
+import { EventFeedItem } from '@/types/feed';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin } from 'lucide-react';
-import type { EventFeedItem } from '@/types/feed';
+import { Card, CardContent } from '@/components/ui/card';
+import { Calendar, MapPin, Users } from 'lucide-react';
 import { format } from 'date-fns';
+import { logClick } from '@/lib/telemetry/usage';
 
 interface EventCardProps {
   event: EventFeedItem;
 }
 
 export function EventCard({ event }: EventCardProps) {
-  const startsAt = event.starts_at ? new Date(event.starts_at) : null;
+  const handleRSVP = () => {
+    logClick('feed_event', 'event', event.id);
+    console.log('[EventCard] RSVP:', event.id);
+  };
+
+  const handleViewDetails = () => {
+    logClick('feed_event', 'event', event.id);
+    window.location.href = `/events/${event.id}`;
+  };
 
   return (
-    <Card className="p-4 space-y-4 shadow-md rounded-xl">
-      {/* Date chip */}
-      {startsAt && (
+    <Card className="w-full max-w-2xl mx-auto bg-card">
+      <CardContent className="p-6 space-y-4">
+        {/* Date/Time Chip */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Calendar className="w-4 h-4" />
-          <span>{format(startsAt, 'MMM d, yyyy • h:mm a')}</span>
+          <Calendar className="h-4 w-4" />
+          <span>
+            {event.starts_at ? format(new Date(event.starts_at), 'PPP p') : 'Date TBA'}
+          </span>
         </div>
-      )}
 
-      {/* Title */}
-      <h3 className="text-lg font-semibold">{event.title}</h3>
+        {/* Title */}
+        <h3 className="text-xl font-semibold text-foreground">
+          {event.title}
+        </h3>
 
-      {/* Location */}
-      {event.location && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MapPin className="w-4 h-4" />
-          <span>{JSON.stringify(event.location)}</span>
+        {/* Location */}
+        {event.location && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4" />
+            <span>{JSON.stringify(event.location)}</span>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center gap-3 pt-2">
+          <Button
+            onClick={handleRSVP}
+            variant="default"
+            size="sm"
+            className="gap-2"
+          >
+            <Users className="h-4 w-4" />
+            RSVP
+          </Button>
+          <Button
+            onClick={handleViewDetails}
+            variant="outline"
+            size="sm"
+          >
+            View Details
+          </Button>
         </div>
-      )}
-
-      {/* RSVP */}
-      <Button className="w-full">RSVP</Button>
+      </CardContent>
     </Card>
   );
 }

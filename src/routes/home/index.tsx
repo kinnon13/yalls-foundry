@@ -5,11 +5,13 @@
 
 import { useSearchParams } from 'react-router-dom';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
-import { TikTokScroller } from '@/components/reels/TikTokScroller';
+import { TikTokScroller } from '@/components/feed/TikTokScroller';
 import { PublicCalendar } from '@/components/calendar/PublicCalendar';
 import { Composer } from '@/components/composer/Composer';
 import { useSession } from '@/lib/auth/context';
 import { useScrollerFeed } from '@/hooks/useScrollerFeed';
+import { Finder } from '@/components/overlays/Finder';
+import { NotificationBell } from '@/components/overlays/NotificationBell';
 
 type Lane = 'personal' | 'combined';
 
@@ -77,9 +79,8 @@ export default function Home() {
           <TikTokScroller
             items={feedItems}
             isLoading={isLoading || isFetchingNextPage}
-            lane={lane}
             onLoadMore={() => fetchNextPage()}
-            hasNextPage={hasNextPage}
+            hasMore={hasNextPage}
           />
         </main>
 
@@ -88,6 +89,9 @@ export default function Home() {
           <PublicCalendar />
         </aside>
       </div>
+
+      {/* Global Overlays */}
+      <Finder />
     </div>
   );
 }

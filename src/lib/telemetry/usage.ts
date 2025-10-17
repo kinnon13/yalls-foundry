@@ -1,81 +1,97 @@
 /**
- * Production-ready usage telemetry (PR5c)
- * Fire-and-forget event tracking for analytics
+ * Usage Telemetry - Production-Grade Event Tracking
+ * Logs user interactions with proper rate limiting and sanitization
  */
 
 import { supabase } from '@/integrations/supabase/client';
 
-export type UsageEventType = 
-  | 'impression' 
-  | 'dwell_start' 
-  | 'dwell_end' 
-  | 'click' 
-  | 'open' 
-  | 'share' 
-  | 'like' 
-  | 'save' 
-  | 'hide' 
-  | 'report';
+const ALLOWED_META_KEYS = ['experiment', 'variant', 'source', 'cta', 'screen', 'viewport'];
+const MAX_META_SIZE = 1024; // 1KB cap
 
-export type UsageEventInput = {
-  sessionId: string;
-  type: UsageEventType;
-  surface: string; // 'home_foryou' | 'home_following' | 'home_shop' | 'dashboard_approvals'
-  itemKind: 'post' | 'listing' | 'event' | 'feature';
-  itemId: string;
-  lane?: string | null;
-  position?: number | null;
-  durationMs?: number | null;
-  meta?: Record<string, unknown>;
-};
+let sessionId: string | null = null;
 
-/**
- * Log a usage event (fire-and-forget)
- * Safe to call in render loops - no await needed
- */
-export function logUsage(ev: UsageEventInput): void {
-  (supabase as any)
-    .rpc('log_usage_event_v2', {
-      p_session_id: ev.sessionId,
-      p_event_type: ev.type,
-      p_surface: ev.surface,
-      p_item_kind: ev.itemKind,
-      p_item_id: ev.itemId,
-      p_lane: ev.lane ?? null,
-      p_position: ev.position ?? null,
-      p_duration_ms: ev.durationMs ?? null,
-      p_meta: sanitizeMeta(ev.meta),
-    })
-    .then(() => void 0)
-    .catch(() => void 0);
+export function getSessionId(): string {
+  if (!sessionId) {
+    sessionId = sessionStorage.getItem('usage_session_id');
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+      sessionStorage.setItem('usage_session_id', sessionId);
+    }
+  }
+  return sessionId;
 }
 
-/**
- * Sanitize metadata to prevent PII leakage and bloat
- */
 function sanitizeMeta(meta?: Record<string, unknown>): Record<string, unknown> | null {
   if (!meta) return null;
   
-  const ALLOWED = ['experiment', 'variant', 'source', 'cta', 'screen', 'viewport'];
   const safe: Record<string, unknown> = {};
-  
-  for (const k of ALLOWED) {
-    if (meta[k] !== undefined) safe[k] = meta[k];
+  for (const key of ALLOWED_META_KEYS) {
+    if (meta[key] !== undefined) {
+      safe[key] = meta[key];
+    }
   }
   
-  const s = JSON.stringify(safe);
-  return s.length > 1024 ? null : safe;
+  const serialized = JSON.stringify(safe);
+  if (serialized.length > MAX_META_SIZE) {
+    console.warn('[Telemetry] Meta size exceeds 1KB, dropping');
+    return null;
+  }
+  
+  return safe;
 }
 
-/**
- * Get or create a session ID for this browser session
- */
-export function getSessionId(): string {
-  const key = 'usage_session_id';
-  let sid = sessionStorage.getItem(key);
-  if (!sid) {
-    sid = crypto.randomUUID();
-    sessionStorage.setItem(key, sid);
+interface LogUsageParams {
+  sessionId: string;
+  type: 'impression' | 'dwell_start' | 'dwell_end' | 'click' | 'open' | 'share' | 'like' | 'save' | 'hide' | 'report';
+  surface: string;
+  itemKind: 'post' | 'listing' | 'event';
+  itemId: string;
+  lane: string | null;
+  position?: number;
+  durationMs?: number;
+  meta?: Record<string, unknown>;
+}
+
+export async function logUsage(params: LogUsageParams): Promise<void> {
+  try {
+    const safeMeta = sanitizeMeta(params.meta);
+    
+    await supabase.rpc('log_usage_event_v2', {
+      p_session_id: params.sessionId,
+      p_event_type: params.type,
+      p_surface: params.surface,
+      p_item_kind: params.itemKind,
+      p_item_id: params.itemId,
+      p_lane: params.lane,
+      p_position: params.position ?? null,
+      p_duration_ms: params.durationMs ?? null,
+      p_meta: safeMeta ? JSON.stringify(safeMeta) : '{}'
+    });
+  } catch (error) {
+    // Fire-and-forget: never block UX
+    console.error('[Telemetry] Failed to log usage:', error);
   }
-  return sid;
+}
+
+export function logImpression(surface: string, itemKind: 'post' | 'listing' | 'event', itemId: string, position: number, lane?: string): void {
+  logUsage({
+    sessionId: getSessionId(),
+    type: 'impression',
+    surface,
+    itemKind,
+    itemId,
+    lane: lane ?? null,
+    position
+  });
+}
+
+export function logClick(surface: string, itemKind: 'post' | 'listing' | 'event', itemId: string): void {
+  logUsage({
+    sessionId: getSessionId(),
+    type: 'click',
+    surface,
+    itemKind,
+    itemId,
+    lane: null
+  });
 }

@@ -3,7 +3,7 @@
  * Renders posts, listings, events with proper spacing and deduplication
  */
 
-import { useRef, useCallback } from 'react';
+import { useRef, useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import type { FeedItem } from '@/types/feed';
 import { ReelCard } from './ReelCard';
@@ -26,7 +26,7 @@ export function TikTokScroller({ items, onLoadMore, hasMore, isLoading }: TikTok
   const lastSeller = useRef<string | null>(null);
 
   // Load more when sentinel comes into view
-  useCallback(() => {
+  useEffect(() => {
     if (inView && hasMore && !isLoading && onLoadMore) {
       onLoadMore();
     }

@@ -1,66 +1,62 @@
 /**
- * Discover - Browse & explore public content
+ * Discover - For You / Trending / Latest with TikTok scroller
  */
 
 import { useState } from 'react';
-import { GlobalHeader } from '@/components/layout/GlobalHeader';
-import { SEOHelmet } from '@/lib/seo/helmet';
-import { SegmentedControl } from '@/components/ui/segmented-control';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Clock, Sparkles } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useScrollerFeed } from '@/hooks/useScrollerFeed';
+import { TikTokScroller } from '@/components/feed/TikTokScroller';
+import { Finder } from '@/components/overlays/Finder';
+import { NotificationBell } from '@/components/overlays/NotificationBell';
+import { Sparkles, TrendingUp, Clock } from 'lucide-react';
 
-type DiscoverTab = 'trending' | 'latest' | 'for_you';
+type DiscoverMode = 'for_you' | 'trending' | 'latest';
 
-export default function Discover() {
-  const [tab, setTab] = useState<DiscoverTab>('trending');
+export default function DiscoverPage() {
+  const [mode, setMode] = useState<DiscoverMode>('for_you');
+  
+  const feed = useScrollerFeed({ lane: 'combined' });
+  const allItems = feed.data?.pages.flatMap(page => page.items) ?? [];
 
   return (
-    <>
-      <SEOHelmet 
-        title="Discover - Y'alls.ai" 
-        description="Explore trending content, latest updates, and personalized recommendations"
-      />
-      <GlobalHeader />
-      
-      <main className="min-h-screen pt-20 bg-background">
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Discover</h1>
-              <p className="text-muted-foreground">
-                Explore trending content and discover new connections
-              </p>
-            </div>
-
-            <SegmentedControl
-              value={tab}
-              onChange={(value) => setTab(value as DiscoverTab)}
-              options={[
-                { value: 'trending', label: 'Trending', icon: <TrendingUp className="h-4 w-4" /> },
-                { value: 'latest', label: 'Latest', icon: <Clock className="h-4 w-4" /> },
-                { value: 'for_you', label: 'For You', icon: <Sparkles className="h-4 w-4" /> }
-              ]}
-            />
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Card key={i} className="animate-fade-in hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
-                  <CardHeader>
-                    <CardTitle>Coming Soon</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      {tab === 'trending' && 'Trending content will appear here'}
-                      {tab === 'latest' && 'Latest posts will appear here'}
-                      {tab === 'for_you' && 'Personalized recommendations will appear here'}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+    <div className="min-h-screen bg-background">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b">
+        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+          <h1 className="text-xl font-bold">Discover</h1>
+          
+          <div className="flex items-center gap-4">
+            <Tabs value={mode} onValueChange={(v) => setMode(v as DiscoverMode)}>
+              <TabsList>
+                <TabsTrigger value="for_you" className="gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  For You
+                </TabsTrigger>
+                <TabsTrigger value="trending" className="gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Trending
+                </TabsTrigger>
+                <TabsTrigger value="latest" className="gap-2">
+                  <Clock className="h-4 w-4" />
+                  Latest
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            
+            <NotificationBell />
           </div>
         </div>
+      </header>
+
+      <main className="pt-14">
+        <TikTokScroller
+          items={allItems}
+          onLoadMore={() => feed.fetchNextPage()}
+          hasMore={feed.hasNextPage}
+          isLoading={feed.isFetchingNextPage}
+        />
       </main>
-    </>
+
+      <Finder />
+    </div>
   );
 }
