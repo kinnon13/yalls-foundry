@@ -7735,12 +7735,19 @@ export type Database = {
         Returns: boolean
       }
       feed_fusion_home: {
-        Args: {
-          p_cursor?: string
-          p_lane: string
-          p_limit?: number
-          p_user_id: string
-        }
+        Args:
+          | {
+              p_cursor?: number
+              p_lane: string
+              p_limit?: number
+              p_profile_id: string
+            }
+          | {
+              p_cursor?: string
+              p_lane: string
+              p_limit?: number
+              p_user_id: string
+            }
         Returns: {
           created_at: string
           item_id: string
@@ -7759,13 +7766,15 @@ export type Database = {
         Returns: Json
       }
       feed_fusion_profile: {
-        Args: {
-          p_cursor?: string
-          p_entity_id: string
-          p_lane: string
-          p_limit?: number
-          p_user_id: string
-        }
+        Args:
+          | { p_cursor?: number; p_limit?: number; p_profile_id: string }
+          | {
+              p_cursor?: string
+              p_entity_id: string
+              p_lane: string
+              p_limit?: number
+              p_user_id: string
+            }
         Returns: {
           created_at: string
           item_id: string
