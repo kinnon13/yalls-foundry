@@ -22,6 +22,7 @@ export const featureRegistry: Record<string, FeatureDef> = {
     defaults: { filter: 'pending' },
     capabilities: ['approve', 'reject', 'hide', 'export'],
     icon: CheckCircle,
+    enabled: true,
   },
   calendar: {
     id: 'calendar',
@@ -36,6 +37,7 @@ export const featureRegistry: Record<string, FeatureDef> = {
     defaults: { view: 'public', range: '30d' },
     capabilities: ['view', 'create', 'edit', 'delete'],
     icon: Calendar,
+    enabled: true,
   },
   earnings: {
     id: 'earnings',
@@ -49,6 +51,7 @@ export const featureRegistry: Record<string, FeatureDef> = {
     defaults: { tab: 'summary' },
     capabilities: ['view', 'export'],
     icon: DollarSign,
+    enabled: true,
   },
 };
 
@@ -58,6 +61,25 @@ export function getFeature(id: string): FeatureDef | undefined {
 
 export function getAllFeatures(): FeatureDef[] {
   return Object.values(featureRegistry);
+}
+
+export function getEnabledFeatures(): FeatureDef[] {
+  return Object.values(featureRegistry).filter(f => {
+    if (f.enabled === undefined || f.enabled === true) return true;
+    if (f.enabled === false) return false;
+    // Rollout percentage: deterministic per-session
+    const roll = Math.abs(hashCode(f.id)) % 100;
+    return roll < f.enabled;
+  });
+}
+
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash;
 }
 
 export function getFeatureCapabilities(id: string): string[] {

@@ -19,6 +19,8 @@ export interface FeatureDef {
   defaults?: FeatureProps;
   capabilities?: string[];
   icon?: ComponentType<{ className?: string }>;
+  enabled?: boolean | number; // true/false or rollout % (0-100)
+  entitlementKey?: string; // e.g. 'pro.plan' for paywall gating
 }
 
 export interface FeatureContext {

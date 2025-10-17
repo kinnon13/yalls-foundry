@@ -3178,6 +3178,7 @@ export type Database = {
       }
       entity_profiles: {
         Row: {
+          claimed_at: string | null
           claimed_by: string | null
           created_at: string
           created_by: string | null
@@ -3195,6 +3196,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          claimed_at?: string | null
           claimed_by?: string | null
           created_at?: string
           created_by?: string | null
@@ -3212,6 +3214,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          claimed_at?: string | null
           claimed_by?: string | null
           created_at?: string
           created_by?: string | null
@@ -3240,6 +3243,7 @@ export type Database = {
       }
       entity_profiles_2025_01: {
         Row: {
+          claimed_at: string | null
           claimed_by: string | null
           created_at: string
           created_by: string | null
@@ -3257,6 +3261,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          claimed_at?: string | null
           claimed_by?: string | null
           created_at?: string
           created_by?: string | null
@@ -3274,6 +3279,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          claimed_at?: string | null
           claimed_by?: string | null
           created_at?: string
           created_by?: string | null
@@ -3294,6 +3300,7 @@ export type Database = {
       }
       entity_profiles_2025_02: {
         Row: {
+          claimed_at: string | null
           claimed_by: string | null
           created_at: string
           created_by: string | null
@@ -3311,6 +3318,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          claimed_at?: string | null
           claimed_by?: string | null
           created_at?: string
           created_by?: string | null
@@ -3328,6 +3336,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          claimed_at?: string | null
           claimed_by?: string | null
           created_at?: string
           created_by?: string | null
@@ -3348,6 +3357,7 @@ export type Database = {
       }
       entity_profiles_2025_03: {
         Row: {
+          claimed_at: string | null
           claimed_by: string | null
           created_at: string
           created_by: string | null
@@ -3365,6 +3375,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          claimed_at?: string | null
           claimed_by?: string | null
           created_at?: string
           created_by?: string | null
@@ -3382,6 +3393,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          claimed_at?: string | null
           claimed_by?: string | null
           created_at?: string
           created_by?: string | null

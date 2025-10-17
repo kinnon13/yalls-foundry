@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 import { updateDashParams, type ModuleKey } from '@/lib/dashUrl';
-import { getAllFeatures } from '@/feature-kernel/registry';
+import { getEnabledFeatures } from '@/feature-kernel/registry';
 import type { FeatureProps } from '@/feature-kernel/types';
 import { 
   LayoutDashboard, 
@@ -180,7 +180,7 @@ export function DashboardSidebar() {
             Quick Add
           </div>
           <div className="space-y-1">
-            {getAllFeatures().slice(0, 3).map((feature) => {
+            {getEnabledFeatures().slice(0, 3).map((feature) => {
               const isActive = activeFeatures.includes(feature.id);
               const Icon = feature.icon || PlusCircle;
               return (
