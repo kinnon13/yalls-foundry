@@ -25,7 +25,6 @@ import NotFound from "./pages/NotFound";
 
 // Lazy load dashboard and AI routes
 const Dashboard = lazy(() => import('./routes/dashboard'));
-const DashboardV2 = lazy(() => import('./routes/dashboard-v2'));
 const DiscoverV2 = lazy(() => import('./routes/discover-v2'));
 const Earnings = lazy(() => import('./routes/earnings'));
 const Approvals = lazy(() => import('./routes/dashboard/approvals'));
@@ -137,10 +136,8 @@ const App = () => (
           <Route path="/orders" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrdersIndex /></Suspense></RequireAuth>} />
           <Route path="/orders/:id" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrderDetail /></Suspense></RequireAuth>} />
           
-          {/* Dashboard V2 & Earnings */}
-          <Route path="/dashboard-v2" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><DashboardV2 /></Suspense></RequireAuth>} />
+          {/* Earnings (standalone for legacy links) */}
           <Route path="/earnings" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><Earnings /></Suspense></RequireAuth>} />
-          <Route path="/dashboard/approvals" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><Approvals /></Suspense></RequireAuth>} />
           <Route path="/dashboard/approvals" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><Approvals /></Suspense></RequireAuth>} />
           
           {/* Farm Ops */}
