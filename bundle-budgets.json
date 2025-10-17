@@ -1,0 +1,43 @@
+{
+  "comment": "Task 15: Performance Budgets - Fail CI if exceeded",
+  "budgets": [
+    {
+      "route": "/",
+      "gzip": 230,
+      "description": "Home (feed + TikTok scroller)"
+    },
+    {
+      "route": "/discover",
+      "gzip": 220,
+      "description": "Discover (grid + filters)"
+    },
+    {
+      "route": "/dashboard",
+      "gzip": 280,
+      "description": "Dashboard (all modules lazy loaded)"
+    },
+    {
+      "route": "/messages",
+      "gzip": 180,
+      "description": "Messages (DM + notifications)"
+    },
+    {
+      "route": "/profile/:id",
+      "gzip": 200,
+      "description": "Profile (feed + hero)"
+    },
+    {
+      "route": "/cart",
+      "gzip": 150,
+      "description": "Cart (checkout flow)"
+    }
+  ],
+  "rules": {
+    "max_bundle_size_kb": 230,
+    "max_js_size_kb": 180,
+    "max_css_size_kb": 30,
+    "max_initial_load_ms": 2000,
+    "max_fcp_ms": 1800,
+    "max_lcp_ms": 2500
+  }
+}

@@ -1,0 +1,8 @@
+# Task 13: Sentry Configuration
+[auth]
+token=
+
+[defaults]
+url=https://sentry.io/
+org=
+project=
