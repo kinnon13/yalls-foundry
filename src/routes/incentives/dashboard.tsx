@@ -1,7 +1,3 @@
-import { Card } from '@/design/components/Card';
-import { Badge } from '@/design/components/Badge';
-import { tokens } from '@/design/tokens';
-
 /**
  * Incentives Dashboard - Programs + Nominations
  */
@@ -17,7 +13,7 @@ export default function IncentivesDashboard() {
     queryKey: ['incentive-programs'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('incentive_programs')
+        .from('incentive_programs' as any)
         .select('*')
         .eq('active', true)
         .order('created_at', { ascending: false });
@@ -32,7 +28,7 @@ export default function IncentivesDashboard() {
       if (!user) return [];
 
       const { data } = await supabase
-        .from('nominations')
+        .from('nominations' as any)
         .select('*')
         .eq('nominated_by', user.id)
         .eq('status', 'active')
@@ -49,7 +45,7 @@ export default function IncentivesDashboard() {
       if (!user) return [];
 
       const { data } = await supabase
-        .from('bonus_payouts')
+        .from('bonus_payouts' as any)
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
@@ -148,7 +144,7 @@ export default function IncentivesDashboard() {
                       Program ID: {n.program_id}
                     </div>
                   </div>
-                  <Badge variant="outline">Active</Badge>
+                  <Badge variant="default">Active</Badge>
                 </div>
               ))}
             </div>

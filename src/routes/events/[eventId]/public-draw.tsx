@@ -29,7 +29,7 @@ export default function PublicDraw() {
     queryKey: ['event-classes', eventId],
     queryFn: async () => {
       const { data } = await supabase
-        .from('event_classes')
+        .from('event_classes' as any)
         .select('*')
         .eq('event_id', eventId)
         .order('sequence', { ascending: true });
@@ -45,7 +45,7 @@ export default function PublicDraw() {
       const results: Array<{classId: string; classTitle: string; draw: any[]}> = [];
       for (const c of classes) {
         const { data } = await supabase
-          .from('draws')
+          .from('draws' as any)
           .select('*')
           .eq('class_id', (c as any).id)
           .eq('perf_num', 1)

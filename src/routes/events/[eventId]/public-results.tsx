@@ -30,7 +30,7 @@ export default function PublicResults() {
     queryKey: ['event-classes', eventId],
     queryFn: async () => {
       const { data } = await supabase
-        .from('event_classes')
+        .from('event_classes' as any)
         .select('*')
         .eq('event_id', eventId)
         .order('sequence', { ascending: true});
@@ -46,7 +46,7 @@ export default function PublicResults() {
       const classResults: Array<{classId: string; classTitle: string; results: any[]}> = [];
       for (const c of classes) {
         const { data } = await supabase
-          .from('results')
+          .from('results' as any)
           .select('*')
           .eq('class_id', (c as any).id)
           .eq('status', 'approved')

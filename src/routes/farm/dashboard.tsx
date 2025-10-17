@@ -8,14 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Horse, Users, Calendar, FileText, AlertTriangle } from 'lucide-react';
+import { Waves, Users, Calendar, FileText, AlertTriangle } from 'lucide-react';
 
 export default function FarmDashboard() {
   const { data: horses = [] } = useQuery({
     queryKey: ['farm-horses'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('horses')
+        .from('horses' as any)
         .select('*')
         .limit(10);
       return data || [];
@@ -26,7 +26,7 @@ export default function FarmDashboard() {
     queryKey: ['farm-boarders'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('boarders')
+        .from('boarders' as any)
         .select('*')
         .eq('status', 'active')
         .limit(10);
@@ -38,9 +38,9 @@ export default function FarmDashboard() {
     queryKey: ['farm-tasks-overdue'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('tasks')
+        .from('tasks' as any)
         .select('*')
-        .eq('status', 'pending')
+        .eq('status', 'open' as any)
         .lt('due_at', new Date().toISOString())
         .order('due_at', { ascending: true })
         .limit(5);
@@ -57,7 +57,7 @@ export default function FarmDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 mb-2">
-              <Horse className="h-4 w-4 text-blue-500" />
+              <Waves className="h-4 w-4 text-blue-500" />
               <div className="text-sm text-muted-foreground">Horses</div>
             </div>
             <div className="text-2xl font-bold">{horses.length}</div>
