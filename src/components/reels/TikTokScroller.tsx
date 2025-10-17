@@ -14,12 +14,12 @@ import type { FeedItem } from '@/types/feed';
 interface TikTokScrollerProps {
   items: FeedItem[];
   isLoading: boolean;
-  lane: string;
+  lane?: string;
   onLoadMore?: () => void;
   hasNextPage?: boolean;
 }
 
-export function TikTokScroller({ items, isLoading, lane, onLoadMore, hasNextPage }: TikTokScrollerProps) {
+export function TikTokScroller({ items, isLoading, lane = 'combined', onLoadMore, hasNextPage }: TikTokScrollerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [muted, setMuted] = useState(true);

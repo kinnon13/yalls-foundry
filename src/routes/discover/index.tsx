@@ -51,7 +51,7 @@ export default function DiscoverPage() {
         <TikTokScroller
           items={allItems}
           onLoadMore={() => feed.fetchNextPage()}
-          hasMore={feed.hasNextPage}
+          hasNextPage={feed.hasNextPage}
           isLoading={feed.isFetchingNextPage}
         />
       </main>

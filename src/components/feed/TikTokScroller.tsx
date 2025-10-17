@@ -13,11 +13,12 @@ import { EventCard } from './EventCard';
 interface TikTokScrollerProps {
   items: FeedItem[];
   onLoadMore?: () => void;
-  hasMore?: boolean;
+  hasNextPage?: boolean;
   isLoading?: boolean;
+  lane?: string;
 }
 
-export function TikTokScroller({ items, onLoadMore, hasMore, isLoading }: TikTokScrollerProps) {
+export function TikTokScroller({ items, onLoadMore, hasNextPage, isLoading, lane = 'combined' }: TikTokScrollerProps) {
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0.1,
     triggerOnce: false,
@@ -27,10 +28,10 @@ export function TikTokScroller({ items, onLoadMore, hasMore, isLoading }: TikTok
 
   // Load more when sentinel comes into view
   useEffect(() => {
-    if (inView && hasMore && !isLoading && onLoadMore) {
+    if (inView && hasNextPage && !isLoading && onLoadMore) {
       onLoadMore();
     }
-  }, [inView, hasMore, isLoading, onLoadMore]);
+  }, [inView, hasNextPage, isLoading, onLoadMore]);
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto pb-24">
@@ -54,7 +55,7 @@ export function TikTokScroller({ items, onLoadMore, hasMore, isLoading }: TikTok
       })}
 
       {/* Load more sentinel */}
-      {hasMore && (
+      {hasNextPage && (
         <div ref={loadMoreRef} className="h-20 flex items-center justify-center">
           {isLoading ? (
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -64,7 +65,7 @@ export function TikTokScroller({ items, onLoadMore, hasMore, isLoading }: TikTok
         </div>
       )}
 
-      {!hasMore && items.length > 0 && (
+      {!hasNextPage && items.length > 0 && (
         <div className="text-center py-8 text-muted-foreground">
           You've reached the end
         </div>

@@ -11,6 +11,7 @@ import { ProfileBubbles } from '@/components/profile/ProfileBubbles';
 import { ProfileLinkBars } from '@/components/profile/ProfileLinkBars';
 import { ProfileCounts } from '@/components/profile/ProfileCounts';
 import { AppearanceSheet } from '@/components/profile/AppearanceSheet';
+import { ProfileFeedTab } from '@/components/profile/ProfileFeedTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
@@ -133,23 +134,11 @@ export default function ProfilePage() {
           </TabsList>
 
           <TabsContent value="this-page">
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground py-8">
-                  Activity specific to this profile
-                </p>
-              </CardContent>
-            </Card>
+            <ProfileFeedTab entityId={profile.user_id} mode="this_page" />
           </TabsContent>
 
           <TabsContent value="combined">
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground py-8">
-                  Combined activity across all owned entities
-                </p>
-              </CardContent>
-            </Card>
+            <ProfileFeedTab entityId={profile.user_id} mode="combined" />
           </TabsContent>
         </Tabs>
       </div>

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreatePost } from '@/components/posts/CreatePost';
 import { PublicCalendarWidget } from '@/components/feed/PublicCalendarWidget';
-import { TikTokScroller } from '@/components/reels/TikTokScroller';
+import { TikTokScroller } from '@/components/feed/TikTokScroller';
 import { useScrollerFeed } from '@/hooks/useScrollerFeed';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { CreateModalRouter } from '@/components/modals/CreateModalRouter';
@@ -31,7 +31,7 @@ export default function Index() {
     isLoading,
     hasNextPage,
     fetchNextPage
-  } = useScrollerFeed({ lane, pageSize: 20 });
+  } = useScrollerFeed({ lane });
 
   const items = useMemo(() => (data?.pages ?? []).flatMap(p => p.items), [data]);
 
@@ -112,10 +112,13 @@ export default function Index() {
                   className="w-full sm:w-auto"
                 />
 
-                {/* TikTokScroller removed - now using home/index.tsx */}
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">Feed moved to /home</p>
-                </div>
+          <TikTokScroller
+            items={items}
+            isLoading={isLoading}
+            lane={lane}
+            onLoadMore={fetchNextPage}
+            hasNextPage={hasNextPage}
+          />
               </div>
 
               <div className="lg:col-span-4 space-y-4">

@@ -13,7 +13,6 @@ import type { FeedItem } from '@/types/feed';
 interface UseScrollerFeedParams {
   lane: 'combined' | 'personal' | 'profile';
   entityId?: string;
-  limit?: number;
 }
 
 interface FeedPage {
@@ -21,8 +20,9 @@ interface FeedPage {
   nextCursor: { ts: string | null; id: string | null };
 }
 
-export function useScrollerFeed({ lane, entityId, limit = 50 }: UseScrollerFeedParams) {
+export function useScrollerFeed({ lane, entityId }: UseScrollerFeedParams) {
   const { session } = useSession();
+  const limit = lane === 'profile' ? 30 : 50;
   
   return useInfiniteQuery<FeedPage>({
     queryKey: ['scroller-feed', lane, entityId, session?.userId],
@@ -67,7 +67,7 @@ export function useScrollerFeed({ lane, entityId, limit = 50 }: UseScrollerFeedP
       }));
 
       // Extract next cursor from the last item
-      const lastItem = data[data.length - 1];
+      const lastItem = data[data.length - 1] as any;
       const nextCursor = {
         ts: lastItem?.next_cursor_ts || null,
         id: lastItem?.next_cursor_id || null,

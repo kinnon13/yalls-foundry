@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { hasRedis } from '@/lib/redis';
 import { Card } from '@/components/ui/card';
 
 export default function Health() {
@@ -14,9 +13,6 @@ export default function Health() {
       const dbStatus = dbError ? 'down' : 'up';
       const dbLatency = Math.round(performance.now() - start);
 
-      // Check Redis (client-side check only)
-      const redisStatus = hasRedis() ? 'configured' : 'not_configured';
-
       // Get version from env
       const version = import.meta.env.VITE_COMMIT_SHA || 'dev';
 
@@ -26,7 +22,6 @@ export default function Health() {
         version,
         services: {
           database: dbStatus,
-          redis: redisStatus,
           latency_ms: dbLatency,
         },
       };
@@ -92,21 +87,6 @@ export default function Health() {
                 <span className="capitalize">{data?.services.database}</span>
                 <span className="font-mono">{data?.services.latency_ms}ms</span>
               </div>
-            </div>
-
-            {/* Redis */}
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    data?.services.redis === 'configured' ? 'bg-green-500' : 'bg-yellow-500'
-                  }`}
-                />
-                <span className="font-medium">Redis Cache</span>
-              </div>
-              <span className="text-sm text-muted-foreground capitalize">
-                {data?.services.redis?.replace('_', ' ')}
-              </span>
             </div>
           </div>
 

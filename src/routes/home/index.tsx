@@ -26,16 +26,10 @@ export default function Home() {
   };
 
   // Fetch feed with infinite scroll
-  const {
-    data,
-    isLoading,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-  } = useScrollerFeed({ lane, pageSize: 20 });
+  const feed = useScrollerFeed({ lane });
 
   // Flatten all pages
-  const feedItems = data?.pages.flatMap(page => page.items) ?? [];
+  const feedItems = feed.data?.pages.flatMap(page => page.items) ?? [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,9 +72,10 @@ export default function Home() {
           {/* Scroller */}
           <TikTokScroller
             items={feedItems}
-            isLoading={isLoading || isFetchingNextPage}
-            onLoadMore={() => fetchNextPage()}
-            hasMore={hasNextPage}
+            isLoading={feed.isLoading || feed.isFetchingNextPage}
+            onLoadMore={() => feed.fetchNextPage()}
+            hasNextPage={feed.hasNextPage}
+            lane={lane}
           />
         </main>
 

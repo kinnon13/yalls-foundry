@@ -7318,6 +7318,10 @@ export type Database = {
       }
     }
     Functions: {
+      _log_rpc: {
+        Args: { p_duration_ms: number; p_error?: string; p_rpc_name: string }
+        Returns: undefined
+      }
       _map_profile_to_entity: {
         Args: { p_profile_id: string }
         Returns: string
@@ -7819,12 +7823,22 @@ export type Database = {
               p_limit?: number
               p_user_id: string
             }
+          | {
+              p_cursor_id?: string
+              p_cursor_ts?: string
+              p_limit?: number
+              p_mode?: string
+              p_user_id: string
+            }
         Returns: {
           created_at: string
+          entity_id: string
           item_id: string
           item_type: string
+          next_cursor_id: string
+          next_cursor_ts: string
           payload: Json
-          score: number
+          rank: number
         }[]
       }
       feed_fusion_home_rate_limited: {
@@ -7845,6 +7859,13 @@ export type Database = {
               p_lane: string
               p_limit?: number
               p_user_id: string
+            }
+          | {
+              p_cursor_id?: string
+              p_cursor_ts?: string
+              p_entity_id: string
+              p_limit?: number
+              p_mode?: string
             }
         Returns: {
           created_at: string
