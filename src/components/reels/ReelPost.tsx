@@ -1,9 +1,13 @@
 // ReelPost - Post feed item with labels and actions (PR5)
 import { PostFeedItem } from '@/types/feed';
-import { Heart, Repeat2, MessageCircle } from 'lucide-react';
+import { Heart, Repeat2, MessageCircle, EllipsisVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { logUsageEvent } from '@/lib/telemetry/usageEvents';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useSession } from '@/hooks/useSession';
+import { useToast } from '@/hooks/use-toast';
 
 interface ReelPostProps {
   reel: PostFeedItem;
@@ -13,6 +17,10 @@ interface ReelPostProps {
 }
 
 export function ReelPost({ reel, onLike, onRepost, onComment }: ReelPostProps) {
+  const { session } = useSession();
+  const qc = useQueryClient();
+  const { toast } = useToast();
+
   const handleInteraction = (action: string, callback?: () => void) => {
     logUsageEvent({
       eventType: 'click',
@@ -22,6 +30,60 @@ export function ReelPost({ reel, onLike, onRepost, onComment }: ReelPostProps) {
     });
     if (callback) callback();
   };
+
+  const hideMutation = useMutation({
+    mutationFn: async () => {
+      if (!reel.entity_id) throw new Error('Missing entity_id');
+      // Prefer RPC (server enforces ownership)
+      const { error: rpcErr } = await (supabase.rpc as any)('feed_hide', {
+        p_entity_id: reel.entity_id,
+        p_post_id: reel.id,
+        p_reason: 'user_hide'
+      });
+      if (rpcErr) {
+        // Fallback to direct insert if the RPC name differs
+        const { error: insErr } = await supabase
+          .from('feed_hides')
+          .insert({ 
+            entity_id: reel.entity_id, 
+            post_id: reel.id, 
+            hidden_by_user: session?.userId,
+            reason: 'user_hide'
+          });
+        if (insErr) throw insErr;
+      }
+      // Telemetry via existing utility
+      logUsageEvent({
+        eventType: 'click',
+        itemType: 'post',
+        itemId: reel.id,
+        payload: { action: 'hide', entity_id: reel.entity_id }
+      });
+      // Ledger
+      await supabase.from('ai_action_ledger').insert({
+        user_id: session?.userId,
+        agent: 'user',
+        action: 'post_hidden',
+        input: { entity_id: reel.entity_id, post_id: reel.id },
+        output: { status: 'ok' },
+        result: 'success'
+      });
+    },
+    onSuccess: () => {
+      // Optimistic removal: prune the hidden id from the infinite query cache
+      qc.setQueriesData({ queryKey: ['feed-fusion'] }, (old: any) => {
+        if (!old?.pages) return old;
+        return {
+          ...old,
+          pages: old.pages.map((p: any) => ({
+            ...p,
+            items: p.items.filter((it: any) => !(it.kind === 'post' && it.id === reel.id))
+          }))
+        };
+      });
+      toast({ title: 'Hidden', description: 'Post removed from this page.' });
+    }
+  });
 
   const media = reel.media?.[0];
   const isVideo = media?.type === 'video';
@@ -53,6 +115,23 @@ export function ReelPost({ reel, onLike, onRepost, onComment }: ReelPostProps) {
 
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+
+      {/* Hide button */}
+      {reel.entity_id && (
+        <div className="absolute top-3 right-3">
+          <button
+            className="p-2 rounded-lg bg-black/30 hover:bg-black/50 text-white backdrop-blur-sm transition-all duration-200 disabled:opacity-50"
+            onClick={(e) => {
+              e.preventDefault();
+              hideMutation.mutate();
+            }}
+            disabled={hideMutation.isPending || !session}
+            title="Hide from this page"
+          >
+            <EllipsisVertical className="w-5 h-5" />
+          </button>
+        </div>
+      )}
 
       {/* Content overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-6 space-y-4 animate-slide-up">
