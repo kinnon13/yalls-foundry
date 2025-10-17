@@ -1915,6 +1915,38 @@ export type Database = {
         }
         Relationships: []
       }
+      care_plans: {
+        Row: {
+          created_at: string
+          horse_id: string
+          id: string
+          schedule: Json
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          horse_id: string
+          id?: string
+          schedule?: Json
+          title: string
+        }
+        Update: {
+          created_at?: string
+          horse_id?: string
+          id?: string
+          schedule?: Json
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_plans_horse_id_fkey"
+            columns: ["horse_id"]
+            isOneToOne: false
+            referencedRelation: "farm_horses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       claim_bounties: {
         Row: {
           amount_cents: number
@@ -3860,6 +3892,45 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      farm_horses: {
+        Row: {
+          created_at: string
+          dob: string | null
+          id: string
+          name: string
+          owner_entity_id: string
+        }
+        Insert: {
+          created_at?: string
+          dob?: string | null
+          id?: string
+          name: string
+          owner_entity_id: string
+        }
+        Update: {
+          created_at?: string
+          dob?: string | null
+          id?: string
+          name?: string
+          owner_entity_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farm_horses_owner_entity_id_fkey"
+            columns: ["owner_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "farm_horses_owner_entity_id_fkey"
+            columns: ["owner_entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
           },
         ]
       }

@@ -1,30 +1,48 @@
-/**
- * Earnings Module
- * Summary / Missed / History tabs
- */
-
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DollarSign, TrendingUp, AlertCircle } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
+
+type Row = {
+  id: string;
+  created_at: string;
+  line: 'business_onboarder' | 'buyer' | 'seller';
+  basis_cents: number;
+  captured_cents: number;
+  missed_cents: number;
+};
 
 type Tab = 'summary' | 'missed' | 'history';
 
 export default function EarningsPanel() {
   const [tab, setTab] = useState<Tab>('summary');
+  const [rows, setRows] = useState<Row[]>([]);
+  const [tierPct, setTierPct] = useState<number>(0.01);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - will be real when Stripe enabled
-  const mockEarnings = {
-    pending: 12450,
-    accrued: 4320,
-    paid: 18900,
-    currentTier: 'free',
-    currentCapture: 1.0,
-    maxCapture: 4.0,
-    missedLastMonth: 3240,
-  };
+  useEffect(() => {
+    (async () => {
+      const [{ data: events }, { data: tier }] = await Promise.all([
+        supabase
+          .from('earnings_events' as any)
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(200),
+        supabase.from('earnings_tiers' as any).select('pct').single(),
+      ]);
+      setRows(((events || []) as unknown) as Row[]);
+      setTierPct((tier as any)?.pct ?? 0.01);
+      setLoading(false);
+    })();
+  }, []);
 
-  const missedDelta = mockEarnings.missedLastMonth;
+  const tierLabel = `${(tierPct * 100).toFixed(1)}%`;
+  const totalCaptured = rows.reduce((a, r) => a + r.captured_cents, 0) / 100;
+  const recentMissed =
+    rows
+      .filter((r) => Date.now() - Date.parse(r.created_at) < 30 * 864e5)
+      .reduce((a, r) => a + r.missed_cents, 0) / 100;
 
   return (
     <div className="p-6 space-y-6">
@@ -50,39 +68,37 @@ export default function EarningsPanel() {
       {tab === 'summary' && (
         <div className="grid grid-cols-3 gap-4">
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Current Capture
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{tierLabel}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Pending
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">
-                ${(mockEarnings.pending / 100).toFixed(2)}
-              </p>
+              <div className="text-3xl font-bold">${totalCaptured.toFixed(2)}</div>
             </CardContent>
           </Card>
+
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Accrued
+                Missed (30d)
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">
-                ${(mockEarnings.accrued / 100).toFixed(2)}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Paid Out
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">
-                ${(mockEarnings.paid / 100).toFixed(2)}
-              </p>
+              <div className="text-3xl font-bold text-destructive">
+                ${recentMissed.toFixed(2)}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -91,29 +107,21 @@ export default function EarningsPanel() {
       {tab === 'missed' && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="text-orange-500" size={20} />
-              Missed Earnings (Last 30 Days)
-            </CardTitle>
+            <CardTitle>Missed Earnings (Last 30 Days)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <p className="text-sm text-muted-foreground">Current Tier</p>
-                  <p className="text-lg font-semibold capitalize">{mockEarnings.currentTier}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {mockEarnings.currentCapture}% capture rate
-                  </p>
+                  <p className="text-lg font-semibold">{tierLabel}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Could have earned</p>
-                  <p className="text-2xl font-bold text-orange-500">
-                    +${(missedDelta / 100).toFixed(2)}
+                  <p className="text-2xl font-bold text-destructive">
+                    +${recentMissed.toFixed(2)}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    at {mockEarnings.maxCapture}% (Tier 2)
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">at 4% (Tier 2)</p>
                 </div>
               </div>
               <Button className="w-full">
@@ -127,9 +135,58 @@ export default function EarningsPanel() {
 
       {tab === 'history' && (
         <Card>
-          <CardContent className="p-8 text-center text-muted-foreground">
-            <p>Transaction history will appear here</p>
-            <p className="text-xs mt-2">Available after Stripe integration</p>
+          <CardHeader>
+            <CardTitle>Earnings History</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-auto">
+              <table className="w-full">
+                <thead className="border-b bg-muted/50">
+                  <tr>
+                    <th className="p-3 text-left text-sm font-medium">Date</th>
+                    <th className="p-3 text-left text-sm font-medium">Line</th>
+                    <th className="p-3 text-right text-sm font-medium">Basis</th>
+                    <th className="p-3 text-right text-sm font-medium">Captured</th>
+                    <th className="p-3 text-right text-sm font-medium">Missed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading && (
+                    <tr>
+                      <td colSpan={5} className="p-6 text-center text-muted-foreground">
+                        Loading…
+                      </td>
+                    </tr>
+                  )}
+                  {!loading && rows.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="p-6 text-center text-muted-foreground">
+                        No earnings yet.
+                      </td>
+                    </tr>
+                  )}
+                  {rows.map((r) => (
+                    <tr key={r.id} className="border-b hover:bg-muted/50 transition-colors">
+                      <td className="p-3 text-sm">
+                        {new Date(r.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="p-3 text-sm capitalize">
+                        {r.line.replace(/_/g, ' ')}
+                      </td>
+                      <td className="p-3 text-sm text-right">
+                        ${(r.basis_cents / 100).toFixed(2)}
+                      </td>
+                      <td className="p-3 text-sm text-right font-medium">
+                        ${(r.captured_cents / 100).toFixed(2)}
+                      </td>
+                      <td className="p-3 text-sm text-right text-destructive">
+                        ${(r.missed_cents / 100).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       )}

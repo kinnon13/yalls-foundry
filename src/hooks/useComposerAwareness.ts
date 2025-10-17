@@ -58,8 +58,8 @@ export function useComposerAwareness() {
       console.log('[Composer Awareness] Suggestion requested:', source, text?.length);
 
       // Check if feature is enabled globally (admin flag)
-      const { getFlag } = await import('@/lib/flags');
-      const featureEnabled = getFlag('composer_coach');
+      const { isEnabled } = await import('@/lib/flags');
+      const featureEnabled = isEnabled('rocker_always_on');
       if (!featureEnabled) {
         console.log('[Composer Awareness] Composer coach disabled globally');
         return;

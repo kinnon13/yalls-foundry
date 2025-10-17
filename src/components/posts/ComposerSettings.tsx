@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { getFlag } from '@/lib/flags';
+import { isEnabled } from '@/lib/flags';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 
@@ -12,7 +12,7 @@ export function ComposerSettings() {
   const [globalEnabled, setGlobalEnabled] = useState(true);
 
   useEffect(() => {
-    setGlobalEnabled(getFlag('composer_coach'));
+    setGlobalEnabled(isEnabled('rocker_always_on'));
   }, []);
 
   const handleToggle = (checked: boolean) => {
