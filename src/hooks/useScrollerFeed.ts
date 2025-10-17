@@ -37,7 +37,7 @@ export function useScrollerFeed(params: FeedParams) {
       const { data: { user } } = await supabase.auth.getUser();
 
       const rpcName = isProfileFeed ? 'feed_fusion_profile' : 'feed_fusion_home';
-      const params = isProfileFeed
+      const rpcParams = isProfileFeed
         ? {
             p_entity_id: entityId,
             p_user_id: user?.id,
@@ -52,7 +52,7 @@ export function useScrollerFeed(params: FeedParams) {
             p_limit: pageSize
           };
 
-      const { data, error } = await (supabase.rpc as any)(rpcName, params);
+      const { data, error } = await (supabase.rpc as any)(rpcName, rpcParams);
 
       if (error) {
         console.error('[useScrollerFeed] RPC error:', error);
@@ -64,6 +64,7 @@ export function useScrollerFeed(params: FeedParams) {
         kind: row.item_type || row.payload?.kind,
         id: row.item_id || row.payload?.id,
         score: row.score,
+        created_at: row.created_at,
         ...row.payload
       }));
 
@@ -77,7 +78,7 @@ export function useScrollerFeed(params: FeedParams) {
       }
 
       const nextCursor = items.length > 0
-        ? items[items.length - 1]?.score?.toString() || new Date().toISOString()
+        ? items[items.length - 1]?.created_at || cursor
         : cursor;
 
       return {

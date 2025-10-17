@@ -13,27 +13,28 @@ interface ReelPostProps {
 }
 
 export function ReelPost({ reel, onLike, onRepost, onComment }: ReelPostProps) {
-  const firstMedia = reel.media?.[0];
-  const isVideo = firstMedia?.type === 'video';
-
-  const handleInteraction = (action: 'like' | 'repost' | 'comment', callback?: () => void) => {
+  const handleInteraction = (action: string, callback?: () => void) => {
     logUsageEvent({
       eventType: 'click',
       itemType: 'post',
       itemId: reel.id,
       payload: { action }
     });
-    callback?.();
+    if (callback) callback();
   };
+
+  const media = reel.media?.[0];
+  const isVideo = media?.type === 'video';
+  const labels = Array.isArray(reel.labels) ? reel.labels : [];
 
   return (
     <article className="relative h-[80vh] w-full overflow-hidden rounded-xl bg-neutral-950 text-white">
       {/* Media background */}
-      {firstMedia && (
+      {media && (
         <div className="absolute inset-0">
           {isVideo ? (
             <video 
-              src={firstMedia.url} 
+              src={media.url} 
               className="h-full w-full object-cover"
               autoPlay
               muted
@@ -42,7 +43,7 @@ export function ReelPost({ reel, onLike, onRepost, onComment }: ReelPostProps) {
             />
           ) : (
             <img 
-              src={firstMedia.url} 
+              src={media.url} 
               alt="Post media"
               className="h-full w-full object-cover"
             />

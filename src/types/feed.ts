@@ -6,6 +6,7 @@ export interface FeedItemBase {
   id: string;
   score?: number;
   entity_id?: string;
+  created_at?: string;
 }
 
 export interface PostFeedItem extends FeedItemBase {
