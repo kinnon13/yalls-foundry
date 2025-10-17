@@ -63,19 +63,17 @@ export function DashboardSidebar() {
   });
 
   const { data: approvalsCount = 0 } = useQuery({
-    queryKey: ['pending-approvals'],
+    queryKey: ['pending-approvals-count'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return 0;
       
-      const { count, error } = await supabase
-        .from('ai_change_proposals')
-        .select('*', { count: 'exact', head: true })
-        .eq('requested_by', user.id)
-        .eq('status', 'pending');
+      const { data, error } = await (supabase as any).rpc('get_pending_approvals_count_by_user', {
+        p_user_id: user.id
+      });
       
       if (error) throw error;
-      return count || 0;
+      return data ?? 0;
     },
     refetchInterval: 30000,
   });

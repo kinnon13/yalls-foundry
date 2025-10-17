@@ -16,13 +16,12 @@ export default function DashboardOverview() {
     queryFn: async () => {
       if (!session?.userId) return null;
       
-      // Use 'any' cast until migration is approved and types are regenerated
       const { data, error } = await (supabase as any).rpc('dashboard_kpis', {
         p_user_id: session.userId
       });
       
       if (error) throw error;
-      return data as {
+      return data as unknown as {
         gmv_7d: number;
         gmv_28d: number;
         capture_rate: number;
@@ -38,18 +37,17 @@ export default function DashboardOverview() {
     staleTime: 30000,
   });
 
-  const { data: actions, isLoading: actionsLoading } = useQuery({
+  const { data: actions = [], isLoading: actionsLoading } = useQuery({
     queryKey: ['next-best-actions', session?.userId],
     queryFn: async () => {
       if (!session?.userId) return [];
       
-      // Use 'any' cast until migration is approved and types are regenerated
       const { data, error } = await (supabase as any).rpc('rocker_next_best_actions', {
         p_user_id: session.userId
       });
       
       if (error) throw error;
-      return (data || []) as Array<{
+      return (data ?? []) as unknown as Array<{
         id: string;
         title: string;
         rationale: string;
