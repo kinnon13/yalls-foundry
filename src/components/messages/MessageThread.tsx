@@ -174,33 +174,45 @@ export function MessageThread({ conversationId }: MessageThreadProps) {
   }
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3 border-b">
+    <Card className="h-full flex flex-col border-0 shadow-xl backdrop-blur-sm bg-card/80">
+      <CardHeader className="pb-4 border-b bg-gradient-to-r from-muted/50 to-transparent">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={otherUser?.avatar_url || undefined} />
-              <AvatarFallback>{otherUser?.display_name?.[0] || 'U'}</AvatarFallback>
-            </Avatar>
+          <div className="flex items-center gap-3 group">
+            <div className="relative">
+              <Avatar className="h-12 w-12 ring-2 ring-background shadow-md transition-transform group-hover:scale-105">
+                <AvatarImage src={otherUser?.avatar_url || undefined} />
+                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+                  {otherUser?.display_name?.[0] || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-background rounded-full" />
+            </div>
             <div>
-              <p className="font-semibold">{otherUser?.display_name || 'Loading...'}</p>
+              <p className="font-semibold text-lg">{otherUser?.display_name || 'Loading...'}</p>
               <p className="text-xs text-muted-foreground">Active recently</p>
             </div>
           </div>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="hover:bg-muted/50">
             <MoreVertical className="h-4 w-4" />
           </Button>
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
+      <CardContent 
+        className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-transparent to-muted/10" 
+        ref={scrollRef}
+      >
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-6 w-6 animate-spin" />
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : messages?.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-sm text-muted-foreground">No messages yet. Start the conversation!</p>
+          <div className="text-center py-12 animate-fade-in">
+            <div className="mb-4 w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center">
+              <Send className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground font-medium mb-1">No messages yet</p>
+            <p className="text-xs text-muted-foreground/70">Start the conversation!</p>
           </div>
         ) : (
           messages?.map((msg, idx) => {
@@ -211,31 +223,34 @@ export function MessageThread({ conversationId }: MessageThreadProps) {
               <div
                 key={msg.id}
                 className={cn(
-                  'flex gap-3',
+                  'flex gap-3 animate-fade-in',
                   isFromMe ? 'flex-row-reverse' : 'flex-row'
                 )}
+                style={{ animationDelay: `${idx * 20}ms` }}
               >
                 {showAvatar ? (
-                  <Avatar className="h-8 w-8 flex-shrink-0">
+                  <Avatar className="h-8 w-8 flex-shrink-0 ring-1 ring-border shadow-sm">
                     <AvatarImage src={msg.sender?.avatar_url || undefined} />
-                    <AvatarFallback>{msg.sender?.display_name?.[0] || 'U'}</AvatarFallback>
+                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs font-semibold">
+                      {msg.sender?.display_name?.[0] || 'U'}
+                    </AvatarFallback>
                   </Avatar>
                 ) : (
                   <div className="w-8 flex-shrink-0" />
                 )}
 
-                <div className={cn('flex flex-col gap-1 max-w-[70%]', isFromMe && 'items-end')}>
+                <div className={cn('flex flex-col gap-1 max-w-[75%]', isFromMe && 'items-end')}>
                   <div
                     className={cn(
-                      'rounded-2xl px-4 py-2',
+                      'rounded-2xl px-4 py-2.5 shadow-sm transition-all hover:shadow-md',
                       isFromMe
                         ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
+                        : 'bg-muted border border-border/50'
                     )}
                   >
-                    <p className="text-sm whitespace-pre-wrap break-words">{msg.body}</p>
+                    <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{msg.body}</p>
                   </div>
-                  <span className="text-xs text-muted-foreground px-1">
+                  <span className="text-xs text-muted-foreground px-2">
                     {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
                   </span>
                 </div>
@@ -245,20 +260,20 @@ export function MessageThread({ conversationId }: MessageThreadProps) {
         )}
       </CardContent>
 
-      <div className="p-4 border-t">
-        <div className="flex gap-2">
+      <div className="p-4 border-t bg-gradient-to-r from-muted/30 to-transparent backdrop-blur-sm">
+        <div className="flex gap-3">
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
-            className="min-h-[60px] max-h-[120px] resize-none"
+            className="min-h-[64px] max-h-[120px] resize-none bg-background/50 border-border/50 focus-visible:ring-2 focus-visible:ring-primary/20 transition-all"
           />
           <Button
             onClick={handleSend}
             disabled={!message.trim() || sendMutation.isPending}
             size="icon"
-            className="h-[60px] w-[60px] flex-shrink-0"
+            className="h-[64px] w-[64px] flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
           >
             {sendMutation.isPending ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -267,8 +282,8 @@ export function MessageThread({ conversationId }: MessageThreadProps) {
             )}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Press Enter to send, Shift+Enter for new line
+        <p className="text-xs text-muted-foreground/70 mt-2 px-1">
+          Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-semibold">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-semibold">Shift+Enter</kbd> for new line
         </p>
       </div>
     </Card>

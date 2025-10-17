@@ -24,9 +24,9 @@ export default function Messages() {
   }
 
   return (
-    <div className="h-full flex gap-4 p-4">
+    <div className="h-full flex gap-6 p-6 bg-gradient-to-br from-background via-background to-muted/20">
       {/* Left: Conversations List */}
-      <div className="w-80 flex-shrink-0">
+      <div className="w-[340px] flex-shrink-0">
         <ConversationList
           selectedId={selectedConversationId}
           onSelect={setSelectedConversationId}
@@ -40,7 +40,7 @@ export default function Messages() {
       </div>
 
       {/* Right: Sidebar (profile, actions) */}
-      <div className="w-80 flex-shrink-0">
+      <div className="w-[340px] flex-shrink-0">
         <MessagesSidebar conversationId={selectedConversationId} />
       </div>
 
