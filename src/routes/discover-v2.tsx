@@ -30,6 +30,18 @@ export default function DiscoverV2() {
         .limit(20);
 
       const { data } = await query;
+      
+      // Log views to ai_action_ledger
+      if (data && data.length > 0) {
+        await supabase.from('ai_action_ledger').insert({
+          agent: 'user',
+          action: 'discover_view',
+          input: { tab: 'discover', count: data.length },
+          output: {},
+          result: 'success'
+        });
+      }
+      
       return data || [];
     },
   });

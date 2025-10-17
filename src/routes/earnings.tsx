@@ -29,8 +29,8 @@ export default function Earnings() {
 
   const TIERS = [
     { name: 'Free', capture: 0, color: 'text-gray-500' },
-    { name: 'Tier 1', capture: 15, color: 'text-blue-500', cost: 9.99 },
-    { name: 'Tier 2', capture: 30, color: 'text-purple-500', cost: 29.99 },
+    { name: 'Tier 1', capture: 2.5, color: 'text-blue-500', cost: 9.99 },
+    { name: 'Tier 2', capture: 4, color: 'text-purple-500', cost: 29.99 },
   ];
 
   const currentTier = earnings?.membership?.tier || 'Free';
