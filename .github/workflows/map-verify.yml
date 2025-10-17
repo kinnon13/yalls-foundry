@@ -1,0 +1,69 @@
+name: Map & Verify Features
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Generate manifests
+        run: npm run map
+      
+      - name: Verify gold-path features
+        run: |
+          node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('docs/features/features.json', 'utf-8'));
+            
+            const goldPath = [
+              'profile_pins', 'favorites', 'reposts', 'linked_accounts', 'entity_edges',
+              'composer_core', 'composer_crosspost', 'composer_schedule',
+              'notification_lanes', 'notification_prefs', 'notification_digest',
+              'events_discounts', 'events_waitlist', 'producer_console_overview',
+              'producer_registrations', 'producer_financials', 'producer_export_csv',
+              'earnings_tiers', 'earnings_missed', 'orders_refund_flow',
+              'ai_context_compiler', 'ai_memory', 'ai_nba_ranker', 'ai_modal', 'ai_explainability'
+            ];
+            
+            const features = new Map(data.features.map(f => [f.id, f]));
+            const missing = goldPath.filter(id => !features.has(id));
+            const notReady = goldPath.filter(id => {
+              const f = features.get(id);
+              return f && f.status === 'shell';
+            });
+            
+            if (missing.length > 0) {
+              console.error('❌ Missing gold-path features:', missing);
+              process.exit(1);
+            }
+            
+            if (notReady.length > 0) {
+              console.error('❌ Gold-path features not at Full UI or Wired:', notReady);
+              process.exit(1);
+            }
+            
+            console.log('✅ All gold-path features are present and ready');
+          "
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: manifests
+          path: |
+            generated/route-manifest.json
+            generated/component-registry.json

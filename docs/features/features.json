@@ -1,0 +1,526 @@
+{
+  "features": [
+    {
+      "id": "profile_pins",
+      "area": "profile",
+      "title": "Profile Pins",
+      "status": "full-ui",
+      "routes": ["/profile/:id"],
+      "components": ["src/components/profile/pins/PinBoard.tsx", "src/components/profile/pins/PinCard.tsx", "src/components/profile/pins/AddPinModal.tsx"],
+      "rpc": ["profile_pins_get", "profile_pins_set"],
+      "flags": ["profile_pins"],
+      "docs": "docs/features/profile-pins.md",
+      "tests": {
+        "unit": [],
+        "e2e": ["tests/e2e/profile.pins.spec.ts"]
+      },
+      "owner": "web",
+      "severity": "p0",
+      "notes": "Complete with DnD reorder"
+    },
+    {
+      "id": "favorites",
+      "area": "profile",
+      "title": "Favorites",
+      "status": "full-ui",
+      "routes": ["/profile/:id/favorites"],
+      "components": ["src/components/profile/FavoriteButton.tsx"],
+      "rpc": ["favorite_toggle", "favorites_list"],
+      "flags": ["favorites"],
+      "docs": "docs/features/favorites.md",
+      "tests": {
+        "unit": [],
+        "e2e": ["tests/e2e/favorites.spec.ts"]
+      },
+      "owner": "web",
+      "severity": "p0",
+      "notes": "Multi-type favorites with optimistic updates"
+    },
+    {
+      "id": "reposts",
+      "area": "profile",
+      "title": "Reposts",
+      "status": "full-ui",
+      "routes": ["/profile/:id/reposts"],
+      "components": ["src/components/profile/RepostButton.tsx", "src/components/profile/RepostModal.tsx"],
+      "rpc": ["post_repost"],
+      "flags": ["reposts"],
+      "docs": "docs/features/reposts.md",
+      "tests": {
+        "unit": [],
+        "e2e": ["tests/e2e/reposts.spec.ts"]
+      },
+      "owner": "web",
+      "severity": "p0",
+      "notes": "Caption + multi-target support"
+    },
+    {
+      "id": "linked_accounts",
+      "area": "profile",
+      "title": "Linked Accounts",
+      "status": "full-ui",
+      "routes": ["/settings/linked-accounts"],
+      "components": ["src/components/profile/LinkedAccountsList.tsx", "src/components/profile/VerifyAccountModal.tsx"],
+      "rpc": ["linked_account_upsert", "linked_accounts_list"],
+      "flags": ["linked_accounts"],
+      "docs": "docs/features/linked-accounts.md",
+      "tests": {
+        "unit": [],
+        "e2e": ["tests/e2e/linked-accounts.spec.ts"]
+      },
+      "owner": "web",
+      "severity": "p1",
+      "notes": "Social verification flow"
+    },
+    {
+      "id": "entity_edges",
+      "area": "profile",
+      "title": "Entity Relationships",
+      "status": "full-ui",
+      "routes": ["/entities/:id/edges"],
+      "components": ["src/components/entities/EdgesManager.tsx"],
+      "rpc": ["entity_edges_list", "entity_edge_create", "entity_edge_update", "entity_edge_remove"],
+      "flags": ["entity_edges"],
+      "docs": "docs/features/entity-edges.md",
+      "tests": {
+        "unit": [],
+        "e2e": ["tests/e2e/entity-edges.spec.ts"]
+      },
+      "owner": "web",
+      "severity": "p1",
+      "notes": "Auto-propagate + crosspost rules"
+    },
+    {
+      "id": "notification_lanes",
+      "area": "notifications",
+      "title": "Notification Lanes",
+      "status": "full-ui",
+      "routes": ["/notifications"],
+      "components": ["src/components/notifications/LaneDrawer.tsx", "src/components/notifications/NotificationItem.tsx"],
+      "rpc": ["notifications_list", "notifications_mark_read", "notifications_mark_all_read", "notifications_counts"],
+      "flags": ["notification_lanes"],
+      "docs": "docs/features/notification-lanes.md",
+      "tests": {
+        "unit": [],
+        "e2e": ["tests/e2e/notifications.lanes.spec.ts"]
+      },
+      "owner": "platform",
+      "severity": "p0",
+      "notes": "Priority/Social/System lanes"
+    },
+    {
+      "id": "notification_prefs",
+      "area": "notifications",
+      "title": "Notification Preferences",
+      "status": "full-ui",
+      "routes": ["/settings/notifications"],
+      "components": ["src/routes/settings/notifications.tsx"],
+      "rpc": ["notification_prefs_get", "notification_prefs_update"],
+      "flags": ["notification_prefs"],
+      "docs": "docs/features/notification-prefs.md",
+      "tests": {
+        "unit": [],
+        "e2e": ["tests/e2e/notifications.prefs.spec.ts"]
+      },
+      "owner": "platform",
+      "severity": "p0",
+      "notes": "Channels, quiet hours, daily cap"
+    },
+    {
+      "id": "notification_digest",
+      "area": "notifications",
+      "title": "Notification Digest",
+      "status": "full-ui",
+      "routes": ["/settings/notifications"],
+      "components": ["src/components/notifications/DigestPreview.tsx"],
+      "rpc": ["notification_digest_preview", "notification_digest_send_test"],
+      "flags": ["notification_digest"],
+      "docs": "docs/features/notification-digest.md",
+      "tests": {
+        "unit": [],
+        "e2e": ["tests/e2e/notifications.digest.spec.ts"]
+      },
+      "owner": "platform",
+      "severity": "p1",
+      "notes": "Daily/weekly email summaries"
+    },
+    {
+      "id": "composer_core",
+      "area": "composer",
+      "title": "Core Composer",
+      "status": "shell",
+      "routes": ["/compose"],
+      "components": [],
+      "rpc": ["rpc_create_post"],
+      "flags": ["composer_core"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p0",
+      "notes": "Text + basic media"
+    },
+    {
+      "id": "composer_media",
+      "area": "composer",
+      "title": "Media Upload",
+      "status": "shell",
+      "routes": ["/compose"],
+      "components": [],
+      "rpc": [],
+      "flags": ["composer_media"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p0",
+      "notes": "Image/video with preview"
+    },
+    {
+      "id": "composer_schedule",
+      "area": "composer",
+      "title": "Scheduled Posts",
+      "status": "shell",
+      "routes": ["/compose"],
+      "components": [],
+      "rpc": [],
+      "flags": ["composer_schedule"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p1",
+      "notes": "DateTime picker + queue"
+    },
+    {
+      "id": "composer_crosspost",
+      "area": "composer",
+      "title": "Crosspost to Entities",
+      "status": "shell",
+      "routes": ["/compose"],
+      "components": [],
+      "rpc": [],
+      "flags": ["composer_crosspost"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p1",
+      "notes": "Multi-entity targeting"
+    },
+    {
+      "id": "events_core",
+      "area": "events",
+      "title": "Event Creation",
+      "status": "shell",
+      "routes": ["/events/new"],
+      "components": [],
+      "rpc": [],
+      "flags": ["events_core"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p0",
+      "notes": "Basic event details"
+    },
+    {
+      "id": "events_discounts",
+      "area": "events",
+      "title": "Discount Codes",
+      "status": "shell",
+      "routes": ["/events/:id/discounts"],
+      "components": [],
+      "rpc": [],
+      "flags": ["events_discounts"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p1",
+      "notes": "Promo codes + limits"
+    },
+    {
+      "id": "events_waitlist",
+      "area": "events",
+      "title": "Waitlist Management",
+      "status": "shell",
+      "routes": ["/events/:id/waitlist"],
+      "components": [],
+      "rpc": [],
+      "flags": ["events_waitlist"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p1",
+      "notes": "FIFO + manual approval"
+    },
+    {
+      "id": "producer_console_overview",
+      "area": "producer",
+      "title": "Producer Dashboard",
+      "status": "shell",
+      "routes": ["/producer"],
+      "components": [],
+      "rpc": [],
+      "flags": ["producer_console"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p0",
+      "notes": "Events overview + quick stats"
+    },
+    {
+      "id": "producer_registrations",
+      "area": "producer",
+      "title": "Registration Management",
+      "status": "shell",
+      "routes": ["/producer/registrations"],
+      "components": [],
+      "rpc": [],
+      "flags": ["producer_registrations"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p0",
+      "notes": "List, filter, refund"
+    },
+    {
+      "id": "producer_financials",
+      "area": "producer",
+      "title": "Financial Reports",
+      "status": "shell",
+      "routes": ["/producer/financials"],
+      "components": [],
+      "rpc": [],
+      "flags": ["producer_financials"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p1",
+      "notes": "Revenue breakdown"
+    },
+    {
+      "id": "producer_export_csv",
+      "area": "producer",
+      "title": "CSV Exports",
+      "status": "shell",
+      "routes": ["/producer/registrations"],
+      "components": [],
+      "rpc": [],
+      "flags": ["producer_export"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p1",
+      "notes": "Download registration data"
+    },
+    {
+      "id": "earnings_tiers",
+      "area": "earnings",
+      "title": "Earnings Tiers",
+      "status": "shell",
+      "routes": ["/earnings"],
+      "components": [],
+      "rpc": [],
+      "flags": ["earnings_tiers"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p1",
+      "notes": "Tier progression UI"
+    },
+    {
+      "id": "earnings_missed",
+      "area": "earnings",
+      "title": "Missed Opportunities",
+      "status": "shell",
+      "routes": ["/earnings/missed"],
+      "components": [],
+      "rpc": [],
+      "flags": ["earnings_missed"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p2",
+      "notes": "What-if calculator"
+    },
+    {
+      "id": "orders_core",
+      "area": "earnings",
+      "title": "Order Management",
+      "status": "shell",
+      "routes": ["/orders"],
+      "components": [],
+      "rpc": [],
+      "flags": ["orders"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p0",
+      "notes": "List orders"
+    },
+    {
+      "id": "orders_refund_flow",
+      "area": "earnings",
+      "title": "Refund Flow",
+      "status": "shell",
+      "routes": ["/orders/:id/refund"],
+      "components": [],
+      "rpc": [],
+      "flags": ["orders_refund"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "web",
+      "severity": "p1",
+      "notes": "Full/partial refunds"
+    },
+    {
+      "id": "ai_context_compiler",
+      "area": "ai",
+      "title": "Context Compiler",
+      "status": "shell",
+      "routes": [],
+      "components": [],
+      "rpc": [],
+      "flags": ["ai_context"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "platform",
+      "severity": "p0",
+      "notes": "Aggregate user context"
+    },
+    {
+      "id": "ai_memory",
+      "area": "ai",
+      "title": "AI Memory",
+      "status": "shell",
+      "routes": [],
+      "components": [],
+      "rpc": [],
+      "flags": ["ai_memory"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "platform",
+      "severity": "p0",
+      "notes": "User memory store"
+    },
+    {
+      "id": "ai_nba_ranker",
+      "area": "ai",
+      "title": "Next Best Action Ranker",
+      "status": "shell",
+      "routes": [],
+      "components": [],
+      "rpc": [],
+      "flags": ["ai_nba"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "platform",
+      "severity": "p0",
+      "notes": "Score NBA candidates"
+    },
+    {
+      "id": "ai_modal",
+      "area": "ai",
+      "title": "AI Modal",
+      "status": "shell",
+      "routes": [],
+      "components": [],
+      "rpc": [],
+      "flags": ["ai_modal"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "platform",
+      "severity": "p0",
+      "notes": "Universal AI interface"
+    },
+    {
+      "id": "ai_explainability",
+      "area": "ai",
+      "title": "AI Explainability",
+      "status": "shell",
+      "routes": ["/ai/explain"],
+      "components": [],
+      "rpc": [],
+      "flags": ["ai_explain"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "platform",
+      "severity": "p1",
+      "notes": "Why this suggestion?"
+    },
+    {
+      "id": "ai_prefs_tuning",
+      "area": "ai",
+      "title": "AI Preferences Tuning",
+      "status": "shell",
+      "routes": ["/settings/ai"],
+      "components": [],
+      "rpc": [],
+      "flags": ["ai_prefs"],
+      "docs": "",
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "owner": "platform",
+      "severity": "p1",
+      "notes": "Tone/style preferences"
+    }
+  ]
+}

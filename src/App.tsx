@@ -80,15 +80,26 @@ const MyResults = lazy(() => import('./routes/events/entrant/my-results'));
 const FarmTasks = lazy(() => import('./routes/farm/Tasks'));
 const FarmHealthLog = lazy(() => import('./routes/farm/HealthLog'));
 
+// Admin routes
+const FeaturesAdmin = lazy(() => import('./routes/admin/features'));
+const RoutesAdmin = lazy(() => import('./routes/admin/routes'));
+const ComponentsAdmin = lazy(() => import('./routes/admin/components'));
+const A11yAdmin = lazy(() => import('./routes/admin/a11y'));
+const TestsAdmin = lazy(() => import('./routes/admin/tests'));
+const NotificationsSettings = lazy(() => import('./routes/settings/notifications'));
+
 const queryClient = new QueryClient();
 const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on';
 
 import { CommandPalette } from '@/components/command/CommandPalette';
 import { ProfileCreationModal } from '@/components/entities/ProfileCreationModal';
 import { usePageTelemetry } from '@/hooks/usePageTelemetry';
+import { DevHUD } from '@/components/dev/DevHUD';
+import { useDevHUD } from '@/hooks/useDevHUD';
 
 function AppContent() {
   usePageTelemetry();
+  const { isOpen: devHUDOpen, close: closeDevHUD } = useDevHUD();
   
   useEffect(() => {
     registerRockerFeatureHandler();
@@ -124,6 +135,12 @@ function AppContent() {
             }
           />
           <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
+          <Route path="/admin/features" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FeaturesAdmin /></Suspense></RequireAuth>} />
+          <Route path="/admin/routes" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><RoutesAdmin /></Suspense></RequireAuth>} />
+          <Route path="/admin/components" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><ComponentsAdmin /></Suspense></RequireAuth>} />
+          <Route path="/admin/a11y" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><A11yAdmin /></Suspense></RequireAuth>} />
+          <Route path="/admin/tests" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><TestsAdmin /></Suspense></RequireAuth>} />
+          <Route path="/settings/notifications" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><NotificationsSettings /></Suspense></RequireAuth>} />
           <Route path="/discover" element={<Suspense fallback={<div>Loading...</div>}><Discover /></Suspense>} />
           <Route path="/health" element={<Health />} />
 
@@ -282,6 +299,7 @@ function AppContent() {
       <RockerDock />
       <RockerChat />
       <RockerSuggestions />
+      <DevHUD isOpen={devHUDOpen} onClose={closeDevHUD} />
       <Toaster />
       <Sonner />
     </>
