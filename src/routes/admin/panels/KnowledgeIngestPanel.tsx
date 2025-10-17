@@ -18,10 +18,6 @@ export function KnowledgeIngestPanel() {
       toast.error('Content is required');
       return;
     }
-    if (!uri.trim()) {
-      toast.error('URI is required (e.g., global://workflows/business-overview)');
-      return;
-    }
 
     // Validate YAML front-matter exists
     if (!content.trim().startsWith('---')) {
@@ -31,7 +27,10 @@ export function KnowledgeIngestPanel() {
 
     setLoading(true);
     try {
-      await ingestKnowledge(content, uri);
+      // Auto-generate URI if not provided
+      const finalUri = uri.trim() || `global://content/${Date.now()}`;
+      
+      await ingestKnowledge(content, finalUri);
       toast.success('Knowledge ingested successfully');
       setContent('');
       setUri('');
@@ -84,15 +83,15 @@ Write your business overview here in markdown.
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="uri">URI</Label>
+          <Label htmlFor="uri">URI (Optional)</Label>
           <Input
             id="uri"
-            placeholder="global://category/subcategory/name"
+            placeholder="global://category/subcategory/name (auto-generated if empty)"
             value={uri}
             onChange={(e) => setUri(e.target.value)}
           />
           <p className="text-sm text-muted-foreground">
-            Format: scope://category/path (e.g., global://workflows/create-event)
+            Leave empty to auto-generate, or use format: scope://category/path
           </p>
         </div>
 
@@ -136,7 +135,7 @@ Write your business overview here in markdown.
 
         <Button
           onClick={handleIngest}
-          disabled={loading || !content.trim() || !uri.trim()}
+          disabled={loading || !content.trim()}
           className="w-full"
         >
           {loading ? (
