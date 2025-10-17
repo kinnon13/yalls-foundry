@@ -11,6 +11,8 @@ import { Button } from '@/design/components/Button';
 import { Input } from '@/design/components/Input';
 import { Badge } from '@/design/components/Badge';
 import { tokens } from '@/design/tokens';
+import { FinderModal } from '@/components/finder/FinderModal';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 interface GlobalHeaderProps {
   showRockerLabels?: boolean;
@@ -22,6 +24,7 @@ export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalH
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [showRockerLabels] = useState(propShowRockerLabels ?? false);
+  const [finderOpen, setFinderOpen] = useState(false);
   const { data: cartCount = 0 } = useCartCount();
   
   useAuthMergeCart();
@@ -84,6 +87,16 @@ export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalH
         </form>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: tokens.space.s }}>
+          <Button
+            variant="ghost"
+            size="m"
+            onClick={() => setFinderOpen(true)}
+          >
+            <Search size={16} />
+          </Button>
+          
+          {session && <NotificationBell />}
+          
           <TourButton />
           <PreviewDropdown />
           
@@ -124,6 +137,8 @@ export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalH
           )}
         </div>
       </div>
+      
+      <FinderModal open={finderOpen} onClose={() => setFinderOpen(false)} />
     </header>
   );
 }

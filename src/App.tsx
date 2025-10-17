@@ -25,6 +25,9 @@ import NotFound from "./pages/NotFound";
 
 // Lazy load dashboard and AI routes
 const Dashboard = lazy(() => import('./routes/dashboard'));
+const DashboardV2 = lazy(() => import('./routes/dashboard-v2'));
+const DiscoverV2 = lazy(() => import('./routes/discover-v2'));
+const Earnings = lazy(() => import('./routes/earnings'));
 const AISettings = lazy(() => import('./routes/settings/ai'));
 const AIActivity = lazy(() => import('./routes/ai/activity'));
 const EntitiesList = lazy(() => import('./routes/entities/index'));
@@ -129,7 +132,11 @@ const App = () => (
           <Route path="/orders/:id" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrderDetail /></Suspense></RequireAuth>} />
           
           {/* Discovery */}
-          <Route path="/discover" element={<Suspense fallback={<div>Loading...</div>}><Discover /></Suspense>} />
+          <Route path="/discover" element={<Suspense fallback={<div>Loading...</div>}><DiscoverV2 /></Suspense>} />
+          
+          {/* Dashboard V2 & Earnings */}
+          <Route path="/dashboard-v2" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><DashboardV2 /></Suspense></RequireAuth>} />
+          <Route path="/earnings" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><Earnings /></Suspense></RequireAuth>} />
           
           {/* Farm Ops */}
           <Route path="/farm/calendar" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FarmCalendar /></Suspense></RequireAuth>} />

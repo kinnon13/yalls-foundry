@@ -1842,6 +1842,36 @@ export type Database = {
         }
         Relationships: []
       }
+      capability_gaps: {
+        Row: {
+          created_at: string
+          id: string
+          section: string
+          status: string | null
+          text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          section: string
+          status?: string | null
+          text: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          section?: string
+          status?: string | null
+          text?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       claim_bounties: {
         Row: {
           amount_cents: number
@@ -4377,6 +4407,107 @@ export type Database = {
           read_at?: string | null
           recipient_user_id?: string
           sender_user_id?: string
+        }
+        Relationships: []
+      }
+      notification_prefs: {
+        Row: {
+          digest_hour: number | null
+          lanes: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          digest_hour?: number | null
+          lanes?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          digest_hour?: number | null
+          lanes?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_receipts: {
+        Row: {
+          archived: boolean | null
+          created_at: string
+          id: string
+          muted: boolean | null
+          notif_id: string
+          read_at: string | null
+          seen_at: string | null
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean | null
+          created_at?: string
+          id?: string
+          muted?: boolean | null
+          notif_id: string
+          read_at?: string | null
+          seen_at?: string | null
+          user_id: string
+        }
+        Update: {
+          archived?: boolean | null
+          created_at?: string
+          id?: string
+          muted?: boolean | null
+          notif_id?: string
+          read_at?: string | null
+          seen_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_receipts_notif_id_fkey"
+            columns: ["notif_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          category: Database["public"]["Enums"]["notification_category"]
+          created_at: string
+          created_by: string | null
+          id: string
+          link: string | null
+          payload: Json | null
+          priority: number
+          thread_key: string | null
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          category: Database["public"]["Enums"]["notification_category"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link?: string | null
+          payload?: Json | null
+          priority?: number
+          thread_key?: string | null
+          title: string
+        }
+        Update: {
+          body?: string | null
+          category?: Database["public"]["Enums"]["notification_category"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link?: string | null
+          payload?: Json | null
+          priority?: number
+          thread_key?: string | null
+          title?: string
         }
         Relationships: []
       }
@@ -7052,6 +7183,25 @@ export type Database = {
         Args: { _business_id: string }
         Returns: boolean
       }
+      notif_mark_all_read: {
+        Args: { p_lane?: string }
+        Returns: undefined
+      }
+      notif_mark_read: {
+        Args: { p_ids: string[] }
+        Returns: undefined
+      }
+      notif_send: {
+        Args: {
+          p_body: string
+          p_category: Database["public"]["Enums"]["notification_category"]
+          p_link?: string
+          p_priority?: number
+          p_title: string
+          p_user_ids: string[]
+        }
+        Returns: string
+      }
       order_start_from_cart: {
         Args: { p_cart_id: string; p_idempotency_key: string }
         Returns: {
@@ -8539,6 +8689,13 @@ export type Database = {
         | "project"
         | "project_context"
         | "notification_preference"
+      notification_category:
+        | "social"
+        | "orders"
+        | "events"
+        | "crm"
+        | "ai"
+        | "system"
       post_visibility: "public" | "followers" | "private"
       recurrence_freq: "daily" | "weekly" | "monthly" | "yearly"
       task_status: "open" | "done" | "cancelled"
@@ -8724,6 +8881,14 @@ export const Constants = {
         "project",
         "project_context",
         "notification_preference",
+      ],
+      notification_category: [
+        "social",
+        "orders",
+        "events",
+        "crm",
+        "ai",
+        "system",
       ],
       post_visibility: ["public", "followers", "private"],
       recurrence_freq: ["daily", "weekly", "monthly", "yearly"],
