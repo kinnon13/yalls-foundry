@@ -1,7 +1,8 @@
 // useScrollerFeed hook - Feed Fusion with infinite scroll (PR5c + Master Plan)
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { FeedItem, FusionFeedItem, PostFeedItem, ListingFeedItem, EventFeedItem } from '@/types/feed';
+import type { FeedItem, PostFeedItem, ListingFeedItem, EventFeedItem } from '@/types/feed';
+import type { FusionFeedItem } from '@/types/rpc';
 import { useEffect, useRef } from 'react';
 import { logUsage, getSessionId } from '@/lib/telemetry/usage';
 

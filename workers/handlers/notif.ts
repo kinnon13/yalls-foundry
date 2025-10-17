@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 export async function handleNotif(job: { type:'notif'; userId: string; lane: string; payload: any }) {
   const { error } = await supabaseAdmin.rpc('notif_send', {

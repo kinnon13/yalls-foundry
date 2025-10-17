@@ -1,5 +1,7 @@
+export type FeedItemKind = 'post' | 'listing' | 'event';
+
 export type FeedItemBase = {
-  kind: 'post' | 'listing' | 'event';
+  kind: FeedItemKind;
   id: string;
   entity_id: string;
   created_at: string;

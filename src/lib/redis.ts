@@ -49,3 +49,5 @@ export async function brpop<T = Json>(queue: string, timeoutSec = 10): Promise<T
   const res = await redis.brPop(queue, timeoutSec);
   return res?.element ? jparse<T>(res.element) : null;
 }
+
+export function hasRedis(): boolean { return !!redis; }
