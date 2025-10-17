@@ -110,7 +110,12 @@ export function ProfileCreationModal() {
         { surface: 'profile_modal', module: 'business' }
       );
       
-      if (error) throw error;
+      if (error) {
+        if (import.meta.env.DEV) {
+          console.error('Error fetching unclaimed profiles:', error);
+        }
+        throw error;
+      }
       
       return (data as UnclaimedProfile[]) || [];
     },

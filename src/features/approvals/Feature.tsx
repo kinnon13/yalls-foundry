@@ -2,17 +2,26 @@
  * Approvals Feature
  * 
  * Standalone feature for reviewing and approving pending content
+ * Uses hardened PR2.5 RPCs with observability
  */
 
-import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/design/components/Button';
 import { Badge } from '@/design/components/Badge';
-import { X, Check, XCircle, ExternalLink } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { X, Check, XCircle } from 'lucide-react';
+import { rpcWithObs } from '@/lib/supaRpc';
 import { toast } from 'sonner';
 import type { FeatureProps } from '@/feature-kernel/types';
+
+interface PendingPost {
+  post_id: string;
+  target_entity_id: string;
+  source_post_id?: string;
+  reason: string;
+  approved: boolean;
+  created_at: string;
+}
 
 interface ApprovalsFeatureProps extends FeatureProps {
   entity?: string;
@@ -34,34 +43,36 @@ export default function ApprovalsFeature({
   const { data: approvals = [], isLoading } = useQuery({
     queryKey: ['approvals-feature', entity, filter],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!entity) return [];
 
-      const { data, error } = await (supabase as any).rpc('get_pending_approvals_by_user', {
-        p_user_id: user.id,
-      });
+      const { data, error } = await rpcWithObs(
+        'feed_pending_targets',
+        { p_entity_id: entity },
+        { surface: 'feature_approvals', feature: 'approvals' }
+      );
 
       if (error) throw error;
-      return (data || []).filter((a: any) => {
-        if (filter === 'pending') return a.status === 'pending';
-        if (filter === 'approved') return a.status === 'approved';
-        if (filter === 'rejected') return a.status === 'rejected';
-        return true;
-      });
+      
+      const rows = (data || []) as PendingPost[];
+      
+      // Client-side filter for approved/rejected (these would need separate RPC or flag)
+      if (filter === 'pending') return rows.filter(r => !r.approved);
+      if (filter === 'approved') return rows.filter(r => r.approved);
+      return rows;
     },
     refetchInterval: 30000,
+    enabled: !!entity,
   });
 
   const approveMutation = useMutation({
-    mutationFn: async (approvalId: string) => {
-      const { error } = await supabase
-        .from('ai_change_approvals')
-        .insert({
-          proposal_id: approvalId,
-          approver_id: (await supabase.auth.getUser()).data.user!.id,
-          approver_role: 'user',
-          decision: 'approved',
-        });
+    mutationFn: async (postId: string) => {
+      if (!entity) throw new Error('No entity selected');
+
+      const { error } = await rpcWithObs(
+        'post_approve_target',
+        { p_post_id: postId, p_entity_id: entity },
+        { surface: 'feature_approvals' }
+      );
 
       if (error) throw error;
     },
@@ -77,16 +88,14 @@ export default function ApprovalsFeature({
   });
 
   const rejectMutation = useMutation({
-    mutationFn: async ({ approvalId, reason }: { approvalId: string; reason?: string }) => {
-      const { error } = await supabase
-        .from('ai_change_approvals')
-        .insert({
-          proposal_id: approvalId,
-          approver_id: (await supabase.auth.getUser()).data.user!.id,
-          approver_role: 'user',
-          decision: 'rejected',
-          reason,
-        });
+    mutationFn: async ({ postId, reason }: { postId: string; reason?: string }) => {
+      if (!entity) throw new Error('No entity selected');
+
+      const { error } = await rpcWithObs(
+        'post_reject_target',
+        { p_post_id: postId, p_entity_id: entity, p_reason: reason ?? null },
+        { surface: 'feature_approvals' }
+      );
 
       if (error) throw error;
     },
@@ -131,7 +140,11 @@ export default function ApprovalsFeature({
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {!entity ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <p className="text-sm">Select an entity to view approvals</p>
+          </div>
+        ) : isLoading ? (
           <div className="text-center py-8 text-muted-foreground">Loading...</div>
         ) : approvals.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
@@ -139,32 +152,28 @@ export default function ApprovalsFeature({
           </div>
         ) : (
           <div className="space-y-3">
-            {approvals.map((approval: any) => (
+            {approvals.map((approval) => (
               <div
-                key={approval.id}
+                key={approval.post_id}
                 className="p-3 border border-border rounded-lg space-y-2"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm">{approval.target_scope}</div>
+                    <div className="font-medium text-sm">{approval.reason}</div>
                     <div className="text-xs text-muted-foreground truncate">
-                      {approval.target_ref}
+                      Post: {approval.post_id}
                     </div>
                   </div>
-                  <Badge variant={
-                    approval.status === 'approved' ? 'success' :
-                    approval.status === 'rejected' ? 'danger' :
-                    'default'
-                  }>
-                    {approval.status}
+                  <Badge variant={approval.approved ? 'success' : 'default'}>
+                    {approval.approved ? 'approved' : 'pending'}
                   </Badge>
                 </div>
-                {approval.status === 'pending' && (
+                {!approval.approved && (
                   <div className="flex gap-2">
                     <Button
                       variant="primary"
                       size="s"
-                      onClick={() => approveMutation.mutate(approval.id)}
+                      onClick={() => approveMutation.mutate(approval.post_id)}
                       disabled={approveMutation.isPending}
                       className="flex-1"
                     >
@@ -174,7 +183,7 @@ export default function ApprovalsFeature({
                     <Button
                       variant="ghost"
                       size="s"
-                      onClick={() => rejectMutation.mutate({ approvalId: approval.id })}
+                      onClick={() => rejectMutation.mutate({ postId: approval.post_id })}
                       disabled={rejectMutation.isPending}
                       className="flex-1"
                     >

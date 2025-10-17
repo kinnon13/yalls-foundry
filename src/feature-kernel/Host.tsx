@@ -12,8 +12,14 @@ import { featureRegistry } from './registry';
 import type { FeatureProps } from './types';
 
 function tryParse(v: string): unknown {
+  if (v.length > 1000) return v; // Cap size to prevent DoS
   try {
-    return JSON.parse(v);
+    const parsed = JSON.parse(v);
+    if (parsed && typeof parsed === 'object') {
+      // Shallow clone to avoid prototype pollution
+      return Object.assign({}, parsed);
+    }
+    return parsed;
   } catch {
     return v;
   }

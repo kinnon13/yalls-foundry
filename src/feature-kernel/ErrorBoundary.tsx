@@ -8,7 +8,7 @@ import { Component, ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/design/components/Button';
 import { Card, CardContent } from '@/components/ui/card';
-import { rpcWithObs } from '@/lib/supaRpc';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Props {
   featureId: string;
@@ -28,27 +28,25 @@ export class FeatureErrorBoundary extends Component<Props, State> {
   }
 
   async componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error(`Feature ${this.props.featureId} crashed:`, error, errorInfo);
+    if (import.meta.env.DEV) {
+      console.error(`Feature ${this.props.featureId} crashed:`, error, errorInfo);
+    }
     
-    // Log to observability without crashing the page
+    // Log to observability without crashing the page (fire-and-forget)
     try {
-      await rpcWithObs(
-        'rpc_observe',
-        {
-          rpc_name: 'feature_crash',
-          duration_ms: 0,
-          status: 'error' as const,
-          error_code: 'FEATURE_CRASH',
-          meta: {
-            feature: this.props.featureId,
-            error: error.message,
-            stack: error.stack?.slice(0, 500),
-          },
-        },
-        { surface: 'feature_kernel' }
-      );
-    } catch (e) {
-      console.error('Failed to log feature crash:', e);
+      (supabase as any).rpc('rpc_observe', {
+        p_rpc_name: 'feature_crash',
+        p_duration_ms: 0,
+        p_status: 'error',
+        p_error_code: 'FEATURE_CRASH',
+        p_meta: {
+          feature: this.props.featureId,
+          error: error.message,
+          stack: error.stack?.slice(0, 500),
+        }
+      }).catch(() => void 0);
+    } catch {
+      // Silent - logging failures shouldn't break UX
     }
   }
 

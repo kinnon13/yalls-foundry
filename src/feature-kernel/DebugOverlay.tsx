@@ -30,11 +30,13 @@ export function DebugOverlay() {
     queryKey: ['rpc-metrics-debug'],
     queryFn: async () => {
       try {
-        const { data, error } = await (supabase as any).rpc('rpc_metrics', { p_minutes: 60 });
+        const { data, error } = await (supabase as any).rpc('rpc_metrics', { p_window_minutes: 60 });
         if (error) throw error;
         return data || [];
       } catch (e) {
-        console.error('Failed to load RPC metrics:', e);
+        if (import.meta.env.DEV) {
+          console.error('Failed to load RPC metrics:', e);
+        }
         return [];
       }
     },
