@@ -22,8 +22,9 @@ export function useCartCount() {
         return 0;
       }
       
-      return (data || []).reduce((sum: number, item: any) => sum + item.qty, 0);
+      const items = data?.items || [];
+      return items.reduce((sum: number, item: any) => sum + (item.qty || 0), 0);
     },
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 5000,
   });
 }

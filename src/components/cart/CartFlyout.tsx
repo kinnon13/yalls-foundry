@@ -5,12 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { getCartSessionId } from '@/lib/cart/session';
 
 export function CartFlyout() {
   const { data: cart } = useQuery({
     queryKey: ['cart'],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('cart_get');
+      const sessionId = getCartSessionId();
+      const { data, error } = await supabase.rpc('cart_get', {
+        p_session_id: sessionId
+      });
       if (error) throw error;
       return (
         (data as unknown as { cart_id: string | null; items: any[]; subtotal_cents: number }) ??

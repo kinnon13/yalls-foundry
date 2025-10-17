@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { z } from "zod";
 import { ShoppingCart } from "lucide-react";
+import { getCartSessionId } from "@/lib/cart/session";
 
 const Qty = z.number().int().min(1).max(9999);
 
@@ -25,10 +26,12 @@ export function AddToCartButton({
 
     setLoading(true);
     try {
+      const sessionId = getCartSessionId();
       const { error } = await supabase.rpc("cart_upsert_item", {
         p_listing_id: listingId,
         p_qty: parsed.data,
         p_variant: variant,
+        p_session_id: sessionId,
       });
       if (error) throw error;
       toast.success("Added to cart");

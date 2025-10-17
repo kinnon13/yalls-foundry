@@ -4,6 +4,7 @@ import { Search, User, ShoppingCart } from 'lucide-react';
 import { useSession } from '@/lib/auth/context';
 import { TourButton } from '@/components/rocker/TourButton';
 import { useCartCount } from '@/hooks/useCartCount';
+import { useAuthMergeCart } from '@/hooks/useAuthMergeCart';
 import { PreviewDropdown } from '@/components/layout/PreviewDropdown';
 import GlobalNav from '@/components/nav/GlobalNav';
 import { Button } from '@/design/components/Button';
@@ -22,6 +23,8 @@ export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalH
   const [searchQuery, setSearchQuery] = useState('');
   const [showRockerLabels] = useState(propShowRockerLabels ?? false);
   const { data: cartCount = 0 } = useCartCount();
+  
+  useAuthMergeCart();
 
   const handleSignOut = async () => {
     await signOut();

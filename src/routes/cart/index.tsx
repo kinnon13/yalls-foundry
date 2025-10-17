@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
+import { getCartSessionId } from '@/lib/cart/session';
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -15,7 +16,10 @@ export default function CartPage() {
   const { data: cart, isLoading } = useQuery({
     queryKey: ['cart'],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('cart_get');
+      const sessionId = getCartSessionId();
+      const { data, error } = await supabase.rpc('cart_get', {
+        p_session_id: sessionId
+      });
       if (error) throw error;
       return (
         (data as unknown as { cart_id: string | null; items: any[]; subtotal_cents: number }) ??
