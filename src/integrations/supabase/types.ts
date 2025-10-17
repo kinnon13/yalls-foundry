@@ -6777,6 +6777,39 @@ export type Database = {
         }
         Relationships: []
       }
+      usage_events: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          item_id: string
+          item_type: string
+          payload: Json | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          item_id: string
+          item_type: string
+          payload?: Json | null
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+          payload?: Json | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_feed_preferences: {
         Row: {
           boosted_topics: string[] | null

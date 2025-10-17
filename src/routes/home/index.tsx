@@ -83,7 +83,7 @@ export default function Home() {
         </main>
 
         {/* Right Rail - Public Calendar */}
-        <aside className="hidden xl:block w-80 border-l border-border sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
+        <aside className="hidden xl:block w-80 border-l border-border sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto p-4">
           <PublicCalendar />
         </aside>
       </div>

@@ -1,81 +1,87 @@
 /**
  * Public Calendar Widget
- * Shows upcoming public events
+ * Shows upcoming events for discovery
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Calendar, MapPin } from 'lucide-react';
+import { Calendar, MapPin, Loader2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 
-interface Event {
-  id: string;
-  title: string;
-  starts_at: string;
-  ends_at: string;
-  location: any;
-  host_entity_id: string;
-}
-
 export function PublicCalendar() {
-  const { data: events = [] } = useQuery({
+  const { data: events, isLoading } = useQuery({
     queryKey: ['public-calendar'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('events')
-        .select('id, title, starts_at, ends_at, location, host_entity_id')
+        .select('*')
         .gte('starts_at', new Date().toISOString())
         .order('starts_at', { ascending: true })
-        .limit(10);
-
+        .limit(5);
+      
       if (error) throw error;
-      return data as Event[];
+      return data || [];
     },
+    refetchInterval: 60000, // Refresh every minute
   });
 
-  return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold">Upcoming Events</h2>
-        <Link to="/events" className="text-sm text-primary hover:underline">
-          View all
-        </Link>
-      </div>
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center p-8">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
 
-      {events.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-8">
-          No upcoming events
-        </p>
-      ) : (
-        <div className="space-y-4">
-          {events.map((event) => (
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Calendar size={18} />
+          Upcoming Events
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {events && events.length > 0 ? (
+          events.map((event) => (
             <Link
               key={event.id}
               to={`/events/${event.id}`}
-              className="block p-4 bg-muted/30 hover:bg-muted/50 rounded-lg transition-colors group"
+              className="block p-3 rounded-lg border hover:bg-accent transition-colors"
             >
-              <h3 className="font-medium mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                {event.title}
-              </h3>
-              
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+              <p className="font-medium text-sm mb-1 line-clamp-1">{event.title}</p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Calendar size={12} />
                 <span>{format(new Date(event.starts_at), 'MMM d, h:mm a')}</span>
               </div>
-
               {event.location && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                   <MapPin size={12} />
-                  <span className="truncate">
-                    {event.location.venue || event.location.city || 'Location TBA'}
+                  <span className="line-clamp-1">
+                    {typeof event.location === 'string' 
+                      ? event.location 
+                      : (event.location as any).name || 'Location TBD'}
                   </span>
                 </div>
               )}
             </Link>
-          ))}
-        </div>
-      )}
-    </div>
+          ))
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No upcoming events
+          </p>
+        )}
+        <Link
+          to="/events"
+          className="block text-center text-sm text-primary hover:underline mt-2"
+        >
+          View all events →
+        </Link>
+      </CardContent>
+    </Card>
   );
 }
