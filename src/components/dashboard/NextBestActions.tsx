@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { useSession } from '@/lib/auth/context';
 
 interface Action {
   id: string;
@@ -29,10 +30,15 @@ interface NextBestActionsProps {
 export function NextBestActions({ actions, isLoading }: NextBestActionsProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { session } = useSession();
   const [executing, setExecuting] = useState<string | null>(null);
 
   const handleAction = async (action: Action) => {
+    if (!session?.userId) return;
+    
     setExecuting(action.id);
+    let result = 'success';
+    let errorMsg: string | null = null;
 
     try {
       // Handle navigation actions
@@ -40,54 +46,46 @@ export function NextBestActions({ actions, isLoading }: NextBestActionsProps) {
         const destination = action.cta.rpc.replace('navigate_to_', '');
         navigate(`/dashboard/${destination}`);
         
-        // Log action
-        await supabase.from('ai_action_ledger').insert({
-          user_id: action.cta.params.user_id,
-          agent: 'user',
-          action: action.cta.rpc,
-          input: action.cta.params,
-          output: { navigated: true },
-          result: 'success',
-        });
-
         toast({
           title: 'Navigating',
           description: `Taking you to ${destination}`,
         });
-        return;
+      } else if (['send_cart_reminder'].includes(action.cta.rpc)) {
+        // Known unimplemented CTAs
+        result = 'noop';
+        toast({
+          title: 'Coming soon',
+          description: 'This action is not yet implemented.',
+        });
+      } else {
+        // Unknown CTA - log but show friendly message
+        result = 'noop';
+        errorMsg = `Unknown CTA: ${action.cta.rpc}`;
+        toast({
+          title: 'Action not available',
+          description: 'This suggestion is noted but can\'t be executed automatically yet.',
+        });
       }
 
-      // Handle other RPC calls (use 'any' cast for dynamic RPC names)
-      const { error: rpcError } = await (supabase as any).rpc(action.cta.rpc, action.cta.params);
-      if (rpcError) throw rpcError;
-
-      // Log successful action
-      await supabase.from('ai_action_ledger').insert({
-        user_id: action.cta.params.user_id,
-        agent: 'rocker',
-        action: action.cta.rpc,
-        input: action.cta.params,
-        output: { success: true },
-        result: 'success',
+      // Always log to ledger using rocker_log_action RPC
+      const { error } = await (supabase as any).rpc('rocker_log_action', {
+        p_user_id: session.userId,
+        p_agent: 'user',
+        p_action: `nba_click_${action.cta.rpc}`,
+        p_input: { action_id: action.id, action_title: action.title },
+        p_output: { success: result === 'success', error: errorMsg },
+        p_result: result
       });
-
-      toast({
-        title: 'Action completed',
-        description: action.title,
-      });
-    } catch (error) {
-      // Error handling without console.log for production
       
-      // Log failed action
-      await supabase.from('ai_action_ledger').insert({
-        user_id: action.cta.params.user_id,
-        agent: 'rocker',
-        action: action.cta.rpc,
-        input: action.cta.params,
-        output: { error: error instanceof Error ? error.message : 'Unknown error' },
-        result: 'failure',
-      });
-
+      if (error) throw error;
+      
+      if (result === 'success') {
+        toast({
+          title: 'Action recorded',
+          description: 'We\'ll follow up on this suggestion.',
+        });
+      }
+    } catch (error) {
       toast({
         title: 'Action failed',
         description: error instanceof Error ? error.message : 'Unknown error',
