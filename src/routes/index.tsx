@@ -1,13 +1,15 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { SEOHelmet } from '@/lib/seo/helmet';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { useSession } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { SmartFeed } from '@/components/posts/SmartFeed';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreatePost } from '@/components/posts/CreatePost';
-import { UpcomingEventsRow } from '@/components/calendar/UpcomingEventsRow';
+import { PublicCalendar } from '@/components/calendar/PublicCalendar';
+import { TikTokScroller } from '@/components/reels/TikTokScroller';
+import { useScrollerFeed } from '@/hooks/useScrollerFeed';
 import { CreateModalRouter } from '@/components/modals/CreateModalRouter';
 import { EventDetailModal } from '@/components/modals/EventDetailModal';
 import { CartModal } from '@/components/modals/CartModal';
@@ -16,13 +18,32 @@ import { OrderSuccessModal } from '@/components/modals/OrderSuccessModal';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Calendar, Trophy, Users, Star, TrendingUp, ShoppingCart } from 'lucide-react';
+import { Calendar, Users, Star, TrendingUp, ShoppingCart } from 'lucide-react';
+import type { FeedMode } from '@/types/feed';
 
 export default function Index() {
   const { session } = useSession();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [refreshKey, setRefreshKey] = useState(0);
+  
+  // Get lane from URL (default: for_you)
+  const lane = (searchParams.get('lane') || 'for_you') as 'for_you' | 'following' | 'shop';
+  
+  // Map lane to feed mode
+  const feedMode: FeedMode = lane === 'following' ? 'personal' : 'combined';
 
-  // Fetch featured content
+  // Feed data
+  const { 
+    data: feedData,
+    isLoading,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage
+  } = useScrollerFeed({ mode: feedMode, pageSize: 20 });
+
+  const allItems = feedData?.pages.flatMap((page) => page.items) || [];
+
+  // Fetch featured content for non-logged-in users
   const { data: featuredEvents = [] } = useQuery({
     queryKey: ['featured-events'],
     queryFn: async () => {
@@ -33,7 +54,12 @@ export default function Index() {
         .limit(3);
       return data || [];
     },
+    enabled: !session
   });
+
+  const handleLaneChange = (newLane: string) => {
+    setSearchParams({ lane: newLane });
+  };
 
   return (
     <>
@@ -130,10 +156,40 @@ export default function Index() {
 
         {/* Feed Section for Logged-in Users */}
         {session && (
-          <div className="max-w-6xl mx-auto p-6 space-y-6">
-            <CreatePost onPostCreated={() => setRefreshKey(prev => prev + 1)} />
-            <UpcomingEventsRow />
-            <SmartFeed key={refreshKey} />
+          <div className="flex gap-6 max-w-7xl mx-auto p-6">
+            {/* Main Feed Column */}
+            <div className="flex-1 space-y-4">
+              {/* Composer */}
+              <CreatePost onPostCreated={() => setRefreshKey((prev) => prev + 1)} />
+
+              {/* Lane Tabs */}
+              <Tabs value={lane} onValueChange={handleLaneChange} className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="for_you">For You</TabsTrigger>
+                  <TabsTrigger value="following">Following</TabsTrigger>
+                  <TabsTrigger value="shop">Shop</TabsTrigger>
+                </TabsList>
+              </Tabs>
+
+              {/* TikTok Scroller */}
+              <TikTokScroller
+                items={allItems}
+                isLoading={isLoading || isFetchingNextPage}
+                hasMore={hasNextPage}
+                onLoadMore={fetchNextPage}
+                onItemView={(item) => {
+                  // Log view event (already handled in useScrollerFeed)
+                  console.log('[Feed] Viewed item:', item.kind, item.id);
+                }}
+              />
+            </div>
+
+            {/* Right Sidebar - Public Calendar */}
+            <div className="hidden lg:block w-80 shrink-0">
+              <div className="sticky top-20">
+                <PublicCalendar />
+              </div>
+            </div>
           </div>
         )}
       </main>
