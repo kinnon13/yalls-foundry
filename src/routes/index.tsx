@@ -5,24 +5,19 @@ import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { useSession } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { CreatePost } from '@/components/posts/CreatePost';
 import { PublicCalendarWidget } from '@/components/feed/PublicCalendarWidget';
 import { TikTokScroller } from '@/components/reels/TikTokScroller';
 import { useScrollerFeed } from '@/hooks/useScrollerFeed';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { CreateModalRouter } from '@/components/modals/CreateModalRouter';
 import { EventDetailModal } from '@/components/modals/EventDetailModal';
 import { CartModal } from '@/components/modals/CartModal';
 import { CheckoutModal } from '@/components/modals/CheckoutModal';
 import { OrderSuccessModal } from '@/components/modals/OrderSuccessModal';
-import { Calendar, Users, Star, TrendingUp, ShoppingCart, Sparkles } from 'lucide-react';
+import { Sparkles, Users, ShoppingCart, TrendingUp, Heart, Zap } from 'lucide-react';
 
 type Lane = 'for_you' | 'following' | 'shop';
-const LANE_LABELS: Record<Lane, string> = {
-  for_you: 'For You',
-  following: 'Following',
-  shop: 'Shop'
-};
 
 export default function Index() {
   const { session } = useSession();
@@ -102,24 +97,19 @@ export default function Index() {
         ) : (
           <div className="container mx-auto px-4 pb-8">
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-8 space-y-4">
+              <div className="lg:col-span-8 space-y-6">
                 <CreatePost onPostCreated={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
                 
-                <div className="flex gap-2 text-sm">
-                  {(['for_you', 'following', 'shop'] as Lane[]).map((k) => (
-                    <button
-                      key={k}
-                      onClick={() => setSearchParams({ lane: k })}
-                      className={`px-3 py-1 rounded transition ${
-                        lane === k
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary hover:bg-secondary/80'
-                      }`}
-                    >
-                      {LANE_LABELS[k]}
-                    </button>
-                  ))}
-                </div>
+                <SegmentedControl
+                  value={lane}
+                  onChange={(value) => setSearchParams({ lane: value })}
+                  options={[
+                    { value: 'for_you', label: 'For You', icon: <Sparkles className="h-4 w-4" /> },
+                    { value: 'following', label: 'Following', icon: <Heart className="h-4 w-4" /> },
+                    { value: 'shop', label: 'Shop', icon: <ShoppingCart className="h-4 w-4" /> }
+                  ]}
+                  className="w-full sm:w-auto"
+                />
 
                 <TikTokScroller
                   items={items}
