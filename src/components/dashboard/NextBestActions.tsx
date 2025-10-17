@@ -57,8 +57,9 @@ export function NextBestActions({ actions, isLoading }: NextBestActionsProps) {
         return;
       }
 
-      // Handle other RPC calls (placeholder - implement actual RPC calls)
-      console.log('RPC call:', action.cta.rpc, action.cta.params);
+      // Handle other RPC calls
+      const { error: rpcError } = await supabase.rpc(action.cta.rpc, action.cta.params);
+      if (rpcError) throw rpcError;
 
       // Log successful action
       await supabase.from('ai_action_ledger').insert({
@@ -75,7 +76,7 @@ export function NextBestActions({ actions, isLoading }: NextBestActionsProps) {
         description: action.title,
       });
     } catch (error) {
-      console.error('Action failed:', error);
+      // Error handling without console.log for production
       
       // Log failed action
       await supabase.from('ai_action_ledger').insert({

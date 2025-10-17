@@ -88,7 +88,7 @@ export function DashboardSidebar() {
   };
 
   return (
-    <div className="w-64 border-r border-border bg-card flex-shrink-0">
+    <div className="w-64 border-r border-border bg-card flex-shrink-0 hidden md:block">
       <div className="p-4">
         <h2 className="text-lg font-semibold text-foreground mb-4">Dashboard</h2>
         <nav className="space-y-1">

@@ -107,11 +107,11 @@ export function DashboardKPIs({ kpis, isLoading }: DashboardKPIsProps) {
   const getVariantClass = (variant: KPITile['variant']) => {
     switch (variant) {
       case 'success':
-        return 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-300';
+        return 'bg-success/10 border-success/20 text-success';
       case 'warning':
-        return 'bg-yellow-500/10 border-yellow-500/20 text-yellow-700 dark:text-yellow-300';
+        return 'bg-warning/10 border-warning/20 text-warning';
       case 'danger':
-        return 'bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-300';
+        return 'bg-danger/10 border-danger/20 text-danger';
       default:
         return 'bg-primary/10 border-primary/20 text-primary';
     }
@@ -120,7 +120,7 @@ export function DashboardKPIs({ kpis, isLoading }: DashboardKPIsProps) {
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-foreground">Key Metrics</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {tiles.map((tile, index) => (
           <div
             key={index}

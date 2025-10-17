@@ -1,0 +1,62 @@
+import { useState } from 'react';
+import { Building2, ChevronDown } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useSession } from '@/lib/auth/context';
+
+export function DashboardEntitySwitcher() {
+  const { session } = useSession();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const { data: entities } = useQuery({
+    queryKey: ['user-entities', session?.userId],
+    queryFn: async () => {
+      if (!session?.userId) return [];
+      
+      const { data, error } = await supabase
+        .from('entities')
+        .select('id, name, entity_type')
+        .eq('owner_id', session.userId);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!session?.userId,
+  });
+
+  const [currentEntity, setCurrentEntity] = useState(entities?.[0]);
+
+  if (!entities || entities.length === 0) return null;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card hover:bg-accent transition-colors"
+      >
+        <Building2 size={16} className="text-muted-foreground" />
+        <span className="text-sm font-medium">{currentEntity?.name || 'Select Entity'}</span>
+        <ChevronDown size={16} className="text-muted-foreground" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full mt-2 w-64 rounded-lg border border-border bg-card shadow-lg z-50">
+          <div className="p-2 space-y-1">
+            {entities.map((entity) => (
+              <button
+                key={entity.id}
+                onClick={() => {
+                  setCurrentEntity(entity);
+                  setIsOpen(false);
+                }}
+                className="w-full px-3 py-2 text-left rounded-md hover:bg-accent transition-colors text-sm"
+              >
+                {entity.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
