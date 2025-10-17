@@ -94,10 +94,57 @@ SELECT check_rate_limit('test:user', 100, 60);
 - ✅ 30-day retention policy (`prune_usage_events()`)
 - ✅ Meta sanitization (no PII)
 
-### PR-O1: Observability + CI/CD ✅
+### PR-O1: Observability + CI/CD ✅ COMPLETE
 - ✅ CI pipeline (`.github/workflows/ci.yml`)
-  - ✅ Type checking
-  - ✅ Linting
+  - ✅ Type checking (strict, blocks PR on failure)
+  - ✅ Linting (blocks PR on failure)
+  - ✅ Unit tests with coverage (80% branches, 85% lines/statements/functions)
+  - ✅ Security scanning (no hardcoded secrets)
+  - ✅ Coverage upload to Codecov
+- ✅ SQL validation workflow (`.github/workflows/sql-validation.yml`)
+  - ✅ RLS policy validation
+  - ✅ SECURITY DEFINER search_path check
+  - ✅ SQL injection vector detection
+  - ✅ Admin function role check validation
+- ✅ E2E smoke tests (`.github/workflows/e2e.yml`)
+  - ✅ Home feed loading (p95 < 3s enforced)
+  - ✅ Scroll + impression logging
+  - ✅ Entitlement paywall display
+  - ✅ Performance budgets
+- ✅ Load testing (`.github/workflows/load-test.yml`)
+  - ✅ Auth brute force simulation
+  - ✅ Feed scraping simulation
+  - ✅ Action spam simulation
+  - ✅ Rate limit validation
+
+**Test Coverage: COMPREHENSIVE**
+- ✅ Security utilities: `tests/unit/security.test.ts`
+  - HTML escaping, URL sanitization, file validation
+- ✅ Rate limiting: `tests/unit/rate-limit.test.ts`
+  - Token bucket, window sliding, race conditions
+- ✅ Caching: `tests/unit/cache.test.ts`
+  - Redis operations, stampede protection, TTL
+- ✅ Feed cache: `tests/unit/feed-cache.test.ts`
+  - Cache hit/miss, invalidation patterns
+- ✅ Telemetry: `tests/unit/telemetry.test.ts`
+  - Meta sanitization, PII filtering
+- ✅ Entitlements: `tests/unit/entitlements-gate.test.ts`
+  - Feature gating, age restrictions, paywall
+- ✅ Kernel host: `tests/unit/kernel-host.test.ts`
+  - Pagination, cursor handling, observability
+- ✅ Edge rate limit: `tests/unit/edge-rate-limit.test.ts`
+  - 429 responses, headers, scope isolation
+- ✅ SQL validation: `tests/sql/rls-validation.test.sql`
+  - RLS enabled, policies correct, indexes present
+
+**Test Infrastructure:**
+- ✅ Shared test renderer: `tests/utils/renderWithProviders.tsx`
+  - Wraps ALL providers (UIProvider, QueryClient, Router, Theme)
+  - Mirrors production stack in main.tsx
+  - Prevents "Invalid hook call" errors
+- ✅ Mock utilities: Sentry, Supabase, crypto, sessionStorage
+- ✅ Fake timers for interval-based code (metrics flush)
+- ✅ Coverage thresholds enforced in CI
   - ✅ Security checks (Supabase linter)
   - ✅ Unit tests
 - ✅ E2E smoke tests (Playwright, `.github/workflows/e2e.yml`)

@@ -1,23 +1,28 @@
 /**
  * Test Utilities - Provider-Safe Rendering
  * 
- * Wraps all components with required providers to prevent hook errors.
+ * CRITICAL: Always use this to render components in tests to prevent:
+ * - "Invalid hook call" errors
+ * - Missing context provider errors
+ * - Theme/router/query client errors
  */
 
 import { ReactNode } from 'react';
 import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from 'next-themes';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { UIProvider } from '@/design/UIProvider';
 
 /**
- * Render component with all required providers
- * Prevents "Invalid hook call" errors in tests
+ * Render component with ALL required providers
+ * Mirrors production provider stack in main.tsx
  */
 export function renderWithProviders(
   ui: ReactNode,
-  opts: { route?: string; queryClient?: QueryClient } = {}
+  opts: { 
+    route?: string; 
+    queryClient?: QueryClient;
+  } = {}
 ) {
   const qc = opts.queryClient || new QueryClient({
     defaultOptions: {
@@ -33,11 +38,9 @@ export function renderWithProviders(
   return render(
     <QueryClientProvider client={qc}>
       <BrowserRouter>
-        <ThemeProvider attribute="class" defaultTheme="dark">
-          <TooltipProvider delayDuration={200}>
-            {ui}
-          </TooltipProvider>
-        </ThemeProvider>
+        <UIProvider>
+          {ui}
+        </UIProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );

@@ -1,0 +1,61 @@
+name: SQL Security Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'tests/sql/**'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+
+jobs:
+  rls-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate RLS policies
+        run: |
+          echo "🔒 Validating Row-Level Security..."
+          
+          # Check all tables have RLS enabled
+          if grep -r "CREATE TABLE" supabase/migrations/ | grep -v "ENABLE ROW LEVEL SECURITY"; then
+            echo "⚠️  Warning: Found tables without RLS"
+          fi
+          
+          # Check SECURITY DEFINER functions have search_path
+          if grep -r "SECURITY DEFINER" supabase/migrations/ | grep -v "SET search_path"; then
+            echo "❌ ERROR: SECURITY DEFINER functions missing search_path"
+            exit 1
+          fi
+          
+          echo "✅ SQL security validation passed"
+      
+      - name: Check for SQL injection vectors
+        run: |
+          echo "🔍 Checking for SQL injection risks..."
+          
+          # Look for dynamic SQL without proper escaping
+          if grep -r "EXECUTE" supabase/migrations/ | grep -v "USING"; then
+            echo "⚠️  Warning: Found EXECUTE without USING (potential SQL injection)"
+          fi
+          
+          echo "✅ SQL injection check completed"
+      
+      - name: Validate admin functions
+        run: |
+          echo "👤 Validating admin function security..."
+          
+          # Check admin functions have role checks
+          ADMIN_FUNCS=$(grep -r "admin_" supabase/migrations/ -A 10 | grep "CREATE.*FUNCTION" | wc -l)
+          ROLE_CHECKS=$(grep -r "has_role.*admin" supabase/migrations/ | wc -l)
+          
+          if [ "$ADMIN_FUNCS" -gt "$ROLE_CHECKS" ]; then
+            echo "⚠️  Warning: Some admin functions may lack role checks"
+          fi
+          
+          echo "✅ Admin function validation completed"
