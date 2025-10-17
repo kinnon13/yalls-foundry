@@ -43,6 +43,11 @@ const EditListing = lazy(() => import('./routes/listings/[id]/edit'));
 const EventsIndex = lazy(() => import('./routes/events/index'));
 const NewEvent = lazy(() => import('./routes/events/new'));
 const EventDetail = lazy(() => import('./routes/events/[id]'));
+const EventClasses = lazy(() => import('./routes/events/[id]/classes'));
+const EventEntries = lazy(() => import('./routes/events/[id]/entries'));
+const EventDraw = lazy(() => import('./routes/events/[id]/draw'));
+const EventResults = lazy(() => import('./routes/events/[id]/results'));
+const EventPayouts = lazy(() => import('./routes/events/[id]/payouts'));
 const CartPage = lazy(() => import('./routes/cart/index'));
 const OrdersIndex = lazy(() => import('./routes/orders/index'));
 const OrderDetail = lazy(() => import('./routes/orders/[id]'));
@@ -87,7 +92,13 @@ const App = () => (
           <Route path="/listings/:id/edit" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><EditListing /></Suspense></RequireAuth>} />
           <Route path="/events" element={<Suspense fallback={<div>Loading...</div>}><EventsIndex /></Suspense>} />
           <Route path="/events/new" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><NewEvent /></Suspense></RequireAuth>} />
-          <Route path="/events/:id" element={<Suspense fallback={<div>Loading...</div>}><EventDetail /></Suspense>} />
+          <Route path="/events/:id" element={<Suspense fallback={<div>Loading...</div>}><EventDetail /></Suspense>}>
+            <Route path="classes" element={<Suspense fallback={<div>Loading...</div>}><EventClasses /></Suspense>} />
+            <Route path="entries" element={<Suspense fallback={<div>Loading...</div>}><EventEntries /></Suspense>} />
+            <Route path="draw" element={<Suspense fallback={<div>Loading...</div>}><EventDraw /></Suspense>} />
+            <Route path="results" element={<Suspense fallback={<div>Loading...</div>}><EventResults /></Suspense>} />
+            <Route path="payouts" element={<Suspense fallback={<div>Loading...</div>}><EventPayouts /></Suspense>} />
+          </Route>
           <Route path="/cart" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><CartPage /></Suspense></RequireAuth>} />
           <Route path="/orders" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrdersIndex /></Suspense></RequireAuth>} />
           <Route path="/orders/:id" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrderDetail /></Suspense></RequireAuth>} />

@@ -1,17 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Outlet, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Edit, MapPin } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const queryClient = useQueryClient();
+  
+  const currentTab = location.pathname.split('/').pop() === id ? 'overview' : location.pathname.split('/').pop() || 'overview';
 
   const { data: event, isLoading } = useQuery({
     queryKey: ['event', id],
@@ -69,7 +73,7 @@ export default function EventDetail() {
     <div className="min-h-screen bg-background">
       <GlobalHeader />
       
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between">
@@ -118,6 +122,33 @@ export default function EventDetail() {
             </div>
           </CardContent>
         </Card>
+
+        <Tabs value={currentTab} className="w-full mt-6">
+          <TabsList className="w-full justify-start">
+            <TabsTrigger value="overview" asChild>
+              <Link to={`/events/${id}`}>Overview</Link>
+            </TabsTrigger>
+            <TabsTrigger value="classes" asChild>
+              <Link to={`/events/${id}/classes`}>Classes</Link>
+            </TabsTrigger>
+            <TabsTrigger value="entries" asChild>
+              <Link to={`/events/${id}/entries`}>Entries</Link>
+            </TabsTrigger>
+            <TabsTrigger value="draw" asChild>
+              <Link to={`/events/${id}/draw`}>Draw</Link>
+            </TabsTrigger>
+            <TabsTrigger value="results" asChild>
+              <Link to={`/events/${id}/results`}>Results</Link>
+            </TabsTrigger>
+            <TabsTrigger value="payouts" asChild>
+              <Link to={`/events/${id}/payouts`}>Payouts</Link>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <div className="mt-4">
+          <Outlet />
+        </div>
       </div>
     </div>
   );

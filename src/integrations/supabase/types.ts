@@ -2593,6 +2593,57 @@ export type Database = {
           },
         ]
       }
+      draws: {
+        Row: {
+          class_id: string
+          created_at: string
+          entry_id: string
+          go_time: string | null
+          id: string
+          is_slack: boolean
+          perf_label: string | null
+          position: number
+          round: number
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          entry_id: string
+          go_time?: string | null
+          id?: string
+          is_slack?: boolean
+          perf_label?: string | null
+          position: number
+          round?: number
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          entry_id?: string
+          go_time?: string | null
+          id?: string
+          is_slack?: boolean
+          perf_label?: string | null
+          position?: number
+          round?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "draws_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "event_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "draws_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dynamic_categories: {
         Row: {
           created_at: string
@@ -3012,6 +3063,110 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      entries: {
+        Row: {
+          back_number: number | null
+          class_id: string
+          created_at: string
+          fees_cents: number
+          horse_entity_id: string | null
+          id: string
+          rider_user_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          back_number?: number | null
+          class_id: string
+          created_at?: string
+          fees_cents?: number
+          horse_entity_id?: string | null
+          id?: string
+          rider_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          back_number?: number | null
+          class_id?: string
+          created_at?: string
+          fees_cents?: number
+          horse_entity_id?: string | null
+          id?: string
+          rider_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entries_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "event_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entries_horse_entity_id_fkey"
+            columns: ["horse_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_classes: {
+        Row: {
+          added_money_cents: number
+          created_at: string
+          discipline: string
+          event_id: string
+          fees_jsonb: Json
+          id: string
+          key: string
+          max_entries: number | null
+          rules_md: string | null
+          schedule_block: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          added_money_cents?: number
+          created_at?: string
+          discipline: string
+          event_id: string
+          fees_jsonb?: Json
+          id?: string
+          key: string
+          max_entries?: number | null
+          rules_md?: string | null
+          schedule_block?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          added_money_cents?: number
+          created_at?: string
+          discipline?: string
+          event_id?: string
+          fees_jsonb?: Json
+          id?: string
+          key?: string
+          max_entries?: number | null
+          rules_md?: string | null
+          schedule_block?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_classes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       events: {
         Row: {
@@ -3822,6 +3977,80 @@ export type Database = {
           },
         ]
       }
+      payout_rules: {
+        Row: {
+          class_id: string
+          created_at: string
+          id: string
+          schema: Json
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          id?: string
+          schema?: Json
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          id?: string
+          schema?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_rules_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "event_classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payouts: {
+        Row: {
+          amount_cents: number
+          class_id: string
+          created_at: string
+          entry_id: string
+          id: string
+          place: number
+          status: string
+        }
+        Insert: {
+          amount_cents?: number
+          class_id: string
+          created_at?: string
+          entry_id: string
+          id?: string
+          place: number
+          status?: string
+        }
+        Update: {
+          amount_cents?: number
+          class_id?: string
+          created_at?: string
+          entry_id?: string
+          id?: string
+          place?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "event_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payouts_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       playbooks: {
         Row: {
           ask_templates: Json | null
@@ -4211,6 +4440,50 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      results: {
+        Row: {
+          created_at: string
+          dnf: boolean
+          entry_id: string
+          id: string
+          notes: string | null
+          penalties_ms: number
+          round: number
+          score: number | null
+          time_ms: number | null
+        }
+        Insert: {
+          created_at?: string
+          dnf?: boolean
+          entry_id: string
+          id?: string
+          notes?: string | null
+          penalties_ms?: number
+          round?: number
+          score?: number | null
+          time_ms?: number | null
+        }
+        Update: {
+          created_at?: string
+          dnf?: boolean
+          entry_id?: string
+          id?: string
+          notes?: string | null
+          penalties_ms?: number
+          round?: number
+          score?: number | null
+          time_ms?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "results_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "entries"
             referencedColumns: ["id"]
           },
         ]
@@ -5229,6 +5502,10 @@ export type Database = {
         Args: { entity_id: string }
         Returns: Json
       }
+      class_upsert: {
+        Args: { p_event_id: string; p_payload: Json }
+        Returns: string
+      }
       cleanup_expired_idempotency: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -5265,6 +5542,10 @@ export type Database = {
       dm_send: {
         Args: { p_body: string; p_metadata?: Json; p_recipient: string }
         Returns: string
+      }
+      draw_generate: {
+        Args: { p_event_id: string; p_opts?: Json }
+        Returns: Json
       }
       dropgeometrycolumn: {
         Args:
@@ -5317,6 +5598,15 @@ export type Database = {
           p_kind: Database["public"]["Enums"]["entity_kind"]
           p_provenance?: Json
           p_window_key?: string
+        }
+        Returns: string
+      }
+      entry_submit: {
+        Args: {
+          p_class_id: string
+          p_horse_entity_id: string
+          p_opts?: Json
+          p_rider_user_id: string
         }
         Returns: string
       }
@@ -5780,6 +6070,10 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      payout_compute: {
+        Args: { p_class_id: string }
+        Returns: Json
+      }
       pgis_asflatgeobuf_finalfn: {
         Args: { "": unknown }
         Returns: string
@@ -5978,6 +6272,10 @@ export type Database = {
       requires_step_up: {
         Args: { action_name: string }
         Returns: boolean
+      }
+      result_record: {
+        Args: { p_entry_id: string; p_payload: Json; p_round: number }
+        Returns: undefined
       }
       revoke_sessions: {
         Args: { target_user_id?: string }
