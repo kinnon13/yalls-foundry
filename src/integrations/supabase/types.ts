@@ -5663,6 +5663,42 @@ export type Database = {
         }
         Relationships: []
       }
+      rpc_observations: {
+        Row: {
+          created_at: string
+          duration_ms: number
+          error_code: string | null
+          id: number
+          meta: Json
+          rpc_name: string
+          status: string
+          tenant_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms: number
+          error_code?: string | null
+          id?: number
+          meta?: Json
+          rpc_name: string
+          status: string
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number
+          error_code?: string | null
+          id?: number
+          meta?: Json
+          rpc_name?: string
+          status?: string
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       saved_items: {
         Row: {
           listing_id: string
@@ -7829,6 +7865,10 @@ export type Database = {
         Args: { action_name: string }
         Returns: boolean
       }
+      resolve_tenant_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       result_record: {
         Args: { p_entry_id: string; p_payload: Json; p_round: number }
         Returns: undefined
@@ -7879,6 +7919,40 @@ export type Database = {
           p_visibility?: string
         }
         Returns: string
+      }
+      rpc_metrics: {
+        Args: { p_window_minutes?: number }
+        Returns: {
+          avg_ms: number
+          calls: number
+          error_rate_pct: number
+          p50_ms: number
+          p95_ms: number
+          p99_ms: number
+          rpc_name: string
+        }[]
+      }
+      rpc_observe: {
+        Args: {
+          p_duration_ms: number
+          p_error_code?: string
+          p_meta?: Json
+          p_rpc_name: string
+          p_status: string
+        }
+        Returns: undefined
+      }
+      rpc_slowest: {
+        Args: { p_limit?: number; p_window_minutes?: number }
+        Returns: {
+          avg_ms: number
+          calls: number
+          error_rate_pct: number
+          p50_ms: number
+          p95_ms: number
+          p99_ms: number
+          rpc_name: string
+        }[]
       }
       save_item: {
         Args: { p_listing_id: string }

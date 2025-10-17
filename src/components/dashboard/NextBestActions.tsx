@@ -7,9 +7,9 @@ import {
 import { Button } from '@/design/components/Button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '@/lib/auth/context';
+import { rpcWithObs } from '@/lib/supaRpc';
 
 interface Action {
   id: string;
@@ -68,14 +68,14 @@ export function NextBestActions({ actions, isLoading }: NextBestActionsProps) {
       }
 
       // Always log to ledger using rocker_log_action RPC
-      const { error } = await (supabase as any).rpc('rocker_log_action', {
+      const { error } = await rpcWithObs('rocker_log_action', {
         p_user_id: session.userId,
         p_agent: 'user',
         p_action: `nba_click_${action.cta.rpc}`,
         p_input: { action_id: action.id, action_title: action.title },
         p_output: { success: result === 'success', error: errorMsg },
         p_result: result
-      });
+      }, { surface: 'next_best_actions' });
       
       if (error) throw error;
       

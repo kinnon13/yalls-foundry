@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { DashboardKPIs } from '@/components/dashboard/DashboardKPIs';
 import { NextBestActions } from '@/components/dashboard/NextBestActions';
 import { DashboardEntitySwitcher } from '@/components/dashboard/DashboardEntitySwitcher';
 import { DashboardBreadcrumbs } from '@/components/dashboard/DashboardBreadcrumbs';
 import { useSession } from '@/lib/auth/context';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+import { rpcWithObs } from '@/lib/supaRpc';
+import RPCHealthCard from '@/components/dashboard/cards/RPCHealth';
 
 export default function DashboardOverview() {
   const { session } = useSession();
@@ -16,9 +17,9 @@ export default function DashboardOverview() {
     queryFn: async () => {
       if (!session?.userId) return null;
       
-      const { data, error } = await (supabase as any).rpc('dashboard_kpis', {
+      const { data, error } = await rpcWithObs('dashboard_kpis', {
         p_user_id: session.userId
-      });
+      }, { surface: 'dashboard_overview' });
       
       if (error) throw error;
       return data as unknown as {
@@ -42,9 +43,9 @@ export default function DashboardOverview() {
     queryFn: async () => {
       if (!session?.userId) return [];
       
-      const { data, error } = await (supabase as any).rpc('rocker_next_best_actions', {
+      const { data, error } = await rpcWithObs('rocker_next_best_actions', {
         p_user_id: session.userId
-      });
+      }, { surface: 'dashboard_overview' });
       
       if (error) throw error;
       return (data ?? []) as unknown as Array<{
@@ -82,7 +83,10 @@ export default function DashboardOverview() {
         <DashboardEntitySwitcher />
       </div>
 
-      <DashboardKPIs kpis={kpis} isLoading={kpisLoading} />
+      <div className="grid gap-4 md:grid-cols-2">
+        <DashboardKPIs kpis={kpis} isLoading={kpisLoading} />
+        <RPCHealthCard />
+      </div>
       <NextBestActions actions={actions} isLoading={actionsLoading} />
     </div>
   );
