@@ -6,29 +6,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
-
-export interface EarningsEvent {
-  id: string;
-  kind: string;
-  amount_cents: number;
-  currency: string;
-  captured: boolean;
-  occurred_at: string;
-  metadata: Record<string, any>;
-}
-
-export interface EarningsLedger {
-  total_earned_cents: number;
-  total_captured_cents: number;
-  pending_cents: number;
-  missed_cents: number;
-}
+import type { EarningsEvent, EarningsLedger } from '@/types/domain';
 
 export function useEarnings() {
   const { session } = useSession();
   const queryClient = useQueryClient();
 
-  const { data: ledger, isLoading: ledgerLoading } = useQuery({
+  const { data: ledger, isLoading: ledgerLoading } = useQuery<EarningsLedger>({
     queryKey: ['earnings-ledger', session?.userId],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
@@ -39,24 +23,27 @@ export function useEarnings() {
 
       if (error) throw error;
 
-      return data
-        ? {
-            total_earned_cents: data.total_earned_cents,
-            total_captured_cents: data.total_captured_cents,
-            pending_cents: data.pending_cents,
-            missed_cents: data.total_earned_cents - data.total_captured_cents,
-          }
-        : {
-            total_earned_cents: 0,
-            total_captured_cents: 0,
-            pending_cents: 0,
-            missed_cents: 0,
-          };
+      if (data) {
+        const ledgerData = data as unknown as EarningsLedger;
+        return {
+          ...ledgerData,
+          missed_cents: ledgerData.total_earned_cents - ledgerData.total_captured_cents,
+        };
+      }
+
+      return {
+        user_id: session?.userId!,
+        total_earned_cents: 0,
+        total_captured_cents: 0,
+        pending_cents: 0,
+        missed_cents: 0,
+        updated_at: new Date().toISOString(),
+      };
     },
     enabled: !!session?.userId,
   });
 
-  const { data: events = [], isLoading: eventsLoading } = useQuery({
+  const { data: events = [], isLoading: eventsLoading } = useQuery<EarningsEvent[]>({
     queryKey: ['earnings-events', session?.userId],
     queryFn: async () => {
       const { data, error } = await (supabase as any)

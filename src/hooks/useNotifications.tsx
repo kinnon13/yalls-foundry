@@ -7,30 +7,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
 import { useEffect } from 'react';
-
-export interface Notification {
-  id: string;
-  channel: string;
-  kind: string;
-  title: string;
-  body: string;
-  data: Record<string, any>;
-  read_at: string | null;
-  created_at: string;
-}
+import type { Notification } from '@/types/domain';
 
 export function useNotifications() {
   const { session } = useSession();
   const queryClient = useQueryClient();
 
-  const { data: notifications = [], isLoading } = useQuery({
+  const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ['notifications', session?.userId],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('notifications')
         .select('*')
         .eq('user_id', session?.userId!)
-        .eq('status', 'sent')
         .order('created_at', { ascending: false })
         .limit(50);
 

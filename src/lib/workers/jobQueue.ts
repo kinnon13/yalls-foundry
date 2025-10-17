@@ -47,7 +47,7 @@ export async function enqueueJob({
     throw error;
   }
 
-  return data.id;
+  return (data as any).id;
 }
 
 export async function getJobStatus(jobId: string): Promise<string | null> {
@@ -58,5 +58,5 @@ export async function getJobStatus(jobId: string): Promise<string | null> {
     .maybeSingle();
 
   if (error) throw error;
-  return data?.status || null;
+  return (data as any)?.status || null;
 }
