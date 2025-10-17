@@ -48,6 +48,7 @@ export default function FeaturesAdminPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
+  const [showPlaceholders, setShowPlaceholders] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditingFeature | null>(null);
 
@@ -66,9 +67,11 @@ export default function FeaturesAdminPage() {
       const matchesStatus = statusFilter === 'all' || f.status === statusFilter;
       const matchesOwner = ownerFilter === 'all' || f.owner === ownerFilter;
       const matchesSeverity = severityFilter === 'all' || f.severity === severityFilter;
-      return matchesSearch && matchesArea && matchesStatus && matchesOwner && matchesSeverity;
+      const isPlaceholder = f.notes?.includes('Auto-generated placeholder');
+      const matchesPlaceholder = !showPlaceholders || isPlaceholder;
+      return matchesSearch && matchesArea && matchesStatus && matchesOwner && matchesSeverity && matchesPlaceholder;
     });
-  }, [features, search, areaFilter, statusFilter, ownerFilter, severityFilter]);
+  }, [features, search, areaFilter, statusFilter, ownerFilter, severityFilter, showPlaceholders]);
 
   const startEdit = (feature: any) => {
     setEditingId(feature.id);
@@ -285,6 +288,13 @@ export default function FeaturesAdminPage() {
             <SelectItem value="platform">Platform</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant={showPlaceholders ? 'default' : 'outline'}
+          onClick={() => setShowPlaceholders(!showPlaceholders)}
+          size="sm"
+        >
+          {showPlaceholders ? 'Showing Placeholders' : 'Show Placeholders'}
+        </Button>
       </div>
 
       {/* Features Table */}

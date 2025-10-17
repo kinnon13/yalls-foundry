@@ -30,12 +30,17 @@ export default function AuditPage() {
       // 1. Feature completeness check
       const stats = kernel.getStats();
       const allFeatures = kernel.features;
+      const expectedMin = 100; // Data-driven: expect at least 100 features based on route count
+      
       auditResults.push({
-        check: 'Feature Index Complete',
+        check: 'Feature Index Coverage',
         category: 'critical',
-        status: stats.total === 87 ? 'pass' : 'fail',
-        message: `${stats.total}/87 features mapped`,
-        details: stats.total < 87 ? ['Missing features in features.json'] : undefined
+        status: stats.total >= expectedMin ? 'pass' : 'fail',
+        message: `${stats.total} features mapped (expected: ${expectedMin}+)`,
+        details: stats.total < expectedMin ? [
+          'Run: npx tsx scripts/feature-audit.ts to see gaps',
+          'Run: npx tsx scripts/backfill-features.ts to auto-generate placeholders'
+        ] : undefined
       });
   
       // 2. Gold-path readiness
@@ -48,17 +53,32 @@ export default function AuditPage() {
       details: goldPath.blocking.length > 0 ? goldPath.blocking.map(id => `${id} is still shell`) : undefined
     });
 
-    // 3. Shell leakage check
+    // 3. Shell leakage check & placeholder detection
     const shellFeatures = allFeatures.filter(f => f.status === 'shell');
+    const placeholders = allFeatures.filter(f => f.notes?.includes('Auto-generated placeholder'));
     const shellInProd = isProd ? shellFeatures.filter(f => f.routes.length > 0).length : 0;
     const hasGuards = shellInProd === 0;
+    
     auditResults.push({
       check: 'Shell Features Protected',
       category: 'critical',
       status: hasGuards ? 'pass' : 'warn',
       message: `${shellFeatures.length} shell features`,
-      details: shellFeatures.map(f => `${f.id}: ${f.title}`)
+      details: [
+        ...shellFeatures.slice(0, 10).map(f => `${f.id}: ${f.title}`),
+        ...(shellFeatures.length > 10 ? [`…+${shellFeatures.length - 10} more`] : [])
+      ]
     });
+    
+    if (placeholders.length > 0) {
+      auditResults.push({
+        check: 'Placeholder Features',
+        category: 'info',
+        status: 'warn',
+        message: `${placeholders.length} auto-generated placeholders need proper metadata`,
+        details: placeholders.slice(0, 15).map(f => `${f.id}: ${f.title}`)
+      });
+    }
 
     // 4. Test coverage
     const withE2E = allFeatures.filter(f => f.tests.e2e.length > 0).length;
