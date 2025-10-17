@@ -1,4 +1,4 @@
-// Feed Fusion Types (PR5a)
+// Feed Fusion Types (PR5a + Master Plan)
 export type FeedItemKind = 'post' | 'listing' | 'event';
 
 export interface FeedItemBase {
@@ -23,6 +23,7 @@ export interface ListingFeedItem extends FeedItemBase {
   price_cents: number;
   media: Array<{ url: string; type: 'image' | 'video' }>;
   stock_quantity?: number;
+  seller_entity_id?: string;
 }
 
 export interface EventFeedItem extends FeedItemBase {
@@ -30,9 +31,20 @@ export interface EventFeedItem extends FeedItemBase {
   title: string;
   starts_at?: string;
   location?: any;
+  host_entity_id?: string;
 }
 
 export type FeedItem = PostFeedItem | ListingFeedItem | EventFeedItem;
 
 export type FeedMode = 'personal' | 'combined';
 export type ProfileFeedMode = 'this' | 'combined';
+
+// RPC response from feed_fusion_*
+export interface FusionFeedItem {
+  item_type: 'post' | 'listing' | 'event';
+  item_id: string;
+  entity_id: string;
+  created_at: string;
+  rank: number;
+  payload: Record<string, any>;
+}

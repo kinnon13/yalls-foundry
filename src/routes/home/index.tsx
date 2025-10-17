@@ -11,12 +11,13 @@ import { Composer } from '@/components/composer/Composer';
 import { useSession } from '@/lib/auth/context';
 import { useScrollerFeed } from '@/hooks/useScrollerFeed';
 
-type Lane = 'for_you' | 'following' | 'shop';
+type Lane = 'personal' | 'combined';
 
 export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { session } = useSession();
-  const lane = (searchParams.get('lane') || 'for_you') as Lane;
+  const laneParam = searchParams.get('lane') || 'personal';
+  const lane = (laneParam === 'following' ? 'combined' : 'personal') as Lane;
 
   const setLane = (newLane: Lane) => {
     setSearchParams({ lane: newLane });
@@ -44,7 +45,7 @@ export default function Home() {
           {/* Lane Tabs */}
           <div className="sticky top-16 z-20 bg-background/95 backdrop-blur border-b border-border">
             <div className="flex items-center justify-center gap-8 h-14">
-              {(['for_you', 'following', 'shop'] as Lane[]).map((l) => (
+              {(['personal', 'combined'] as Lane[]).map((l) => (
                 <button
                   key={l}
                   onClick={() => setLane(l)}
@@ -56,7 +57,7 @@ export default function Home() {
                     }
                   `}
                 >
-                  {l === 'for_you' ? 'For You' : l === 'following' ? 'Following' : 'Shop'}
+                  {l === 'personal' ? 'Personal' : 'Combined'}
                   {lane === l && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary animate-scale-in" />
                   )}

@@ -17,13 +17,14 @@ import { CheckoutModal } from '@/components/modals/CheckoutModal';
 import { OrderSuccessModal } from '@/components/modals/OrderSuccessModal';
 import { Sparkles, Users, ShoppingCart, TrendingUp, Heart, Zap } from 'lucide-react';
 
-type Lane = 'for_you' | 'following' | 'shop';
+type Lane = 'personal' | 'combined';
 
 export default function Index() {
   const { session } = useSession();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const lane = (searchParams.get('lane') || 'for_you') as Lane;
+  const laneParam = searchParams.get('lane') || 'personal';
+  const lane = (laneParam === 'following' ? 'combined' : 'personal') as Lane;
 
   const { 
     data,
