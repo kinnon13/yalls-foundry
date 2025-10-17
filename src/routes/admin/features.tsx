@@ -18,6 +18,20 @@ import { FeatureEditorDialog } from '@/components/admin/FeatureEditorDialog';
 
 type FeatureStatus = 'shell' | 'full-ui' | 'wired';
 
+// Area aliases for canonical naming
+const AREA_ALIASES: Record<string, string> = {
+  dashboard: 'business',
+  biz: 'business',
+  shop: 'marketplace',
+};
+
+// Format area names nicely
+const startCase = (s: string) =>
+  s.replace(/[_-]/g, ' ')
+   .replace(/\b\w/g, c => c.toUpperCase());
+
+const labelForArea = (a: string) => startCase(AREA_ALIASES[a] ?? a);
+
 export default function FeaturesAdminPage() {
   const [search, setSearch] = useState('');
   const [areaFilter, setAreaFilter] = useState<string>('all');
@@ -36,11 +50,12 @@ export default function FeaturesAdminPage() {
 
   const filtered = useMemo(() => {
     return features.filter(f => {
+      const canonArea = AREA_ALIASES[f.area] ?? f.area;
       const matchesSearch =
         search === '' ||
         f.title.toLowerCase().includes(search.toLowerCase()) ||
         f.id.toLowerCase().includes(search.toLowerCase());
-      const matchesArea = areaFilter === 'all' || f.area === areaFilter;
+      const matchesArea = areaFilter === 'all' || canonArea === areaFilter;
       const matchesStatus = statusFilter === 'all' || f.status === statusFilter;
       const matchesOwner = ownerFilter === 'all' || f.owner === ownerFilter;
       const matchesSeverity = severityFilter === 'all' || f.severity === severityFilter;
@@ -110,8 +125,11 @@ export default function FeaturesAdminPage() {
   const percentComplete = stats.completionPercent;
   const shellInProd = isProd ? features.filter(f => f.status === 'shell' && f.routes.length > 0).length : 0;
 
-  // Get all unique areas for filter
-  const allAreas = Array.from(new Set(features.map(f => f.area))).sort();
+  // Get all unique canonical areas for filter
+  const allAreas = useMemo(() => 
+    Array.from(new Set(features.map(f => AREA_ALIASES[f.area] ?? f.area))).sort(),
+    [features]
+  );
 
   return (
     <div className="container max-w-7xl py-8 space-y-6">
@@ -221,7 +239,7 @@ export default function FeaturesAdminPage() {
           <SelectContent>
             <SelectItem value="all">All Areas</SelectItem>
             {allAreas.map(a => (
-              <SelectItem key={a} value={a}>{a}</SelectItem>
+              <SelectItem key={a} value={a}>{labelForArea(a)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
