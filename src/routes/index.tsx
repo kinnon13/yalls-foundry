@@ -19,7 +19,6 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Calendar, Users, Star, TrendingUp, ShoppingCart } from 'lucide-react';
-import type { FeedMode } from '@/types/feed';
 
 export default function Index() {
   const { session } = useSession();
@@ -28,18 +27,15 @@ export default function Index() {
   
   // Get lane from URL (default: for_you)
   const lane = (searchParams.get('lane') || 'for_you') as 'for_you' | 'following' | 'shop';
-  
-  // Map lane to feed mode
-  const feedMode: FeedMode = lane === 'following' ? 'personal' : 'combined';
 
-  // Feed data
+  // Feed data using direct lane
   const { 
     data: feedData,
     isLoading,
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage
-  } = useScrollerFeed({ mode: feedMode, pageSize: 20 });
+  } = useScrollerFeed({ lane, pageSize: 20 });
 
   const allItems = feedData?.pages.flatMap((page) => page.items) || [];
 

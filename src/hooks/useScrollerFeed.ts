@@ -1,24 +1,37 @@
-// useScrollerFeed hook - Feed Fusion (PR5a)
+// useScrollerFeed hook - Feed Fusion (PR5b - direct lane support)
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { FeedItem, FeedMode, ProfileFeedMode } from '@/types/feed';
+import type { FeedItem } from '@/types/feed';
 
-interface FeedParams {
-  mode: FeedMode | ProfileFeedMode;
-  entityId?: string; // for profile feeds
+type HomeLane = 'for_you' | 'following' | 'shop';
+type ProfileLane = 'this' | 'combined';
+
+interface HomeFeedParams {
+  lane: HomeLane;
   pageSize?: number;
 }
+
+interface ProfileFeedParams {
+  lane: ProfileLane;
+  entityId: string;
+  pageSize?: number;
+}
+
+type FeedParams = HomeFeedParams | ProfileFeedParams;
 
 interface FeedPage {
   items: FeedItem[];
   nextCursor: string;
 }
 
-export function useScrollerFeed({ mode, entityId, pageSize = 20 }: FeedParams) {
-  const isProfileFeed = Boolean(entityId);
+export function useScrollerFeed(params: FeedParams) {
+  const { pageSize = 20 } = params;
+  const isProfileFeed = 'entityId' in params;
+  const lane = params.lane;
+  const entityId = isProfileFeed ? params.entityId : undefined;
 
   return useInfiniteQuery<FeedPage>({
-    queryKey: ['feed-fusion', mode, entityId],
+    queryKey: ['feed-fusion', lane, entityId],
     queryFn: async ({ pageParam }) => {
       const cursor = pageParam ?? new Date().toISOString();
       const { data: { user } } = await supabase.auth.getUser();
@@ -28,13 +41,13 @@ export function useScrollerFeed({ mode, entityId, pageSize = 20 }: FeedParams) {
         ? {
             p_entity_id: entityId,
             p_user_id: user?.id,
-            p_mode: mode,
+            p_lane: lane,
             p_cursor: cursor,
             p_limit: pageSize
           }
         : {
             p_user_id: user?.id,
-            p_mode: mode,
+            p_lane: lane,
             p_cursor: cursor,
             p_limit: pageSize
           };
@@ -59,7 +72,7 @@ export function useScrollerFeed({ mode, entityId, pageSize = 20 }: FeedParams) {
         await (supabase as any).from('usage_events').insert({
           user_id: user.id,
           event_type: 'feed_view',
-          payload: { mode, cursor, count: items.length }
+          payload: { lane, cursor, count: items.length }
         });
       }
 

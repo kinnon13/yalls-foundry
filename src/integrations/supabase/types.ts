@@ -6755,6 +6755,37 @@ export type Database = {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
       }
+      feed_fusion_home: {
+        Args: {
+          p_cursor?: string
+          p_lane: string
+          p_limit?: number
+          p_user_id: string
+        }
+        Returns: {
+          created_at: string
+          item_id: string
+          item_type: string
+          payload: Json
+          score: number
+        }[]
+      }
+      feed_fusion_profile: {
+        Args: {
+          p_cursor?: string
+          p_entity_id: string
+          p_lane: string
+          p_limit?: number
+          p_user_id: string
+        }
+        Returns: {
+          created_at: string
+          item_id: string
+          item_type: string
+          payload: Json
+          score: number
+        }[]
+      }
       feed_hide: {
         Args:
           | { p_entity_id: string; p_post_id: string }
