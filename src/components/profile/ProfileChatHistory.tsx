@@ -142,7 +142,7 @@ export function ProfileChatHistory() {
   function handleOpenSession(sessionId: string) {
     // Navigate to dashboard AI tab with the session ID
     localStorage.setItem('rocker-load-session', sessionId);
-    navigate('/dashboard?tab=ai');
+    navigate('/dashboard?m=settings&sub=ai');
   }
 
   function formatDate(dateString: string) {

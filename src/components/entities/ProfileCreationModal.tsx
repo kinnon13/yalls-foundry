@@ -91,10 +91,12 @@ export function ProfileCreationModal() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch unclaimed profiles when a type is selected
-  const { data: unclaimedProfiles = [], isLoading: loadingUnclaimed } = useQuery({
+  const { data: unclaimedProfiles = [], isLoading: loadingUnclaimed, error: unclaimedError } = useQuery({
     queryKey: ['unclaimed-profiles', selectedType],
     queryFn: async () => {
       if (!selectedType) return [];
+      
+      console.log('Fetching unclaimed profiles for type:', selectedType);
       
       const { data, error } = await supabase
         .from('entity_profiles')
@@ -104,7 +106,12 @@ export function ProfileCreationModal() {
         .order('name')
         .limit(20);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching unclaimed profiles:', error);
+        throw error;
+      }
+      
+      console.log(`Found ${data?.length || 0} unclaimed profiles for type ${selectedType}`);
       return data || [];
     },
     enabled: !!selectedType && isOpen,
@@ -388,6 +395,14 @@ export function ProfileCreationModal() {
               <div className="text-center py-4 text-muted-foreground text-sm">
                 Loading unclaimed profiles...
               </div>
+            ) : unclaimedError ? (
+              <Card className="border-destructive">
+                <CardContent className="p-4">
+                  <div className="text-sm text-destructive">
+                    Error loading unclaimed profiles. Please try again.
+                  </div>
+                </CardContent>
+              </Card>
             ) : unclaimedProfiles.length > 0 ? (
               <Card>
                 <CardContent className="p-4 space-y-3">
@@ -423,7 +438,15 @@ export function ProfileCreationModal() {
                   </div>
                 </CardContent>
               </Card>
-            ) : null}
+            ) : (
+              <Card className="border-dashed">
+                <CardContent className="p-4">
+                  <div className="text-sm text-muted-foreground text-center">
+                    No unclaimed {PROFILE_TYPES.find(t => t.type === selectedType)?.label.toLowerCase()} profiles available
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Button
               variant="ghost"

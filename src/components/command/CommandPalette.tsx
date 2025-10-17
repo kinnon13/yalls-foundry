@@ -147,7 +147,7 @@ export function CommandPalette() {
       icon: <Settings className="h-4 w-4" />,
       keywords: ['dashboard', 'admin', 'settings', 'manage'],
       action: () => {
-        navigate('/dashboard');
+        navigate('/dashboard?m=overview');
         setOpen(false);
       }
     },

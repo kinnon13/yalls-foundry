@@ -105,6 +105,7 @@ const App = () => (
           <Route path="/profile/:id" element={<Suspense fallback={<div>Loading...</div>}><ProfilePageDynamic /></Suspense>} />
           <Route path="/stallions" element={<Suspense fallback={<div>Loading...</div>}><StallionsIndex /></Suspense>} />
           <Route path="/stallions/:id" element={<Suspense fallback={<div>Loading...</div>}><StallionDetail /></Suspense>} />
+          {/* Dashboard - single route with query param navigation */}
           <Route
             path="/dashboard"
             element={
@@ -114,14 +115,7 @@ const App = () => (
                 </Suspense>
               </RequireAuth>
             }
-          >
-            <Route index element={<Suspense fallback={<div>Loading...</div>}><DashboardOverview /></Suspense>} />
-            <Route path="approvals" element={<Suspense fallback={<div>Loading...</div>}><Approvals /></Suspense>} />
-            <Route path="business" element={<Suspense fallback={<div>Loading...</div>}><DashboardBusiness /></Suspense>} />
-            <Route path="settings" element={<Suspense fallback={<div>Loading...</div>}><DashboardSettings /></Suspense>} />
-            <Route path="earnings" element={<Suspense fallback={<div>Loading...</div>}><Earnings /></Suspense>} />
-            <Route path="messages" element={<Suspense fallback={<div>Loading...</div>}><Messages /></Suspense>} />
-          </Route>
+          />
           <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
           <Route path="/discover" element={<Suspense fallback={<div>Loading...</div>}><Discover /></Suspense>} />
 

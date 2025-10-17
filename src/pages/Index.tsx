@@ -49,7 +49,7 @@ const Index = () => {
         
         <div className="flex gap-4 justify-center mt-8">
           {isLoggedIn ? (
-            <Button onClick={() => navigate('/dashboard')} size="lg">
+            <Button onClick={() => navigate('/dashboard?m=overview')} size="lg">
               Go to Dashboard
             </Button>
           ) : (

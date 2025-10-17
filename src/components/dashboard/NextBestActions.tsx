@@ -44,7 +44,7 @@ export function NextBestActions({ actions, isLoading }: NextBestActionsProps) {
       // Handle navigation actions
       if (action.cta.rpc.startsWith('navigate_to_')) {
         const destination = action.cta.rpc.replace('navigate_to_', '');
-        navigate(`/dashboard/${destination}`);
+        navigate(`/dashboard?m=${destination}`);
         
         toast({
           title: 'Navigating',

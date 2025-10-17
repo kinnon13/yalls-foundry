@@ -1,4 +1,5 @@
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import { updateDashParams, type ModuleKey } from '@/lib/dashUrl';
 import { 
   LayoutDashboard, 
   Building2, 
@@ -23,30 +24,30 @@ import { useUserEntities } from '@/hooks/useUserEntities';
 
 interface NavItem {
   label: string;
-  path: string;
+  module: ModuleKey;
   icon: React.ReactNode;
   badge?: boolean;
   requiresEntity?: 'farm' | 'horse' | 'business' | 'producers';
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Overview', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
-  { label: 'Business', path: '/dashboard/business', icon: <Building2 size={20} />, requiresEntity: 'business' },
-  { label: 'Producers', path: '/dashboard/producers', icon: <Users size={20} />, requiresEntity: 'producers' },
-  { label: 'Incentives', path: '/dashboard/incentives', icon: <Gift size={20} /> },
-  { label: 'Stallions', path: '/dashboard/stallions', icon: <Sparkles size={20} />, requiresEntity: 'horse' },
-  { label: 'Farm Ops', path: '/dashboard/farm-ops', icon: <Tractor size={20} />, requiresEntity: 'farm' },
-  { label: 'Events', path: '/dashboard/events', icon: <Calendar size={20} /> },
-  { label: 'Orders', path: '/dashboard/orders', icon: <ShoppingCart size={20} /> },
-  { label: 'Earnings', path: '/dashboard/earnings', icon: <DollarSign size={20} /> },
-   { label: 'Messages', path: '/dashboard/messages', icon: <MessageSquare size={20} />, badge: true },
-  { label: 'Approvals', path: '/dashboard/approvals', icon: <CheckCircle size={20} />, badge: true },
-  { label: 'Settings', path: '/dashboard/settings', icon: <Settings size={20} /> },
+  { label: 'Overview', module: 'overview', icon: <LayoutDashboard size={20} /> },
+  { label: 'Business', module: 'business', icon: <Building2 size={20} />, requiresEntity: 'business' },
+  { label: 'Producers', module: 'producers', icon: <Users size={20} />, requiresEntity: 'producers' },
+  { label: 'Incentives', module: 'incentives', icon: <Gift size={20} /> },
+  { label: 'Stallions', module: 'stallions', icon: <Sparkles size={20} />, requiresEntity: 'horse' },
+  { label: 'Farm Ops', module: 'farm_ops', icon: <Tractor size={20} />, requiresEntity: 'farm' },
+  { label: 'Events', module: 'events', icon: <Calendar size={20} /> },
+  { label: 'Orders', module: 'orders', icon: <ShoppingCart size={20} /> },
+  { label: 'Earnings', module: 'earnings', icon: <DollarSign size={20} /> },
+  { label: 'Messages', module: 'messages', icon: <MessageSquare size={20} />, badge: true },
+  { label: 'Approvals', module: 'approvals', icon: <CheckCircle size={20} />, badge: true },
+  { label: 'Settings', module: 'settings', icon: <Settings size={20} /> },
 ];
 
 export function DashboardSidebar() {
-  const location = useLocation();
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeModule = (searchParams.get('m') as ModuleKey) || 'overview';
   const { capabilities, isLoading: loadingEntities } = useUserEntities();
 
   const { data: unreadCount = 0 } = useQuery({
@@ -126,28 +127,31 @@ export function DashboardSidebar() {
 
         <nav className="space-y-1">
           {visibleItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive = activeModule === item.module;
             const badgeCount = getBadgeCount(item);
 
             return (
-              <Link key={item.path} to={item.path}>
-                <Button
-                  variant={isActive ? 'secondary' : 'ghost'}
-                  size="m"
-                  className={cn(
-                    'w-full justify-start gap-3',
-                    isActive && 'bg-secondary'
-                  )}
-                >
-                  {item.icon}
-                  <span className="flex-1 text-left">{item.label}</span>
-                  {badgeCount > 0 && (
-                    <Badge variant="danger" className="ml-auto">
-                      {badgeCount}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
+              <Button
+                key={item.module}
+                variant={isActive ? 'secondary' : 'ghost'}
+                size="m"
+                className={cn(
+                  'w-full justify-start gap-3',
+                  isActive && 'bg-secondary'
+                )}
+                onClick={() => {
+                  const next = updateDashParams(searchParams, { m: item.module });
+                  setSearchParams(next);
+                }}
+              >
+                {item.icon}
+                <span className="flex-1 text-left">{item.label}</span>
+                {badgeCount > 0 && (
+                  <Badge variant="danger" className="ml-auto">
+                    {badgeCount}
+                  </Badge>
+                )}
+              </Button>
             );
           })}
         </nav>
