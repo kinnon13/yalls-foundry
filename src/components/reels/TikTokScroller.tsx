@@ -1,57 +1,33 @@
 /**
- * TikTok-style Scroller
- * Scroll-snap, ↑/↓ nav, preload ±1, auto-mute/tap-toggle
+ * TikTok-style Scroller with Dedupe + Dwell Tracking + A11y
+ * Scroll-snap, ↑/↓ nav, impression dedupe, dwell timers
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import { ReelPost } from './ReelPost';
 import { ReelListing } from './ReelListing';
 import { ReelEvent } from './ReelEvent';
 import { useUsageEvent } from '@/hooks/useUsageEvent';
-
-interface FusionItem {
-  item_type: 'post' | 'listing' | 'event';
-  item_id: string;
-  score: number;
-  created_at: string;
-  payload: any;
-}
+import type { FeedItem } from '@/types/feed';
 
 interface TikTokScrollerProps {
-  items: FusionItem[];
+  items: FeedItem[];
   isLoading: boolean;
   lane: string;
+  onLoadMore?: () => void;
+  hasNextPage?: boolean;
 }
 
-export function TikTokScroller({ items, isLoading, lane }: TikTokScrollerProps) {
+export function TikTokScroller({ items, isLoading, lane, onLoadMore, hasNextPage }: TikTokScrollerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [muted, setMuted] = useState(true);
+  const seenRef = useRef<Set<string>>(new Set());
+  const dwellStopRef = useRef<(() => void) | null>(null);
   const logUsageEvent = useUsageEvent();
 
-  // Log impressions
-  useEffect(() => {
-    if (items[currentIndex]) {
-      const item = items[currentIndex];
-      logUsageEvent('impression', item.item_type, item.item_id, { lane });
-    }
-  }, [currentIndex, items]);
-
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown' && currentIndex < items.length - 1) {
-        scrollToIndex(currentIndex + 1);
-      } else if (e.key === 'ArrowUp' && currentIndex > 0) {
-        scrollToIndex(currentIndex - 1);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, items.length]);
-
-  const scrollToIndex = (index: number) => {
+  const scrollToIndex = useCallback((index: number) => {
     const container = containerRef.current;
     if (!container) return;
     const target = container.children[index] as HTMLElement;
@@ -59,7 +35,52 @@ export function TikTokScroller({ items, isLoading, lane }: TikTokScrollerProps) 
       target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       setCurrentIndex(index);
     }
-  };
+  }, []);
+
+  // Log impression (dedupe) + start dwell timer
+  useEffect(() => {
+    const item = items[currentIndex];
+    if (!item) return;
+
+    const key = `${item.kind}:${item.id}`;
+
+    // Log impression once
+    if (!seenRef.current.has(key)) {
+      seenRef.current.add(key);
+      logUsageEvent('impression', item.kind, item.id, { lane });
+    }
+
+    // Stop previous dwell timer
+    if (dwellStopRef.current) dwellStopRef.current();
+
+    // Start new dwell timer (3s threshold)
+    const start = Date.now();
+    dwellStopRef.current = () => {
+      const ms = Date.now() - start;
+      if (ms >= 3000) {
+        logUsageEvent('dwell', item.kind, item.id, { ms, lane });
+      }
+    };
+
+    return () => {
+      if (dwellStopRef.current) dwellStopRef.current();
+    };
+  }, [currentIndex, items, lane, logUsageEvent]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown' && currentIndex < items.length - 1) {
+        e.preventDefault();
+        scrollToIndex(currentIndex + 1);
+      } else if (e.key === 'ArrowUp' && currentIndex > 0) {
+        e.preventDefault();
+        scrollToIndex(currentIndex - 1);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentIndex, items.length, scrollToIndex]);
 
   // Intersection observer for auto-index tracking
   useEffect(() => {
@@ -71,7 +92,9 @@ export function TikTokScroller({ items, isLoading, lane }: TikTokScrollerProps) 
         entries.forEach((entry) => {
           if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
             const index = Array.from(container.children).indexOf(entry.target);
-            if (index !== -1) setCurrentIndex(index);
+            if (index !== -1 && index !== currentIndex) {
+              setCurrentIndex(index);
+            }
           }
         });
       },
@@ -80,12 +103,19 @@ export function TikTokScroller({ items, isLoading, lane }: TikTokScrollerProps) 
 
     Array.from(container.children).forEach((child) => observer.observe(child));
     return () => observer.disconnect();
-  }, [items]);
+  }, [items, currentIndex]);
 
-  if (isLoading) {
+  // Auto-load more when near end
+  useEffect(() => {
+    if (currentIndex >= items.length - 3 && hasNextPage && !isLoading && onLoadMore) {
+      onLoadMore();
+    }
+  }, [currentIndex, items.length, hasNextPage, isLoading, onLoadMore]);
+
+  if (isLoading && items.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="animate-pulse-subtle text-muted-foreground">Loading feed...</div>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -105,25 +135,39 @@ export function TikTokScroller({ items, isLoading, lane }: TikTokScrollerProps) 
     <div className="relative">
       <div
         ref={containerRef}
+        role="feed"
+        aria-label="Content feed"
         className="snap-y snap-mandatory overflow-y-scroll h-[calc(100vh-8rem)] scroll-smooth"
         style={{ scrollSnapType: 'y mandatory' }}
       >
         {items.map((item, index) => (
           <div
-            key={`${item.item_type}-${item.item_id}`}
+            key={`${item.kind}-${item.id}-${index}`}
+            role="article"
             className="snap-start snap-always h-[calc(100vh-8rem)] flex items-center justify-center"
           >
-            {item.item_type === 'post' && (
-              <ReelPost data={item.payload} itemId={item.item_id} muted={muted} onToggleMute={() => setMuted(!muted)} />
+            {item.kind === 'post' && (
+              <ReelPost
+                data={item as any}
+                itemId={item.id}
+                muted={muted}
+                onToggleMute={() => setMuted(!muted)}
+                isActive={currentIndex === index}
+              />
             )}
-            {item.item_type === 'listing' && (
-              <ReelListing data={item.payload} itemId={item.item_id} />
+            {item.kind === 'listing' && (
+              <ReelListing data={item as any} itemId={item.id} />
             )}
-            {item.item_type === 'event' && (
-              <ReelEvent data={item.payload} itemId={item.item_id} />
+            {item.kind === 'event' && (
+              <ReelEvent data={item as any} itemId={item.id} />
             )}
           </div>
         ))}
+        {isLoading && (
+          <div className="snap-start h-[calc(100vh-8rem)] flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        )}
       </div>
 
       {/* Navigation Arrows */}
@@ -131,13 +175,15 @@ export function TikTokScroller({ items, isLoading, lane }: TikTokScrollerProps) 
         <button
           onClick={() => scrollToIndex(Math.max(0, currentIndex - 1))}
           disabled={currentIndex === 0}
+          aria-label="Previous item"
           className="w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronUp size={20} />
         </button>
         <button
           onClick={() => scrollToIndex(Math.min(items.length - 1, currentIndex + 1))}
-          disabled={currentIndex === items.length - 1}
+          disabled={currentIndex === items.length - 1 && !hasNextPage}
+          aria-label="Next item"
           className="w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronDown size={20} />
@@ -154,6 +200,9 @@ export function TikTokScroller({ items, isLoading, lane }: TikTokScrollerProps) 
             }`}
           />
         ))}
+        {hasNextPage && (
+          <div className="w-1 h-1 rounded-full bg-white/30 animate-pulse" />
+        )}
       </div>
     </div>
   );

@@ -36,7 +36,7 @@ export async function logUsageEvent({
       event_type: eventType,
       item_type: itemType,
       item_id: itemId,
-      payload
+      payload: payload,
     });
   } catch (error) {
     console.warn('[Telemetry] Failed to log event:', eventType, error);

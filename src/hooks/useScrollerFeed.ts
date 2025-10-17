@@ -1,4 +1,4 @@
-// useScrollerFeed hook - Feed Fusion (PR5b - direct lane support)
+// useScrollerFeed hook - Feed Fusion with infinite scroll (PR5c)
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { FeedItem } from '@/types/feed';
@@ -21,7 +21,7 @@ type FeedParams = HomeFeedParams | ProfileFeedParams;
 
 interface FeedPage {
   items: FeedItem[];
-  nextCursor: string;
+  nextCursor: string | null;
 }
 
 export function useScrollerFeed(params: FeedParams) {
@@ -33,20 +33,20 @@ export function useScrollerFeed(params: FeedParams) {
   return useInfiniteQuery<FeedPage>({
     queryKey: ['feed-fusion', lane, entityId],
     queryFn: async ({ pageParam }) => {
-      const cursor = pageParam ?? new Date().toISOString();
+      const cursor = pageParam ?? null;
       const { data: { user } } = await supabase.auth.getUser();
 
       const rpcName = isProfileFeed ? 'feed_fusion_profile' : 'feed_fusion_home';
       const rpcParams = isProfileFeed
         ? {
             p_entity_id: entityId,
-            p_user_id: user?.id,
+            p_user_id: user?.id || null,
             p_lane: lane,
             p_cursor: cursor,
             p_limit: pageSize
           }
         : {
-            p_user_id: user?.id,
+            p_user_id: user?.id || null,
             p_lane: lane,
             p_cursor: cursor,
             p_limit: pageSize
@@ -68,26 +68,16 @@ export function useScrollerFeed(params: FeedParams) {
         ...row.payload
       }));
 
-      // Log usage event
-      if (user?.id && items.length > 0) {
-        await (supabase as any).from('usage_events').insert({
-          user_id: user.id,
-          event_type: 'feed_view',
-          payload: { lane, cursor, count: items.length }
-        });
-      }
-
-      const nextCursor = items.length > 0
-        ? items[items.length - 1]?.created_at || cursor
-        : cursor;
+      const nextCursor = items.length === pageSize 
+        ? items[items.length - 1]?.created_at || null
+        : null;
 
       return {
         items,
-        nextCursor: String(nextCursor)
+        nextCursor: nextCursor ? String(nextCursor) : null
       };
     },
-    getNextPageParam: (lastPage) =>
-      lastPage.items.length === pageSize ? lastPage.nextCursor : undefined,
-    initialPageParam: undefined
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    initialPageParam: null as string | null
   });
 }

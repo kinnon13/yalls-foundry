@@ -26,7 +26,7 @@ export function useUsageEvent() {
         event_type: eventType,
         item_type: itemType,
         item_id: itemId,
-        metadata: metadata,
+        payload: metadata,
       });
     } catch (error) {
       console.error('Failed to log usage event:', error);

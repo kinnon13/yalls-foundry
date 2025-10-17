@@ -22,9 +22,10 @@ interface ReelPostProps {
   itemId: string;
   muted: boolean;
   onToggleMute: () => void;
+  isActive: boolean;
 }
 
-export function ReelPost({ data, itemId, muted, onToggleMute }: ReelPostProps) {
+export function ReelPost({ data, itemId, muted, onToggleMute, isActive }: ReelPostProps) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const logUsageEvent = useUsageEvent();
@@ -68,7 +69,7 @@ export function ReelPost({ data, itemId, muted, onToggleMute }: ReelPostProps) {
             <video
               src={data.media[0].url}
               className="w-full h-full object-cover"
-              autoPlay
+              autoPlay={isActive}
               loop
               muted={muted}
               playsInline

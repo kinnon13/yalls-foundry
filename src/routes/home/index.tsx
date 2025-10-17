@@ -1,27 +1,17 @@
 /**
- * Home — Unified Feed with Lane Tabs
+ * Home — Unified Feed with Lane Tabs + Infinite Scroll
  * For You (default) / Following / Shop
  */
 
-import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { TikTokScroller } from '@/components/reels/TikTokScroller';
 import { PublicCalendar } from '@/components/calendar/PublicCalendar';
 import { Composer } from '@/components/composer/Composer';
 import { useSession } from '@/lib/auth/context';
-import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useScrollerFeed } from '@/hooks/useScrollerFeed';
 
 type Lane = 'for_you' | 'following' | 'shop';
-
-interface FusionItem {
-  item_type: 'post' | 'listing' | 'event';
-  item_id: string;
-  score: number;
-  created_at: string;
-  payload: any;
-}
 
 export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -32,19 +22,17 @@ export default function Home() {
     setSearchParams({ lane: newLane });
   };
 
-  const { data: feedItems = [], isLoading } = useQuery({
-    queryKey: ['feed-fusion-home', session?.userId, lane],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc('feed_fusion_home', {
-        p_user_id: session?.userId || null,
-        p_lane: lane,
-        p_cursor: null,
-        p_limit: 20,
-      });
-      if (error) throw error;
-      return data as FusionItem[];
-    },
-  });
+  // Fetch feed with infinite scroll
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useScrollerFeed({ lane, pageSize: 20 });
+
+  // Flatten all pages
+  const feedItems = data?.pages.flatMap(page => page.items) ?? [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,7 +73,13 @@ export default function Home() {
           )}
 
           {/* Scroller */}
-          <TikTokScroller items={feedItems} isLoading={isLoading} lane={lane} />
+          <TikTokScroller
+            items={feedItems}
+            isLoading={isLoading || isFetchingNextPage}
+            lane={lane}
+            onLoadMore={() => fetchNextPage()}
+            hasNextPage={hasNextPage}
+          />
         </main>
 
         {/* Right Rail - Public Calendar */}
