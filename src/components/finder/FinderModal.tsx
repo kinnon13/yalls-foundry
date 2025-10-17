@@ -20,6 +20,7 @@ interface FinderModalProps {
 const APP_LINKS = [
   { section: 'social', icon: Home, label: 'Create Post', path: '/feed' },
   { section: 'social', icon: Home, label: 'My Profile', path: '/profile' },
+  { section: 'social', icon: Home, label: 'Approvals', path: '/dashboard/approvals' },
   { section: 'marketplace', icon: ShoppingBag, label: 'Create Listing', path: '/listings/new' },
   { section: 'marketplace', icon: ShoppingBag, label: 'Browse Shop', path: '/discover' },
   { section: 'events', icon: Calendar, label: 'Create Event', path: '/events/new' },

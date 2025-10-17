@@ -7,12 +7,15 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
+import { PostCardMenu } from './PostCardMenu';
 
 type PostCardProps = {
   target: any;
+  currentEntityId?: string;
+  canModerate?: boolean;
 };
 
-export function PostCard({ target }: PostCardProps) {
+export function PostCard({ target, currentEntityId, canModerate = false }: PostCardProps) {
   const post = target.posts;
   const author = post?.profiles;
   const authorEntity = post?.entities;
@@ -37,12 +40,23 @@ export function PostCard({ target }: PostCardProps) {
   return (
     <Card className="p-4">
       <div className="space-y-3">
-        {/* Label */}
-        {labelText && (
-          <Badge variant="secondary" className="text-xs">
-            {labelText}
-          </Badge>
-        )}
+        {/* Label and Menu */}
+        <div className="flex items-center justify-between">
+          {labelText && (
+            <Badge variant="secondary" className="text-xs">
+              {labelText}
+            </Badge>
+          )}
+          {currentEntityId && (
+            <PostCardMenu
+              postId={post.id}
+              entityId={currentEntityId}
+              isHidden={false}
+              isPending={!target.approved}
+              canModerate={canModerate}
+            />
+          )}
+        </div>
 
         {/* Author */}
         <div className="flex items-center gap-3">

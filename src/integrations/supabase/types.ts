@@ -6727,7 +6727,24 @@ export type Database = {
         Returns: boolean
       }
       feed_hide: {
-        Args: { p_entity_id: string; p_post_id: string; p_reason?: string }
+        Args:
+          | { p_entity_id: string; p_post_id: string }
+          | { p_entity_id: string; p_post_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      feed_pending_targets: {
+        Args: { p_entity_id: string }
+        Returns: {
+          approved: boolean
+          created_at: string
+          post_id: string
+          reason: string
+          source_post_id: string
+          target_entity_id: string
+        }[]
+      }
+      feed_unhide: {
+        Args: { p_entity_id: string; p_post_id: string }
         Returns: undefined
       }
       flag_content: {
@@ -7301,6 +7318,14 @@ export type Database = {
           p_target_entity_ids?: string[]
         }
         Returns: string
+      }
+      post_target_approve: {
+        Args: { p_entity_id: string; p_post_id: string }
+        Returns: undefined
+      }
+      post_target_reject: {
+        Args: { p_entity_id: string; p_post_id: string }
+        Returns: undefined
       }
       postgis_addbbox: {
         Args: { "": unknown }
