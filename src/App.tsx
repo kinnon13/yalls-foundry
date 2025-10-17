@@ -11,6 +11,7 @@ import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
 import InactivityNudge from '@/components/rocker/InactivityNudge';
+import { RockerDock } from '@/components/rocker/RockerDock';
 import { RockerProvider } from '@/lib/ai/rocker/context';
 import { RedirectHandler } from '@/components/navigation/RedirectHandler';
 import PreviewRoutes from '@/preview/PreviewRoutes';
@@ -24,8 +25,10 @@ import MarketplaceIndex from "./routes/marketplace/index";
 import ListingDetail from "./routes/marketplace/[id]";
 import NotFound from "./pages/NotFound";
 
-// Lazy load dashboard
+// Lazy load dashboard and AI routes
 const Dashboard = lazy(() => import('./routes/dashboard'));
+const AISettings = lazy(() => import('./routes/settings/ai'));
+const AIActivity = lazy(() => import('./routes/ai/activity'));
 
 const queryClient = new QueryClient();
 const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on';
@@ -62,6 +65,28 @@ const App = () => (
           />
           <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
 
+          {/* AI/Rocker Routes */}
+          <Route
+            path="/settings/ai"
+            element={
+              <RequireAuth>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <AISettings />
+                </Suspense>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/ai/activity"
+            element={
+              <RequireAuth>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <AIActivity />
+                </Suspense>
+              </RequireAuth>
+            }
+          />
+
           {/* Auth Route (handles both login & signup via tabs) */}
           <Route path="/login" element={<Login />} />
 
@@ -77,6 +102,7 @@ const App = () => (
 
               {FEEDBACK_ENABLED && <FeedbackWidget />}
               <InactivityNudge />
+              <RockerDock />
               <RockerChat />
               <RockerSuggestions />
               <Toaster />

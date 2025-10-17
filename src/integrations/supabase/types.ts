@@ -104,6 +104,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_action_ledger: {
+        Row: {
+          action: string
+          agent: string
+          correlation_id: string | null
+          created_at: string
+          id: string
+          input: Json
+          output: Json
+          result: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          agent: string
+          correlation_id?: string | null
+          created_at?: string
+          id?: string
+          input?: Json
+          output?: Json
+          result: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          agent?: string
+          correlation_id?: string | null
+          created_at?: string
+          id?: string
+          input?: Json
+          output?: Json
+          result?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ai_admin_private_memory: {
         Row: {
           created_at: string | null
@@ -244,6 +280,33 @@ export type Database = {
           target_scope?: string
           tenant_id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ai_consent: {
+        Row: {
+          channels: Json
+          frequency_cap: number
+          proactive_enabled: boolean
+          quiet_hours: unknown | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channels?: Json
+          frequency_cap?: number
+          proactive_enabled?: boolean
+          quiet_hours?: unknown | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channels?: Json
+          frequency_cap?: number
+          proactive_enabled?: boolean
+          quiet_hours?: unknown | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -4282,6 +4345,42 @@ export type Database = {
       }
     }
     Views: {
+      ai_action_my_timeline: {
+        Row: {
+          action: string | null
+          agent: string | null
+          correlation_id: string | null
+          created_at: string | null
+          id: string | null
+          input: Json | null
+          output: Json | null
+          result: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action?: string | null
+          agent?: string | null
+          correlation_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          input?: Json | null
+          output?: Json | null
+          result?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string | null
+          agent?: string | null
+          correlation_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          input?: Json | null
+          output?: Json | null
+          result?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       geography_columns: {
         Row: {
           coord_dimension: number | null
@@ -5029,7 +5128,7 @@ export type Database = {
         Returns: unknown
       }
       is_admin: {
-        Args: { _user_id: string }
+        Args: Record<PropertyKey, never> | { _user_id: string }
         Returns: boolean
       }
       is_biz_member: {
@@ -5316,6 +5415,22 @@ export type Database = {
       revoke_sessions: {
         Args: { target_user_id?: string }
         Returns: Json
+      }
+      rocker_check_consent: {
+        Args: { p_action_type: string; p_user_id: string }
+        Returns: Json
+      }
+      rocker_log_action: {
+        Args: {
+          p_action: string
+          p_agent: string
+          p_correlation_id?: string
+          p_input?: Json
+          p_output?: Json
+          p_result?: string
+          p_user_id: string
+        }
+        Returns: string
       }
       rpc_create_post: {
         Args: {
@@ -6475,6 +6590,7 @@ export type Database = {
       }
     }
     Enums: {
+      ai_channel: "snackbar" | "dm" | "email" | "push"
       app_role:
         | "admin"
         | "moderator"
@@ -6651,6 +6767,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ai_channel: ["snackbar", "dm", "email", "push"],
       app_role: [
         "admin",
         "moderator",
