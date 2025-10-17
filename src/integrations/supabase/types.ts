@@ -3115,6 +3115,41 @@ export type Database = {
           },
         ]
       }
+      entry_checkin_log: {
+        Row: {
+          checked_in_at: string
+          checked_in_by: string | null
+          entry_id: string
+          id: string
+          metadata: Json | null
+          method: string
+        }
+        Insert: {
+          checked_in_at?: string
+          checked_in_by?: string | null
+          entry_id: string
+          id?: string
+          metadata?: Json | null
+          method?: string
+        }
+        Update: {
+          checked_in_at?: string
+          checked_in_by?: string | null
+          entry_id?: string
+          id?: string
+          metadata?: Json | null
+          method?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entry_checkin_log_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_classes: {
         Row: {
           added_money_cents: number
@@ -3554,6 +3589,39 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_taxonomy: {
+        Row: {
+          listing_id: string
+          taxonomy_id: string
+          value_id: string
+        }
+        Insert: {
+          listing_id: string
+          taxonomy_id: string
+          value_id: string
+        }
+        Update: {
+          listing_id?: string
+          taxonomy_id?: string
+          value_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_taxonomy_taxonomy_id_fkey"
+            columns: ["taxonomy_id"]
+            isOneToOne: false
+            referencedRelation: "taxonomies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_taxonomy_value_id_fkey"
+            columns: ["value_id"]
+            isOneToOne: false
+            referencedRelation: "taxonomy_values"
             referencedColumns: ["id"]
           },
         ]
@@ -4548,6 +4616,24 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_items: {
+        Row: {
+          listing_id: string
+          saved_at: string
+          user_id: string
+        }
+        Insert: {
+          listing_id: string
+          saved_at?: string
+          user_id: string
+        }
+        Update: {
+          listing_id?: string
+          saved_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       settlement_batches: {
         Row: {
           batch_date: string
@@ -4801,6 +4887,82 @@ export type Database = {
             columns: ["related_entity_id"]
             isOneToOne: false
             referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      taxonomies: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          kind: string
+          label: string
+          metadata: Json | null
+          parent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          kind: string
+          label: string
+          metadata?: Json | null
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          kind?: string
+          label?: string
+          metadata?: Json | null
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taxonomies_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "taxonomies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      taxonomy_values: {
+        Row: {
+          id: string
+          label: string
+          metadata: Json | null
+          sort_order: number | null
+          taxonomy_id: string
+          value: string
+        }
+        Insert: {
+          id?: string
+          label: string
+          metadata?: Json | null
+          sort_order?: number | null
+          taxonomy_id: string
+          value: string
+        }
+        Update: {
+          id?: string
+          label?: string
+          metadata?: Json | null
+          sort_order?: number | null
+          taxonomy_id?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taxonomy_values_taxonomy_id_fkey"
+            columns: ["taxonomy_id"]
+            isOneToOne: false
+            referencedRelation: "taxonomies"
             referencedColumns: ["id"]
           },
         ]
@@ -5141,6 +5303,27 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      views_coldstart: {
+        Row: {
+          listing_id: string
+          session_id: string | null
+          user_id: string | null
+          viewed_at: string
+        }
+        Insert: {
+          listing_id: string
+          session_id?: string | null
+          user_id?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          listing_id?: string
+          session_id?: string | null
+          user_id?: string | null
+          viewed_at?: string
+        }
+        Relationships: []
       }
       visual_learning_events: {
         Row: {
@@ -5695,7 +5878,7 @@ export type Database = {
       entry_submit: {
         Args: {
           p_class_id: string
-          p_horse_entity_id: string
+          p_horse_entity_id?: string
           p_opts?: Json
           p_rider_user_id: string
         }
@@ -6360,6 +6543,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      record_view: {
+        Args: { p_listing_id: string; p_session_id?: string }
+        Returns: undefined
+      }
       requires_step_up: {
         Args: { action_name: string }
         Returns: boolean
@@ -6404,6 +6591,10 @@ export type Database = {
           p_visibility?: string
         }
         Returns: string
+      }
+      save_item: {
+        Args: { p_listing_id: string }
+        Returns: undefined
       }
       search_entities: {
         Args: { p_limit?: number; p_query: string; p_tenant_id: string }
@@ -7521,6 +7712,10 @@ export type Database = {
       unlockrows: {
         Args: { "": string }
         Returns: number
+      }
+      unsave_item: {
+        Args: { p_listing_id: string }
+        Returns: undefined
       }
       updategeometrysrid: {
         Args: {

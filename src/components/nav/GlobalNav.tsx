@@ -3,8 +3,9 @@ import { Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/lib/auth/context';
 import { getHeaderNav, type NavItem } from '@/lib/nav/getNav';
 import { MessageSquare, Mail, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/design/components/Button';
+import { Badge } from '@/design/components/Badge';
+import { tokens } from '@/design/tokens';
 
 const iconMap: Record<string, any> = {
   MessageSquare,
@@ -25,29 +26,18 @@ export default function GlobalNav() {
   }, [session?.userId, loc.pathname]);
 
   return (
-    <div className="flex items-center gap-1">
+    <div style={{ display: 'flex', alignItems: 'center', gap: tokens.space.xs }}>
       {items.map(item => {
         const active = loc.pathname.startsWith(item.path);
         const Icon = item.icon ? iconMap[item.icon] : null;
         
         return (
-          <Link
-            key={item.key}
-            to={item.path}
-            className="relative"
-          >
-            <Button
-              variant={active ? 'secondary' : 'ghost'}
-              size="sm"
-              className="relative"
-            >
-              {Icon && <Icon className="h-4 w-4 mr-2" />}
+          <Link key={item.key} to={item.path}>
+            <Button variant={active ? 'secondary' : 'ghost'} size="s">
+              {Icon && <Icon size={16} style={{ marginRight: tokens.space.xxs }} />}
               <span>{item.label}</span>
               {!!item.badgeCount && item.badgeCount > 0 && (
-                <Badge 
-                  variant="destructive"
-                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                >
+                <Badge variant="danger">
                   {item.badgeCount > 99 ? '99+' : item.badgeCount}
                 </Badge>
               )}
