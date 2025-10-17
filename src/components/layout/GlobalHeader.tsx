@@ -22,12 +22,17 @@ interface GlobalHeaderProps {
 
 export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalHeaderProps = {}) {
   const navigate = useNavigate();
-  const { session } = useSession();
+  const { session, signOut } = useSession();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchCategory, setSearchCategory] = useState<'all' | 'horses' | 'businesses' | 'events' | 'users'>('all');
   const [showRockerLabels, setShowRockerLabels] = useState(propShowRockerLabels ?? false);
   const { data: cartCount = 0 } = useCartCount();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   // Listen to localStorage changes for label state
   useEffect(() => {
@@ -247,17 +252,16 @@ export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalH
                 )}
               </div>
               <div className="relative">
-                <Link to="/login">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    data-rocker="sign out" 
-                    aria-label="Sign out"
-                    className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
-                  >
-                    Sign Out
-                  </Button>
-                </Link>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSignOut}
+                  data-rocker="sign out" 
+                  aria-label="Sign out"
+                  className={showRockerLabels ? "ring-2 ring-primary ring-offset-2" : ""}
+                >
+                  Sign Out
+                </Button>
                 {showRockerLabels && (
                   <Badge className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary/90 text-xs pointer-events-none z-10">
                     "sign out"
