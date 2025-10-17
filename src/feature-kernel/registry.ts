@@ -23,6 +23,7 @@ export const featureRegistry: Record<string, FeatureDef> = {
     capabilities: ['approve', 'reject', 'hide', 'export'],
     icon: CheckCircle,
     enabled: true,
+    requires: ['approvals'],
   },
   calendar: {
     id: 'calendar',
@@ -38,6 +39,7 @@ export const featureRegistry: Record<string, FeatureDef> = {
     capabilities: ['view', 'create', 'edit', 'delete'],
     icon: Calendar,
     enabled: true,
+    requires: ['calendar'],
   },
   earnings: {
     id: 'earnings',
@@ -52,6 +54,7 @@ export const featureRegistry: Record<string, FeatureDef> = {
     capabilities: ['view', 'export'],
     icon: DollarSign,
     enabled: true,
+    requires: ['earnings'],
   },
 };
 

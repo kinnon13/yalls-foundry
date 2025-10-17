@@ -8,6 +8,7 @@ import { Suspense, useMemo, lazy } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { FeatureErrorBoundary } from './ErrorBoundary';
+import { EntitlementGate } from './EntitlementGate';
 import { featureRegistry } from './registry';
 import type { FeatureProps } from './types';
 
@@ -115,12 +116,14 @@ export default function FeatureHost() {
       return (
         <FeatureErrorBoundary key={`${id}:${def.version}`} featureId={id}>
           <Suspense fallback={<FeatureSkeleton title={def.title} />}>
-            <LazyFeature
-              {...props}
-              featureId={id}
-              updateProps={(updates: Partial<FeatureProps>) => updateFeatureProps(id, updates)}
-              close={() => closeFeature(id)}
-            />
+            <EntitlementGate featureId={def.id} requires={def.requires}>
+              <LazyFeature
+                {...props}
+                featureId={id}
+                updateProps={(updates: Partial<FeatureProps>) => updateFeatureProps(id, updates)}
+                close={() => closeFeature(id)}
+              />
+            </EntitlementGate>
           </Suspense>
         </FeatureErrorBoundary>
       );

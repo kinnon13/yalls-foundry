@@ -1258,6 +1258,21 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_plans: {
+        Row: {
+          id: string
+          meta: Json
+        }
+        Insert: {
+          id: string
+          meta?: Json
+        }
+        Update: {
+          id?: string
+          meta?: Json
+        }
+        Relationships: []
+      }
       boarders: {
         Row: {
           board_type: string
@@ -2986,6 +3001,41 @@ export type Database = {
         }
         Relationships: []
       }
+      entitlement_overrides: {
+        Row: {
+          allow: boolean
+          created_at: string
+          feature_id: string | null
+          id: string
+          tenant_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          allow: boolean
+          created_at?: string
+          feature_id?: string | null
+          id?: string
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          allow?: boolean
+          created_at?: string
+          feature_id?: string | null
+          id?: string
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entitlement_overrides_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "feature_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entity_claims: {
         Row: {
           claimant_user_id: string
@@ -3675,6 +3725,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      feature_catalog: {
+        Row: {
+          id: string
+          meta: Json
+          tier_hint: string
+          title: string
+        }
+        Insert: {
+          id: string
+          meta?: Json
+          tier_hint?: string
+          title: string
+        }
+        Update: {
+          id?: string
+          meta?: Json
+          tier_hint?: string
+          title?: string
+        }
+        Relationships: []
       }
       feature_flags: {
         Row: {
@@ -4771,6 +4842,36 @@ export type Database = {
             columns: ["entry_id"]
             isOneToOne: false
             referencedRelation: "entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_entitlements: {
+        Row: {
+          feature_id: string
+          plan_id: string
+        }
+        Insert: {
+          feature_id: string
+          plan_id: string
+        }
+        Update: {
+          feature_id?: string
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_entitlements_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "feature_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_entitlements_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "billing_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -6446,6 +6547,44 @@ export type Database = {
           },
         ]
       }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          ends_at: string | null
+          id: string
+          plan_id: string | null
+          starts_at: string
+          tenant_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          plan_id?: string | null
+          starts_at?: string
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          plan_id?: string | null
+          starts_at?: string
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "billing_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_ui_prefs: {
         Row: {
           prefs: Json
@@ -7369,6 +7508,12 @@ export type Database = {
         Args: { "": string }
         Returns: unknown
       }
+      get_entitlements: {
+        Args: { p_user_id?: string }
+        Returns: {
+          feature_id: string
+        }[]
+      }
       get_event_viewable: {
         Args: { p_event_id: string }
         Returns: {
@@ -7481,6 +7626,10 @@ export type Database = {
           min_role?: Database["public"]["Enums"]["calendar_role"]
           user_id: string
         }
+        Returns: boolean
+      }
+      has_feature: {
+        Args: { p_feature_id: string; p_user_id?: string }
         Returns: boolean
       }
       has_role: {

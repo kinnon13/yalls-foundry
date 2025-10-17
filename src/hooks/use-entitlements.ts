@@ -1,40 +1,45 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { rpcWithObs } from '@/lib/supaRpc';
 
 /**
- * Entitlements hook - checks user's access to modules/features
- * 
- * Future: connect to subscription_tier + account_capabilities
- * For now: returns basic free-tier access
+ * Entitlements hook - checks user's access to features via canonical DB functions
+ * Cached for 60s, refreshed every 2min
  */
 export function useEntitlements() {
-  const { data: session } = useQuery({
-    queryKey: ['session'],
+  const { data: feats = [] } = useQuery({
+    queryKey: ['entitlements'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session;
+      const { data, error } = await rpcWithObs(
+        'get_entitlements',
+        {},
+        { surface: 'entitlements' }
+      );
+      if (error) throw error;
+      return ((data as any) || []).map((r: any) => r.feature_id as string);
     },
+    staleTime: 60_000,
+    refetchInterval: 120_000,
   });
 
-  // TODO: Replace with actual entitlement check against user_roles or subscription_tier
+  const has = (req?: string[] | null): boolean => {
+    if (!req || req.length === 0) return true;
+    return req.every(f => feats.includes(f));
+  };
+
   const canUseModule = (moduleKey: string): boolean => {
-    if (!session) return false;
-    
-    // For now, all authenticated users can access all modules
-    // Future: check against account_capabilities or subscription tier
+    // For now, modules are free; only features are gated
     return true;
   };
 
   const canUseFeature = (featureId: string): boolean => {
-    if (!session) return false;
-    
-    // Future: check feature-level entitlements
-    return true;
+    return feats.includes(featureId);
   };
 
   return {
+    list: feats,
+    has,
     canUseModule,
     canUseFeature,
-    isAuthenticated: !!session,
+    isAuthenticated: true, // If hook runs, user is authenticated
   };
 }

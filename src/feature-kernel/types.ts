@@ -20,7 +20,7 @@ export interface FeatureDef {
   capabilities?: string[];
   icon?: ComponentType<{ className?: string }>;
   enabled?: boolean | number; // true/false or rollout % (0-100)
-  entitlementKey?: string; // e.g. 'pro.plan' for paywall gating
+  requires?: string[]; // entitlement feature_ids needed
 }
 
 export interface FeatureContext {
