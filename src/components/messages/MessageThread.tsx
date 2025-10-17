@@ -62,6 +62,16 @@ export function MessageThread({ conversationId }: MessageThreadProps) {
           .from('messages')
           .update({ read_at: new Date().toISOString() })
           .in('id', unreadIds);
+        
+        // Log to Rocker for tracking message reads
+        await supabase.from('ai_action_ledger').insert({
+          user_id: session!.session!.userId,
+          agent: 'user',
+          action: 'messages_read',
+          input: { conversation_id: conversationId, count: unreadIds.length },
+          output: { message_ids: unreadIds },
+          result: 'success'
+        });
       }
 
       // Fetch profiles for senders
@@ -104,12 +114,32 @@ export function MessageThread({ conversationId }: MessageThreadProps) {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Log to Rocker for tracking message interactions
+      await supabase.from('ai_action_ledger').insert({
+        user_id: session?.session?.userId,
+        agent: 'user',
+        action: 'message_sent',
+        input: { recipient_id: conversationId, message_length: message.length },
+        output: { success: true },
+        result: 'success'
+      });
+      
       setMessage('');
       queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
-    onError: (error) => {
+    onError: async (error) => {
+      // Log failure to Rocker
+      await supabase.from('ai_action_ledger').insert({
+        user_id: session?.session?.userId,
+        agent: 'user',
+        action: 'message_send_failed',
+        input: { recipient_id: conversationId },
+        output: { error: error instanceof Error ? error.message : 'Unknown error' },
+        result: 'failure'
+      });
+      
       toast({
         title: 'Failed to send',
         description: error instanceof Error ? error.message : 'Could not send message',

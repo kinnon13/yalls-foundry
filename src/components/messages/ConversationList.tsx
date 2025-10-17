@@ -35,6 +35,20 @@ type ConversationListProps = {
 export function ConversationList({ selectedId, onSelect, onNewMessage }: ConversationListProps) {
   const session = useSession();
   const [search, setSearch] = useState('');
+  
+  // Log conversation view for Rocker tracking
+  useEffect(() => {
+    if (selectedId && session?.session?.userId) {
+      supabase.from('ai_action_ledger').insert({
+        user_id: session.session.userId,
+        agent: 'user',
+        action: 'conversation_viewed',
+        input: { conversation_id: selectedId },
+        output: {},
+        result: 'success'
+      });
+    }
+  }, [selectedId, session?.session?.userId]);
 
   const { data: conversations, isLoading, refetch } = useQuery({
     queryKey: ['conversations', session?.session?.userId],

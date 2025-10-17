@@ -58,7 +58,17 @@ export function NewMessageDialog({ open, onOpenChange, onConversationCreated }: 
       });
       if (error) throw error;
     },
-    onSuccess: (_, { recipientId }) => {
+    onSuccess: async (_, { recipientId }) => {
+      // Log to Rocker for tracking new conversation creation
+      await supabase.from('ai_action_ledger').insert({
+        user_id: session!.session!.userId,
+        agent: 'user',
+        action: 'conversation_started',
+        input: { recipient_id: recipientId, message_length: message.length },
+        output: { success: true },
+        result: 'success'
+      });
+      
       toast({ title: 'Message sent' });
       onConversationCreated(recipientId);
       onOpenChange(false);
@@ -66,7 +76,17 @@ export function NewMessageDialog({ open, onOpenChange, onConversationCreated }: 
       setSelectedUser(null);
       setMessage('');
     },
-    onError: (error) => {
+    onError: async (error) => {
+      // Log failure to Rocker
+      await supabase.from('ai_action_ledger').insert({
+        user_id: session!.session!.userId,
+        agent: 'user',
+        action: 'conversation_start_failed',
+        input: { recipient_id: selectedUser },
+        output: { error: error instanceof Error ? error.message : 'Unknown error' },
+        result: 'failure'
+      });
+      
       toast({
         title: 'Failed to send',
         description: error instanceof Error ? error.message : 'Could not send message',

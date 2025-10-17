@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useSession } from '@/lib/auth/context';
+import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { ConversationList } from '@/components/messages/ConversationList';
 import { MessageThread } from '@/components/messages/MessageThread';
 import { NewMessageDialog } from '@/components/messages/NewMessageDialog';
@@ -24,7 +25,9 @@ export default function Messages() {
   }
 
   return (
-    <div className="h-full flex gap-6 p-6 bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-background">
+      <GlobalHeader />
+      <div className="h-[calc(100vh-64px)] flex gap-6 p-6 bg-gradient-to-br from-background via-background to-muted/20">
       {/* Left: Conversations List */}
       <div className="w-[340px] flex-shrink-0">
         <ConversationList
@@ -44,12 +47,13 @@ export default function Messages() {
         <MessagesSidebar conversationId={selectedConversationId} />
       </div>
 
-      {/* New Message Dialog */}
-      <NewMessageDialog
-        open={newMessageOpen}
-        onOpenChange={setNewMessageOpen}
-        onConversationCreated={setSelectedConversationId}
-      />
+        {/* New Message Dialog */}
+        <NewMessageDialog
+          open={newMessageOpen}
+          onOpenChange={setNewMessageOpen}
+          onConversationCreated={setSelectedConversationId}
+        />
+      </div>
     </div>
   );
 }
