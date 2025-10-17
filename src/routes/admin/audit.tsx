@@ -24,20 +24,21 @@ export default function AuditPage() {
   const [running, setRunning] = useState(false);
 
   const runAudit = async () => {
-    setRunning(true);
-    const auditResults: AuditResult[] = [];
-
-    // 1. Feature completeness check
-    const stats = getFeatureStats();
-    auditResults.push({
-      check: 'Feature Index Complete',
-      category: 'critical',
-      status: stats.total === 87 ? 'pass' : 'fail',
-      message: `${stats.total}/87 features mapped`,
-      details: stats.total < 87 ? ['Missing features in features.json'] : undefined
-    });
-
-    // 2. Gold-path readiness
+    try {
+      setRunning(true);
+      const auditResults: AuditResult[] = [];
+  
+      // 1. Feature completeness check
+      const stats = getFeatureStats();
+      auditResults.push({
+        check: 'Feature Index Complete',
+        category: 'critical',
+        status: stats.total === 87 ? 'pass' : 'fail',
+        message: `${stats.total}/87 features mapped`,
+        details: stats.total < 87 ? ['Missing features in features.json'] : undefined
+      });
+  
+      // 2. Gold-path readiness
     const goldPath = validateGoldPath();
     auditResults.push({
       check: 'Gold-Path Features Ready',
@@ -134,8 +135,13 @@ export default function AuditPage() {
     auditResults.push(...areaChecks);
 
     setResults(auditResults);
+  } catch (err) {
+    console.error('Audit failed', err);
+    setResults([{ check: 'Audit Error', category: 'critical', status: 'fail', message: 'Unexpected error running audit' }]);
+  } finally {
     setRunning(false);
-  };
+  }
+};
 
   useEffect(() => {
     runAudit();
@@ -156,6 +162,9 @@ export default function AuditPage() {
           <p className="text-sm text-muted-foreground mt-1">
             Comprehensive platform health check
           </p>
+          <div role="status" aria-live="polite" className="sr-only">
+            {running ? 'Audit running' : 'Audit idle'}
+          </div>
         </div>
         <Button onClick={runAudit} disabled={running}>
           {running ? (
