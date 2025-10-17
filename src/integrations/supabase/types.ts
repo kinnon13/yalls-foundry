@@ -5880,6 +5880,30 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_counters: {
+        Row: {
+          count: number
+          created_at: string
+          id: number
+          scope: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          id?: number
+          scope: string
+          window_start?: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          id?: number
+          scope?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       result_flags: {
         Row: {
           created_at: string
@@ -7525,6 +7549,10 @@ export type Database = {
             }
         Returns: string
       }
+      check_rate_limit: {
+        Args: { p_limit: number; p_scope: string; p_window_sec?: number }
+        Returns: Json
+      }
       check_voice_post_rate_limit: {
         Args: {
           p_max_posts?: number
@@ -7720,6 +7748,15 @@ export type Database = {
           payload: Json
           score: number
         }[]
+      }
+      feed_fusion_home_rate_limited: {
+        Args: {
+          p_cursor?: string
+          p_lane: string
+          p_limit?: number
+          p_user_id: string
+        }
+        Returns: Json
       }
       feed_fusion_profile: {
         Args: {
