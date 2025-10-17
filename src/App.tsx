@@ -29,6 +29,8 @@ import NotFound from "./pages/NotFound";
 const Dashboard = lazy(() => import('./routes/dashboard'));
 const AISettings = lazy(() => import('./routes/settings/ai'));
 const AIActivity = lazy(() => import('./routes/ai/activity'));
+const EntitiesList = lazy(() => import('./routes/entities/index'));
+const EntityDetail = lazy(() => import('./routes/entities/[id]'));
 const ClaimEntity = lazy(() => import('./routes/claim/[entityId]'));
 const AdminClaims = lazy(() => import('./routes/admin/claims'));
 
@@ -89,7 +91,23 @@ const App = () => (
             }
           />
 
-          {/* Entity Claim Routes */}
+          {/* Entity Routes */}
+          <Route
+            path="/entities"
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <EntitiesList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/entities/:id"
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <EntityDetail />
+              </Suspense>
+            }
+          />
           <Route
             path="/claim/:entityId"
             element={
