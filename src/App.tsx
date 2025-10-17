@@ -23,6 +23,7 @@ import Login from "./routes/login";
 import Profile from "./routes/profile";
 import ControlRoom from "./routes/admin/control-room";
 import NotFound from "./pages/NotFound";
+import Health from "./pages/Health";
 
 // Lazy load dashboard and AI routes
 const DashboardLayout = lazy(() => import('./routes/dashboard/index'));
@@ -122,6 +123,7 @@ function AppContent() {
           />
           <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
           <Route path="/discover" element={<Suspense fallback={<div>Loading...</div>}><Discover /></Suspense>} />
+          <Route path="/health" element={<Health />} />
 
           {/* Phase 3: Listings & Events */}
           <Route path="/listings" element={<Suspense fallback={<div>Loading...</div>}><ListingsIndex /></Suspense>} />
