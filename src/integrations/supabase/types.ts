@@ -1335,6 +1335,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "boarders_horse_entity_id_fkey"
+            columns: ["horse_entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
+          {
             foreignKeyName: "boarders_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
@@ -1439,8 +1446,29 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "breeding_records_foal_entity_id_fkey"
+            columns: ["foal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
+          {
             foreignKeyName: "breeding_records_mare_entity_id_fkey"
             columns: ["mare_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "breeding_records_mare_entity_id_fkey"
+            columns: ["mare_entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
+          {
+            foreignKeyName: "breeding_records_stallion_entity_id_fkey"
+            columns: ["stallion_entity_id"]
             isOneToOne: false
             referencedRelation: "entities"
             referencedColumns: ["id"]
@@ -1449,8 +1477,8 @@ export type Database = {
             foreignKeyName: "breeding_records_stallion_entity_id_fkey"
             columns: ["stallion_entity_id"]
             isOneToOne: false
-            referencedRelation: "entities"
-            referencedColumns: ["id"]
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
           },
         ]
       }
@@ -1936,6 +1964,13 @@ export type Database = {
             referencedRelation: "entities"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "claim_bounties_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
         ]
       }
       claim_events: {
@@ -2022,6 +2057,45 @@ export type Database = {
           status?: string
           transaction_type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      connections: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          metadata: Json
+          object_id: string
+          object_type: string
+          relation: string
+          subject_id: string
+          subject_type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json
+          object_id: string
+          object_type: string
+          relation: string
+          subject_id: string
+          subject_type: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          metadata?: Json
+          object_id?: string
+          object_type?: string
+          relation?: string
+          subject_id?: string
+          subject_type?: string
         }
         Relationships: []
       }
@@ -3139,6 +3213,13 @@ export type Database = {
             referencedRelation: "entities"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "entity_claims_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
         ]
       }
       entity_edges: {
@@ -3187,11 +3268,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "entity_edges_object_entity_id_fkey"
+            columns: ["object_entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
+          {
             foreignKeyName: "entity_edges_subject_entity_id_fkey"
             columns: ["subject_entity_id"]
             isOneToOne: false
             referencedRelation: "entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_edges_subject_entity_id_fkey"
+            columns: ["subject_entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
           },
         ]
       }
@@ -3263,6 +3358,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_members_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
           },
         ]
       }
@@ -3526,6 +3628,13 @@ export type Database = {
             referencedRelation: "entities"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "entity_ui_prefs_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: true
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
         ]
       }
       entries: {
@@ -3576,6 +3685,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entries_horse_entity_id_fkey"
+            columns: ["horse_entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
           },
         ]
       }
@@ -3732,6 +3848,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "events_host_entity_id_fkey"
+            columns: ["host_entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
+          {
             foreignKeyName: "events_host_profile_id_fkey"
             columns: ["host_profile_id"]
             isOneToOne: false
@@ -3763,6 +3886,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorite_entities_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
           },
         ]
       }
@@ -3916,6 +4046,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "feed_hides_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
+          {
             foreignKeyName: "feed_hides_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
@@ -4007,6 +4144,87 @@ export type Database = {
           expires_at?: string
           key?: string
           result?: Json
+        }
+        Relationships: []
+      }
+      incentive_nominations: {
+        Row: {
+          created_at: string
+          fee_paid: boolean
+          horse_id: string
+          id: string
+          incentive_id: string
+          nominator_user_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fee_paid?: boolean
+          horse_id: string
+          id?: string
+          incentive_id: string
+          nominator_user_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fee_paid?: boolean
+          horse_id?: string
+          id?: string
+          incentive_id?: string
+          nominator_user_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incentive_nominations_incentive_id_fkey"
+            columns: ["incentive_id"]
+            isOneToOne: false
+            referencedRelation: "incentives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incentive_nominations_incentive_id_fkey"
+            columns: ["incentive_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["incentive_id"]
+          },
+        ]
+      }
+      incentives: {
+        Row: {
+          created_at: string
+          deadline_at: string
+          eligibility_rules: Json
+          entry_fee_cents: number
+          id: string
+          program_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deadline_at: string
+          eligibility_rules?: Json
+          entry_fee_cents?: number
+          id?: string
+          program_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deadline_at?: string
+          eligibility_rules?: Json
+          entry_fee_cents?: number
+          id?: string
+          program_name?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -5199,6 +5417,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "post_tags_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
+          {
             foreignKeyName: "post_tags_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
@@ -5256,6 +5481,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_targets_target_entity_id_fkey"
+            columns: ["target_entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
           },
         ]
       }
@@ -5322,6 +5554,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
           },
         ]
       }
@@ -6093,6 +6332,13 @@ export type Database = {
             referencedRelation: "entities"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "stallion_profiles_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: true
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
         ]
       }
       stalls_rv_inventory: {
@@ -6224,6 +6470,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_related_entity_id_fkey"
+            columns: ["related_entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
           },
         ]
       }
@@ -6768,6 +7021,48 @@ export type Database = {
         }
         Relationships: []
       }
+      work_packages: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_date: string | null
+          id: string
+          project_id: string
+          role: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          project_id: string
+          role: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          project_id?: string
+          role?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       ai_action_my_timeline: {
@@ -6864,6 +7159,17 @@ export type Database = {
           seen_at: string | null
           title: string | null
           user_id: string | null
+        }
+        Relationships: []
+      }
+      v_incentive_eligibility: {
+        Row: {
+          deadline_at: string | null
+          horse_id: string | null
+          incentive_id: string | null
+          is_open: boolean | null
+          meets_rules: boolean | null
+          program_name: string | null
         }
         Relationships: []
       }
@@ -7226,6 +7532,14 @@ export type Database = {
       cleanup_expired_memories: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      connection_metrics: {
+        Args: { p_window_hours?: number }
+        Returns: {
+          count: number
+          object_type: string
+          relation: string
+        }[]
       }
       contributor_window_status: {
         Args: { p_entity_id: string }
@@ -7683,6 +7997,16 @@ export type Database = {
           likes_count: number
         }[]
       }
+      get_user_connection_kernels: {
+        Args: { p_user_id?: string }
+        Returns: {
+          context_data: Json
+          kernel_type: string
+          object_id: string
+          priority: number
+          source: string
+        }[]
+      }
       get_user_kernels: {
         Args: { p_user_id?: string }
         Returns: {
@@ -7767,6 +8091,10 @@ export type Database = {
         Args: { p_feature_id: string; p_user_id?: string }
         Returns: boolean
       }
+      has_incentive_action: {
+        Args: { p_horse_id: string; p_incentive_id: string; p_user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args:
           | { _role: Database["public"]["Enums"]["app_role"]; _user_id: string }
@@ -7792,6 +8120,10 @@ export type Database = {
       hnswhandler: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      incentive_nominate: {
+        Args: { p_horse_id: string; p_incentive_id: string; p_metadata?: Json }
+        Returns: string
       }
       is_admin: {
         Args: Record<PropertyKey, never> | { _user_id: string }

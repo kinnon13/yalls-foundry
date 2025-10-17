@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod';
-import { CheckCircle, Calendar, DollarSign } from 'lucide-react';
+import { CheckCircle, Calendar, DollarSign, Trophy, Briefcase } from 'lucide-react';
 import type { FeatureDef } from './types';
 
 export const featureRegistry: Record<string, FeatureDef> = {
@@ -55,6 +55,40 @@ export const featureRegistry: Record<string, FeatureDef> = {
     icon: DollarSign,
     enabled: true,
     requires: ['earnings'],
+  },
+  incentives: {
+    id: 'incentives',
+    title: 'Incentives',
+    description: 'Discover and nominate horses for incentive programs',
+    version: '1',
+    loader: () => import('../features/incentives/Feature'),
+    schema: z.object({
+      horse: z.string().uuid().optional(),
+      program: z.string().uuid().optional(),
+      mode: z.enum(['discover', 'nominate', 'enter', 'pay', 'draws']).default('discover'),
+    }),
+    defaults: { mode: 'discover' },
+    capabilities: ['view', 'nominate', 'enter', 'pay', 'draws'],
+    icon: Trophy,
+    enabled: true,
+    requires: ['incentives'],
+  },
+  work_packages: {
+    id: 'work_packages',
+    title: 'Work Packages',
+    description: 'Manage scoped work assignments for projects',
+    version: '1',
+    loader: () => import('../features/work-packages/Feature'),
+    schema: z.object({
+      project: z.string().uuid().optional(),
+      role: z.enum(['plumber', 'electrician', 'framer', 'general', 'other']).optional(),
+      range: z.enum(['week', 'month']).default('week'),
+    }),
+    defaults: { range: 'week' },
+    capabilities: ['view', 'update', 'complete'],
+    icon: Briefcase,
+    enabled: true,
+    requires: ['work_packages'],
   },
 };
 
