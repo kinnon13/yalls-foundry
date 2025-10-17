@@ -1,38 +1,35 @@
-// Feed Fusion Types (PR5a + Master Plan)
-export type FeedItemKind = 'post' | 'listing' | 'event';
-
-export interface FeedItemBase {
-  kind: FeedItemKind;
+export type FeedItemBase = {
+  kind: 'post' | 'listing' | 'event';
   id: string;
-  score?: number;
-  entity_id?: string;
-  created_at?: string;
-}
+  entity_id: string;
+  created_at: string;
+  score: number;
+};
 
-export interface PostFeedItem extends FeedItemBase {
+export type PostFeedItem = FeedItemBase & {
   kind: 'post';
   body: string;
-  media: Array<{ url: string; type: 'image' | 'video' }>;
+  media: any[];
   author_user_id?: string;
   labels?: Array<'auto' | 'repost' | 'cross_post'>;
-}
+};
 
-export interface ListingFeedItem extends FeedItemBase {
+export type ListingFeedItem = FeedItemBase & {
   kind: 'listing';
   title: string;
   price_cents: number;
-  media: Array<{ url: string; type: 'image' | 'video' }>;
+  media: any[];
   stock_quantity?: number;
   seller_entity_id?: string;
-}
+};
 
-export interface EventFeedItem extends FeedItemBase {
+export type EventFeedItem = FeedItemBase & {
   kind: 'event';
   title: string;
   starts_at?: string;
   location?: any;
   host_entity_id?: string;
-}
+};
 
 export type FeedItem = PostFeedItem | ListingFeedItem | EventFeedItem;
 

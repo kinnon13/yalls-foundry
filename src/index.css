@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body {
+  overscroll-behavior-y: none;
+}
+
 /* Prevent iOS rubber-band overscroll */
 html, body { 
   overscroll-behavior-y: none; 

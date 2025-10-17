@@ -2,12 +2,18 @@ import { rget, rset } from '@/lib/redis';
 import { supabase } from '@/integrations/supabase/client';
 import type { FeedItem } from '@/types/feed';
 
-export async function getHomeFeedCached(userId: string | null, lane: 'personal'|'combined'): Promise<FeedItem[]> {
+export async function getHomeFeedCached(
+  userId: string | null,
+  lane: 'personal' | 'combined'
+): Promise<FeedItem[]> {
   const key = `feed:home:${userId ?? 'anon'}:${lane}`;
   const cached = await rget<FeedItem[]>(key);
   if (cached) return cached;
 
-  const { data, error } = await (supabase.rpc as any)('feed_fusion_home', { p_user_id: userId, p_mode: lane });
+  const { data, error } = await supabase.rpc('feed_fusion_home' as any, {
+    p_user_id: userId,
+    p_mode: lane,
+  });
   if (error) throw error;
 
   const items: FeedItem[] = (data ?? []).map((row: any) => ({
@@ -19,17 +25,22 @@ export async function getHomeFeedCached(userId: string | null, lane: 'personal'|
     ...row.payload,
   }));
 
-  // 60s is a sweet spot for "fresh but cheap"
   await rset(key, items, 60);
   return items;
 }
 
-export async function getProfileFeedCached(entityId: string, mode: 'this'|'all'): Promise<FeedItem[]> {
+export async function getProfileFeedCached(
+  entityId: string,
+  mode: 'this' | 'all'
+): Promise<FeedItem[]> {
   const key = `feed:profile:${entityId}:${mode}`;
   const cached = await rget<FeedItem[]>(key);
   if (cached) return cached;
 
-  const { data, error } = await (supabase.rpc as any)('feed_fusion_profile', { p_entity_id: entityId, p_mode: mode });
+  const { data, error } = await supabase.rpc('feed_fusion_profile' as any, {
+    p_entity_id: entityId,
+    p_mode: mode,
+  });
   if (error) throw error;
 
   const items: FeedItem[] = (data ?? []).map((row: any) => ({

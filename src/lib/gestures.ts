@@ -6,7 +6,7 @@ export function attachVerticalSwipe(
   let startY = 0, lastY = 0, startT = 0;
   let touching = false;
 
-  el.style.touchAction = 'pan-y'; // allow vertical scrolling gestures
+  el.style.touchAction = 'pan-y';
 
   const onDown = (e: TouchEvent | MouseEvent) => {
     touching = true;
@@ -23,13 +23,10 @@ export function attachVerticalSwipe(
   const onUp = (e?: Event) => {
     if (!touching) return;
     touching = false;
-
     const dy = lastY - startY;
     const dt = Math.max(1, performance.now() - startT);
-    const v = dy / dt; // px/ms
-
-    // prevent iOS rubber-banding "click-through"
-    if (e && 'preventDefault' in e) try { (e as Event).preventDefault(); } catch {}
+    const v = dy / dt;
+    try { e?.preventDefault?.(); } catch {}
 
     if (dy > 80 || v > 0.5) onPrev();
     else if (dy < -80 || v < -0.5) onNext();
@@ -37,18 +34,18 @@ export function attachVerticalSwipe(
 
   el.addEventListener('touchstart', onDown, { passive: true });
   el.addEventListener('touchmove', onMove, { passive: true });
-  el.addEventListener('touchend', onUp, { passive: false });
+  el.addEventListener('touchend', onUp as any, { passive: false });
 
   el.addEventListener('mousedown', onDown);
   window.addEventListener('mousemove', onMove as any, { passive: true });
-  window.addEventListener('mouseup', onUp);
+  window.addEventListener('mouseup', onUp as any);
 
   return () => {
     el.removeEventListener('touchstart', onDown);
     el.removeEventListener('touchmove', onMove as any);
-    el.removeEventListener('touchend', onUp);
+    el.removeEventListener('touchend', onUp as any);
     el.removeEventListener('mousedown', onDown);
     window.removeEventListener('mousemove', onMove as any);
-    window.removeEventListener('mouseup', onUp);
+    window.removeEventListener('mouseup', onUp as any);
   };
 }

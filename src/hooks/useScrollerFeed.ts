@@ -1,7 +1,7 @@
 // useScrollerFeed hook - Feed Fusion with infinite scroll (PR5c + Master Plan)
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { FeedItem, FusionFeedItem, PostFeedItem, ListingFeedItem, EventFeedItem, FeedItemKind } from '@/types/feed';
+import type { FeedItem, FusionFeedItem, PostFeedItem, ListingFeedItem, EventFeedItem } from '@/types/feed';
 import { useEffect, useRef } from 'react';
 import { logUsage, getSessionId } from '@/lib/telemetry/usage';
 
@@ -60,7 +60,7 @@ export function useScrollerFeed(params: FeedParams) {
       // Transform RPC results to FeedItem[]
       const items: FeedItem[] = ((data as FusionFeedItem[]) || []).map((row) => {
         const base = {
-          kind: row.item_type as FeedItemKind,
+          kind: row.item_type as 'post' | 'listing' | 'event',
           id: row.item_id,
           score: row.rank,
           created_at: row.created_at,
