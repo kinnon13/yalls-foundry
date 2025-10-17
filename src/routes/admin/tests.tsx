@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import featuresData from '@/../../docs/features/features.json';
+import featuresData from '../../../docs/features/features.json';
 import { Badge } from '@/components/ui/badge';
 import { TestTube, CheckCircle, XCircle } from 'lucide-react';
 
