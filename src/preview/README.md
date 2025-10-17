@@ -7,10 +7,10 @@ Read-only UI previews for Pay/Admin/Data experiences. No writes, no money moves.
 1. **Env flag** - VITE_PREVIEW_ENABLED must be true
 2. **Admin auth** - Routes gated via PreviewGuard
 3. **Origin allowlist** - Only trusted domains accepted
-4. **HMAC tokens** - 5-minute signed tokens prevent spoofing
+4. **Server-side HMAC** - Tokens signed by edge function (secret never in browser)
 5. **Mutation blocking** - Fetch/XHR/WebSocket/Forms/SendBeacon blocked
 6. **Schema validation** - All messages validated via zod
-7. **Server audit** - All events logged to audit-preview-event function
+7. **Server audit** - All events logged with idempotency (5-min dedupe window)
 
 ## Hand-off Contract
 
@@ -25,9 +25,10 @@ type PreviewEvent =
 
 ## Usage
 
-Open preview with HMAC:
+Open preview with server-signed token:
 ```typescript
 import { openPreviewWindow } from '@/lib/preview/openPreview';
+// Fetches signed token from sign-preview-token edge function
 const win = await openPreviewWindow('/preview/pay/checkout');
 ```
 
@@ -38,6 +39,11 @@ usePreviewMessage((event) => {
   // Handle validated + audited event
 });
 ```
+
+## Environment Setup
+
+Edge functions need:
+- `PREVIEW_HMAC_SECRET` - Set as Supabase secret (for sign-preview-token)
 
 ## Rollout to Subdomains
 When moving to real subdomains, update only the origin allowlist - contract stays identical.
