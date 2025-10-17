@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useSession } from '@/lib/auth/context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingUp } from 'lucide-react';
@@ -16,26 +17,44 @@ type Row = {
 type Tab = 'summary' | 'missed' | 'history';
 
 export default function EarningsPanel() {
+  const { session } = useSession();
   const [tab, setTab] = useState<Tab>('summary');
   const [rows, setRows] = useState<Row[]>([]);
   const [tierPct, setTierPct] = useState<number>(0.01);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
-      const [{ data: events }, { data: tier }] = await Promise.all([
-        supabase
-          .from('earnings_events' as any)
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(200),
-        supabase.from('earnings_tiers' as any).select('pct').single(),
-      ]);
-      setRows(((events || []) as unknown) as Row[]);
-      setTierPct((tier as any)?.pct ?? 0.01);
+    const load = async () => {
+      if (!session?.userId) return;
+
+      const { data: rows, error: err1 } = await (supabase as any)
+        .from('earnings_events')
+        .select('*')
+        .eq('user_id', session.userId)
+        .order('created_at', { ascending: false });
+      if (err1) { console.error(err1); return; }
+
+      const { data: tierRow, error: err2 } = await (supabase as any)
+        .from('earnings_tiers')
+        .select('pct')
+        .eq('user_id', session.userId)
+        .maybeSingle();
+      if (!err2 && tierRow) setTierPct(tierRow.pct);
+
+      // Get preview for demonstration
+      const { data: preview } = await supabase.rpc('earnings_preview' as any, {
+        p_user_id: session.userId,
+        p_event: { basis_cents: 10000, target_pct: 0.04 }
+      });
+      if (preview) {
+        console.log('[Earnings] Preview:', preview);
+      }
+
+      setRows((rows || []) as Row[]);
       setLoading(false);
-    })();
-  }, []);
+    };
+    load();
+  }, [session?.userId]);
 
   const tierLabel = `${(tierPct * 100).toFixed(1)}%`;
   const totalCaptured = rows.reduce((a, r) => a + r.captured_cents, 0) / 100;
