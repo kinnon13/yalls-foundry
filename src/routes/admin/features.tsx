@@ -1,46 +1,22 @@
 /**
  * @feature(admin_features)
  * Feature Index Admin Page
- * View, filter, and manage all 87 features
+ * Complete feature management with sub-features
  */
 
 import React, { useState, useMemo } from 'react';
-import { kernel, GOLD_PATH_FEATURES } from '@/lib/feature-kernel';
+import { kernel, GOLD_PATH_FEATURES, Feature } from '@/lib/feature-kernel';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, FileText, TestTube, Code, AlertCircle, Star, Shield, Edit2, Save, X, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Plus, Shield, AlertCircle, Download, FileJson } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { FeatureCard } from '@/components/admin/FeatureCard';
+import { FeatureEditorDialog } from '@/components/admin/FeatureEditorDialog';
 
 type FeatureStatus = 'shell' | 'full-ui' | 'wired';
-type FeatureArea = 'profile' | 'notifications' | 'composer' | 'events' | 'producer' | 'earnings' | 'ai';
-
-const STATUS_COLORS: Record<FeatureStatus, string> = {
-  shell: 'bg-gray-500',
-  'full-ui': 'bg-blue-500',
-  wired: 'bg-green-500',
-};
-
-const AREA_LABELS: Record<FeatureArea, string> = {
-  profile: 'Profile',
-  notifications: 'Notifications',
-  composer: 'Composer',
-  events: 'Events',
-  producer: 'Producer',
-  earnings: 'Earnings',
-  ai: 'AI',
-};
-
-interface EditingFeature {
-  id: string;
-  status: FeatureStatus;
-  owner: string;
-  notes: string;
-  severity: string;
-}
 
 export default function FeaturesAdminPage() {
   const [search, setSearch] = useState('');
@@ -49,8 +25,9 @@ export default function FeaturesAdminPage() {
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [showPlaceholders, setShowPlaceholders] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<EditingFeature | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingFeature, setEditingFeature] = useState<Feature | null>(null);
+  const [addingSubFeatureTo, setAddingSubFeatureTo] = useState<string | null>(null);
 
   const features = kernel.features;
   const goldPath = kernel.validateGoldPath();
@@ -73,46 +50,57 @@ export default function FeaturesAdminPage() {
     });
   }, [features, search, areaFilter, statusFilter, ownerFilter, severityFilter, showPlaceholders]);
 
-  const startEdit = (feature: any) => {
-    setEditingId(feature.id);
-    setEditForm({
-      id: feature.id,
-      status: feature.status,
-      owner: feature.owner,
-      notes: feature.notes,
-      severity: feature.severity
-    });
+  const handleEdit = (feature: Feature) => {
+    setEditingFeature(feature);
+    setAddingSubFeatureTo(null);
+    setEditorOpen(true);
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditForm(null);
+  const handleAddNew = () => {
+    setEditingFeature(null);
+    setAddingSubFeatureTo(null);
+    setEditorOpen(true);
   };
 
-  const saveEdit = () => {
-    if (!editForm) return;
-    
-    // In a real implementation, this would persist to features.json via an API
-    // For now, just show a toast
-    toast.success(`Updated ${editForm.id}`, {
-      description: 'Changes saved successfully. Note: In production, this would persist to features.json via backend.'
-    });
-    
-    console.log('Save changes:', editForm);
-    setEditingId(null);
-    setEditForm(null);
+  const handleAddSubFeature = (parentId: string) => {
+    setEditingFeature(null);
+    setAddingSubFeatureTo(parentId);
+    setEditorOpen(true);
   };
 
-  const getCompletionCriteria = (feature: any) => {
-    const criteria = [
-      { label: 'Routes', met: feature.routes.length > 0 },
-      { label: 'Components', met: feature.components.length > 0 },
-      { label: 'Docs', met: !!feature.docs },
-      { label: 'Tests', met: feature.tests.e2e.length > 0 || feature.tests.unit.length > 0 },
-      { label: 'Owner', met: !!feature.owner },
-      { label: 'Severity', met: !!feature.severity }
-    ];
-    return criteria;
+  const handleDelete = (featureId: string) => {
+    if (confirm(`Are you sure you want to delete feature "${featureId}"?`)) {
+      toast.success(`Deleted ${featureId}`, {
+        description: 'In production, this would remove the feature from features.json'
+      });
+    }
+  };
+
+  const handleSaveFeature = (featureData: Partial<Feature>) => {
+    if (editingFeature) {
+      toast.success(`Updated ${featureData.id}`, {
+        description: 'Changes saved. In production, this would update features.json'
+      });
+    } else {
+      toast.success(`Created ${featureData.id}`, {
+        description: 'Feature created. In production, this would add to features.json'
+      });
+    }
+    setEditorOpen(false);
+    setEditingFeature(null);
+    setAddingSubFeatureTo(null);
+  };
+
+  const handleExportJSON = () => {
+    const data = JSON.stringify({ features: filtered }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `features-export-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Exported features to JSON');
   };
 
   // Summary stats
@@ -122,20 +110,31 @@ export default function FeaturesAdminPage() {
   const percentComplete = stats.completionPercent;
   const shellInProd = isProd ? features.filter(f => f.status === 'shell' && f.routes.length > 0).length : 0;
 
+  // Get all unique areas for filter
+  const allAreas = Array.from(new Set(features.map(f => f.area))).sort();
+
   return (
     <div className="container max-w-7xl py-8 space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Feature Index</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {totalFeatures} features · {percentComplete.toFixed(1)}% complete
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Sources: {stats.sources.base} base · {stats.sources.overlays} overlay · {stats.sources.generated} generated
-        </p>
-      </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Feature Index</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {totalFeatures} features · {percentComplete.toFixed(1)}% complete
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Sources: {stats.sources.base} base · {stats.sources.overlays} overlay · {stats.sources.generated} generated
+          </p>
+        </div>
         <div className="flex gap-2">
+          <Button onClick={handleExportJSON} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export JSON
+          </Button>
+          <Button onClick={handleAddNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Feature
+          </Button>
           <Button asChild variant="outline">
             <Link to="/admin/audit">
               <Shield className="h-4 w-4 mr-2" />
@@ -207,39 +206,6 @@ export default function FeaturesAdminPage() {
         </div>
       </div>
 
-      {/* Progress by Area */}
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Progress by Area</h2>
-        {Object.entries(byArea).map(([area, counts]) => {
-          const total = counts.shell + counts['full-ui'] + counts.wired;
-          const complete = counts['full-ui'] + counts.wired;
-          const pct = (complete / total) * 100;
-
-          return (
-            <div key={area} className="space-y-1">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">{AREA_LABELS[area as FeatureArea] || area}</span>
-                <span className="text-muted-foreground">
-                  {complete}/{total} · {pct.toFixed(0)}%
-                </span>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden flex">
-                <div
-                  className="h-full bg-green-500 transition-all"
-                  style={{ width: `${(counts.wired / total) * 100}%` }}
-                  title={`${counts.wired} wired`}
-                />
-                <div
-                  className="h-full bg-blue-500 transition-all"
-                  style={{ width: `${(counts['full-ui'] / total) * 100}%` }}
-                  title={`${counts['full-ui']} full-ui`}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
       {/* Filters */}
       <div className="flex items-center gap-4 flex-wrap">
         <Input
@@ -254,8 +220,8 @@ export default function FeaturesAdminPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Areas</SelectItem>
-            {Object.keys(AREA_LABELS).map(a => (
-              <SelectItem key={a} value={a}>{AREA_LABELS[a as FeatureArea]}</SelectItem>
+            {allAreas.map(a => (
+              <SelectItem key={a} value={a}>{a}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -300,222 +266,38 @@ export default function FeaturesAdminPage() {
         </Button>
       </div>
 
-      {/* Features Table */}
-      <div className="rounded-lg border">
-        <table className="w-full">
-          <thead className="border-b bg-muted/50">
-            <tr>
-              <th className="text-left p-3 font-medium w-8"></th>
-              <th className="text-left p-3 font-medium">Feature</th>
-              <th className="text-left p-3 font-medium">Status</th>
-              <th className="text-left p-3 font-medium">Severity</th>
-              <th className="text-left p-3 font-medium">Owner</th>
-              <th className="text-left p-3 font-medium">Completion</th>
-              <th className="text-left p-3 font-medium">Coverage</th>
-              <th className="text-left p-3 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((feature) => {
-              const isGoldPath = GOLD_PATH_FEATURES.includes(feature.id);
-              const isShellInProd = isProd && feature.status === 'shell' && feature.routes.length > 0;
-              const isEditing = editingId === feature.id;
-              const criteria = getCompletionCriteria(feature);
-              const completionPct = (criteria.filter(c => c.met).length / criteria.length) * 100;
-              
-              return (
-                <tr key={feature.id} className="border-b hover:bg-muted/30">
-                  <td className="p-3">
-                    {isGoldPath && (
-                      <span title="Gold-path feature">
-                        <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3">
-                    <div>
-                      <div className="font-medium flex items-center gap-2">
-                        {feature.title}
-                        {isShellInProd && (
-                          <span title="Shell exposed in production">
-                            <AlertCircle className="h-4 w-4 text-yellow-500" />
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-muted-foreground">{feature.id}</div>
-                      {isEditing && editForm && (
-                        <div className="mt-2 space-y-2">
-                          <Textarea
-                            placeholder="Notes..."
-                            value={editForm.notes}
-                            onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                            className="text-xs"
-                            rows={2}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-3">
-                    {isEditing && editForm ? (
-                      <Select
-                        value={editForm.status}
-                        onValueChange={(v) => setEditForm({ ...editForm, status: v as FeatureStatus })}
-                      >
-                        <SelectTrigger className="w-28 h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="shell">Shell</SelectItem>
-                          <SelectItem value="full-ui">Full UI</SelectItem>
-                          <SelectItem value="wired">Wired</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Badge className={STATUS_COLORS[feature.status as FeatureStatus]}>
-                        {feature.status}
-                      </Badge>
-                    )}
-                  </td>
-                  <td className="p-3">
-                    {isEditing && editForm ? (
-                      <Select
-                        value={editForm.severity}
-                        onValueChange={(v) => setEditForm({ ...editForm, severity: v })}
-                      >
-                        <SelectTrigger className="w-20 h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="p0">P0</SelectItem>
-                          <SelectItem value="p1">P1</SelectItem>
-                          <SelectItem value="p2">P2</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Badge variant={feature.severity === 'p0' ? 'destructive' : 'outline'}>
-                        {feature.severity?.toUpperCase() || 'N/A'}
-                      </Badge>
-                    )}
-                  </td>
-                  <td className="p-3">
-                    {isEditing && editForm ? (
-                      <Input
-                        value={editForm.owner}
-                        onChange={(e) => setEditForm({ ...editForm, owner: e.target.value })}
-                        className="w-24 h-8 text-sm"
-                      />
-                    ) : (
-                      <span className="text-sm">{feature.owner}</span>
-                    )}
-                  </td>
-                  <td className="p-3">
-                    <div className="space-y-1">
-                      <div className="text-xs text-muted-foreground">{completionPct.toFixed(0)}%</div>
-                      <div className="flex gap-1">
-                        {criteria.map((c, i) => (
-                          <span key={i} title={c.label}>
-                            {c.met ? (
-                              <CheckCircle2 className="h-3 w-3 text-green-600" />
-                            ) : (
-                              <XCircle className="h-3 w-3 text-gray-300" />
-                            )}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-3">
-                    <div className="space-y-1">
-                      <div className="flex gap-1">
-                        <Badge variant="outline" className="text-xs px-1">
-                          R: {feature.routes.length}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs px-1">
-                          C: {feature.components.length}
-                        </Badge>
-                      </div>
-                      <div className="flex gap-1">
-                        <Badge variant={feature.tests.e2e.length > 0 ? 'default' : 'outline'} className="text-xs px-1">
-                          E2E: {feature.tests.e2e.length}
-                        </Badge>
-                        <Badge variant={feature.tests.unit.length > 0 ? 'default' : 'outline'} className="text-xs px-1">
-                          U: {feature.tests.unit.length}
-                        </Badge>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-1">
-                      {isEditing ? (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={saveEdit}
-                            aria-label="Save changes"
-                          >
-                            <Save className="h-4 w-4 text-green-600" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={cancelEdit}
-                            aria-label="Cancel edit"
-                          >
-                            <X className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => startEdit(feature)}
-                            aria-label="Edit feature"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          {feature.routes[0] && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              asChild
-                              aria-label="Open route"
-                            >
-                              <a href={feature.routes[0]} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                            </Button>
-                          )}
-                          {feature.docs && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              asChild
-                              aria-label="View docs"
-                            >
-                              <a href={`/${feature.docs}`} target="_blank" rel="noopener noreferrer">
-                                <FileText className="h-3 w-3" />
-                              </a>
-                            </Button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </td>
-              </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      {/* Features Grid */}
+      <div className="space-y-3">
+        {filtered.map((feature) => (
+          <FeatureCard
+            key={feature.id}
+            feature={feature}
+            isGoldPath={GOLD_PATH_FEATURES.includes(feature.id)}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onAddSubFeature={handleAddSubFeature}
+          />
+        ))}
       </div>
 
       {filtered.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground">
+        <div className="text-center py-12 text-muted-foreground">
           No features match your filters
         </div>
       )}
+
+      {/* Feature Editor Dialog */}
+      <FeatureEditorDialog
+        open={editorOpen}
+        onClose={() => {
+          setEditorOpen(false);
+          setEditingFeature(null);
+          setAddingSubFeatureTo(null);
+        }}
+        onSave={handleSaveFeature}
+        feature={editingFeature}
+        parentId={addingSubFeatureTo || undefined}
+      />
     </div>
   );
 }
