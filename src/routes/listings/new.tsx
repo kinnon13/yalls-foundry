@@ -44,7 +44,7 @@ export default function NewListing() {
     setSaving(true);
     try {
       const { data, error } = await supabase
-        .from('listings')
+        .from('listings' as any)
         .insert({
           seller_entity_id: sellerEntityId,
           title,
@@ -52,7 +52,7 @@ export default function NewListing() {
           price_cents: parseInt(priceCents),
           stock_qty: parseInt(stockQty),
           status: 'active'
-        })
+        } as any)
         .select()
         .single();
 

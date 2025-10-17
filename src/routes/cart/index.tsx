@@ -17,7 +17,10 @@ export default function CartPage() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc('cart_get');
       if (error) throw error;
-      return data as { cart_id: string | null; items: any[]; subtotal_cents: number };
+      return (
+        (data as unknown as { cart_id: string | null; items: any[]; subtotal_cents: number }) ??
+        { cart_id: null, items: [], subtotal_cents: 0 }
+      );
     }
   });
 
@@ -27,21 +30,21 @@ export default function CartPage() {
     queryFn: async () => {
       const ids = cart!.items.map(i => i.listing_id);
       const { data, error } = await supabase
-        .from('listings')
+        .from('listings' as any)
         .select('*')
-        .in('id', ids);
+        .in('id', ids as any);
       
       if (error) throw error;
-      return data;
+      return data as any[];
     }
   });
 
   const removeMutation = useMutation({
     mutationFn: async (itemId: string) => {
       const { error } = await supabase
-        .from('cart_items')
+        .from('cart_items' as any)
         .delete()
-        .eq('id', itemId);
+        .eq('id', itemId as any);
       
       if (error) throw error;
     },
@@ -57,7 +60,7 @@ export default function CartPage() {
         p_meta: {},
         p_tax_cents: 0,
         p_shipping_cents: 0
-      });
+      } as any);
 
       if (error) throw error;
 

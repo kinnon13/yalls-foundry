@@ -16,13 +16,13 @@ export default function EventsIndex() {
     queryKey: ['events'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('events')
+        .from('events' as any)
         .select('*')
         .eq('status', 'published')
         .order('starts_at', { ascending: true });
       
       if (error) throw error;
-      return data;
+      return data as any[];
     }
   });
 

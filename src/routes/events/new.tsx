@@ -44,7 +44,7 @@ export default function NewEvent() {
     setSaving(true);
     try {
       const { data, error } = await supabase
-        .from('events')
+        .from('events' as any)
         .insert({
           host_entity_id: hostEntityId,
           title,
@@ -52,7 +52,7 @@ export default function NewEvent() {
           starts_at: new Date(startsAt).toISOString(),
           ends_at: endsAt ? new Date(endsAt).toISOString() : null,
           status: 'draft'
-        })
+        } as any)
         .select()
         .single();
 

@@ -12,7 +12,10 @@ export function CartFlyout() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc('cart_get');
       if (error) throw error;
-      return data as { cart_id: string | null; items: any[]; subtotal_cents: number };
+      return (
+        (data as unknown as { cart_id: string | null; items: any[]; subtotal_cents: number }) ??
+        { cart_id: null, items: [], subtotal_cents: 0 }
+      );
     },
     refetchInterval: 5000
   });

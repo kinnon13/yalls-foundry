@@ -15,13 +15,13 @@ export default function ListingsIndex() {
     queryKey: ['listings'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('listings')
+        .from('listings' as any)
         .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as any[];
     }
   });
 
@@ -30,7 +30,7 @@ export default function ListingsIndex() {
       p_listing_id: listingId,
       p_qty: 1,
       p_variant: {}
-    });
+    } as any);
     
     if (error) {
       console.error('Failed to add to cart:', error);

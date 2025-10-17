@@ -17,22 +17,22 @@ export default function EventDetail() {
     queryKey: ['event', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('events')
+        .from('events' as any)
         .select('*, entities!host_entity_id(display_name)')
         .eq('id', id!)
         .maybeSingle();
       
       if (error) throw error;
-      return data;
+      return data as any;
     }
   });
 
   const publishMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
-        .from('events')
-        .update({ status: 'published' })
-        .eq('id', id!);
+        .from('events' as any)
+        .update({ status: 'published' } as any)
+        .eq('id', id! as any);
       
       if (error) throw error;
     },

@@ -25,20 +25,20 @@ export default function EditListing() {
     queryKey: ['listing', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('listings')
+        .from('listings' as any)
         .select('*')
         .eq('id', id!)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
+      const row: any = data;
+      setTitle(row?.title ?? '');
+      setDescription(row?.description ?? '');
+      setPriceCents((row?.price_cents ?? 0).toString());
+      setStockQty((row?.stock_qty ?? 0).toString());
+      setStatus(row?.status ?? 'draft');
       
-      setTitle(data.title);
-      setDescription(data.description);
-      setPriceCents(data.price_cents.toString());
-      setStockQty(data.stock_qty.toString());
-      setStatus(data.status);
-      
-      return data;
+      return row;
     }
   });
 
@@ -48,14 +48,14 @@ export default function EditListing() {
     
     try {
       const { error } = await supabase
-        .from('listings')
+        .from('listings' as any)
         .update({
           title,
           description,
           price_cents: parseInt(priceCents),
           stock_qty: parseInt(stockQty),
           status
-        })
+        } as any)
         .eq('id', id!);
 
       if (error) throw error;

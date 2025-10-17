@@ -17,40 +17,44 @@ export default function ListingDetail() {
     queryKey: ['listing', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('listings')
+        .from('listings' as any)
         .select('*, entities!seller_entity_id(display_name)')
         .eq('id', id!)
         .maybeSingle();
       
       if (error) throw error;
-      return data;
+      return data as any;
     }
   });
 
   // Rocker hook: track 2nd view in 7 days
   useEffect(() => {
     if (!listing) return;
-    
-    const viewKey = `listing_view_${id}`;
-    const lastView = localStorage.getItem(viewKey);
-    const now = Date.now();
-    
-    if (lastView) {
-      const daysSince = (now - parseInt(lastView)) / (1000 * 60 * 60 * 24);
-      if (daysSince <= 7) {
-        // 2nd view within 7 days - nudge
-        supabase.rpc('rocker_log_action', {
-          p_user_id: (async () => (await supabase.auth.getUser()).data.user?.id)(),
-          p_agent: 'rocker',
-          p_action: 'nudge_prefill_cart',
-          p_input: { listing_id: id },
-          p_output: { nudge_shown: true },
-          p_result: 'success'
-        });
+
+    const run = async () => {
+      const viewKey = `listing_view_${id}`;
+      const lastView = localStorage.getItem(viewKey);
+      const now = Date.now();
+
+      if (lastView) {
+        const daysSince = (now - parseInt(lastView)) / (1000 * 60 * 60 * 24);
+        if (daysSince <= 7) {
+          const { data: { user } } = await supabase.auth.getUser();
+          await supabase.rpc('rocker_log_action', {
+            p_user_id: user?.id,
+            p_agent: 'rocker',
+            p_action: 'nudge_prefill_cart',
+            p_input: { listing_id: id },
+            p_output: { nudge_shown: true },
+            p_result: 'success'
+          } as any);
+        }
       }
-    }
-    
-    localStorage.setItem(viewKey, now.toString());
+
+      localStorage.setItem(viewKey, now.toString());
+    };
+
+    run();
   }, [id, listing]);
 
   const handleAddToCart = async () => {
@@ -58,7 +62,7 @@ export default function ListingDetail() {
       p_listing_id: id!,
       p_qty: 1,
       p_variant: {}
-    });
+    } as any);
     
     if (error) {
       toast.error('Failed to add to cart');
