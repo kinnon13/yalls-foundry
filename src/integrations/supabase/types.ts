@@ -6595,6 +6595,10 @@ export type Database = {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
       }
+      feed_hide: {
+        Args: { p_entity_id: string; p_post_id: string; p_reason?: string }
+        Returns: undefined
+      }
       flag_content: {
         Args: {
           p_content_id: string
