@@ -24,7 +24,14 @@ export default function IncentivesDashboard() {
     queryFn: async () => {
       const { data } = await supabase
         .from('incentive_programs' as any)
-        .select('*')
+        .select(`
+          *,
+          business:businesses(
+            id,
+            name,
+            business_type
+          )
+        `)
         .eq('active', true)
         .order('created_at', { ascending: false });
       return data || [];
@@ -222,7 +229,14 @@ export default function IncentivesDashboard() {
                       <div key={p.id} className="p-4 border rounded">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-bold text-lg">{p.name}</h3>
-                          <Badge variant="default">Active</Badge>
+                          <div className="flex gap-2">
+                            {p.business && (
+                              <Badge variant="secondary">
+                                {p.business.name}
+                              </Badge>
+                            )}
+                            <Badge variant="default">Active</Badge>
+                          </div>
                         </div>
                         <p className="text-sm text-muted-foreground mb-3">{p.description}</p>
                         {p.starts_at && p.ends_at && (
