@@ -1,4 +1,7 @@
 {
+  "$schema": "./features-schema.json",
+  "version": "1.0.0",
+  "lastUpdated": "2025-01-14",
   "features": [
     {
       "id": "profile_pins",
@@ -16,7 +19,8 @@
       },
       "owner": "web",
       "severity": "p0",
-      "notes": "Complete with DnD reorder"
+      "notes": "Complete with DnD reorder",
+      "subFeatures": ["pin_create", "pin_reorder", "pin_delete", "pin_visibility"]
     },
     {
       "id": "favorites",
