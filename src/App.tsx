@@ -110,6 +110,7 @@ const App = () => (
             }
           />
           <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
+          <Route path="/discover" element={<Suspense fallback={<div>Loading...</div>}><Discover /></Suspense>} />
 
           {/* Phase 3: Listings & Events */}
           <Route path="/listings" element={<Suspense fallback={<div>Loading...</div>}><ListingsIndex /></Suspense>} />
