@@ -47,20 +47,20 @@ export default function OrderDetail() {
 
   const load = async () => {
     setLoading(true);
-    const q = supabase.from("orders")
+    const q = supabase.from("orders" as any)
       .select("id, created_at, status, buyer_user_id, seller_entity_id, subtotal_cents, tax_cents, shipping_cents, total_cents, mock_paid_at, label_printed_at")
       .eq("id", id!).maybeSingle();
     
     const [user, ord] = await Promise.all([supabase.auth.getUser(), q]);
     setMe(user.data.user?.id ?? null);
-    if (!ord.error && ord.data) setOrder(ord.data as Order);
+    if (!ord.error && ord.data) setOrder(ord.data as any);
 
     const olis = await supabase
-      .from("order_line_items")
+      .from("order_line_items" as any)
       .select("id, order_id, listing_id, title_snapshot, qty, unit_price_cents, metadata")
       .eq("order_id", id!);
     
-    if (!olis.error && olis.data) setItems(olis.data as OLI[]);
+    if (!olis.error && olis.data) setItems(olis.data as any);
     setLoading(false);
   };
 

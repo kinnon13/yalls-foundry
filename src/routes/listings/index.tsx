@@ -1,92 +1,81 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { GlobalHeader } from '@/components/layout/GlobalHeader';
-import { Plus, ShoppingCart } from 'lucide-react';
-import { useSession } from '@/lib/auth/context';
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
+import { GlobalHeader } from "@/components/layout/GlobalHeader";
+import { AddToCartButton } from "@/components/cart/AddToCartButton";
+
+type Listing = {
+  id: string;
+  seller_entity_id: string;
+  title: string;
+  description: string | null;
+  price_cents: number;
+  stock_qty: number;
+  status: string;
+};
+
+const usd = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
 export default function ListingsIndex() {
-  const { session } = useSession();
-  
-  const { data: listings, isLoading } = useQuery({
-    queryKey: ['listings'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('listings' as any)
-        .select('*')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as any[];
-    }
-  });
+  const [rows, setRows] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  const handleAddToCart = async (listingId: string) => {
-    const { error } = await supabase.rpc('cart_upsert_item', {
-      p_listing_id: listingId,
-      p_qty: 1,
-      p_variant: {}
-    } as any);
-    
-    if (error) {
-      console.error('Failed to add to cart:', error);
-    }
-  };
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from("listings" as any)
+        .select("id,seller_entity_id,title,description,price_cents,stock_qty,status")
+        .eq("status", "active")
+        .order("created_at", { ascending: false });
+      setRows((data ?? []) as any);
+      setLoading(false);
+    })();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
       <GlobalHeader />
-      
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Marketplace</h1>
-            <p className="text-muted-foreground mt-1">Browse active listings</p>
-          </div>
-          {session && (
-            <Link to="/listings/new">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Listing
-              </Button>
-            </Link>
-          )}
+      <div className="mx-auto max-w-4xl p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold">Marketplace</h1>
+          <Button onClick={() => navigate("/listings/new")}>New Listing</Button>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-12">Loading...</div>
-        ) : !listings?.length ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No active listings yet</p>
-          </div>
+        {loading ? (
+          <div>Loading…</div>
+        ) : rows.length === 0 ? (
+          <Card>
+            <CardContent className="p-6">No active listings yet.</CardContent>
+          </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings.map((listing) => (
-              <Card key={listing.id}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {rows.map((l) => (
+              <Card key={l.id}>
                 <CardHeader>
-                  <CardTitle>{listing.title}</CardTitle>
-                  <CardDescription className="line-clamp-2">{listing.description}</CardDescription>
+                  <CardTitle className="flex justify-between items-center">
+                    <span>{l.title}</span>
+                    <span className="text-sm opacity-70">{usd(l.price_cents)}</span>
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold">
-                      ${(listing.price_cents / 100).toFixed(2)}
-                    </span>
-                    <Badge variant="secondary">{listing.stock_qty} in stock</Badge>
+                <CardContent className="space-y-3">
+                  {l.description && (
+                    <p className="text-sm opacity-75 line-clamp-2">{l.description}</p>
+                  )}
+                  <div className="text-sm opacity-70">Stock: {l.stock_qty}</div>
+                  <div className="flex gap-2">
+                    <AddToCartButton listingId={l.id} />
+                    <Button
+                      variant="secondary"
+                      onClick={() => navigate(`/listings/${l.id}/edit`)}
+                    >
+                      Edit
+                    </Button>
                   </div>
                 </CardContent>
-                <CardFooter className="flex gap-2">
-                  <Link to={`/listings/${listing.id}`} className="flex-1">
-                    <Button variant="outline" className="w-full">View Details</Button>
-                  </Link>
-                  <Button onClick={() => handleAddToCart(listing.id)} size="icon">
-                    <ShoppingCart className="h-4 w-4" />
-                  </Button>
-                </CardFooter>
               </Card>
             ))}
           </div>

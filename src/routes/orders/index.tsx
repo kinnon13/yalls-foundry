@@ -29,10 +29,10 @@ export default function OrdersIndex() {
     (async () => {
       setLoading(true);
       const { data, error } = await supabase
-        .from("orders")
+        .from("orders" as any)
         .select("id, created_at, status, buyer_user_id, seller_entity_id, total_cents, mock_paid_at, label_printed_at")
         .order("created_at", { ascending: false });
-      if (!error && data) setOrders(data as Order[]);
+      if (!error && data) setOrders(data as any);
       setLoading(false);
     })();
   }, []);
