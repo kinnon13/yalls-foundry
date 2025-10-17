@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, AlertCircle, Play, RefreshCw } from 'lucide-react';
 import { getFeatureStats, validateGoldPath, GOLD_PATH_FEATURES } from '@/lib/featureGuards';
-import featuresData from '../../../docs/features/features.json';
+import { features as allFeatures } from '@/lib/featuresData';
 
 interface AuditResult {
   check: string;
@@ -49,7 +49,7 @@ export default function AuditPage() {
     });
 
     // 3. Shell leakage check
-    const shellFeatures = featuresData.features.filter(f => f.status === 'shell');
+    const shellFeatures = allFeatures.filter(f => f.status === 'shell');
     const hasGuards = shellFeatures.every(f => {
       // Check if routes have dev guards (simplified - in real impl, check actual route files)
       return f.routes.length === 0 || import.meta.env.DEV;
@@ -63,10 +63,10 @@ export default function AuditPage() {
     });
 
     // 4. Test coverage
-    const withE2E = featuresData.features.filter(f => f.tests.e2e.length > 0).length;
-    const withUnit = featuresData.features.filter(f => f.tests.unit.length > 0).length;
-    const withAny = featuresData.features.filter(f => f.tests.e2e.length > 0 || f.tests.unit.length > 0).length;
-    const coveragePct = (withAny / featuresData.features.length) * 100;
+    const withE2E = allFeatures.filter(f => f.tests.e2e.length > 0).length;
+    const withUnit = allFeatures.filter(f => f.tests.unit.length > 0).length;
+    const withAny = allFeatures.filter(f => f.tests.e2e.length > 0 || f.tests.unit.length > 0).length;
+    const coveragePct = (withAny / allFeatures.length) * 100;
     
     auditResults.push({
       check: 'Test Coverage',
@@ -76,13 +76,13 @@ export default function AuditPage() {
       details: [
         `E2E: ${withE2E} features`,
         `Unit: ${withUnit} features`,
-        `No tests: ${featuresData.features.length - withAny} features`
+        `No tests: ${allFeatures.length - withAny} features`
       ]
     });
 
     // 5. Documentation coverage
-    const withDocs = featuresData.features.filter(f => f.docs && f.docs.length > 0).length;
-    const docsPct = (withDocs / featuresData.features.length) * 100;
+    const withDocs = allFeatures.filter(f => f.docs && f.docs.length > 0).length;
+    const docsPct = (withDocs / allFeatures.length) * 100;
     
     auditResults.push({
       check: 'Documentation Coverage',
@@ -93,8 +93,8 @@ export default function AuditPage() {
     });
 
     // 6. Owner assignment
-    const withOwner = featuresData.features.filter(f => f.owner && f.owner.length > 0).length;
-    const ownerPct = (withOwner / featuresData.features.length) * 100;
+    const withOwner = allFeatures.filter(f => f.owner && f.owner.length > 0).length;
+    const ownerPct = (withOwner / allFeatures.length) * 100;
     
     auditResults.push({
       check: 'Owner Assignment',
@@ -105,8 +105,8 @@ export default function AuditPage() {
     });
 
     // 7. Severity classification
-    const withSeverity = featuresData.features.filter(f => f.severity && ['p0', 'p1', 'p2'].includes(f.severity)).length;
-    const severityPct = (withSeverity / featuresData.features.length) * 100;
+    const withSeverity = allFeatures.filter(f => f.severity && ['p0', 'p1', 'p2'].includes(f.severity)).length;
+    const severityPct = (withSeverity / allFeatures.length) * 100;
     
     auditResults.push({
       check: 'Severity Classification',

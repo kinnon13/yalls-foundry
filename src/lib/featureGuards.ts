@@ -3,7 +3,7 @@
  * Enforces that shell features never appear in production
  */
 
-import featuresData from '../../docs/features/features.json';
+import { features as allFeatures } from './featuresData';
 
 type FeatureStatus = 'shell' | 'full-ui' | 'wired';
 
@@ -22,7 +22,7 @@ declare global {
   }
 }
 
-const features = featuresData.features as Feature[];
+const featuresList = allFeatures as unknown as Feature[];
 
 const isDev = import.meta.env.DEV || new URLSearchParams(window.location.search).get('dev') === '1';
 const isProd = import.meta.env.PROD && !isDev;
@@ -31,7 +31,7 @@ const isProd = import.meta.env.PROD && !isDev;
  * Check if a feature should be accessible
  */
 export function isFeatureAccessible(featureId: string): boolean {
-  const feature = features.find(f => f.id === featureId);
+  const feature = featuresList.find(f => f.id === featureId);
   
   if (!feature) {
     console.warn(`[FeatureGuard] Unknown feature: ${featureId}`);
@@ -58,7 +58,7 @@ export function isFeatureAccessible(featureId: string): boolean {
  * Get feature status
  */
 export function getFeatureStatus(featureId: string): FeatureStatus | null {
-  const feature = features.find(f => f.id === featureId);
+  const feature = featuresList.find(f => f.id === featureId);
   return feature?.status || null;
 }
 
@@ -66,20 +66,20 @@ export function getFeatureStatus(featureId: string): FeatureStatus | null {
  * Get all features by status
  */
 export function getFeaturesByStatus(status: FeatureStatus): Feature[] {
-  return features.filter(f => f.status === status);
+  return featuresList.filter(f => f.status === status);
 }
 
 /**
  * Get feature completion stats
  */
 export function getFeatureStats() {
-  const total = features.length;
-  const byStatus = features.reduce((acc: Record<string, number>, f) => {
+  const total = featuresList.length;
+  const byStatus = featuresList.reduce((acc: Record<string, number>, f) => {
     acc[f.status] = (acc[f.status] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
   
-  const byArea = features.reduce((acc: Record<string, Record<string, number>>, f) => {
+  const byArea = featuresList.reduce((acc: Record<string, Record<string, number>>, f) => {
     if (!acc[f.area]) acc[f.area] = { shell: 0, 'full-ui': 0, wired: 0 };
     acc[f.area][f.status] = (acc[f.area][f.status] || 0) + 1;
     return acc;
@@ -128,7 +128,7 @@ export function validateGoldPath(): { ready: boolean; blocking: string[] } {
   const blocking: string[] = [];
   
   for (const featureId of GOLD_PATH_FEATURES) {
-    const feature = features.find(f => f.id === featureId);
+    const feature = featuresList.find(f => f.id === featureId);
     if (!feature || feature.status === 'shell') {
       blocking.push(featureId);
     }

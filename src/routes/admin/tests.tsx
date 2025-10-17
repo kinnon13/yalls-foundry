@@ -5,12 +5,12 @@
  */
 
 import React from 'react';
-import featuresData from '../../../docs/features/features.json';
+import { features as allFeatures } from '@/lib/featuresData';
 import { Badge } from '@/components/ui/badge';
 import { TestTube, CheckCircle, XCircle } from 'lucide-react';
 
 export default function TestsAdminPage() {
-  const features = featuresData.features;
+  const features = allFeatures;
 
   const withE2E = features.filter(f => f.tests.e2e.length > 0).length;
   const withUnit = features.filter(f => f.tests.unit.length > 0).length;

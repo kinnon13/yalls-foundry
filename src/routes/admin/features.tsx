@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import featuresData from '../../../docs/features/features.json';
+import { features as allFeatures } from '@/lib/featuresData';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -52,7 +52,7 @@ export default function FeaturesAdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditingFeature | null>(null);
 
-  const features = featuresData.features;
+  const features = allFeatures;
   const goldPath = validateGoldPath();
   const stats = getFeatureStats();
   const isProd = import.meta.env.PROD;

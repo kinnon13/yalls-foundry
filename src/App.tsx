@@ -86,6 +86,7 @@ const RoutesAdmin = lazy(() => import('./routes/admin/routes'));
 const ComponentsAdmin = lazy(() => import('./routes/admin/components'));
 const A11yAdmin = lazy(() => import('./routes/admin/a11y'));
 const TestsAdmin = lazy(() => import('./routes/admin/tests'));
+const AuditAdmin = lazy(() => import('./routes/admin/audit'));
 const NotificationsSettings = lazy(() => import('./routes/settings/notifications'));
 
 const queryClient = new QueryClient();
@@ -139,6 +140,7 @@ function AppContent() {
           <Route path="/admin/routes" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><RoutesAdmin /></Suspense></RequireAuth>} />
           <Route path="/admin/components" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><ComponentsAdmin /></Suspense></RequireAuth>} />
           <Route path="/admin/a11y" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><A11yAdmin /></Suspense></RequireAuth>} />
+          <Route path="/admin/audit" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><AuditAdmin /></Suspense></RequireAuth>} />
           <Route path="/admin/tests" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><TestsAdmin /></Suspense></RequireAuth>} />
           <Route path="/settings/notifications" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><NotificationsSettings /></Suspense></RequireAuth>} />
           <Route path="/discover" element={<Suspense fallback={<div>Loading...</div>}><Discover /></Suspense>} />
