@@ -57,8 +57,8 @@ export function NextBestActions({ actions, isLoading }: NextBestActionsProps) {
         return;
       }
 
-      // Handle other RPC calls
-      const { error: rpcError } = await supabase.rpc(action.cta.rpc, action.cta.params);
+      // Handle other RPC calls (use 'any' cast for dynamic RPC names)
+      const { error: rpcError } = await (supabase as any).rpc(action.cta.rpc, action.cta.params);
       if (rpcError) throw rpcError;
 
       // Log successful action

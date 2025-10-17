@@ -15,8 +15,8 @@ export function DashboardEntitySwitcher() {
       
       const { data, error } = await supabase
         .from('entities')
-        .select('id, name, entity_type')
-        .eq('owner_id', session.userId);
+        .select('id, display_name, kind')
+        .eq('owner_user_id', session.userId);
       
       if (error) throw error;
       return data || [];
@@ -35,7 +35,7 @@ export function DashboardEntitySwitcher() {
         className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card hover:bg-accent transition-colors"
       >
         <Building2 size={16} className="text-muted-foreground" />
-        <span className="text-sm font-medium">{currentEntity?.name || 'Select Entity'}</span>
+        <span className="text-sm font-medium">{currentEntity?.display_name || 'Select Entity'}</span>
         <ChevronDown size={16} className="text-muted-foreground" />
       </button>
 
@@ -51,7 +51,7 @@ export function DashboardEntitySwitcher() {
                 }}
                 className="w-full px-3 py-2 text-left rounded-md hover:bg-accent transition-colors text-sm"
               >
-                {entity.name}
+                {entity.display_name}
               </button>
             ))}
           </div>

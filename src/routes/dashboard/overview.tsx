@@ -16,7 +16,8 @@ export default function DashboardOverview() {
     queryFn: async () => {
       if (!session?.userId) return null;
       
-      const { data, error } = await supabase.rpc('dashboard_kpis', {
+      // Use 'any' cast until migration is approved and types are regenerated
+      const { data, error } = await (supabase as any).rpc('dashboard_kpis', {
         p_user_id: session.userId
       });
       
@@ -30,7 +31,7 @@ export default function DashboardOverview() {
         campaigns_scheduled: number;
         atc_rate: number;
         rsvp_rate: number;
-      };
+      } | null;
     },
     enabled: !!session?.userId,
     refetchInterval: 60000,
@@ -42,12 +43,22 @@ export default function DashboardOverview() {
     queryFn: async () => {
       if (!session?.userId) return [];
       
-      const { data, error } = await supabase.rpc('rocker_next_best_actions', {
+      // Use 'any' cast until migration is approved and types are regenerated
+      const { data, error } = await (supabase as any).rpc('rocker_next_best_actions', {
         p_user_id: session.userId
       });
       
       if (error) throw error;
-      return data || [];
+      return (data || []) as Array<{
+        id: string;
+        title: string;
+        rationale: string;
+        impact_score: number;
+        cta: {
+          rpc: string;
+          params: Record<string, any>;
+        };
+      }>;
     },
     enabled: !!session?.userId,
     refetchInterval: 120000,
