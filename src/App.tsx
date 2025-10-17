@@ -91,6 +91,7 @@ const App = () => (
           {/* 7-Route Spine */}
           <Route path="/" element={<Index />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Suspense fallback={<div>Loading...</div>}><ProfilePageDynamic /></Suspense>} />
           <Route path="/profile/:id" element={<Suspense fallback={<div>Loading...</div>}><ProfilePageDynamic /></Suspense>} />
           <Route path="/stallions" element={<Suspense fallback={<div>Loading...</div>}><StallionsIndex /></Suspense>} />
