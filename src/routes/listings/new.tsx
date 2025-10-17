@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { ListingSchema } from '@/lib/validation/schemas';
 
 export default function NewListing() {
   const navigate = useNavigate();
@@ -36,8 +37,20 @@ export default function NewListing() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sellerEntityId) {
-      toast.error('Please select a seller entity');
+
+    const parsed = ListingSchema.safeParse({
+      seller_entity_id: sellerEntityId,
+      title,
+      description,
+      price_cents: parseInt(priceCents) || 0,
+      stock_qty: parseInt(stockQty) || 0,
+      status: 'active'
+    });
+
+    if (!parsed.success) {
+      const errors = parsed.error.flatten().fieldErrors;
+      const firstError = Object.values(errors)[0]?.[0];
+      toast.error(firstError || 'Validation failed');
       return;
     }
 
@@ -45,14 +58,7 @@ export default function NewListing() {
     try {
       const { data, error } = await supabase
         .from('listings' as any)
-        .insert({
-          seller_entity_id: sellerEntityId,
-          title,
-          description,
-          price_cents: parseInt(priceCents),
-          stock_qty: parseInt(stockQty),
-          status: 'active'
-        } as any)
+        .insert(parsed.data as any)
         .select()
         .single();
 

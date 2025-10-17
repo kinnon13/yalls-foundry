@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { EventSchema } from '@/lib/validation/schemas';
 
 export default function NewEvent() {
   const navigate = useNavigate();
@@ -36,8 +37,20 @@ export default function NewEvent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!hostEntityId) {
-      toast.error('Please select a host entity');
+
+    const parsed = EventSchema.safeParse({
+      host_entity_id: hostEntityId,
+      title,
+      description,
+      starts_at: startsAt ? new Date(startsAt).toISOString() : '',
+      ends_at: endsAt ? new Date(endsAt).toISOString() : undefined,
+      status: 'draft'
+    });
+
+    if (!parsed.success) {
+      const errors = parsed.error.flatten().fieldErrors;
+      const firstError = Object.values(errors)[0]?.[0];
+      toast.error(firstError || 'Validation failed');
       return;
     }
 
@@ -45,14 +58,7 @@ export default function NewEvent() {
     try {
       const { data, error } = await supabase
         .from('events' as any)
-        .insert({
-          host_entity_id: hostEntityId,
-          title,
-          description,
-          starts_at: new Date(startsAt).toISOString(),
-          ends_at: endsAt ? new Date(endsAt).toISOString() : null,
-          status: 'draft'
-        } as any)
+        .insert(parsed.data as any)
         .select()
         .single();
 
