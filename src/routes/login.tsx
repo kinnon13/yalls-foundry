@@ -4,7 +4,7 @@
  * Real Supabase authentication with email/password signup and login.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { SEOHelmet } from '@/lib/seo/helmet';
 import { useSession } from '@/lib/auth/context';
@@ -23,10 +23,11 @@ export default function Login() {
   const { session } = useSession();
   const navigate = useNavigate();
 
-  if (session) {
-    navigate('/');
-    return null;
-  }
+  useEffect(() => {
+    if (session) {
+      navigate('/');
+    }
+  }, [session, navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
