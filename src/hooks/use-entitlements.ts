@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { rpcWithObs } from '@/lib/supaRpc';
 
 /**
@@ -6,6 +6,8 @@ import { rpcWithObs } from '@/lib/supaRpc';
  * Cached for 60s, refreshed every 2min
  */
 export function useEntitlements() {
+  const queryClient = useQueryClient();
+  
   const { data: feats = [] } = useQuery({
     queryKey: ['entitlements'],
     queryFn: async () => {
@@ -27,7 +29,7 @@ export function useEntitlements() {
   };
 
   const canUseModule = (moduleKey: string): boolean => {
-    // For now, modules are free; only features are gated
+    // Modules are free; only features within modules are gated
     return true;
   };
 
@@ -35,11 +37,17 @@ export function useEntitlements() {
     return feats.includes(featureId);
   };
 
+  const invalidate = () => {
+    // Force immediate refresh of entitlements (use after upgrade/downgrade)
+    queryClient.invalidateQueries({ queryKey: ['entitlements'] });
+  };
+
   return {
     list: feats,
     has,
     canUseModule,
     canUseFeature,
-    isAuthenticated: true, // If hook runs, user is authenticated
+    invalidate,
+    isAuthenticated: true,
   };
 }

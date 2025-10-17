@@ -7181,6 +7181,10 @@ export type Database = {
         Args: { p_test_id: string; p_winner?: string }
         Returns: Json
       }
+      entitlement_override_set: {
+        Args: { p_allow: boolean; p_feature_id: string; p_user_id: string }
+        Returns: string
+      }
       entity_claim_approve: {
         Args: { p_claim_id: string }
         Returns: Json

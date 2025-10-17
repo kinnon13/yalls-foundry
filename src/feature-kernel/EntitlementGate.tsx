@@ -29,27 +29,46 @@ export function EntitlementGate({
 
   if (!allowed) {
     // Non-blocking telemetry (fire-and-forget)
-    if (import.meta.env.PROD) {
-      (supabase as any)
-        .rpc('rpc_observe', {
-          p_rpc_name: 'gate_hit',
-          p_duration_ms: 0,
-          p_status: 'noop',
-          p_error_code: null,
-          p_meta: { featureId, surface: 'entitlements' },
-        })
-        .catch(() => void 0);
-    }
+    (supabase as any)
+      .rpc('rpc_observe', {
+        p_rpc_name: 'entitlement_gate',
+        p_duration_ms: 0,
+        p_status: 'noop',
+        p_error_code: null,
+        p_meta: { 
+          feature: featureId, 
+          outcome: 'blocked',
+          reason: 'paywall',
+          surface: 'entitlements'
+        },
+      })
+      .catch(() => void 0);
 
     return fallback ?? <DefaultPaywall featureId={featureId} />;
   }
+
+  // Log successful gate pass (for conversion funnels)
+  (supabase as any)
+    .rpc('rpc_observe', {
+      p_rpc_name: 'entitlement_gate',
+      p_duration_ms: 0,
+      p_status: 'ok',
+      p_error_code: null,
+      p_meta: { 
+        feature: featureId, 
+        outcome: 'allowed',
+        surface: 'entitlements'
+      },
+    })
+    .catch(() => void 0);
 
   return <>{children}</>;
 }
 
 function DefaultPaywall({ featureId }: { featureId: string }) {
   const handleUpgrade = () => {
-    window.location.href = `/billing?upgrade=pro&f=${encodeURIComponent(featureId)}`;
+    const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = `/billing?upgrade=pro&f=${encodeURIComponent(featureId)}&return_to=${returnTo}`;
   };
 
   return (
@@ -60,7 +79,7 @@ function DefaultPaywall({ featureId }: { featureId: string }) {
         </div>
         <CardTitle>Upgrade Required</CardTitle>
         <CardDescription>
-          Unlock <span className="font-semibold">{featureId}</span> on the Pro plan
+          Unlock <span className="font-semibold capitalize">{featureId.replace('_', ' ')}</span> on the Pro plan
         </CardDescription>
       </CardHeader>
       <CardContent className="flex justify-center">
