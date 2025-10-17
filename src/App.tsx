@@ -21,8 +21,6 @@ import Search from "./routes/search";
 import Login from "./routes/login";
 import Profile from "./routes/profile";
 import ControlRoom from "./routes/admin/control-room";
-import MarketplaceIndex from "./routes/marketplace/index";
-import ListingDetail from "./routes/marketplace/[id]";
 import NotFound from "./pages/NotFound";
 
 // Lazy load dashboard and AI routes
@@ -36,6 +34,18 @@ const Messages = lazy(() => import('./routes/messages/index'));
 const CRM = lazy(() => import('./routes/crm/index'));
 const ClaimEntity = lazy(() => import('./routes/claim/[entityId]'));
 const AdminClaims = lazy(() => import('./routes/admin/claims'));
+
+// Phase 3: Marketplace & Events
+const ListingsIndex = lazy(() => import('./routes/listings/index'));
+const NewListing = lazy(() => import('./routes/listings/new'));
+const ListingDetail = lazy(() => import('./routes/listings/[id]'));
+const EditListing = lazy(() => import('./routes/listings/[id]/edit'));
+const EventsIndex = lazy(() => import('./routes/events/index'));
+const NewEvent = lazy(() => import('./routes/events/new'));
+const EventDetail = lazy(() => import('./routes/events/[id]'));
+const CartPage = lazy(() => import('./routes/cart/index'));
+const OrdersIndex = lazy(() => import('./routes/orders/index'));
+const OrderDetail = lazy(() => import('./routes/orders/[id]'));
 
 const queryClient = new QueryClient();
 const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on';
@@ -57,8 +67,6 @@ const App = () => (
           {/* 7-Route Spine */}
           <Route path="/" element={<Index />} />
           <Route path="/search" element={<Search />} />
-          <Route path="/marketplace" element={<MarketplaceIndex />} />
-          <Route path="/marketplace/:id" element={<ListingDetail />} />
           <Route path="/profile/:id" element={<Profile />} />
           <Route
             path="/dashboard"
@@ -71,6 +79,22 @@ const App = () => (
             }
           />
           <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
+
+          {/* Phase 3: Listings & Events */}
+          <Route path="/listings" element={<Suspense fallback={<div>Loading...</div>}><ListingsIndex /></Suspense>} />
+          <Route path="/listings/new" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><NewListing /></Suspense></RequireAuth>} />
+          <Route path="/listings/:id" element={<Suspense fallback={<div>Loading...</div>}><ListingDetail /></Suspense>} />
+          <Route path="/listings/:id/edit" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><EditListing /></Suspense></RequireAuth>} />
+          <Route path="/events" element={<Suspense fallback={<div>Loading...</div>}><EventsIndex /></Suspense>} />
+          <Route path="/events/new" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><NewEvent /></Suspense></RequireAuth>} />
+          <Route path="/events/:id" element={<Suspense fallback={<div>Loading...</div>}><EventDetail /></Suspense>} />
+          <Route path="/cart" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><CartPage /></Suspense></RequireAuth>} />
+          <Route path="/orders" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrdersIndex /></Suspense></RequireAuth>} />
+          <Route path="/orders/:id" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrderDetail /></Suspense></RequireAuth>} />
+          
+          {/* Legacy marketplace routes - redirect to listings */}
+          <Route path="/marketplace" element={<Suspense fallback={<div>Loading...</div>}><ListingsIndex /></Suspense>} />
+          <Route path="/marketplace/:id" element={<Suspense fallback={<div>Loading...</div>}><ListingDetail /></Suspense>} />
 
           {/* Phase 2: Social + CRM Routes */}
           <Route
