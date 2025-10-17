@@ -1,119 +1,123 @@
-// ReelEvent - Event feed item with RSVP and links (PR5)
-import { EventFeedItem } from '@/types/feed';
-import { Calendar, MapPin, ExternalLink } from 'lucide-react';
+/**
+ * Reel Event Card
+ * Date/time/venue chips, RSVP, Draw/Results
+ */
+
+import { useState } from 'react';
+import { Calendar, MapPin, Users, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { logUsageEvent } from '@/lib/telemetry/usageEvents';
+import { useUsageEvent } from '@/hooks/useUsageEvent';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 interface ReelEventProps {
-  reel: EventFeedItem;
-  onRSVP?: () => void;
+  data: {
+    host_entity_id: string;
+    title: string;
+    description: string;
+    starts_at: string;
+    ends_at: string;
+    location?: any;
+    media?: any[];
+  };
+  itemId: string;
 }
 
-export function ReelEvent({ reel, onRSVP }: ReelEventProps) {
-  const dateStr = reel.starts_at 
-    ? new Date(reel.starts_at).toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      })
-    : null;
+export function ReelEvent({ data, itemId }: ReelEventProps) {
+  const [rsvpd, setRsvpd] = useState(false);
+  const logUsageEvent = useUsageEvent();
+  const { toast } = useToast();
 
-  const timeStr = reel.starts_at
-    ? new Date(reel.starts_at).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit'
-      })
-    : null;
+  const hasMedia = data.media && data.media.length > 0;
+  const startsAt = new Date(data.starts_at);
+  const endsAt = new Date(data.ends_at);
 
-  const locationDisplay = typeof reel.location === 'string' 
-    ? reel.location 
-    : reel.location?.name || null;
-
-  const handleRSVP = () => {
-    logUsageEvent({
-      eventType: 'rsvp',
-      itemType: 'event',
-      itemId: reel.id,
-      payload: { starts_at: reel.starts_at }
+  const handleRSVP = async () => {
+    setRsvpd(!rsvpd);
+    logUsageEvent('rsvp', 'event', itemId, { action: rsvpd ? 'cancel' : 'confirm' });
+    toast({ 
+      title: rsvpd ? 'RSVP cancelled' : 'RSVP confirmed!',
+      description: rsvpd ? undefined : 'We\'ll send you a reminder before the event.' 
     });
-    onRSVP?.();
+  };
+
+  const handleDraw = () => {
+    logUsageEvent('click', 'event', itemId, { action: 'draw' });
+    toast({ title: 'Draw feature coming soon!' });
+  };
+
+  const handleResults = () => {
+    logUsageEvent('click', 'event', itemId, { action: 'results' });
+    toast({ title: 'Results feature coming soon!' });
   };
 
   return (
-    <article className="relative h-[80vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-gradient-to-br from-primary/30 via-accent/20 to-card shadow-lg animate-scale-in">
-      {/* Decorative background pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)',
-          backgroundSize: '40px 40px'
-        }} />
-      </div>
+    <div className="relative w-full max-w-2xl mx-auto bg-card rounded-lg overflow-hidden shadow-lg animate-scale-in">
+      {/* Cover Image */}
+      {hasMedia && (
+        <div className="relative w-full aspect-[16/9] bg-muted">
+          <img
+            src={data.media[0].url}
+            alt={data.title}
+            className="w-full h-full object-cover"
+          />
+          
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        </div>
+      )}
 
       {/* Content */}
-      <div className="relative h-full flex flex-col justify-between p-6 animate-fade-in">
-        {/* Header badges */}
-        <div className="flex gap-2">
-          <Badge variant="secondary" className="bg-primary/20 backdrop-blur-md border border-primary/30 text-primary-foreground">
-            <Calendar className="h-3 w-3 mr-1" />
-            Event
-          </Badge>
+      <div className="p-6">
+        <h2 className="text-2xl font-bold mb-4">{data.title}</h2>
+
+        {/* Date/Time/Location Chips */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-full text-sm">
+            <Calendar size={14} />
+            <span>{format(startsAt, 'MMM d, yyyy')}</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-full text-sm">
+            <Calendar size={14} />
+            <span>{format(startsAt, 'h:mm a')}</span>
+          </div>
+          {data.location && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-full text-sm">
+              <MapPin size={14} />
+              <span className="truncate max-w-[200px]">
+                {data.location.venue || data.location.city || 'Location TBA'}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Main content */}
-        <div className="space-y-6 animate-slide-up">
-          <h2 className="text-3xl font-bold leading-tight text-foreground">{reel.title}</h2>
+        {/* Description */}
+        <p className="text-muted-foreground mb-6 line-clamp-4">{data.description}</p>
 
-          {/* Date/Time/Location */}
-          <div className="space-y-3 text-foreground">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 backdrop-blur-sm transition-all duration-200 hover:bg-background/70">
-              <Calendar className="h-5 w-5 text-primary" />
-              <div>
-                <p className="font-medium">{dateStr || 'Date TBA'}</p>
-                <div className="text-sm text-muted-foreground">
-                  {timeStr && <span>{timeStr}</span>}
-                  {locationDisplay && timeStr && <span> • </span>}
-                  {locationDisplay && <span>{locationDisplay}</span>}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="space-y-3">
-            <Button
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg transition-all duration-200 hover:scale-[1.02]"
-              onClick={handleRSVP}
-            >
-              RSVP Now
-            </Button>
-
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1 border-primary/30 hover:bg-primary/10 transition-all duration-200 hover:scale-105"
-                asChild
-              >
-                <a href={`/events/${reel.id}/draw`}>
-                  View Draw
-                  <ExternalLink className="h-4 w-4 ml-2" />
-                </a>
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1 border-primary/30 hover:bg-primary/10 transition-all duration-200 hover:scale-105"
-                asChild
-              >
-                <a href={`/events/${reel.id}/results`}>
-                  Results
-                  <ExternalLink className="h-4 w-4 ml-2" />
-                </a>
-              </Button>
-            </div>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex gap-3 mb-4">
+          <Button
+            className={`flex-1 ${rsvpd ? 'bg-primary/20 text-primary' : ''}`}
+            variant={rsvpd ? 'outline' : 'default'}
+            onClick={handleRSVP}
+          >
+            <Users size={18} className="mr-2" />
+            {rsvpd ? 'RSVP\'d' : 'RSVP'}
+          </Button>
+          <Button variant="outline" onClick={handleDraw}>
+            Draw
+          </Button>
+          <Button variant="outline" onClick={handleResults}>
+            <Award size={18} className="mr-1" />
+            Results
+          </Button>
         </div>
+
+        {/* Attendees Count (Mock) */}
+        <p className="text-xs text-muted-foreground text-center">
+          42 people attending
+        </p>
       </div>
-    </article>
+    </div>
   );
 }

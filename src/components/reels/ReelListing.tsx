@@ -1,120 +1,161 @@
-// ReelListing - Marketplace listing feed item (PR5)
-import { ListingFeedItem } from '@/types/feed';
-import { ShoppingCart, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+/**
+ * Reel Listing Card
+ * Full-bleed carousel, price chip, 1-tap Add to Cart
+ */
+
 import { useState } from 'react';
-import { logUsageEvent } from '@/lib/telemetry/usageEvents';
-import { cn } from '@/lib/utils';
+import { ShoppingCart, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useUsageEvent } from '@/hooks/useUsageEvent';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface ReelListingProps {
-  reel: ListingFeedItem;
-  onAddToCart?: () => void;
+  data: {
+    seller_entity_id: string;
+    title: string;
+    description: string;
+    price_cents: number;
+    media?: any[];
+    stock_quantity: number;
+    status: string;
+  };
+  itemId: string;
 }
 
-export function ReelListing({ reel, onAddToCart }: ReelListingProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const media = reel.media || [];
-  const currentMedia = media[currentIndex];
+export function ReelListing({ data, itemId }: ReelListingProps) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [saved, setSaved] = useState(false);
+  const logUsageEvent = useUsageEvent();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const handleAddToCart = () => {
-    logUsageEvent({
-      eventType: 'add_to_cart',
-      itemType: 'listing',
-      itemId: reel.id,
-      payload: { price_cents: reel.price_cents }
-    });
-    onAddToCart?.();
+  const hasMedia = data.media && data.media.length > 0;
+  const images = hasMedia ? data.media.filter((m: any) => m.type === 'image') : [];
+
+  const addToCartMutation = useMutation({
+    mutationFn: async () => {
+      const sessionId = sessionStorage.getItem('cart_session_id') || crypto.randomUUID();
+      sessionStorage.setItem('cart_session_id', sessionId);
+
+      const { error } = await supabase.rpc('cart_upsert_item', {
+        p_listing_id: itemId,
+        p_qty: 1,
+        p_session_id: sessionId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      toast({ title: 'Added to cart!' });
+      logUsageEvent('add_to_cart', 'listing', itemId);
+    },
+    onError: () => {
+      toast({ title: 'Failed to add to cart', variant: 'destructive' });
+    },
+  });
+
+  const handleSave = async () => {
+    setSaved(!saved);
+    logUsageEvent('click', 'listing', itemId, { action: 'save' });
+    // TODO: Call save RPC when implemented
+  };
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
   return (
-    <article className="relative h-[80vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-card shadow-lg animate-scale-in">
-      {/* Media carousel */}
-      {currentMedia && (
-        <div className="absolute inset-0">
-          {currentMedia.type === 'video' ? (
-            <video 
-              src={currentMedia.url} 
-              className="h-full w-full object-cover transition-opacity duration-300"
-              autoPlay
-              muted
-              loop
-              playsInline
-            />
-          ) : (
-            <img 
-              src={currentMedia.url} 
-              alt={reel.title}
-              className="h-full w-full object-cover transition-opacity duration-300"
-              loading="lazy"
-            />
+    <div className="relative w-full max-w-2xl mx-auto bg-card rounded-lg overflow-hidden shadow-lg animate-scale-in">
+      {/* Image Carousel */}
+      {images.length > 0 && (
+        <div className="relative w-full aspect-[4/5] bg-muted">
+          <img
+            src={images[currentImageIndex].url}
+            alt={data.title}
+            className="w-full h-full object-cover"
+          />
+
+          {/* Carousel Controls */}
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-all"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-all"
+              >
+                <ChevronRight size={20} />
+              </button>
+
+              {/* Dots */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1">
+                {images.map((_: any, i: number) => (
+                  <div
+                    key={i}
+                    className={`w-1.5 h-1.5 rounded-full transition-all ${
+                      i === currentImageIndex ? 'bg-white w-4' : 'bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
           )}
+
+          {/* Price Chip */}
+          <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded-full text-sm font-semibold">
+            ${(data.price_cents / 100).toFixed(2)}
+          </div>
+
+          {/* Save Button */}
+          <button
+            onClick={handleSave}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-all"
+          >
+            <Heart size={18} className={saved ? 'fill-current' : ''} />
+          </button>
         </div>
       )}
 
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+      {/* Content */}
+      <div className="p-6">
+        <h3 className="text-xl font-semibold mb-2">{data.title}</h3>
+        <p className="text-muted-foreground text-sm mb-4 line-clamp-3">{data.description}</p>
 
-      {/* Media indicators */}
-      {media.length > 1 && (
-        <div className="absolute top-4 left-0 right-0 flex justify-center gap-1.5 px-4 z-10">
-          {media.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentIndex(idx)}
-              className={cn(
-                'h-1.5 flex-1 max-w-20 rounded-full transition-all duration-300',
-                idx === currentIndex 
-                  ? 'bg-primary' 
-                  : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-              )}
-              aria-label={`View image ${idx + 1}`}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Content overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 space-y-4 animate-slide-up">
-        {/* Title and price */}
-        <div className="flex items-start justify-between gap-4">
-          <h3 className="text-xl font-semibold flex-1 text-primary-foreground">{reel.title}</h3>
-          <Badge variant="secondary" className="bg-primary text-primary-foreground text-base px-3 py-1.5 shadow-md">
-            ${(reel.price_cents / 100).toFixed(2)}
-          </Badge>
-        </div>
-
-        {/* Stock indicator */}
-        {reel.stock_quantity !== undefined && reel.stock_quantity <= 5 && (
-          <Badge variant="destructive" className="animate-pulse-subtle">
-            Only {reel.stock_quantity} left
-          </Badge>
+        {/* Stock Badge */}
+        {data.stock_quantity < 5 && (
+          <p className="text-xs text-destructive mb-3">Only {data.stock_quantity} left!</p>
         )}
 
         {/* Actions */}
         <div className="flex gap-3">
           <Button
-            className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 gap-2 transition-all duration-200 hover:scale-[1.02] shadow-lg"
-            onClick={handleAddToCart}
+            className="flex-1"
+            onClick={() => addToCartMutation.mutate()}
+            disabled={addToCartMutation.isPending || data.stock_quantity === 0}
           >
-            <ShoppingCart className="h-4 w-4" />
-            Add to Cart
+            <ShoppingCart size={18} className="mr-2" />
+            {data.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
           </Button>
-          <Button
-            variant="outline"
-            className="border-primary/30 text-primary-foreground hover:bg-primary/20 transition-all duration-200 hover:scale-105"
-            asChild
-          >
-            <a href={`/entities/${reel.entity_id}`}>
-              <ExternalLink className="h-4 w-4" />
-            </a>
+          <Button variant="outline" size="icon">
+            <Heart size={18} className={saved ? 'fill-current text-destructive' : ''} />
           </Button>
         </div>
 
-        <p className="text-sm text-muted-foreground">
-          More from this seller
-        </p>
+        {/* More from seller */}
+        <button className="mt-4 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          More from this seller →
+        </button>
       </div>
-    </article>
+    </div>
   );
 }

@@ -111,12 +111,10 @@ export default function Index() {
                   className="w-full sm:w-auto"
                 />
 
-                <TikTokScroller
-                  items={items}
-                  isLoading={isLoading}
-                  hasMore={hasNextPage ?? false}
-                  onLoadMore={fetchNextPage}
-                />
+                {/* TikTokScroller removed - now using home/index.tsx */}
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Feed moved to /home</p>
+                </div>
               </div>
 
               <div className="lg:col-span-4 space-y-4">
