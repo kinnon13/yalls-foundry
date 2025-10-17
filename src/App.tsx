@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { AuthProvider } from '@/lib/auth/context';
 import { RequireAuth } from '@/lib/auth/guards';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
@@ -16,6 +16,7 @@ import { RockerProvider } from '@/lib/ai/rocker/context';
 import { RedirectHandler } from '@/components/navigation/RedirectHandler';
 import PreviewRoutes from '@/preview/PreviewRoutes';
 import { PreviewMessageListener } from '@/components/preview/PreviewMessageListener';
+import { registerRockerFeatureHandler } from '@/feature-kernel/rocker-handler';
 import Index from "./routes/index";
 import Search from "./routes/search";
 import Login from "./routes/login";
@@ -82,21 +83,21 @@ const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on'
 import { CommandPalette } from '@/components/command/CommandPalette';
 import { ProfileCreationModal } from '@/components/entities/ProfileCreationModal';
 
-const App = () => (
-  <HelmetProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <RockerProvider>
-              {/* Global Command Palette */}
-              <CommandPalette />
-              
-              {/* Profile Creation Modal */}
-              <ProfileCreationModal />
-              
-              <RedirectHandler />
-              <Routes>
+function AppContent() {
+  useEffect(() => {
+    registerRockerFeatureHandler();
+  }, []);
+
+  return (
+    <>
+      {/* Global Command Palette */}
+      <CommandPalette />
+      
+      {/* Profile Creation Modal */}
+      <ProfileCreationModal />
+      
+      <RedirectHandler />
+      <Routes>
           {/* 7-Route Spine */}
           <Route path="/" element={<Index />} />
           <Route path="/search" element={<Search />} />
@@ -259,21 +260,33 @@ const App = () => (
 
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
-              </Routes>
+      </Routes>
 
-              {/* Preview Routes (dev/staging only) */}
-              <PreviewRoutes />
+      {/* Preview Routes (dev/staging only) */}
+      <PreviewRoutes />
 
-              {/* Preview message handler */}
-              <PreviewMessageListener />
+      {/* Preview message handler */}
+      <PreviewMessageListener />
 
-              {FEEDBACK_ENABLED && <FeedbackWidget />}
-              <InactivityNudge />
-              <RockerDock />
-              <RockerChat />
-              <RockerSuggestions />
-              <Toaster />
-              <Sonner />
+      {FEEDBACK_ENABLED && <FeedbackWidget />}
+      <InactivityNudge />
+      <RockerDock />
+      <RockerChat />
+      <RockerSuggestions />
+      <Toaster />
+      <Sonner />
+    </>
+  );
+}
+
+const App = () => (
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <RockerProvider>
+              <AppContent />
             </RockerProvider>
           </AuthProvider>
         </BrowserRouter>

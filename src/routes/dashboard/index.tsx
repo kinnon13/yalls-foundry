@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
+import FeatureHost from '@/feature-kernel/Host';
+import { DebugOverlay } from '@/feature-kernel/DebugOverlay';
 import type { ModuleKey } from '@/lib/dashUrl';
 
 const panels = {
@@ -24,6 +26,7 @@ export default function DashboardLayout() {
   const isMobile = useIsMobile();
   const [sp] = useSearchParams();
   const m = (sp.get('m') as ModuleKey) || 'overview';
+  const f = sp.get('f'); // feature list
   
   const Panel = useMemo(() => panels[m] ?? panels.overview, [m]);
 
@@ -32,12 +35,17 @@ export default function DashboardLayout() {
       <GlobalHeader />
       <div className="flex h-[calc(100vh-64px)]">
         {!isMobile && <DashboardSidebar />}
-        <main className="flex-1 overflow-auto">
-          <Suspense fallback={<div className="p-6 text-muted-foreground">Loading...</div>}>
-            <Panel />
-          </Suspense>
+        <main className="flex-1 overflow-auto p-4">
+          {f ? (
+            <FeatureHost />
+          ) : (
+            <Suspense fallback={<div className="p-6 text-muted-foreground">Loading...</div>}>
+              <Panel />
+            </Suspense>
+          )}
         </main>
       </div>
+      <DebugOverlay />
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { updateDashParams, type ModuleKey } from '@/lib/dashUrl';
+import { getAllFeatures } from '@/feature-kernel/registry';
+import type { FeatureProps } from '@/feature-kernel/types';
 import { 
   LayoutDashboard, 
   Building2, 
@@ -48,6 +50,7 @@ const NAV_ITEMS: NavItem[] = [
 export function DashboardSidebar() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeModule = (searchParams.get('m') as ModuleKey) || 'overview';
+  const activeFeatures = (searchParams.get('f') ?? '').split(',').filter(Boolean);
   const { capabilities, isLoading: loadingEntities } = useUserEntities();
 
   const { data: unreadCount = 0 } = useQuery({
@@ -107,7 +110,22 @@ export function DashboardSidebar() {
   };
 
   const visibleItems = NAV_ITEMS.filter(shouldShowItem);
-  const hiddenItems = NAV_ITEMS.filter(item => item.requiresEntity && !shouldShowItem(item));
+  
+  const openFeature = (featureId: string, props?: FeatureProps) => {
+    const next = new URLSearchParams(searchParams);
+    const list = (next.get('f') ?? '').split(',').filter(Boolean);
+    if (!list.includes(featureId)) list.push(featureId);
+    next.set('f', list.join(','));
+    
+    // Set feature props
+    if (props) {
+      for (const [k, v] of Object.entries(props)) {
+        next.set(`fx.${featureId}.${k}`, typeof v === 'string' ? v : JSON.stringify(v));
+      }
+    }
+    
+    setSearchParams(next);
+  };
 
   return (
     <div className="w-64 border-r border-border bg-card flex-shrink-0 hidden md:block">
@@ -155,6 +173,35 @@ export function DashboardSidebar() {
             );
           })}
         </nav>
+
+        {/* Quick Feature Access */}
+        <div className="mt-6 pt-4 border-t border-border">
+          <div className="text-xs font-medium text-muted-foreground mb-2 px-3">
+            Quick Add
+          </div>
+          <div className="space-y-1">
+            {getAllFeatures().slice(0, 3).map((feature) => {
+              const isActive = activeFeatures.includes(feature.id);
+              const Icon = feature.icon || PlusCircle;
+              return (
+                <Button
+                  key={feature.id}
+                  variant={isActive ? 'secondary' : 'ghost'}
+                  size="m"
+                  className={cn(
+                    'w-full justify-start gap-3',
+                    isActive && 'bg-secondary/50'
+                  )}
+                  onClick={() => openFeature(feature.id)}
+                >
+                  <Icon size={16} />
+                  <span className="flex-1 text-left text-sm">{feature.title}</span>
+                  {isActive && <CheckCircle size={14} className="text-primary" />}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
