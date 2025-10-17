@@ -3001,6 +3001,39 @@ export type Database = {
         }
         Relationships: []
       }
+      entitlement_override_audit: {
+        Row: {
+          action: string
+          actor_user_id: string
+          allow: boolean | null
+          created_at: string
+          feature_id: string
+          id: number
+          reason: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id: string
+          allow?: boolean | null
+          created_at?: string
+          feature_id: string
+          id?: number
+          reason?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string
+          allow?: boolean | null
+          created_at?: string
+          feature_id?: string
+          id?: number
+          reason?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       entitlement_overrides: {
         Row: {
           allow: boolean
@@ -3029,6 +3062,13 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "entitlement_overrides_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "feature_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entitlement_overrides_fk_feature"
             columns: ["feature_id"]
             isOneToOne: false
             referencedRelation: "feature_catalog"
@@ -4865,6 +4905,20 @@ export type Database = {
             columns: ["feature_id"]
             isOneToOne: false
             referencedRelation: "feature_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_entitlements_fk_feature"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "feature_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_entitlements_fk_plan"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "billing_plans"
             referencedColumns: ["id"]
           },
           {
@@ -6929,6 +6983,19 @@ export type Database = {
             }
         Returns: string
       }
+      admin_clear_entitlement_override: {
+        Args: { p_feature_id: string; p_target_user_id: string }
+        Returns: undefined
+      }
+      admin_set_entitlement_override: {
+        Args: {
+          p_allow: boolean
+          p_feature_id: string
+          p_reason?: string
+          p_target_user_id: string
+        }
+        Returns: undefined
+      }
       aggregate_user_patterns: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -7180,6 +7247,15 @@ export type Database = {
       end_price_test: {
         Args: { p_test_id: string; p_winner?: string }
         Returns: Json
+      }
+      entitlement_gate_metrics: {
+        Args: { p_window_minutes?: number }
+        Returns: {
+          calls: number
+          feature: string
+          outcome: string
+          rate_pct: number
+        }[]
       }
       entitlement_override_set: {
         Args: { p_allow: boolean; p_feature_id: string; p_user_id: string }
