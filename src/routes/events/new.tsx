@@ -59,7 +59,7 @@ export default function NewEvent() {
       if (error) throw error;
 
       toast.success('Event created');
-      navigate(`/events/${data.id}`);
+      navigate(`/events/${(data as any)?.id}`);
     } catch (error: any) {
       toast.error(error.message);
     } finally {

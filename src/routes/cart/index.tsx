@@ -56,7 +56,7 @@ export default function CartPage() {
 
   const handleCheckout = async () => {
     try {
-      const { data: orderId, error } = await supabase.rpc('order_create_from_cart', {
+      const { data: orderId, error } = await supabase.rpc('order_create_from_cart' as any, {
         p_meta: {},
         p_tax_cents: 0,
         p_shipping_cents: 0
@@ -72,20 +72,20 @@ export default function CartPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`
         },
-        body: JSON.stringify({ order_id: orderId })
+        body: JSON.stringify({ order_id: String(orderId) })
       });
 
       if (!response.ok) throw new Error('Payment failed');
 
       // Rocker hook: log payment
-      await supabase.rpc('rocker_log_action', {
+      await supabase.rpc('rocker_log_action' as any, {
         p_user_id: session?.user.id,
         p_agent: 'rocker',
         p_action: 'order_preview_paid',
-        p_input: { order_id: orderId },
-        p_output: { success: true },
+        p_input: { order_id: String(orderId) } as any,
+        p_output: { success: true } as any,
         p_result: 'success'
-      });
+      } as any);
 
       toast.success('Order placed!');
       navigate(`/orders/${orderId}`);

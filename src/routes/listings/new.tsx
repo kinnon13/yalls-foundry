@@ -59,7 +59,7 @@ export default function NewListing() {
       if (error) throw error;
 
       toast.success('Listing created');
-      navigate(`/listings/${data.id}`);
+      navigate(`/listings/${(data as any)?.id}`);
     } catch (error: any) {
       toast.error(error.message);
     } finally {

@@ -12,12 +12,12 @@ export default function OrdersIndex() {
     queryKey: ['orders'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('orders')
+        .from('orders' as any)
         .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as any[];
     }
   });
 
