@@ -10,7 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, FileText, TestTube, Code } from 'lucide-react';
+import { ExternalLink, FileText, TestTube, Code, AlertCircle, Star, Shield } from 'lucide-react';
+import { validateGoldPath, GOLD_PATH_FEATURES, getFeatureStats } from '@/lib/featureGuards';
+import { Link } from 'react-router-dom';
 
 type FeatureStatus = 'shell' | 'full-ui' | 'wired';
 type FeatureArea = 'profile' | 'notifications' | 'composer' | 'events' | 'producer' | 'earnings' | 'ai';
@@ -38,6 +40,9 @@ export default function FeaturesAdminPage() {
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
 
   const features = featuresData.features;
+  const goldPath = validateGoldPath();
+  const stats = getFeatureStats();
+  const isProd = import.meta.env.PROD;
 
   const filtered = useMemo(() => {
     return features.filter(f => {
@@ -54,42 +59,90 @@ export default function FeaturesAdminPage() {
 
   // Summary stats
   const totalFeatures = features.length;
-  const byStatus = features.reduce((acc, f) => {
-    acc[f.status] = (acc[f.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const byArea = features.reduce((acc, f) => {
-    if (!acc[f.area]) acc[f.area] = { shell: 0, 'full-ui': 0, wired: 0 };
-    acc[f.area][f.status as FeatureStatus] += 1;
-    return acc;
-  }, {} as Record<string, Record<FeatureStatus, number>>);
-
-  const percentComplete = ((byStatus['full-ui'] || 0) + (byStatus.wired || 0)) / totalFeatures * 100;
+  const byStatus = stats.byStatus;
+  const byArea = stats.byArea;
+  const percentComplete = stats.completionPercent;
+  const shellInProd = isProd ? features.filter(f => f.status === 'shell' && f.routes.length > 0).length : 0;
 
   return (
     <div className="container max-w-7xl py-8 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Feature Index</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {totalFeatures} features · {percentComplete.toFixed(1)}% complete
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Feature Index</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {totalFeatures} features · {percentComplete.toFixed(1)}% complete
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/admin/audit">
+              <Shield className="h-4 w-4 mr-2" />
+              Run Audit
+            </Link>
+          </Button>
+        </div>
       </div>
 
+      {/* Alerts */}
+      {!goldPath.ready && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+            <div>
+              <div className="font-medium text-red-900">Gold-Path Not Ready</div>
+              <div className="text-sm text-red-700 mt-1">
+                {goldPath.blocking.length} critical features are still in shell status:
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {goldPath.blocking.map(id => (
+                  <Badge key={id} variant="destructive" className="text-xs">
+                    {id}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {shellInProd > 0 && (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+            <div>
+              <div className="font-medium text-yellow-900">Production Warning</div>
+              <div className="text-sm text-yellow-700 mt-1">
+                {shellInProd} shell features have routes exposed in production and should be protected
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <div className="rounded-lg border p-4">
-          <div className="text-2xl font-bold">{byStatus.shell || 0}</div>
+          <div className="text-2xl font-bold text-gray-600">{byStatus.shell || 0}</div>
           <div className="text-sm text-muted-foreground">Shell</div>
+          {isProd && byStatus.shell > 0 && (
+            <div className="text-xs text-yellow-600 mt-1">Should be hidden in prod</div>
+          )}
         </div>
         <div className="rounded-lg border p-4">
-          <div className="text-2xl font-bold">{byStatus['full-ui'] || 0}</div>
+          <div className="text-2xl font-bold text-blue-600">{byStatus['full-ui'] || 0}</div>
           <div className="text-sm text-muted-foreground">Full UI</div>
         </div>
         <div className="rounded-lg border p-4">
-          <div className="text-2xl font-bold">{byStatus.wired || 0}</div>
+          <div className="text-2xl font-bold text-green-600">{byStatus.wired || 0}</div>
           <div className="text-sm text-muted-foreground">Wired</div>
+        </div>
+        <div className="rounded-lg border p-4">
+          <div className="text-2xl font-bold text-amber-600">{GOLD_PATH_FEATURES.length}</div>
+          <div className="text-sm text-muted-foreground">Gold-Path</div>
+          <div className={`text-xs mt-1 ${goldPath.ready ? 'text-green-600' : 'text-red-600'}`}>
+            {goldPath.ready ? 'All ready' : `${goldPath.blocking.length} blocking`}
+          </div>
         </div>
       </div>
 
@@ -109,10 +162,16 @@ export default function FeaturesAdminPage() {
                   {complete}/{total} · {pct.toFixed(0)}%
                 </span>
               </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div className="h-2 rounded-full bg-muted overflow-hidden flex">
                 <div
-                  className="h-full bg-primary transition-all"
-                  style={{ width: `${pct}%` }}
+                  className="h-full bg-green-500 transition-all"
+                  style={{ width: `${(counts.wired / total) * 100}%` }}
+                  title={`${counts.wired} wired`}
+                />
+                <div
+                  className="h-full bg-blue-500 transition-all"
+                  style={{ width: `${(counts['full-ui'] / total) * 100}%` }}
+                  title={`${counts['full-ui']} full-ui`}
                 />
               </div>
             </div>
@@ -167,6 +226,7 @@ export default function FeaturesAdminPage() {
         <table className="w-full">
           <thead className="border-b bg-muted/50">
             <tr>
+              <th className="text-left p-3 font-medium w-8"></th>
               <th className="text-left p-3 font-medium">Feature</th>
               <th className="text-left p-3 font-medium">Status</th>
               <th className="text-left p-3 font-medium">Owner</th>
@@ -177,25 +237,43 @@ export default function FeaturesAdminPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((feature) => (
-              <tr key={feature.id} className="border-b hover:bg-muted/30">
-                <td className="p-3">
-                  <div>
-                    <div className="font-medium">{feature.title}</div>
-                    <div className="text-xs text-muted-foreground">{feature.id}</div>
-                  </div>
-                </td>
-                <td className="p-3">
-                  <Badge className={STATUS_COLORS[feature.status as FeatureStatus]}>
-                    {feature.status}
-                  </Badge>
-                </td>
-                <td className="p-3 text-sm">{feature.owner}</td>
-                <td className="p-3 text-sm">{feature.routes.length}</td>
-                <td className="p-3 text-sm">{feature.components.length}</td>
-                <td className="p-3 text-sm">
-                  {feature.tests.e2e.length + feature.tests.unit.length}
-                </td>
+            {filtered.map((feature) => {
+              const isGoldPath = GOLD_PATH_FEATURES.includes(feature.id);
+              const isShellInProd = isProd && feature.status === 'shell' && feature.routes.length > 0;
+              
+              return (
+                <tr key={feature.id} className="border-b hover:bg-muted/30">
+                  <td className="p-3">
+                    {isGoldPath && (
+                      <span title="Gold-path feature">
+                        <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-3">
+                    <div>
+                      <div className="font-medium flex items-center gap-2">
+                        {feature.title}
+                        {isShellInProd && (
+                          <span title="Shell exposed in production">
+                            <AlertCircle className="h-4 w-4 text-yellow-500" />
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{feature.id}</div>
+                    </div>
+                  </td>
+                  <td className="p-3">
+                    <Badge className={STATUS_COLORS[feature.status as FeatureStatus]}>
+                      {feature.status}
+                    </Badge>
+                  </td>
+                  <td className="p-3 text-sm">{feature.owner}</td>
+                  <td className="p-3 text-sm">{feature.routes.length}</td>
+                  <td className="p-3 text-sm">{feature.components.length}</td>
+                  <td className="p-3 text-sm">
+                    {feature.tests.e2e.length + feature.tests.unit.length}
+                  </td>
                 <td className="p-3">
                   <div className="flex items-center gap-2">
                     {feature.routes[0] && (
@@ -243,7 +321,8 @@ export default function FeaturesAdminPage() {
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
