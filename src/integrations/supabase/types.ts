@@ -4673,6 +4673,97 @@ export type Database = {
         }
         Relationships: []
       }
+      stalls_rv_inventory: {
+        Row: {
+          available_quantity: number
+          created_at: string
+          event_id: string
+          id: string
+          label: string
+          metadata: Json | null
+          price_cents: number
+          reserved_quantity: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          available_quantity?: number
+          created_at?: string
+          event_id: string
+          id?: string
+          label: string
+          metadata?: Json | null
+          price_cents?: number
+          reserved_quantity?: number
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          available_quantity?: number
+          created_at?: string
+          event_id?: string
+          id?: string
+          label?: string
+          metadata?: Json | null
+          price_cents?: number
+          reserved_quantity?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stalls_rv_inventory_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stalls_rv_reservations: {
+        Row: {
+          created_at: string
+          id: string
+          inventory_id: string
+          metadata: Json | null
+          quantity: number
+          status: string
+          total_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inventory_id: string
+          metadata?: Json | null
+          quantity?: number
+          status?: string
+          total_cents: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inventory_id?: string
+          metadata?: Json | null
+          quantity?: number
+          status?: string
+          total_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stalls_rv_reservations_inventory_id_fkey"
+            columns: ["inventory_id"]
+            isOneToOne: false
+            referencedRelation: "stalls_rv_inventory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           created_at: string
