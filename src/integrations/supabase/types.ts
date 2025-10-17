@@ -1258,6 +1258,187 @@ export type Database = {
         }
         Relationships: []
       }
+      boarders: {
+        Row: {
+          board_type: string
+          business_id: string
+          created_at: string
+          emergency_contact: Json | null
+          end_date: string | null
+          horse_entity_id: string | null
+          id: string
+          monthly_rate_cents: number
+          profile_id: string
+          special_needs: Json | null
+          start_date: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          board_type: string
+          business_id: string
+          created_at?: string
+          emergency_contact?: Json | null
+          end_date?: string | null
+          horse_entity_id?: string | null
+          id?: string
+          monthly_rate_cents: number
+          profile_id: string
+          special_needs?: Json | null
+          start_date: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          board_type?: string
+          business_id?: string
+          created_at?: string
+          emergency_contact?: Json | null
+          end_date?: string | null
+          horse_entity_id?: string | null
+          id?: string
+          monthly_rate_cents?: number
+          profile_id?: string
+          special_needs?: Json | null
+          start_date?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boarders_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boarders_horse_entity_id_fkey"
+            columns: ["horse_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boarders_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bounty_tasks: {
+        Row: {
+          claimed_by: string | null
+          completed_at: string | null
+          created_at: string
+          description: string
+          expires_at: string | null
+          id: string
+          requirements: Json
+          reward_cents: number
+          status: string | null
+          task_type: string
+          title: string
+        }
+        Insert: {
+          claimed_by?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description: string
+          expires_at?: string | null
+          id?: string
+          requirements?: Json
+          reward_cents: number
+          status?: string | null
+          task_type: string
+          title: string
+        }
+        Update: {
+          claimed_by?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string
+          expires_at?: string | null
+          id?: string
+          requirements?: Json
+          reward_cents?: number
+          status?: string | null
+          task_type?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bounty_tasks_claimed_by_fkey"
+            columns: ["claimed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      breeding_records: {
+        Row: {
+          breeding_date: string
+          created_at: string
+          created_by: string
+          foal_entity_id: string | null
+          id: string
+          mare_entity_id: string
+          notes: string | null
+          outcome: string | null
+          stallion_entity_id: string
+          updated_at: string
+        }
+        Insert: {
+          breeding_date: string
+          created_at?: string
+          created_by: string
+          foal_entity_id?: string | null
+          id?: string
+          mare_entity_id: string
+          notes?: string | null
+          outcome?: string | null
+          stallion_entity_id: string
+          updated_at?: string
+        }
+        Update: {
+          breeding_date?: string
+          created_at?: string
+          created_by?: string
+          foal_entity_id?: string | null
+          id?: string
+          mare_entity_id?: string
+          notes?: string | null
+          outcome?: string | null
+          stallion_entity_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "breeding_records_foal_entity_id_fkey"
+            columns: ["foal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "breeding_records_mare_entity_id_fkey"
+            columns: ["mare_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "breeding_records_stallion_entity_id_fkey"
+            columns: ["stallion_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_kpi_snapshots: {
         Row: {
           active_users: number | null
@@ -2552,6 +2733,39 @@ export type Database = {
           },
         ]
       }
+      discovery_items: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          item_id: string
+          item_type: string
+          metadata: Json | null
+          relevance_score: number | null
+          trending_score: number | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          item_id: string
+          item_type: string
+          metadata?: Json | null
+          relevance_score?: number | null
+          trending_score?: number | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          item_id?: string
+          item_type?: string
+          metadata?: Json | null
+          relevance_score?: number | null
+          trending_score?: number | null
+        }
+        Relationships: []
+      }
       drafts: {
         Row: {
           created_at: string
@@ -3558,6 +3772,53 @@ export type Database = {
         }
         Relationships: []
       }
+      leaderboard_entries: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          metric_type: string
+          metric_value: number
+          period: string
+          period_start: string | null
+          profile_id: string
+          rank: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          metric_value?: number
+          period: string
+          period_start?: string | null
+          profile_id: string
+          rank?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          metric_value?: number
+          period?: string
+          period_start?: string | null
+          profile_id?: string
+          rank?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leaderboard_entries_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ledger_entries: {
         Row: {
           amount_cents: number
@@ -3679,6 +3940,65 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      marketplace_listings: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          location: Json | null
+          media: Json | null
+          metadata: Json | null
+          price_cents: number
+          seller_profile_id: string
+          status: string
+          stock_quantity: number
+          title: string
+          updated_at: string
+          views_count: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: Json | null
+          media?: Json | null
+          metadata?: Json | null
+          price_cents: number
+          seller_profile_id: string
+          status?: string
+          stock_quantity?: number
+          title: string
+          updated_at?: string
+          views_count?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: Json | null
+          media?: Json | null
+          metadata?: Json | null
+          price_cents?: number
+          seller_profile_id?: string
+          status?: string
+          stock_quantity?: number
+          title?: string
+          updated_at?: string
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_listings_seller_profile_id_fkey"
+            columns: ["seller_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -4758,6 +5078,53 @@ export type Database = {
           srtext?: string | null
         }
         Relationships: []
+      }
+      stallion_profiles: {
+        Row: {
+          breeding_record: Json | null
+          breeding_status: string | null
+          created_at: string
+          entity_id: string
+          genetics: Json | null
+          media: Json | null
+          offspring_count: number | null
+          stud_fee_cents: number | null
+          temperament_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          breeding_record?: Json | null
+          breeding_status?: string | null
+          created_at?: string
+          entity_id: string
+          genetics?: Json | null
+          media?: Json | null
+          offspring_count?: number | null
+          stud_fee_cents?: number | null
+          temperament_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          breeding_record?: Json | null
+          breeding_status?: string | null
+          created_at?: string
+          entity_id?: string
+          genetics?: Json | null
+          media?: Json | null
+          offspring_count?: number | null
+          stud_fee_cents?: number | null
+          temperament_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stallion_profiles_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: true
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stalls_rv_inventory: {
         Row: {
