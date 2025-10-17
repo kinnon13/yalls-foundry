@@ -1,115 +1,151 @@
-import { useEffect, useState } from 'react';
+/**
+ * Feed Page - Personal vs Combined toggle
+ * <200 LOC
+ */
+
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useSession } from '@/lib/auth/context';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { FeedComposer } from '@/components/feed/FeedComposer';
+import { PostCard } from '@/components/feed/PostCard';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 
-type Post = {
-  id: string;
-  body: string;
-  media: any;
-  visibility: string;
-  created_at: string;
-  author_user_id: string;
-  kind: string;
-};
+export default function FeedPage() {
+  const [view, setView] = useState<'personal' | 'combined'>('personal');
 
-export default function Feed() {
-  const { session } = useSession();
-  const [body, setBody] = useState('');
-  const [rows, setRows] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const load = async () => {
-    const { data, error } = await supabase
-      .from('posts')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100);
-    
-    if (error) {
-      toast.error('Failed to load posts');
-      console.error(error);
-      return;
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
     }
-    
-    setRows(data ?? []);
-  };
+  });
 
-  useEffect(() => {
-    load();
-  }, []);
+  const { data: posts, isLoading, refetch } = useQuery({
+    queryKey: ['feed', view, user?.id],
+    queryFn: async () => {
+      if (!user) return [];
 
-  const submit = async () => {
-    if (!session || !body.trim()) return;
-    
-    setLoading(true);
-    try {
-      const { error } = await supabase.rpc('post_create', {
-        p_body: body,
-        p_visibility: 'public',
-        p_entity_id: null,
-        p_media: []
-      });
+      if (view === 'personal') {
+        // Personal: only posts targeting user's owned entities
+        const { data: ownedEntities } = await supabase
+          .from('entities')
+          .select('id')
+          .eq('owner_user_id', user.id);
 
-      if (error) throw error;
+        const entityIds = ownedEntities?.map(e => e.id) || [];
 
-      setBody('');
-      await load();
-      toast.success('Post created!');
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to create post');
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (entityIds.length === 0) return [];
+
+        const { data, error } = await supabase
+          .from('post_targets')
+          .select(`
+            *,
+            posts (
+              id,
+              body,
+              media,
+              created_at,
+              author_user_id,
+              profiles (display_name, avatar_url),
+              entities (id, display_name, handle)
+            )
+          `)
+          .in('target_entity_id', entityIds)
+          .eq('approved', true)
+          .not('posts.id', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+        return data || [];
+      } else {
+        // Combined: all posts from followed entities + own entities
+        const { data, error } = await supabase
+          .from('post_targets')
+          .select(`
+            *,
+            posts (
+              id,
+              body,
+              media,
+              created_at,
+              author_user_id,
+              profiles (display_name, avatar_url),
+              entities (id, display_name, handle)
+            )
+          `)
+          .eq('approved', true)
+          .not('posts.id', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (error) throw error;
+        return data || [];
+      }
+    },
+    enabled: !!user
+  });
+
+  const { data: ownedEntities } = useQuery({
+    queryKey: ['owned-entities', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from('entities')
+        .select('id, display_name, handle')
+        .eq('owner_user_id', user.id);
+      return data || [];
+    },
+    enabled: !!user
+  });
 
   return (
-    <>
+    <div className="min-h-screen bg-background">
       <GlobalHeader />
-      <div className="container max-w-2xl mx-auto p-4 space-y-4">
-      <Card>
-        <CardHeader>
-          <h2 className="text-2xl font-bold">Social Feed</h2>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Textarea
-            placeholder="Share something…"
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            rows={3}
-            className="resize-none"
-          />
-          <div className="flex justify-end">
-            <Button
-              disabled={loading || !body.trim()}
-              onClick={submit}
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {loading ? 'Posting…' : 'Post'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <Tabs value={view} onValueChange={(v) => setView(v as any)}>
+          <TabsList className="w-full mb-6">
+            <TabsTrigger value="personal" className="flex-1">Personal</TabsTrigger>
+            <TabsTrigger value="combined" className="flex-1">Combined</TabsTrigger>
+          </TabsList>
 
-      <div className="space-y-3">
-        {rows.map((p) => (
-          <Card key={p.id}>
-            <CardContent className="pt-6">
-              <div className="text-xs text-muted-foreground mb-2">
-                {new Date(p.created_at).toLocaleString()}
+          <TabsContent value="personal">
+            <FeedComposer onPostCreated={refetch} authorEntities={ownedEntities || []} />
+            
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
               </div>
-              <div className="whitespace-pre-wrap">{p.body}</div>
-            </CardContent>
-          </Card>
-        ))}
+            ) : (
+              <div className="space-y-4 mt-6">
+                {posts?.map((target: any) => (
+                  <PostCard key={target.id} target={target} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="combined">
+            <FeedComposer onPostCreated={refetch} authorEntities={ownedEntities || []} />
+            
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : (
+              <div className="space-y-4 mt-6">
+                {posts?.map((target: any) => (
+                  <PostCard key={target.id} target={target} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
-      </div>
-    </>
+    </div>
   );
 }

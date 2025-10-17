@@ -3021,6 +3021,60 @@ export type Database = {
           },
         ]
       }
+      entity_edges: {
+        Row: {
+          allow_crosspost: boolean | null
+          auto_propagate: boolean | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          object_entity_id: string
+          relation_type: string
+          status: string | null
+          subject_entity_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          allow_crosspost?: boolean | null
+          auto_propagate?: boolean | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          object_entity_id: string
+          relation_type: string
+          status?: string | null
+          subject_entity_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          allow_crosspost?: boolean | null
+          auto_propagate?: boolean | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          object_entity_id?: string
+          relation_type?: string
+          status?: string | null
+          subject_entity_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_edges_object_entity_id_fkey"
+            columns: ["object_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_edges_subject_entity_id_fkey"
+            columns: ["subject_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entity_ingest_log: {
         Row: {
           action: string | null
@@ -3053,6 +3107,44 @@ export type Database = {
           unknown_memory_id?: string | null
         }
         Relationships: []
+      }
+      entity_members: {
+        Row: {
+          created_at: string | null
+          entity_id: string
+          id: string
+          member_user_id: string
+          permissions: Json | null
+          role: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entity_id: string
+          id?: string
+          member_user_id: string
+          permissions?: Json | null
+          role?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entity_id?: string
+          id?: string
+          member_user_id?: string
+          permissions?: Json | null
+          role?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_members_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       entity_profiles: {
         Row: {
@@ -3636,6 +3728,48 @@ export type Database = {
           path?: string | null
         }
         Relationships: []
+      }
+      feed_hides: {
+        Row: {
+          created_at: string | null
+          entity_id: string
+          hidden_by_user: string
+          id: string
+          post_id: string
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entity_id: string
+          hidden_by_user: string
+          id?: string
+          post_id: string
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entity_id?: string
+          hidden_by_user?: string
+          id?: string
+          post_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_hides_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_hides_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       horse_feed: {
         Row: {
@@ -4687,6 +4821,97 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      post_tags: {
+        Row: {
+          created_at: string | null
+          entity_id: string
+          id: string
+          post_id: string
+          tag_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entity_id: string
+          id?: string
+          post_id: string
+          tag_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entity_id?: string
+          id?: string
+          post_id?: string
+          tag_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_tags_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_tags_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_targets: {
+        Row: {
+          approved: boolean | null
+          created_at: string | null
+          id: string
+          post_id: string
+          reason: string | null
+          source_post_id: string | null
+          target_entity_id: string
+        }
+        Insert: {
+          approved?: boolean | null
+          created_at?: string | null
+          id?: string
+          post_id: string
+          reason?: string | null
+          source_post_id?: string | null
+          target_entity_id: string
+        }
+        Update: {
+          approved?: boolean | null
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          reason?: string | null
+          source_post_id?: string | null
+          target_entity_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_targets_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_targets_source_post_id_fkey"
+            columns: ["source_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_targets_target_entity_id_fkey"
+            columns: ["target_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -6902,6 +7127,24 @@ export type Database = {
           p_entity_id?: string
           p_media?: Json
           p_visibility?: Database["public"]["Enums"]["post_visibility"]
+        }
+        Returns: string
+      }
+      post_publish: {
+        Args: {
+          p_author_entity_id: string
+          p_body: string
+          p_media?: Json
+          p_tag_entity_ids?: string[]
+          p_target_entity_ids?: string[]
+        }
+        Returns: string
+      }
+      post_repost: {
+        Args: {
+          p_by_entity_id: string
+          p_original_post_id: string
+          p_target_entity_ids?: string[]
         }
         Returns: string
       }
