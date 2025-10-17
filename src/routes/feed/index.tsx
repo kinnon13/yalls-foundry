@@ -10,10 +10,10 @@ import { toast } from 'sonner';
 type Post = {
   id: string;
   body: string;
-  media: any[];
+  media: any;
   visibility: string;
   created_at: string;
-  author_id: string;
+  author_user_id: string;
   kind: string;
 };
 
@@ -48,11 +48,11 @@ export default function Feed() {
     
     setLoading(true);
     try {
-      const { error } = await supabase.rpc('rpc_create_post', {
-        p_idempotency_key: crypto.randomUUID(),
-        p_content: body,
+      const { error } = await supabase.rpc('post_create', {
+        p_body: body,
         p_visibility: 'public',
-        p_media_urls: []
+        p_entity_id: null,
+        p_media: []
       });
 
       if (error) throw error;

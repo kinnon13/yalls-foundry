@@ -1955,8 +1955,10 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          owner_user_id: string | null
           phone: string | null
           status: string
+          tags: Json
           tenant_id: string | null
           updated_at: string
         }
@@ -1968,8 +1970,10 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          owner_user_id?: string | null
           phone?: string | null
           status?: string
+          tags?: Json
           tenant_id?: string | null
           updated_at?: string
         }
@@ -1981,8 +1985,10 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          owner_user_id?: string | null
           phone?: string | null
           status?: string
+          tags?: Json
           tenant_id?: string | null
           updated_at?: string
         }
@@ -2002,7 +2008,11 @@ export type Database = {
           contact_hint: Json | null
           contact_id: string | null
           created_at: string
+          data: Json
+          happened_at: string
           id: string
+          kind: string | null
+          owner_user_id: string | null
           props: Json
           source: string
           tenant_id: string
@@ -2014,7 +2024,11 @@ export type Database = {
           contact_hint?: Json | null
           contact_id?: string | null
           created_at?: string
+          data?: Json
+          happened_at?: string
           id?: string
+          kind?: string | null
+          owner_user_id?: string | null
           props?: Json
           source?: string
           tenant_id: string
@@ -2026,7 +2040,11 @@ export type Database = {
           contact_hint?: Json | null
           contact_id?: string | null
           created_at?: string
+          data?: Json
+          happened_at?: string
           id?: string
+          kind?: string | null
+          owner_user_id?: string | null
           props?: Json
           source?: string
           tenant_id?: string
@@ -2074,7 +2092,11 @@ export type Database = {
           contact_hint: Json | null
           contact_id: string | null
           created_at: string
+          data: Json
+          happened_at: string
           id: string
+          kind: string | null
+          owner_user_id: string | null
           props: Json
           source: string
           tenant_id: string
@@ -2086,7 +2108,11 @@ export type Database = {
           contact_hint?: Json | null
           contact_id?: string | null
           created_at?: string
+          data?: Json
+          happened_at?: string
           id?: string
+          kind?: string | null
+          owner_user_id?: string | null
           props?: Json
           source?: string
           tenant_id: string
@@ -2098,7 +2124,11 @@ export type Database = {
           contact_hint?: Json | null
           contact_id?: string | null
           created_at?: string
+          data?: Json
+          happened_at?: string
           id?: string
+          kind?: string | null
+          owner_user_id?: string | null
           props?: Json
           source?: string
           tenant_id?: string
@@ -2146,7 +2176,11 @@ export type Database = {
           contact_hint: Json | null
           contact_id: string | null
           created_at: string
+          data: Json
+          happened_at: string
           id: string
+          kind: string | null
+          owner_user_id: string | null
           props: Json
           source: string
           tenant_id: string
@@ -2158,7 +2192,11 @@ export type Database = {
           contact_hint?: Json | null
           contact_id?: string | null
           created_at?: string
+          data?: Json
+          happened_at?: string
           id?: string
+          kind?: string | null
+          owner_user_id?: string | null
           props?: Json
           source?: string
           tenant_id: string
@@ -2170,7 +2208,11 @@ export type Database = {
           contact_hint?: Json | null
           contact_id?: string | null
           created_at?: string
+          data?: Json
+          happened_at?: string
           id?: string
+          kind?: string | null
+          owner_user_id?: string | null
           props?: Json
           source?: string
           tenant_id?: string
@@ -2218,7 +2260,11 @@ export type Database = {
           contact_hint: Json | null
           contact_id: string | null
           created_at: string
+          data: Json
+          happened_at: string
           id: string
+          kind: string | null
+          owner_user_id: string | null
           props: Json
           source: string
           tenant_id: string
@@ -2230,7 +2276,11 @@ export type Database = {
           contact_hint?: Json | null
           contact_id?: string | null
           created_at?: string
+          data?: Json
+          happened_at?: string
           id?: string
+          kind?: string | null
+          owner_user_id?: string | null
           props?: Json
           source?: string
           tenant_id: string
@@ -2242,7 +2292,11 @@ export type Database = {
           contact_hint?: Json | null
           contact_id?: string | null
           created_at?: string
+          data?: Json
+          happened_at?: string
           id?: string
+          kind?: string | null
+          owner_user_id?: string | null
           props?: Json
           source?: string
           tenant_id?: string
@@ -3466,6 +3520,33 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          metadata: Json
+          recipient_user_id: string
+          sender_user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          recipient_user_id: string
+          sender_user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          recipient_user_id?: string
+          sender_user_id?: string
+        }
+        Relationships: []
+      }
       order_line_items: {
         Row: {
           created_at: string
@@ -3717,6 +3798,38 @@ export type Database = {
         }
         Relationships: []
       }
+      post_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_reshares: {
         Row: {
           commentary: string | null
@@ -3807,8 +3920,10 @@ export type Database = {
       posts: {
         Row: {
           author_id: string
+          author_user_id: string | null
           body: string | null
           created_at: string | null
+          entity_id: string | null
           id: string
           idempotency_key: string | null
           kind: string
@@ -3820,8 +3935,10 @@ export type Database = {
         }
         Insert: {
           author_id: string
+          author_user_id?: string | null
           body?: string | null
           created_at?: string | null
+          entity_id?: string | null
           id?: string
           idempotency_key?: string | null
           kind: string
@@ -3833,8 +3950,10 @@ export type Database = {
         }
         Update: {
           author_id?: string
+          author_user_id?: string | null
           body?: string | null
           created_at?: string | null
+          entity_id?: string | null
           id?: string
           idempotency_key?: string | null
           kind?: string
@@ -3851,6 +3970,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "posts_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -4169,6 +4295,47 @@ export type Database = {
           srtext?: string | null
         }
         Relationships: []
+      }
+      tasks: {
+        Row: {
+          created_at: string
+          due_at: string | null
+          id: string
+          owner_user_id: string
+          related_entity_id: string | null
+          status: Database["public"]["Enums"]["task_status"]
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          owner_user_id: string
+          related_entity_id?: string | null
+          status?: Database["public"]["Enums"]["task_status"]
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          owner_user_id?: string
+          related_entity_id?: string | null
+          status?: Database["public"]["Enums"]["task_status"]
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_related_entity_id_fkey"
+            columns: ["related_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       term_dictionary: {
         Row: {
@@ -4966,6 +5133,15 @@ export type Database = {
         Args: { p_entity_id: string }
         Returns: Json
       }
+      crm_contact_upsert: {
+        Args: {
+          p_email?: string
+          p_name: string
+          p_phone?: string
+          p_tags?: Json
+        }
+        Returns: string
+      }
       decrement_listing_stock: {
         Args: { p_listing_id: string; p_qty: number }
         Returns: undefined
@@ -4976,6 +5152,10 @@ export type Database = {
       }
       disablelongtransactions: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      dm_send: {
+        Args: { p_body: string; p_metadata?: Json; p_recipient: string }
         Returns: string
       }
       dropgeometrycolumn: {
@@ -5550,6 +5730,15 @@ export type Database = {
           | { use_typmod?: boolean }
         Returns: string
       }
+      post_create: {
+        Args: {
+          p_body: string
+          p_entity_id?: string
+          p_media?: Json
+          p_visibility?: Database["public"]["Enums"]["post_visibility"]
+        }
+        Returns: string
+      }
       postgis_addbbox: {
         Args: { "": unknown }
         Returns: unknown
@@ -5689,6 +5878,14 @@ export type Database = {
       rocker_check_consent: {
         Args: { p_action_type: string; p_user_id: string }
         Returns: Json
+      }
+      rocker_generate_followup_list: {
+        Args: { p_days_idle?: number }
+        Returns: {
+          contact_id: string
+          name: string
+          reason: string
+        }[]
       }
       rocker_log_action: {
         Args: {
@@ -6909,7 +7106,9 @@ export type Database = {
         | "project"
         | "project_context"
         | "notification_preference"
+      post_visibility: "public" | "followers" | "private"
       recurrence_freq: "daily" | "weekly" | "monthly" | "yearly"
+      task_status: "open" | "done" | "cancelled"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -7093,7 +7292,9 @@ export const Constants = {
         "project_context",
         "notification_preference",
       ],
+      post_visibility: ["public", "followers", "private"],
       recurrence_freq: ["daily", "weekly", "monthly", "yearly"],
+      task_status: ["open", "done", "cancelled"],
     },
   },
 } as const

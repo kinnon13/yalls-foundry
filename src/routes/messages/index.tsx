@@ -52,14 +52,11 @@ export default function Messages() {
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          sender_user_id: session.userId,
-          recipient_user_id: toUserId,
-          body: body,
-          metadata: {}
-        });
+      const { error } = await supabase.rpc('dm_send', {
+        p_recipient: toUserId,
+        p_body: body,
+        p_metadata: {}
+      });
 
       if (error) throw error;
 

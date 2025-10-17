@@ -53,19 +53,12 @@ export default function CRM() {
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('crm_contacts')
-        .insert({
-          owner_user_id: session.userId,
-          name: name,
-          email: email || null,
-          phone: phone || null,
-          custom_fields: {},
-          business_id: '',
-          status: 'active',
-          notes: '',
-          tenant_id: session.userId
-        });
+      const { error } = await supabase.rpc('crm_contact_upsert', {
+        p_name: name,
+        p_email: email || null,
+        p_phone: phone || null,
+        p_tags: []
+      });
 
       if (error) throw error;
 
