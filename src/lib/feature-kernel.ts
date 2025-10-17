@@ -4,10 +4,10 @@
  * Loads JSON manifests and provides typed helpers + guards
  */
 
-import { mergedFeatures } from './feature-kernel-loader';
+import featuresDoc from '../../docs/features/features.json';
 
 export type FeatureStatus = 'shell' | 'full-ui' | 'wired';
-export type FeatureArea = 'profile' | 'notifications' | 'composer' | 'events' | 'producer' | 'earnings' | 'ai' | 'admin' | 'marketplace' | 'business' | 'search' | 'orders' | 'messaging' | 'farm' | 'shipping' | 'other';
+export type FeatureArea = 'profile' | 'notifications' | 'composer' | 'events' | 'producer' | 'earnings' | 'ai' | 'admin' | 'marketplace' | 'business' | 'search' | 'orders' | 'messaging' | 'farm' | 'shipping' | 'settings' | 'platform' | 'other';
 
 export interface Feature {
   id: string;
@@ -29,8 +29,59 @@ export interface Feature {
   subFeatures?: string[];
 }
 
-// Load merged features
-const completeFeatures = mergedFeatures;
+interface FeaturesFile {
+  features?: Feature[];
+}
+
+// Load base features
+const loadedFeatures = (Array.isArray(featuresDoc) 
+  ? featuresDoc 
+  : (featuresDoc as FeaturesFile).features || []
+) as Feature[];
+
+// Try to load complete dataset (synchronous)
+let completeFeatures: Feature[] = loadedFeatures;
+
+try {
+  // Synchronous import - will be tree-shaken if file doesn't exist
+  const completeDoc = require('../../docs/features/features-complete.json');
+  const completeList = (Array.isArray(completeDoc)
+    ? completeDoc
+    : (completeDoc as FeaturesFile).features || []
+  ) as Feature[];
+  
+  if (completeList.length > 0) {
+    // Deep merge: prefer completeList, combine arrays
+    const map = new Map<string, Feature>();
+    for (const f of loadedFeatures) map.set(f.id, f);
+    for (const f of completeList) {
+      if (map.has(f.id)) {
+        const existing = map.get(f.id)!;
+        map.set(f.id, {
+          ...existing,
+          ...f,
+          routes: Array.from(new Set([...existing.routes, ...f.routes])),
+          components: Array.from(new Set([...existing.components, ...f.components])),
+          rpc: Array.from(new Set([...existing.rpc, ...f.rpc])),
+          flags: Array.from(new Set([...existing.flags, ...f.flags])),
+          tests: {
+            unit: Array.from(new Set([...existing.tests.unit, ...f.tests.unit])),
+            e2e: Array.from(new Set([...existing.tests.e2e, ...f.tests.e2e]))
+          }
+        });
+      } else {
+        map.set(f.id, f);
+      }
+    }
+    completeFeatures = Array.from(map.values());
+  }
+} catch (err) {
+  // If complete file doesn't exist or fails to load, use base features only
+  console.info('[Feature Kernel] Using base features.json only');
+}
+
+// Sort by ID
+completeFeatures.sort((a, b) => a.id.localeCompare(b.id));
 
 /**
  * Gold-path critical features
