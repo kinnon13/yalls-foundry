@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { trackMetric } from './monitoring/metrics';
 
 type RpcStatus = 'ok' | 'error' | 'noop';
 
@@ -26,6 +27,9 @@ export async function rpcWithObs<TParams extends Record<string, any>, TResult = 
   }
 
   const durationMs = Math.round(performance.now() - t0);
+
+  // Track metrics for observability
+  trackMetric('rpc_call', rpcName, { status, error: errorCode }, durationMs);
 
   // Sampling + safety: only log if sampled, and keep meta small (<1KB)
   if (Math.random() <= SAMPLE_RATE) {

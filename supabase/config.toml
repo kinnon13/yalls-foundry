@@ -159,3 +159,7 @@ verify_jwt = true
 [functions.preview-pay-labels]
 verify_jwt = true
 
+# --- PR-I1 Infrastructure: Feed API with caching ---
+[functions.feed-api]
+verify_jwt = false
+
