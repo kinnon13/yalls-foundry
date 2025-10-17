@@ -151,29 +151,6 @@ export function DashboardSidebar() {
             );
           })}
         </nav>
-
-        {hiddenItems.length > 0 && (
-          <div className="mt-6 pt-4 border-t border-border">
-            <div className="text-xs font-medium text-muted-foreground mb-2 px-3">
-              Unlock with profile
-            </div>
-            <div className="space-y-1">
-              {hiddenItems.map((item) => (
-                <Button
-                  key={item.path}
-                  variant="ghost"
-                  size="m"
-                  className="w-full justify-start gap-3 opacity-50"
-                  onClick={() => setSearchParams({ create: 'profile' })}
-                >
-                  {item.icon}
-                  <span className="flex-1 text-left">{item.label}</span>
-                  <PlusCircle size={14} className="ml-auto" />
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

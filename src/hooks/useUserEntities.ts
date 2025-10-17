@@ -5,7 +5,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export type EntityType = 'horse' | 'farm' | 'business' | 'person';
+export type EntityType = 'horse' | 'business' | 'owner' | 'stable' | 'breeder' | 'rider' | 'event' | 'profile';
 
 export interface UserEntity {
   id: string;
@@ -16,10 +16,10 @@ export interface UserEntity {
 }
 
 export interface EntityCapabilities {
-  hasFarm: boolean;
+  hasFarm: boolean; // Maps to stable
   hasHorse: boolean;
   hasBusiness: boolean;
-  hasProducers: boolean;
+  hasProducers: boolean; // Maps to owner
   entities: UserEntity[];
 }
 
@@ -59,10 +59,10 @@ export function useUserEntities() {
       const userEntities = (entities || []) as UserEntity[];
 
       return {
-        hasFarm: userEntities.some(e => e.entity_type === 'farm'),
+        hasFarm: userEntities.some(e => e.entity_type === 'stable'),
         hasHorse: userEntities.some(e => e.entity_type === 'horse'),
         hasBusiness: userEntities.some(e => e.entity_type === 'business'),
-        hasProducers: userEntities.some(e => e.entity_type === 'person'),
+        hasProducers: userEntities.some(e => e.entity_type === 'owner'),
         entities: userEntities,
       };
     },
