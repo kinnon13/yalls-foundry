@@ -141,7 +141,7 @@ export function Settings() {
                 <div>
                   <Label>Quiet Hours</Label>
                   <p className="text-sm text-muted-foreground">
-                    Current: {aiConsent?.quiet_hours || 'None set'}
+                    Current: {(aiConsent?.quiet_hours as string) || 'None set'}
                   </p>
                 </div>
                 <div>

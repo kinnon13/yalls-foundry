@@ -15,7 +15,7 @@ export function Earnings() {
   const { session } = useSession();
 
   // Mock tier for now (would come from mlm_user_stats in real app)
-  const tierCapture = 1; // Default: Free tier
+  const tierCapture: number = 1; // Default: Free tier (1% / 2.5% / 4%)
 
   const maxTier = 4;
   const missedPercent = maxTier - tierCapture;
