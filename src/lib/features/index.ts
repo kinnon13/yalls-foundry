@@ -3,6 +3,10 @@
  * Single source of truth for all features
  */
 
+// Load JSON sources - Vite handles .json imports natively
+import baseJson from '../../../docs/features/features.json';
+import completeJson from '../../../docs/features/features-complete.json';
+
 export type FeatureStatus = 'shell' | 'full-ui' | 'wired';
 export type FeatureArea = 'profile' | 'notifications' | 'composer' | 'events' | 'producer' | 'earnings' | 'ai' | 'admin' | 'other';
 
@@ -28,16 +32,12 @@ export interface Feature {
   type?: 'feature' | 'capability' | 'tech';
 }
 
-// Load JSON sources
-import baseJson from '../../../docs/features/features.json';
-import completeJson from '../../../docs/features/features-complete.json';
-
 interface FeaturesFile {
-  features: Feature[];
+  features?: Feature[];
 }
 
-const baseList: Feature[] = ((baseJson as FeaturesFile).features || []) as Feature[];
-const completeList: Feature[] = ((completeJson as FeaturesFile).features || []) as Feature[];
+const baseList: Feature[] = (Array.isArray(baseJson) ? baseJson : (baseJson as FeaturesFile).features || []) as Feature[];
+const completeList: Feature[] = (Array.isArray(completeJson) ? completeJson : (completeJson as FeaturesFile).features || []) as Feature[];
 
 /**
  * Deep merge two features, combining arrays
