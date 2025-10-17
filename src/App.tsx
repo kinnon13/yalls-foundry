@@ -53,6 +53,8 @@ const EventStalls = lazy(() => import('./routes/events/[id]/stalls-booking'));
 const EventQRCheckin = lazy(() => import('./routes/events/[eventId]/qr-checkin'));
 const PublicDraw = lazy(() => import('./routes/events/[id]/public-draw'));
 const PublicResults = lazy(() => import('./routes/events/[id]/public-results'));
+const EventDrawPublic = lazy(() => import('./routes/events/[eventId]/draw'));
+const EventResultsPublic = lazy(() => import('./routes/events/[eventId]/results'));
 const CartPage = lazy(() => import('./routes/cart/index'));
 const OrdersIndex = lazy(() => import('./routes/orders/index'));
 const OrderDetail = lazy(() => import('./routes/orders/[id]'));
@@ -114,6 +116,8 @@ const App = () => (
           </Route>
           <Route path="/events/:eventId/enter" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><EventEnter /></Suspense></RequireAuth>} />
           <Route path="/events/:eventId/qr-checkin" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><EventQRCheckin /></Suspense></RequireAuth>} />
+          <Route path="/events/:eventId/draw" element={<Suspense fallback={<div>Loading...</div>}><EventDrawPublic /></Suspense>} />
+          <Route path="/events/:eventId/results" element={<Suspense fallback={<div>Loading...</div>}><EventResultsPublic /></Suspense>} />
           <Route path="/cart" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><CartPage /></Suspense></RequireAuth>} />
           <Route path="/orders" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrdersIndex /></Suspense></RequireAuth>} />
           <Route path="/orders/:id" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrderDetail /></Suspense></RequireAuth>} />
