@@ -63,8 +63,14 @@ function titleize(id: string) {
 }
 
 function guessArea(route: string, file: string): string {
-  // Area inference rules
+  // Area inference rules (order matters - most specific first)
   if (file.includes('/admin/')) return 'admin';
+  if (file.includes('/crm')) return 'business';
+  if (file.includes('/kpi') || file.includes('/analytics') || file.includes('/metrics')) return 'business';
+  if (file.includes('/campaign') || file.includes('/marketing')) return 'business';
+  if (file.includes('/accounting') || file.includes('/financials')) return 'business';
+  if (file.includes('/dashboard')) return 'business';
+  if (file.includes('/producer') || file.includes('/business')) return 'business';
   if (file.includes('/marketplace') || file.includes('/listing')) return 'marketplace';
   if (file.includes('/orders') || file.includes('/checkout') || file.includes('/cart')) return 'orders';
   if (file.includes('/payment') || file.includes('/billing')) return 'payments';
@@ -72,7 +78,6 @@ function guessArea(route: string, file: string): string {
   if (file.includes('/message') || file.includes('/chat')) return 'messaging';
   if (file.includes('/farm')) return 'farm';
   if (file.includes('/shipping') || file.includes('/logistic')) return 'shipping';
-  if (file.includes('/producer') || file.includes('/business') || file.includes('/dashboard')) return 'business';
   if (file.includes('/profile')) return 'profile';
   if (file.includes('/event')) return 'events';
   if (file.includes('/composer')) return 'composer';
@@ -117,12 +122,14 @@ async function main() {
 
   // Scan codebase
   const routeFiles = await glob(['src/routes/**/*.{ts,tsx}'], { ignore: ['**/__tests__/**', '**/*.test.*', '**/*.spec.*'] });
-  const compFiles = await glob(['src/components/**/*.{ts,tsx}'], { ignore: ['**/__tests__/**', '**/*.test.*', '**/*.spec.*'] });
+  const compFiles = await glob(['src/components/**/*.{ts,tsx}'], { 
+    ignore: ['**/__tests__/**', '**/*.test.*', '**/*.spec.*', '**/ui/**'] 
+  });
   const testFiles = await glob(['tests/**/*.{ts,tsx}'], {});
   
-  console.log(`   Routes found: ${routeFiles.length}`);
-  console.log(`   Components found: ${compFiles.length}`);
-  console.log(`   Tests found: ${testFiles.length}\n`);
+  console.log(`   Routes: ${routeFiles.length}`);
+  console.log(`   Components: ${compFiles.length} (excluding ui/)`);
+  console.log(`   Tests: ${testFiles.length}\n`);
 
   // Collect discovered features
   const discovered = new Map<string, Feature>();
@@ -219,6 +226,12 @@ async function main() {
     discovered.delete(id);
   }
 
+  // Calculate area breakdown
+  const byArea: Record<string, number> = {};
+  for (const f of discovered.values()) {
+    byArea[f.area] = (byArea[f.area] ?? 0) + 1;
+  }
+  
   // Emit generated features
   ensureDir(OUT_DIR);
   const payload = {
@@ -226,7 +239,14 @@ async function main() {
     metadata: {
       generated: new Date().toISOString(),
       source: 'backfill',
-      version: '1.0.0'
+      version: '1.0.0',
+      counts: {
+        total: discovered.size,
+        routes: routeFiles.length,
+        components: compFiles.length,
+        tests: testFiles.length,
+        byArea
+      }
     }
   };
   
@@ -234,8 +254,17 @@ async function main() {
 
   console.log(`✅ Backfill complete!`);
   console.log(`   Generated features: ${payload.features.length}`);
-  console.log(`   Output: ${OUT}`);
-  console.log(`\n💡 Refresh /admin/features to see the full list\n`);
+  console.log(`   Manual features (excluded): ${manual.size}`);
+  console.log(`   Total unique features: ${payload.features.length + manual.size}`);
+  console.log(`\n📊 By area:`);
+  
+  const sorted = Object.entries(byArea).sort((a, b) => b[1] - a[1]);
+  for (const [area, count] of sorted.slice(0, 15)) {
+    console.log(`   ${area.padEnd(15)} ${count}`);
+  }
+  
+  console.log(`\n   Output: ${OUT}`);
+  console.log(`\n💡 Next: Refresh /admin/features to see all ${payload.features.length + manual.size} features\n`);
 }
 
 main().catch(err => {
