@@ -28,7 +28,10 @@ export function NextBestActionsPanel() {
       });
       
       if (error) throw error;
-      return (data || []) as unknown as NextBestAction[];
+      
+      // Parse if string, handle as array
+      const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+      return (Array.isArray(parsed) ? parsed : []) as NextBestAction[];
     },
     enabled: !!session?.userId,
     refetchInterval: 5 * 60 * 1000,
