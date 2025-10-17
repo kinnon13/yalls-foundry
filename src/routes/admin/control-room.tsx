@@ -38,6 +38,7 @@ import { MediaUploadDialog } from '@/components/media/MediaUploadDialog';
 import { ModeratorConsole } from '@/routes/admin/panels/ModeratorConsole';
 import AIAnalyticsPanel from '@/routes/admin/panels/AIAnalyticsPanel';
 import KnowledgeBrowserPanel from '@/routes/admin/panels/KnowledgeBrowserPanel';
+import { KnowledgeIngestPanel } from '@/routes/admin/panels/KnowledgeIngestPanel';
 import { Phase2VerificationPanel } from '@/routes/admin/panels/Phase2VerificationPanel';
 import { HardeningVerificationPanel } from '@/routes/admin/panels/HardeningVerificationPanel';
 import { SuperAIPanel } from '@/routes/admin/panels/SuperAIPanel';
@@ -362,6 +363,7 @@ export default function ControlRoom() {
 
             {/* Knowledge Browser Tab */}
             <TabsContent value="knowledge" className="space-y-6">
+              <KnowledgeIngestPanel />
               <KnowledgeBrowserPanel />
             </TabsContent>
 
