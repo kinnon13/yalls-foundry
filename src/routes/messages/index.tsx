@@ -25,7 +25,7 @@ export default function Messages() {
   const [loading, setLoading] = useState(false);
 
   const load = async () => {
-    if (!session) return;
+    if (!session?.userId) return;
 
     const { data, error } = await supabase
       .from('messages')
@@ -40,7 +40,7 @@ export default function Messages() {
       return;
     }
 
-    setRows((data ?? []) as Msg[]);
+    setRows(data ?? []);
   };
 
   useEffect(() => {
@@ -48,15 +48,18 @@ export default function Messages() {
   }, [session]);
 
   const send = async () => {
-    if (!session || !toUserId || !body.trim()) return;
+    if (!session?.userId || !toUserId || !body.trim()) return;
 
     setLoading(true);
     try {
-      const { error } = await supabase.rpc('dm_send', {
-        p_recipient: toUserId,
-        p_body: body,
-        p_metadata: {}
-      });
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          sender_user_id: session.userId,
+          recipient_user_id: toUserId,
+          body: body,
+          metadata: {}
+        });
 
       if (error) throw error;
 

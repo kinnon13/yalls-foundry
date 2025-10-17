@@ -13,7 +13,10 @@ type Contact = {
   name: string;
   email?: string;
   phone?: string;
-  tags: any[];
+  custom_fields: any;
+  business_id: string;
+  status: string;
+  notes: string;
   created_at: string;
 };
 
@@ -38,7 +41,7 @@ export default function CRM() {
       return;
     }
 
-    setContacts((data ?? []) as Contact[]);
+    setContacts(data ?? []);
   };
 
   useEffect(() => {
@@ -46,16 +49,23 @@ export default function CRM() {
   }, []);
 
   const save = async () => {
-    if (!session || !name.trim()) return;
+    if (!session?.userId || !name.trim()) return;
 
     setLoading(true);
     try {
-      const { error } = await supabase.rpc('crm_contact_upsert', {
-        p_name: name,
-        p_email: email || null,
-        p_phone: phone || null,
-        p_tags: []
-      });
+      const { error } = await supabase
+        .from('crm_contacts')
+        .insert({
+          owner_user_id: session.userId,
+          name: name,
+          email: email || null,
+          phone: phone || null,
+          custom_fields: {},
+          business_id: '',
+          status: 'active',
+          notes: '',
+          tenant_id: session.userId
+        });
 
       if (error) throw error;
 

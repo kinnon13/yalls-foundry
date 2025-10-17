@@ -11,9 +11,10 @@ type Post = {
   id: string;
   body: string;
   media: any[];
-  visibility: 'public' | 'followers' | 'private';
+  visibility: string;
   created_at: string;
-  author_user_id: string;
+  author_id: string;
+  kind: string;
 };
 
 export default function Feed() {
@@ -35,7 +36,7 @@ export default function Feed() {
       return;
     }
     
-    setRows((data ?? []) as Post[]);
+    setRows(data ?? []);
   };
 
   useEffect(() => {
@@ -47,11 +48,11 @@ export default function Feed() {
     
     setLoading(true);
     try {
-      const { error } = await supabase.rpc('post_create', {
-        p_body: body,
+      const { error } = await supabase.rpc('rpc_create_post', {
+        p_idempotency_key: crypto.randomUUID(),
+        p_content: body,
         p_visibility: 'public',
-        p_entity_id: null,
-        p_media: []
+        p_media_urls: []
       });
 
       if (error) throw error;

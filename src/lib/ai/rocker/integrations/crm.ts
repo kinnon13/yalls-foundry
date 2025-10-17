@@ -6,16 +6,26 @@ import { supabase } from '@/integrations/supabase/client';
  * @returns Array of contacts needing follow-up with reasons
  */
 export async function getFollowUps(days = 14) {
-  const { data, error } = await supabase.rpc('rocker_generate_followup_list', {
-    p_days_idle: days
-  });
+  // Query contacts with no recent events
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+
+  const { data, error } = await supabase
+    .from('crm_contacts')
+    .select('id, name, updated_at')
+    .lt('updated_at', cutoff.toISOString())
+    .limit(50);
 
   if (error) {
     console.error('Failed to fetch follow-ups:', error);
     return [];
   }
 
-  return data ?? [];
+  return (data ?? []).map(c => ({
+    contact_id: c.id,
+    name: c.name,
+    reason: `No activity since ${new Date(c.updated_at).toLocaleDateString()}`
+  }));
 }
 
 /**
@@ -26,7 +36,11 @@ export async function logCRMEvent(
   kind: string,
   data: Record<string, any>
 ) {
+  const user = (await supabase.auth.getUser()).data.user;
+  if (!user) return;
+
   const { error } = await supabase.from('crm_events').insert({
+    owner_user_id: user.id,
     contact_id: contactId,
     kind,
     data,

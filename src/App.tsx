@@ -34,7 +34,6 @@ const EntityDetail = lazy(() => import('./routes/entities/[id]'));
 const Feed = lazy(() => import('./routes/feed/index'));
 const Messages = lazy(() => import('./routes/messages/index'));
 const CRM = lazy(() => import('./routes/crm/index'));
-const CRM = lazy(() => import('./routes/crm/index'));
 const ClaimEntity = lazy(() => import('./routes/claim/[entityId]'));
 const AdminClaims = lazy(() => import('./routes/admin/claims'));
 
