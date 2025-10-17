@@ -142,6 +142,16 @@ verify_jwt = true
 [functions.ai-curate-feed]
 verify_jwt = true
 
+# --- PR2.6 Rocker Tasks (Proactive SMS/Chat) ---
+[functions.rocker-send-outbox]
+verify_jwt = false
+
+[functions.rocker-send-outbox.cron]
+schedule = "* * * * *"  # Every minute
+
+[functions.rocker-sms-webhook]
+verify_jwt = false
+
 # --- Phase 3 Preview Pay Functions ---
 [functions.preview-pay-checkout]
 verify_jwt = true
