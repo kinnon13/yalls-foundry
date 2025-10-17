@@ -1,278 +1,165 @@
 # Production Deployment Guide
 
+## Environment Variables
+
+### Frontend (Vite)
+```bash
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...
+VITE_REDIS_URL=rediss://:password@host:port
+VITE_SENTRY_DSN=https://...@sentry.io/...  # optional
+VITE_COMMIT_SHA=abc123                      # optional
+```
+
+### Worker (Node.js)
+```bash
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...  # service key (server-only!)
+REDIS_URL=rediss://...
+JOBS_QUEUE=jobs:main
+```
+
 ## Infrastructure Setup
 
-### 1. Redis (Required for caching & queues)
+### 1. Redis (Upstash or Managed)
+- Sign up at [Upstash](https://upstash.com) for serverless Redis
+- Create a database and copy the `rediss://` URL
+- Set as `VITE_REDIS_URL` and `REDIS_URL`
 
-**Option A: Local (Development)**
-```bash
-docker run -d -p 6379:6379 redis:7-alpine
-```
-
-**Option B: Managed (Production)**
-- Upstash: https://upstash.com (Recommended - serverless)
-- Redis Cloud: https://redis.com/try-free
-- Railway: https://railway.app
-
-Set environment variable:
-```bash
-VITE_REDIS_URL=redis://localhost:6379
-# Or for Upstash:
-VITE_REDIS_URL=rediss://default:password@endpoint.upstash.io:6379
-```
-
-### 2. Storage Bucket (CSV Exports)
-
-Create storage bucket in Supabase:
+### 2. Storage Bucket
+Create the exports bucket in Supabase:
 ```sql
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('exports', 'exports', false);
 
--- RLS policy for user-owned exports
-CREATE POLICY "Users can access own exports"
+-- RLS policy for exports
+CREATE POLICY "Users can view own exports"
 ON storage.objects FOR SELECT
-USING (
-  bucket_id = 'exports' AND
-  auth.uid()::text = (storage.foldername(name))[1]
-);
+USING (bucket_id = 'exports' AND auth.uid()::text = (storage.foldername(name))[1]);
 ```
 
-### 3. PgBouncer (Connection Pooling)
-
-For Supabase projects, enable PgBouncer from dashboard:
-1. Go to Database → Connection Pooling
-2. Enable Transaction mode
-3. Update connection string to use port 6543
-
-### 4. Environment Variables
-
-Required for production:
+### 3. Worker Process
+Deploy worker to Railway/Render/Fly.io:
 ```bash
-# Supabase (auto-configured)
-VITE_SUPABASE_URL=your_url
-VITE_SUPABASE_ANON_KEY=your_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_key
+# Install dependencies
+npm install
 
-# Redis (required for caching)
-VITE_REDIS_URL=redis://your-redis-url
-
-# Observability (optional but recommended)
-VITE_SENTRY_DSN=your_sentry_dsn
-VITE_COMMIT_SHA=git_commit_hash
-
-# Production flag
-NODE_ENV=production
-```
-
-### 5. Worker Process
-
-The background worker processes CSV exports and notifications.
-
-**Deploy worker separately:**
-```bash
-# Build first
+# Build worker
 npm run build
 
-# Start worker
+# Run worker
 node dist/workers/index.js
 ```
 
-**Using PM2:**
-```bash
-pm2 start dist/workers/index.js --name worker
-pm2 save
+**Dockerfile** (optional):
+```dockerfile
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --production
+COPY dist ./dist
+CMD ["node", "dist/workers/index.js"]
 ```
 
-**Using systemd:**
-```ini
-[Unit]
-Description=Y'alls Worker
-After=network.target
+## Cloudflare Setup
 
-[Service]
-Type=simple
-User=www-data
-WorkingDirectory=/var/www/yalls
-ExecStart=/usr/bin/node dist/workers/index.js
-Restart=always
+### Caching Rules
+1. **Static Assets**: `/assets/*` → Cache Everything, Edge TTL 1 year
+2. **API Bypass**: `/rpc/*`, `/health` → Bypass Cache
+3. **SPA Routes**: `/` → Standard (dynamic HTML)
 
-[Install]
-WantedBy=multi-user.target
-```
+### Rate Limiting
+1. **API**: `/rpc/*` → 100 req/min per IP
+2. **Payments**: `/payments/*` → 60 req/min per IP
+3. **Auth**: `/auth/*` → 20 req/min per IP
 
-### 6. Cloudflare (CDN + WAF)
-
-**Cache Rules:**
-1. Path: `/assets/*` → Cache Everything, 1 year TTL
-2. Path: `/` Method: GET → Cache Everything, 60s TTL, Bypass cookies
-
-**Rate Limit Rules:**
-1. `/rpc/*` → 100 req/min/IP, burst 30
-2. `/auth/*` → 20 req/min/IP
-3. `/*` → Block if > 1000 req/5min from same IP
-
-**Security:**
-- Enable Bot Fight Mode
-- Set Security Level to Medium
-- Enable Email Obfuscation
-- Enable Hotlink Protection
-
-## Health Checks
-
-The `/health` endpoint returns system status:
-```json
-{
-  "ok": true,
-  "db": "up",
-  "redis": "configured",
-  "time": "2025-01-01T00:00:00.000Z",
-  "version": "abc123"
-}
-```
-
-Set up monitoring:
-- Uptime Robot: https://uptimerobot.com
-- Better Uptime: https://betteruptime.com
-- Or use GitHub Actions (`.github/workflows/uptime.yml`)
+### Security
+- Bot Fight Mode: **ON**
+- Security Level: **Medium**
+- Hotlink Protection: **ON**
+- Email Obfuscation: **ON**
 
 ## Load Testing
 
-Run load tests with k6:
+Run k6 smoke test:
 ```bash
-# Install k6
-brew install k6  # macOS
-# or download from https://k6.io
-
-# Run test
 k6 run loadtest.js
-
-# With custom target
-k6 run -e BASE_URL=https://your-domain.com loadtest.js
 ```
 
-**Targets:**
-- p95 latency < 300ms
-- Error rate < 2%
-- Throughput > 100 req/s
+Target thresholds:
+- Error rate: < 2%
+- p95 latency: < 300ms
+- Success rate: > 98%
 
 ## Monitoring
 
-**Sentry (Errors & Performance):**
-1. Create project at https://sentry.io
-2. Add DSN to `VITE_SENTRY_DSN`
-3. Errors auto-reported with stack traces
-4. Performance traces sampled at 10%
+### Sentry
+```typescript
+Sentry.init({
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  release: import.meta.env.VITE_COMMIT_SHA,
+  tracesSampleRate: 0.2
+});
+```
 
-**Database Metrics:**
-Check these in Supabase dashboard:
-- Connection count (should stay below pool size)
-- Query duration (p95 < 100ms)
-- Cache hit ratio (> 90%)
+### Health Checks
+- Endpoint: `GET /health`
+- Expected: `{ ok: true, db: "up", redis: "up" }`
+- Monitor via GitHub Actions or external service
 
-## Scaling Checklist
+## Deployment Checklist
 
-**Phase 1: 0-100K users (Current)**
-- ✅ RLS policies enabled
-- ✅ Connection pooling (PgBouncer)
-- ✅ Redis caching (60s TTL)
-- ✅ CDN caching (Cloudflare)
-- ✅ Edge rate limiting
-- ✅ Background workers
-- ✅ Health checks
-- ⏳ Load testing
+- [ ] Set all environment variables
+- [ ] Deploy worker process with service key
+- [ ] Create `exports` storage bucket
+- [ ] Apply Cloudflare rules
+- [ ] Run k6 load test (p95 < 300ms)
+- [ ] Configure Sentry monitoring
+- [ ] Set up uptime monitoring
+- [ ] Test CSV export flow
+- [ ] Verify notifications work
+- [ ] Test feed caching (check Redis)
 
-**Phase 2: 100K-1M users**
-- Add read replicas
-- Increase worker replicas (2-3)
-- Add Redis Cluster
-- Implement cache warming
-- Add database partitioning
+## Scaling Considerations
 
-**Phase 3: 1M+ users**
-- Multi-region deployment
-- Database sharding
-- Advanced caching strategies
-- Dedicated worker infrastructure
+### Horizontal
+- **Web**: Auto-scale on Vercel/Netlify
+- **Worker**: Deploy 2+ replicas behind load balancer
+- **Redis**: Upstash auto-scales; upgrade tier if needed
 
-## Deployment Platforms
+### Vertical
+- **DB**: Monitor connections via PgBouncer; upgrade Supabase plan
+- **Redis**: Upgrade Upstash tier for more memory
+- **Worker**: Increase memory if CSV exports timeout
 
-**Recommended Stack:**
-- Frontend: Vercel / Netlify
-- Worker: Railway / Render
-- Database: Supabase (managed)
-- Cache: Upstash Redis
-- CDN: Cloudflare
+## Cost Estimates (1M users)
 
-**Single Platform (Easier):**
-- Railway: https://railway.app (All-in-one)
-- Render: https://render.com (Web + Worker)
-
-## Security Checklist
-
-- ✅ RLS policies on all tables
-- ✅ API rate limiting (DB + Edge)
-- ✅ CORS properly configured
-- ✅ Service keys never exposed
-- ✅ Secrets in environment variables
-- ✅ Error messages scrubbed (no PII)
-- ✅ Auth required for mutations
-- ✅ Input validation on all forms
-
-## Cost Estimates
-
-**Development (Free tier):**
-- Supabase: $0 (Free tier)
-- Upstash Redis: $0 (10K commands/day free)
-- Cloudflare: $0 (Free plan)
-- Sentry: $0 (5K events/month)
-**Total: $0/month**
-
-**Production (Small scale):**
-- Supabase Pro: $25/month
-- Upstash Redis: $10/month (100K commands/day)
-- Cloudflare Pro: $20/month (optional)
-- Sentry: $26/month (50K events)
-- Worker hosting: $5-10/month
-**Total: ~$60-85/month**
-
-**Production (100K users):**
-- Supabase Team: $599/month
-- Upstash Redis: $40/month
-- Cloudflare Business: $200/month
-- Sentry: $80/month
-- Worker hosting: $50/month
-**Total: ~$970/month**
+- **Supabase**: ~$25-50/mo (Pro plan)
+- **Redis**: ~$10-20/mo (Upstash)
+- **Worker**: ~$5-10/mo (Railway/Render)
+- **CDN**: ~$0 (Cloudflare Free)
+- **Total**: ~$40-80/mo for 1M MAU
 
 ## Troubleshooting
 
-**High latency:**
-1. Check Redis is connected: `VITE_REDIS_URL` set?
-2. Verify CDN cache hits in Cloudflare analytics
-3. Check DB connection pool not exhausted
-4. Review Sentry performance traces
+### High Redis Memory
+- Reduce TTLs (feed: 60s → 30s)
+- Add random jitter to prevent stampede
+- Clear old keys: `redis-cli --scan --pattern "feed:*" | xargs redis-cli del`
 
-**Worker not processing jobs:**
-1. Check worker is running: `ps aux | grep worker`
-2. Verify Redis connection: `redis-cli ping`
-3. Check worker logs for errors
-4. Ensure `SUPABASE_SERVICE_ROLE_KEY` is set
+### Worker Crashes
+- Check logs for unhandled errors
+- Increase memory allocation
+- Add retry logic with exponential backoff
 
-**Rate limit errors:**
-1. User hitting edge limits? Check Cloudflare WAF logs
-2. DB rate limit? Check `rate_limit_counters` table
-3. Adjust thresholds if legitimate traffic
+### Slow Feed Load
+- Check Redis hit rate (should be > 80%)
+- Monitor RPC execution time in Supabase
+- Consider adding DB indexes on `created_at`, `entity_id`
 
-## Support
+## Security
 
-- Supabase Discord: https://discord.supabase.com
-- Railway Discord: https://discord.gg/railway
-- Sentry Docs: https://docs.sentry.io
-
----
-
-**Next Steps:**
-1. Set up Redis (Upstash free tier)
-2. Deploy worker process
-3. Configure Cloudflare cache rules
-4. Run load test (`k6 run loadtest.js`)
-5. Set up health monitoring
+- **Service Key**: NEVER expose in frontend; worker-only
+- **RLS**: Enabled on all tables; test with different users
+- **CORS**: Restricted to your domain in production
+- **Rate Limits**: Enforce at edge (Cloudflare) + DB (RPC)

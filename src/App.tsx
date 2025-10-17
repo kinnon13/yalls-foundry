@@ -82,8 +82,11 @@ const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on'
 
 import { CommandPalette } from '@/components/command/CommandPalette';
 import { ProfileCreationModal } from '@/components/entities/ProfileCreationModal';
+import { usePageTelemetry } from '@/hooks/usePageTelemetry';
 
 function AppContent() {
+  usePageTelemetry();
+  
   useEffect(() => {
     registerRockerFeatureHandler();
   }, []);
