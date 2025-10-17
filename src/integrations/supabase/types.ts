@@ -4467,6 +4467,13 @@ export type Database = {
             foreignKeyName: "notification_receipts_notif_id_fkey"
             columns: ["notif_id"]
             isOneToOne: false
+            referencedRelation: "notif_center_view"
+            referencedColumns: ["notif_id"]
+          },
+          {
+            foreignKeyName: "notification_receipts_notif_id_fkey"
+            columns: ["notif_id"]
+            isOneToOne: false
             referencedRelation: "notifications"
             referencedColumns: ["id"]
           },
@@ -5051,6 +5058,7 @@ export type Database = {
           author_id: string
           author_user_id: string | null
           body: string | null
+          body_tsv: unknown | null
           created_at: string | null
           entity_id: string | null
           id: string
@@ -5066,6 +5074,7 @@ export type Database = {
           author_id: string
           author_user_id?: string | null
           body?: string | null
+          body_tsv?: unknown | null
           created_at?: string | null
           entity_id?: string | null
           id?: string
@@ -5081,6 +5090,7 @@ export type Database = {
           author_id?: string
           author_user_id?: string | null
           body?: string | null
+          body_tsv?: unknown | null
           created_at?: string | null
           entity_id?: string | null
           id?: string
@@ -6287,6 +6297,25 @@ export type Database = {
         }
         Relationships: []
       }
+      notif_center_view: {
+        Row: {
+          archived: boolean | null
+          body: string | null
+          category: Database["public"]["Enums"]["notification_category"] | null
+          created_at: string | null
+          link: string | null
+          muted: boolean | null
+          notif_id: string | null
+          payload: Json | null
+          priority: number | null
+          read_at: string | null
+          receipt_id: string | null
+          seen_at: string | null
+          title: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _map_profile_to_entity: {
@@ -7209,14 +7238,23 @@ export type Database = {
         Returns: undefined
       }
       notif_send: {
-        Args: {
-          p_body: string
-          p_category: Database["public"]["Enums"]["notification_category"]
-          p_link?: string
-          p_priority?: number
-          p_title: string
-          p_user_ids: string[]
-        }
+        Args:
+          | {
+              p_body: string
+              p_category: Database["public"]["Enums"]["notification_category"]
+              p_link?: string
+              p_priority?: number
+              p_title: string
+              p_user_ids: string[]
+            }
+          | {
+              p_body: string
+              p_category: string
+              p_link?: string
+              p_payload?: Json
+              p_title: string
+              p_user_id: string
+            }
         Returns: string
       }
       order_start_from_cart: {
@@ -7498,6 +7536,16 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      rocker_next_best_actions: {
+        Args: { p_user_id: string }
+        Returns: {
+          action_type: string
+          description: string
+          link: string
+          priority: number
+          title: string
+        }[]
       }
       rpc_create_post: {
         Args: {

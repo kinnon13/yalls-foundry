@@ -132,12 +132,10 @@ const App = () => (
           <Route path="/orders" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrdersIndex /></Suspense></RequireAuth>} />
           <Route path="/orders/:id" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrderDetail /></Suspense></RequireAuth>} />
           
-          {/* Discovery */}
-          <Route path="/discover" element={<Suspense fallback={<div>Loading...</div>}><DiscoverV2 /></Suspense>} />
-          
           {/* Dashboard V2 & Earnings */}
           <Route path="/dashboard-v2" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><DashboardV2 /></Suspense></RequireAuth>} />
           <Route path="/earnings" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><Earnings /></Suspense></RequireAuth>} />
+          <Route path="/dashboard/approvals" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><Approvals /></Suspense></RequireAuth>} />
           <Route path="/dashboard/approvals" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><Approvals /></Suspense></RequireAuth>} />
           
           {/* Farm Ops */}

@@ -49,7 +49,7 @@ export function FinderModal({ open, onClose }: FinderModalProps) {
       const { data: posts } = await supabase
         .from('posts')
         .select('id, body')
-        .textSearch('body', query)
+        .textSearch('body_tsv', query)
         .limit(5);
 
       const { data: listings } = await supabase
