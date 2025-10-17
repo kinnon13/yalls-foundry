@@ -67,13 +67,11 @@ export function UpcomingEventsRow() {
   const { data: savedEvents } = useQuery({
     queryKey: ['calendar-events', session?.userId],
     queryFn: async () => {
-      // @ts-expect-error - table added in migration, types will regenerate
       const { data } = await supabase
         .from('calendar_events')
-        .select('*')
-        .eq('user_id', session!.userId);
-      // @ts-expect-error - types will regenerate after migration
-      return new Set((data || []).map(e => e.event_id));
+        .select('id, title, starts_at, ends_at, location, event_type')
+        .eq('created_by', session!.userId);
+      return new Set((data || []).map(e => e.id));
     },
     enabled: !!session?.userId
   });

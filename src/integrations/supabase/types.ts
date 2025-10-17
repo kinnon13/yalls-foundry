@@ -5161,6 +5161,76 @@ export type Database = {
         }
         Relationships: []
       }
+      price_test_variants: {
+        Row: {
+          id: string
+          price_cents: number
+          test_id: string
+          variant_key: string
+        }
+        Insert: {
+          id?: string
+          price_cents: number
+          test_id: string
+          variant_key: string
+        }
+        Update: {
+          id?: string
+          price_cents?: number
+          test_id?: string
+          variant_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_test_variants_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "price_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_tests: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+          listing_id: string
+          owner_user_id: string
+          started_at: string | null
+          status: string
+          winner_variant: string | null
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          listing_id: string
+          owner_user_id: string
+          started_at?: string | null
+          status?: string
+          winner_variant?: string | null
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          listing_id?: string
+          owner_user_id?: string
+          started_at?: string | null
+          status?: string
+          winner_variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_tests_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_pins: {
         Row: {
           created_at: string
@@ -5235,6 +5305,133 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      promotion_redemptions: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          listing_id: string | null
+          order_id: string
+          promotion_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          listing_id?: string | null
+          order_id: string
+          promotion_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          listing_id?: string | null
+          order_id?: string
+          promotion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_redemptions_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_redemptions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_redemptions_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotion_targets: {
+        Row: {
+          id: string
+          listing_id: string
+          promotion_id: string
+        }
+        Insert: {
+          id?: string
+          listing_id: string
+          promotion_id: string
+        }
+        Update: {
+          id?: string
+          listing_id?: string
+          promotion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_targets_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_targets_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotions: {
+        Row: {
+          created_at: string
+          discount_type: Database["public"]["Enums"]["discount_type"] | null
+          discount_value: number
+          end_at: string
+          id: string
+          kind: Database["public"]["Enums"]["promotion_kind"]
+          metadata: Json
+          name: string
+          owner_user_id: string
+          start_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discount_type?: Database["public"]["Enums"]["discount_type"] | null
+          discount_value: number
+          end_at: string
+          id?: string
+          kind?: Database["public"]["Enums"]["promotion_kind"]
+          metadata?: Json
+          name: string
+          owner_user_id: string
+          start_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discount_type?: Database["public"]["Enums"]["discount_type"] | null
+          discount_value?: number
+          end_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["promotion_kind"]
+          metadata?: Json
+          name?: string
+          owner_user_id?: string
+          start_at?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -5331,6 +5528,80 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rocker_campaign_audience: {
+        Row: {
+          campaign_id: string
+          id: string
+          segment: string
+          segment_params: Json
+          user_ids: string[] | null
+        }
+        Insert: {
+          campaign_id: string
+          id?: string
+          segment: string
+          segment_params?: Json
+          user_ids?: string[] | null
+        }
+        Update: {
+          campaign_id?: string
+          id?: string
+          segment?: string
+          segment_params?: Json
+          user_ids?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_campaign_audience_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rocker_campaigns: {
+        Row: {
+          channel: string
+          created_at: string
+          id: string
+          name: string
+          rrule: string | null
+          schedule_at: string | null
+          sent_count: number
+          status: string
+          template: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          id?: string
+          name: string
+          rrule?: string | null
+          schedule_at?: string | null
+          sent_count?: number
+          status?: string
+          template?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          id?: string
+          name?: string
+          rrule?: string | null
+          schedule_at?: string | null
+          sent_count?: number
+          status?: string
+          template?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       rocker_conversations: {
         Row: {
@@ -6715,6 +6986,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      end_price_test: {
+        Args: { p_test_id: string; p_winner?: string }
+        Returns: Json
+      }
       entity_claim_approve: {
         Args: { p_claim_id: string }
         Returns: Json
@@ -7059,6 +7334,10 @@ export type Database = {
       get_knowledge_scope_filter: {
         Args: { p_tenant_id?: string; p_user_id: string }
         Returns: string
+      }
+      get_price_suggestions: {
+        Args: { p_listing_id: string }
+        Returns: Json
       }
       get_proj4_from_srid: {
         Args: { "": number }
@@ -7523,6 +7802,10 @@ export type Database = {
       postgis_wagyu_version: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      queue_campaign_messages: {
+        Args: { p_campaign_id: string }
+        Returns: Json
       }
       record_view: {
         Args: { p_listing_id: string; p_session_id?: string }
@@ -8700,6 +8983,10 @@ export type Database = {
         Args: { "": unknown }
         Returns: number
       }
+      start_price_test: {
+        Args: { p_listing_id: string; p_variants: Json }
+        Returns: string
+      }
       text: {
         Args: { "": unknown }
         Returns: string
@@ -8762,6 +9049,7 @@ export type Database = {
       calendar_type: "personal" | "business" | "horse" | "event" | "custom"
       claim_method: "email" | "sms" | "manual"
       claim_status: "pending" | "approved" | "rejected" | "canceled"
+      discount_type: "percent" | "amount"
       draft_kind: "post" | "listing" | "event"
       draft_status: "draft" | "scheduled" | "published"
       entity_kind: "person" | "business" | "horse" | "event"
@@ -8801,6 +9089,7 @@ export type Database = {
         | "ai"
         | "system"
       post_visibility: "public" | "followers" | "private"
+      promotion_kind: "discount" | "boost"
       recurrence_freq: "daily" | "weekly" | "monthly" | "yearly"
       task_status: "open" | "done" | "cancelled"
     }
@@ -8953,6 +9242,7 @@ export const Constants = {
       calendar_type: ["personal", "business", "horse", "event", "custom"],
       claim_method: ["email", "sms", "manual"],
       claim_status: ["pending", "approved", "rejected", "canceled"],
+      discount_type: ["percent", "amount"],
       draft_kind: ["post", "listing", "event"],
       draft_status: ["draft", "scheduled", "published"],
       entity_kind: ["person", "business", "horse", "event"],
@@ -8995,6 +9285,7 @@ export const Constants = {
         "system",
       ],
       post_visibility: ["public", "followers", "private"],
+      promotion_kind: ["discount", "boost"],
       recurrence_freq: ["daily", "weekly", "monthly", "yearly"],
       task_status: ["open", "done", "cancelled"],
     },

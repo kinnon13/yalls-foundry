@@ -1,0 +1,131 @@
+/**
+ * Earnings Overview - Commission splits, tier capture, missed earnings
+ */
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
+
+export function EarningsOverview() {
+  // Mock tier for now (would come from mlm_user_stats in real app)
+  type TierCapture = 1 | 2.5 | 4;
+  const tierCapture = 1 as TierCapture; // Default: Free tier
+
+  const maxTier: TierCapture = 4;
+  const missedPercent = Math.max(0, maxTier - tierCapture);
+
+  // Mock earnings data (in real app, would come from commissions/payouts tables)
+  const mockEarnings = {
+    pending_cents: 2500,
+    accrued_cents: 15000,
+    paid_cents: 45000,
+    eligible_cents: 100000,
+  };
+
+  const missedCents = Math.round((mockEarnings.eligible_cents * missedPercent) / 100);
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Tiles */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ${(mockEarnings.pending_cents / 100).toFixed(2)}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Accrued</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ${(mockEarnings.accrued_cents / 100).toFixed(2)}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Paid</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ${(mockEarnings.paid_cents / 100).toFixed(2)}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-yellow-500/50 bg-yellow-500/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-1">
+              <AlertTriangle className="w-4 h-4 text-yellow-500" />
+              Missed
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
+              ${(missedCents / 100).toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Upgrade to capture more
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tier Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Tier</CardTitle>
+          <CardDescription>Current capture rate: {tierCapture}%</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Free (1%)</span>
+              <Badge variant={tierCapture === 1 ? 'default' : 'outline'}>
+                {tierCapture === 1 ? 'Current' : '—'}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Tier 1 (2.5%)</span>
+              <Badge variant={tierCapture === 2.5 ? 'default' : 'outline'}>
+                {tierCapture === 2.5 ? 'Current' : '—'}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Tier 2 (4%)</span>
+              <Badge variant={tierCapture === 4 ? 'default' : 'outline'}>
+                {tierCapture === 4 ? 'Current' : '—'}
+              </Badge>
+            </div>
+          </div>
+          <Button variant="outline" className="w-full">
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Upgrade Tier
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Split Lines */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Commission Splits</CardTitle>
+          <CardDescription>60% Onboarder / 25% Buyer / 15% Seller</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Splits apply to eligible transactions. Upgrades and direct sales excluded.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
