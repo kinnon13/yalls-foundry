@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
+import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,7 +73,9 @@ export default function Messages() {
   };
 
   return (
-    <div className="container max-w-2xl mx-auto p-4 space-y-4">
+    <>
+      <GlobalHeader />
+      <div className="container max-w-2xl mx-auto p-4 space-y-4">
       <Card>
         <CardHeader>
           <h2 className="text-2xl font-bold">Messages</h2>
@@ -126,6 +129,7 @@ export default function Messages() {
           </Card>
         ))}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

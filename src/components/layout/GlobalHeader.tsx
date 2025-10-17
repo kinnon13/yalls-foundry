@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { useEffect } from 'react';
 import { useCartCount } from '@/hooks/useCartCount';
 import { PreviewDropdown } from '@/components/layout/PreviewDropdown';
+import GlobalNav from '@/components/nav/GlobalNav';
 
 interface GlobalHeaderProps {
   showRockerLabels?: boolean;
@@ -151,6 +152,9 @@ export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalH
                 )}
               </div>
             )}
+
+            {/* Phase 2 Dynamic Nav */}
+            <GlobalNav />
           </nav>
         </div>
 

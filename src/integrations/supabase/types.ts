@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_capabilities: {
+        Row: {
+          enabled: boolean
+          feature_id: string
+          granted_at: string
+          granted_by: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          enabled?: boolean
+          feature_id: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          enabled?: boolean
+          feature_id?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_capabilities_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "features"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_audit: {
         Row: {
           action: string
@@ -3080,6 +3115,62 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_locations: {
+        Row: {
+          feature_id: string
+          location: string
+          sort_order: number
+        }
+        Insert: {
+          feature_id: string
+          location: string
+          sort_order?: number
+        }
+        Update: {
+          feature_id?: string
+          location?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_locations_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "features"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      features: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          is_public: boolean
+          key: string
+          label: string
+          path: string | null
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_public?: boolean
+          key: string
+          label: string
+          path?: string | null
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_public?: boolean
+          key?: string
+          label?: string
+          path?: string | null
+        }
+        Relationships: []
+      }
       horse_feed: {
         Row: {
           caption: string | null
@@ -3526,6 +3617,7 @@ export type Database = {
           created_at: string
           id: string
           metadata: Json
+          read_at: string | null
           recipient_user_id: string
           sender_user_id: string
         }
@@ -3534,6 +3626,7 @@ export type Database = {
           created_at?: string
           id?: string
           metadata?: Json
+          read_at?: string | null
           recipient_user_id: string
           sender_user_id: string
         }
@@ -3542,6 +3635,7 @@ export type Database = {
           created_at?: string
           id?: string
           metadata?: Json
+          read_at?: string | null
           recipient_user_id?: string
           sender_user_id?: string
         }

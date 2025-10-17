@@ -72,6 +72,36 @@ const App = () => (
           />
           <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
 
+          {/* Phase 2: Social + CRM Routes */}
+          <Route
+            path="/feed"
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <Feed />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/messages"
+            element={
+              <RequireAuth>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <Messages />
+                </Suspense>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/crm"
+            element={
+              <RequireAuth>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <CRM />
+                </Suspense>
+              </RequireAuth>
+            }
+          />
+
           {/* AI/Rocker Routes */}
           <Route
             path="/settings/ai"
