@@ -1,0 +1,24 @@
+name: Uptime Check
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # Every 5 minutes
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check health endpoint
+        run: |
+          response=$(curl -f -s -o /dev/null -w "%{http_code}" ${{ secrets.PROD_URL }}/health || echo "failed")
+          if [ "$response" != "200" ]; then
+            echo "❌ Health check failed with status: $response"
+            exit 1
+          fi
+          echo "✅ Health check passed"
+      
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "🚨 Production health check failed!"
+          # TODO: Add Slack/Discord webhook notification here

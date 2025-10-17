@@ -1,0 +1,46 @@
+/**
+ * TikTok-Style Scroll Snap
+ * Smooth vertical scrolling with snap points
+ */
+
+.tiktok-rail {
+  scroll-snap-type: y mandatory;
+  overflow-y: auto;
+  height: 100vh;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+.tiktok-item {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+/* Smooth scroll behavior */
+.tiktok-rail {
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar but keep functionality */
+.tiktok-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.tiktok-rail {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Loading indicator */
+.tiktok-loading {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  padding: 1rem;
+  text-align: center;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+}
