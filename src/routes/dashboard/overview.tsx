@@ -7,6 +7,7 @@ import { useSession } from '@/lib/auth/context';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { rpcWithObs } from '@/lib/supaRpc';
 import RPCHealthCard from '@/components/dashboard/cards/RPCHealth';
+import { ContextKernelHost } from '@/feature-kernel/ContextKernelHost';
 
 export default function DashboardOverview() {
   const { session } = useSession();
@@ -87,6 +88,9 @@ export default function DashboardOverview() {
         <DashboardKPIs kpis={kpis} isLoading={kpisLoading} />
         <RPCHealthCard />
       </div>
+      
+      <ContextKernelHost />
+      
       <NextBestActions actions={actions} isLoading={actionsLoading} />
     </div>
   );

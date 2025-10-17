@@ -4010,6 +4010,45 @@ export type Database = {
         }
         Relationships: []
       }
+      kernel_contexts: {
+        Row: {
+          context_data: Json
+          context_entity_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          kernel_type: string
+          priority: number | null
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context_data?: Json
+          context_entity_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          kernel_type: string
+          priority?: number | null
+          source: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context_data?: Json
+          context_entity_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          kernel_type?: string
+          priority?: number | null
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       knowledge_chunks: {
         Row: {
           created_at: string | null
@@ -7180,6 +7219,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_expired_kernels: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_expired_memories: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -7638,6 +7681,18 @@ export type Database = {
           followers_count: number
           following_count: number
           likes_count: number
+        }[]
+      }
+      get_user_kernels: {
+        Args: { p_user_id?: string }
+        Returns: {
+          context_data: Json
+          context_entity_id: string
+          entity_display_name: string
+          kernel_id: string
+          kernel_type: string
+          priority: number
+          source: string
         }[]
       }
       get_user_role: {
