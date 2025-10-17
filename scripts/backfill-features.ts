@@ -1,193 +1,244 @@
-// scripts/backfill-features.ts
-// Auto-create placeholder features for untagged routes/components
+#!/usr/bin/env tsx
+// Emits generated/feature-backfill.json with auto-created feature entries
+// Never overwrites manual status in docs/features/features.json
+
 import fs from 'fs';
+import path from 'path';
+import glob from 'fast-glob';
 
-const FEATURES = 'docs/features/features.json';
-const ROUTE_MANIFEST = 'generated/route-manifest.json';
-const COMPONENT_REGISTRY = 'generated/component-registry.json';
-
+type FeatureStatus = 'shell' | 'full-ui' | 'wired';
 type Feature = {
   id: string;
   area: string;
   title: string;
-  status: 'shell' | 'full-ui' | 'wired';
+  status: FeatureStatus;
   routes: string[];
   components: string[];
+  rpc: string[];
+  flags: string[];
+  docs: string;
   tests: { unit: string[]; e2e: string[] };
-  owner?: string;
-  severity?: 'p0' | 'p1' | 'p2';
-  docs?: string;
-  notes?: string;
+  owner: string;
+  severity: 'p0' | 'p1' | 'p2';
+  notes: string;
 };
 
-// Load existing data
-let fjson: any = { features: [] };
-let rmanifest: any = { routes: [] };
-let creg: any = { components: [] };
+const BASE = 'docs/features/features.json';
+const OVERLAY = 'docs/features/features-complete.json';
+const OUT_DIR = 'generated';
+const OUT = path.join(OUT_DIR, 'feature-backfill.json');
 
-try {
-  fjson = JSON.parse(fs.readFileSync(FEATURES, 'utf8'));
-} catch {
-  console.warn('⚠️  features.json not found, creating new');
-}
+const FEATURE_TAG = /@feature\(([^)]+)\)/g;
+const FLAG_TAG = /@flag\(([^)]+)\)/g;
 
-try {
-  rmanifest = JSON.parse(fs.readFileSync(ROUTE_MANIFEST, 'utf8'));
-} catch {
-  console.error('❌ route-manifest.json not found. Run npm run map:routes first');
-  process.exit(1);
-}
-
-try {
-  creg = JSON.parse(fs.readFileSync(COMPONENT_REGISTRY, 'utf8'));
-} catch {
-  console.warn('⚠️  component-registry.json not found');
-}
-
-const features: Feature[] = fjson.features ?? [];
-const byId = new Map(features.map(f => [f.id, f]));
-
-const routes = (rmanifest.routes ?? []) as { path: string; file: string; features?: string[] }[];
-const components = (creg.components ?? []) as { path: string; features?: string[] }[];
-
-// Area inference rules (order matters - first match wins)
-const AREA_RULES: { test: (s: string) => boolean; area: string }[] = [
-  { test: p => p.includes('/admin/'), area: 'admin' },
-  { test: p => p.includes('/marketplace') || p.includes('/listings'), area: 'marketplace' },
-  { test: p => p.includes('/orders') || p.includes('/checkout') || p.includes('/cart'), area: 'orders' },
-  { test: p => p.includes('/payments') || p.includes('/billing'), area: 'payments' },
-  { test: p => p.includes('/search') || p.includes('/discover'), area: 'search' },
-  { test: p => p.includes('/messages') || p.includes('/chat'), area: 'messaging' },
-  { test: p => p.includes('/farm'), area: 'farm' },
-  { test: p => p.includes('/shipping') || p.includes('/logistics'), area: 'shipping' },
-  { test: p => p.includes('/producer') || p.includes('/business') || p.includes('/dashboard'), area: 'business' },
-  { test: p => p.includes('/profile'), area: 'profile' },
-  { test: p => p.includes('/events'), area: 'events' },
-  { test: p => p.includes('/composer'), area: 'composer' },
-  { test: p => p.includes('/notifications'), area: 'notifications' },
-  { test: p => p.includes('/earnings'), area: 'earnings' },
-  { test: p => p.includes('/ai'), area: 'ai' },
-  { test: p => p.includes('/settings'), area: 'settings' },
-  { test: _ => true, area: 'platform' }, // fallback
-];
-
-const slug = (s: string) => s.replace(/[^\w]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase();
-const inferArea = (path: string) => (AREA_RULES.find(r => r.test(path))?.area) ?? 'platform';
-
-const titleFromRoute = (path: string) => {
-  const parts = path.split('/').filter(p => p && !p.startsWith(':') && !p.startsWith('['));
-  return parts.map(p => p.charAt(0).toUpperCase() + p.slice(1).replace(/-/g, ' ')).join(' ') || path;
-};
-
-const titleFromComponent = (path: string) => {
-  const name = path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') || path;
-  return name.replace(/([A-Z])/g, ' $1').trim();
-};
-
-const idFromRoute = (path: string) => {
-  const area = inferArea(path);
-  const pathSlug = slug(path).replace(/^_/, '').replace(/_index$/, '').replace(/_id$/, '_detail');
-  return `${area}_${pathSlug}`;
-};
-
-const idFromComponent = (path: string) => {
-  const area = inferArea(path);
-  const componentSlug = slug(path.replace(/^src\/components\//, '').replace(/\.(tsx?|jsx?)$/, ''));
-  return `${area}_${componentSlug}`;
-};
-
-let created = 0;
-let updated = 0;
-
-// Backfill routes
-for (const r of routes) {
-  if (r.features && r.features.length) continue; // Already tagged
-  
-  const id = idFromRoute(r.path);
-  if (!byId.has(id)) {
-    byId.set(id, {
-      id,
-      area: inferArea(r.path),
-      title: titleFromRoute(r.path),
-      status: 'shell',
-      routes: [r.path],
-      components: [],
-      tests: { unit: [], e2e: [] },
-      owner: 'web',
-      severity: 'p2',
-      docs: '',
-      notes: 'Auto-generated placeholder - needs @feature tag'
-    });
-    created++;
-  } else {
-    const f = byId.get(id)!;
-    if (!f.routes.includes(r.path)) {
-      f.routes.push(r.path);
-      updated++;
-    }
+function readJson<T>(file: string): T | null {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return null;
   }
 }
 
-// Backfill components
-for (const c of components) {
-  if (c.features && c.features.length) continue; // Already tagged
+function ensureDir(p: string) {
+  if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
+}
+
+function toRoute(file: string): string {
+  // Convert file path -> route path for React Router
+  // e.g. src/routes/orders/[id].tsx -> /orders/:id
+  const rel = file
+    .replace(/^src\/routes/, '')
+    .replace(/\/index\.tsx?$/, '')
+    .replace(/\.tsx?$/, '');
   
-  const id = idFromComponent(c.path);
-  if (!byId.has(id)) {
-    byId.set(id, {
+  return rel
+    .replace(/\[(\w+)\]/g, ':$1')
+    .replace(/\\/g, '/')
+    .replace(/\/+/g, '/')
+    || '/';
+}
+
+function titleize(id: string) {
+  return id.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function guessArea(route: string, file: string): string {
+  // Area inference rules
+  if (file.includes('/admin/')) return 'admin';
+  if (file.includes('/marketplace') || file.includes('/listing')) return 'marketplace';
+  if (file.includes('/orders') || file.includes('/checkout') || file.includes('/cart')) return 'orders';
+  if (file.includes('/payment') || file.includes('/billing')) return 'payments';
+  if (file.includes('/search') || file.includes('/discover')) return 'search';
+  if (file.includes('/message') || file.includes('/chat')) return 'messaging';
+  if (file.includes('/farm')) return 'farm';
+  if (file.includes('/shipping') || file.includes('/logistic')) return 'shipping';
+  if (file.includes('/producer') || file.includes('/business') || file.includes('/dashboard')) return 'business';
+  if (file.includes('/profile')) return 'profile';
+  if (file.includes('/event')) return 'events';
+  if (file.includes('/composer')) return 'composer';
+  if (file.includes('/notification')) return 'notifications';
+  if (file.includes('/earning')) return 'earnings';
+  if (file.includes('/ai')) return 'ai';
+  if (file.includes('/setting')) return 'settings';
+  
+  // Fallback to route-based inference
+  const parts = (route || '').split('/').filter(Boolean);
+  if (parts[0]) return parts[0];
+  
+  // Fallback to component folder
+  const m = file.match(/^src\/components\/([^/]+)/);
+  return m ? m[1] : 'platform';
+}
+
+function normalizeId(raw: string) {
+  return raw.trim().toLowerCase().replace(/[^a-z0-9_:.-]/g, '_');
+}
+
+function deriveFeatureIdFromPath(p: string) {
+  // e.g. src/routes/marketplace/listing/[id].tsx -> marketplace_listing
+  const rel = p.replace(/^src\//, '').replace(/\.[tj]sx?$/, '');
+  const parts = rel.split('/').filter(Boolean);
+  const area = guessArea('', p);
+  const name = parts[parts.length - 1]?.replace(/\[|\]/g, '') || parts[parts.length - 2] || 'index';
+  return normalizeId(`${area}_${name}`);
+}
+
+async function main() {
+  console.log('\n🔧 Starting feature backfill...\n');
+  
+  // Load existing manual features
+  const baseData = readJson<{ features: Feature[] }>(BASE);
+  const overlayData = readJson<{ features: Feature[] }>(OVERLAY);
+  const base = baseData?.features ?? [];
+  const overlay = overlayData?.features ?? [];
+  const manual = new Map(base.concat(overlay).map(f => [f.id, f]));
+  
+  console.log(`   Manual features: ${manual.size}`);
+
+  // Scan codebase
+  const routeFiles = await glob(['src/routes/**/*.{ts,tsx}'], { ignore: ['**/__tests__/**', '**/*.test.*', '**/*.spec.*'] });
+  const compFiles = await glob(['src/components/**/*.{ts,tsx}'], { ignore: ['**/__tests__/**', '**/*.test.*', '**/*.spec.*'] });
+  const testFiles = await glob(['tests/**/*.{ts,tsx}'], {});
+  
+  console.log(`   Routes found: ${routeFiles.length}`);
+  console.log(`   Components found: ${compFiles.length}`);
+  console.log(`   Tests found: ${testFiles.length}\n`);
+
+  // Collect discovered features
+  const discovered = new Map<string, Feature>();
+
+  function upsert(id: string, updater: (f: Feature) => void, seed?: Partial<Feature>) {
+    const ex = discovered.get(id) || {
       id,
-      area: inferArea(c.path),
-      title: titleFromComponent(c.path),
-      status: 'shell',
+      title: titleize(id),
+      area: 'platform',
+      status: 'shell' as FeatureStatus,
       routes: [],
-      components: [c.path],
+      components: [],
+      rpc: [],
+      flags: [],
+      docs: '',
       tests: { unit: [], e2e: [] },
       owner: 'web',
-      severity: 'p2',
-      docs: '',
-      notes: 'Auto-generated placeholder - needs @feature tag'
-    });
-    created++;
-  } else {
-    const f = byId.get(id)!;
-    if (!f.components.includes(c.path)) {
-      f.components.push(c.path);
-      updated++;
+      severity: 'p2' as const,
+      notes: 'Auto-generated placeholder - needs review',
+      ...seed,
+    };
+    updater(ex);
+    discovered.set(id, ex);
+  }
+
+  function scanFileForFeatureIds(file: string, content: string): string[] {
+    const ids = new Set<string>();
+    for (const m of content.matchAll(FEATURE_TAG)) {
+      ids.add(normalizeId(m[1]));
+    }
+    if (ids.size === 0) {
+      ids.add(deriveFeatureIdFromPath(file));
+    }
+    return [...ids];
+  }
+
+  function scanFileForFlags(content: string): string[] {
+    const ids = new Set<string>();
+    for (const m of content.matchAll(FLAG_TAG)) {
+      ids.add(normalizeId(m[1]));
+    }
+    return [...ids];
+  }
+
+  // Process routes
+  for (const file of routeFiles) {
+    const content = fs.readFileSync(file, 'utf8');
+    const route = toRoute(file);
+    const flags = scanFileForFlags(content);
+    const featureIds = scanFileForFeatureIds(file, content);
+    
+    for (const id of featureIds) {
+      upsert(id, f => {
+        f.routes = Array.from(new Set([...f.routes, route])).sort();
+        f.flags = Array.from(new Set([...f.flags, ...flags])).sort();
+        f.area = guessArea(route, file);
+      });
     }
   }
+
+  // Process components
+  for (const file of compFiles) {
+    const content = fs.readFileSync(file, 'utf8');
+    const featureIds = scanFileForFeatureIds(file, content);
+    
+    for (const id of featureIds) {
+      upsert(id, f => {
+        f.components = Array.from(new Set([...f.components, file])).sort();
+        if (f.area === 'platform') f.area = guessArea('', file);
+      });
+    }
+  }
+
+  // Process tests
+  for (const file of testFiles) {
+    const content = fs.readFileSync(file, 'utf8');
+    const tagged = scanFileForFeatureIds(file, content);
+    const isE2E = /\/e2e\//.test(file);
+    const ids = tagged.length ? tagged : [deriveFeatureIdFromPath(file)];
+    
+    for (const id of ids) {
+      upsert(id, f => {
+        if (isE2E) {
+          f.tests.e2e = Array.from(new Set([...f.tests.e2e, file])).sort();
+        } else {
+          f.tests.unit = Array.from(new Set([...f.tests.unit, file])).sort();
+        }
+      });
+    }
+  }
+
+  // Remove anything already defined manually to avoid duplicates
+  for (const id of manual.keys()) {
+    discovered.delete(id);
+  }
+
+  // Emit generated features
+  ensureDir(OUT_DIR);
+  const payload = {
+    features: Array.from(discovered.values()).sort((a, b) => a.id.localeCompare(b.id)),
+    metadata: {
+      generated: new Date().toISOString(),
+      source: 'backfill',
+      version: '1.0.0'
+    }
+  };
+  
+  fs.writeFileSync(OUT, JSON.stringify(payload, null, 2) + '\n');
+
+  console.log(`✅ Backfill complete!`);
+  console.log(`   Generated features: ${payload.features.length}`);
+  console.log(`   Output: ${OUT}`);
+  console.log(`\n💡 Refresh /admin/features to see the full list\n`);
 }
 
-// Write output to generated/ (non-destructive)
-const outputDir = 'generated';
-const outputFile = `${outputDir}/feature-backfill.json`;
-
-if (!fs.existsSync(outputDir)) {
-  fs.mkdirSync(outputDir, { recursive: true });
-}
-
-const out = {
-  "$schema": "../docs/features/features-schema.json",
-  "version": "1.0.0",
-  "lastUpdated": new Date().toISOString().split('T')[0],
-  "source": "backfill",
-  features: Array.from(byId.values()).sort((a, b) => a.id.localeCompare(b.id))
-};
-
-// Create backup of existing backfill
-if (fs.existsSync(outputFile)) {
-  const backup = outputFile.replace('.json', `.backup-${Date.now()}.json`);
-  fs.copyFileSync(outputFile, backup);
-  console.log(`📦 Backup created: ${backup}`);
-}
-
-fs.writeFileSync(outputFile, JSON.stringify(out, null, 2) + '\n');
-
-console.log('\n✅ Backfill complete!');
-console.log(`   - New features: ${created}`);
-console.log(`   - Updated features: ${updated}`);
-console.log(`   - Total features: ${out.features.length}`);
-console.log(`   - Output: ${outputFile}`);
-console.log('\n💡 Next steps:');
-console.log('   1. Refresh the app - kernel auto-loads from generated/');
-console.log('   2. Add @feature(...) tags to files with placeholder entries');
-console.log('   3. View placeholders at /admin/features with "Show Placeholders" filter\n');
+main().catch(err => {
+  console.error('❌ Backfill failed:', err);
+  process.exit(1);
+});
