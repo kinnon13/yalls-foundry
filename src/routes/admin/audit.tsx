@@ -89,7 +89,7 @@ export default function AuditPage() {
       category: 'important',
       status: docsPct >= 80 ? 'pass' : docsPct >= 50 ? 'warn' : 'fail',
       message: `${docsPct.toFixed(1)}% features documented`,
-      details: docsPct < 100 ? [`${featuresData.features.length - withDocs} features missing docs`] : undefined
+      details: docsPct < 100 ? [`${allFeatures.length - withDocs} features missing docs`] : undefined
     });
 
     // 6. Owner assignment
@@ -101,7 +101,7 @@ export default function AuditPage() {
       category: 'important',
       status: ownerPct >= 95 ? 'pass' : 'warn',
       message: `${ownerPct.toFixed(1)}% features have owners`,
-      details: ownerPct < 100 ? [`${featuresData.features.length - withOwner} unassigned features`] : undefined
+      details: ownerPct < 100 ? [`${allFeatures.length - withOwner} unassigned features`] : undefined
     });
 
     // 7. Severity classification
@@ -113,7 +113,7 @@ export default function AuditPage() {
       category: 'info',
       status: severityPct >= 90 ? 'pass' : 'warn',
       message: `${severityPct.toFixed(1)}% features classified`,
-      details: severityPct < 100 ? [`${featuresData.features.length - withSeverity} features need severity`] : undefined
+      details: severityPct < 100 ? [`${allFeatures.length - withSeverity} features need severity`] : undefined
     });
 
     // 8. Area breakdown

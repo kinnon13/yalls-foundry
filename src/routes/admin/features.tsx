@@ -116,7 +116,7 @@ export default function FeaturesAdminPage() {
   // Summary stats
   const totalFeatures = features.length;
   const byStatus = stats.byStatus;
-  const byArea = stats.byArea;
+  const byArea = stats.byArea as Record<string, { shell: number; 'full-ui': number; wired: number }>;
   const percentComplete = stats.completionPercent;
   const shellInProd = isProd ? features.filter(f => f.status === 'shell' && f.routes.length > 0).length : 0;
 
