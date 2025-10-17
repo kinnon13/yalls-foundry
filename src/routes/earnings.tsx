@@ -112,6 +112,46 @@ export default function Earnings() {
       </Card>
 
       {/* Membership Tiers */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Missed Earnings - Upgrade to Capture More</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <p className="text-muted-foreground">
+              On current tier ({currentTier}), you're capturing {TIERS.find(t => t.name === currentTier)?.capture}% of affiliate transactions.
+            </p>
+            
+            {currentTier === 'Free' && (
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 rounded">
+                <div className="font-bold text-yellow-800 dark:text-yellow-200 mb-2">
+                  💰 You're missing out on earnings!
+                </div>
+                <div className="text-sm text-yellow-700 dark:text-yellow-300">
+                  If you had Tier 1, you'd earn <strong>2.5%</strong> per transaction instead of 0%.
+                  <br />
+                  Tier 2 captures <strong>4%</strong> - that's $4 for every $100 in network sales!
+                </div>
+              </div>
+            )}
+
+            {currentTier === 'Tier 1' && (
+              <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 rounded">
+                <div className="font-bold text-blue-800 dark:text-blue-200 mb-2">
+                  📈 Upgrade to earn more!
+                </div>
+                <div className="text-sm text-blue-700 dark:text-blue-300">
+                  Currently earning 2.5% - upgrade to Tier 2 for <strong>4%</strong> capture.
+                  <br />
+                  That's an additional <strong>1.5%</strong> on every sale!
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Membership Tiers */}
       <Card>
         <CardHeader>
           <CardTitle>Membership Tiers</CardTitle>

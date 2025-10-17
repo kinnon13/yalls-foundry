@@ -70,6 +70,9 @@ const FarmCalendar = lazy(() => import('./routes/farm/calendar'));
 const FarmDashboard = lazy(() => import('./routes/farm/dashboard'));
 const BoarderProfile = lazy(() => import('./routes/farm/boarder/[id]'));
 const IncentivesDashboard = lazy(() => import('./routes/incentives/dashboard'));
+const MyEntries = lazy(() => import('./routes/events/entrant/my-entries'));
+const MyDraws = lazy(() => import('./routes/events/entrant/my-draws'));
+const MyResults = lazy(() => import('./routes/events/entrant/my-results'));
 
 const queryClient = new QueryClient();
 const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on';
@@ -146,6 +149,11 @@ const App = () => (
           
           {/* Incentives */}
           <Route path="/incentives/dashboard" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><IncentivesDashboard /></Suspense></RequireAuth>} />
+          
+          {/* Entrant Routes */}
+          <Route path="/entrant/my-entries" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><MyEntries /></Suspense></RequireAuth>} />
+          <Route path="/entrant/my-draws" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><MyDraws /></Suspense></RequireAuth>} />
+          <Route path="/entrant/my-results" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><MyResults /></Suspense></RequireAuth>} />
           
           {/* Legacy marketplace routes - redirect to listings */}
           <Route path="/marketplace" element={<Suspense fallback={<div>Loading...</div>}><ListingsIndex /></Suspense>} />
