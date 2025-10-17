@@ -3021,6 +3021,7 @@ export type Database = {
           description: string | null
           ends_at: string | null
           event_type: string
+          host_entity_id: string | null
           host_profile_id: string | null
           id: string
           location: Json | null
@@ -3036,6 +3037,7 @@ export type Database = {
           description?: string | null
           ends_at?: string | null
           event_type: string
+          host_entity_id?: string | null
           host_profile_id?: string | null
           id?: string
           location?: Json | null
@@ -3051,6 +3053,7 @@ export type Database = {
           description?: string | null
           ends_at?: string | null
           event_type?: string
+          host_entity_id?: string | null
           host_profile_id?: string | null
           id?: string
           location?: Json | null
@@ -3065,6 +3068,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_host_entity_id_fkey"
+            columns: ["host_entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
             referencedColumns: ["id"]
           },
           {
@@ -4901,6 +4911,10 @@ export type Database = {
       }
     }
     Functions: {
+      _map_profile_to_entity: {
+        Args: { p_profile_id: string }
+        Returns: string
+      }
       _postgis_deprecate: {
         Args: { newname: string; oldname: string; version: string }
         Returns: undefined

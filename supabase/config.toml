@@ -142,3 +142,10 @@ verify_jwt = true
 [functions.ai-curate-feed]
 verify_jwt = true
 
+# --- Phase 3 Preview Pay Functions ---
+[functions.preview-pay-checkout]
+verify_jwt = true
+
+[functions.preview-pay-labels]
+verify_jwt = true
+
