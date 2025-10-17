@@ -8,7 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, AlertCircle, Play, RefreshCw } from 'lucide-react';
-import { allFeatures, getFeatureStats, validateGoldPath, GOLD_PATH_FEATURES, isProd } from '@/lib/features';
+import { kernel, GOLD_PATH_FEATURES, isProd } from '@/lib/feature-kernel';
 
 interface AuditResult {
   check: string;
@@ -28,7 +28,8 @@ export default function AuditPage() {
       const auditResults: AuditResult[] = [];
   
       // 1. Feature completeness check
-      const stats = getFeatureStats();
+      const stats = kernel.getStats();
+      const allFeatures = kernel.features;
       auditResults.push({
         check: 'Feature Index Complete',
         category: 'critical',
@@ -38,7 +39,7 @@ export default function AuditPage() {
       });
   
       // 2. Gold-path readiness
-    const goldPath = validateGoldPath();
+    const goldPath = kernel.validateGoldPath();
     auditResults.push({
       check: 'Gold-Path Features Ready',
       category: 'critical',
@@ -114,7 +115,7 @@ export default function AuditPage() {
     });
 
     // 8. Area breakdown
-    const byArea = stats.byArea;
+    const byArea = stats.byArea as Record<string, { shell: number; 'full-ui': number; wired: number }>;
     const areaChecks = Object.entries(byArea).map(([area, counts]): AuditResult => {
       const total = (counts.shell || 0) + (counts['full-ui'] || 0) + (counts.wired || 0);
       const ready = (counts['full-ui'] || 0) + (counts.wired || 0);

@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { allFeatures, validateGoldPath, GOLD_PATH_FEATURES, getFeatureStats } from '@/lib/features';
+import { kernel, GOLD_PATH_FEATURES } from '@/lib/feature-kernel';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -51,9 +51,9 @@ export default function FeaturesAdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditingFeature | null>(null);
 
-  const features = allFeatures;
-  const goldPath = validateGoldPath();
-  const stats = getFeatureStats();
+  const features = kernel.features;
+  const goldPath = kernel.validateGoldPath();
+  const stats = kernel.getStats();
   const isProd = import.meta.env.PROD;
 
   const filtered = useMemo(() => {
