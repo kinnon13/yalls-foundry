@@ -7068,7 +7068,9 @@ export type Database = {
         Returns: undefined
       }
       feed_pending_targets: {
-        Args: { p_entity_id: string }
+        Args:
+          | { p_cursor?: string; p_entity_id: string; p_limit?: number }
+          | { p_entity_id: string }
         Returns: {
           approved: boolean
           created_at: string
@@ -7640,6 +7642,10 @@ export type Database = {
           | { use_typmod?: boolean }
         Returns: string
       }
+      post_approve_target: {
+        Args: { p_entity_id: string; p_post_id: string }
+        Returns: Json
+      }
       post_create: {
         Args: {
           p_body: string
@@ -7658,6 +7664,10 @@ export type Database = {
           p_target_entity_ids?: string[]
         }
         Returns: string
+      }
+      post_reject_target: {
+        Args: { p_entity_id: string; p_post_id: string; p_reason?: string }
+        Returns: Json
       }
       post_repost: {
         Args: {

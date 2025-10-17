@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { logUsageEvent } from '@/lib/telemetry/usageEvents';
 
 type PostCardMenuProps = {
   postId: string;
@@ -30,22 +32,53 @@ export function PostCardMenu({
   canModerate,
 }: PostCardMenuProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   if (!canModerate) return null;
 
-  const handleHide = async () => {
-    const { error } = await supabase.rpc('feed_hide', {
-      p_post_id: postId,
-      p_entity_id: entityId,
-    });
-
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
+  const hideMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc('feed_hide', {
+        p_post_id: postId,
+        p_entity_id: entityId,
+      });
+      if (error) throw error;
+      
+      logUsageEvent({
+        eventType: 'click',
+        itemType: 'post',
+        itemId: postId,
+        payload: { entity_id: entityId, source: 'post_card_menu', action: 'hide_post' }
+      });
+    },
+    onMutate: async () => {
+      // Optimistic update: remove from feed
+      await queryClient.cancelQueries({ queryKey: ['feed-fusion'] });
+      
+      queryClient.setQueriesData<any>({ queryKey: ['feed-fusion'] }, (old: any) => {
+        if (!old?.pages) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            items: page.items.filter((item: any) => item.id !== postId)
+          }))
+        };
+      });
+    },
+    onSuccess: () => {
       toast({ title: 'Post hidden from this page' });
-      window.location.reload();
+      queryClient.invalidateQueries({ queryKey: ['feed-fusion'] });
+    },
+    onError: (err) => {
+      toast({ 
+        title: 'Error', 
+        description: err instanceof Error ? err.message : 'Failed to hide post',
+        variant: 'destructive' 
+      });
+      queryClient.invalidateQueries({ queryKey: ['feed-fusion'] });
     }
-  };
+  });
 
   const handleUnhide = async () => {
     const { error } = await supabase.rpc('feed_unhide', {
@@ -114,7 +147,10 @@ export function PostCardMenu({
                 Unhide from this page
               </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onClick={handleHide}>
+              <DropdownMenuItem 
+                onClick={() => hideMutation.mutate()}
+                disabled={hideMutation.isPending}
+              >
                 Hide from this page
               </DropdownMenuItem>
             )}

@@ -1,23 +1,34 @@
 /**
- * Approvals Page - Pending cross-posts and hidden posts management
+ * Approvals Module - Three-column layout for pending cross-posts
  * <200 LOC
  */
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { usePendingApprovals, useApproveTarget, useRejectTarget } from '@/hooks/useApprovals';
 
-export default function ApprovalsPage() {
-  const { toast } = useToast();
+const REJECT_REASONS = [
+  { value: 'off_topic', label: 'Off-topic' },
+  { value: 'low_quality', label: 'Low quality' },
+  { value: 'not_relevant', label: 'Not relevant' },
+  { value: 'other', label: 'Other' },
+];
+
+export default function Approvals() {
+  const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
+  const [selectedPost, setSelectedPost] = useState<any | null>(null);
+  const [rejectReason, setRejectReason] = useState<string>('not_relevant');
 
   // Get user's owned entities
-  const { data: entities } = useQuery({
+  const { data: entities, isLoading: entitiesLoading } = useQuery({
     queryKey: ['owned-entities'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -29,95 +40,52 @@ export default function ApprovalsPage() {
         .eq('owner_user_id', user.id);
 
       if (error) throw error;
+      
+      // Auto-select first entity
+      if (data && data.length > 0 && !selectedEntityId) {
+        setSelectedEntityId(data[0].id);
+      }
+
       return data;
     },
   });
 
-  // Get pending targets across all entities
-  const { data: pending, isLoading: pendingLoading, refetch: refetchPending } = useQuery({
-    queryKey: ['pending-targets', entities?.map(e => e.id)],
-    queryFn: async () => {
-      if (!entities || entities.length === 0) return [];
+  const {
+    data,
+    isLoading: pendingLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = usePendingApprovals(selectedEntityId);
 
-      const results = await Promise.all(
-        entities.map(async (entity) => {
-          const { data, error } = await supabase.rpc('feed_pending_targets', {
-            p_entity_id: entity.id,
-          });
+  const approveMutation = useApproveTarget();
+  const rejectMutation = useRejectTarget();
 
-          if (error) throw error;
+  const pending = data?.pages.flatMap(page => page.items) ?? [];
 
-          return data?.map((row: any) => ({
-            ...row,
-            entity_name: entity.display_name,
-            entity_id: entity.id,
-          })) || [];
-        })
-      );
-
-      return results.flat();
-    },
-    enabled: !!entities && entities.length > 0,
-  });
-
-  // Get hidden posts across entities
-  const { data: hidden, isLoading: hiddenLoading, refetch: refetchHidden } = useQuery({
-    queryKey: ['hidden-posts', entities?.map(e => e.id)],
-    queryFn: async () => {
-      if (!entities || entities.length === 0) return [];
-
-      const { data, error } = await supabase
-        .from('feed_hides')
-        .select('*, posts(*), entities(display_name)')
-        .in('entity_id', entities.map(e => e.id));
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!entities && entities.length > 0,
-  });
-
-  const handleApprove = async (postId: string, entityId: string) => {
-    const { error } = await supabase.rpc('post_target_approve', {
-      p_post_id: postId,
-      p_entity_id: entityId,
-    });
-
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Post approved' });
-      refetchPending();
-    }
+  const handleApprove = () => {
+    if (!selectedPost || !selectedEntityId) return;
+    approveMutation.mutate(
+      { postId: selectedPost.post_id, entityId: selectedEntityId },
+      { onSuccess: () => setSelectedPost(null) }
+    );
   };
 
-  const handleReject = async (postId: string, entityId: string) => {
-    const { error } = await supabase.rpc('post_target_reject', {
-      p_post_id: postId,
-      p_entity_id: entityId,
-    });
-
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Post rejected' });
-      refetchPending();
-    }
+  const handleReject = () => {
+    if (!selectedPost || !selectedEntityId) return;
+    rejectMutation.mutate(
+      { postId: selectedPost.post_id, entityId: selectedEntityId, reason: rejectReason },
+      { onSuccess: () => setSelectedPost(null) }
+    );
   };
 
-  const handleUnhide = async (postId: string, entityId: string) => {
-    const { error } = await supabase.rpc('feed_unhide', {
-      p_post_id: postId,
-      p_entity_id: entityId,
-    });
-
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Post restored' });
-      refetchHidden();
-    }
-  };
+  if (entitiesLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   if (!entities || entities.length === 0) {
     return (
@@ -129,84 +97,149 @@ export default function ApprovalsPage() {
   }
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Approvals</h1>
-
-      <Tabs defaultValue="pending">
-        <TabsList>
-          <TabsTrigger value="pending">
-            Pending {pending && pending.length > 0 && `(${pending.length})`}
-          </TabsTrigger>
-          <TabsTrigger value="hidden">
-            Hidden {hidden && hidden.length > 0 && `(${hidden.length})`}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="pending" className="space-y-4">
-          {pendingLoading && <Loader2 className="h-6 w-6 animate-spin" />}
-          {pending && pending.length === 0 && (
-            <p className="text-muted-foreground">No pending approvals.</p>
-          )}
-          {pending?.map((item: any) => (
-            <Card key={`${item.post_id}-${item.entity_id}`} className="p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <Badge variant="secondary" className="mb-2">
-                    {item.entity_name}
-                  </Badge>
-                  <p className="text-sm text-muted-foreground">
-                    Cross-post requested {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => handleApprove(item.post_id, item.entity_id)}
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleReject(item.post_id, item.entity_id)}
-                  >
-                    Reject
-                  </Button>
-                </div>
-              </div>
-            </Card>
+    <div className="h-full flex gap-6">
+      {/* Left: Entity Picker */}
+      <div className="w-64 flex-shrink-0 space-y-4">
+        <h2 className="font-semibold">Your Pages</h2>
+        <div className="space-y-2">
+          {entities.map((entity) => (
+            <Button
+              key={entity.id}
+              variant={selectedEntityId === entity.id ? 'default' : 'outline'}
+              className="w-full justify-start"
+              onClick={() => {
+                setSelectedEntityId(entity.id);
+                setSelectedPost(null);
+              }}
+            >
+              {entity.display_name}
+            </Button>
           ))}
-        </TabsContent>
+        </div>
+      </div>
 
-        <TabsContent value="hidden" className="space-y-4">
-          {hiddenLoading && <Loader2 className="h-6 w-6 animate-spin" />}
-          {hidden && hidden.length === 0 && (
-            <p className="text-muted-foreground">No hidden posts.</p>
-          )}
-          {hidden?.map((item: any) => (
-            <Card key={`${item.post_id}-${item.entity_id}`} className="p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <Badge variant="secondary" className="mb-2">
-                    {item.entities?.display_name}
-                  </Badge>
-                  <p className="text-sm">{item.posts?.body?.substring(0, 100)}...</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Hidden {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                  </p>
+      {/* Middle: Pending Posts List */}
+      <div className="flex-1 space-y-4 overflow-y-auto max-h-[calc(100vh-12rem)]">
+        <h2 className="font-semibold">
+          Pending Approvals {pending.length > 0 && `(${pending.length})`}
+        </h2>
+        
+        {pendingLoading && <Loader2 className="h-6 w-6 animate-spin" />}
+        
+        {!pendingLoading && pending.length === 0 && (
+          <p className="text-muted-foreground">No pending approvals.</p>
+        )}
+
+        {pending.map((item) => (
+          <Card
+            key={item.post_id}
+            className={`p-4 cursor-pointer transition-colors ${
+              selectedPost?.post_id === item.post_id ? 'border-primary' : ''
+            }`}
+            onClick={() => setSelectedPost(item)}
+          >
+            <div className="flex items-start gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={item.author_avatar || undefined} />
+                <AvatarFallback>{item.author_name?.[0] || 'U'}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold truncate">{item.author_name || 'Unknown'}</p>
+                <p className="text-sm text-muted-foreground truncate">{item.body.substring(0, 80)}...</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatDistanceToNow(new Date(item.post_created_at), { addSuffix: true })}
+                </p>
+              </div>
+            </div>
+          </Card>
+        ))}
+
+        {hasNextPage && (
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+          >
+            {isFetchingNextPage ? 'Loading...' : 'Load More'}
+          </Button>
+        )}
+      </div>
+
+      {/* Right: Approval Drawer */}
+      <div className="w-96 flex-shrink-0 space-y-4">
+        {!selectedPost ? (
+          <div className="text-center text-muted-foreground py-12">
+            Select a post to review
+          </div>
+        ) : (
+          <Card className="p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={selectedPost.author_avatar || undefined} />
+                <AvatarFallback>{selectedPost.author_name?.[0] || 'U'}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold">{selectedPost.author_name || 'Unknown'}</p>
+                <p className="text-sm text-muted-foreground">
+                  {formatDistanceToNow(new Date(selectedPost.post_created_at), { addSuffix: true })}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="whitespace-pre-wrap">{selectedPost.body}</p>
+              
+              {selectedPost.media && Array.isArray(selectedPost.media) && selectedPost.media.length > 0 && (
+                <div className="grid grid-cols-2 gap-2">
+                  {selectedPost.media.map((item: any, idx: number) => (
+                    <img
+                      key={idx}
+                      src={item.url}
+                      alt="Post media"
+                      className="rounded-lg w-full h-32 object-cover"
+                    />
+                  ))}
                 </div>
+              )}
+            </div>
+
+            <div className="space-y-3 pt-4 border-t">
+              <Button
+                className="w-full"
+                onClick={handleApprove}
+                disabled={approveMutation.isPending || rejectMutation.isPending}
+              >
+                {approveMutation.isPending ? 'Approving...' : 'Approve'}
+              </Button>
+
+              <div className="space-y-2">
+                <Select value={rejectReason} onValueChange={setRejectReason}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Reason for rejection" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REJECT_REASONS.map((reason) => (
+                      <SelectItem key={reason.value} value={reason.value}>
+                        {reason.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
                 <Button
-                  size="sm"
                   variant="outline"
-                  onClick={() => handleUnhide(item.post_id, item.entity_id)}
+                  className="w-full"
+                  onClick={handleReject}
+                  disabled={approveMutation.isPending || rejectMutation.isPending}
                 >
-                  Unhide
+                  {rejectMutation.isPending ? 'Rejecting...' : 'Reject'}
                 </Button>
               </div>
-            </Card>
-          ))}
-        </TabsContent>
-      </Tabs>
+            </div>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
