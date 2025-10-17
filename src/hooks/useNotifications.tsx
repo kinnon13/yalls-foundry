@@ -1,82 +1,70 @@
 /**
  * Notifications Hook
- * Real-time bell notifications with unread count
+ * Paginated list with optimistic mark-read
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useSession } from '@/lib/auth/context';
-import { useEffect } from 'react';
-import type { Notification } from '@/types/domain';
+import { Notifications } from '@/ports';
+import type { NotificationLane, NotificationItem } from '@/ports/notifications';
 
-export function useNotifications() {
-  const { session } = useSession();
+export function useNotifications(userId: string, lane: NotificationLane) {
   const queryClient = useQueryClient();
 
-  const { data: notifications = [], isLoading } = useQuery<Notification[]>({
-    queryKey: ['notifications', session?.userId],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('notifications')
-        .select('*')
-        .eq('user_id', session?.userId!)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      return data as Notification[];
-    },
-    enabled: !!session?.userId,
+  const { data: notifications = [], isLoading } = useQuery({
+    queryKey: ['notifications', userId, lane],
+    queryFn: () => Notifications.list(userId, lane, { limit: 50 }),
+    staleTime: 30_000,
+    enabled: !!userId,
   });
 
-  const unreadCount = notifications.filter((n) => !n.read_at).length;
+  const unreadCount = notifications.filter(n => !n.read_at).length;
 
   const markRead = useMutation({
-    mutationFn: async (notifId: string) => {
-      const { error } = await (supabase as any).rpc('notif_mark_read', {
-        p_notif_id: notifId,
-      });
-      if (error) throw error;
+    mutationFn: (ids: string[]) => Notifications.markRead(userId, ids),
+    onMutate: async (ids) => {
+      // Optimistic update
+      await queryClient.cancelQueries({ queryKey: ['notifications', userId, lane] });
+      const prev = queryClient.getQueryData<NotificationItem[]>(['notifications', userId, lane]);
+      
+      queryClient.setQueryData<NotificationItem[]>(['notifications', userId, lane], (old = []) =>
+        old.map(n => ids.includes(n.id) ? { ...n, read_at: new Date().toISOString() } : n)
+      );
+      
+      return { prev };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) {
+        queryClient.setQueryData(['notifications', userId, lane], ctx.prev);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', userId, lane] });
+      queryClient.invalidateQueries({ queryKey: ['notification-counts', userId] });
     },
   });
 
   const markAllRead = useMutation({
-    mutationFn: async () => {
-      const { error } = await (supabase as any).rpc('notif_mark_all_read');
-      if (error) throw error;
+    mutationFn: () => Notifications.markAllRead(userId, lane),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['notifications', userId, lane] });
+      const prev = queryClient.getQueryData<NotificationItem[]>(['notifications', userId, lane]);
+      
+      queryClient.setQueryData<NotificationItem[]>(['notifications', userId, lane], (old = []) =>
+        old.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() }))
+      );
+      
+      return { prev };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) {
+        queryClient.setQueryData(['notifications', userId, lane], ctx.prev);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', userId, lane] });
+      queryClient.invalidateQueries({ queryKey: ['notification-counts', userId] });
     },
   });
-
-  // Subscribe to realtime notifications
-  useEffect(() => {
-    if (!session?.userId) return;
-
-    const channel = supabase
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${session.userId}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['notifications'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      channel.unsubscribe();
-    };
-  }, [session?.userId, queryClient]);
 
   return {
     notifications,

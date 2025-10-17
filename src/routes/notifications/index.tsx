@@ -4,13 +4,20 @@
  */
 
 import { useNotifications } from '@/hooks/useNotifications';
+import { useSession } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
 import { CheckCheck, Bell } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton, SkeletonList } from '@/components/system/Skeleton';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useState } from 'react';
+import type { NotificationLane } from '@/ports/notifications';
 
 export default function NotificationsPage() {
-  const { notifications, unreadCount, isLoading, markRead, markAllRead } = useNotifications();
+  const { session } = useSession();
+  const userId = session?.userId || '';
+  const [activeLane, setActiveLane] = useState<NotificationLane>('priority');
+  const { notifications, unreadCount, isLoading, markRead, markAllRead } = useNotifications(userId, activeLane);
 
   if (isLoading) {
     return (
@@ -49,48 +56,58 @@ export default function NotificationsPage() {
         )}
       </div>
 
-      {notifications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
-          <Bell className="mb-4 h-12 w-12 text-muted-foreground/50" />
-          <h3 className="mb-1 text-lg font-semibold">No notifications yet</h3>
-          <p className="text-sm text-muted-foreground">
-            When you get notifications, they'll show up here
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {notifications.map((notif) => (
-            <div
-              key={notif.id}
-              className={`group relative rounded-xl border p-4 transition-all hover:shadow-md ${
-                notif.read_at
-                  ? 'bg-background'
-                  : 'bg-accent/30 border-primary/20'
-              }`}
-              onClick={() => !notif.read_at && markRead.mutate(notif.id)}
-              role="button"
-              tabIndex={0}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-1">
-                  <h3 className="font-semibold leading-tight">{notif.title}</h3>
-                  {notif.body && (
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {notif.body}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
-                  </p>
-                </div>
-                {!notif.read_at && (
-                  <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-primary animate-pulse" />
-                )}
-              </div>
+      <Tabs value={activeLane} onValueChange={(v) => setActiveLane(v as NotificationLane)}>
+        <TabsList>
+          <TabsTrigger value="priority">Priority</TabsTrigger>
+          <TabsTrigger value="social">Social</TabsTrigger>
+          <TabsTrigger value="system">System</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={activeLane} className="mt-6">
+          {notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
+              <Bell className="mb-4 h-12 w-12 text-muted-foreground/50" />
+              <h3 className="mb-1 text-lg font-semibold">No notifications yet</h3>
+              <p className="text-sm text-muted-foreground">
+                When you get notifications, they'll show up here
+              </p>
             </div>
-          ))}
-        </div>
-      )}
+          ) : (
+            <div className="space-y-2">
+              {notifications.map((notif) => (
+                <div
+                  key={notif.id}
+                  className={`group relative rounded-xl border p-4 transition-all hover:shadow-md ${
+                    notif.read_at
+                      ? 'bg-background'
+                      : 'bg-accent/30 border-primary/20'
+                  }`}
+                  onClick={() => !notif.read_at && markRead.mutate([notif.id])}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-1">
+                      <h3 className="font-semibold leading-tight">{notif.title}</h3>
+                      {notif.body && (
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {notif.body}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
+                      </p>
+                    </div>
+                    {!notif.read_at && (
+                      <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-primary animate-pulse" />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
