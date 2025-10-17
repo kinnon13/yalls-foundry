@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuthContext } from '@/lib/auth/context';
+import { useSession } from '@/lib/auth/context';
 
 export interface Flag {
   key: string;
@@ -15,7 +15,7 @@ export interface Flag {
 }
 
 export function useFlags() {
-  const { user } = useAuthContext();
+  const { session } = useSession();
 
   const { data: flags = [] } = useQuery({
     queryKey: ['feature_flags'],
@@ -33,10 +33,10 @@ export function useFlags() {
     const flag = flags.find(f => f.key === key);
     if (!flag || !flag.enabled) return false;
     if (flag.rollout >= 100) return true;
-    if (!user?.id) return false;
+    if (!session?.userId) return false;
 
     // Deterministic bucketing: same user always gets same result
-    const hash = (key + ':' + user.id)
+    const hash = (key + ':' + session.userId)
       .split('')
       .reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0);
     const bucket = Math.abs(hash) % 100;
