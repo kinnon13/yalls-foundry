@@ -1,6 +1,7 @@
 /**
  * Health Check Endpoint
- * Returns system status for monitoring
+ * Returns 200 if DB latency < 500ms, 503 otherwise
+ * Production-grade monitoring with timing
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -16,36 +17,49 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const t0 = performance.now();
+
   try {
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Check DB connection
+    // Quick health check query
     const { error: dbError } = await supabase
       .from('profiles')
       .select('id')
       .limit(1);
 
+    const latencyMs = Math.round(performance.now() - t0);
+    const isHealthy = !dbError && latencyMs < 500;
+
     const health = {
-      ok: !dbError,
-      db: dbError ? 'down' : 'up',
+      ok: isHealthy,
+      latency_ms: latencyMs,
+      db_status: dbError ? 'error' : 'up',
       redis: Deno.env.get('REDIS_URL') ? 'configured' : 'not_configured',
-      time: new Date().toISOString(),
+      timestamp: new Date().toISOString(),
+      environment: Deno.env.get('ENVIRONMENT') || 'production',
       version: Deno.env.get('COMMIT_SHA') || 'dev',
     };
 
     return new Response(JSON.stringify(health), {
-      status: health.ok ? 200 : 503,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: isHealthy ? 200 : 503,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+      },
     });
   } catch (error) {
+    const latencyMs = Math.round(performance.now() - t0);
     return new Response(
       JSON.stringify({
         ok: false,
+        latency_ms: latencyMs,
         error: error instanceof Error ? error.message : 'Unknown error',
-        time: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
       }),
       {
         status: 503,

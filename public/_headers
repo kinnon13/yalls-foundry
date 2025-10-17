@@ -1,18 +1,20 @@
-# Cache headers for static assets (CDN optimization)
+# Cloudflare CDN Headers - Production Optimization
+# Billion-user scale: maximize cache hits
 
 # Static assets - immutable, 1 year cache
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
 
-# JavaScript bundles
+# JavaScript/CSS bundles
 /*.js
   Cache-Control: public, max-age=31536000, immutable
-
-# CSS files
 /*.css
   Cache-Control: public, max-age=31536000, immutable
 
-# Images
+# Images - long cache
+/images/*
+  Cache-Control: public, max-age=31536000, immutable
 /*.png
   Cache-Control: public, max-age=31536000, immutable
 /*.jpg
@@ -22,6 +24,8 @@
 /*.svg
   Cache-Control: public, max-age=31536000, immutable
 /*.webp
+  Cache-Control: public, max-age=31536000, immutable
+/*.gif
   Cache-Control: public, max-age=31536000, immutable
 
 # Fonts
@@ -34,12 +38,19 @@
 
 # HTML - no cache (always fresh)
 /*.html
-  Cache-Control: no-cache, must-revalidate
+  Cache-Control: no-store
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
 
 # Service worker
 /sw.js
   Cache-Control: no-cache, must-revalidate
 
-# API routes - short cache
+# API routes - no cache (dynamic)
 /api/*
-  Cache-Control: public, max-age=30, stale-while-revalidate=60
+  Cache-Control: no-store
+
+# Default fallback
+/*
+  Cache-Control: public, max-age=300
+  X-Content-Type-Options: nosniff

@@ -1,73 +1,78 @@
 /**
  * QR Check-In Edge Function
- * Validates entry and sets checked_in status
+ * Production-grade: validates reservation and marks checked in
  */
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
-    const { entry_id } = await req.json()
-
-    if (!entry_id) {
-      throw new Error('entry_id required')
-    }
-
-    // Fetch entry
-    const { data: entry, error: fetchError } = await supabase
-      .from('entries')
-      .select('*')
-      .eq('id', entry_id)
-      .single()
-
-    if (fetchError || !entry) {
-      throw new Error('Entry not found')
-    }
-
-    if (entry.status === 'checked_in') {
+    const { code } = await req.json();
+    
+    if (!code) {
       return new Response(
-        JSON.stringify({ message: 'Already checked in', entry }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      )
+        JSON.stringify({ error: 'QR code required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Update entry status
-    const { error: updateError } = await supabase
-      .from('entries')
-      .update({ status: 'checked_in', checked_in_at: new Date().toISOString() })
-      .eq('id', entry_id)
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
 
-    if (updateError) throw updateError
+    // Check in reservation
+    const { data: reservation, error } = await supabase
+      .from('reservations')
+      .update({
+        status: 'checked_in',
+        metadata: { checked_in_at: new Date().toISOString() },
+      })
+      .eq('qr_code', code)
+      .in('status', ['active', 'confirmed'])
+      .select('id, event_id, entrant_name')
+      .maybeSingle();
 
-    // Log check-in
-    await supabase.from('entry_checkin_log').insert({
-      entry_id,
-      checked_in_at: new Date().toISOString(),
-    })
+    if (error) {
+      console.error('[QR Check-in] DB error:', error);
+      return new Response(
+        JSON.stringify({ error: 'Database error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!reservation) {
+      return new Response(
+        JSON.stringify({ error: 'Not found or already checked in' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('[QR Check-in] Success:', reservation.id);
 
     return new Response(
-      JSON.stringify({ message: 'Checked in successfully', entry_id }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-    )
-  } catch (error: any) {
-    console.error('QR check-in error:', error)
+      JSON.stringify({
+        success: true,
+        reservation,
+        message: 'Check-in successful',
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('[QR Check-in] Exception:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'Unknown error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-    )
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
-})
+});
