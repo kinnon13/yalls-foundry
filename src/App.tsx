@@ -24,7 +24,10 @@ import ControlRoom from "./routes/admin/control-room";
 import NotFound from "./pages/NotFound";
 
 // Lazy load dashboard and AI routes
-const Dashboard = lazy(() => import('./routes/dashboard'));
+const DashboardLayout = lazy(() => import('./routes/dashboard/index'));
+const DashboardOverview = lazy(() => import('./routes/dashboard/overview'));
+const DashboardBusiness = lazy(() => import('./routes/dashboard/business'));
+const DashboardSettings = lazy(() => import('./routes/dashboard/settings'));
 const DiscoverV2 = lazy(() => import('./routes/discover-v2'));
 const Earnings = lazy(() => import('./routes/earnings'));
 const Approvals = lazy(() => import('./routes/dashboard/approvals'));
@@ -103,11 +106,17 @@ const App = () => (
             element={
               <RequireAuth>
                 <Suspense fallback={<div>Loading...</div>}>
-                  <Dashboard />
+                  <DashboardLayout />
                 </Suspense>
               </RequireAuth>
             }
-          />
+          >
+            <Route index element={<Suspense fallback={<div>Loading...</div>}><DashboardOverview /></Suspense>} />
+            <Route path="approvals" element={<Suspense fallback={<div>Loading...</div>}><Approvals /></Suspense>} />
+            <Route path="business" element={<Suspense fallback={<div>Loading...</div>}><DashboardBusiness /></Suspense>} />
+            <Route path="settings" element={<Suspense fallback={<div>Loading...</div>}><DashboardSettings /></Suspense>} />
+            <Route path="earnings" element={<Suspense fallback={<div>Loading...</div>}><Earnings /></Suspense>} />
+          </Route>
           <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
           <Route path="/discover" element={<Suspense fallback={<div>Loading...</div>}><Discover /></Suspense>} />
 
@@ -138,7 +147,6 @@ const App = () => (
           
           {/* Earnings (standalone for legacy links) */}
           <Route path="/earnings" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><Earnings /></Suspense></RequireAuth>} />
-          <Route path="/dashboard/approvals" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><Approvals /></Suspense></RequireAuth>} />
           
           {/* Farm Ops */}
           <Route path="/farm/calendar" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FarmCalendar /></Suspense></RequireAuth>} />
