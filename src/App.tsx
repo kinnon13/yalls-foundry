@@ -80,7 +80,7 @@ const queryClient = new QueryClient();
 const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on';
 
 import { CommandPalette } from '@/components/command/CommandPalette';
-import { EntityCreationModal } from '@/components/entities/EntityCreationModal';
+import { ProfileCreationModal } from '@/components/entities/ProfileCreationModal';
 
 const App = () => (
   <HelmetProvider>
@@ -92,8 +92,8 @@ const App = () => (
               {/* Global Command Palette */}
               <CommandPalette />
               
-              {/* Entity Creation/Claim Modal */}
-              <EntityCreationModal />
+              {/* Profile Creation Modal */}
+              <ProfileCreationModal />
               
               <RedirectHandler />
               <Routes>

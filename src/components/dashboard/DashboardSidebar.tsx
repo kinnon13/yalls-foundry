@@ -12,7 +12,7 @@ import {
   MessageSquare,
   Settings,
   CheckCircle,
-  Plus
+  PlusCircle
 } from 'lucide-react';
 import { Button } from '@/design/components/Button';
 import { Badge } from '@/design/components/Badge';
@@ -111,18 +111,18 @@ export function DashboardSidebar() {
   return (
     <div className="w-64 border-r border-border bg-card flex-shrink-0 hidden md:block">
       <div className="p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
-          <Button
-            size="s"
-            variant="ghost"
-            className="h-8 w-8 p-0"
-            onClick={() => setSearchParams({ entity: 'claim' })}
-            aria-label="Add entity"
-          >
-            <Plus size={18} />
-          </Button>
-        </div>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Dashboard</h2>
+        
+        {/* Create Profile Button */}
+        <Button
+          variant="secondary"
+          size="m"
+          onClick={() => setSearchParams({ create: 'profile' })}
+          className="w-full justify-start gap-2 mb-4"
+        >
+          <PlusCircle size={20} />
+          <span>Create new profile</span>
+        </Button>
 
         <nav className="space-y-1">
           {visibleItems.map((item) => {
@@ -155,7 +155,7 @@ export function DashboardSidebar() {
         {hiddenItems.length > 0 && (
           <div className="mt-6 pt-4 border-t border-border">
             <div className="text-xs font-medium text-muted-foreground mb-2 px-3">
-              Available with entity
+              Unlock with profile
             </div>
             <div className="space-y-1">
               {hiddenItems.map((item) => (
@@ -164,19 +164,11 @@ export function DashboardSidebar() {
                   variant="ghost"
                   size="m"
                   className="w-full justify-start gap-3 opacity-50"
-                  onClick={() => {
-                    const typeMap = {
-                      farm: 'farm',
-                      horse: 'horse',
-                      business: 'business',
-                      producers: 'person',
-                    };
-                    setSearchParams({ entity: typeMap[item.requiresEntity!] });
-                  }}
+                  onClick={() => setSearchParams({ create: 'profile' })}
                 >
                   {item.icon}
                   <span className="flex-1 text-left">{item.label}</span>
-                  <Plus size={14} className="ml-auto" />
+                  <PlusCircle size={14} className="ml-auto" />
                 </Button>
               ))}
             </div>
