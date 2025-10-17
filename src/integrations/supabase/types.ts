@@ -5737,7 +5737,14 @@ export type Database = {
         Returns: undefined
       }
       cart_upsert_item: {
-        Args: { p_listing_id: string; p_qty: number; p_session_id?: string }
+        Args:
+          | { p_listing_id: string; p_qty: number; p_session_id?: string }
+          | {
+              p_listing_id: string
+              p_qty: number
+              p_session_id?: string
+              p_variant?: Json
+            }
         Returns: string
       }
       check_voice_post_rate_limit: {

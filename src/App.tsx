@@ -48,9 +48,19 @@ const EventEntries = lazy(() => import('./routes/events/[id]/entries'));
 const EventDraw = lazy(() => import('./routes/events/[id]/draw'));
 const EventResults = lazy(() => import('./routes/events/[id]/results'));
 const EventPayouts = lazy(() => import('./routes/events/[id]/payouts'));
+const EventEnter = lazy(() => import('./routes/events/[eventId]/enter'));
+const EventStalls = lazy(() => import('./routes/events/[id]/stalls-booking'));
+const EventQRCheckin = lazy(() => import('./routes/events/[eventId]/qr-checkin'));
+const PublicDraw = lazy(() => import('./routes/events/[id]/public-draw'));
+const PublicResults = lazy(() => import('./routes/events/[id]/public-results'));
 const CartPage = lazy(() => import('./routes/cart/index'));
 const OrdersIndex = lazy(() => import('./routes/orders/index'));
 const OrderDetail = lazy(() => import('./routes/orders/[id]'));
+const Discover = lazy(() => import('./routes/discover'));
+const FarmCalendar = lazy(() => import('./routes/farm/calendar'));
+const FarmDashboard = lazy(() => import('./routes/farm/dashboard'));
+const BoarderProfile = lazy(() => import('./routes/farm/boarder/[id]'));
+const IncentivesDashboard = lazy(() => import('./routes/incentives/dashboard'));
 
 const queryClient = new QueryClient();
 const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on';
@@ -98,10 +108,26 @@ const App = () => (
             <Route path="draw" element={<Suspense fallback={<div>Loading...</div>}><EventDraw /></Suspense>} />
             <Route path="results" element={<Suspense fallback={<div>Loading...</div>}><EventResults /></Suspense>} />
             <Route path="payouts" element={<Suspense fallback={<div>Loading...</div>}><EventPayouts /></Suspense>} />
+            <Route path="stalls" element={<Suspense fallback={<div>Loading...</div>}><EventStalls /></Suspense>} />
+            <Route path="public-draw" element={<Suspense fallback={<div>Loading...</div>}><PublicDraw /></Suspense>} />
+            <Route path="public-results" element={<Suspense fallback={<div>Loading...</div>}><PublicResults /></Suspense>} />
           </Route>
+          <Route path="/events/:eventId/enter" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><EventEnter /></Suspense></RequireAuth>} />
+          <Route path="/events/:eventId/qr-checkin" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><EventQRCheckin /></Suspense></RequireAuth>} />
           <Route path="/cart" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><CartPage /></Suspense></RequireAuth>} />
           <Route path="/orders" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrdersIndex /></Suspense></RequireAuth>} />
           <Route path="/orders/:id" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrderDetail /></Suspense></RequireAuth>} />
+          
+          {/* Discovery */}
+          <Route path="/discover" element={<Suspense fallback={<div>Loading...</div>}><Discover /></Suspense>} />
+          
+          {/* Farm Ops */}
+          <Route path="/farm/calendar" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FarmCalendar /></Suspense></RequireAuth>} />
+          <Route path="/farm/dashboard" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FarmDashboard /></Suspense></RequireAuth>} />
+          <Route path="/farm/boarder/:id" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><BoarderProfile /></Suspense></RequireAuth>} />
+          
+          {/* Incentives */}
+          <Route path="/incentives/dashboard" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><IncentivesDashboard /></Suspense></RequireAuth>} />
           
           {/* Legacy marketplace routes - redirect to listings */}
           <Route path="/marketplace" element={<Suspense fallback={<div>Loading...</div>}><ListingsIndex /></Suspense>} />
