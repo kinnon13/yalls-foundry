@@ -152,6 +152,70 @@ export default function AuditPage() {
 
     auditResults.push(...areaChecks);
 
+    // 9. Business Stack Audit (detailed)
+    const businessFeatures = allFeatures.filter(f => 
+      f.area === 'business' || 
+      f.id.includes('crm') || 
+      f.id.includes('kpi') || 
+      f.id.includes('analytics') || 
+      f.id.includes('dashboard') ||
+      f.id.includes('producer') ||
+      f.id.includes('earnings') ||
+      f.id.includes('orders')
+    );
+    
+    const expectedBusinessModules = [
+      { id: 'crm', name: 'CRM & Contacts', keywords: ['crm'] },
+      { id: 'kpi', name: 'KPI Dashboard', keywords: ['kpi', 'metric', 'analytics'] },
+      { id: 'accounting', name: 'Accounting & Financials', keywords: ['accounting', 'financial', 'bookkeeping'] },
+      { id: 'email', name: 'Email Marketing', keywords: ['email', 'campaign', 'newsletter'] },
+      { id: 'social', name: 'Social Media Posting', keywords: ['post', 'composer', 'social'] },
+      { id: 'orders', name: 'Order Management', keywords: ['order', 'purchase'] },
+      { id: 'earnings', name: 'Earnings & Payouts', keywords: ['earning', 'payout', 'payment'] },
+      { id: 'producer', name: 'Producer Console', keywords: ['producer', 'event'] },
+      { id: 'approvals', name: 'Approvals Workflow', keywords: ['approval', 'review'] },
+      { id: 'inventory', name: 'Inventory Management', keywords: ['inventory', 'stock', 'stallion'] },
+      { id: 'messaging', name: 'Business Messaging', keywords: ['message', 'chat', 'inbox'] },
+      { id: 'farm', name: 'Farm Operations', keywords: ['farm', 'ops'] }
+    ];
+    
+    const businessModuleStatus = expectedBusinessModules.map(module => {
+      const features = businessFeatures.filter(f => 
+        module.keywords.some(kw => f.id.includes(kw) || f.title.toLowerCase().includes(kw))
+      );
+      const hasAny = features.length > 0;
+      const hasWired = features.some(f => f.status === 'wired');
+      const hasFullUI = features.some(f => f.status === 'full-ui');
+      const allShell = features.every(f => f.status === 'shell');
+      
+      return {
+        module: module.name,
+        status: !hasAny ? 'missing' : hasWired ? 'wired' : hasFullUI ? 'full-ui' : allShell ? 'shell' : 'partial',
+        count: features.length,
+        features: features.map(f => `${f.id} (${f.status})`).join(', ')
+      };
+    });
+    
+    const businessReady = businessModuleStatus.filter(m => m.status === 'wired' || m.status === 'full-ui').length;
+    const businessMissing = businessModuleStatus.filter(m => m.status === 'missing').length;
+    
+    auditResults.push({
+      check: 'Business Stack Completeness',
+      category: 'critical',
+      status: businessReady >= 8 ? 'pass' : businessReady >= 5 ? 'warn' : 'fail',
+      message: `${businessReady}/${expectedBusinessModules.length} business modules built`,
+      details: [
+        `✅ Ready: ${businessModuleStatus.filter(m => m.status === 'wired' || m.status === 'full-ui').map(m => m.module).join(', ')}`,
+        `⚠️  Shell: ${businessModuleStatus.filter(m => m.status === 'shell' || m.status === 'partial').map(m => m.module).join(', ')}`,
+        `❌ Missing: ${businessModuleStatus.filter(m => m.status === 'missing').map(m => m.module).join(', ')}`,
+        '',
+        'Detailed breakdown:',
+        ...businessModuleStatus.map(m => 
+          `  ${m.status === 'wired' || m.status === 'full-ui' ? '✅' : m.status === 'missing' ? '❌' : '⚠️ '} ${m.module}: ${m.count} features (${m.status})`
+        )
+      ]
+    });
+
     setResults(auditResults);
   } catch (err) {
     console.error('Audit failed', err);
