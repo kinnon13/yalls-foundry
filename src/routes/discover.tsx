@@ -1,124 +1,234 @@
 /**
- * PR C3: Discover Page (Popular Feed)
- * For You / Trending / Latest sections with faceted search
+ * Discover Page - Mixed feed with ReelCards & ListingCards
  */
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Tabs } from '@/design/components/Tabs';
-import { Card } from '@/design/components/Card';
-import { Badge } from '@/design/components/Badge';
-import { Price } from '@/design/components/Price';
 import { supabase } from '@/integrations/supabase/client';
-import { tokens } from '@/design/tokens';
-import { useSearchParams } from 'react-router-dom';
+import { GlobalHeader } from '@/components/layout/GlobalHeader';
+import { ReelCard } from '@/design/components/ReelCard';
+import { FacetBar, FacetGroup } from '@/design/components/FacetBar';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ShoppingCart, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Discover() {
   const [activeTab, setActiveTab] = useState('for-you');
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [facets, setFacets] = useState<Record<string, any>>({});
 
-  const selectedFacets = searchParams.get('facets')?.split(',') || [];
-
-  const { data: taxonomies = [] } = useQuery({
-    queryKey: ['taxonomies'],
+  // Fetch listings
+  const { data: listings = [] } = useQuery({
+    queryKey: ['discover-listings', activeTab, facets],
     queryFn: async () => {
-      const { data } = await supabase.from('taxonomies').select('*');
+      let query = supabase
+        .from('marketplace_listings' as any)
+        .select('*')
+        .eq('status', 'active');
+
+      // Apply price filter
+      if (facets.price) {
+        query = query.gte('price_cents', facets.price[0] * 100);
+        query = query.lte('price_cents', facets.price[1] * 100);
+      }
+
+      const { data } = await query.order('created_at', { ascending: false }).limit(20);
       return data || [];
     },
   });
 
-  const { data: listings = [] } = useQuery({
-    queryKey: ['discover-listings', activeTab, selectedFacets],
+  // Fetch posts for reel cards
+  const { data: posts = [] } = useQuery({
+    queryKey: ['discover-posts', activeTab],
     queryFn: async () => {
-      // Mock data for now - real implementation would query marketplace
-      return [];
+      const { data } = await supabase
+        .from('posts' as any)
+        .select('*, profiles!posts_author_user_id_fkey(display_name, avatar_url)')
+        .eq('visibility', 'public')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      return data || [];
     },
   });
 
-  const handleFacetToggle = (facetKey: string) => {
-    const updated = selectedFacets.includes(facetKey)
-      ? selectedFacets.filter(f => f !== facetKey)
-      : [...selectedFacets, facetKey];
-    
-    if (updated.length > 0) {
-      searchParams.set('facets', updated.join(','));
-    } else {
-      searchParams.delete('facets');
-    }
-    setSearchParams(searchParams);
-  };
-
-  const tabs = [
+  // Facet groups configuration
+  const facetGroups: FacetGroup[] = [
     {
-      id: 'for-you',
-      label: 'For You',
-      content: (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: tokens.space.m }}>
-          {listings.map((listing: any) => (
-            <Card key={listing.id} padding="m">
-              <div style={{ fontWeight: tokens.typography.weight.semibold, marginBottom: tokens.space.xs }}>
-                {listing.title}
-              </div>
-              <Price cents={listing.price_cents} />
-            </Card>
-          ))}
-        </div>
-      ),
+      id: 'price',
+      label: 'Price Range',
+      type: 'range',
+      range: { min: 0, max: 50000, step: 100 },
     },
     {
-      id: 'trending',
-      label: 'Trending',
-      content: (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: tokens.space.m }}>
-          {listings.map((listing: any) => (
-            <Card key={listing.id} padding="m">
-              <div style={{ fontWeight: tokens.typography.weight.semibold, marginBottom: tokens.space.xs }}>
-                {listing.title}
-              </div>
-              <Price cents={listing.price_cents} />
-              <Badge variant="warning">🔥 Trending</Badge>
-            </Card>
-          ))}
-        </div>
-      ),
-    },
-    {
-      id: 'latest',
-      label: 'Latest',
-      content: (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: tokens.space.m }}>
-          {listings.map((listing: any) => (
-            <Card key={listing.id} padding="m">
-              <div style={{ fontWeight: tokens.typography.weight.semibold, marginBottom: tokens.space.xs }}>
-                {listing.title}
-              </div>
-              <Price cents={listing.price_cents} />
-            </Card>
-          ))}
-        </div>
-      ),
+      id: 'category',
+      label: 'Category',
+      type: 'checkbox',
+      options: [
+        { value: 'horses', label: 'Horses', count: 45 },
+        { value: 'tack', label: 'Tack & Equipment', count: 120 },
+        { value: 'trailers', label: 'Trailers', count: 23 },
+        { value: 'services', label: 'Services', count: 67 },
+      ],
     },
   ];
 
+  const handleFacetChange = (facetId: string, value: any) => {
+    setFacets((prev) => ({
+      ...prev,
+      [facetId]: value,
+    }));
+  };
+
+  const handleResetFacets = () => {
+    setFacets({});
+  };
+
+  // Mix reels and listings for feed
+  const mixedFeed = [];
+  let postIndex = 0;
+  let listingIndex = 0;
+
+  // Interleave posts and listings (1 reel per 3 listings)
+  while (postIndex < posts.length || listingIndex < listings.length) {
+    // Add 3 listings
+    for (let i = 0; i < 3 && listingIndex < listings.length; i++) {
+      mixedFeed.push({ type: 'listing', data: listings[listingIndex++] });
+    }
+    // Add 1 reel
+    if (postIndex < posts.length) {
+      mixedFeed.push({ type: 'reel', data: posts[postIndex++] });
+    }
+  }
+
   return (
-    <div style={{ padding: tokens.space.m }}>
-      <div style={{ marginBottom: tokens.space.m }}>
-        <h2 style={{ fontSize: tokens.typography.size.xxl, fontWeight: tokens.typography.weight.bold, marginBottom: tokens.space.s }}>
-          Discover
-        </h2>
-        <div style={{ display: 'flex', gap: tokens.space.xs, flexWrap: 'wrap' }}>
-          {taxonomies.slice(0, 10).map((tax: any) => (
-            <Badge
-              key={tax.id}
-              variant={selectedFacets.includes(tax.key) ? 'default' : 'warning'}
-            >
-              {tax.label}
-            </Badge>
-          ))}
+    <div className="min-h-screen bg-background">
+      <GlobalHeader />
+      
+      <div className="container mx-auto px-4 py-6">
+        <h1 className="text-3xl font-bold mb-6">Discover</h1>
+
+        <div className="grid lg:grid-cols-[280px_1fr] gap-6">
+          {/* Sidebar Facets */}
+          <div className="hidden lg:block">
+            <FacetBar
+              groups={facetGroups}
+              values={facets}
+              onChange={handleFacetChange}
+              onReset={handleResetFacets}
+            />
+          </div>
+
+          {/* Main Content */}
+          <div>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+              <TabsList>
+                <TabsTrigger value="for-you">For You</TabsTrigger>
+                <TabsTrigger value="trending">Trending</TabsTrigger>
+                <TabsTrigger value="latest">Latest</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value={activeTab} className="mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {mixedFeed.map((item, idx) => {
+                    if (item.type === 'reel') {
+                      const post = item.data as any;
+                      return (
+                        <ReelCard
+                          key={`reel-${post.id}`}
+                          media={
+                            post.media?.[0]?.url ? (
+                              <img
+                                src={post.media[0].url}
+                                alt={post.body}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-muted">
+                                <p className="text-muted-foreground">No media</p>
+                              </div>
+                            )
+                          }
+                          title={post.body?.slice(0, 50) || 'Post'}
+                          author={
+                            <div className="flex items-center gap-2">
+                              {post.profiles?.avatar_url && (
+                                <img
+                                  src={post.profiles.avatar_url}
+                                  alt={post.profiles.display_name}
+                                  className="w-6 h-6 rounded-full"
+                                />
+                              )}
+                              <span className="text-sm text-white">
+                                {post.profiles?.display_name || 'Anonymous'}
+                              </span>
+                            </div>
+                          }
+                          onLike={() => {}}
+                          onComment={() => {}}
+                          onShare={() => {}}
+                        />
+                      );
+                    } else {
+                      const listing = item.data as any;
+                      return (
+                        <Link key={`listing-${listing.id}`} to={`/listings/${listing.id}`}>
+                          <Card className="h-full hover:shadow-lg transition-shadow">
+                            <CardContent className="p-0">
+                              {listing.media?.[0]?.url ? (
+                                <img
+                                  src={listing.media[0].url}
+                                  alt={listing.title}
+                                  className="w-full h-48 object-cover rounded-t-lg"
+                                />
+                              ) : (
+                                <div className="w-full h-48 bg-muted flex items-center justify-center rounded-t-lg">
+                                  No image
+                                </div>
+                              )}
+                              
+                              <div className="p-4">
+                                <h3 className="font-semibold mb-2 line-clamp-1">
+                                  {listing.title}
+                                </h3>
+                                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                                  {listing.description}
+                                </p>
+                                
+                                <div className="flex items-center justify-between">
+                                  <div className="text-xl font-bold text-primary">
+                                    ${(listing.price_cents / 100).toFixed(2)}
+                                  </div>
+                                  <Button size="sm" variant="outline">
+                                    <ShoppingCart className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                
+                                {listing.stock_quantity <= 5 && (
+                                  <Badge variant="destructive" className="mt-2">
+                                    Only {listing.stock_quantity} left
+                                  </Badge>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      );
+                    }
+                  })}
+                </div>
+
+                {mixedFeed.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No items found. Adjust your filters or check back later.
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </div>
-
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
     </div>
   );
 }

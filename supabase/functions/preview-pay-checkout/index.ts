@@ -1,56 +1,50 @@
-import { serve } from "https://deno.land/std@0.214.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+/**
+ * Preview Payment Checkout - Mock Stripe checkout for development
+ * Returns mock payment intent for testing
+ */
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Content-Type": "application/json",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders, status: 204 });
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { order_id } = await req.json();
+
     if (!order_id) {
-      return new Response(
-        JSON.stringify({ error: "order_id required" }),
-        { status: 400, headers: corsHeaders }
-      );
+      throw new Error('order_id required');
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      {
-        global: {
-          headers: { Authorization: req.headers.get("Authorization") ?? "" },
-        },
-      }
-    );
+    // Mock payment intent response
+    const mockPaymentIntent = {
+      id: `pi_mock_${crypto.randomUUID()}`,
+      status: 'succeeded',
+      amount: 5000, // Mock $50.00
+      currency: 'usd',
+      order_id,
+      created: Date.now(),
+    };
 
-    const { error } = await supabase.rpc("order_preview_pay", {
-      p_order_id: order_id,
+    console.log('Mock checkout created:', mockPaymentIntent);
+
+    return new Response(JSON.stringify(mockPaymentIntent), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
     });
-
-    if (error) {
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { status: 400, headers: corsHeaders }
-      );
-    }
-
+  } catch (error) {
+    console.error('Checkout error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ ok: true, order_id }),
-      { status: 200, headers: corsHeaders }
-    );
-  } catch (e) {
-    return new Response(
-      JSON.stringify({ error: (e as Error)?.message ?? "unknown error" }),
-      { status: 500, headers: corsHeaders }
+      JSON.stringify({ error: message }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      }
     );
   }
 });
