@@ -14,15 +14,23 @@ import { Trophy, Plus, DollarSign, Building2 } from 'lucide-react';
 export function Incentives() {
   const { session } = useSession();
 
-  // Fetch producer businesses
+  // Fetch producer businesses (filter by kind='business' and metadata.business_type='producer')
   const { data: producers } = useQuery({
     queryKey: ['my-producers', session?.userId],
     queryFn: async () => {
       const { data } = await supabase
         .from('entities')
         .select('*')
-        .eq('owner_user_id', session?.userId);
-      return data || [];
+        .eq('owner_user_id', session?.userId)
+        .eq('kind', 'business');
+      
+      // Filter to only producer businesses by checking metadata
+      return data?.filter((entity) => 
+        entity.metadata && 
+        typeof entity.metadata === 'object' && 
+        'business_type' in entity.metadata && 
+        entity.metadata.business_type === 'producer'
+      ) || [];
     },
     enabled: !!session?.userId,
   });

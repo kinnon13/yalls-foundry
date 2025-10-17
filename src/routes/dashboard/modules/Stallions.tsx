@@ -20,8 +20,16 @@ export function Stallions() {
         .from('entities')
         .select('*')
         .eq('owner_user_id', session?.userId)
+        .eq('kind', 'horse')
         .order('created_at', { ascending: false });
-      return data || [];
+      
+      // Filter to stallions via metadata (stallion is a horse variant)
+      return data?.filter((entity) =>
+        entity.metadata &&
+        typeof entity.metadata === 'object' &&
+        'stallion' in entity.metadata &&
+        entity.metadata.stallion === true
+      ) || [];
     },
     enabled: !!session?.userId,
   });
