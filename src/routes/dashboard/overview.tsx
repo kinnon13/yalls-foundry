@@ -20,7 +20,8 @@ export default function Overview() {
       }
       const { data, error } = await supabase.rpc('rocker_next_best_actions', { p_user_id: user.id });
       if (!error && data) {
-        setItems((data || []).map((r: any) => r as NBA));
+        const actionsArray = Array.isArray(data) ? data : [];
+        setItems(actionsArray.map((r: any) => r as NBA));
       }
       setLoading(false);
     })();

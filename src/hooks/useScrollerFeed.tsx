@@ -22,10 +22,13 @@ interface FeedPage {
 
 export function useScrollerFeed({ lane, entityId }: UseScrollerFeedParams) {
   const { session } = useSession();
+  
+  // Map legacy modes to new lanes
+  const mappedLane = lane === 'combined' ? 'for_you' : lane === 'personal' ? 'following' : lane;
   const limit = lane === 'profile' ? 30 : 50;
   
   return useInfiniteQuery<FeedPage>({
-    queryKey: ['scroller-feed', lane, entityId, session?.userId],
+    queryKey: ['scroller-feed', mappedLane, entityId, session?.userId],
     queryFn: async ({ pageParam }) => {
       const cursor = pageParam as { ts: string | null; id: string | null } | undefined;
       
@@ -42,7 +45,7 @@ export function useScrollerFeed({ lane, entityId }: UseScrollerFeedParams) {
           }
         : {
             p_user_id: session?.userId,
-            p_mode: lane,
+            p_mode: mappedLane,
             p_cursor_ts: cursor?.ts || null,
             p_cursor_id: cursor?.id || null,
             p_limit: limit,

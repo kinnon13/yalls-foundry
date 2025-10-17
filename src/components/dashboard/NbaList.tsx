@@ -52,13 +52,15 @@ export function NbaList() {
     return <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />;
   }
 
-  if (!actions?.length) {
+  const actionsArray = Array.isArray(actions) ? actions : [];
+  
+  if (actionsArray.length === 0) {
     return <p className="text-sm text-muted-foreground">No actions at the moment</p>;
   }
 
   return (
     <div className="space-y-2">
-      {actions.slice(0, 5).map((action: any, i: number) => (
+      {actionsArray.slice(0, 5).map((action: any, i: number) => (
         <div key={i} className="flex items-center justify-between p-3 border rounded-lg">
           <div>
             <p className="text-sm font-medium">{action.title || 'Action'}</p>

@@ -89,10 +89,10 @@ export default function DashboardV2() {
           Next Best Actions
         </h3>
         <div className="space-y-3">
-          {nextActions.length === 0 && (
+          {(!Array.isArray(nextActions) || nextActions.length === 0) && (
             <p className="text-sm text-muted-foreground">No suggestions at this time.</p>
           )}
-          {nextActions.map((action: any, idx: number) => (
+          {Array.isArray(nextActions) && nextActions.map((action: any, idx: number) => (
             <Button
               key={idx}
               variant="outline"

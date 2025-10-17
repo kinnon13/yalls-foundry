@@ -8735,13 +8735,7 @@ export type Database = {
       }
       rocker_next_best_actions: {
         Args: { p_user_id: string }
-        Returns: {
-          action_type: string
-          description: string
-          link: string
-          priority: number
-          title: string
-        }[]
+        Returns: Json
       }
       rpc_create_post: {
         Args: {

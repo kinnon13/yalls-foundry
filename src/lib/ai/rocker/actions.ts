@@ -18,7 +18,8 @@ export async function fetchNextBestActions(userId: string): Promise<NextBestActi
     });
 
     if (error) throw error;
-    return (data || []).map((row: any) => row.payload as NextBestAction);
+    const actionsArray = Array.isArray(data) ? data : [];
+    return actionsArray.map((row: any) => row as NextBestAction);
   } catch (error) {
     console.error('[Rocker] Failed to fetch actions:', error);
     return [];
