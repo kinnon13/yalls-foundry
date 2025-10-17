@@ -3278,6 +3278,32 @@ export type Database = {
         }
         Relationships: []
       }
+      entity_ui_prefs: {
+        Row: {
+          entity_id: string
+          prefs: Json
+          updated_at: string
+        }
+        Insert: {
+          entity_id: string
+          prefs?: Json
+          updated_at?: string
+        }
+        Update: {
+          entity_id?: string
+          prefs?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_ui_prefs_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: true
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entries: {
         Row: {
           back_number: number | null
@@ -3486,6 +3512,32 @@ export type Database = {
             columns: ["host_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorite_entities: {
+        Row: {
+          created_at: string
+          entity_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorite_entities_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
             referencedColumns: ["id"]
           },
         ]
@@ -4743,6 +4795,44 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_pins: {
+        Row: {
+          created_at: string
+          id: string
+          item_data: Json
+          item_id: string | null
+          item_type: string
+          position: number
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_data?: Json
+          item_id?: string | null
+          item_type: string
+          position: number
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_data?: Json
+          item_id?: string | null
+          item_type?: string
+          position?: number
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_pins_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -5671,6 +5761,24 @@ export type Database = {
           },
         ]
       }
+      user_ui_prefs: {
+        Row: {
+          prefs: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          prefs?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          prefs?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       views_coldstart: {
         Row: {
           listing_id: string
@@ -6529,6 +6637,14 @@ export type Database = {
           table_schema: string
         }[]
       }
+      get_user_aggregate_counts: {
+        Args: { p_user_id: string }
+        Returns: {
+          followers_count: number
+          following_count: number
+          likes_count: number
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: string
@@ -6919,6 +7035,10 @@ export type Database = {
       }
       record_view: {
         Args: { p_listing_id: string; p_session_id?: string }
+        Returns: undefined
+      }
+      reorder_pins: {
+        Args: { p_pin_positions: Json; p_profile_id: string }
         Returns: undefined
       }
       requires_step_up: {

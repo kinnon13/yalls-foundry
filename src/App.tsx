@@ -55,6 +55,9 @@ const PublicDraw = lazy(() => import('./routes/events/[id]/public-draw'));
 const PublicResults = lazy(() => import('./routes/events/[id]/public-results'));
 const EventDrawPublic = lazy(() => import('./routes/events/[eventId]/draw'));
 const EventResultsPublic = lazy(() => import('./routes/events/[eventId]/results'));
+const StallionsIndex = lazy(() => import('./routes/stallions/index'));
+const StallionDetail = lazy(() => import('./routes/stallions/[id]'));
+const ProfilePageDynamic = lazy(() => import('./routes/profile/[id]'));
 const CartPage = lazy(() => import('./routes/cart/index'));
 const OrdersIndex = lazy(() => import('./routes/orders/index'));
 const OrderDetail = lazy(() => import('./routes/orders/[id]'));
@@ -84,7 +87,10 @@ const App = () => (
           {/* 7-Route Spine */}
           <Route path="/" element={<Index />} />
           <Route path="/search" element={<Search />} />
-          <Route path="/profile/:id" element={<Profile />} />
+          <Route path="/profile" element={<Suspense fallback={<div>Loading...</div>}><ProfilePageDynamic /></Suspense>} />
+          <Route path="/profile/:id" element={<Suspense fallback={<div>Loading...</div>}><ProfilePageDynamic /></Suspense>} />
+          <Route path="/stallions" element={<Suspense fallback={<div>Loading...</div>}><StallionsIndex /></Suspense>} />
+          <Route path="/stallions/:id" element={<Suspense fallback={<div>Loading...</div>}><StallionDetail /></Suspense>} />
           <Route
             path="/dashboard"
             element={
