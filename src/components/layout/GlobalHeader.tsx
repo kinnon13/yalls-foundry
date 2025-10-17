@@ -12,7 +12,7 @@ import { Input } from '@/design/components/Input';
 import { Badge } from '@/design/components/Badge';
 import { tokens } from '@/design/tokens';
 import { FinderModal } from '@/components/finder/FinderModal';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { NotificationBell } from '@/components/notifications/NotificationBellIcon';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface GlobalHeaderProps {
