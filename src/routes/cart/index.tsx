@@ -64,28 +64,9 @@ export default function CartPage() {
 
       if (error) throw error;
 
-      // Mock payment
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/preview-pay-checkout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({ order_id: String(orderId) })
-      });
-
-      if (!response.ok) throw new Error('Payment failed');
-
-      // Rocker hook: log payment
-      await supabase.rpc('rocker_log_action' as any, {
-        p_user_id: session?.user.id,
-        p_agent: 'rocker',
-        p_action: 'order_preview_paid',
-        p_input: { order_id: String(orderId) } as any,
-        p_output: { success: true } as any,
-        p_result: 'success'
-      } as any);
+      // Import callEdge at top instead of inline fetch
+      const { callEdge } = await import('@/lib/edge/callEdge');
+      await callEdge("preview-pay-checkout", { order_id: orderId });
 
       toast.success('Order placed!');
       navigate(`/orders/${orderId}`);

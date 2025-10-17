@@ -1,6 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { callEdge } from '@/lib/edge/callEdge';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,68 +9,87 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { Printer } from 'lucide-react';
+import { Printer, ArrowLeft } from 'lucide-react';
+
+type Order = {
+  id: string;
+  created_at: string;
+  status: string;
+  buyer_user_id: string;
+  seller_entity_id: string;
+  subtotal_cents: number;
+  tax_cents: number;
+  shipping_cents: number;
+  total_cents: number;
+  mock_paid_at: string | null;
+  label_printed_at: string | null;
+};
+
+type OLI = { 
+  id: string; 
+  listing_id: string | null; 
+  title_snapshot: string; 
+  qty: number; 
+  unit_price_cents: number; 
+  metadata: any; 
+};
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [order, setOrder] = useState<Order | null>(null);
+  const [items, setItems] = useState<OLI[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [printing, setPrinting] = useState(false);
+  const [me, setMe] = useState<string | null>(null);
 
-  const { data: order, isLoading } = useQuery({
-    queryKey: ['order', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('orders' as any)
-        .select('*')
-        .eq('id', id!)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data as any;
+  const asUSD = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
+  const load = async () => {
+    setLoading(true);
+    const q = supabase.from("orders")
+      .select("id, created_at, status, buyer_user_id, seller_entity_id, subtotal_cents, tax_cents, shipping_cents, total_cents, mock_paid_at, label_printed_at")
+      .eq("id", id!).maybeSingle();
+    
+    const [user, ord] = await Promise.all([supabase.auth.getUser(), q]);
+    setMe(user.data.user?.id ?? null);
+    if (!ord.error && ord.data) setOrder(ord.data as Order);
+
+    const olis = await supabase
+      .from("order_line_items")
+      .select("id, order_id, listing_id, title_snapshot, qty, unit_price_cents, metadata")
+      .eq("order_id", id!);
+    
+    if (!olis.error && olis.data) setItems(olis.data as OLI[]);
+    setLoading(false);
+  };
+
+  useEffect(() => { if (id) load(); }, [id]);
+
+  const canPrintLabel = useMemo(() => {
+    if (!order || !me) return false;
+    const isSellerSide = order.buyer_user_id !== me;
+    return isSellerSide && order.status === "paid" && !order.label_printed_at;
+  }, [order, me]);
+
+  const markLabelPrinted = async () => {
+    setPrinting(true);
+    try {
+      await callEdge("preview-pay-labels", { order_id: order!.id });
+      await load();
+      toast.success("Label marked printed");
+    } catch (e: any) {
+      toast.error(e.message || "Couldn't mark label");
+    } finally {
+      setPrinting(false);
     }
-  });
+  };
 
-  const { data: lineItems } = useQuery({
-    queryKey: ['order-items', id],
-    enabled: !!order,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('order_line_items' as any)
-        .select('*')
-        .eq('order_id', id!);
-      
-      if (error) throw error;
-      return data as any[];
-    }
-  });
-
-  const printLabelMutation = useMutation({
-    mutationFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/preview-pay-labels`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({ order_id: id })
-      });
-
-      if (!response.ok) throw new Error('Failed to mark label printed');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['order', id] });
-      toast.success('Label marked as printed');
-    },
-    onError: (error: any) => {
-      toast.error(error.message);
-    }
-  });
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <GlobalHeader />
-        <div className="container mx-auto px-4 py-8 text-center">Loading...</div>
+        <div className="container mx-auto px-4 py-8 text-center">Loading…</div>
       </div>
     );
   }
@@ -79,10 +99,10 @@ export default function OrderDetail() {
       <div className="min-h-screen bg-background">
         <GlobalHeader />
         <div className="container mx-auto px-4 py-8 text-center">
-          <p>Order not found</p>
-          <Link to="/orders">
-            <Button className="mt-4">Back to Orders</Button>
-          </Link>
+          <p className="text-muted-foreground">Order not found.</p>
+          <Button variant="outline" onClick={() => navigate("/orders")} className="mt-4">
+            Back to Orders
+          </Button>
         </div>
       </div>
     );
@@ -92,12 +112,21 @@ export default function OrderDetail() {
     <div className="min-h-screen bg-background">
       <GlobalHeader />
       
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate("/orders")}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Orders
+        </Button>
+
         <Card>
           <CardHeader>
-            <div className="flex items-start justify-between">
+            <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Order #{order.id.slice(0, 8)}</CardTitle>
+                <CardTitle>Order #{order.id.slice(0,8)}</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
                   {format(new Date(order.created_at), 'PPp')}
                 </p>
@@ -106,58 +135,67 @@ export default function OrderDetail() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="flex gap-2">
+              {order.mock_paid_at && (
+                <Badge variant="secondary">
+                  Paid {format(new Date(order.mock_paid_at), 'PPp')}
+                </Badge>
+              )}
+              {order.label_printed_at && (
+                <Badge variant="secondary">
+                  Label printed {format(new Date(order.label_printed_at), 'PPp')}
+                </Badge>
+              )}
+            </div>
+
             <div>
-              <h3 className="font-semibold mb-4">Order Items</h3>
+              <h3 className="font-semibold mb-3">Items</h3>
               <div className="space-y-2">
-                {lineItems?.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between">
+                {items.map(it => (
+                  <div key={it.id} className="flex items-center justify-between rounded border p-3">
                     <div>
-                      <p>{item.title_snapshot}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Qty: {item.qty} × ${(item.unit_price_cents / 100).toFixed(2)}
-                      </p>
+                      <div className="font-medium">{it.title_snapshot}</div>
+                      <div className="text-sm text-muted-foreground">Qty {it.qty}</div>
                     </div>
-                    <p className="font-medium">
-                      ${((item.qty * item.unit_price_cents) / 100).toFixed(2)}
-                    </p>
+                    <div className="text-right">
+                      <div className="font-semibold">{asUSD(it.unit_price_cents)}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Line {asUSD(it.qty * it.unit_price_cents)}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <Separator />
-
-            <div className="space-y-2">
+            <div className="rounded border p-4 space-y-2">
               <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span>${(order.subtotal_cents / 100).toFixed(2)}</span>
+                <span>Subtotal</span>
+                <span>{asUSD(order.subtotal_cents)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Tax:</span>
-                <span>${(order.tax_cents / 100).toFixed(2)}</span>
+                <span>Tax</span>
+                <span>{asUSD(order.tax_cents)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Shipping:</span>
-                <span>${(order.shipping_cents / 100).toFixed(2)}</span>
+                <span>Shipping</span>
+                <span>{asUSD(order.shipping_cents)}</span>
               </div>
-              <Separator />
-              <div className="flex justify-between text-lg font-semibold">
-                <span>Total:</span>
-                <span>${(order.total_cents / 100).toFixed(2)}</span>
+              <div className="flex justify-between font-semibold border-t pt-2">
+                <span>Total</span>
+                <span>{asUSD(order.total_cents)}</span>
               </div>
             </div>
 
-            {order.status === 'paid' && !order.label_printed_at && (
-              <Button onClick={() => printLabelMutation.mutate()} className="w-full">
-                <Printer className="h-4 w-4 mr-2" />
-                Mark Label Printed (Seller)
+            {canPrintLabel && (
+              <Button 
+                onClick={markLabelPrinted}
+                disabled={printing}
+                className="w-full gap-2"
+              >
+                <Printer className="h-4 w-4" />
+                {printing ? "Marking…" : "Mark Label Printed (mock)"}
               </Button>
-            )}
-
-            {order.label_printed_at && (
-              <p className="text-sm text-muted-foreground text-center">
-                Label printed on {format(new Date(order.label_printed_at), 'PPp')}
-              </p>
             )}
           </CardContent>
         </Card>
