@@ -2,6 +2,8 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { FeedItem } from '@/types/feed';
+import { useEffect, useRef } from 'react';
+import { logUsage, getSessionId } from '@/lib/telemetry/usage';
 
 type HomeLane = 'for_you' | 'following' | 'shop';
 type ProfileLane = 'this' | 'combined';
@@ -29,8 +31,9 @@ export function useScrollerFeed(params: FeedParams) {
   const isProfileFeed = 'entityId' in params;
   const lane = params.lane;
   const entityId = isProfileFeed ? params.entityId : undefined;
+  const impressionTracked = useRef<Set<string>>(new Set());
 
-  return useInfiniteQuery<FeedPage>({
+  const query = useInfiniteQuery<FeedPage>({
     queryKey: ['feed-fusion', lane, entityId],
     queryFn: async ({ pageParam }) => {
       const cursor = pageParam ?? null;
@@ -80,4 +83,32 @@ export function useScrollerFeed(params: FeedParams) {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: null as string | null
   });
+
+  // Track impressions when data loads
+  useEffect(() => {
+    if (!query.data) return;
+    
+    const sessionId = getSessionId();
+    const surface = isProfileFeed ? `profile_${lane}` : `home_${lane}`;
+    
+    query.data.pages.forEach((page, pageIndex) => {
+      page.items.forEach((item, itemIndex) => {
+        const trackKey = `${item.id}-${pageIndex}`;
+        if (impressionTracked.current.has(trackKey)) return;
+        
+        impressionTracked.current.add(trackKey);
+        logUsage({
+          sessionId,
+          type: 'impression',
+          surface,
+          itemKind: item.kind,
+          itemId: item.id,
+          lane: lane || null,
+          position: pageIndex * pageSize + itemIndex,
+        });
+      });
+    });
+  }, [query.data, lane, isProfileFeed, pageSize]);
+
+  return query;
 }

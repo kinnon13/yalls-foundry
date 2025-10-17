@@ -6779,34 +6779,49 @@ export type Database = {
       }
       usage_events: {
         Row: {
-          created_at: string | null
+          created_at: string
+          duration_ms: number | null
           event_type: string
           id: string
           item_id: string
           item_type: string
+          lane: string | null
           payload: Json | null
+          position: number | null
           session_id: string
-          user_id: string | null
+          surface: string | null
+          tenant_id: string | null
+          user_id: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
           event_type: string
           id?: string
           item_id: string
           item_type: string
+          lane?: string | null
           payload?: Json | null
+          position?: number | null
           session_id: string
-          user_id?: string | null
+          surface?: string | null
+          tenant_id?: string | null
+          user_id?: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
           event_type?: string
           id?: string
           item_id?: string
           item_type?: string
+          lane?: string | null
           payload?: Json | null
+          position?: number | null
           session_id?: string
-          user_id?: string | null
+          surface?: string | null
+          tenant_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -8201,6 +8216,20 @@ export type Database = {
       l2_normalize: {
         Args: { "": string } | { "": unknown } | { "": unknown }
         Returns: unknown
+      }
+      log_usage_event_v2: {
+        Args: {
+          p_duration_ms?: number
+          p_event_type: string
+          p_item_id: string
+          p_item_kind: string
+          p_lane?: string
+          p_meta?: Json
+          p_position?: number
+          p_session_id: string
+          p_surface: string
+        }
+        Returns: undefined
       }
       longtransactionsenabled: {
         Args: Record<PropertyKey, never>
