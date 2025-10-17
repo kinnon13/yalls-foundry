@@ -77,6 +77,8 @@ const IncentivesDashboard = lazy(() => import('./routes/incentives/dashboard'));
 const MyEntries = lazy(() => import('./routes/events/entrant/my-entries'));
 const MyDraws = lazy(() => import('./routes/events/entrant/my-draws'));
 const MyResults = lazy(() => import('./routes/events/entrant/my-results'));
+const FarmTasks = lazy(() => import('./routes/farm/Tasks'));
+const FarmHealthLog = lazy(() => import('./routes/farm/HealthLog'));
 
 const queryClient = new QueryClient();
 const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on';
@@ -157,6 +159,8 @@ function AppContent() {
           <Route path="/farm/calendar" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FarmCalendar /></Suspense></RequireAuth>} />
           <Route path="/farm/dashboard" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FarmDashboard /></Suspense></RequireAuth>} />
           <Route path="/farm/boarder/:id" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><BoarderProfile /></Suspense></RequireAuth>} />
+          <Route path="/farm/tasks" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FarmTasks /></Suspense></RequireAuth>} />
+          <Route path="/farm/health" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FarmHealthLog /></Suspense></RequireAuth>} />
           
           {/* Incentives */}
           <Route path="/incentives/dashboard" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><IncentivesDashboard /></Suspense></RequireAuth>} />
