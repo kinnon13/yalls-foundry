@@ -157,26 +157,37 @@ for (const c of components) {
   }
 }
 
-// Write output
+// Write output to generated/ (non-destructive)
+const outputDir = 'generated';
+const outputFile = `${outputDir}/feature-backfill.json`;
+
+if (!fs.existsSync(outputDir)) {
+  fs.mkdirSync(outputDir, { recursive: true });
+}
+
 const out = {
-  "$schema": "./features-schema.json",
+  "$schema": "../docs/features/features-schema.json",
   "version": "1.0.0",
   "lastUpdated": new Date().toISOString().split('T')[0],
+  "source": "backfill",
   features: Array.from(byId.values()).sort((a, b) => a.id.localeCompare(b.id))
 };
 
-// Create backup
-if (fs.existsSync(FEATURES)) {
-  const backup = FEATURES.replace('.json', `.backup-${Date.now()}.json`);
-  fs.copyFileSync(FEATURES, backup);
+// Create backup of existing backfill
+if (fs.existsSync(outputFile)) {
+  const backup = outputFile.replace('.json', `.backup-${Date.now()}.json`);
+  fs.copyFileSync(outputFile, backup);
   console.log(`📦 Backup created: ${backup}`);
 }
 
-fs.writeFileSync(FEATURES, JSON.stringify(out, null, 2) + '\n');
+fs.writeFileSync(outputFile, JSON.stringify(out, null, 2) + '\n');
 
 console.log('\n✅ Backfill complete!');
 console.log(`   - New features: ${created}`);
 console.log(`   - Updated features: ${updated}`);
 console.log(`   - Total features: ${out.features.length}`);
-console.log('\n💡 Next: Add @feature(...) tags to files with placeholder entries');
-console.log('   Placeholders have notes: "Auto-generated placeholder"\n');
+console.log(`   - Output: ${outputFile}`);
+console.log('\n💡 Next steps:');
+console.log('   1. Refresh the app - kernel auto-loads from generated/');
+console.log('   2. Add @feature(...) tags to files with placeholder entries');
+console.log('   3. View placeholders at /admin/features with "Show Placeholders" filter\n');

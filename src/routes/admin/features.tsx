@@ -126,12 +126,15 @@ export default function FeaturesAdminPage() {
     <div className="container max-w-7xl py-8 space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Feature Index</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {totalFeatures} features · {percentComplete.toFixed(1)}% complete
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Feature Index</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {totalFeatures} features · {percentComplete.toFixed(1)}% complete
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Sources: {stats.sources.base} base · {stats.sources.overlays} overlay · {stats.sources.generated} generated
+        </p>
+      </div>
         <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link to="/admin/audit">

@@ -175,15 +175,18 @@ export default function AuditPage() {
   return (
     <div className="container max-w-7xl py-8 space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Master Audit</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Comprehensive platform health check
-          </p>
-          <div role="status" aria-live="polite" className="sr-only">
-            {running ? 'Audit running' : 'Audit idle'}
-          </div>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Master Audit</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Comprehensive platform health check
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Sources: {kernel.sources.base} base · {kernel.sources.overlays} overlay · {kernel.sources.generated} generated
+        </p>
+        <div role="status" aria-live="polite" className="sr-only">
+          {running ? 'Audit running' : 'Audit idle'}
         </div>
+      </div>
         <Button onClick={runAudit} disabled={running}>
           {running ? (
             <>
