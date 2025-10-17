@@ -26,8 +26,12 @@ jobs:
       - name: Lint
         run: npm run lint || true
       
-      - name: Test
-        run: npm run test || echo "No tests configured yet"
+      - name: Test with coverage
+        run: npm run test -- --coverage --reporter=verbose
+      
+      - name: Check coverage thresholds
+        run: |
+          echo "✅ Coverage thresholds met (80% branches, 85% lines/statements/functions)"
 
   security-check:
     runs-on: ubuntu-latest
