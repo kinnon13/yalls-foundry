@@ -96,15 +96,15 @@ export function CampaignsTab() {
 
   const queueCampaign = useMutation({
     mutationFn: async (campaignId: string) => {
-      const { data, error } = await supabase.rpc('queue_campaign_messages', {
+      const { data, error } = await (supabase as any).rpc('schedule_campaign_sends', {
         p_campaign_id: campaignId,
       });
       if (error) throw error;
       return data;
     },
-    onSuccess: (data: any) => {
+    onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-      toast.success(`Queued ${data.queued} messages`);
+      toast.success(`Campaign scheduled - ${count} messages queued`);
     },
   });
 
