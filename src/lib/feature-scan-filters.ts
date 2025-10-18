@@ -62,10 +62,12 @@ export const tableIgnore = [
 export function normRoute(p: string): string {
   return (p || '/')
     .replace(/\/index$/, '')
-    .replace(/\/+$/, '')
-    .replace(/\[([^\]]+)\]/g, ':$1')
-    .replace(/\/\d+(?:[\/$]|$)/g, '/:id$1')
-    .replace(/\/[0-9a-f-]{8,}(?:[\/$]|$)/ig, '/:id$1') || '/';
+    .replace(/\/+/g, '/')                 // collapse double slashes
+    .replace(/\/+$/g, '')                 // trim trailing slash (except root)
+    .replace(/\[([^\]]+)\]/g, ':$1')      // next.js style => :param
+    .replace(/\/\d+(?=\/|$)/g, '/:id')    // numeric ids
+    .replace(/\/[0-9a-f-]{8,}(?=\/|$)/gi, '/:id') // uuids
+    || '/';
 }
 
 /**
@@ -74,21 +76,25 @@ export function normRoute(p: string): string {
  */
 export function collapseFamilies(paths: string[]): string[] {
   const families = new Map<string, Set<string>>();
-  const add = (h: string, v: string) => {
-    if (!families.has(h)) families.set(h, new Set());
-    families.get(h)!.add(v);
-  };
-
+  
   for (const raw of paths) {
     const p = normRoute(('/' + raw).replace(/\/+/g, '/'));
     const parts = p.split('/').filter(Boolean);
     const head = '/' + (parts[0] ?? '');
+    const set = families.get(head) ?? new Set<string>();
     
     if (COLLAPSE_HEADS.has(head) && parts.length >= 2) {
-      add(head, `${head}/*`);
+      set.add(`${head}/*`);
     } else {
-      add(head, p || '/');
+      set.add(p || '/');
     }
+    
+    families.set(head, set);
+  }
+
+  // If /* family exists for a head, drop the bare head to avoid duplicates
+  for (const [head, set] of families) {
+    if (set.has(`${head}/*`)) set.delete(head);
   }
 
   // Flatten + stable sort
