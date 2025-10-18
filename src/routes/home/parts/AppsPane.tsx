@@ -86,28 +86,15 @@ export default function AppsPane() {
     return totalEntities === 0;
   }, [capabilities]);
 
-  // Combine all visible apps
+  // Combine all visible apps (without create profile button)
   const visibleApps = useMemo(() => {
     const apps = [...CONSUMER_APPS];
-    
-    // Add "Create Profile" tile after Profile if user has no entities
-    if (hasNoManagedEntities) {
-      const createProfileTile: AppTile = {
-        id: 'create-profile',
-        label: 'Create Profile',
-        icon: Plus,
-        route: '/profiles/new',
-        color: 'from-primary/30 to-primary/10',
-      };
-      // Insert after Profile (index 1)
-      apps.splice(2, 0, createProfileTile);
-    }
     
     // Add filtered management apps
     apps.push(...filteredManagementApps);
     
     return apps;
-  }, [hasNoManagedEntities, filteredManagementApps]);
+  }, [filteredManagementApps]);
 
   // Fetch pinned entities
   const { data: pinnedEntities = [] } = useQuery({
@@ -139,7 +126,7 @@ export default function AppsPane() {
 
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative pb-24">
       {/* Always-visible favorites bar */}
       <section className="mb-2">
         <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
@@ -226,6 +213,28 @@ export default function AppsPane() {
           </button>
         ))}
       </div>
+
+      {/* Create Profile Button - Fixed to bottom left */}
+      {hasNoManagedEntities && (
+        <div className="fixed bottom-4 left-4 z-50 flex flex-col gap-2">
+          <button
+            onClick={() => navigate('/profiles/new')}
+            className={cn(
+              "flex items-center gap-3 px-6 py-3 rounded-xl",
+              "bg-gradient-to-br from-primary/30 to-primary/10",
+              "border border-white/10 shadow-lg",
+              "hover:scale-105 active:scale-95 transition-all duration-200"
+            )}
+            aria-label="Create new profile"
+          >
+            <Plus className="w-5 h-5 text-white" strokeWidth={2} />
+            <span className="text-sm font-semibold text-white">Create new profile</span>
+          </button>
+          <div className="text-xs text-muted-foreground px-2">
+            {pinnedEntities.length} pinned {pinnedEntities.length === 1 ? 'app' : 'apps'}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
