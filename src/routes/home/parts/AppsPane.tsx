@@ -139,9 +139,9 @@ export default function AppsPane() {
 
 
   return (
-    <div className="space-y-4">
-      {/* Always-visible favorites bar */}
-      <section className="mb-2">
+    <div className="space-y-4 h-full">
+      {/* Always-visible favorites bar with distinct background */}
+      <section className="mb-2 bg-muted/30 p-4 rounded-lg">
         <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
         <FavoritesBar size={72} gap={12} />
       </section>
@@ -163,7 +163,7 @@ export default function AppsPane() {
 
       {/* Grid of app tiles & pins (scalable) */}
       <div
-        className="grid gap-3"
+        className="grid gap-3 bg-muted/20 p-4 rounded-lg"
         style={{
           gridTemplateColumns: `repeat(auto-fill, minmax(${tile}px, 1fr))`,
         }}
