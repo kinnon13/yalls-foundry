@@ -483,6 +483,47 @@ export default function FeaturesAdminPage() {
     };
   }, [features]);
 
+  // Debug mode - expose catalog data to console
+  useEffect(() => {
+    const dbg = new URLSearchParams(location.search).get('debug');
+    if (dbg === 'catalog') {
+      const undoc = (window as any).__undocumented;
+      
+      // Expose for quick inspection in DevTools
+      (window as any).__CATALOG_LAST = { 
+        features, 
+        goldPath,
+        stats,
+        gaps: undoc,
+        areasDebug 
+      };
+
+      // Pretty tables for the console
+      if (undoc) {
+        console.log('%c[CATALOG] Undocumented routes', 'color:#22d3ee; font-weight:bold');
+        console.table(undoc.routes?.map((r: string) => ({ route: r })) || []);
+        
+        console.log('%c[CATALOG] Undocumented RPCs', 'color:#f472b6; font-weight:bold');
+        console.table(undoc.rpcs?.map((r: string) => ({ rpc: r })) || []);
+        
+        console.log('%c[CATALOG] Undocumented tables', 'color:#a78bfa; font-weight:bold');
+        console.table(undoc.tables?.map((t: string) => ({ table: t })) || []);
+      }
+
+      // Quick copy helper
+      (window as any).__copyUndoc = () => {
+        const data = (window as any).__undocumented;
+        if (data) {
+          navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+          console.log('✅ Copied undocumented items to clipboard');
+        } else {
+          console.warn('⚠️ No undocumented data available yet. Run a scan first.');
+        }
+      };
+      console.log('%c💡 Run __copyUndoc() to copy all gaps to clipboard.', 'color:#10b981; font-weight:bold');
+    }
+  }, [features, goldPath, stats, areasDebug]);
+
   const fetchTestResults = async () => {
     setTestLoading(true);
     try {
