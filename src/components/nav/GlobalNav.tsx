@@ -1,11 +1,11 @@
 /**
- * Global Nav - Fixed tabs per spec
- * Home | Discover | Dashboard | Messages
+ * Global Nav - Primary Navigation
+ * Home | Discover | App Store | Marketplace | Dashboard | Messages
  */
 
 import { Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/lib/auth/context';
-import { Home, Compass, LayoutDashboard, MessageSquare } from 'lucide-react';
+import { Home, Compass, LayoutDashboard, MessageSquare, Store, ShoppingBag } from 'lucide-react';
 import { Button } from '@/design/components/Button';
 import { Badge } from '@/design/components/Badge';
 import { tokens } from '@/design/tokens';
@@ -17,11 +17,15 @@ const iconMap = {
   Compass,
   LayoutDashboard,
   MessageSquare,
+  Store,
+  ShoppingBag,
 };
 
 const NAV_ITEMS = [
   { key: 'home', label: 'Home', path: '/', icon: 'Home' },
   { key: 'discover', label: 'Discover', path: '/discover', icon: 'Compass' },
+  { key: 'app-store', label: 'App Store', path: '/app-store', icon: 'Store' },
+  { key: 'marketplace', label: 'Marketplace', path: '/marketplace', icon: 'ShoppingBag' },
   { key: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: 'LayoutDashboard', requireAuth: true },
   { key: 'messages', label: 'Messages', path: '/messages', icon: 'MessageSquare', requireAuth: true },
 ];

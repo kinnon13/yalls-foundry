@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from 'next-themes';
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
 import { Suspense, lazy, useEffect } from 'react';
 import { AuthProvider } from '@/lib/auth/context';
@@ -47,8 +47,11 @@ const CRM = lazy(() => import('./routes/crm/index'));
 const ClaimEntity = lazy(() => import('./routes/claim/[entityId]'));
 const AdminClaims = lazy(() => import('./routes/admin/claims'));
 
-// Phase 3: Marketplace & Events
-const ListingsIndex = lazy(() => import('./routes/listings/index'));
+// App Store & Marketplace
+const AppStore = lazy(() => import('./routes/app-store/index'));
+const MarketplaceIndex = lazy(() => import('./routes/marketplace/index'));
+
+// Phase 3: Listings & Events
 const NewListing = lazy(() => import('./routes/listings/new'));
 const ListingDetail = lazy(() => import('./routes/listings/[id]'));
 const EditListing = lazy(() => import('./routes/listings/[id]/edit'));
@@ -119,8 +122,9 @@ function AppContent() {
         '/stallions', '/stallions/:id', '/dashboard', '/admin/control-room',
         '/admin/features', '/admin/routes', '/admin/components', '/admin/a11y',
         '/admin/audit', '/admin/tests', '/notifications', '/settings/notifications',
-        '/discover', '/health', '/listings', '/listings/new', '/listings/:id',
-        '/listings/:id/edit', '/events', '/events/new', '/events/:id',
+        '/discover', '/health', '/app-store', '/marketplace', '/marketplace/:id',
+        '/listings', '/listings/new', '/listings/:id', '/listings/:id/edit', 
+        '/events', '/events/new', '/events/:id',
         '/events/:id/classes', '/events/:id/entries', '/events/:id/draw',
         '/events/:id/results', '/events/:id/payouts', '/events/:id/stalls',
         '/events/:id/public-draw', '/events/:id/public-results',
@@ -129,7 +133,7 @@ function AppContent() {
         '/cart', '/orders', '/orders/:id', '/earnings', '/farm/calendar',
         '/farm/dashboard', '/farm/boarder/:id', '/farm/tasks', '/farm/health',
         '/incentives/dashboard', '/entrant/my-entries', '/entrant/my-draws',
-        '/entrant/my-results', '/marketplace', '/marketplace/:id', '/feed',
+        '/entrant/my-results', '/feed',
         '/social', '/messages', '/crm', '/settings/ai', '/ai/activity', '/entities',
         '/entities/:id', '/claim/:entityId', '/admin/claims'
       ]);
@@ -189,11 +193,21 @@ function AppContent() {
           <Route path="/discover" element={<Suspense fallback={<div>Loading...</div>}><Discover /></Suspense>} />
           <Route path="/health" element={<Health />} />
 
-          {/* Phase 3: Listings & Events */}
-          <Route path="/listings" element={<Suspense fallback={<div>Loading...</div>}><ListingsIndex /></Suspense>} />
+          {/* App Store & Marketplace */}
+          <Route path="/app-store" element={<Suspense fallback={<div>Loading...</div>}><AppStore /></Suspense>} />
+          <Route path="/marketplace" element={<Suspense fallback={<div>Loading...</div>}><MarketplaceIndex /></Suspense>} />
+          <Route path="/marketplace/:id" element={<Suspense fallback={<div>Loading...</div>}><ListingDetail /></Suspense>} />
+          
+          {/* Listings Management (seller-side) */}
+          <Route path="/listings" element={<Navigate to="/marketplace" replace />} />
           <Route path="/listings/new" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><NewListing /></Suspense></RequireAuth>} />
           <Route path="/listings/:id" element={<Suspense fallback={<div>Loading...</div>}><ListingDetail /></Suspense>} />
           <Route path="/listings/:id/edit" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><EditListing /></Suspense></RequireAuth>} />
+          
+          {/* Redirects for legacy/convenience */}
+          <Route path="/store" element={<Navigate to="/app-store" replace />} />
+          <Route path="/shop" element={<Navigate to="/marketplace" replace />} />
+          {/* Events */}
           <Route path="/events" element={<Suspense fallback={<div>Loading...</div>}><EventsIndex /></Suspense>} />
           <Route path="/events/new" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><NewEvent /></Suspense></RequireAuth>} />
           <Route path="/events/:id" element={<Suspense fallback={<div>Loading...</div>}><EventDetail /></Suspense>}>
@@ -231,10 +245,6 @@ function AppContent() {
           <Route path="/entrant/my-entries" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><MyEntries /></Suspense></RequireAuth>} />
           <Route path="/entrant/my-draws" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><MyDraws /></Suspense></RequireAuth>} />
           <Route path="/entrant/my-results" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><MyResults /></Suspense></RequireAuth>} />
-          
-          {/* Legacy marketplace routes - redirect to listings */}
-          <Route path="/marketplace" element={<Suspense fallback={<div>Loading...</div>}><ListingsIndex /></Suspense>} />
-          <Route path="/marketplace/:id" element={<Suspense fallback={<div>Loading...</div>}><ListingDetail /></Suspense>} />
 
           {/* Phase 2: Social + CRM Routes */}
           <Route
