@@ -9,7 +9,6 @@ import { HelmetProvider } from 'react-helmet-async';
 import { Suspense, lazy, useEffect } from 'react';
 import { AuthProvider } from '@/lib/auth/context';
 import { RequireAuth } from '@/lib/auth/guards';
-import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
 import InactivityNudge from '@/components/rocker/InactivityNudge';
@@ -102,7 +101,6 @@ const StubBacklog = lazy(() => import('./routes/admin/stub-backlog'));
 const Diag = lazy(() => import('./routes/_diag'));
 
 const queryClient = new QueryClient();
-const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on';
 
 import { CommandPalette } from '@/components/command/CommandPalette';
 import { ProfileCreationModal } from '@/components/entities/ProfileCreationModal';
@@ -116,6 +114,16 @@ function AppContent() {
   
   useEffect(() => {
     registerRockerFeatureHandler();
+    
+    // Keyboard shortcut: Cmd/Ctrl+H to navigate home
+    const onKey = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (e.key.toLowerCase() === 'h' && mod) {
+        e.preventDefault();
+        window.location.href = '/home';
+      }
+    };
+    window.addEventListener('keydown', onKey);
     
     // Register all routes for the scanner
     import('@/router/registry').then(({ registerRoutes }) => {
@@ -140,6 +148,8 @@ function AppContent() {
         '/entities/:id', '/claim/:entityId', '/admin/claims'
       ]);
     });
+    
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   return (
@@ -385,7 +395,6 @@ function AppContent() {
       {/* Preview message handler */}
       {import.meta.env.VITE_PREVIEW_ENABLED === 'true' && <PreviewMessageListener />}
 
-      {FEEDBACK_ENABLED && <FeedbackWidget />}
       <InactivityNudge />
       <RockerDock />
       <RockerChat />

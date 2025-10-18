@@ -25,7 +25,6 @@ import RLSScanner from '@/routes/admin/panels/RLSScanner';
 import TestRunner from '@/routes/admin/panels/TestRunner';
 import CodeSearchPanel from '@/routes/admin/panels/CodeSearchPanel';
 import AuthPanel from '@/routes/admin/panels/AuthPanel';
-import FeedbackInbox from '@/routes/admin/panels/FeedbackInbox';
 import { SuggestionsPanel } from '@/routes/admin/panels/SuggestionsPanel';
 import { FlagsPanel } from '@/routes/admin/panels/FlagsPanel';
 import { ScaleScorecard } from '@/lib/observability/ScaleScorecard';
@@ -540,15 +539,6 @@ export default function Dashboard() {
                       </CardHeader>
                       <CardContent>
                         <AuthPanel />
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-sm">User Feedback</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <FeedbackInbox />
                       </CardContent>
                     </Card>
 

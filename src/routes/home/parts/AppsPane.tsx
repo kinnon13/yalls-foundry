@@ -8,7 +8,7 @@ import {
   Calendar, Settings, DollarSign, Trophy, ShoppingCart,
   Building, Users, Sparkles, Tractor, CheckCircle,
   MessageSquare, User, MapPin, Flame, BookOpen, 
-  Home, Store, Activity, Zap, Target, Award, LucideIcon, Plus
+  Store, Activity, Zap, Target, Award, LucideIcon, Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,7 +24,6 @@ interface AppTile {
 
 // Consumer apps - always visible
 const CONSUMER_APPS: AppTile[] = [
-  { id: 'home', label: 'Home', icon: Home, module: 'overview', color: 'from-blue-500/20 to-blue-600/5' },
   { id: 'me', label: 'My Profile', icon: User, route: '/me', color: 'from-purple-500/20 to-purple-600/5' },
   { id: 'social', label: 'Four', icon: Flame, route: '/social', color: 'from-orange-500/20 to-red-600/5' },
   { id: 'marketplace', label: 'Market', icon: Store, route: '/marketplace', color: 'from-green-500/20 to-emerald-600/5' },

@@ -38,7 +38,7 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
       <div className="mx-auto max-w-[1400px] h-full px-3 md:px-4 flex items-center gap-3">
         {/* Brand / Home */}
         <Link
-          to="/"
+          to="/home"
           className="inline-flex items-center gap-2 font-semibold tracking-tight"
           aria-label="Yalls.ai Home"
         >

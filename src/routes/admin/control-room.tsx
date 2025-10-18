@@ -28,7 +28,6 @@ import CodeSearchPanel from '@/routes/admin/panels/CodeSearchPanel';
 import CodeAuditPanel from '@/routes/admin/panels/CodeAuditPanel';
 import ScalingReadinessPanel from '@/routes/admin/panels/ScalingReadinessPanel';
 import AuthPanel from '@/routes/admin/panels/AuthPanel';
-import FeedbackInbox from '@/routes/admin/panels/FeedbackInbox';
 import { SuggestionsPanel } from '@/routes/admin/panels/SuggestionsPanel';
 import { FeatureFlagsPanel } from '@/routes/admin/panels/FeatureFlagsPanel';
 import { TourSchedulePanel } from '@/routes/admin/panels/TourSchedulePanel';
@@ -397,7 +396,6 @@ export default function ControlRoom() {
 
             {/* Feedback Tab */}
             <TabsContent value="feedback" className="space-y-6">
-              <FeedbackInbox />
               <SuggestionsPanel />
             </TabsContent>
 
