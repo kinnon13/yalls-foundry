@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useEffect, useState, Component, ReactNode } from 'react';
+import { Suspense, lazy, useMemo, useState, useEffect, Component, ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { Wallpaper } from '@/components/appearance/Wallpaper';
@@ -7,12 +7,12 @@ import { useAppearance } from '@/hooks/useAppearance';
 import { supabase } from '@/integrations/supabase/client';
 import { DraggableAppGrid } from '@/components/desktop/DraggableAppGrid';
 import { DebugOverlay } from '@/feature-kernel/DebugOverlay';
-import { FeatureErrorBoundary } from '@/feature-kernel/ErrorBoundary';
 import { coerceModule, type ModuleKey } from '@/lib/dashUrl';
-import { TikTokFeed } from '@/components/social/TikTokFeed';
-import { BottomNav } from '@/components/layout/BottomNav';
+import { SideFeed } from '@/components/dashboard/SideFeed';
+import { ChatDrawer } from '@/components/dashboard/ChatDrawer';
+import { DashFooter } from '@/components/dashboard/DashFooter';
 import { Button } from '@/components/ui/button';
-import { X, ChevronLeft } from 'lucide-react';
+import { X, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 class DashboardErrorBoundary extends Component<
@@ -70,252 +70,107 @@ export default function DashboardLayout() {
   const [sp] = useSearchParams();
   const rawModule = sp.get('m');
   const m = coerceModule(rawModule);
+  const [chatOpen, setChatOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [feedWidth, setFeedWidth] = useState(400);
-  const [feedHeight, setFeedHeight] = useState(600);
-  const [feedRightOffset, setFeedRightOffset] = useState(0);
-  const [feedTopOffset, setFeedTopOffset] = useState(64);
-  const [isDraggingLeft, setIsDraggingLeft] = useState(false);
-  const [isDraggingRight, setIsDraggingRight] = useState(false);
-  const [isDraggingBottom, setIsDraggingBottom] = useState(false);
-  const [isDraggingTop, setIsDraggingTop] = useState(false);
   
   const Panel = useMemo(() => panels[m] ?? panels.overview, [m]);
 
-  // Handle left edge drag (resize width) - Mouse + Touch
-  useEffect(() => {
-    if (!isDraggingLeft) return;
-
-    const handleMove = (clientX: number) => {
-      const newWidth = window.innerWidth - clientX - feedRightOffset;
-      setFeedWidth(Math.max(300, Math.min(800, newWidth)));
-    };
-
-    const handleMouseMove = (e: MouseEvent) => handleMove(e.clientX);
-    const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
-      handleMove(e.touches[0].clientX);
-    };
-
-    const handleEnd = () => setIsDraggingLeft(false);
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleEnd);
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleEnd);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleEnd);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleEnd);
-    };
-  }, [isDraggingLeft, feedRightOffset]);
-
-  // Handle right edge drag (move entire panel) - Mouse + Touch
-  useEffect(() => {
-    if (!isDraggingRight) return;
-
-    const handleMove = (clientX: number) => {
-      const newRightOffset = window.innerWidth - clientX;
-      setFeedRightOffset(Math.max(0, Math.min(400, newRightOffset)));
-    };
-
-    const handleMouseMove = (e: MouseEvent) => handleMove(e.clientX);
-    const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
-      handleMove(e.touches[0].clientX);
-    };
-
-    const handleEnd = () => setIsDraggingRight(false);
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleEnd);
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleEnd);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleEnd);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleEnd);
-    };
-  }, [isDraggingRight]);
-
-  // Handle bottom edge drag (resize height) - Mouse + Touch
-  useEffect(() => {
-    if (!isDraggingBottom) return;
-
-    const handleMove = (clientY: number) => {
-      // Calculate height from top of feed to cursor position
-      const newHeight = clientY - feedTopOffset;
-      setFeedHeight(Math.max(150, Math.min(window.innerHeight - 80, newHeight)));
-    };
-
-    const handleMouseMove = (e: MouseEvent) => handleMove(e.clientY);
-    const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
-      handleMove(e.touches[0].clientY);
-    };
-
-    const handleEnd = () => setIsDraggingBottom(false);
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleEnd);
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleEnd);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleEnd);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleEnd);
-    };
-  }, [isDraggingBottom, feedTopOffset]);
-
-  // Handle top edge drag (move vertically) - Mouse + Touch
-  useEffect(() => {
-    if (!isDraggingTop) return;
-
-    const handleMove = (clientY: number) => {
-      // Clamp so the feed stays within viewport
-      const minTop = 64; // below global header
-      const maxTop = Math.max(0, window.innerHeight - feedHeight - 40);
-      const nextTop = Math.max(minTop, Math.min(maxTop, clientY));
-      setFeedTopOffset(nextTop);
-    };
-
-    const handleMouseMove = (e: MouseEvent) => handleMove(e.clientY);
-    const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
-      handleMove(e.touches[0].clientY);
-    };
-
-    const handleEnd = () => setIsDraggingTop(false);
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleEnd);
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleEnd);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleEnd);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleEnd);
-    };
-  }, [isDraggingTop, feedHeight]);
-
-  // Get user ID for appearance settings
+  // Get current user ID
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
 
-  // Load user appearance settings
-  const { data: appearance } = useAppearance({ 
+  // Load appearance settings for current user
+  const appearanceQuery = useAppearance({ 
     type: 'user', 
-    id: userId || '' 
+    id: userId || '00000000-0000-0000-0000-000000000000' 
   });
-
-  // Update document title on module change
-  useEffect(() => {
-    const titles: Record<ModuleKey, string> = {
-      overview: 'Dashboard Overview',
-      business: 'Business Management',
-      producers: 'Producers',
-      incentives: 'Incentives',
-      stallions: 'Stallions',
-      farm_ops: 'Farm Operations',
-      events: 'Calendar',
-      orders: 'Orders',
-      earnings: 'Earnings',
-      messages: 'Messages',
-      approvals: 'Approvals',
-      settings: 'Settings',
-    };
-    document.title = titles[m] || 'Dashboard';
-  }, [m]);
+  
+  const isScreenSaverActive = false; // TODO: Implement screensaver detection
 
   return (
-    <div className="min-h-screen bg-background relative">
-      {/* Wallpaper background - fixed, full screen, z-0 */}
-      {appearance?.wallpaper_url && (
-        <Wallpaper
-          url={appearance.wallpaper_url}
-          blur={(appearance.screensaver_payload as any)?.blur}
-          dim={(appearance.screensaver_payload as any)?.dim}
-        />
-      )}
+    <div className="h-dvh flex flex-col bg-background overflow-hidden">
+      {/* Wallpaper */}
+      <div className="fixed inset-0 -z-10">
+        <Wallpaper />
+      </div>
 
-      {/* Blur/dim overlay - only when wallpaper is present */}
-      {appearance?.wallpaper_url && (
-        <div 
-          className="fixed inset-0 z-10 pointer-events-none"
-          aria-hidden="true"
-        />
-      )}
+      {/* Screen Saver */}
+      {isScreenSaverActive && <ScreenSaver />}
 
-      {/* Screen saver overlay - z-40 */}
-      {appearance?.screensaver_payload && (
-        <ScreenSaver payload={appearance.screensaver_payload as any} />
-      )}
-
+      {/* Global header */}
       <GlobalHeader />
-      
-      {/* Main content area - z-20, with right margin for feed and bottom padding for nav */}
-      <div 
-        className="relative z-20 h-[calc(100vh-64px)] overflow-auto transition-all duration-200 pb-16"
-        style={{ marginRight: `${feedWidth + feedRightOffset}px` }}
-      >
-        {rawModule ? (
-          <div className="container mx-auto p-6">
+
+      {/* Main content - two column grid */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {m ? (
+          /* Module panel view */
+          <div className="h-full px-4 py-2 overflow-auto">
+            <div className="flex items-center justify-between mb-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const params = new URLSearchParams(window.location.search);
+                  params.delete('m');
+                  window.history.pushState({}, '', `${window.location.pathname}?${params}`);
+                  window.location.reload();
+                }}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Close Module
+              </Button>
+            </div>
             <DashboardErrorBoundary>
-              <FeatureErrorBoundary featureId={`dashboard.${m}`}>
-                <Suspense fallback={<PanelSkeleton />}>
-                  <Panel />
-                </Suspense>
-              </FeatureErrorBoundary>
+              <Suspense fallback={<PanelSkeleton />}>
+                <Panel />
+              </Suspense>
             </DashboardErrorBoundary>
           </div>
         ) : (
-          <DashboardErrorBoundary>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><PanelSkeleton /></div>}>
-              <DraggableAppGrid />
-            </Suspense>
-          </DashboardErrorBoundary>
+          /* Desktop view: apps grid + sidecar feed */
+          <div className="h-full grid grid-cols-1 lg:grid-cols-[minmax(640px,1fr)_minmax(420px,520px)] gap-4 px-4 py-4">
+            {/* Left: Apps Grid */}
+            <div className="relative overflow-auto">
+              <DashboardErrorBoundary>
+                <Suspense fallback={<div className="flex items-center justify-center h-full"><PanelSkeleton /></div>}>
+                  <DraggableAppGrid />
+                </Suspense>
+              </DashboardErrorBoundary>
+            </div>
+
+            {/* Right: Sidecar Feed (hidden on mobile/tablet) */}
+            <div className="hidden lg:block">
+              <SideFeed />
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Left Resize Handle - DISABLED (dimensions locked) */}
-      
-      {/* Social Feed Sidecar - Permanently open with locked dimensions */}
-      <div
-        className="fixed bg-background border-l border-r shadow-xl z-40"
-        style={{ 
-          width: `${feedWidth}px`,
-          height: `${feedHeight}px`,
-          right: `${feedRightOffset}px`,
-          top: `${feedTopOffset}px`
-        }}
-      >
-        {/* Feed Header (locked - no drag) */}
-        <div
-          className="h-12 border-b flex items-center justify-between px-4 bg-background/95 backdrop-blur select-none"
+      {/* Sticky Footer */}
+      <DashFooter />
+
+      {/* Chat Drawer (overlays) */}
+      <ChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} />
+
+      {/* Floating chat trigger (bottom-right) */}
+      {!chatOpen && !m && (
+        <button
+          onClick={() => setChatOpen(true)}
+          className={cn(
+            "fixed bottom-20 right-6 z-50",
+            "w-14 h-14 rounded-full shadow-lg",
+            "bg-primary text-primary-foreground",
+            "flex items-center justify-center",
+            "hover:scale-110 transition-transform",
+            "lg:right-[540px]" // Position left of feed on desktop
+          )}
         >
-          <h2 className="font-semibold">Social Feed</h2>
-          <div className="text-xs text-muted-foreground">{feedWidth}×{feedHeight}px (Locked)</div>
-        </div>
-
-        {/* Feed Content */}
-        <div className="h-[calc(100%-48px)] overflow-hidden">
-          <TikTokFeed />
-        </div>
-      </div>
-
-      {/* Right & Bottom Resize Handles - DISABLED (dimensions locked) */}
+          <MessageSquare className="w-6 h-6" strokeWidth={2} />
+        </button>
+      )}
 
       <DebugOverlay />
-      <BottomNav />
     </div>
   );
 }

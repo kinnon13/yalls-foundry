@@ -10741,6 +10741,14 @@ export type Database = {
         }
         Returns: string
       }
+      user_aggregate_social_stats: {
+        Args: { p_user_id: string }
+        Returns: {
+          total_followers: number
+          total_following: number
+          total_likes: number
+        }[]
+      }
       vector_avg: {
         Args: { "": number[] }
         Returns: string
