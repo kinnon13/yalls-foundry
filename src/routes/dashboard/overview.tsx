@@ -59,63 +59,85 @@ export default function Overview() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      {/* Mac-style header bar */}
-      <div className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500/80" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-              <div className="w-3 h-3 rounded-full bg-green-500/80" />
-            </div>
-            <h1 className="text-sm font-medium">Dashboard</h1>
+    <div className="min-h-screen bg-background">
+      {/* macOS window chrome */}
+      <div className="sticky top-0 z-50 backdrop-blur-2xl bg-background/70 border-b border-border/40 shadow-sm">
+        <div className="px-4 py-2.5 flex items-center gap-4">
+          {/* Traffic lights */}
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-[#FF5F57] hover:bg-[#FF5F57]/80 transition-colors" />
+            <div className="w-3 h-3 rounded-full bg-[#FEBC2E] hover:bg-[#FEBC2E]/80 transition-colors" />
+            <div className="w-3 h-3 rounded-full bg-[#28C840] hover:bg-[#28C840]/80 transition-colors" />
           </div>
-          <DashboardEntitySwitcher />
+          
+          {/* Window title - centered */}
+          <div className="flex-1 flex justify-center">
+            <h1 className="text-[13px] font-medium text-foreground/80 tracking-tight">Dashboard</h1>
+          </div>
+          
+          {/* Entity switcher */}
+          <div>
+            <DashboardEntitySwitcher />
+          </div>
         </div>
       </div>
 
-      {/* iOS-style app grid container */}
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-12">
-        {/* Collections (folders) */}
-        <CollectionsBar />
+      {/* Main content - macOS style spacing */}
+      <div className="px-8 py-6 space-y-8">
+        {/* Collections */}
+        <section>
+          <CollectionsBar />
+        </section>
 
-        {/* My Apps grid */}
-        {primaryEntity?.id && <MyApps entityId={primaryEntity.id} />}
+        {/* My Apps */}
+        {primaryEntity?.id && (
+          <section>
+            <MyApps entityId={primaryEntity.id} />
+          </section>
+        )}
 
-        {/* Portal/Network tiles */}
-        <PortalTiles />
+        {/* Network tiles */}
+        <section>
+          <PortalTiles />
+        </section>
 
-        {/* Upcoming events - compact */}
-        <UpcomingFromNetwork />
+        {/* Upcoming events */}
+        <section>
+          <UpcomingFromNetwork />
+        </section>
 
-        {/* Next Best Actions - iOS card style */}
+        {/* Next Best Actions */}
         {(loading || items.length > 0) && (
-          <section className="space-y-4">
-            <h2 className="text-lg font-semibold px-2">Suggested</h2>
-            <div className="grid gap-3 md:grid-cols-2">
+          <section className="space-y-3">
+            <h2 className="text-[15px] font-semibold text-foreground/90 px-1">Suggested</h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {loading && (
-                <div className="rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 p-6">
+                <div className="rounded-xl bg-muted/30 p-5 border border-border/30">
                   <div className="animate-pulse space-y-3">
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-3 bg-muted rounded w-full"></div>
+                    <div className="h-4 bg-muted rounded w-3/4" />
+                    <div className="h-3 bg-muted rounded w-full" />
                   </div>
                 </div>
               )}
               {items.map((a, i) => (
-                <div 
-                  className="rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 p-6 space-y-3 hover:bg-card/80 transition-all hover:scale-[1.02] hover:shadow-lg" 
+                <a
+                  href={a.href}
                   key={i}
+                  className="group rounded-xl bg-card/40 backdrop-blur-sm border border-border/30 p-5 space-y-2.5 hover:bg-card/60 hover:border-border/50 transition-all duration-200 hover:shadow-md active:scale-[0.98]"
                 >
-                  <div className="font-medium text-base">{a.cta}</div>
-                  <p className="text-sm text-muted-foreground">{a.why}</p>
-                  <a 
-                    className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors" 
-                    href={a.href}
-                  >
+                  <div className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors">
+                    {a.cta}
+                  </div>
+                  <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-2">
+                    {a.why}
+                  </p>
+                  <div className="inline-flex items-center text-[11px] font-medium text-primary">
                     Do it
-                  </a>
-                </div>
+                    <svg className="w-3 h-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </a>
               ))}
             </div>
           </section>
