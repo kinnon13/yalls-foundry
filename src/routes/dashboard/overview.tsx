@@ -6,6 +6,7 @@ import { DashboardBreadcrumbs } from '@/components/dashboard/DashboardBreadcrumb
 import { UpcomingFromNetwork } from '@/components/dashboard/UpcomingFromNetwork';
 import { PortalTiles } from '@/components/dashboard/PortalTiles';
 import { MyApps } from '@/components/dashboard/MyApps';
+import { CollectionsBar } from '@/components/dashboard/CollectionsBar';
 import { useRocker } from '@/lib/ai/rocker';
 import { useSession } from '@/lib/auth/context';
 import { useQuery } from '@tanstack/react-query';
@@ -71,6 +72,8 @@ export default function Overview() {
       <DashboardKPIs kpis={null} isLoading={false} />
 
       {primaryEntity?.id && <MyApps entityId={primaryEntity.id} />}
+
+      <CollectionsBar />
 
       <UpcomingFromNetwork />
 
