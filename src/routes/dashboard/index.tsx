@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useEffect, useState, Component, ReactNode } from 'react';
+import { Suspense, lazy, useMemo, useEffect, useState, useRef, Component, ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { Wallpaper } from '@/components/appearance/Wallpaper';
@@ -71,8 +71,8 @@ export default function DashboardLayout() {
   const rawModule = sp.get('m');
   const m = coerceModule(rawModule);
   const [userId, setUserId] = useState<string | null>(null);
-  const [feedWidth] = useState(400);
-  const [feedHeight] = useState(600);
+  const [feedWidth, setFeedWidth] = useState(400);
+  const [feedHeight, setFeedHeight] = useState(600);
   const [feedRightOffset] = useState(0);
   const [feedTopOffset] = useState(64);
   
@@ -88,6 +88,36 @@ export default function DashboardLayout() {
   });
   
   const isScreenSaverActive = false;
+
+  // Social Feed resizing
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const startRef = useRef<{ x: number; y: number; w: number; h: number }>({ x: 0, y: 0, w: 0, h: 0 });
+  const MIN_W = 320;
+  const MIN_H = 400;
+
+  const onResizePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    startRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      w: containerRef.current?.offsetWidth || feedWidth,
+      h: containerRef.current?.offsetHeight || feedHeight,
+    };
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - startRef.current.x;
+      const dy = ev.clientY - startRef.current.y;
+      const newW = Math.max(MIN_W, startRef.current.w + dx);
+      const newH = Math.max(MIN_H, startRef.current.h + dy);
+      setFeedWidth(Math.round(newW));
+      setFeedHeight(Math.round(newH));
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
 
   return (
     <div className="h-dvh flex flex-col bg-background overflow-hidden">
@@ -146,26 +176,35 @@ export default function DashboardLayout() {
         )}
       </div>
 
-      {/* Social Feed Sidecar - Fixed overlay (dimensions locked) */}
+      {/* Social Feed Sidecar - Resizable overlay */}
       <div
-        className="fixed bg-background border-l border-r shadow-xl z-40"
-        style={{ 
+        ref={containerRef}
+        className="fixed bg-background border-l border-r shadow-xl z-40 relative"
+        style={{
           width: `${feedWidth}px`,
           height: `${feedHeight}px`,
           right: `${feedRightOffset}px`,
           top: `${feedTopOffset}px`
         }}
       >
-        {/* Feed Header (locked - no drag) */}
+        {/* Feed Header */}
         <div className="h-12 border-b flex items-center justify-between px-4 bg-background/95 backdrop-blur select-none">
           <h2 className="font-semibold">Social Feed</h2>
-          <div className="text-xs text-muted-foreground">{feedWidth}×{feedHeight}px (Locked)</div>
+          <div className="text-xs text-muted-foreground">{feedWidth}×{feedHeight}px</div>
         </div>
 
         {/* Feed Content */}
         <div className="h-[calc(100%-48px)] overflow-hidden">
           <TikTokFeed />
         </div>
+
+        {/* Resize handle */}
+        <div
+          onPointerDown={onResizePointerDown}
+          className="absolute bottom-1 right-1 h-4 w-4 cursor-nwse-resize rounded bg-muted border border-border"
+          aria-label="Resize social feed"
+          title="Drag to resize"
+        />
       </div>
 
       <DebugOverlay />
