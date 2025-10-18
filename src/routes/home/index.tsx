@@ -15,7 +15,7 @@ export default function HomePage() {
         </div>
 
         {/* Tablet & Desktop */}
-        <div className="hidden md:grid h-[calc(100vh-112px)] gap-6 px-6 mx-auto max-w-[1600px]
+        <div className="hidden md:grid h-[calc(100vh-112px)] gap-6 px-6
           md:grid-cols-[1fr_2fr] xl:grid-cols-[2fr_1fr]">
           {/* Apps (left) */}
           <div className="min-w-0">
