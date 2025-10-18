@@ -58,10 +58,17 @@ export function ScreenSaver({ payload }: ScreenSaverProps) {
       ? items[(Math.floor(Date.now() / 5000)) % Math.max(items.length, 1)]?.url
       : items[0]?.url;
 
+  const handleExit = () => setIdle(false);
+
   return (
     <div
-      className="fixed inset-0 z-[100] bg-black cursor-pointer"
-      onClick={() => setIdle(false)}
+      className="fixed inset-0 z-40 bg-black cursor-pointer"
+      onClick={handleExit}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') {
+          handleExit();
+        }
+      }}
       role="button"
       tabIndex={0}
       aria-label="Exit screen saver"

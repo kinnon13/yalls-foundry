@@ -13,7 +13,7 @@ export function Wallpaper({ url, blur = 6, dim = 0.15 }: WallpaperProps) {
   if (!url) return null;
 
   return (
-    <div className="fixed inset-0 -z-10">
+    <div className="fixed inset-0 z-0 pointer-events-none">
       <img
         src={url}
         className="w-full h-full object-cover"
