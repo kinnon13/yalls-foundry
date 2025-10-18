@@ -112,7 +112,7 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col">
+    <section className="flex h-full w-full flex-col bg-gradient-to-b from-muted/20 to-background">
       {/* Home button and Connected Accounts heading in same row */}
       <div className="mb-2 flex items-center justify-between px-2">
         <button
