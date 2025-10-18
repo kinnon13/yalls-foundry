@@ -35,16 +35,16 @@ export function useTopBubbles({ userId, limit = 8, publicOnly = false }: Options
       const { data: pins, error } = await q.limit(limit);
       if (error || !pins?.length) return [] as Bubble[];
 
-      // fetch entities in one go
+      // fetch entities in one go - cast ref_id to uuid since it's stored as text
       const ids = pins.map(p => p.ref_id);
       const { data: ents } = await supabase
         .from('entities')
         .select('id, display_name, handle, kind, status, metadata')
-        .in('id', ids);
+        .in('id', ids.map(id => id as any)); // Cast to handle text->uuid
 
       const map = new Map(ents?.map(e => [e.id, e]) ?? []);
       return pins
-        .map(p => map.get(p.ref_id))
+        .map(p => map.get(p.ref_id as any))
         .filter(Boolean)
         .map((e: any) => ({
           id: e.id,
