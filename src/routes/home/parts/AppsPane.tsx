@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FavoritesBar } from '@/components/social/FavoritesBar';
 import { supabase } from '@/integrations/supabase/client';
@@ -169,7 +169,7 @@ export default function AppsPane() {
       </section>
 
       {/* Apps Grid */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden bg-muted/20 px-2 pb-2 flex items-start relative">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden bg-muted/20 px-2 flex items-start relative min-h-0">
         <div 
           className="grid gap-3 w-fit border border-border/60 rounded-lg p-2 relative group"
           style={{
@@ -178,9 +178,7 @@ export default function AppsPane() {
             gridAutoFlow: 'column',
             gridAutoColumns: `${tile}px`,
             resize: 'vertical',
-            overflow: 'auto',
-            minHeight: '200px',
-            maxHeight: '100%',
+            boxSizing: 'border-box',
           }}
         >
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-20 bg-primary/50 rounded-full cursor-ns-resize group-hover:bg-primary transition-colors" />
