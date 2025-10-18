@@ -97,7 +97,7 @@ export function FeatureCard({
               {completionCriteria.map((criterion, i) => {
                 const Icon = criterion.icon;
                 return (
-              <span>
+              <span key={i}>
                 {criterion.met ? (
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                 ) : (
