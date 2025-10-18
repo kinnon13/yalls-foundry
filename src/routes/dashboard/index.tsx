@@ -109,7 +109,9 @@ export default function DashboardLayout() {
   const MIN_W = 320;
   const MIN_H = 400;
 
-  const onResizePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+  type Edge = 'corner' | 'right' | 'left' | 'bottom';
+
+  const onResizeStart = (edge: Edge) => (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     startRef.current = {
       x: e.clientX,
@@ -120,8 +122,19 @@ export default function DashboardLayout() {
     const onMove = (ev: PointerEvent) => {
       const dx = ev.clientX - startRef.current.x;
       const dy = ev.clientY - startRef.current.y;
-      const newW = Math.max(MIN_W, startRef.current.w + dx);
-      const newH = Math.max(MIN_H, startRef.current.h + dy);
+      let newW = startRef.current.w;
+      let newH = startRef.current.h;
+
+      if (edge === 'right' || edge === 'corner') {
+        newW = Math.max(MIN_W, startRef.current.w + dx);
+      }
+      if (edge === 'left') {
+        newW = Math.max(MIN_W, startRef.current.w - dx);
+      }
+      if (edge === 'bottom' || edge === 'corner') {
+        newH = Math.max(MIN_H, startRef.current.h + dy);
+      }
+
       setFeedWidth(Math.round(newW));
       setFeedHeight(Math.round(newH));
     };
@@ -154,7 +167,7 @@ export default function DashboardLayout() {
       {/* Social Feed Sidecar - Resizable overlay */}
       <div
         ref={containerRef}
-        className="fixed bg-background border-l border-r shadow-xl z-40 relative"
+        className="fixed bg-background border-l border-r shadow-xl z-40 relative select-none"
         style={{
           width: `${feedWidth}px`,
           height: `${feedHeight}px`,
@@ -173,12 +186,31 @@ export default function DashboardLayout() {
           <TikTokFeed />
         </div>
 
-        {/* Resize handle */}
+        {/* Resize handles */}
+        {/* Corner (bottom-right) */}
         <div
-          onPointerDown={onResizePointerDown}
+          onPointerDown={onResizeStart('corner')}
           className="absolute bottom-1 right-1 h-4 w-4 cursor-nwse-resize rounded bg-muted border border-border"
           aria-label="Resize social feed"
           title="Drag to resize"
+        />
+        {/* Right edge */}
+        <div
+          onPointerDown={onResizeStart('right')}
+          className="absolute top-1/2 right-0 -translate-y-1/2 h-20 w-1 cursor-ew-resize bg-border/50"
+          aria-label="Resize width from right"
+        />
+        {/* Left edge */}
+        <div
+          onPointerDown={onResizeStart('left')}
+          className="absolute top-1/2 left-0 -translate-y-1/2 h-20 w-1 cursor-ew-resize bg-border/50"
+          aria-label="Resize width from left"
+        />
+        {/* Bottom edge */}
+        <div
+          onPointerDown={onResizeStart('bottom')}
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-20 h-1 cursor-ns-resize bg-border/50"
+          aria-label="Resize height"
         />
       </div>
 
