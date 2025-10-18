@@ -24,8 +24,7 @@ jobs:
 
       # Optional (keeps npm caches happy; skips if no lockfile)
       - name: Install
-        run: |
-          if [ -f package-lock.json ]; then npm ci; else echo "no lockfile, skipping install"; fi
+        run: npm install
 
       - name: Sanity dump
         run: |

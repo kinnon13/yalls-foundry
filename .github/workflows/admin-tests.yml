@@ -22,7 +22,7 @@ jobs:
           node-version: '20'
       
       - name: Install dependencies
-        run: npm ci
+        run: npm install
       
       - name: Run admin route tests
         run: npm test -- tests/route-aliases.test.ts
