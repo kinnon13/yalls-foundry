@@ -155,9 +155,8 @@ export default function AppsPane() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      <div className="flex-1 overflow-x-auto overflow-y-hidden">
       {/* Sticky header (Favorites + controls) */}
-      <section className="sticky top-0 z-20 bg-muted/30 px-2 py-1 backdrop-blur">
+      <section className="shrink-0 bg-muted/30 px-2 py-1 backdrop-blur">
         <h3 className="text-base font-semibold text-foreground mb-1 text-center">Favorites</h3>
         <FavoritesBar size={72} gap={12} />
         <div className="mt-1 flex items-center gap-3 px-0">
@@ -176,14 +175,13 @@ export default function AppsPane() {
       </section>
 
       {/* Horizontal scrolling grid of app tiles & pins */}
-      <div className="flex gap-3 bg-muted/20 p-2 pt-4 pb-20 overflow-x-auto overflow-y-hidden h-full">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden bg-muted/20 p-2">
         <div 
-          className="grid gap-3"
+          className="grid gap-3 h-full"
           style={{
             gridTemplateRows: `repeat(auto-fill, ${tile}px)`,
             gridAutoFlow: 'column',
             gridAutoColumns: `${tile}px`,
-            height: '100%',
           }}
         >
         {/* Installed apps - now filtered by capabilities */}
@@ -246,7 +244,6 @@ export default function AppsPane() {
           </button>
         ))}
         </div>
-      </div>
       </div>
     </div>
   );
