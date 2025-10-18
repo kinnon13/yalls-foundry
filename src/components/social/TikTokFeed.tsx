@@ -197,12 +197,6 @@ export function TikTokFeed() {
                   <div className="text-sm text-white/70">@{post.entities.handle}</div>
                 )}
               </div>
-              <Button
-                size="sm"
-                className="ml-auto bg-primary hover:bg-primary/90"
-              >
-                Follow
-              </Button>
             </div>
 
             {/* Post content */}
@@ -213,6 +207,15 @@ export function TikTokFeed() {
 
           {/* Right sidebar actions */}
           <div className="absolute right-4 bottom-32 flex flex-col gap-6 z-20">
+            {/* Follow button */}
+            <button className="flex flex-col items-center gap-1">
+              <div className="w-12 h-12 rounded-full bg-primary backdrop-blur-sm flex items-center justify-center hover:bg-primary/90 transition-colors">
+                <span className="text-white font-semibold text-lg">+</span>
+              </div>
+              <span className="text-xs text-white font-medium">Follow</span>
+            </button>
+
+            {/* Like button */}
             <button className="flex flex-col items-center gap-1">
               <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
                 <Heart className="w-6 h-6 text-white" />
