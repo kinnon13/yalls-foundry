@@ -6,29 +6,30 @@ import { BottomDock } from '@/components/layout/BottomDock';
 
 export default function HomePage() {
   return (
-    <>
+    // Full-viewport shell: header / content / dock - no body scroll
+    <div className="fixed inset-0 grid grid-rows-[64px_1fr_80px] bg-background">
       <GlobalHeader />
-      <main className="pt-14 pb-16">
-        {/* Phone: horizontal pager (Apps | Feed | Shop | Profile) */}
-        <div className="md:hidden">
-          <PhonePager />
+
+      {/* Split content: Left = Apps, Right = Feed (no outer scroll) */}
+      <div className="grid h-full overflow-hidden lg:grid-cols-[minmax(560px,2fr)_minmax(420px,1fr)] md:grid-cols-[minmax(420px,1fr)_minmax(560px,2fr)] grid-cols-[1fr]">
+        {/* Left: Apps — independent scroll */}
+        <div className="hidden md:block overflow-y-auto overscroll-contain px-4 pb-24 pt-3">
+          <AppsPane />
         </div>
 
-        {/* Tablet & Desktop */}
-        <div className="hidden md:grid h-[calc(100vh-112px)] gap-6 px-6 mx-auto max-w-[1600px]
-          md:grid-cols-[1fr_2fr] xl:grid-cols-[2fr_1fr]">
-          {/* Apps (left) */}
-          <div className="min-w-0">
-            <AppsPane />
-          </div>
-          {/* Reels (right) */}
-          <div className="min-w-[360px] max-w-[560px] justify-self-end w-full">
-            <SocialFeedPane />
-          </div>
+        {/* Right: Feed — independent scroll */}
+        <div className="hidden md:block overflow-y-auto overscroll-contain border-l border-border px-0 pb-24">
+          <SocialFeedPane />
         </div>
-      </main>
+
+        {/* Phone: horizontal pager (Apps | Feed | Shop | Profile) */}
+        <div className="md:hidden h-full overflow-hidden">
+          <PhonePager />
+        </div>
+      </div>
+
       <BottomDock />
-    </>
+    </div>
   );
 }
 

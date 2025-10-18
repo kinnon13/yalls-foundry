@@ -5,17 +5,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent body scroll - only panes scroll */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
 html, body {
   overscroll-behavior-y: none;
 }
 
-#app, .tiktok-panel {
-  scroll-snap-type: y mandatory;
+/* Stable scrollbar gutter prevents layout shift */
+* {
+  scrollbar-gutter: stable both-edges;
 }
 
-/* Prevent iOS rubber-band overscroll */
-html, body { 
-  overscroll-behavior-y: none; 
+#app, .tiktok-panel {
+  scroll-snap-type: y mandatory;
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 

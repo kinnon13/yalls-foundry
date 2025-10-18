@@ -126,8 +126,8 @@ export default function AppsPane() {
 
   return (
     <div className="space-y-4 relative pb-24">
-      {/* Always-visible favorites bar */}
-      <section className="mb-2">
+      {/* Sticky favorites rail at top */}
+      <section className="sticky top-0 z-10 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2 mb-2">
         <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
         <FavoritesBar size={72} gap={12} />
       </section>

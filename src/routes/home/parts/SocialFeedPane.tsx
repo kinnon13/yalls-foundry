@@ -111,46 +111,46 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col">
-      {/* Profile bubble above the feed */}
-      <ProfileSummaryBar />
+    <div className="h-full w-full overflow-y-auto overscroll-contain">
+      <div className="mx-auto max-w-[520px] w-full px-0">
+        <section className="flex h-full w-full flex-col">
+          {/* Profile bubble above the feed */}
+          <ProfileSummaryBar />
 
-      {/* Tab indicators (clickable or drag/swipe to change) */}
-      <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-background/70 backdrop-blur px-2 py-1">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer',
-              t === tab
-                ? 'bg-primary text-primary-foreground scale-105'
-                : 'bg-muted/50 text-muted-foreground scale-95 hover:bg-muted hover:scale-100'
-            )}
-          >
-            {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {/* Swipeable feed container */}
-      <div 
-        ref={railRef}
-        className="relative flex-1 select-none touch-pan-y"
-      >
-        <div 
-          className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
-        >
-          <div className="space-y-4 px-2 pb-4">
-            {items.map((item) => (
-              <div key={item.id} className="h-[calc(100vh-16rem)] snap-start">
-                <Reel {...item} />
-              </div>
+          {/* Tab indicators (clickable or drag/swipe to change) */}
+          <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-background/70 backdrop-blur px-2 py-1">
+            {TABS.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer',
+                  t === tab
+                    ? 'bg-primary text-primary-foreground scale-105'
+                    : 'bg-muted/50 text-muted-foreground scale-95 hover:bg-muted hover:scale-100'
+                )}
+              >
+                {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
+              </button>
             ))}
           </div>
-        </div>
+
+          {/* Swipeable feed container */}
+          <div 
+            ref={railRef}
+            className="relative flex-1 select-none touch-pan-y"
+          >
+            <div className="space-y-4 px-2 pb-4">
+              {items.map((item) => (
+                <div key={item.id} className="h-[calc(100vh-16rem)] snap-start">
+                  <Reel {...item} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
-    </section>
+    </div>
   );
 }
 
