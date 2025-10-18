@@ -94,6 +94,7 @@ const AuditAdmin = lazy(() => import('./routes/admin/audit'));
 const NotificationsSettings = lazy(() => import('./routes/settings/notifications'));
 const NotificationsPage = lazy(() => import('./routes/notifications'));
 const StubBacklog = lazy(() => import('./routes/admin/stub-backlog'));
+const Diag = lazy(() => import('./routes/_diag'));
 
 const queryClient = new QueryClient();
 const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on';
@@ -335,6 +336,9 @@ function AppContent() {
 
           {/* Auth Route (handles both login & signup via tabs) */}
           <Route path="/login" element={<Login />} />
+          
+          {/* Diagnostic Route - Context Health Check */}
+          <Route path="/_diag" element={<Suspense fallback={<div>Loading...</div>}><Diag /></Suspense>} />
 
           {/* Preview Routes (dev/staging only) - nested inside main Routes */}
           {import.meta.env.VITE_PREVIEW_ENABLED === 'true' && (

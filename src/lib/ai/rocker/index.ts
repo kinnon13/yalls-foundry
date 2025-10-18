@@ -9,6 +9,13 @@ export { RockerHint } from './RockerHint';
 export { RockerWhy } from './RockerWhy';
 export { RockerTray } from './RockerTray';
 
-// Legacy exports for backwards compatibility with chat system
-export { useRockerGlobal, RockerProvider as RockerChatProvider } from './RockerChatProvider';
+// Chat-specific exports (use unique names to avoid confusion)
+export { 
+  useRockerGlobal, 
+  RockerProvider as RockerChatProvider 
+} from './RockerChatProvider';
 export type { RockerContextValue } from './RockerChatProvider';
+
+// NOTE: Import these with explicit aliases to avoid confusion:
+// import { RockerProvider as RockerCore } from '@/lib/ai/rocker/RockerProvider';
+// import { RockerChatProvider } from '@/lib/ai/rocker';
