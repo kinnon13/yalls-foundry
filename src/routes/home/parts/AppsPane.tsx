@@ -109,20 +109,37 @@ export default function AppsPane() {
   // Fetch pinned entities
   const pins = useProfilePins(userId);
 
-  const { data: pinnedEntities = [] } = useQuery({
+  const { data: pinnedEntities } = useQuery({
     queryKey: ['pinned-entities', userId, pins.data],
     queryFn: async () => {
-      if (!pins.data) return [];
+      if (!pins.data) return { entities: [], ghostPins: [] };
       const entityPins = pins.data.filter(p => p.pin_type === 'entity');
-      if (entityPins.length === 0) return [];
+      if (entityPins.length === 0) return { entities: [], ghostPins: [] };
 
       const entityIds = entityPins.map(p => p.ref_id);
-      const { data } = await supabase
-        .from('entities')
-        .select('id, display_name, kind, status, handle, owner_user_id')
-        .in('id', entityIds);
       
-      return data || [];
+      // Chunk large IN queries (100 IDs per chunk)
+      const chunk = <T,>(arr: T[], n = 100): T[][] => 
+        Array.from({ length: Math.ceil(arr.length / n) }, (_, i) => 
+          arr.slice(i * n, (i + 1) * n)
+        );
+      
+      const results = await Promise.all(
+        chunk(entityIds, 100).map(ids =>
+          supabase
+            .from('entities')
+            .select('id, display_name, kind, status, handle, owner_user_id')
+            .in('id', ids)
+        )
+      );
+
+      const entities = results.flatMap(r => r.data ?? []);
+      
+      // Track ghost pins (pins pointing to deleted entities)
+      const foundIds = new Set(entities.map(e => e.id));
+      const ghostPins = entityPins.filter(p => !foundIds.has(p.ref_id));
+      
+      return { entities, ghostPins };
     },
     enabled: !!userId && !!pins.data && pins.data.length > 0
   });
@@ -168,21 +185,38 @@ export default function AppsPane() {
     return apps;
   }, [hasNoManagedEntities, filteredManagementApps]);
 
-  // All items (apps + pinned entities)
+  // All items (apps + pinned entities + ghost pins)
   const allItems = useMemo(() => {
     const items = [...visibleApps];
+    
     // Add pinned entities
-    pinnedEntities.forEach((entity: any) => {
+    (pinnedEntities?.entities || []).forEach((entity: any) => {
+      const route = entity.owner_user_id === userId 
+        ? `/workspace/${entity.id}/dashboard` 
+        : `/entities/${entity.id}`;
+      
       items.push({
         id: `entity:${entity.id}`,
         label: entity.display_name,
         icon: Building,
-        route: `/entities/${entity.id}`,
-        color: 'from-accent/20 to-accent/5',
+        route,
+        color: entity.status === 'unclaimed' ? 'from-amber-500/20 to-amber-500/5' : 'from-accent/20 to-accent/5',
       });
     });
+    
+    // Add ghost pins (deleted entities) - these won't navigate but user can see them
+    (pinnedEntities?.ghostPins || []).forEach((pin: any) => {
+      items.push({
+        id: `ghost:${pin.ref_id}`,
+        label: pin.title || 'Deleted Item',
+        icon: Building,
+        route: undefined,
+        color: 'from-muted/20 to-muted/5',
+      });
+    });
+    
     return items;
-  }, [visibleApps, pinnedEntities]);
+  }, [visibleApps, pinnedEntities, userId]);
 
   // Grid dimensions derived from resizable box (subtract padding+border: p-3=12px each side, border-2=2px each side => 28px total)
   const gridDims = useMemo(() => {
