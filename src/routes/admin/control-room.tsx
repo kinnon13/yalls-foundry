@@ -378,22 +378,6 @@ export default function ControlRoom() {
             <TabsContent value="tests" className="space-y-6">
               <div className="grid gap-6 lg:grid-cols-1">
                 <TestRunner />
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <TestTube className="h-5 w-5" />
-                      GitHub Actions Test Results
-                    </CardTitle>
-                    <CardDescription>View test execution history from CI/CD</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Link to="/admin/test-results">
-                      <Button className="w-full">
-                        View Test Results Dashboard
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
               </div>
             </TabsContent>
 
