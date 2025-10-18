@@ -6,6 +6,10 @@ import { ContributorCredit } from '@/components/entities/ContributorCredit';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Star } from 'lucide-react';
+import { useProfilePins } from '@/hooks/useProfilePins';
+import { useToast } from '@/hooks/use-toast';
 
 type Entity = {
   id: string;
@@ -26,6 +30,13 @@ export default function EntityDetail() {
   const { id } = useParams();
   const [entity, setEntity] = useState<Entity | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const { toast } = useToast();
+  const { data: pins = [], add: addPin } = useProfilePins(userId || '');
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id || null));
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -64,6 +75,27 @@ export default function EntityDetail() {
     );
   }
 
+  const isPinned = pins.some(p => p.pin_type === 'horse' && p.ref_id === entity.id);
+
+  const handlePin = () => {
+    if (!userId) {
+      toast({ title: 'Please sign in to pin entities', variant: 'destructive' });
+      return;
+    }
+    
+    addPin.mutate({
+      pin_type: 'horse',
+      ref_id: entity.id,
+      title: entity.display_name,
+      metadata: {
+        kind: entity.kind,
+        handle: entity.handle,
+        status: entity.status
+      }
+    });
+    toast({ title: 'Added to My Apps' });
+  };
+
   return (
     <div className="container max-w-4xl py-8 space-y-6">
       {entity.status === 'unclaimed' && (
@@ -84,6 +116,14 @@ export default function EntityDetail() {
               )}
             </div>
             <div className="flex gap-2">
+              <Button
+                variant={isPinned ? "default" : "outline"}
+                size="icon"
+                onClick={handlePin}
+                disabled={addPin.isPending || isPinned}
+              >
+                <Star className={`h-4 w-4 ${isPinned ? 'fill-current' : ''}`} />
+              </Button>
               <Badge variant="outline" className="capitalize">
                 {entity.kind}
               </Badge>

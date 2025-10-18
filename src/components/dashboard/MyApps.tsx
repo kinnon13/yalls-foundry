@@ -6,8 +6,9 @@ import {
   Building2, MessageSquare, Calendar, 
   Award, BarChart3, Store, Search, Plus, Sparkles
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppStoreModal } from './AppStoreModal';
+import { useProfilePins } from '@/hooks/useProfilePins';
 
 const iconMap: Record<string, any> = {
   'Building2': Building2,
@@ -30,8 +31,15 @@ interface MyAppsProps {
 export function MyApps({ entityId }: MyAppsProps) {
   const { log } = useRocker();
   const [showAppStore, setShowAppStore] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const { data: installedApps, isLoading } = useQuery({
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id || null));
+  }, []);
+
+  const { data: pins = [] } = useProfilePins(userId || '');
+
+  const { data: installedApps, isLoading: isLoadingApps } = useQuery({
     queryKey: ['installed-apps', entityId],
     queryFn: async () => {
       if (!entityId) return [];
@@ -45,6 +53,24 @@ export function MyApps({ entityId }: MyAppsProps) {
     },
     enabled: !!entityId
   });
+
+  const { data: pinnedEntities, isLoading: isLoadingPins } = useQuery({
+    queryKey: ['pinned-entities', userId],
+    queryFn: async () => {
+      const entityPins = pins.filter(p => p.pin_type === 'horse');
+      if (entityPins.length === 0) return [];
+
+      const { data } = await supabase
+        .from('entities')
+        .select('id, display_name, kind, status, handle')
+        .in('id', entityPins.map(p => p.ref_id));
+
+      return data || [];
+    },
+    enabled: !!userId && pins.length > 0
+  });
+
+  const isLoading = isLoadingApps || isLoadingPins;
 
   const getCategoryAccent = (category: string) => {
     const accents: Record<string, string> = {
@@ -105,6 +131,18 @@ export function MyApps({ entityId }: MyAppsProps) {
               />
             );
           })}
+          
+          {pinnedEntities && pinnedEntities.map((entity: any) => (
+            <AppBubble
+              key={entity.id}
+              to={`/workspace/${entity.id}/dashboard`}
+              icon={<Building2 className="h-6 w-6" />}
+              title={entity.display_name}
+              meta={entity.status === 'unclaimed' ? 'Unclaimed' : entity.kind}
+              accent={entity.status === 'unclaimed' ? 'hsl(45 85% 60%)' : 'hsl(200 90% 55%)'}
+              onClick={() => log('pinned_entity_open', { entity_id: entity.id })}
+            />
+          ))}
           
           <AppBubble
             icon={<Plus className="h-6 w-6" />}
