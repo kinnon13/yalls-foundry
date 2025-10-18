@@ -154,7 +154,7 @@ export default function SocialFeedPane() {
         <div 
           className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
-          <div className="space-y-4 pr-2 pb-4">
+          <div className="pr-2 pb-4">
             {items.map((item) => (
               <div key={item.id} className="h-[calc(100vh-16rem)] snap-start">
                 <Reel {...item} />

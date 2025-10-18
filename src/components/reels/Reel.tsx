@@ -35,7 +35,7 @@ export function Reel({ src, alt, author, caption, stats, onLike, onComment, onSa
 
   return (
     <article
-      className="relative w-full h-full snap-start bg-black rounded-lg overflow-hidden"
+      className="relative w-full h-full snap-start bg-black overflow-hidden"
       onDoubleClick={doubleTapLike}
     >
       {/* MEDIA: full-bleed */}
