@@ -32,7 +32,7 @@ export default function EntityDetail() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
-  const { data: pins = [], add: addPin } = useProfilePins(userId || '');
+  const pins = useProfilePins(userId);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id || null));
@@ -75,25 +75,28 @@ export default function EntityDetail() {
     );
   }
 
-  const isPinned = pins.some(p => p.pin_type === 'horse' && p.ref_id === entity.id);
+  const isPinned = pins.data?.some(p => p.pin_type === 'entity' && p.ref_id === entity.id);
 
   const handlePin = () => {
     if (!userId) {
       toast({ title: 'Please sign in to pin entities', variant: 'destructive' });
       return;
     }
-    
-    addPin.mutate({
-      pin_type: 'horse',
-      ref_id: entity.id,
-      title: entity.display_name,
-      metadata: {
-        kind: entity.kind,
-        handle: entity.handle,
-        status: entity.status
-      }
-    });
-    toast({ title: 'Added to My Apps' });
+
+    if (isPinned) {
+      pins.remove.mutate({ pin_type: 'entity', ref_id: entity.id });
+    } else {
+      pins.add.mutate({
+        pin_type: 'entity',
+        ref_id: entity.id,
+        title: entity.display_name,
+        metadata: {
+          kind: entity.kind,
+          handle: entity.handle,
+          status: entity.status
+        }
+      });
+    }
   };
 
   return (
@@ -120,7 +123,7 @@ export default function EntityDetail() {
                 variant={isPinned ? "default" : "outline"}
                 size="icon"
                 onClick={handlePin}
-                disabled={addPin.isPending || isPinned}
+                disabled={pins.add.isPending || pins.remove.isPending}
               >
                 <Star className={`h-4 w-4 ${isPinned ? 'fill-current' : ''}`} />
               </Button>

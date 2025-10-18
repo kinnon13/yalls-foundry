@@ -5452,6 +5452,36 @@ export type Database = {
           },
         ]
       }
+      pin_folders: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          icon: string | null
+          id: string
+          name: string
+          sort_index: number | null
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          sort_index?: number | null
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          sort_index?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       plan_entitlements: {
         Row: {
           feature_id: string
@@ -7313,6 +7343,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_pins: {
+        Row: {
+          created_at: string | null
+          folder_id: string | null
+          id: string
+          metadata: Json | null
+          pin_type: Database["public"]["Enums"]["pin_type"]
+          ref_id: string
+          sort_index: number | null
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          folder_id?: string | null
+          id?: string
+          metadata?: Json | null
+          pin_type: Database["public"]["Enums"]["pin_type"]
+          ref_id: string
+          sort_index?: number | null
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          folder_id?: string | null
+          id?: string
+          metadata?: Json | null
+          pin_type?: Database["public"]["Enums"]["pin_type"]
+          ref_id?: string
+          sort_index?: number | null
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_pins_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "pin_folders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -10541,6 +10615,7 @@ export type Database = {
         | "crm"
         | "ai"
         | "system"
+      pin_type: "entity" | "app" | "route" | "folder"
       post_visibility: "public" | "followers" | "private"
       promotion_kind: "discount" | "boost"
       recurrence_freq: "daily" | "weekly" | "monthly" | "yearly"
@@ -10738,6 +10813,7 @@ export const Constants = {
         "ai",
         "system",
       ],
+      pin_type: ["entity", "app", "route", "folder"],
       post_visibility: ["public", "followers", "private"],
       promotion_kind: ["discount", "boost"],
       recurrence_freq: ["daily", "weekly", "monthly", "yearly"],

@@ -37,7 +37,7 @@ export function MyApps({ entityId }: MyAppsProps) {
     supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id || null));
   }, []);
 
-  const { data: pins = [] } = useProfilePins(userId || '');
+  const pins = useProfilePins(userId);
 
   const { data: installedApps, isLoading: isLoadingApps } = useQuery({
     queryKey: ['installed-apps', entityId],
@@ -55,9 +55,10 @@ export function MyApps({ entityId }: MyAppsProps) {
   });
 
   const { data: pinnedEntities, isLoading: isLoadingPins } = useQuery({
-    queryKey: ['pinned-entities', userId],
+    queryKey: ['pinned-entities', userId, pins.data],
     queryFn: async () => {
-      const entityPins = pins.filter(p => p.pin_type === 'horse');
+      if (!pins.data) return [];
+      const entityPins = pins.data.filter(p => p.pin_type === 'entity');
       if (entityPins.length === 0) return [];
 
       const { data } = await supabase
@@ -67,7 +68,7 @@ export function MyApps({ entityId }: MyAppsProps) {
 
       return data || [];
     },
-    enabled: !!userId && pins.length > 0
+    enabled: !!userId && !!pins.data && pins.data.length > 0
   });
 
   const isLoading = isLoadingApps || isLoadingPins;
@@ -115,34 +116,43 @@ export function MyApps({ entityId }: MyAppsProps) {
       <section className="space-y-4">
         <h2 className="text-lg font-semibold px-2">My Apps</h2>
         <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-          {installedApps && installedApps.map((app: any) => {
-            const catalog = app.app_catalog;
-            const IconComponent = iconMap[catalog?.icon] || Building2;
-            
-            return (
-              <AppBubble
-                key={app.app_key}
-                to={getAppRoute(app.app_key)}
-                icon={<IconComponent className="h-6 w-6" />}
-                title={catalog?.name || app.app_key}
-                meta={catalog?.summary}
-                accent={getCategoryAccent(catalog?.category)}
-                onClick={() => log('app_open', { app_key: app.app_key, entity_id: entityId })}
-              />
-            );
-          })}
-          
-          {pinnedEntities && pinnedEntities.map((entity: any) => (
-            <AppBubble
-              key={entity.id}
-              to={`/workspace/${entity.id}/dashboard`}
-              icon={<Building2 className="h-6 w-6" />}
-              title={entity.display_name}
-              meta={entity.status === 'unclaimed' ? 'Unclaimed' : entity.kind}
-              accent={entity.status === 'unclaimed' ? 'hsl(45 85% 60%)' : 'hsl(200 90% 55%)'}
-              onClick={() => log('pinned_entity_open', { entity_id: entity.id })}
-            />
-          ))}
+          {[
+            ...(installedApps || []).map((app: any) => ({
+              key: `app:${app.app_key}`,
+              type: 'app' as const,
+              title: app.app_catalog?.name || app.app_key,
+              icon: iconMap[app.app_catalog?.icon] || Building2,
+              meta: app.app_catalog?.summary,
+              accent: getCategoryAccent(app.app_catalog?.category || 'utility'),
+              to: getAppRoute(app.app_key),
+              onClick: () => log('app_open', { app_key: app.app_key, entity_id: entityId })
+            })),
+            ...(pinnedEntities || []).map((entity: any) => ({
+              key: `entity:${entity.id}`,
+              type: 'entity' as const,
+              title: entity.display_name,
+              icon: Building2,
+              meta: entity.status === 'unclaimed' ? 'Unclaimed' : entity.kind,
+              accent: entity.status === 'unclaimed' ? 'hsl(45 85% 60%)' : 'hsl(200 90% 55%)',
+              to: `/workspace/${entity.id}/dashboard`,
+              onClick: () => log('pinned_entity_open', { entity_id: entity.id })
+            }))
+          ]
+            .sort((a, b) => a.title.localeCompare(b.title))
+            .map((tile) => {
+              const IconComponent = tile.icon;
+              return (
+                <AppBubble
+                  key={tile.key}
+                  to={tile.to}
+                  icon={<IconComponent className="h-6 w-6" />}
+                  title={tile.title}
+                  meta={tile.meta}
+                  accent={tile.accent}
+                  onClick={tile.onClick}
+                />
+              );
+            })}
           
           <AppBubble
             icon={<Plus className="h-6 w-6" />}
