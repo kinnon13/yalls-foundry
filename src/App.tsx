@@ -29,6 +29,7 @@ import NotFound from "./pages/NotFound";
 import Health from "./pages/Health";
 
 // Lazy load dashboard and AI routes
+import HomePage from './routes/home';
 const DashboardLayout = lazy(() => import('./routes/dashboard/index'));
 const DashboardOverview = lazy(() => import('./routes/dashboard/overview'));
 const DashboardBusiness = lazy(() => import('./routes/dashboard/business'));
@@ -118,7 +119,7 @@ function AppContent() {
     // Register all routes for the scanner
     import('@/router/registry').then(({ registerRoutes }) => {
       registerRoutes([
-        '/', '/search', '/login', '/profile', '/profile/:id',
+        '/', '/home', '/search', '/login', '/profile', '/profile/:id',
         '/stallions', '/stallions/:id', '/dashboard', '/admin/control-room',
         '/admin/features', '/admin/routes', '/admin/components', '/admin/a11y',
         '/admin/audit', '/admin/tests', '/notifications', '/settings/notifications',
@@ -149,9 +150,12 @@ function AppContent() {
       <ProfileCreationModal />
       
       <RedirectHandler />
-      <Routes>
+        <Routes>
+          {/* Home - New unified layout */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/home" element={<HomePage />} />
+          
           {/* 7-Route Spine */}
-          <Route path="/" element={<Index />} />
           <Route path="/search" element={<Search />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Suspense fallback={<div>Loading...</div>}><ProfilePageDynamic /></Suspense>} />

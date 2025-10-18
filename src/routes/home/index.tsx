@@ -1,92 +1,38 @@
-/**
- * Home — Unified Feed with Lane Tabs + Infinite Scroll
- * For You (default) / Following / Shop
- */
-
-import { useSearchParams } from 'react-router-dom';
+import AppsPane from './parts/AppsPane';
+import SocialFeedPane from './parts/SocialFeedPane';
+import PhonePager from './parts/PhonePager';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
-import { TikTokScroller } from '@/components/feed/TikTokScroller';
-import { PublicCalendar } from '@/components/calendar/PublicCalendar';
-import { Composer } from '@/components/composer/Composer';
-import { useSession } from '@/lib/auth/context';
-import { useScrollerFeed } from '@/hooks/useScrollerFeed';
-import { Finder } from '@/components/overlays/Finder';
-import { NotificationBell } from '@/components/overlays/NotificationBell';
+import { BottomDock } from '@/components/layout/BottomDock';
 
-type Lane = 'personal' | 'combined';
-
-export default function Home() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { session } = useSession();
-  const laneParam = searchParams.get('lane') || 'personal';
-  const lane = (laneParam === 'following' ? 'combined' : 'personal') as Lane;
-
-  const setLane = (newLane: Lane) => {
-    setSearchParams({ lane: newLane });
-  };
-
-  // Fetch feed with infinite scroll
-  const feed = useScrollerFeed({ lane });
-
-  // Flatten all pages
-  const feedItems = feed.data?.pages.flatMap(page => page.items) ?? [];
-
+export default function HomePage() {
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <GlobalHeader />
-      
-      <div className="flex">
-        {/* Main Feed */}
-        <main className="flex-1 max-w-3xl mx-auto">
-          {/* Lane Tabs */}
-          <div className="sticky top-16 z-20 bg-background/95 backdrop-blur border-b border-border">
-            <div className="flex items-center justify-center gap-8 h-14">
-              {(['personal', 'combined'] as Lane[]).map((l) => (
-                <button
-                  key={l}
-                  onClick={() => setLane(l)}
-                  className={`
-                    relative px-4 py-2 text-sm font-medium transition-all
-                    ${lane === l 
-                      ? 'text-foreground' 
-                      : 'text-muted-foreground hover:text-foreground'
-                    }
-                  `}
-                >
-                  {l === 'personal' ? 'Personal' : 'Combined'}
-                  {lane === l && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary animate-scale-in" />
-                  )}
-                </button>
-              ))}
-            </div>
+      <main className="pt-14 pb-16">
+        {/* Phone: horizontal pager with 4 screens */}
+        <div className="md:hidden">
+          <PhonePager />
+        </div>
+
+        {/* Tablet & Desktop: grid */}
+        <div className="hidden md:grid mx-auto max-w-[1400px] gap-4 px-3 md:px-4">
+          {/* Tablet: 1/3 apps (left) | 2/3 feed (right) */}
+          {/* Desktop: 2/3 apps (left) | 1/3 feed (right) */}
+          <div className="
+            grid gap-4
+            md:grid-cols-[1fr_2fr]
+            xl:grid-cols-[2fr_1fr]
+          ">
+            <section aria-label="Apps" className="min-h-[calc(100vh-14rem)]">
+              <AppsPane />
+            </section>
+            <aside aria-label="Social Feed" className="min-h-[calc(100vh-14rem)]">
+              <SocialFeedPane />
+            </aside>
           </div>
-
-          {/* Composer */}
-          {session && (
-            <div className="border-b border-border">
-              <Composer />
-            </div>
-          )}
-
-          {/* Scroller */}
-          <TikTokScroller
-            items={feedItems}
-            isLoading={feed.isLoading || feed.isFetchingNextPage}
-            onLoadMore={() => feed.fetchNextPage()}
-            hasNextPage={feed.hasNextPage}
-            lane={lane}
-          />
-        </main>
-
-        {/* Right Rail - Public Calendar */}
-        <aside className="hidden xl:block w-80 border-l border-border sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto p-4">
-          <PublicCalendar />
-        </aside>
-      </div>
-
-      {/* Global Overlays */}
-      <Finder />
-    </div>
+        </div>
+      </main>
+      <BottomDock />
+    </>
   );
 }
