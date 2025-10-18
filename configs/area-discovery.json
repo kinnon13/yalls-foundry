@@ -1,0 +1,247 @@
+{
+  "version": "2.0",
+  "lastUpdated": "2025-01-18",
+  
+  "areas": [
+    {
+      "raw": "producer",
+      "canonical": "dashboard",
+      "subareas": [
+        "workspace",
+        "entities",
+        "crm",
+        "listings",
+        "orders",
+        "programs",
+        "calendar",
+        "farm",
+        "messaging",
+        "growth"
+      ],
+      "description": "Producer workspace for managing business operations"
+    },
+    {
+      "raw": "earnings",
+      "canonical": "equinestats",
+      "subareas": [
+        "performance",
+        "programs",
+        "pedigree",
+        "comparisons",
+        "insights"
+      ],
+      "description": "Horse performance analytics and earnings tracking"
+    },
+    {
+      "raw": "composer",
+      "canonical": "discovery",
+      "subareas": ["feed"],
+      "description": "Content creation and posting"
+    },
+    {
+      "raw": "admin",
+      "canonical": "admin",
+      "subareas": ["audit", "claims", "features", "control"],
+      "description": "Administrative controls and monitoring"
+    },
+    {
+      "raw": "ai",
+      "canonical": "ai",
+      "subareas": ["activity", "memory", "policy"],
+      "description": "AI agent controls and observability"
+    },
+    {
+      "raw": "discovery",
+      "canonical": "discovery",
+      "subareas": [
+        "search",
+        "profiles",
+        "events",
+        "feed",
+        "marketplace"
+      ],
+      "description": "Public browsing and discovery"
+    },
+    {
+      "raw": "events",
+      "canonical": "events",
+      "subareas": ["producer_events", "entrant"],
+      "description": "Event management and participation"
+    },
+    {
+      "raw": "platform",
+      "canonical": "platform",
+      "subareas": ["auth", "commerce", "content", "telemetry"],
+      "description": "Core platform services"
+    },
+    {
+      "raw": "profile",
+      "canonical": "profile",
+      "subareas": ["my_profile"],
+      "description": "User profile management"
+    }
+  ],
+
+  "routeAliases": {
+    "/organizer": "/workspace/:entityId/events",
+    "/organizer/*": "/workspace/:entityId/events/*",
+    "/incentives/dashboard": "/workspace/:entityId/programs",
+    "/workspace/:entityId/incentives": "/workspace/:entityId/programs",
+    "/dashboard": "/workspace",
+    "/entrant": "/entries",
+    "/equistats": "/equinestats",
+    "/equistats/*": "/equinestats/*",
+    "/crm": "/workspace/:entityId/crm"
+  },
+
+  "collapsedHeads": [
+    "/events",
+    "/marketplace",
+    "/messages",
+    "/orders",
+    "/farm",
+    "/entries",
+    "/entities",
+    "/listings",
+    "/profile",
+    "/stallions",
+    "/cart",
+    "/workspace",
+    "/equinestats"
+  ],
+
+  "routeCategories": {
+    "/events": "public",
+    "/marketplace": "public",
+    "/entries": "private",
+    "/workspace": "workspace",
+    "/equinestats": "public",
+    "/profile": "private",
+    "/feed": "private",
+    "/cart": "private",
+    "/orders": "private",
+    "/admin": "dashboard",
+    "/ai": "dashboard"
+  },
+
+  "featureFlags": {
+    "workspace_growth": {
+      "name": "Network & Affiliates",
+      "description": "Referral tracking and MLM features",
+      "rollout": "beta",
+      "requiredEntitlement": "growth_module"
+    },
+    "nba_tray": {
+      "name": "Next Best Actions",
+      "description": "AI-powered action recommendations",
+      "rollout": "beta",
+      "requiredEntitlement": "ai_recommendations"
+    },
+    "equinestats_private": {
+      "name": "Private EquineStats",
+      "description": "Workspace analytics for horse owners",
+      "rollout": "ga",
+      "requiredEntitlement": "equinestats_pro"
+    },
+    "theme_overrides": {
+      "name": "Custom Themes",
+      "description": "Per-user and per-workspace theming",
+      "rollout": "beta",
+      "requiredEntitlement": "custom_branding"
+    },
+    "live_kpis": {
+      "name": "Live KPI Tiles",
+      "description": "Real-time business metrics",
+      "rollout": "ga",
+      "requiredEntitlement": "analytics_basic"
+    }
+  },
+
+  "kpiDefinitions": {
+    "workspace": {
+      "metrics": [
+        { "id": "revenue_cents", "label": "Revenue", "format": "currency" },
+        { "id": "orders", "label": "Orders", "format": "number" },
+        { "id": "entries", "label": "Entries", "format": "number" },
+        { "id": "views", "label": "Views", "format": "number" }
+      ],
+      "refreshInterval": 120
+    },
+    "producer_events": {
+      "metrics": [
+        { "id": "event_views", "label": "Event Views", "format": "number" },
+        { "id": "registrations", "label": "Registrations", "format": "number" },
+        { "id": "checkins", "label": "Check-ins", "format": "number" },
+        { "id": "revenue_cents", "label": "Event Revenue", "format": "currency" }
+      ],
+      "refreshInterval": 120
+    },
+    "listings": {
+      "metrics": [
+        { "id": "views", "label": "Views", "format": "number" },
+        { "id": "add_to_cart", "label": "Add to Cart", "format": "number" },
+        { "id": "purchases", "label": "Purchases", "format": "number" },
+        { "id": "gmv_cents", "label": "GMV", "format": "currency" }
+      ],
+      "refreshInterval": 120
+    },
+    "growth": {
+      "metrics": [
+        { "id": "referred_gmv_cents", "label": "Referred GMV", "format": "currency" },
+        { "id": "net_commissions_cents", "label": "Net Commissions", "format": "currency" },
+        { "id": "active_referrals", "label": "Active Referrals", "format": "number" },
+        { "id": "downline_health", "label": "Downline Health", "format": "percentage" }
+      ],
+      "refreshInterval": 300
+    }
+  },
+
+  "themeDefaults": {
+    "brand": {
+      "primary": "#3B82F6",
+      "accent": "#10B981"
+    },
+    "surface": {
+      "bg": "#0B0F14",
+      "card": "#131A22"
+    },
+    "text": {
+      "primary": "#E5E7EB",
+      "muted": "#9CA3AF"
+    },
+    "density": {
+      "scale": 1.0
+    }
+  },
+
+  "nbaConfig": {
+    "maxCards": 5,
+    "refreshInterval": 300,
+    "priorityWeights": {
+      "revenue_impact": 0.4,
+      "user_fit": 0.3,
+      "ease": 0.2,
+      "urgency": 0.1
+    }
+  },
+
+  "growthConfig": {
+    "maxTiers": 5,
+    "commissionCaps": {
+      "tier1": 0.10,
+      "tier2": 0.05,
+      "tier3": 0.03,
+      "tier4": 0.02,
+      "tier5": 0.01
+    },
+    "clawbackWindow": 30,
+    "termsVersion": "v1"
+  },
+
+  "meta": {
+    "normalized": true,
+    "collapsed": true,
+    "rockerEnabled": true,
+    "notes": "Producer = Business entity. Programs (formerly incentives). EquineStats public + private + live KPI. Legacy: equistats→equinestats, organizer→workspace, incentives→programs. Network & Affiliates = compliant MLM growth module."
+  }
+}
