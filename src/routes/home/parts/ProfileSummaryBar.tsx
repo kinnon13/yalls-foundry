@@ -55,10 +55,10 @@ export default function ProfileSummaryBar() {
   return (
     <Link
       to="/profile"
-      className="flex flex-col items-center gap-2 px-2 py-2 hover:bg-muted/30 rounded-lg transition-colors"
+      className="flex items-center gap-3 px-2 py-2 hover:bg-muted/30 rounded-lg transition-colors"
       aria-label="Open your profile"
     >
-      {/* Avatar */}
+      {/* Avatar on left */}
       <div className="relative h-[72px] w-[72px] rounded-full overflow-hidden ring-2 ring-primary/60 shrink-0">
         {avatar ? (
           <img src={avatar} alt="" className="h-full w-full object-cover" />
@@ -67,19 +67,21 @@ export default function ProfileSummaryBar() {
         )}
       </div>
 
-      {/* Stats centered */}
-      <div className="flex gap-6 text-sm">
-        <div className="flex flex-col items-center">
-          <span className="text-lg font-bold text-foreground">{totals.following}</span>
-          <span className="text-xs text-muted-foreground">Following</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-lg font-bold text-foreground">{totals.followers}</span>
-          <span className="text-xs text-muted-foreground">Followers</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-lg font-bold text-foreground">{totals.likes}</span>
-          <span className="text-xs text-muted-foreground">Likes</span>
+      {/* Stats centered in remaining space */}
+      <div className="flex-1 flex justify-center">
+        <div className="flex gap-6 text-sm">
+          <div className="flex flex-col items-center">
+            <span className="text-lg font-bold text-foreground">{totals.following}</span>
+            <span className="text-xs text-muted-foreground">Following</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-lg font-bold text-foreground">{totals.followers}</span>
+            <span className="text-xs text-muted-foreground">Followers</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-lg font-bold text-foreground">{totals.likes}</span>
+            <span className="text-xs text-muted-foreground">Likes</span>
+          </div>
         </div>
       </div>
     </Link>
