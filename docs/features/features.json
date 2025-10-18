@@ -44,10 +44,10 @@
       "id": "reposts",
       "area": "profile",
       "title": "Reposts",
-      "status": "full-ui",
+      "status": "wired",
       "routes": ["/profile/:id/reposts"],
       "components": ["src/components/profile/RepostButton.tsx", "src/components/profile/RepostModal.tsx"],
-      "rpc": ["post_repost"],
+      "rpc": ["post_repost", "post_quote", "post_repost_entity"],
       "flags": ["reposts"],
       "docs": "docs/features/reposts.md",
       "tests": {
@@ -56,7 +56,7 @@
       },
       "owner": "web",
       "severity": "p0",
-      "notes": "Caption + multi-target support"
+      "notes": "Production-ready: DB-backed with RLS, idempotent reposts, quote support"
     },
     {
       "id": "linked_accounts",
