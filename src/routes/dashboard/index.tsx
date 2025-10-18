@@ -71,9 +71,11 @@ export default function DashboardLayout() {
   const m = coerceModule(rawModule);
   const [userId, setUserId] = useState<string | null>(null);
   const [feedWidth, setFeedWidth] = useState(400);
+  const [feedHeight, setFeedHeight] = useState(600);
   const [feedRightOffset, setFeedRightOffset] = useState(0);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
+  const [isDraggingBottom, setIsDraggingBottom] = useState(false);
   
   const Panel = useMemo(() => panels[m] ?? panels.overview, [m]);
 
@@ -136,6 +138,36 @@ export default function DashboardLayout() {
       document.removeEventListener('touchend', handleEnd);
     };
   }, [isDraggingRight]);
+
+  // Handle bottom edge drag (resize height) - Mouse + Touch
+  useEffect(() => {
+    if (!isDraggingBottom) return;
+
+    const handleMove = (clientY: number) => {
+      const newHeight = window.innerHeight - clientY - 64; // 64px for header
+      setFeedHeight(Math.max(300, Math.min(window.innerHeight - 100, newHeight)));
+    };
+
+    const handleMouseMove = (e: MouseEvent) => handleMove(e.clientY);
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      handleMove(e.touches[0].clientY);
+    };
+
+    const handleEnd = () => setIsDraggingBottom(false);
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleEnd);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleEnd);
+    };
+  }, [isDraggingBottom]);
 
   // Get user ID for appearance settings
   useEffect(() => {
@@ -235,16 +267,17 @@ export default function DashboardLayout() {
 
       {/* Social Feed Sidecar - Permanently open */}
       <div
-        className="fixed top-16 h-[calc(100vh-64px)] bg-background border-l border-r shadow-xl z-40"
+        className="fixed top-16 bg-background border-l border-r shadow-xl z-40"
         style={{ 
           width: `${feedWidth}px`,
+          height: `${feedHeight}px`,
           right: `${feedRightOffset}px`
         }}
       >
         {/* Feed Header */}
         <div className="h-12 border-b flex items-center justify-between px-4 bg-background/95 backdrop-blur">
           <h2 className="font-semibold">Social Feed</h2>
-          <div className="text-xs text-muted-foreground">{feedWidth}px</div>
+          <div className="text-xs text-muted-foreground">{feedWidth}×{feedHeight}px</div>
         </div>
 
         {/* Feed Content */}
@@ -256,10 +289,13 @@ export default function DashboardLayout() {
       {/* Right Resize Handle (move panel) */}
       <div
         className={cn(
-          "fixed top-16 h-[calc(100vh-64px)] w-2 sm:w-1 bg-border hover:bg-primary/50 active:bg-primary cursor-col-resize z-50 transition-colors touch-none",
+          "fixed top-16 w-2 sm:w-1 bg-border hover:bg-primary/50 active:bg-primary cursor-col-resize z-50 transition-colors touch-none",
           isDraggingRight && "bg-primary"
         )}
-        style={{ right: `${feedRightOffset}px` }}
+        style={{ 
+          right: `${feedRightOffset}px`,
+          height: `${feedHeight}px`
+        }}
         onMouseDown={() => setIsDraggingRight(true)}
         onTouchStart={() => setIsDraggingRight(true)}
         role="separator"
@@ -267,6 +303,26 @@ export default function DashboardLayout() {
         aria-label="Move social feed position"
       >
         <div className="absolute inset-y-0 -left-2 -right-2" />
+      </div>
+
+      {/* Bottom Resize Handle (adjust height) */}
+      <div
+        className={cn(
+          "fixed h-2 sm:h-1 bg-border hover:bg-primary/50 active:bg-primary cursor-row-resize z-50 transition-colors touch-none",
+          isDraggingBottom && "bg-primary"
+        )}
+        style={{ 
+          right: `${feedRightOffset}px`,
+          width: `${feedWidth}px`,
+          top: `${feedHeight + 64}px`
+        }}
+        onMouseDown={() => setIsDraggingBottom(true)}
+        onTouchStart={() => setIsDraggingBottom(true)}
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="Resize social feed height"
+      >
+        <div className="absolute inset-x-0 -top-2 -bottom-2" />
       </div>
 
       <DebugOverlay />
