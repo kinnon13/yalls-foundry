@@ -1,5 +1,10 @@
 # Welcome to your Lovable project
 
+<!-- CI Badges -->
+[![All Checks (on-demand)](https://github.com/kinnon13/yalls-foundry/actions/workflows/all-on-demand.yml/badge.svg?branch=main)](https://github.com/kinnon13/yalls-foundry/actions/workflows/all-on-demand.yml)
+[![Tests (on-demand)](https://github.com/kinnon13/yalls-foundry/actions/workflows/tests-only.yml/badge.svg?branch=main)](https://github.com/kinnon13/yalls-foundry/actions/workflows/tests-only.yml)
+[![show-your-work](https://github.com/kinnon13/yalls-foundry/actions/workflows/show-your-work.yml/badge.svg?branch=main)](https://github.com/kinnon13/yalls-foundry/actions/workflows/show-your-work.yml)
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/35930c9d-d097-4ffb-95fc-2b1b27e3c5f5
