@@ -112,7 +112,7 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col bg-white">
+    <section className="flex h-full w-full flex-col">
       {/* Home button and Connected Accounts heading in same row */}
       <div className="mb-2 flex items-center justify-between px-2">
         <button
@@ -129,7 +129,7 @@ export default function SocialFeedPane() {
       <ProfileSummaryBar />
 
       {/* Tab indicators (clickable or drag/swipe to change) */}
-      <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-white/90 backdrop-blur px-2 py-1">
+      <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 backdrop-blur px-2 py-1">
         {TABS.map((t) => (
           <button
             key={t}
@@ -149,10 +149,10 @@ export default function SocialFeedPane() {
       {/* Swipeable feed container */}
       <div 
         ref={railRef}
-        className="relative flex-1 select-none touch-pan-y bg-white"
+        className="relative flex-1 select-none touch-pan-y"
       >
         <div 
-          className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide bg-white"
+          className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
           <div className="space-y-4 px-2 pb-4">
             {items.map((item) => (
