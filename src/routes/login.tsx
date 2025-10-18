@@ -25,7 +25,7 @@ export default function Login() {
 
   useEffect(() => {
     if (session) {
-      navigate('/');
+      navigate('/dashboard');
     }
   }, [session, navigate]);
 
@@ -63,7 +63,7 @@ export default function Login() {
       const { error } = await signInWithPassword(email, password);
       if (error) throw error;
       toast({ title: 'Signed in successfully' });
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       toast({
         title: 'Sign in failed',
