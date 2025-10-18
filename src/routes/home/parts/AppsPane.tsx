@@ -214,24 +214,39 @@ export default function AppsPane() {
         ))}
       </div>
 
-      {/* Create Profile Button - Fixed to bottom left */}
+      {/* Create Profile Icon - Fixed to bottom left */}
       {hasNoManagedEntities && (
-        <div className="fixed bottom-4 left-4 z-50 flex flex-col gap-2">
+        <div className="fixed bottom-20 left-4 z-50 flex flex-col gap-2">
           <button
             onClick={() => navigate('/profiles/new')}
             className={cn(
-              "flex items-center gap-3 px-6 py-3 rounded-xl",
-              "bg-gradient-to-br from-primary/30 to-primary/10",
-              "border border-white/10 shadow-lg",
-              "hover:scale-105 active:scale-95 transition-all duration-200"
+              "group flex flex-col items-center gap-2 p-2",
+              "w-20 aspect-square rounded-2xl transition-all duration-200",
+              "hover:scale-105 active:scale-95",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             )}
             aria-label="Create new profile"
+            title="Create new profile"
           >
-            <Plus className="w-5 h-5 text-white" strokeWidth={2} />
-            <span className="text-sm font-semibold text-white">Create new profile</span>
+            <div 
+              className={cn(
+                "flex items-center justify-center flex-1 w-full",
+                "shadow-lg group-hover:shadow-xl transition-all duration-200",
+                "bg-gradient-to-br from-primary/30 to-primary/10",
+                "border border-white/10 rounded-xl"
+              )}
+            >
+              <Plus 
+                className="text-white drop-shadow-sm w-1/2 h-1/2"
+                strokeWidth={2} 
+              />
+            </div>
+            <span className="text-[10px] leading-tight text-center font-medium truncate max-w-full">
+              Create new profile
+            </span>
           </button>
-          <div className="text-xs text-muted-foreground px-2">
-            {pinnedEntities.length} pinned {pinnedEntities.length === 1 ? 'app' : 'apps'}
+          <div className="text-xs text-muted-foreground text-center">
+            {pinnedEntities.length} pinned
           </div>
         </div>
       )}
