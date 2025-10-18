@@ -1336,60 +1336,7 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     <RockerContext.Provider value={value}>
       {children}
       
-      {/* Microphone activation banner */}
-      {voiceStatus === 'disconnected' && !initializingRef.current && !isAlwaysListening && !voiceBannerDismissed && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-card border border-primary/20 rounded-lg shadow-lg p-4 max-w-md flex items-center gap-3 z-50 animate-in slide-in-from-bottom">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-            <Mic className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium">Activate voice mode</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Click to enable "Hey {AI_PROFILES[actorRole || 'user'].name}" wake word
-            </p>
-          </div>
-          <Button 
-            variant="default" 
-            size="sm"
-            className="shrink-0"
-            onClick={async () => {
-              console.log('[Rocker] User clicked activate - triggering permission request');
-              try {
-                await toggleAlwaysListening();
-                toast({
-                  title: "Voice activated!",
-                  description: `Say 'Hey ${AI_PROFILES[actorRole || 'user'].name}' to start a conversation`,
-                });
-              } catch (error: any) {
-                console.error('[Rocker] Activation failed:', error);
-                if (error?.name === 'NotAllowedError') {
-                  toast({
-                    title: "Microphone blocked",
-                    description: "Please allow microphone access in your browser settings",
-                    variant: "destructive",
-                  });
-                } else {
-                  toast({
-                    title: "Activation failed",
-                    description: error?.message || "Please try again",
-                    variant: "destructive",
-                  });
-                }
-              }
-            }}
-          >
-            Activate
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="shrink-0 h-8 w-8"
-            onClick={() => setVoiceBannerDismissed(true)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
+      {/* Voice banner disabled site-wide */}
     </RockerContext.Provider>
   );
 }
