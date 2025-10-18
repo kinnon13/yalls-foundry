@@ -1,0 +1,47 @@
+.bubble-rail {
+  padding: 8px 0 6px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.bubble-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 0 4px;
+  scroll-snap-type: x proximity;
+}
+
+.bubble-track::-webkit-scrollbar {
+  height: 6px;
+}
+
+.bubble {
+  scroll-snap-align: start;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.bubble img {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.bubble-name {
+  max-width: 64px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(255, 255, 255, 0.85);
+}

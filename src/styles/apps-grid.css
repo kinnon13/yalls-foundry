@@ -1,0 +1,59 @@
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile), 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.app-tile {
+  /* hard square — text or borders won't change size */
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: grid;
+  grid-template-rows: 1fr auto;
+  place-items: center;
+  padding: 12px;
+  overflow: hidden;
+  box-sizing: border-box;
+  user-select: none;
+  transition: transform 0.15s ease;
+}
+
+.app-tile:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.app-tile:hover {
+  transform: translateY(-1px);
+}
+
+.app-icon-wrap {
+  width: calc(var(--tile) * 0.46);
+  height: calc(var(--tile) * 0.46);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.app-label {
+  width: 100%;
+  margin-top: 8px;
+  text-align: center;
+  font-size: clamp(11px, 0.11 * var(--tile), 14px);
+  line-height: 1.1;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Safety: borders/padding never change the math */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}

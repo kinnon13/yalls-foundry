@@ -89,8 +89,16 @@ export function DraggableAppGrid() {
   const [userId, setUserId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [openFolder, setOpenFolder] = useState<AppFolder | null>(null);
+  const [tileSize, setTileSize] = useState(() => 
+    Number(localStorage.getItem('apps.tileSize') || 112)
+  );
   
   const { pins, folders, updatePosition, pinApp, createFolder } = useAppPins(userId);
+
+  // Persist tile size
+  useEffect(() => {
+    localStorage.setItem('apps.tileSize', String(tileSize));
+  }, [tileSize]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -167,11 +175,11 @@ export function DraggableAppGrid() {
     return (
       <div
         className={cn(
-          "flex flex-col items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 relative",
-          "rounded-2xl sm:rounded-3xl transition-all duration-200",
-          !isDraggingThis && "hover:scale-105 active:scale-95 cursor-grab active:cursor-grabbing",
-          isDraggingThis && "opacity-50"
+          "app-tile cursor-grab active:cursor-grabbing",
+          !isDraggingThis && "hover:scale-105 active:scale-95",
+          isDraggingThis && "opacity-50 scale-105 shadow-2xl ring-2 ring-primary"
         )}
+        style={{ width: tileSize, height: tileSize }}
       >
         {isPinned && (
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background z-10" />
@@ -181,23 +189,12 @@ export function DraggableAppGrid() {
             {index}
           </div>
         )}
-        <div className={cn(
-          "relative flex items-center justify-center shadow-lg",
-          `bg-gradient-to-br ${app.color || 'from-primary/20 to-primary/5'}`,
-          "border border-white/10",
-          "w-14 h-14 rounded-[18px] sm:w-16 sm:h-16 sm:rounded-[20px]",
-          "md:w-[72px] md:h-[72px] md:rounded-[21px]",
-          "lg:w-20 lg:h-20 lg:rounded-[22px]",
-          "xl:w-[88px] xl:h-[88px] xl:rounded-[24px]"
-        )}>
-          <Icon 
-            className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 xl:w-11 xl:h-11 text-white drop-shadow-sm"
-            strokeWidth={1.5} 
-          />
+        <div className="app-icon-wrap">
+          <Icon className="w-full h-full text-white" strokeWidth={1.5} />
         </div>
-        <span className="text-[10px] sm:text-[11px] md:text-xs font-medium text-foreground/90 text-center leading-tight truncate max-w-[56px] sm:max-w-[64px] md:max-w-[72px] lg:max-w-[80px] xl:max-w-[88px]">
+        <div className="app-label" title={app.label}>
           {app.label}
-        </span>
+        </div>
       </div>
     );
   };
@@ -248,6 +245,21 @@ export function DraggableAppGrid() {
 
   return (
     <>
+      {/* Size Control */}
+      <div className="px-4 py-3 flex items-center gap-3">
+        <label className="text-sm text-muted-foreground whitespace-nowrap">App size</label>
+        <input
+          type="range"
+          min={88}
+          max={160}
+          step={4}
+          value={tileSize}
+          onChange={(e) => setTileSize(Number(e.target.value))}
+          className="flex-1 max-w-xs"
+        />
+        <span className="text-xs text-muted-foreground w-12">{tileSize}px</span>
+      </div>
+
       <DndContext 
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -255,9 +267,12 @@ export function DraggableAppGrid() {
         onDragEnd={handleDragEnd}
       >
         <div className="relative z-20 w-full min-h-[600vh] overflow-auto">
-          <div className="pin-canvas relative outline-dashed outline-1 outline-primary/30 max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16 min-h-[600vh]">
+          <div 
+            className="pin-canvas relative outline-dashed outline-1 outline-primary/30 max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16 min-h-[600vh]"
+            style={{ '--tile': `${tileSize}px` } as React.CSSProperties}
+          >
             <div className="absolute top-2 left-4 text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">Pin area</div>
-            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-4 sm:gap-6 md:gap-7 lg:gap-8">
+            <div className="apps-grid">
               {Object.values(APPS).map((app, idx) => (
                 <DraggableApp key={app.id} app={app} index={idx + 1} />
               ))}

@@ -1,3 +1,6 @@
+@import './apps-grid.css';
+@import './bubbles.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
