@@ -2199,6 +2199,42 @@ export type Database = {
           },
         ]
       }
+      contacts: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          meta: Json | null
+          owner_user_id: string
+          phone: string | null
+          source: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          meta?: Json | null
+          owner_user_id: string
+          phone?: string | null
+          source?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          meta?: Json | null
+          owner_user_id?: string
+          phone?: string | null
+          source?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       content_flags: {
         Row: {
           content_id: string
@@ -2271,6 +2307,32 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_members: {
+        Row: {
+          conversation_id: string
+          joined_at: string | null
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          joined_at?: string | null
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          joined_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_members_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_sessions: {
         Row: {
           created_at: string | null
@@ -2298,6 +2360,33 @@ export type Database = {
           title?: string | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      conversations: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: string
+          last_message_at: string | null
+          type: Database["public"]["Enums"]["conversation_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: string
+          last_message_at?: string | null
+          type?: Database["public"]["Enums"]["conversation_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          last_message_at?: string | null
+          type?: Database["public"]["Enums"]["conversation_type"]
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -5065,6 +5154,32 @@ export type Database = {
             columns: ["memory_id"]
             isOneToOne: false
             referencedRelation: "ai_user_memory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_reads: {
+        Row: {
+          message_id: string
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          message_id: string
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          message_id?: string
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reads_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
         ]
@@ -10575,6 +10690,7 @@ export type Database = {
       calendar_type: "personal" | "business" | "horse" | "event" | "custom"
       claim_method: "email" | "sms" | "manual"
       claim_status: "pending" | "approved" | "rejected" | "canceled"
+      conversation_type: "direct" | "group"
       discount_type: "percent" | "amount"
       draft_kind: "post" | "listing" | "event"
       draft_status: "draft" | "scheduled" | "published"
@@ -10770,6 +10886,7 @@ export const Constants = {
       calendar_type: ["personal", "business", "horse", "event", "custom"],
       claim_method: ["email", "sms", "manual"],
       claim_status: ["pending", "approved", "rejected", "canceled"],
+      conversation_type: ["direct", "group"],
       discount_type: ["percent", "amount"],
       draft_kind: ["post", "listing", "event"],
       draft_status: ["draft", "scheduled", "published"],
