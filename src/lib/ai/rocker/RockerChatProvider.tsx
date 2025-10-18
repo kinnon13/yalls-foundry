@@ -20,7 +20,7 @@ import { useRockerNotifications } from '@/hooks/useRockerNotifications';
 import { AI_PROFILES, type AIRole } from './config';
 import { useComposerAwareness } from '@/hooks/useComposerAwareness';
 
-interface RockerContextValue {
+export interface RockerContextValue {
   // Chat state
   messages: RockerMessage[];
   isLoading: boolean;
@@ -1393,3 +1393,6 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     </RockerContext.Provider>
   );
 }
+
+// Export alias for backwards compatibility
+export { RockerProvider as RockerChatProvider };

@@ -12,7 +12,7 @@ import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
 import InactivityNudge from '@/components/rocker/InactivityNudge';
 import { RockerDock } from '@/components/rocker/RockerDock';
-import { RockerChatProvider, useRockerGlobal } from '@/lib/ai/rocker/RockerChatProvider';
+import { RockerChatProvider } from '@/lib/ai/rocker/context';
 import { RockerProvider } from '@/lib/ai/rocker/RockerProvider';
 import { RedirectHandler } from '@/components/navigation/RedirectHandler';
 import PreviewRoutes from '@/preview/PreviewRoutes';
