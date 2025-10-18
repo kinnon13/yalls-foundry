@@ -337,16 +337,32 @@ export default function FeaturesAdminPage() {
       // Load manifest from bundled raw JSON
       const manifest = JSON.parse(featuresManifestRaw);
       
-      // Step 1: Discover ALL routes in the codebase
-      const routeFiles = import.meta.glob('/src/routes/**/*.{tsx,ts}', { eager: false });
-      const discoveredRoutes = Object.keys(routeFiles).map(path => {
-        return path
-          .replace('/src/routes', '')
-          .replace(/\.tsx?$/, '')
-          .replace(/\/index$/, '')
-          .replace(/\[([^\]]+)\]/g, ':$1') // Convert [id] to :id
-          || '/';
-      });
+      // Step 1: Get routes from registry (fallback to glob)
+      let discoveredRoutes: string[] = [];
+      try {
+        const { getRegisteredRoutes } = await import('@/router/registry');
+        discoveredRoutes = getRegisteredRoutes();
+        console.log('[Scanner] Got routes from registry:', discoveredRoutes.length);
+      } catch {
+        // Fallback: widen globs to catch more route files
+        const routeFiles = import.meta.glob([
+          '/src/routes/**/*.{tsx,ts}',
+          '/src/pages/**/*.{tsx,ts}',
+        ], { eager: false });
+        
+        discoveredRoutes = Object.keys(routeFiles).map(path => {
+          return path
+            .replace('/src/routes', '')
+            .replace('/src/pages', '')
+            .replace(/\.tsx?$/, '')
+            .replace(/\/index$/, '')
+            .replace(/\[([^\]]+)\]/g, ':$1') // Convert [id] to :id
+            || '/';
+        });
+        console.log('[Scanner] Fallback glob discovery:', discoveredRoutes.length);
+      }
+      
+      if (!discoveredRoutes.includes('/')) discoveredRoutes.push('/');
 
       // Step 2: Discover all components for verification
       const allComponentFiles = import.meta.glob('/src/**/*.{tsx,ts}', { eager: false });
@@ -402,6 +418,27 @@ export default function FeaturesAdminPage() {
       }
 
       console.log('[Scanner] Edge function response:', data);
+
+      // Step 5: Compute undocumented items
+      const rpcScan = (data?.rpcs ?? []).map((x: any) => x.name);
+      const tableScan = (data?.tables ?? []).map((x: any) => x.name);
+      
+      const undocumentedRoutes = discoveredRoutes.filter(r => !documentedRoutes.has(r));
+      const undocumentedRpcs = rpcScan.filter((n: string) => !documentedRpcs.has(n));
+      const undocumentedTables = tableScan.filter((n: string) => !documentedTables.has(n));
+
+      console.log('[Scanner] Undocumented items:', {
+        routes: undocumentedRoutes.length,
+        rpcs: undocumentedRpcs.length,
+        tables: undocumentedTables.length,
+      });
+
+      // Store undocumented items in state for display
+      (window as any).__undocumented = {
+        routes: undocumentedRoutes,
+        rpcs: undocumentedRpcs,
+        tables: undocumentedTables,
+      };
 
       const rpcMap = new Map<string, { exists: boolean; security_definer?: boolean }>();
       for (const r of (data?.rpcs ?? [])) {
@@ -499,7 +536,9 @@ export default function FeaturesAdminPage() {
 
       console.log('[Scanner] Scan complete. Features scanned:', scanned.size);
       setScannedFeatures(scanned);
-      toast.success(`Feature scan complete: ${scanned.size} features analyzed`);
+      toast.success(`Feature scan complete: ${scanned.size} features analyzed`, {
+        description: `Found ${undocumentedRoutes.length} undocumented routes, ${undocumentedRpcs.length} RPCs, ${undocumentedTables.length} tables`
+      });
     } catch (e: any) {
       console.error('[Scanner] Scan error:', e);
       toast.error(e.message || 'Failed to scan features');
@@ -751,6 +790,77 @@ export default function FeaturesAdminPage() {
           </CardContent>
         )}
       </Card>
+
+      {/* Undocumented Items */}
+      {scannedFeatures.size > 0 && (window as any).__undocumented && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Undocumented Items</CardTitle>
+            <CardDescription>Routes, RPCs, and tables discovered but not in features.json</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Undocumented Routes */}
+            <div>
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <Badge variant="outline">{((window as any).__undocumented.routes || []).length}</Badge>
+                Undocumented Routes
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {((window as any).__undocumented.routes || []).slice(0, 20).map((route: string) => (
+                  <Badge key={route} variant="secondary" className="text-xs">
+                    {route}
+                  </Badge>
+                ))}
+                {((window as any).__undocumented.routes || []).length > 20 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{((window as any).__undocumented.routes || []).length - 20} more
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Undocumented RPCs */}
+            <div>
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <Badge variant="outline">{((window as any).__undocumented.rpcs || []).length}</Badge>
+                Undocumented RPCs
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {((window as any).__undocumented.rpcs || []).slice(0, 20).map((rpc: string) => (
+                  <Badge key={rpc} variant="secondary" className="text-xs font-mono">
+                    {rpc}
+                  </Badge>
+                ))}
+                {((window as any).__undocumented.rpcs || []).length > 20 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{((window as any).__undocumented.rpcs || []).length - 20} more
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Undocumented Tables */}
+            <div>
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <Badge variant="outline">{((window as any).__undocumented.tables || []).length}</Badge>
+                Undocumented Tables
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {((window as any).__undocumented.tables || []).slice(0, 20).map((table: string) => (
+                  <Badge key={table} variant="secondary" className="text-xs font-mono">
+                    {table}
+                  </Badge>
+                ))}
+                {((window as any).__undocumented.tables || []).length > 20 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{((window as any).__undocumented.tables || []).length - 20} more
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Scanner Results */}
       {scannedFeatures.size > 0 && (

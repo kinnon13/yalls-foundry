@@ -60,12 +60,12 @@ Deno.serve(async (req) => {
       introspectAll: body.introspectAll 
     });
 
-    // Call the comprehensive feature_introspect RPC
+    // Call the comprehensive feature_introspect RPC with exact param names
     const { data, error } = await admin.rpc('feature_introspect', {
-      p_rpcs: body.rpcs || [],
-      p_tables: body.tables || [],
+      p_rpcs: Array.isArray(body.rpcs) ? body.rpcs : [],
+      p_tables: Array.isArray(body.tables) ? body.tables : [],
       p_introspect_all: body.introspectAll === true,
-    } as any);
+    });
 
     if (error) {
       console.error('feature_introspect error:', error);

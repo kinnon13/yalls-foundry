@@ -105,6 +105,29 @@ function AppContent() {
   
   useEffect(() => {
     registerRockerFeatureHandler();
+    
+    // Register all routes for the scanner
+    import('@/router/registry').then(({ registerRoutes }) => {
+      registerRoutes([
+        '/', '/search', '/login', '/profile', '/profile/:id',
+        '/stallions', '/stallions/:id', '/dashboard', '/admin/control-room',
+        '/admin/features', '/admin/routes', '/admin/components', '/admin/a11y',
+        '/admin/audit', '/admin/tests', '/notifications', '/settings/notifications',
+        '/discover', '/health', '/listings', '/listings/new', '/listings/:id',
+        '/listings/:id/edit', '/events', '/events/new', '/events/:id',
+        '/events/:id/classes', '/events/:id/entries', '/events/:id/draw',
+        '/events/:id/results', '/events/:id/payouts', '/events/:id/stalls',
+        '/events/:id/public-draw', '/events/:id/public-results',
+        '/events/:eventId/enter', '/events/:eventId/qr-checkin',
+        '/events/:eventId/draw', '/events/:eventId/results',
+        '/cart', '/orders', '/orders/:id', '/earnings', '/farm/calendar',
+        '/farm/dashboard', '/farm/boarder/:id', '/farm/tasks', '/farm/health',
+        '/incentives/dashboard', '/entrant/my-entries', '/entrant/my-draws',
+        '/entrant/my-results', '/marketplace', '/marketplace/:id', '/feed',
+        '/messages', '/crm', '/settings/ai', '/ai/activity', '/entities',
+        '/entities/:id', '/claim/:entityId', '/admin/claims'
+      ]);
+    });
   }, []);
 
   return (
