@@ -132,21 +132,13 @@ export default function SocialFeedPane() {
         ))}
       </div>
 
-      {/* Swipeable feed container with visual drag feedback */}
+      {/* Swipeable feed container */}
       <div 
         ref={railRef}
         className="relative flex-1 select-none touch-pan-y"
-        style={{ 
-          cursor: isDragging ? 'grabbing' : 'grab'
-        }}
       >
         <div 
           className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
-          style={{
-            transform: isDragging ? `translateX(${dragOffset * 0.3}px)` : 'translateX(0)',
-            transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            opacity: isDragging ? 0.8 : 1
-          }}
         >
           <div className="space-y-4 px-2 pb-4">
             {items.map((item) => (
