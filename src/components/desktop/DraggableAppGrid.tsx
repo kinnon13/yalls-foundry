@@ -59,7 +59,7 @@ const APPS: Record<string, AppTile> = {
   settings: { id: 'settings', label: 'Settings', icon: Settings, module: 'settings', color: 'from-slate-500/20 to-gray-600/5' },
 };
 
-// Default grid layout (8 cols × 6 rows = 48 spots)
+// Default grid layout (8 cols × unlimited rows)
 const DEFAULT_POSITIONS: Record<string, [number, number]> = {
   home: [0, 0],
   profile: [1, 0],
@@ -132,14 +132,14 @@ export function DraggableAppGrid() {
       updatePosition.mutate({
         pinId: existingPin.id,
         x: Math.max(0, Math.min(7, gridX)),
-        y: Math.max(0, Math.min(5, gridY)),
+        y: Math.max(0, gridY), // No max limit on Y
       });
     } else {
       // Create new pin at this position
       pinApp.mutate({
         appId: active.id as string,
         x: Math.max(0, Math.min(7, gridX)),
-        y: Math.max(0, Math.min(5, gridY)),
+        y: Math.max(0, gridY), // No max limit on Y
       });
     }
   };
@@ -223,7 +223,7 @@ export function DraggableAppGrid() {
         onDragStart={({ active }) => setActiveId(active.id as string)}
         onDragEnd={handleDragEnd}
       >
-        <div className="relative z-20 w-full h-full overflow-auto">
+        <div className="relative z-20 w-full min-h-[200vh] overflow-auto">
           <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16">
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-4 sm:gap-6 md:gap-7 lg:gap-8">
               {Object.values(APPS).map((app) => (

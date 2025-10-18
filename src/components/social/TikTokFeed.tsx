@@ -86,8 +86,8 @@ export function TikTokFeed() {
 
     const handleScroll = () => {
       const scrollTop = container.scrollTop;
-      const windowHeight = window.innerHeight;
-      const index = Math.round(scrollTop / windowHeight);
+      const containerHeight = container.clientHeight;
+      const index = Math.round(scrollTop / containerHeight);
       setCurrentIndex(index);
 
       // Load next page when near the end
@@ -106,7 +106,7 @@ export function TikTokFeed() {
     if (!container) return;
     
     container.scrollTo({
-      top: index * window.innerHeight,
+      top: index * container.clientHeight,
       behavior: 'smooth'
     });
   }, []);
@@ -131,7 +131,7 @@ export function TikTokFeed() {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-black">
+      <div className="h-full flex items-center justify-center bg-black">
         <div className="animate-pulse text-white">Loading feed...</div>
       </div>
     );
@@ -139,7 +139,7 @@ export function TikTokFeed() {
 
   if (!posts || posts.length === 0) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary/20 to-background p-6 text-center">
+      <div className="h-full flex flex-col items-center justify-center bg-gradient-to-b from-primary/20 to-background p-6 text-center">
         <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-4">
           <Heart className="w-10 h-10 text-primary" />
         </div>
@@ -154,13 +154,13 @@ export function TikTokFeed() {
   return (
     <div
       ref={containerRef}
-      className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-black"
+      className="h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide bg-black"
       style={{ scrollSnapType: 'y mandatory' }}
     >
       {posts.map((post: Post, idx: number) => (
         <div
           key={post.id}
-          className="h-screen w-full snap-start snap-always relative flex items-center justify-center"
+          className="h-full w-full snap-start snap-always relative flex items-center justify-center"
         >
           {/* Background media */}
           {post.media?.url && (
