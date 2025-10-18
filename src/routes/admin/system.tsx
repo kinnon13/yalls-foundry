@@ -9,6 +9,12 @@ interface SystemHealthData {
   tables: { name: string; ok: boolean }[];
   rpcs: { name: string; ok: boolean }[];
   recentActions: any[];
+  coverage?: {
+    documented_tables: number;
+    undocumented_tables: string[];
+    documented_rpcs: number;
+    undocumented_rpcs: string[];
+  };
   timestamp: string;
 }
 
@@ -58,10 +64,19 @@ export default function SystemHealthPage() {
         .order('created_at', { ascending: false })
         .limit(10);
 
+      // Placeholder for coverage data (would come from ops-report.json or RPC)
+      const coverage = {
+        documented_tables: tables.filter(t => t.ok).length,
+        undocumented_tables: [] as string[],
+        documented_rpcs: rpcs.filter(r => r.ok).length,
+        undocumented_rpcs: [] as string[],
+      };
+
       return {
         tables,
         rpcs,
         recentActions: actions || [],
+        coverage,
         timestamp: new Date().toISOString(),
       };
     },
@@ -165,6 +180,55 @@ export default function SystemHealthPage() {
             </p>
           </CardContent>
         </Card>
+
+        {/* Database Coverage */}
+        {health?.coverage && (health.coverage.undocumented_tables.length > 0 || health.coverage.undocumented_rpcs.length > 0) && (
+          <Card className="md:col-span-2 lg:col-span-3">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-warning" />
+                Database Coverage
+              </CardTitle>
+              <CardDescription>
+                Undocumented database objects (run <code className="text-xs bg-muted px-1">node scripts/ops-report.mjs</code> to analyze)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                {health.coverage.undocumented_tables.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-sm mb-2">Undocumented Tables ({health.coverage.undocumented_tables.length})</h4>
+                    <div className="space-y-1 text-xs font-mono">
+                      {health.coverage.undocumented_tables.slice(0, 10).map((t, i) => (
+                        <div key={i} className="text-muted-foreground">{t}</div>
+                      ))}
+                      {health.coverage.undocumented_tables.length > 10 && (
+                        <div className="text-muted-foreground italic">
+                          ... and {health.coverage.undocumented_tables.length - 10} more
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {health.coverage.undocumented_rpcs.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-sm mb-2">Undocumented RPCs ({health.coverage.undocumented_rpcs.length})</h4>
+                    <div className="space-y-1 text-xs font-mono">
+                      {health.coverage.undocumented_rpcs.slice(0, 10).map((r, i) => (
+                        <div key={i} className="text-muted-foreground">{r}</div>
+                      ))}
+                      {health.coverage.undocumented_rpcs.length > 10 && (
+                        <div className="text-muted-foreground italic">
+                          ... and {health.coverage.undocumented_rpcs.length - 10} more
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Recent AI Actions */}
         <Card className="md:col-span-2 lg:col-span-3">

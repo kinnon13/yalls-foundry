@@ -6,8 +6,23 @@ function fail(msg) {
   process.exit(1);
 }
 
+function warn(msg) {
+  console.warn('⚠️ Architecture:', msg);
+}
+
 function ok(msg) {
   console.log('✅', msg);
+}
+
+// Convert glob pattern to regex
+function globToRegex(pattern) {
+  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+  return new RegExp('^' + escaped + '$');
+}
+
+// Check if name matches any glob pattern
+function matchesAnyGlob(name, patterns) {
+  return patterns.some(p => globToRegex(p).test(name));
 }
 
 // Check area-discovery.json exists
@@ -62,7 +77,7 @@ const requiredHeads = ['/equinestats', '/workspace', '/events', '/marketplace'];
 
 for (const head of requiredHeads) {
   if (!heads.has(head)) {
-    console.warn(`⚠️  collapsedHeads missing recommended entry: "${head}"`);
+    warn(`collapsedHeads missing recommended entry: "${head}"`);
   }
 }
 
@@ -94,8 +109,22 @@ const criticalAreas = ['dashboard', 'equinestats', 'platform'];
 
 for (const critical of criticalAreas) {
   if (!canonicalNames.has(critical)) {
-    console.warn(`⚠️  Missing recommended critical area: "${critical}"`);
+    warn(`Missing recommended critical area: "${critical}"`);
   }
+}
+
+// Load coverage-ignore config
+let ignoreConfig = { schemas: [], table_globs: [], rpc_globs: [], catchAll: {} };
+const ignorePath = 'configs/coverage-ignore.json';
+if (fs.existsSync(ignorePath)) {
+  try {
+    ignoreConfig = JSON.parse(fs.readFileSync(ignorePath, 'utf8'));
+    ok(`Loaded coverage-ignore with ${ignoreConfig.schemas.length} schemas, ${ignoreConfig.table_globs.length} table patterns, ${ignoreConfig.rpc_globs.length} RPC patterns`);
+  } catch (e) {
+    warn(`coverage-ignore.json invalid: ${e.message}`);
+  }
+} else {
+  warn('coverage-ignore.json not found - run `node scripts/ops-report.mjs` to analyze database coverage');
 }
 
 ok('area-discovery.json structure is valid');

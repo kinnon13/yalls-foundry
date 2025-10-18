@@ -4,6 +4,7 @@
   "summary": "Implemented Phase 1-4: Config-driven area discovery, Rocker control plane MVP, theme system broker, and live KPI tiles with full CI validation and system health monitoring",
   "files_changed": [
     "configs/area-discovery.json",
+    "configs/coverage-ignore.json",
     "src/hooks/useAreaDiscovery.ts",
     "src/lib/navigation/redirects.ts",
     "src/components/theme/ThemeBroker.tsx",
@@ -11,6 +12,7 @@
     "src/components/dashboard/KpiTiles.tsx",
     "scripts/validate-architecture.mjs",
     "scripts/validate-db.sql",
+    "scripts/ops-report.mjs",
     "scripts/health/check-repo.mjs",
     "scripts/health/check-db.mjs",
     "scripts/health/generate-report.mjs",
@@ -100,7 +102,8 @@
     "node scripts/validate-architecture.mjs",
     "node scripts/validate-work-report.mjs",
     "psql $DATABASE_URL -f scripts/validate-db.sql",
-    "node scripts/health/generate-report.mjs"
+    "node scripts/health/generate-report.mjs",
+    "node scripts/ops-report.mjs"
   ],
   "evidence": {
     "screens": ["kpis.png", "themeflip.png", "system_health.png"],

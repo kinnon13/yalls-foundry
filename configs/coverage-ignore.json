@@ -1,0 +1,46 @@
+{
+  "schemas": [
+    "pg_catalog",
+    "information_schema",
+    "pg_toast",
+    "graphql_public",
+    "extensions",
+    "storage",
+    "auth",
+    "realtime",
+    "supabase_functions",
+    "vault"
+  ],
+  "table_globs": [
+    "*_p20*",
+    "*_part_*",
+    "*_partition_*",
+    "*_mv",
+    "*_view",
+    "*_log",
+    "*_audit",
+    "*_audit_log",
+    "temp_*",
+    "_*",
+    "pg_*",
+    "sql_*"
+  ],
+  "rpc_globs": [
+    "http_*",
+    "realtime_*",
+    "graphql_*",
+    "storage_*",
+    "auth_*",
+    "pg_*",
+    "supabase_*",
+    "_*",
+    "citext*",
+    "regexp_*",
+    "vector_*",
+    "postgis_*"
+  ],
+  "catchAll": {
+    "tables": "platform",
+    "rpcs": "platform"
+  }
+}
