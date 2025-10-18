@@ -30,7 +30,7 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
   return (
     <header
       className={cn(
-        'fixed top-0 inset-x-0 z-40 h-16 bg-background/80 backdrop-blur border-b border-border/60',
+        'fixed top-0 inset-x-0 z-40 h-14 bg-background/80 backdrop-blur border-b border-border/60',
         className
       )}
       role="banner"
@@ -42,8 +42,8 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
           className="inline-flex items-center gap-2 font-semibold tracking-tight"
           aria-label="Yalls.ai Home"
         >
-          <span className="hidden sm:inline">yalls.ai</span>
           <Home className="h-5 w-5" />
+          <span className="hidden sm:inline">yalls.ai</span>
         </Link>
 
         {/* Search (desktop/tablet) */}

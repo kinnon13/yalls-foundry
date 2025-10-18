@@ -5,23 +5,17 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Prevent body scroll - only panes scroll */
-html, body, #root {
-  height: 100%;
-  overflow: hidden;
-}
-
 html, body {
   overscroll-behavior-y: none;
 }
 
-/* Stable scrollbar gutter prevents layout shift */
-* {
-  scrollbar-gutter: stable both-edges;
-}
-
 #app, .tiktok-panel {
   scroll-snap-type: y mandatory;
+}
+
+/* Prevent iOS rubber-band overscroll */
+html, body { 
+  overscroll-behavior-y: none; 
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
@@ -173,34 +167,5 @@ All colors MUST be HSL.
   #sidefeed-pane [data-draggable],
   #sidefeed-pane [aria-grabbed="true"] {
     display: none !important;
-  }
-
-  /* Debug: box outlines & grid helpers  */
-  :root[data-debug="boxes"] #home-shell * { 
-    outline: 1px solid rgba(0,255,255,.25); 
-  }
-  :root[data-debug="grid"] #home-content { 
-    background:
-      linear-gradient(90deg, rgba(255,255,0,.10) 0 1px, transparent 1px 100%),
-      linear-gradient(0deg,  rgba(255,0,255,.10) 0 1px, transparent 1px 100%);
-    background-size: 64px 64px, 64px 64px;
-  }
-  :root[data-debug="vars"] #debug-vars { 
-    display: block; 
-  }
-  #debug-vars { 
-    display: none; 
-    position: fixed; 
-    right: 8px; 
-    bottom: 72px; 
-    z-index: 60;
-    font: 12px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
-    background: color-mix(in oklab, canvas 92%, black 8%); 
-    color: color-mix(in oklab, canvasText 92%, white 8%);
-    border: 1px solid color-mix(in oklab, canvasText 85%, transparent); 
-    border-radius: 10px; 
-    padding: 10px 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.35); 
-    backdrop-filter: blur(6px);
   }
 }

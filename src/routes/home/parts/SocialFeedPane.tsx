@@ -1,146 +1,156 @@
-import { useEffect, useRef, useState } from 'react';
-import { Heart, MessageCircle, Bookmark, Repeat2, Share2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useSession } from '@/lib/auth/context';
+import { Reel } from '@/components/reels/Reel';
+import { cn } from '@/lib/utils';
+import ProfileSummaryBar from './ProfileSummaryBar';
 
-// TEMP data – wire to real feed later
-const items = new Array(20).fill(0).map((_, i) => ({
-  id: `post-${i}`,
-  img: `https://picsum.photos/seed/reel-${i}/900/1600`,
-  caption: `Post #${i + 1}`,
-  likes: Math.floor(Math.random() * 1000),
-  comments: Math.floor(Math.random() * 200),
-}));
+const TABS = ['following', 'for-you', 'shop', 'profile'] as const;
+type Tab = typeof TABS[number];
 
 export default function SocialFeedPane() {
-  const paneRef = useRef<HTMLDivElement | null>(null);
-  const headerRef = useRef<HTMLDivElement | null>(null);
-  const [reelSize, setReelSize] = useState({ w: 360, h: 640 }); // 9:16 default
-  const [tab, setTab] = useState<'following'|'for-you'|'shop'>('following');
+  const { session } = useSession();
+  const [sp, setSp] = useSearchParams();
+  const initialTab = (sp.get('feed') as Tab) || 'following';
+  const [tab, setTab] = useState<Tab>(initialTab);
+  const [entityId, setEntityId] = useState<string | null>(sp.get('entity') || null);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // Fit a 9:16 box to the pane: w = min(paneW, paneH * 9/16), h = w * 16/9
+  // seamless drag/swipe gesture for tab switching
+  const railRef = useRef<HTMLDivElement>(null);
+  const startRef = useRef<{ x: number; y: number } | null>(null);
+  
   useEffect(() => {
-    const el = paneRef.current;
+    const el = railRef.current;
     if (!el) return;
 
-    const resize = () => {
-      const elRect = el.getBoundingClientRect();
-      const paneW = el.clientWidth || elRect.width || window.innerWidth;
-      const headerH = headerRef.current?.offsetHeight ?? 0;
-
-      // Prefer container height; if it's 0 (e.g. nested auto/overflow context),
-      // fall back to viewport height minus global header/footer.
-      const paneHRaw = el.clientHeight || elRect.height;
-      const fallbackH = window.innerHeight - 64 /* GlobalHeader */ - 56 /* BottomDock */;
-      const paneH = Math.max(paneHRaw, 0) || Math.max(fallbackH, 0);
-
-      const availH = Math.max(0, paneH - headerH - 8);
-      const wFromH = Math.floor((availH * 9) / 16);
-      const w = Math.min(paneW, wFromH);
-      const h = Math.max(0, Math.floor((w * 16) / 9));
-      setReelSize({ w, h });
+    const onDown = (e: PointerEvent | TouchEvent) => {
+      const p = 'touches' in e ? e.touches[0] : e;
+      startRef.current = { x: p.clientX, y: p.clientY };
+      setIsDragging(false);
+      setDragOffset(0);
     };
 
-    const ro = new ResizeObserver(resize);
-    ro.observe(el);
-    // Also observe header height changes
-    let roHeader: ResizeObserver | null = null;
-    if (headerRef.current) {
-      roHeader = new ResizeObserver(resize);
-      roHeader.observe(headerRef.current);
-    }
-    resize();
-    return () => { ro.disconnect(); roHeader?.disconnect(); };
-  }, []);
+    const onMove = (e: PointerEvent | TouchEvent) => {
+      if (!startRef.current) return;
+      const p = 'touches' in e ? e.touches[0] : e;
+      const dx = p.clientX - startRef.current.x;
+      const dy = p.clientY - startRef.current.y;
+
+      // Start dragging if horizontal movement dominates
+      if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > 10) {
+        setIsDragging(true);
+        setDragOffset(dx);
+        if ('preventDefault' in e) e.preventDefault();
+      }
+    };
+
+    const onUp = (e: PointerEvent | TouchEvent) => {
+      if (!startRef.current) return;
+      const p = 'changedTouches' in e ? e.changedTouches[0] : e;
+      const dx = p.clientX - startRef.current.x;
+      startRef.current = null;
+
+      // Switch tab if dragged far enough (80px threshold)
+      if (isDragging && Math.abs(dx) > 80) {
+        const i = TABS.indexOf(tab);
+        if (dx < 0 && i < TABS.length - 1) setTab(TABS[i + 1]);
+        if (dx > 0 && i > 0) setTab(TABS[i - 1]);
+      }
+
+      setIsDragging(false);
+      setDragOffset(0);
+    };
+
+    el.addEventListener('pointerdown', onDown, { passive: true });
+    el.addEventListener('touchstart', onDown, { passive: true });
+    el.addEventListener('pointermove', onMove, { passive: false });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('pointerup', onUp, { passive: true });
+    el.addEventListener('touchend', onUp, { passive: true });
+    el.addEventListener('pointercancel', onUp, { passive: true });
+
+    return () => {
+      el.removeEventListener('pointerdown', onDown);
+      el.removeEventListener('touchstart', onDown);
+      el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('touchend', onUp);
+      el.removeEventListener('pointercancel', onUp);
+    };
+  }, [tab, isDragging]);
+
+  // persist state in URL (?feed=…&entity=…)
+  useEffect(() => {
+    const next = new URLSearchParams(sp);
+    next.set('feed', tab);
+    if (entityId) next.set('entity', entityId);
+    else next.delete('entity');
+    setSp(next, { replace: true });
+  }, [tab, entityId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Generate placeholder data based on tab
+  const items = useMemo(() => {
+    return new Array(20).fill(0).map((_, i) => ({
+      id: `${tab}-${i}`,
+      src: `https://picsum.photos/seed/${tab}-${i}/900/1600`,
+      author: {
+        name: `User ${i + 1}`,
+        handle: `user${i + 1}`,
+      },
+      caption: `This is a sample post for ${tab} • #${i + 1}`,
+      stats: {
+        likes: Math.floor(Math.random() * 10000),
+        comments: Math.floor(Math.random() * 1000),
+        saves: Math.floor(Math.random() * 500),
+        reposts: Math.floor(Math.random() * 300),
+      },
+    }));
+  }, [tab]);
 
   return (
-    <div ref={paneRef} className="h-full w-full overflow-y-auto overscroll-contain">
-      {/* Profile bubble + totals + tabs */}
-      <div ref={headerRef} className="sticky top-0 z-10 bg-background/85 backdrop-blur px-3 py-2 border-b border-border/40">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="size-9 rounded-full bg-muted ring-1 ring-border" />
-            <div className="text-xs text-muted-foreground">
-              <div className="font-medium text-foreground">You</div>
-              <div>0 Following • 0 Followers • 0 Likes</div>
-            </div>
-          </div>
-          {/* tabs */}
-          <div className="flex gap-2">
-            {(['following','for-you','shop'] as const).map(t => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`px-3 py-1 rounded-full text-xs border transition-all ${
-                  t===tab ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-accent'
-                }`}
-              >
-                {t === 'for-you' ? 'For You' : t[0].toUpperCase()+t.slice(1)}
-              </button>
+    <section className="flex h-full w-full flex-col">
+      {/* Profile bubble above the feed */}
+      <ProfileSummaryBar />
+
+      {/* Tab indicators (clickable or drag/swipe to change) */}
+      <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-background/70 backdrop-blur px-2 py-1">
+        {TABS.map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={cn(
+              'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer',
+              t === tab
+                ? 'bg-primary text-primary-foreground scale-105'
+                : 'bg-muted/50 text-muted-foreground scale-95 hover:bg-muted hover:scale-100'
+            )}
+          >
+            {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Swipeable feed container */}
+      <div 
+        ref={railRef}
+        className="relative flex-1 select-none touch-pan-y"
+      >
+        <div 
+          className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
+        >
+          <div className="space-y-4 px-2 pb-4">
+            {items.map((item) => (
+              <div key={item.id} className="h-[calc(100vh-16rem)] snap-start">
+                <Reel {...item} />
+              </div>
             ))}
           </div>
         </div>
       </div>
-
-      {/* Feed with auto-sized reels */}
-      <div className="w-full flex flex-col items-center gap-6 py-3">
-        {items.map(card => (
-          <article
-            key={card.id}
-            className="relative overflow-hidden shadow-lg"
-            style={{ width: reelSize.w, height: reelSize.h }}
-          >
-            {/* Media fills fully */}
-            <img
-              src={card.img}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover"
-              draggable={false}
-            />
-
-            {/* Right-side action stack (kept inside the box) */}
-            <div className="absolute right-2 bottom-20 flex flex-col gap-3 text-white/95">
-              <IconBtn label="Like" count={card.likes}>
-                <Heart className="w-5 h-5" />
-              </IconBtn>
-              <IconBtn label="Comment" count={card.comments}>
-                <MessageCircle className="w-5 h-5" />
-              </IconBtn>
-              <IconBtn label="Save">
-                <Bookmark className="w-5 h-5" />
-              </IconBtn>
-              <IconBtn label="Repost">
-                <Repeat2 className="w-5 h-5" />
-              </IconBtn>
-              <IconBtn label="Share">
-                <Share2 className="w-5 h-5" />
-              </IconBtn>
-            </div>
-
-            {/* Caption gradient + text */}
-            <div className="absolute inset-x-0 bottom-0 p-3">
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/60 to-transparent" />
-              <p className="relative z-10 text-white/95 text-sm">{card.caption}</p>
-            </div>
-          </article>
-        ))}
-      </div>
-    </div>
+    </section>
   );
 }
 
-function IconBtn({ children, label, count }: { children: React.ReactNode; label: string; count?: number }) {
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <button
-        aria-label={label}
-        title={label}
-        className="grid place-items-center size-10 rounded-full bg-black/35 backdrop-blur
-                   hover:bg-black/50 border border-white/20 transition-colors"
-      >
-        {children}
-      </button>
-      {count !== undefined && (
-        <span className="text-xs font-medium">{count > 999 ? `${(count/1000).toFixed(1)}K` : count}</span>
-      )}
-    </div>
-  );
-}

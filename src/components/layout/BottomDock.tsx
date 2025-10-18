@@ -1,103 +1,125 @@
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { MessageCircle, Plus, Store, Globe2, AppWindow } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { PlusCircle, MessageCircle, Store, Globe2, AppWindow } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { ChatDrawer } from '@/components/chat/ChatDrawer';
-import { openInWorkspace } from '@/routes/home/parts/WorkspaceHost';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+
+type DockItem = {
+  key: string;
+  label: string;
+  to?: string;
+  onClick?: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: number;
+};
 
 export function BottomDock() {
   const nav = useNavigate();
-  const [sp, setSp] = useSearchParams();
   const [chatOpen, setChatOpen] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
 
-  const handleCreate = (route: string) => {
-    setCreateOpen(false);
-    nav(route);
-  };
-
-  const Item = ({ onClick, children, label }: { onClick: () => void; children: React.ReactNode; label: string }) => (
-    <button 
-      onClick={onClick} 
-      title={label}
-      aria-label={label}
-      className="size-11 grid place-items-center rounded-xl bg-card/70 border border-border/60 hover:bg-accent/40 transition-colors"
-    >
-      {children}
-    </button>
-  );
+  const items: DockItem[] = [
+    {
+      key: 'messages',
+      label: 'Messages',
+      onClick: () => setChatOpen(true),
+      icon: MessageCircle,
+    },
+    {
+      key: 'create',
+      label: 'Create',
+      onClick: () => nav('/create'),
+      icon: PlusCircle,
+    },
+    {
+      key: 'market',
+      label: 'Marketplace',
+      to: '/marketplace',
+      icon: Store,
+    },
+    {
+      key: 'unclaimed',
+      label: 'Unclaimed',
+      to: '/unclaimed',
+      icon: Globe2,
+    },
+    {
+      key: 'appstore',
+      label: 'App Store',
+      to: '/app-store',
+      icon: AppWindow,
+    },
+  ];
 
   return (
     <>
       <ChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} />
-      <CreateSheet open={createOpen} onClose={() => setCreateOpen(false)} onSelect={handleCreate} />
       
-      <div className="h-14 border-t border-border bg-background/80 backdrop-blur px-3">
-        <div className="h-full max-w-[680px] mx-auto flex items-center justify-between gap-4">
-          <Item onClick={() => setChatOpen(true)} label="Messages">
-            <MessageCircle className="w-5 h-5" />
-          </Item>
-          <Item onClick={() => setCreateOpen(true)} label="Create">
-            <Plus className="w-5 h-5" />
-          </Item>
-          <Item onClick={() => openInWorkspace(sp, setSp, 'marketplace')} label="Marketplace">
-            <Store className="w-5 h-5" />
-          </Item>
-          <Item onClick={() => nav('/unclaimed')} label="Unclaimed">
-            <Globe2 className="w-5 h-5" />
-          </Item>
-          <Item onClick={() => nav('/app-store')} label="App Store">
-            <AppWindow className="w-5 h-5" />
-          </Item>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function CreateSheet({
-  open,
-  onClose,
-  onSelect
-}: {
-  open: boolean;
-  onClose: () => void;
-  onSelect: (route: string) => void;
-}) {
-  const createOptions = [
-    { label: 'Profile', route: '/profiles/new' },
-    { label: 'Business', route: '/businesses/new' },
-    { label: 'Horse', route: '/horses/new' },
-    { label: 'Farm', route: '/farms/new' },
-    { label: 'Post', route: '/post/new' },
-    { label: 'Listing', route: '/listings/new' },
-    { label: 'Event', route: '/events/new' },
-  ];
-
-  return (
-    <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="rounded-t-2xl">
-        <SheetHeader>
-          <SheetTitle>Create</SheetTitle>
-        </SheetHeader>
-        <div className="grid grid-cols-2 gap-2 mt-4">
-          {createOptions.map((option) => (
-            <button
-              key={option.route}
-              onClick={() => onSelect(option.route)}
-              className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3 text-left
-                         hover:bg-white/[0.08] transition-all duration-200"
+      <nav
+        role="navigation"
+        aria-label="Bottom dock"
+        className={cn(
+          'fixed bottom-0 inset-x-0 z-40 bg-background/90 backdrop-blur border-t border-border/60',
+          'px-2 pb-[max(0px,env(safe-area-inset-bottom))]'
+        )}
+      >
+      <div className="mx-auto max-w-[800px] h-16 grid grid-cols-5 gap-2 items-end">
+        {items.map((it) => {
+          const Icon = it.icon;
+          const isCreate = it.key === 'create';
+          const content = (
+            <div
+              className={cn(
+                'flex flex-col items-center gap-1',
+                isCreate && 'translate-y-[-12px]'
+              )}
             >
-              {option.label}
+              <div
+                className={cn(
+                  'grid place-items-center rounded-2xl shadow-lg transition-all duration-200',
+                  'border border-white/10',
+                  isCreate 
+                    ? 'h-14 w-14 bg-gradient-to-br from-primary/30 to-primary/10'
+                    : 'h-12 w-12 bg-gradient-to-br from-primary/20 to-primary/5'
+                )}
+                aria-hidden
+              >
+                <Icon 
+                  className={cn(
+                    'text-white drop-shadow-sm',
+                    isCreate ? 'w-7 h-7' : 'w-6 h-6'
+                  )} 
+                />
+              </div>
+              <span className="text-[10px] leading-tight font-medium truncate max-w-full">
+                {it.label}
+              </span>
+            </div>
+          );
+
+          return it.to ? (
+            <Link
+              key={it.key}
+              to={it.to}
+              className="relative flex flex-col items-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition-all"
+              aria-label={it.label}
+              title={it.label}
+            >
+              {content}
+            </Link>
+          ) : (
+            <button
+              key={it.key}
+              onClick={it.onClick}
+              className="relative flex flex-col items-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition-all"
+              aria-label={it.label}
+              title={it.label}
+            >
+              {content}
             </button>
-          ))}
-        </div>
-      </SheetContent>
-    </Sheet>
+          );
+        })}
+      </div>
+    </nav>
+    </>
   );
 }

@@ -12,7 +12,7 @@ import { RequireAuth } from '@/lib/auth/guards';
 import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
 import InactivityNudge from '@/components/rocker/InactivityNudge';
-
+import { RockerDock } from '@/components/rocker/RockerDock';
 import { RockerChatProvider } from '@/lib/ai/rocker';
 import { RockerProvider } from '@/lib/ai/rocker';
 import { RedirectHandler } from '@/components/navigation/RedirectHandler';
@@ -396,7 +396,7 @@ function AppContent() {
       {import.meta.env.VITE_PREVIEW_ENABLED === 'true' && <PreviewMessageListener />}
 
       <InactivityNudge />
-      
+      <RockerDock />
       <RockerChat />
       <RockerSuggestions />
       <DevHUD isOpen={devHUDOpen} onClose={closeDevHUD} />

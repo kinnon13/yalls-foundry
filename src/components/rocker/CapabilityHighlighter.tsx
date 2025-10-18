@@ -115,7 +115,18 @@ export function CapabilityHighlighter({ userId, onFlagMissing }: CapabilityHighl
   };
 
   if (!visible) {
-    return null; // Hidden by default - can be enabled via dev tools if needed
+    return (
+      <Button
+        onClick={() => setVisible(true)}
+        variant="outline"
+        size="sm"
+        className="fixed bottom-20 right-4 z-[2147483640] shadow-lg"
+        title="Show what Rocker can do"
+      >
+        <Eye className="w-4 h-4 mr-2" />
+        Show Capabilities
+      </Button>
+    );
   }
 
   return createPortal(

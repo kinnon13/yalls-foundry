@@ -1,50 +1,34 @@
 import AppsPane from './parts/AppsPane';
 import SocialFeedPane from './parts/SocialFeedPane';
 import PhonePager from './parts/PhonePager';
-import WorkspaceHost from './parts/WorkspaceHost';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { BottomDock } from '@/components/layout/BottomDock';
-import DebugToggles from '@/components/dev/DebugToggles';
 
 export default function HomePage() {
   return (
-    // Full-viewport shell; body must not scroll
-    <div id="home-shell" className="fixed inset-0 grid grid-rows-[64px_1fr_56px] bg-background">
+    <>
       <GlobalHeader />
-
-      {/* Content area: NO outer scroll */}
-      <div
-        id="home-content"
-        className="
-          grid h-full overflow-hidden
-          lg:grid-cols-[minmax(320px,2fr)_minmax(280px,1fr)]
-          md:grid-cols-[minmax(280px,1fr)_minmax(320px,2fr)]
-          grid-cols-1
-        "
-      >
-        {/* Left: Apps (desktop/tablet) — independent scroll */}
-        <div className="min-w-0 min-h-0 h-full overflow-y-auto overscroll-contain px-4 pb-24 pt-3">
-          <AppsPane />
-        </div>
-
-        {/* Right: Feed (desktop/tablet) — independent scroll */}
-        <div className="min-w-0 min-h-0 h-full overflow-y-auto overscroll-contain border-l border-border px-0 pb-24">
-          <SocialFeedPane />
-        </div>
-
-        {/* Phone: horizontal pager */}
-        <div className="hidden h-full overflow-hidden">
+      <main className="pt-14 pb-16">
+        {/* Phone: horizontal pager (Apps | Feed | Shop | Profile) */}
+        <div className="md:hidden">
           <PhonePager />
         </div>
-      </div>
 
-      {/* Always on top of the grid */}
-      <WorkspaceHost />
-
+        {/* Tablet & Desktop */}
+        <div className="hidden md:grid h-[calc(100vh-112px)] gap-6 px-6 mx-auto max-w-[1600px]
+          md:grid-cols-[1fr_2fr] xl:grid-cols-[2fr_1fr]">
+          {/* Apps (left) */}
+          <div className="min-w-0">
+            <AppsPane />
+          </div>
+          {/* Reels (right) */}
+          <div className="min-w-[360px] max-w-[560px] justify-self-end w-full">
+            <SocialFeedPane />
+          </div>
+        </div>
+      </main>
       <BottomDock />
-      
-      {/* Dev-only debug tools */}
-      {import.meta.env.DEV && <DebugToggles />}
-    </div>
+    </>
   );
 }
+
