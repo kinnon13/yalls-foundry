@@ -1,0 +1,73 @@
+{
+  "areas": [
+    { "canonical": "admin",     "subareas": ["audit","claims","control"] },
+    { "canonical": "ai",        "subareas": ["activity","memory","policy"] },
+    { "canonical": "discovery", "subareas": ["search","marketplace","public_profiles","public_events","feed"] },
+    { "canonical": "dashboard", "subareas": ["home","entities","crm","listings","orders","incentives","calendar","farm_ops","messaging"] },
+    { "canonical": "events",    "subareas": ["organizer","entrant"] },
+    { "canonical": "equistats", "subareas": ["horse_performance","earnings_programs","pedigree_crosses","compare_insights"] },
+    { "canonical": "platform",  "subareas": ["auth","commerce_buyer","content_taxonomy","telemetry"] },
+    { "canonical": "profile",   "subareas": ["me"] }
+  ],
+
+  "aliases": {
+    "/entrant": "/entries",
+    "/dashboard": "/workspace",
+    "/incentives/dashboard": "/workspace",
+    "/crm": "/workspace"
+  },
+
+  "routeFamilies": [
+    { "path": "/admin/*",                 "area": "admin",     "visibility": "dashboard" },
+    { "path": "/ai/activity",             "area": "ai",        "visibility": "dashboard" },
+    { "path": "/search",                  "area": "discovery", "visibility": "public" },
+    { "path": "/marketplace/*",           "area": "discovery", "visibility": "public" },
+    { "path": "/stallions/*",             "area": "discovery", "visibility": "public" },
+    { "path": "/entities/*",              "area": "discovery", "visibility": "public" },
+    { "path": "/events/*",                "area": "discovery", "visibility": "public" },
+    { "path": "/feed",                    "area": "discovery", "visibility": "private" },
+
+    { "path": "/workspace/*",             "area": "dashboard", "visibility": "dashboard" },
+    { "path": "/listings/*",              "area": "dashboard", "visibility": "dashboard" },
+    { "path": "/orders/*",                "area": "dashboard", "visibility": "dashboard", "notes": "seller console" },
+    { "path": "/incentives/*",            "area": "dashboard", "visibility": "dashboard" },
+    { "path": "/farm/*",                  "area": "dashboard", "visibility": "dashboard" },
+    { "path": "/entries/*",               "area": "events",    "visibility": "private" },
+    { "path": "/organizer/*",             "area": "events",    "visibility": "organizer" },
+
+    { "path": "/equistats/*",             "area": "equistats", "visibility": "public" },
+
+    { "path": "/cart",                    "area": "platform",  "visibility": "private" },
+    { "path": "/login",                   "area": "platform",  "visibility": "public" },
+    { "path": "/profile",                 "area": "profile",   "visibility": "private" }
+  ],
+
+  "rpcsByArea": {
+    "admin":     ["feature_introspect","feature_probe","admin_clear_entitlement_override","admin_set_entitlement_override","update_feature_flags_updated_at"],
+    "ai":        ["rocker_next_best_actions","rocker_log_action","rocker_generate_followup_list","rocker_check_consent","ai_mem_get","ai_mem_mark","ai_mem_upsert","ai_mem_promote","ai_propose","ai_approve"],
+    "discovery": ["get_price_suggestions","get_event_viewable","feed_fusion_home","feed_fusion_profile","feed_fusion_home_rate_limited","feed_hide","feed_unhide","feed_pending_targets"],
+    "dashboard": ["entity_create_unclaimed","entity_claim_start","entity_claim_approve","entity_claim_reject","contributor_window_status","crm_contact_upsert","update_crm_contacts_updated_at","get_user_aggregate_counts","get_user_role","get_user_workspaces","get_workspace_summary","order_start_from_cart","decrement_listing_stock","attach_incentive_to_event","update_calendar_updated_at","dm_send"],
+    "events":    ["draw_generate","entry_submit","reservation_check_in","reservation_issue_qr"],
+    "platform":  ["cart_get","cart_merge_guest_to_user","cart_upsert_item","order_start_from_cart"],
+    "equistats": ["payout_compute"]
+  },
+
+  "tableClusters": {
+    "entities":      ["entities","entity_members","entity_profiles","entity_profiles_*","entity_ui_prefs","entity_ingest_log","favorite_entities","saved_items","stallion_profiles","boarders"],
+    "events":        ["events","event_classes","entries","entry_checkin_log","draws","results","result_flags","stalls_rv_inventory","stalls_rv_reservations","live_streams","tour_schedules"],
+    "marketplace":   ["marketplace_listings","listing_taxonomy","dynamic_categories","media","media_entities","taxonomies","taxonomy_values"],
+    "orders":        ["orders","order_line_items","payments","payouts","commission_ledger","ledger_entries","settlement_batches"],
+    "crm":           ["crm_contacts","crm_activities","crm_events","crm_events_*"],
+    "ai":            ["rocker_campaigns","rocker_campaign_audience","rocker_conversations","rocker_notifications","ai_*","knowledge_*","memory_*"],
+    "notifications": ["notifications","notification_receipts","notification_prefs","outbox"],
+    "feed":          ["posts","post_*","feed_hides","horse_feed","views_coldstart"],
+    "calendar":      ["calendars","calendar_events","calendar_event_attendees","calendar_event_reminders","calendar_collections","calendar_collection_members","calendar_collection_shares","calendar_shares"],
+    "commerce":      ["shopping_carts","shopping_cart_items","orders","order_line_items","payments"],
+    "admin":         ["features","feature_flags","feature_locations","feature_catalog","entitlement_overrides","entitlement_override_audit","plan_entitlements","rpc_observations","admin_audit","admin_audit_log","preview_audit_log"],
+    "equistats":     ["payouts","commission_ledger","ledger_entries","leaderboard_entries","breeding_records","term_dictionary","term_knowledge"]
+  },
+
+  "piiLikely": ["profiles","orders","order_line_items","payments","notifications","messages","crm_contacts","entity_members","contributors","user_roles","contact_identities"],
+
+  "meta": { "normalized": true, "collapsed": true }
+}

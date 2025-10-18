@@ -7709,6 +7709,14 @@ export type Database = {
         }
         Returns: string
       }
+      attach_incentive_to_event: {
+        Args: {
+          p_entity_id: string
+          p_event_id: string
+          p_incentive_id: string
+        }
+        Returns: Json
+      }
       badge_grant: {
         Args: {
           p_badge_id: string
@@ -8433,6 +8441,21 @@ export type Database = {
       get_user_role: {
         Args: { _user_id: string }
         Returns: string
+      }
+      get_user_workspaces: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          display_name: string
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["entity_kind"]
+          handle: string
+          is_owner: boolean
+          role: string
+        }[]
+      }
+      get_workspace_summary: {
+        Args: { p_entity_id: string }
+        Returns: Json
       }
       gettransactionid: {
         Args: Record<PropertyKey, never>
