@@ -173,3 +173,6 @@ verify_jwt = false
 [functions.run-tests]
 verify_jwt = true
 
+[functions.feature-scan]
+verify_jwt = true
+
