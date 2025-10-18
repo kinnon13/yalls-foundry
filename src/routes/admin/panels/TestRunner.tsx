@@ -37,6 +37,7 @@ export default function TestRunner() {
     skipped: number;
     duration: number;
   } | null>(null);
+  const [unsupported, setUnsupported] = useState(false);
 
   const runTests = async () => {
     setRunning(true);
@@ -46,15 +47,19 @@ export default function TestRunner() {
 
       if (error) {
         console.error('Test run error:', error);
-        
-        // Check if it's a function not found error
-        if (error.message?.includes('FunctionsRelayError') || error.message?.includes('not found')) {
+        const msg = (error as any)?.message || '';
+        if (msg.includes('Spawning subprocesses is not allowed')) {
+          setUnsupported(true);
+          toast.warning('Tests not supported in this environment', {
+            description: 'Edge runtime cannot spawn Vitest. Run `pnpm test` locally or in CI.'
+          });
+        } else if (msg.includes('FunctionsRelayError') || msg.includes('not found')) {
           toast.error('Test runner deploying', {
             description: 'The test runner function is being deployed. Please wait a moment and try again.'
           });
         } else {
           toast.error('Failed to run tests', {
-            description: error.message || 'Unknown error'
+            description: msg || 'Unknown error'
           });
         }
         setRunning(false);
