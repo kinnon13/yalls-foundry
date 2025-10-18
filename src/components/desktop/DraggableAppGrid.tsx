@@ -351,7 +351,12 @@ export function DraggableAppGrid() {
       >
         {/* Drag indicator */}
         <div className="absolute top-2 right-2 text-[10px] px-2 py-1 rounded-full bg-primary/20 text-primary border border-primary/40 pointer-events-none">
-          Drag to move • Edges to resize
+          {gridSize.width}px × {gridSize.height}px
+        </div>
+
+        {/* Position indicator */}
+        <div className="absolute top-2 left-2 text-[10px] px-2 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/40 pointer-events-none">
+          X: {Math.round(gridPosition.x)} Y: {Math.round(gridPosition.y)}
         </div>
 
         {/* Size Control */}
