@@ -180,9 +180,10 @@ export default function AppsPane() {
         <div 
           className="grid gap-3"
           style={{
-            gridTemplateRows: `repeat(3, ${tile}px)`,
+            gridTemplateRows: `repeat(auto-fill, ${tile}px)`,
             gridAutoFlow: 'column',
             gridAutoColumns: `${tile}px`,
+            height: '100%',
           }}
         >
         {/* Installed apps - now filtered by capabilities */}
