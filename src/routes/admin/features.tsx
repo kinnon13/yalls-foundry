@@ -327,6 +327,44 @@ export default function FeaturesAdminPage() {
     toast.success(`Exported ${data.summary.routes + data.summary.rpcs + data.summary.tables} undocumented items`);
   };
 
+  const handleExportUndocumentedCSV = () => {
+    const undoc = (window as any).__undocumented;
+    if (!undoc) {
+      toast.error('No undocumented items to export');
+      return;
+    }
+
+    // Create CSV content with BOM for Excel compatibility
+    const BOM = '\uFEFF';
+    let csv = BOM + 'Type,Name\n';
+
+    // Add routes
+    (undoc.routes || []).forEach((route: string) => {
+      csv += `Route,"${route.replace(/"/g, '""')}"\n`;
+    });
+
+    // Add RPCs
+    (undoc.rpcs || []).forEach((rpc: string) => {
+      csv += `RPC,"${rpc.replace(/"/g, '""')}"\n`;
+    });
+
+    // Add tables
+    (undoc.tables || []).forEach((table: string) => {
+      csv += `Table,"${table.replace(/"/g, '""')}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `undocumented-items-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    const total = (undoc.routes?.length || 0) + (undoc.rpcs?.length || 0) + (undoc.tables?.length || 0);
+    toast.success(`Exported ${total} undocumented items to CSV`);
+  };
+
   const fetchTestResults = async () => {
     setTestLoading(true);
     try {
@@ -916,10 +954,16 @@ export default function FeaturesAdminPage() {
                     Found in codebase/database but not in features.json
                   </CardDescription>
                 </div>
-                <Button onClick={handleExportUndocumented} variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export All
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={handleExportUndocumentedCSV} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </Button>
+                  <Button onClick={handleExportUndocumented} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export JSON
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
