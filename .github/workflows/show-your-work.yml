@@ -16,5 +16,14 @@ jobs:
       - name: Validate architecture config
         run: node scripts/validate-architecture.mjs
       
+      - name: Validate DB objects (syntactic)
+        if: ${{ secrets.DATABASE_URL }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          psql "$DATABASE_URL" -f scripts/validate-db.sql
+      
       - name: Validate work-report.json and PR body
         run: node scripts/validate-work-report.mjs

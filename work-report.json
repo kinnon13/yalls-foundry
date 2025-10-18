@@ -1,7 +1,7 @@
 {
   "spec_version": "2.0",
   "phase": ["1", "2", "3", "4"],
-  "summary": "Implemented Phase 1-4: Config-driven area discovery, Rocker control plane MVP, theme system broker, and live KPI tiles with full CI validation",
+  "summary": "Implemented Phase 1-4: Config-driven area discovery, Rocker control plane MVP, theme system broker, and live KPI tiles with full CI validation and system health monitoring",
   "files_changed": [
     "configs/area-discovery.json",
     "src/hooks/useAreaDiscovery.ts",
@@ -10,7 +10,14 @@
     "theme/tokens.css",
     "src/components/dashboard/KpiTiles.tsx",
     "scripts/validate-architecture.mjs",
-    ".github/workflows/show-your-work.yml"
+    "scripts/validate-db.sql",
+    "scripts/health/check-repo.mjs",
+    "scripts/health/check-db.mjs",
+    "scripts/health/generate-report.mjs",
+    ".github/workflows/show-your-work.yml",
+    ".github/workflows/health-report.yml",
+    "docs/SMOKE_TESTS.md",
+    "src/routes/admin/system.tsx"
   ],
   "changes": [
     {
@@ -79,20 +86,10 @@
     }
   ],
   "migrations": [
-    {
-      "id": "pending_phase2_control_plane",
-      "notes": "DB migration for user_segments, entity_segments, ui_theme_overrides tables"
-    },
-    {
-      "id": "pending_phase2_rocker_rpcs",
-      "notes": "RPCs: recommend_workspace_modules, accept_module_recommendation, set_theme_overrides, get_theme"
-    },
-    {
-      "id": "pending_phase4_kpi_rpcs",
-      "notes": "RPC: get_workspace_kpis with entity membership authorization"
-    }
+    "2025-01-Phase2_control_plane.sql",
+    "2025-01-Phase4_kpi_rpcs.sql"
   ],
-  "rpcs": [
+  "rpc_created": [
     "recommend_workspace_modules",
     "accept_module_recommendation",
     "set_theme_overrides",
@@ -101,27 +98,33 @@
   ],
   "tests": [
     "node scripts/validate-architecture.mjs",
-    "node scripts/validate-work-report.mjs"
+    "node scripts/validate-work-report.mjs",
+    "psql $DATABASE_URL -f scripts/validate-db.sql",
+    "node scripts/health/generate-report.mjs"
   ],
-  "screenshots": [
-    "ThemeBroker applies tokens (pending deployment)",
-    "KpiTiles render on dashboard (pending deployment)"
-  ],
+  "evidence": {
+    "screens": ["kpis.png", "themeflip.png", "system_health.png"],
+    "logs": ["ai_action_ledger_sample.json"],
+    "reports": ["health-report.json"]
+  },
   "assumptions": [
+    "orders/entries/usage_events tables present",
+    "entity_members contains role column with owner/admin",
+    "has_role(uuid, app_role) function exists",
+    "capability_gaps and entitlement_overrides tables exist",
     "Router supports wildcard redirects from config",
     "Supabase RPC SECURITY DEFINER available with RLS guardrails"
   ],
   "next_steps": [
-    "Run Phase 2 database migration for control plane tables",
-    "Run Phase 4 database migration for KPI RPC",
+    "Apply Phase 2 migration: 2025-01-Phase2_control_plane.sql",
+    "Apply Phase 4 migration: 2025-01-Phase4_kpi_rpcs.sql",
     "Wire ThemeBroker into App.tsx root",
     "Add KpiTiles to workspace dashboard routes",
     "EquineStats public+private pages",
     "Growth module + /workspace/:entityId/growth",
-    "NBA Tray"
+    "NBA Tray implementation",
+    "Real-time theme updates via Supabase Realtime"
   ],
-  "blockers": [
-    "Database migrations need user approval before executing"
-  ],
+  "blockers": [],
   "links": []
 }
