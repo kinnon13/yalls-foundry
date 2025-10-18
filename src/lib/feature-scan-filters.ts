@@ -19,6 +19,7 @@ const COLLAPSE_HEADS = new Set([
 ]);
 
 export const routeIgnore = [
+  /^\/$/,                               // root/home page
   /^\/preview($|\/)/,
   /^\/health$/,
   /^\/admin\/(components|a11y|tests|routes)$/,
