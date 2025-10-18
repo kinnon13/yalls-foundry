@@ -73,9 +73,11 @@ export default function DashboardLayout() {
   const [feedWidth, setFeedWidth] = useState(400);
   const [feedHeight, setFeedHeight] = useState(600);
   const [feedRightOffset, setFeedRightOffset] = useState(0);
+  const [feedTopOffset, setFeedTopOffset] = useState(64);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
   const [isDraggingBottom, setIsDraggingBottom] = useState(false);
+  const [isDraggingTop, setIsDraggingTop] = useState(false);
   
   const Panel = useMemo(() => panels[m] ?? panels.overview, [m]);
 
@@ -145,9 +147,8 @@ export default function DashboardLayout() {
 
     const handleMove = (clientY: number) => {
       // Calculate height from top of feed to cursor position
-      const feedTop = 64; // header height
-      const newHeight = clientY - feedTop;
-      setFeedHeight(Math.max(300, Math.min(window.innerHeight - 100, newHeight)));
+      const newHeight = clientY - feedTopOffset;
+      setFeedHeight(Math.max(150, Math.min(window.innerHeight - 80, newHeight)));
     };
 
     const handleMouseMove = (e: MouseEvent) => handleMove(e.clientY);
@@ -169,7 +170,40 @@ export default function DashboardLayout() {
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleEnd);
     };
-  }, [isDraggingBottom]);
+  }, [isDraggingBottom, feedTopOffset]);
+
+  // Handle top edge drag (move vertically) - Mouse + Touch
+  useEffect(() => {
+    if (!isDraggingTop) return;
+
+    const handleMove = (clientY: number) => {
+      // Clamp so the feed stays within viewport
+      const minTop = 64; // below global header
+      const maxTop = Math.max(0, window.innerHeight - feedHeight - 40);
+      const nextTop = Math.max(minTop, Math.min(maxTop, clientY));
+      setFeedTopOffset(nextTop);
+    };
+
+    const handleMouseMove = (e: MouseEvent) => handleMove(e.clientY);
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      handleMove(e.touches[0].clientY);
+    };
+
+    const handleEnd = () => setIsDraggingTop(false);
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleEnd);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleEnd);
+    };
+  }, [isDraggingTop, feedHeight]);
 
   // Get user ID for appearance settings
   useEffect(() => {
@@ -254,10 +288,10 @@ export default function DashboardLayout() {
       {/* Left Resize Handle (adjust width) */}
       <div
         className={cn(
-          "fixed top-16 h-[calc(100vh-64px)] w-2 sm:w-1 bg-border hover:bg-primary/50 active:bg-primary cursor-col-resize z-50 transition-colors touch-none",
+          "fixed w-2 sm:w-1 bg-border hover:bg-primary/50 active:bg-primary cursor-col-resize z-50 transition-colors touch-none",
           isDraggingLeft && "bg-primary"
         )}
-        style={{ right: `${feedWidth + feedRightOffset}px` }}
+        style={{ right: `${feedWidth + feedRightOffset}px`, top: `${feedTopOffset}px`, height: `${feedHeight}px` }}
         onMouseDown={() => setIsDraggingLeft(true)}
         onTouchStart={() => setIsDraggingLeft(true)}
         role="separator"
@@ -269,15 +303,20 @@ export default function DashboardLayout() {
 
       {/* Social Feed Sidecar - Permanently open */}
       <div
-        className="fixed top-16 bg-background border-l border-r shadow-xl z-40"
+        className="fixed bg-background border-l border-r shadow-xl z-40"
         style={{ 
           width: `${feedWidth}px`,
           height: `${feedHeight}px`,
-          right: `${feedRightOffset}px`
+          right: `${feedRightOffset}px`,
+          top: `${feedTopOffset}px`
         }}
       >
-        {/* Feed Header */}
-        <div className="h-12 border-b flex items-center justify-between px-4 bg-background/95 backdrop-blur">
+        {/* Feed Header (drag to move vertically) */}
+        <div
+          className="h-12 border-b flex items-center justify-between px-4 bg-background/95 backdrop-blur cursor-move select-none"
+          onMouseDown={() => setIsDraggingTop(true)}
+          onTouchStart={() => setIsDraggingTop(true)}
+        >
           <h2 className="font-semibold">Social Feed</h2>
           <div className="text-xs text-muted-foreground">{feedWidth}×{feedHeight}px</div>
         </div>
@@ -288,15 +327,16 @@ export default function DashboardLayout() {
         </div>
       </div>
 
-      {/* Right Resize Handle (move panel) */}
+      {/* Right Resize Handle (move panel horizontally) */}
       <div
         className={cn(
-          "fixed top-16 w-2 sm:w-1 bg-border hover:bg-primary/50 active:bg-primary cursor-col-resize z-50 transition-colors touch-none",
+          "fixed w-2 sm:w-1 bg-border hover:bg-primary/50 active:bg-primary cursor-col-resize z-50 transition-colors touch-none",
           isDraggingRight && "bg-primary"
         )}
         style={{ 
           right: `${feedRightOffset}px`,
-          height: `${feedHeight}px`
+          height: `${feedHeight}px`,
+          top: `${feedTopOffset}px`
         }}
         onMouseDown={() => setIsDraggingRight(true)}
         onTouchStart={() => setIsDraggingRight(true)}
@@ -316,7 +356,7 @@ export default function DashboardLayout() {
         style={{ 
           right: `${feedRightOffset}px`,
           width: `${feedWidth}px`,
-          top: `${feedHeight + 64}px`
+          top: `${feedTopOffset + feedHeight}px`
         }}
         onMouseDown={() => setIsDraggingBottom(true)}
         onTouchStart={() => setIsDraggingBottom(true)}
