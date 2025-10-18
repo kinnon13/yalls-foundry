@@ -72,8 +72,10 @@ export function AppGrid() {
 
   return (
     <div className="relative z-20 w-full h-full overflow-auto">
-      <div className="max-w-7xl mx-auto px-12 py-16">
-        <div className="grid grid-cols-5 md:grid-cols-7 lg:grid-cols-8 gap-8">
+      {/* iPhone: px-4 py-8, iPad: px-8 py-12, Mac: px-12 py-16 */}
+      <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16">
+        {/* iPhone: 4 cols, iPad: 6 cols, Mac: 7-8 cols */}
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-4 sm:gap-6 md:gap-7 lg:gap-8">
           {APPS.map((app) => {
             const Icon = app.icon;
             return (
@@ -81,32 +83,55 @@ export function AppGrid() {
                 key={app.id}
                 onClick={() => handleAppClick(app)}
                 className={cn(
-                  "group flex flex-col items-center gap-2 p-2",
-                  "rounded-3xl transition-all duration-200",
+                  "group flex flex-col items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2",
+                  "rounded-2xl sm:rounded-3xl transition-all duration-200",
                   "hover:scale-105 active:scale-95",
                   "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                 )}
                 aria-label={app.label}
               >
-                {/* App Icon - Large like macOS */}
+                {/* App Icon - Responsive sizes: iPhone 60px, iPad 72px, Mac 80-88px */}
                 <div className={cn(
-                  "relative w-20 h-20 rounded-[22px] flex items-center justify-center",
+                  "relative flex items-center justify-center",
                   "shadow-lg group-hover:shadow-xl transition-all duration-200",
                   `bg-gradient-to-br ${app.color || 'from-primary/20 to-primary/5'}`,
-                  "border border-white/10"
+                  "border border-white/10",
+                  // iPhone: 60px, iPad: 72px, Mac: 80-88px
+                  "w-14 h-14 rounded-[18px]",
+                  "sm:w-16 sm:h-16 sm:rounded-[20px]",
+                  "md:w-[72px] md:h-[72px] md:rounded-[21px]",
+                  "lg:w-20 lg:h-20 lg:rounded-[22px]",
+                  "xl:w-[88px] xl:h-[88px] xl:rounded-[24px]"
                 )}>
-                  <Icon className="w-10 h-10 text-white drop-shadow-sm" strokeWidth={1.5} />
+                  <Icon 
+                    className={cn(
+                      "text-white drop-shadow-sm",
+                      // iPhone: 7, iPad: 8, Mac: 10-11
+                      "w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 xl:w-11 xl:h-11"
+                    )}
+                    strokeWidth={1.5} 
+                  />
                   
                   {/* Badge notification */}
                   {app.badge && (
-                    <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-background">
+                    <div className={cn(
+                      "absolute bg-red-500 text-white font-bold rounded-full flex items-center justify-center border-2 border-background",
+                      "-top-0.5 -right-0.5 w-5 h-5 text-[10px] sm:-top-1 sm:-right-1 sm:w-6 sm:h-6 sm:text-xs"
+                    )}>
                       {app.badge > 99 ? '99+' : app.badge}
                     </div>
                   )}
                 </div>
                 
-                {/* App Label */}
-                <span className="text-xs font-medium text-foreground/90 text-center leading-tight max-w-[80px] truncate">
+                {/* App Label - Responsive text */}
+                <span className={cn(
+                  "font-medium text-foreground/90 text-center leading-tight truncate",
+                  "text-[10px] max-w-[56px]",
+                  "sm:text-[11px] sm:max-w-[64px]",
+                  "md:text-xs md:max-w-[72px]",
+                  "lg:max-w-[80px]",
+                  "xl:max-w-[88px]"
+                )}>
                   {app.label}
                 </span>
               </button>
