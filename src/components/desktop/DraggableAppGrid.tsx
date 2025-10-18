@@ -347,21 +347,25 @@ export function DraggableAppGrid() {
           width: `${gridSize.width}px`,
           height: `${gridSize.height}px`
         }}
-        onMouseDown={handleGridDragStart}
       >
-        {/* Drag indicator */}
-        <div className="absolute top-2 right-2 text-[10px] px-2 py-1 rounded-full bg-primary/20 text-primary border border-primary/40 pointer-events-none">
-          {gridSize.width}px × {gridSize.height}px
-        </div>
-
-        {/* Position indicator */}
-        <div className="absolute top-2 left-2 text-[10px] px-2 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/40 pointer-events-none">
-          X: {Math.round(gridPosition.x)} Y: {Math.round(gridPosition.y)}
+        {/* Drag Handle Bar - ONLY this area drags the container */}
+        <div 
+          className="px-4 py-2 bg-background/80 border-b border-border/40 cursor-move flex items-center justify-between"
+          onMouseDown={handleGridDragStart}
+        >
+          <div className="text-xs text-muted-foreground">
+            📱 Apps Grid • Drag here to move
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-[10px] px-2 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/40">
+              {gridSize.width}px × {gridSize.height}px
+            </div>
+          </div>
         </div>
 
         {/* Size Control */}
         <div className="px-4 py-3 flex items-center gap-3 bg-background/60 border-b border-border/40">
-          <label className="text-sm text-muted-foreground whitespace-nowrap">App size</label>
+          <label className="text-sm text-muted-foreground whitespace-nowrap">Tile size</label>
           <input
             type="range"
             min={88}
@@ -369,8 +373,7 @@ export function DraggableAppGrid() {
             step={4}
             value={tileSize}
             onChange={(e) => setTileSize(Number(e.target.value))}
-            className="flex-1 max-w-xs no-drag"
-            onMouseDown={(e) => e.stopPropagation()}
+            className="flex-1 max-w-xs"
           />
           <span className="text-xs text-muted-foreground w-12">{tileSize}px</span>
         </div>
@@ -381,7 +384,7 @@ export function DraggableAppGrid() {
           onDragStart={({ active }) => setActiveId(normalizeId(active.id as string))}
           onDragEnd={handleDragEnd}
         >
-          <div className="relative w-full h-[calc(100%-60px)] overflow-auto">
+          <div className="relative w-full h-[calc(100%-108px)] overflow-auto">
             <div 
               className="pin-canvas relative max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16"
               style={{ '--tile': `${tileSize}px` } as React.CSSProperties}
