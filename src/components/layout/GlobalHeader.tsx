@@ -1,215 +1,106 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, User, ShoppingCart, Menu, X } from 'lucide-react';
-import { useSession } from '@/lib/auth/context';
-import { TourButton } from '@/components/rocker/TourButton';
-import { useCartCount } from '@/hooks/useCartCount';
-import { useAuthMergeCart } from '@/hooks/useAuthMergeCart';
-import { PreviewDropdown } from '@/components/layout/PreviewDropdown';
-import GlobalNav from '@/components/nav/GlobalNav';
-import { Button } from '@/design/components/Button';
-import { Input } from '@/design/components/Input';
-import { Badge } from '@/design/components/Badge';
-import { tokens } from '@/design/tokens';
-import { FinderModal } from '@/components/finder/FinderModal';
-import { NotificationBell } from '@/components/notifications/NotificationBellIcon';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Link, useNavigate } from 'react-router-dom';
+import { Bell, ShoppingCart, LogOut, Home, Search } from 'lucide-react';
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 
-interface GlobalHeaderProps {
-  showRockerLabels?: boolean;
-}
+type Props = {
+  notifCount?: number;
+  cartCount?: number;
+  className?: string;
+};
 
-export function GlobalHeader({ showRockerLabels: propShowRockerLabels }: GlobalHeaderProps = {}) {
+export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props) {
   const navigate = useNavigate();
-  const { session, signOut } = useSession();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showRockerLabels] = useState(propShowRockerLabels ?? false);
-  const [finderOpen, setFinderOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { data: cartCount = 0 } = useCartCount();
-  const isMobile = useIsMobile();
-  
-  useAuthMergeCart();
+  const [q, setQ] = useState('');
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+  const onSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!q.trim()) return;
+    navigate(`/search?q=${encodeURIComponent(q.trim())}`);
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/login');
+    } catch {}
   };
 
   return (
-    <header style={{
-      position: 'sticky',
-      top: 0,
-      zIndex: tokens.zIndex.header,
-      width: '100%',
-      background: tokens.color.bg.dark,
-      borderBottom: `1px solid ${tokens.color.text.secondary}40`,
-    }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        height: 64,
-        padding: `0 ${isMobile ? tokens.space.s : tokens.space.m}px`,
-        maxWidth: 1440,
-        margin: '0 auto',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? tokens.space.s : tokens.space.l }}>
-          <Link to="/" style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: tokens.space.xs,
-            fontWeight: tokens.typography.weight.bold,
-            fontSize: isMobile ? tokens.typography.size.m : tokens.typography.size.l,
-            textDecoration: 'none',
-            color: tokens.color.text.primary,
-          }}>
-            yalls.ai
-          </Link>
-          
-          {!isMobile && (
-            <nav style={{ display: 'flex', alignItems: 'center', gap: tokens.space.s }}>
-              <GlobalNav />
-            </nav>
-          )}
-        </div>
-
-        {!isMobile && (
-          <form onSubmit={handleSearch} style={{ flex: '1', maxWidth: 400, margin: `0 ${tokens.space.m}px` }}>
-            <Input
-              type="search"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={setSearchQuery}
-            />
-          </form>
-        )}
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: tokens.space.xs }}>
-          {!isMobile && (
-            <Button
-              variant="ghost"
-              size="m"
-              onClick={() => setFinderOpen(true)}
-            >
-              <Search size={16} />
-            </Button>
-          )}
-          
-          {session && !isMobile && <NotificationBell />}
-          
-          {!isMobile && <TourButton />}
-          {!isMobile && <PreviewDropdown />}
-          
-          <Button
-            variant="ghost"
-            size="m"
-            onClick={() => {
-              const params = new URLSearchParams(searchParams);
-              params.set('modal', 'cart');
-              setSearchParams(params);
-            }}
-          >
-            <ShoppingCart size={16} />
-            {cartCount > 0 && <Badge variant="danger">{cartCount}</Badge>}
-          </Button>
-
-          {isMobile ? (
-            <Button
-              variant="ghost"
-              size="m"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </Button>
-          ) : (
-            session ? (
-              <>
-                <Link to={`/profile/${session.userId}`}>
-                  <Button variant="ghost" size="m">
-                    <User size={16} style={{ marginRight: tokens.space.xxs }} />
-                    Profile
-                  </Button>
-                </Link>
-                <Button variant="secondary" size="m" onClick={handleSignOut}>
-                  Sign Out
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link to="/login">
-                  <Button variant="ghost" size="m">Sign In</Button>
-                </Link>
-                <Link to="/login">
-                  <Button variant="primary" size="m">Sign Up</Button>
-                </Link>
-              </>
-            )
-          )}
-        </div>
-      </div>
-      
-      {/* Mobile Menu */}
-      {isMobile && mobileMenuOpen && (
-        <div style={{
-          position: 'absolute',
-          top: 64,
-          left: 0,
-          right: 0,
-          background: tokens.color.bg.dark,
-          borderBottom: `1px solid ${tokens.color.text.secondary}40`,
-          padding: tokens.space.m,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: tokens.space.s,
-        }}>
-          <form onSubmit={(e) => { handleSearch(e); setMobileMenuOpen(false); }}>
-            <Input
-              type="search"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={setSearchQuery}
-            />
-          </form>
-          
-          <GlobalNav />
-          
-          {session && <NotificationBell />}
-          
-          {session ? (
-            <>
-              <Link to={`/profile/${session.userId}`} onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="ghost" size="m" className="w-full justify-start">
-                  <User size={16} style={{ marginRight: tokens.space.xs }} />
-                  Profile
-                </Button>
-              </Link>
-              <Button variant="secondary" size="m" onClick={() => { handleSignOut(); setMobileMenuOpen(false); }} className="w-full">
-                Sign Out
-              </Button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="ghost" size="m" className="w-full">Sign In</Button>
-              </Link>
-              <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="primary" size="m" className="w-full">Sign Up</Button>
-              </Link>
-            </>
-          )}
-        </div>
+    <header
+      className={cn(
+        'fixed top-0 inset-x-0 z-40 h-14 bg-background/80 backdrop-blur border-b border-border/60',
+        className
       )}
-      
-      <FinderModal open={finderOpen} onClose={() => setFinderOpen(false)} />
+      role="banner"
+    >
+      <div className="mx-auto max-w-[1400px] h-full px-3 md:px-4 flex items-center gap-3">
+        {/* Brand / Home */}
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 font-semibold tracking-tight"
+          aria-label="Yalls.ai Home"
+        >
+          <Home className="h-5 w-5" />
+          <span className="hidden sm:inline">yalls.ai</span>
+        </Link>
+
+        {/* Search (desktop/tablet) */}
+        <form onSubmit={onSearch} className="hidden md:flex items-center gap-2 grow max-w-2xl ml-2">
+          <div className="relative grow">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search people, businesses, apps…"
+              className="w-full h-10 pl-9 pr-3 rounded-md border border-border/60 bg-background"
+              aria-label="Search"
+            />
+          </div>
+        </form>
+
+        {/* Right actions */}
+        <nav aria-label="Top actions" className="ml-auto flex items-center gap-2">
+          {/* Notifications */}
+          <Link
+            to="/notifications"
+            className="relative inline-grid place-items-center h-10 w-10 rounded-md border border-border/60 hover:bg-accent/40 transition-colors"
+            aria-label="Notifications"
+          >
+            <Bell className="h-5 w-5" />
+            {notifCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] grid place-items-center font-semibold">
+                {notifCount > 99 ? '99+' : notifCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Cart */}
+          <Link
+            to="/marketplace/cart"
+            className="relative inline-grid place-items-center h-10 w-10 rounded-md border border-border/60 hover:bg-accent/40 transition-colors"
+            aria-label="Cart"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] grid place-items-center font-semibold">
+                {cartCount > 99 ? '99+' : cartCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Logout */}
+          <button
+            onClick={logout}
+            className="inline-flex items-center gap-2 h-10 px-3 rounded-md border border-border/60 hover:bg-accent/40 transition-colors"
+            aria-label="Logout"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
+        </nav>
+      </div>
     </header>
   );
 }

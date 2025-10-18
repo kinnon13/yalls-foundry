@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { DraggableAppGrid } from '@/components/desktop/DraggableAppGrid';
 import { DebugOverlay } from '@/feature-kernel/DebugOverlay';
 import { TwoUpFeed } from '@/components/dashboard/TwoUpFeed';
-import { BottomNav } from '@/components/layout/BottomNav';
+import { BottomDock } from '@/components/layout/BottomDock';
 import Footer from '@/components/layout/Footer';
 import BubbleRailTop from '@/components/social/BubbleRailTop';
 
@@ -317,7 +317,7 @@ export default function DashboardLayout() {
       </div>
 
       <DebugOverlay />
-      <BottomNav />
+      <BottomDock />
       <Footer />
     </div>
   );
