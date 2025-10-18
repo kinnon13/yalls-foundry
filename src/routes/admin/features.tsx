@@ -96,6 +96,7 @@ export default function FeaturesAdminPage() {
   const [scannedFeatures, setScannedFeatures] = useState<Map<string, ScannedFeature>>(new Map());
   const [showScanner, setShowScanner] = useState(false);
   const [sortBy, setSortBy] = useState<'status' | 'area'>('area');
+  const [selectedForExport, setSelectedForExport] = useState<Set<string>>(new Set());
 
   const features = kernel.features;
   const goldPath = kernel.validateGoldPath();
@@ -207,10 +208,19 @@ export default function FeaturesAdminPage() {
       return;
     }
 
+    const featuresToExport = selectedForExport.size > 0 
+      ? Array.from(scannedFeatures.values()).filter(f => selectedForExport.has(f.id))
+      : Array.from(scannedFeatures.values());
+
+    if (featuresToExport.length === 0) {
+      toast.error('No features selected for export');
+      return;
+    }
+
     const scanData = {
       timestamp: new Date().toISOString(),
       summary: {
-        totalFeatures: scannedFeatures.size,
+        totalFeatures: featuresToExport.length,
         byComputedStatus: {
           shell: 0,
           'full-ui': 0,
@@ -227,7 +237,7 @@ export default function FeaturesAdminPage() {
       features: [] as any[],
     };
 
-    Array.from(scannedFeatures.values()).forEach(f => {
+    featuresToExport.forEach(f => {
       // Update summary counts
       if (f.computed) {
         scanData.summary.byComputedStatus[f.computed]++;
@@ -261,7 +271,25 @@ export default function FeaturesAdminPage() {
     a.download = `feature-scan-results-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Exported scan results to JSON');
+    toast.success(`Exported ${featuresToExport.length} feature(s) to JSON`);
+  };
+
+  const handleSelectAll = () => {
+    setSelectedForExport(new Set(Array.from(scannedFeatures.keys())));
+  };
+
+  const handleSelectNone = () => {
+    setSelectedForExport(new Set());
+  };
+
+  const handleToggleFeature = (featureId: string) => {
+    const newSelection = new Set(selectedForExport);
+    if (newSelection.has(featureId)) {
+      newSelection.delete(featureId);
+    } else {
+      newSelection.add(featureId);
+    }
+    setSelectedForExport(newSelection);
   };
 
   const fetchTestResults = async () => {
@@ -609,10 +637,17 @@ export default function FeaturesAdminPage() {
             {scanLoading ? 'Scanning...' : 'Scan Features'}
           </Button>
           {scannedFeatures.size > 0 && (
-            <Button onClick={handleExportScanResults} variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export Scan Results
-            </Button>
+            <>
+              <Button onClick={handleExportScanResults} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Export {selectedForExport.size > 0 ? `${selectedForExport.size} Selected` : 'All'}
+              </Button>
+              {selectedForExport.size > 0 && (
+                <Button onClick={handleSelectNone} variant="ghost" size="sm">
+                  Clear Selection
+                </Button>
+              )}
+            </>
           )}
           <Button onClick={handleExportJSON} variant="outline">
             <Download className="h-4 w-4 mr-2" />
@@ -915,10 +950,31 @@ export default function FeaturesAdminPage() {
           </CardHeader>
           {showScanner && (
             <CardContent>
+              <div className="flex items-center gap-2 mb-4">
+                <Button onClick={handleSelectAll} variant="outline" size="sm">
+                  Select All
+                </Button>
+                <Button onClick={handleSelectNone} variant="outline" size="sm">
+                  Select None
+                </Button>
+                {selectedForExport.size > 0 && (
+                  <span className="text-sm text-muted-foreground">
+                    {selectedForExport.size} selected
+                  </span>
+                )}
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
+                      <th className="text-center p-2 w-12">
+                        <input
+                          type="checkbox"
+                          checked={selectedForExport.size === scannedFeatures.size && scannedFeatures.size > 0}
+                          onChange={(e) => e.target.checked ? handleSelectAll() : handleSelectNone()}
+                          className="cursor-pointer"
+                        />
+                      </th>
                       <th className="text-left p-2">Feature</th>
                       <th className="text-center p-2">Area</th>
                       <th className="text-center p-2">Manifest</th>
@@ -933,6 +989,14 @@ export default function FeaturesAdminPage() {
                       const scan = scannedFeatures.get(feature.id);
                       return (
                         <tr key={feature.id} className="border-b hover:bg-accent">
+                          <td className="text-center p-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedForExport.has(feature.id)}
+                              onChange={() => handleToggleFeature(feature.id)}
+                              className="cursor-pointer"
+                            />
+                          </td>
                           <td className="p-2">{feature.title}</td>
                           <td className="text-center p-2">{feature.area}</td>
                           <td className="text-center p-2">
