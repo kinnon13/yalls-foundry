@@ -42,8 +42,28 @@
       "description": "Added architecture validation step before work report validation"
     },
     {
+      "file": "scripts/health/check-repo.mjs",
+      "description": "Created repo health checker that validates file presence, area-discovery.json structure, aliases, and legacy references"
+    },
+    {
+      "file": "scripts/health/check-db.mjs",
+      "description": "Created DB health checker that validates tables, RLS policies, RPCs, SECURITY DEFINER functions, and PII protection"
+    },
+    {
+      "file": "scripts/health/generate-report.mjs",
+      "description": "Created health report generator that orchestrates repo + DB checks and outputs health-report.json with severity levels"
+    },
+    {
+      "file": ".github/workflows/health-report.yml",
+      "description": "Created CI workflow that runs health checks on PRs and posts summary comments"
+    },
+    {
+      "file": "docs/SMOKE_TESTS.md",
+      "description": "Created smoke test checklist for verifying Phase 1-4 implementation post-merge"
+    },
+    {
       "file": "work-report.json",
-      "description": "Updated work report with Phase 1-4 implementation details"
+      "description": "Updated work report with Phase 1-4 implementation details and health system additions"
     }
   ],
   "commands": [
@@ -51,6 +71,11 @@
       "cmd": "node scripts/validate-architecture.mjs",
       "exitCode": 0,
       "notes": "Architecture validation passes"
+    },
+    {
+      "cmd": "node scripts/health/generate-report.mjs",
+      "exitCode": "pending",
+      "notes": "Health report generation (requires DATABASE_URL in CI)"
     }
   ],
   "migrations": [

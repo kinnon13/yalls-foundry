@@ -1,0 +1,56 @@
+name: Health Report
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm i pg
+
+      - name: Validate architecture config
+        run: node scripts/validate-architecture.mjs
+
+      - name: Generate Health Report
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/health/generate-report.mjs
+
+      - name: Upload health-report.json
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-report
+          path: health-report.json
+
+      - name: Comment summary on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const rep = JSON.parse(fs.readFileSync('health-report.json','utf8'));
+            const body = [
+              '### 🩺 Health Report',
+              `- OK: **${rep.summary.ok}**`,
+              `- WARN: **${rep.summary.warnings}**`,
+              `- CRIT: **${rep.summary.critical}**`,
+              '',
+              'Top issues:',
+              ...rep.items.filter(i=>!i.ok).slice(0,10).map(i=>`- **${i.severity.toUpperCase()}**: ${i.msg}`)
+            ].join('\n');
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
