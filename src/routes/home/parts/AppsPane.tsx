@@ -260,7 +260,7 @@ export default function AppsPane() {
           <div className="w-full h-full">
             {/* App Icons Grid - Background Layer */}
             <div 
-              className={cn("grid gap-3 transition-opacity duration-200", openApp && "opacity-20")}
+              className={cn("grid gap-3 place-content-center w-full h-full transition-opacity duration-200", openApp && "opacity-20")}
               style={{
                 gridTemplateColumns: `repeat(${gridDims.cols}, ${tile}px)`,
                 gridTemplateRows: `repeat(${gridDims.rows}, ${tile}px)`,
