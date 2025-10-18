@@ -24,7 +24,6 @@ import { cn } from '@/lib/utils';
 import { useAppPins, type AppFolder } from '@/hooks/useAppPins';
 import { FolderView } from './FolderView';
 import { supabase } from '@/integrations/supabase/client';
-import { TikTokFeed } from '@/components/social/TikTokFeed';
 
 interface AppTile {
   id: string;
@@ -60,23 +59,22 @@ const APPS: Record<string, AppTile> = {
 };
 
 // Default grid layout (8 cols × 6 rows = 48 spots)
-// Social feed takes up 3×2 grid (cols 2-4, rows 0-1)
 const DEFAULT_POSITIONS: Record<string, [number, number]> = {
   home: [0, 0],
   profile: [1, 0],
-  // social feed occupies [2,0], [3,0], [4,0], [2,1], [3,1], [4,1]
-  marketplace: [5, 0],
-  messages: [6, 0],
+  social: [2, 0],
+  marketplace: [3, 0],
+  messages: [4, 0],
   calendar: [0, 1],
   earnings: [1, 1],
-  business: [5, 1],
-  producers: [6, 1],
+  orders: [2, 1],
+  business: [3, 1],
+  producers: [4, 1],
   stallions: [0, 2],
   farm_ops: [1, 2],
   incentives: [2, 2],
   approvals: [3, 2],
   activity: [4, 2],
-  orders: [5, 2],
   discover: [0, 3],
   map: [1, 3],
   page: [2, 3],
@@ -174,9 +172,7 @@ export function DraggableAppGrid() {
         <div className="relative z-20 w-full h-full overflow-auto">
           <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16">
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-4 sm:gap-6 md:gap-7 lg:gap-8">
-              {Object.values(APPS)
-                .filter(app => app.id !== 'social') // Remove old social app tile
-                .map((app) => (
+              {Object.values(APPS).map((app) => (
                 <button
                   key={app.id}
                   onClick={() => handleAppClick(app)}
@@ -185,28 +181,6 @@ export function DraggableAppGrid() {
                   {renderApp(app, activeId === app.id)}
                 </button>
               ))}
-              
-              {/* Social Feed - spans 3 columns × 2 rows */}
-              <div 
-                className="col-span-3 row-span-2 rounded-3xl overflow-hidden border-2 border-border/50 shadow-xl bg-background"
-                style={{ 
-                  gridColumn: '3 / 6',
-                  gridRow: '1 / 3',
-                  height: '400px'
-                }}
-              >
-                <div className="h-full flex flex-col">
-                  <div className="h-10 border-b flex items-center justify-between px-4 bg-gradient-to-br from-orange-500/20 to-red-600/5">
-                    <div className="flex items-center gap-2">
-                      <Flame className="w-5 h-5 text-orange-500" />
-                      <span className="font-semibold text-sm">Social Feed</span>
-                    </div>
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <TikTokFeed />
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
