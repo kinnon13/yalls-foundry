@@ -139,7 +139,7 @@ export default function AppsPane() {
 
 
   return (
-    <div className="space-y-4 bg-gradient-to-b from-accent/40 to-background h-full p-4">
+    <div className="space-y-4">
       {/* Always-visible favorites bar */}
       <section className="mb-2">
         <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
