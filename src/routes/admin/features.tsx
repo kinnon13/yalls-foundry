@@ -13,8 +13,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Shield, AlertCircle, Download, RefreshCw, CheckCircle, XCircle, Clock, ExternalLink, Scan } from 'lucide-react';
+import { Plus, Shield, AlertCircle, Download, RefreshCw, CheckCircle, XCircle, Clock, ExternalLink, Scan, ChevronDown, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FeatureCard } from '@/components/admin/FeatureCard';
@@ -97,6 +98,9 @@ export default function FeaturesAdminPage() {
   const [showScanner, setShowScanner] = useState(false);
   const [sortBy, setSortBy] = useState<'status' | 'area'>('area');
   const [selectedForExport, setSelectedForExport] = useState<Set<string>>(new Set());
+  const [showUndocRoutes, setShowUndocRoutes] = useState(false);
+  const [showUndocRpcs, setShowUndocRpcs] = useState(false);
+  const [showUndocTables, setShowUndocTables] = useState(false);
 
   const features = kernel.features;
   const goldPath = kernel.validateGoldPath();
@@ -290,6 +294,37 @@ export default function FeaturesAdminPage() {
       newSelection.add(featureId);
     }
     setSelectedForExport(newSelection);
+  };
+
+  const handleExportUndocumented = () => {
+    const undoc = (window as any).__undocumented;
+    if (!undoc) {
+      toast.error('No undocumented items to export');
+      return;
+    }
+
+    const data = {
+      timestamp: new Date().toISOString(),
+      summary: {
+        routes: undoc.routes?.length || 0,
+        rpcs: undoc.rpcs?.length || 0,
+        tables: undoc.tables?.length || 0,
+      },
+      undocumented: {
+        routes: undoc.routes || [],
+        rpcs: undoc.rpcs || [],
+        tables: undoc.tables || [],
+      }
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `undocumented-items-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${data.summary.routes + data.summary.rpcs + data.summary.tables} undocumented items`);
   };
 
   const fetchTestResults = async () => {
@@ -864,75 +899,99 @@ export default function FeaturesAdminPage() {
       </Card>
 
       {/* Undocumented Items */}
-      {scannedFeatures.size > 0 && (window as any).__undocumented && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Undocumented Items</CardTitle>
-            <CardDescription>Routes, RPCs, and tables discovered but not in features.json</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Undocumented Routes */}
-            <div>
-              <h3 className="font-semibold mb-2 flex items-center gap-2">
-                <Badge variant="outline">{((window as any).__undocumented.routes || []).length}</Badge>
-                Undocumented Routes
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {((window as any).__undocumented.routes || []).slice(0, 20).map((route: string) => (
-                  <Badge key={route} variant="secondary" className="text-xs">
-                    {route}
-                  </Badge>
-                ))}
-                {((window as any).__undocumented.routes || []).length > 20 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{((window as any).__undocumented.routes || []).length - 20} more
-                  </Badge>
-                )}
+      {scannedFeatures.size > 0 && (window as any).__undocumented && (() => {
+        const undoc = (window as any).__undocumented;
+        const totalUndoc = (undoc.routes?.length || 0) + (undoc.rpcs?.length || 0) + (undoc.tables?.length || 0);
+        
+        return (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    Undocumented Items
+                    <Badge variant="outline" className="text-lg">{totalUndoc}</Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    Found in codebase/database but not in features.json
+                  </CardDescription>
+                </div>
+                <Button onClick={handleExportUndocumented} variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export All
+                </Button>
               </div>
-            </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Undocumented Routes */}
+              <Collapsible open={showUndocRoutes} onOpenChange={setShowUndocRoutes}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between hover:bg-accent">
+                    <div className="flex items-center gap-2">
+                      {showUndocRoutes ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      <span className="font-semibold">Undocumented Routes</span>
+                      <Badge variant="outline">{undoc.routes?.length || 0}</Badge>
+                    </div>
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-3">
+                  <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto p-2 border rounded-lg">
+                    {(undoc.routes || []).map((route: string) => (
+                      <Badge key={route} variant="secondary" className="text-xs">
+                        {route}
+                      </Badge>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
-            {/* Undocumented RPCs */}
-            <div>
-              <h3 className="font-semibold mb-2 flex items-center gap-2">
-                <Badge variant="outline">{((window as any).__undocumented.rpcs || []).length}</Badge>
-                Undocumented RPCs
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {((window as any).__undocumented.rpcs || []).slice(0, 20).map((rpc: string) => (
-                  <Badge key={rpc} variant="secondary" className="text-xs font-mono">
-                    {rpc}
-                  </Badge>
-                ))}
-                {((window as any).__undocumented.rpcs || []).length > 20 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{((window as any).__undocumented.rpcs || []).length - 20} more
-                  </Badge>
-                )}
-              </div>
-            </div>
+              {/* Undocumented RPCs */}
+              <Collapsible open={showUndocRpcs} onOpenChange={setShowUndocRpcs}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between hover:bg-accent">
+                    <div className="flex items-center gap-2">
+                      {showUndocRpcs ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      <span className="font-semibold">Undocumented RPCs</span>
+                      <Badge variant="outline">{undoc.rpcs?.length || 0}</Badge>
+                    </div>
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-3">
+                  <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto p-2 border rounded-lg">
+                    {(undoc.rpcs || []).map((rpc: string) => (
+                      <Badge key={rpc} variant="secondary" className="text-xs font-mono">
+                        {rpc}
+                      </Badge>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
-            {/* Undocumented Tables */}
-            <div>
-              <h3 className="font-semibold mb-2 flex items-center gap-2">
-                <Badge variant="outline">{((window as any).__undocumented.tables || []).length}</Badge>
-                Undocumented Tables
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {((window as any).__undocumented.tables || []).slice(0, 20).map((table: string) => (
-                  <Badge key={table} variant="secondary" className="text-xs font-mono">
-                    {table}
-                  </Badge>
-                ))}
-                {((window as any).__undocumented.tables || []).length > 20 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{((window as any).__undocumented.tables || []).length - 20} more
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              {/* Undocumented Tables */}
+              <Collapsible open={showUndocTables} onOpenChange={setShowUndocTables}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between hover:bg-accent">
+                    <div className="flex items-center gap-2">
+                      {showUndocTables ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      <span className="font-semibold">Undocumented Tables</span>
+                      <Badge variant="outline">{undoc.tables?.length || 0}</Badge>
+                    </div>
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-3">
+                  <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto p-2 border rounded-lg">
+                    {(undoc.tables || []).map((table: string) => (
+                      <Badge key={table} variant="secondary" className="text-xs font-mono">
+                        {table}
+                      </Badge>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Scanner Results */}
       {scannedFeatures.size > 0 && (
