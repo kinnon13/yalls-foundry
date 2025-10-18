@@ -1,4 +1,4 @@
-import React from "react";
+import { StrictMode } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 
@@ -373,7 +373,7 @@ function AppContent() {
 }
 
 const App = () => (
-  <React.StrictMode>
+  <StrictMode>
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
@@ -389,7 +389,7 @@ const App = () => (
         </BrowserRouter>
       </QueryClientProvider>
     </HelmetProvider>
-  </React.StrictMode>
+  </StrictMode>
 );
 
 export default App;

@@ -8,8 +8,8 @@ import { initSentry } from "./lib/sentry";
 // Task 13: Initialize Sentry
 initSentry();
 
-// Register service worker for PWA
-if ('serviceWorker' in navigator) {
+// Register service worker for PWA (only in production to avoid dev cache issues)
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 
