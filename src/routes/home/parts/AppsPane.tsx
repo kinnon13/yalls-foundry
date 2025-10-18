@@ -155,7 +155,7 @@ export default function AppsPane() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden">
       {/* Sticky header (Favorites + controls) */}
       <section className="sticky top-0 z-20 bg-muted/30 px-2 py-1 backdrop-blur">
         <h3 className="text-base font-semibold text-foreground mb-1 text-center">Favorites</h3>
@@ -175,13 +175,15 @@ export default function AppsPane() {
         </div>
       </section>
 
-      {/* Grid of app tiles & pins (scrollable) */}
-      <div
-        className="grid gap-3 bg-muted/20 p-2 pt-4 pb-20"
-        style={{
-          gridTemplateColumns: `repeat(auto-fill, minmax(${tile}px, 1fr))`,
-        }}
-      >
+      {/* Horizontal scrolling grid of app tiles & pins */}
+      <div className="flex gap-3 bg-muted/20 p-2 pt-4 pb-20 overflow-x-auto overflow-y-hidden">
+        <div 
+          className="grid gap-3 auto-cols-max"
+          style={{
+            gridTemplateRows: `repeat(auto-fill, minmax(${tile}px, 1fr))`,
+            gridAutoFlow: 'column',
+          }}
+        >
         {/* Installed apps - now filtered by capabilities */}
         {visibleApps.map((app) => {
           const Icon = app.icon;
@@ -239,6 +241,7 @@ export default function AppsPane() {
             </span>
           </button>
         ))}
+        </div>
       </div>
       </div>
     </div>
