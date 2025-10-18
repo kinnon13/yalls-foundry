@@ -106,10 +106,10 @@ test.describe('Notifications Phase 2: Full Wiring', () => {
     await page.goto(`${BASE_URL}/settings/notifications`);
     await page.waitForLoadState('networkidle');
 
-    // Set quiet hours to current time ± 1 hour
-    const now = new Date();
-    const startTime = `${String(now.getHours() - 1).padStart(2, '0')}:00`;
-    const endTime = `${String(now.getHours() + 1).padStart(2, '0')}:00`;
+    // Set quiet hours to current time ± 1 hour (with wraparound)
+    const h = new Date().getHours();
+    const startTime = `${String((h + 23) % 24).padStart(2, '0')}:00`;
+    const endTime = `${String((h + 1) % 24).padStart(2, '0')}:00`;
 
     await page.locator('#quiet-start').fill(startTime);
     await page.locator('#quiet-end').fill(endTime);
