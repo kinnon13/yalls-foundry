@@ -95,6 +95,7 @@ export default function FeaturesAdminPage() {
   const [scanLoading, setScanLoading] = useState(false);
   const [scannedFeatures, setScannedFeatures] = useState<Map<string, ScannedFeature>>(new Map());
   const [showScanner, setShowScanner] = useState(false);
+  const [sortBy, setSortBy] = useState<'status' | 'area'>('area');
 
   const features = kernel.features;
   const goldPath = kernel.validateGoldPath();
@@ -117,6 +118,35 @@ export default function FeaturesAdminPage() {
       return matchesSearch && matchesArea && matchesStatus && matchesOwner && matchesSeverity && matchesPlaceholder;
     });
   }, [features, search, areaFilter, statusFilter, ownerFilter, severityFilter, showPlaceholders]);
+
+  const sorted = useMemo(() => {
+    const result = [...filtered];
+    if (sortBy === 'area') {
+      result.sort((a, b) => {
+        const aArea = AREA_ALIASES[a.area] ?? a.area;
+        const bArea = AREA_ALIASES[b.area] ?? b.area;
+        return aArea.localeCompare(bArea) || a.title.localeCompare(b.title);
+      });
+    } else {
+      const statusOrder = { 'wired': 0, 'full-ui': 1, 'shell': 2 };
+      result.sort((a, b) => {
+        const aStatus = statusOrder[a.status as keyof typeof statusOrder] ?? 99;
+        const bStatus = statusOrder[b.status as keyof typeof statusOrder] ?? 99;
+        return aStatus - bStatus || a.title.localeCompare(b.title);
+      });
+    }
+    return result;
+  }, [filtered, sortBy]);
+
+  const counts = useMemo(() => {
+    const shell = filtered.filter(f => f.status === 'shell').length;
+    const fullUi = filtered.filter(f => f.status === 'full-ui').length;
+    const wired = filtered.filter(f => f.status === 'wired').length;
+    const goldPathIds = new Set(GOLD_PATH_FEATURES);
+    const goldPathCount = filtered.filter(f => goldPathIds.has(f.id)).length;
+    const blockingCount = filtered.filter(f => f.severity === 'p0').length;
+    return { shell, fullUi, wired, goldPathCount, blockingCount };
+  }, [filtered]);
 
   const handleEdit = (feature: Feature) => {
     setEditingFeature(feature);
@@ -638,29 +668,27 @@ export default function FeaturesAdminPage() {
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-4 gap-4">
-        <div className="rounded-lg border p-4">
-          <div className="text-2xl font-bold text-gray-600">{byStatus.shell || 0}</div>
-          <div className="text-sm text-muted-foreground">Shell</div>
-          {isProd && byStatus.shell > 0 && (
-            <div className="text-xs text-yellow-600 mt-1">Should be hidden in prod</div>
-          )}
-        </div>
-        <div className="rounded-lg border p-4">
-          <div className="text-2xl font-bold text-blue-600">{byStatus['full-ui'] || 0}</div>
-          <div className="text-sm text-muted-foreground">Full UI</div>
-        </div>
-        <div className="rounded-lg border p-4">
-          <div className="text-2xl font-bold text-green-600">{byStatus.wired || 0}</div>
-          <div className="text-sm text-muted-foreground">Wired</div>
-        </div>
-        <div className="rounded-lg border p-4">
-          <div className="text-2xl font-bold text-amber-600">{GOLD_PATH_FEATURES.length}</div>
-          <div className="text-sm text-muted-foreground">Gold-Path</div>
-          <div className={`text-xs mt-1 ${goldPath.ready ? 'text-green-600' : 'text-red-600'}`}>
-            {goldPath.ready ? 'All ready' : `${goldPath.blocking.length} blocking`}
-          </div>
-        </div>
+      <div className="flex items-center gap-3 flex-wrap">
+        <Badge variant="secondary" className="text-sm px-3 py-1.5">
+          <span className="font-semibold">{counts.shell}</span>
+          <span className="ml-1.5 text-muted-foreground">Shell</span>
+        </Badge>
+        <Badge variant="secondary" className="text-sm px-3 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-100">
+          <span className="font-semibold">{counts.fullUi}</span>
+          <span className="ml-1.5">Full UI</span>
+        </Badge>
+        <Badge variant="secondary" className="text-sm px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-100">
+          <span className="font-semibold">{counts.wired}</span>
+          <span className="ml-1.5">Wired</span>
+        </Badge>
+        <Badge variant="secondary" className="text-sm px-3 py-1.5 bg-amber-100 text-amber-700 hover:bg-amber-100">
+          <span className="font-semibold">{counts.goldPathCount}</span>
+          <span className="ml-1.5">Gold Path</span>
+        </Badge>
+        <Badge variant="secondary" className="text-sm px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-100">
+          <span className="font-semibold">{counts.blockingCount}</span>
+          <span className="ml-1.5">Blocking (P0)</span>
+        </Badge>
       </div>
 
       {/* Filters */}
@@ -712,6 +740,15 @@ export default function FeaturesAdminPage() {
             <SelectItem value="all">All Owners</SelectItem>
             <SelectItem value="web">Web</SelectItem>
             <SelectItem value="platform">Platform</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'status' | 'area')}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="area">Sort by Area</SelectItem>
+            <SelectItem value="status">Sort by Status</SelectItem>
           </SelectContent>
         </Select>
         <Button
@@ -892,7 +929,7 @@ export default function FeaturesAdminPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((feature) => {
+                    {sorted.map((feature) => {
                       const scan = scannedFeatures.get(feature.id);
                       return (
                         <tr key={feature.id} className="border-b hover:bg-accent">
@@ -941,7 +978,7 @@ export default function FeaturesAdminPage() {
 
       {/* Features Grid */}
       <div className="space-y-3">
-        {filtered.map((feature) => {
+        {sorted.map((feature) => {
           const scan = scannedFeatures.get(feature.id);
           const displayFeature = scan || feature;
           return (
@@ -957,7 +994,7 @@ export default function FeaturesAdminPage() {
         })}
       </div>
 
-      {filtered.length === 0 && (
+      {sorted.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
           No features match your filters
         </div>
