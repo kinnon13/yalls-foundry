@@ -94,6 +94,13 @@ export default function DashboardLayout() {
     id: userId || '00000000-0000-0000-0000-000000000000' 
   });
   
+  // Always clear any module param to hide center panel
+  useEffect(() => {
+    if (rawModule) {
+      setSp({});
+    }
+  }, [rawModule, setSp]);
+  
   const isScreenSaverActive = false;
 
   // Social Feed resizing
@@ -139,45 +146,9 @@ export default function DashboardLayout() {
       {/* Global header */}
       <GlobalHeader />
 
-      {/* Main content area */}
-      <div className="flex-1 relative min-h-0 overflow-hidden">
-        {m ? (
-          <div className="h-full overflow-auto">
-            <div className="max-w-7xl mx-auto px-4 py-6">
-              <div className="flex items-center justify-between mb-6">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => {
-                    window.location.href = '/dashboard';
-                  }}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Back to Desktop
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => {
-                    window.location.href = '/dashboard';
-                  }}
-                >
-                  <X className="w-4 h-4" />
-                  Close
-                </Button>
-              </div>
-              <DashboardErrorBoundary>
-                <Suspense fallback={<PanelSkeleton />}>
-                  <Panel />
-                </Suspense>
-              </DashboardErrorBoundary>
-            </div>
-          </div>
-        ) : (
-          /* Clean desktop view with just the social feed */
-          <div className="h-full w-full bg-background" />
-        )}
+      {/* Main content area - hidden per user request */}
+      <div className="flex-1 relative min-h-0 overflow-hidden hidden">
+        {/* Center dashboard hidden */}
       </div>
 
       {/* Social Feed Sidecar - Resizable overlay */}
