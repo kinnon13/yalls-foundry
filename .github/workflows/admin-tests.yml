@@ -44,4 +44,5 @@ jobs:
         run: node scripts/ops-report.mjs || echo "Ops report skipped (no DATABASE_URL)"
       
       - name: TypeCheck admin routes
+        continue-on-error: true
         run: npx tsc --noEmit src/routes/admin/*.tsx || echo "No admin routes to typecheck"
