@@ -15,22 +15,15 @@ export default function HomePage() {
         </div>
 
         {/* Tablet & Desktop */}
-        <div className="hidden md:block mx-auto max-w-[1600px] px-3 md:px-4">
-          {/* Tablet: 1/3 apps | 2/3 feed — Desktop: 2/3 apps | 1/3 feed */}
-          <div
-            className="
-              grid gap-4
-              md:grid-cols-[minmax(320px,1fr)_minmax(480px,2fr)]
-              xl:grid-cols-[minmax(720px,2fr)_minmax(420px,1fr)]
-              items-start
-            "
-          >
-            <section aria-label="Apps" className="min-h-[calc(100vh-14rem)]">
-              <AppsPane />
-            </section>
-            <aside aria-label="Social Feed" className="min-h-[calc(100vh-14rem)]">
-              <SocialFeedPane />
-            </aside>
+        <div className="hidden md:grid h-[calc(100vh-112px)] gap-6 px-6 mx-auto max-w-[1600px]
+          md:grid-cols-[1fr_2fr] xl:grid-cols-[2fr_1fr]">
+          {/* Apps (left) */}
+          <div className="min-w-0">
+            <AppsPane />
+          </div>
+          {/* Reels (right) */}
+          <div className="min-w-[360px] max-w-[560px] justify-self-end w-full">
+            <SocialFeedPane />
           </div>
         </div>
       </main>

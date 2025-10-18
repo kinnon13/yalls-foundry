@@ -104,9 +104,15 @@ function Reels({
       aria-label="Social feed"
     >
       {items.map(card => (
-        <article key={card.id} className="snap-start h-[calc(100vh-14rem)] relative">
+        <article key={card.id} className="snap-start h-[calc(100vh-14rem)] relative overflow-hidden">
           {/* media fills the panel, no rounded masks */}
-          <img src={card.img} alt="" className="absolute inset-0 w-full h-full object-cover select-none" draggable={false} loading="lazy" />
+          <img 
+            src={card.img} 
+            alt="" 
+            className="absolute inset-0 w-full h-full object-cover select-none" 
+            draggable={false}
+            loading="lazy"
+          />
 
           {/* gradient for legibility */}
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />

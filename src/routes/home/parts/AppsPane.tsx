@@ -90,7 +90,7 @@ export default function AppsPane() {
   return (
     <div className="space-y-4">
       {/* Bubbles across the very top, sticky below header */}
-      <div className="sticky top-14 z-10 bg-background/80 backdrop-blur">
+      <div className="sticky top-[56px] z-10 bg-background/70 backdrop-blur pb-2">
         <BubbleRailTop />
       </div>
 
@@ -111,8 +111,10 @@ export default function AppsPane() {
 
       {/* Grid of app tiles & pins (scalable) */}
       <div
-        style={{ ['--tile' as any]: `${tile}px` }}
-        className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(var(--tile),1fr))]"
+        className="grid gap-3"
+        style={{
+          gridTemplateColumns: `repeat(auto-fill, minmax(${tile}px, 1fr))`,
+        }}
       >
         {/* Installed apps */}
         {APPS.map((app) => {
