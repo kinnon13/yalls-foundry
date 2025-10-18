@@ -1,27 +1,25 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import AppsPane from './AppsPane';
 import SocialFeedPane from './SocialFeedPane';
 import { User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function PhonePager() {
-  const pages = [
-    { key: 'apps', node: <AppsPageMini /> },
-    { key: 'feed', node: <FeedPageMini initialTab="following" /> },
-    { key: 'shop', node: <FeedPageMini initialTab="shop" /> },
-    { key: 'profile', node: <ProfileMini /> },
-  ];
-
+  const pages = ['apps', 'feed', 'shop', 'profile'] as const;
+  
   return (
     <div className="w-screen overflow-x-auto snap-x snap-mandatory flex no-scrollbar">
-      {pages.map(p => (
-        <section
-          key={p.key}
-          className="snap-start shrink-0 w-screen min-h-[calc(100vh-14rem)] px-3"
-          aria-label={p.key}
+      {pages.map(key => (
+        <section 
+          key={key} 
+          className="snap-start shrink-0 w-screen min-h-[calc(100vh-14rem)] px-3" 
+          aria-label={key}
         >
-          {p.node}
+          {key === 'apps' && <AppsPageMini />}
+          {key === 'feed' && <FeedPageMini />}
+          {key === 'shop' && <FeedPageMini />}
+          {key === 'profile' && <ProfileMini />}
         </section>
       ))}
     </div>
@@ -36,7 +34,7 @@ function AppsPageMini() {
   );
 }
 
-function FeedPageMini({ initialTab }: {initialTab:'following'|'for-you'|'shop'}) {
+function FeedPageMini() {
   return (
     <div className="py-3">
       <SocialFeedPane />
@@ -86,3 +84,4 @@ function ProfileMini() {
     </div>
   );
 }
+

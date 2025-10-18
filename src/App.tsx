@@ -155,6 +155,9 @@ function AppContent() {
           <Route path="/" element={<HomePage />} />
           <Route path="/home" element={<HomePage />} />
           
+          {/* Redirect old dashboard to new home */}
+          <Route path="/dashboard" element={<Navigate to="/home" replace />} />
+          
           {/* 7-Route Spine */}
           <Route path="/search" element={<Search />} />
           <Route path="/login" element={<Login />} />

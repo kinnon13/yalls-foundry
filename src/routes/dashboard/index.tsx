@@ -184,24 +184,6 @@ export default function DashboardLayout() {
   
   const isScreenSaverActive = false;
 
-  // Guard: if a builder tries to move nodes, snap them back
-  useEffect(() => {
-    const grid = document.getElementById('dashboard-grid');
-    if (!grid) return;
-
-    const fix = () => {
-      const apps = document.getElementById('apps-pane');
-      const feed = document.getElementById('sidefeed-pane');
-      if (apps && apps.parentElement !== grid) grid.appendChild(apps);
-      if (feed && feed.parentElement !== grid) grid.appendChild(feed);
-    };
-
-    const obs = new MutationObserver(fix);
-    obs.observe(document.body, { childList: true, subtree: true });
-    fix();
-    return () => obs.disconnect();
-  }, []);
-
   return (
     <div className="h-dvh flex flex-col bg-background overflow-hidden">
       {/* Wallpaper */}

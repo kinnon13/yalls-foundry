@@ -9,20 +9,22 @@ export default function HomePage() {
     <>
       <GlobalHeader />
       <main className="pt-14 pb-16">
-        {/* Phone: horizontal pager with 4 screens */}
+        {/* Phone: horizontal pager (Apps | Feed | Shop | Profile) */}
         <div className="md:hidden">
           <PhonePager />
         </div>
 
-        {/* Tablet & Desktop: grid */}
-        <div className="hidden md:grid mx-auto max-w-[1400px] gap-4 px-3 md:px-4">
-          {/* Tablet: 1/3 apps (left) | 2/3 feed (right) */}
-          {/* Desktop: 2/3 apps (left) | 1/3 feed (right) */}
-          <div className="
-            grid gap-4
-            md:grid-cols-[1fr_2fr]
-            xl:grid-cols-[2fr_1fr]
-          ">
+        {/* Tablet & Desktop */}
+        <div className="hidden md:block mx-auto max-w-[1600px] px-3 md:px-4">
+          {/* Tablet: 1/3 apps | 2/3 feed — Desktop: 2/3 apps | 1/3 feed */}
+          <div
+            className="
+              grid gap-4
+              md:grid-cols-[minmax(320px,1fr)_minmax(480px,2fr)]
+              xl:grid-cols-[minmax(720px,2fr)_minmax(420px,1fr)]
+              items-start
+            "
+          >
             <section aria-label="Apps" className="min-h-[calc(100vh-14rem)]">
               <AppsPane />
             </section>
@@ -36,3 +38,4 @@ export default function HomePage() {
     </>
   );
 }
+

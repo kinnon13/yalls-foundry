@@ -89,8 +89,8 @@ export default function AppsPane() {
 
   return (
     <div className="space-y-4">
-      {/* Horizontal bubble rail */}
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b border-border/40 -mx-3 px-3 md:mx-0 md:px-0">
+      {/* Bubbles across the very top, sticky below header */}
+      <div className="sticky top-14 z-10 bg-background/80 backdrop-blur">
         <BubbleRailTop />
       </div>
 
@@ -109,7 +109,7 @@ export default function AppsPane() {
         <span className="text-xs text-muted-foreground w-12">{tile}px</span>
       </div>
 
-      {/* Grid of apps + pinned entities */}
+      {/* Grid of app tiles & pins (scalable) */}
       <div
         style={{ ['--tile' as any]: `${tile}px` }}
         className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(var(--tile),1fr))]"
