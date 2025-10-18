@@ -62,10 +62,15 @@ export default function TestRunner() {
       }
 
       if (data?.error) {
-        console.error('Test execution error:', data.error);
-        toast.error('Test execution failed', {
-          description: data.error
-        });
+        if (data.error === 'not_supported') {
+          toast.warning('Tests not supported in preview', {
+            description: 'Run `pnpm test` locally or in CI. This UI will display results when a CI endpoint is connected.'
+          });
+        } else {
+          toast.error('Test execution failed', {
+            description: data.error
+          });
+        }
         setRunning(false);
         return;
       }
