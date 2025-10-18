@@ -67,10 +67,10 @@ export default function BubbleRailTop() {
 
   return (
     <div className="px-3 py-2 overflow-x-auto no-scrollbar">
-      <div ref={ref} className="flex gap-3 cursor-grab select-none">
+      <div ref={ref} className="flex gap-3 cursor-grab select-none items-start">
         {bubbles.concat(bubbles).map((b, i) => (
-          <button key={b.id + '-' + i} className="flex-shrink-0 w-14">
-            <span className="block h-14 w-14 rounded-full ring-2 ring-primary/60 overflow-hidden">
+          <button key={b.id + '-' + i} className="flex-shrink-0 w-16">
+            <span className="block h-14 w-14 rounded-full ring-2 ring-primary/60 overflow-hidden mx-auto">
               {b.avatar ? (
                 <img src={b.avatar} alt={b.name} className="h-full w-full object-cover" />
               ) : (
@@ -79,7 +79,7 @@ export default function BubbleRailTop() {
                 </span>
               )}
             </span>
-            <span className="block mt-1 text-[10px] leading-tight line-clamp-2 opacity-80">
+            <span className="block mt-1 text-[10px] text-center leading-tight line-clamp-2 opacity-80">
               {b.name}
             </span>
           </button>

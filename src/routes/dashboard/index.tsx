@@ -87,6 +87,14 @@ export default function DashboardLayout() {
 
   // Drag handlers
   const handleDragStart = (e: React.MouseEvent) => {
+    // Don't start drag from interactive elements
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button, a, input, textarea, select, [data-nodrag], .no-drag') ||
+      (target as HTMLElement).getAttribute('contenteditable') === 'true'
+    ) {
+      return;
+    }
     setIsDragging(true);
     setDragStart({ x: e.clientX - feedPosition.x, y: e.clientY - feedPosition.y });
   };
@@ -130,6 +138,7 @@ export default function DashboardLayout() {
         let newWidth = prev.width;
         let newHeight = prev.height;
         let newX = feedPosition.x;
+        let newY = feedPosition.y;
 
         if (isResizing.includes('left')) {
           newWidth = Math.max(320, prev.width - deltaX);
@@ -141,8 +150,12 @@ export default function DashboardLayout() {
         if (isResizing.includes('bottom') || isResizing.includes('corner')) {
           newHeight = Math.max(400, prev.height + deltaY);
         }
+        if (isResizing.includes('top')) {
+          newHeight = Math.max(400, prev.height - deltaY);
+          newY = feedPosition.y + deltaY;
+        }
 
-        setFeedPosition(p => ({ ...p, x: newX }));
+        setFeedPosition(p => ({ ...p, x: newX, y: newY }));
         return { width: newWidth, height: newHeight };
       });
 
@@ -236,6 +249,7 @@ export default function DashboardLayout() {
           }}
           className="fixed z-40 border border-border/40 bg-background/70 backdrop-blur rounded-xl overflow-hidden shadow-2xl"
           aria-label="Social feed"
+          onMouseDown={handleDragStart}
         >
           {/* Drag Handle Header */}
           <div 
@@ -290,6 +304,10 @@ export default function DashboardLayout() {
           <div
             className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize bg-purple-500/20 hover:bg-purple-500/40 transition-colors"
             onMouseDown={(e) => handleResizeStart(e, 'bottom')}
+          />
+          <div
+            className="absolute left-0 right-0 top-0 h-2 cursor-ns-resize bg-purple-500/20 hover:bg-purple-500/40 transition-colors"
+            onMouseDown={(e) => handleResizeStart(e, 'top')}
           />
           <div
             className="absolute right-0 bottom-0 w-4 h-4 cursor-nwse-resize bg-red-500/30 hover:bg-red-500/50 transition-colors"
