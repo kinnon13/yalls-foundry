@@ -4,6 +4,9 @@
  * Complete feature management with sub-features
  */
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import featuresManifestRaw from '../../../docs/features/features.json?raw';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { kernel, GOLD_PATH_FEATURES, Feature } from '@/lib/feature-kernel';
 import { Input } from '@/components/ui/input';
@@ -265,17 +268,17 @@ export default function FeaturesAdminPage() {
 
   const runFeatureScan = useCallback(async () => {
     setScanLoading(true);
+    console.log('[Scanner] Starting feature scan...');
     try {
-      // Fetch manifest dynamically
-      const manifestRes = await fetch('/docs/features/features.json');
-      const manifestData = await manifestRes.json();
-      
+      // Load manifest from bundled raw JSON
+      const manifest = JSON.parse(featuresManifestRaw);
       const allRpcs = new Set<string>();
       const allTables = new Set<string>();
       const allRoutes = new Set<string>();
 
-      for (const f of manifestData.features) {
+      for (const f of manifest.features) {
         (f.rpc || []).forEach((r: string) => allRpcs.add(r));
+        (f.tables || []).forEach((t: string) => allTables.add(t));
         (f.routes || []).forEach((r: string) => allRoutes.add(r));
       }
 
@@ -285,11 +288,17 @@ export default function FeaturesAdminPage() {
         routes: [...allRoutes],
       };
 
+      console.log('[Scanner] Invoking feature-scan edge function...', inputs);
       const { data, error } = await supabase.functions.invoke('feature-scan', {
         body: inputs
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Scanner] Edge function error:', error);
+        throw error;
+      }
+
+      console.log('[Scanner] Edge function response:', data);
 
       const rpcMap = new Map<string, boolean>();
       for (const r of (data?.rpcs ?? [])) rpcMap.set(r.name, !!r.exists);
@@ -299,13 +308,27 @@ export default function FeaturesAdminPage() {
         tableMap.set(t.name, { exists: !!t.exists, rls: !!t.rls });
       }
 
+      console.log('[Scanner] Probing routes...');
       const routeReach = await probeRoutes(inputs.routes);
+      console.log('[Scanner] Route probe results:', routeReach);
+
+      // Vite glob for component verification
+      const componentFiles = import.meta.glob('/src/**/*.{ts,tsx}', { eager: false });
+      const normalizeComponentPath = (p: string) => '/' + p.replace(/^\/+/, '');
+      
+      const checkComponentsExist = (f: any) => {
+        if (!Array.isArray(f.components) || f.components.length === 0) return false;
+        return f.components.every((path: string) => {
+          const normalized = normalizeComponentPath(path);
+          return !!componentFiles[normalized];
+        });
+      };
 
       const scanned = new Map<string, ScannedFeature>();
       
-      for (const f of manifestData.features as any[]) {
+      for (const f of manifest.features as any[]) {
         const hasRoute = (f.routes || []).some((r: string) => routeReach[r]);
-        const componentsExist = checkComponents(f);
+        const componentsExist = checkComponentsExist(f);
         const rpcs = (f.rpc || []).map((name: string) => ({ 
           name, 
           exists: !!rpcMap.get(name) 
@@ -330,15 +353,16 @@ export default function FeaturesAdminPage() {
         } as ScannedFeature);
       }
 
+      console.log('[Scanner] Scan complete. Features scanned:', scanned.size);
       setScannedFeatures(scanned);
-      toast.success('Feature scan complete');
+      toast.success(`Feature scan complete: ${scanned.size} features analyzed`);
     } catch (e: any) {
-      console.error('Scan error:', e);
+      console.error('[Scanner] Scan error:', e);
       toast.error(e.message || 'Failed to scan features');
     } finally {
       setScanLoading(false);
     }
-  }, [checkComponents, probeRoutes, computeStatus]);
+  }, [probeRoutes, computeStatus]);
 
   // Summary stats
   const totalFeatures = features.length;
