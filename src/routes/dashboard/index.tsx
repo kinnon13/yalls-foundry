@@ -9,7 +9,7 @@ import { DraggableAppGrid } from '@/components/desktop/DraggableAppGrid';
 import { DebugOverlay } from '@/feature-kernel/DebugOverlay';
 import { TwoUpFeed } from '@/components/dashboard/TwoUpFeed';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Footer from '@/components/layout/Footer';
 
 class DashboardErrorBoundary extends Component<
   { children: ReactNode },
@@ -51,7 +51,7 @@ export default function DashboardLayout() {
   const [sp, setSp] = useSearchParams();
   const rawModule = sp.get('m');
   const [userId, setUserId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('following');
+  const [activeTab, setActiveTab] = useState<'following' | 'foryou' | 'shop'>('following');
 
   // Always clear any module param to hide center panel
   useEffect(() => {
@@ -59,6 +59,23 @@ export default function DashboardLayout() {
       setSp({});
     }
   }, [rawModule, setSp]);
+
+  // Listen for swipe events to change tabs
+  useEffect(() => {
+    const handleSwipe = (e: CustomEvent<'prev' | 'next'>) => {
+      const tabs = ['following', 'foryou', 'shop'] as const;
+      const currentIndex = tabs.indexOf(activeTab as any);
+      
+      if (e.detail === 'next' && currentIndex < tabs.length - 1) {
+        setActiveTab(tabs[currentIndex + 1]);
+      } else if (e.detail === 'prev' && currentIndex > 0) {
+        setActiveTab(tabs[currentIndex - 1]);
+      }
+    };
+
+    window.addEventListener('feed-swipe', handleSwipe as any);
+    return () => window.removeEventListener('feed-swipe', handleSwipe as any);
+  }, [activeTab]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
@@ -119,34 +136,52 @@ export default function DashboardLayout() {
         {/* Social Feed - RIGHT (LOCKED) */}
         <aside
           id="sidefeed-pane"
-          className="sticky top-[var(--header-h,64px)] h-[calc(100dvh-var(--header-h,64px))] overflow-hidden rounded-xl border border-border/40 bg-background/60 backdrop-blur"
+          className="fixed z-40 right-6 top-[var(--header-h,64px)] h-[calc(100dvh-var(--header-h,64px))] w-[480px] lg:w-[520px] border-l border-border/40 bg-background/70 backdrop-blur rounded-l-xl overflow-hidden"
           data-locked="true"
+          aria-label="Social feed"
         >
-          {/* Tabs for feed types */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-3 h-12 rounded-none border-b">
-              <TabsTrigger value="following" className="text-sm">Following</TabsTrigger>
-              <TabsTrigger value="foryou" className="text-sm">For You</TabsTrigger>
-              <TabsTrigger value="shop" className="text-sm">Shop</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="following" className="flex-1 overflow-hidden m-0">
-              <TwoUpFeed feedKey="following" />
-            </TabsContent>
-            
-            <TabsContent value="foryou" className="flex-1 overflow-hidden m-0">
-              <TwoUpFeed feedKey="foryou" />
-            </TabsContent>
-            
-            <TabsContent value="shop" className="flex-1 overflow-hidden m-0">
-              <TwoUpFeed feedKey="shop" />
-            </TabsContent>
-          </Tabs>
+          {/* Header: profile + totals + scrollable tabs */}
+          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b border-border/40">
+            <div className="px-3 py-2 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="h-8 w-8 rounded-full bg-muted flex-shrink-0" />
+                <div className="text-xs min-w-0">
+                  <div className="font-medium truncate">{userId ? 'You' : 'Guest'}</div>
+                  <div className="opacity-70 text-[10px]">
+                    <span className="mr-2">0 Following</span>
+                    <span className="mr-2">0 Followers</span>
+                    <span>0 Likes</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto no-scrollbar flex-shrink-0">
+                <div className="flex gap-1">
+                  {(['following', 'foryou', 'shop'] as const).map(k => (
+                    <button
+                      key={k}
+                      onClick={() => setActiveTab(k)}
+                      className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
+                        activeTab === k 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'bg-muted hover:bg-muted/80'
+                      }`}
+                    >
+                      {k === 'foryou' ? 'For You' : k[0].toUpperCase() + k.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <TwoUpFeed feedKey={activeTab} />
         </aside>
       </div>
 
       <DebugOverlay />
       <BottomNav />
+      <Footer />
     </div>
   );
 }

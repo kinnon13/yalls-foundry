@@ -5,7 +5,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Heart, MessageCircle, Share2, Bookmark } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, Repeat2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { generateMockPosts } from '@/lib/mock/posts';
 
@@ -15,12 +15,17 @@ interface Post {
   id: string;
   body: string;
   media?: any;
+  media_url?: string;
   created_at: string;
   author_user_id: string;
   profiles?: {
     display_name: string;
     avatar_url?: string;
   };
+  likes?: number;
+  comments?: number;
+  saves?: number;
+  reposts?: number;
 }
 
 export function TwoUpFeed({ feedKey }: { feedKey: FeedKey }) {
@@ -89,77 +94,66 @@ export function TwoUpFeed({ feedKey }: { feedKey: FeedKey }) {
   return (
     <div ref={ref} className="h-full overflow-auto px-3 py-3 space-y-3 scrollbar-thin">
       {items.map((item: Post) => (
-        <PostCard key={item.id} item={item} height={postHeight} />
+        <PostCard key={item.id} item={item} />
       ))}
       <div className="h-8" />
     </div>
   );
 }
 
-function PostCard({ item, height }: { item: Post; height: number }) {
+function PostCard({ item }: { item: Post }) {
   return (
-    <div 
-      className="relative rounded-xl overflow-hidden bg-muted border border-border/40"
-      style={{ height: `${height}px` }}
-    >
-      {/* Background media */}
-      {item.media?.url && (
-        <img
-          src={item.media.url}
+    <article className="relative aspect-[9/16] w-full rounded-xl overflow-hidden bg-black/50">
+      {item.media_url && (
+        <img 
+          src={item.media_url} 
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
         />
       )}
       
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-      {/* Content */}
-      <div className="relative z-10 h-full flex flex-col justify-end p-4">
-        {/* Author */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
+      
+      <div className="absolute bottom-0 left-0 right-0 p-4">
         <div className="flex items-center gap-2 mb-2">
           {item.profiles?.avatar_url ? (
-            <img
-              src={item.profiles.avatar_url}
+            <img 
+              src={item.profiles.avatar_url} 
               alt={item.profiles.display_name}
-              className="w-8 h-8 rounded-full border-2 border-white"
+              className="w-8 h-8 rounded-full"
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-semibold">
-              {item.profiles?.display_name?.[0] || '?'}
-            </div>
+            <div className="w-8 h-8 rounded-full bg-muted" />
           )}
-          <div className="text-white text-sm font-medium">
+          <span className="text-sm font-medium text-white">
             {item.profiles?.display_name || 'Anonymous'}
-          </div>
+          </span>
         </div>
-
-        {/* Body */}
-        <p className="text-white text-sm line-clamp-2 mb-3">
-          {item.body}
-        </p>
+        <p className="text-sm text-white/90 line-clamp-2">{item.body}</p>
       </div>
 
-      {/* Compact action buttons */}
-      <div className="absolute right-2 bottom-2 flex gap-2 z-20">
-        <ActionButton icon={Heart} label="24K" />
-        <ActionButton icon={MessageCircle} label="1.2K" />
-        <ActionButton icon={Bookmark} />
+      <div className="absolute right-2 bottom-2 flex flex-col items-center gap-3">
+        <ActionButton icon={Heart} label={item.likes} />
+        <ActionButton icon={MessageCircle} label={item.comments} />
+        <ActionButton icon={Bookmark} label={item.saves} />
+        <ActionButton icon={Repeat2} label={item.reposts} />
         <ActionButton icon={Share2} />
       </div>
-    </div>
+    </article>
   );
 }
 
-function ActionButton({ icon: Icon, label }: { icon: any; label?: string }) {
+function ActionButton({ icon: Icon, label }: { icon: any; label?: string | number }) {
+  const displayLabel = typeof label === 'number' 
+    ? label > 999 ? `${(label / 1000).toFixed(1)}k` : label.toString()
+    : label;
+
   return (
-    <button className="flex flex-col items-center gap-0.5 group">
-      <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
-        <Icon className="w-4 h-4 text-white" strokeWidth={2} />
+    <button className="h-11 w-11 rounded-full bg-black/40 hover:bg-black/60 grid place-items-center backdrop-blur-sm transition-colors">
+      <div className="grid place-items-center text-xs text-white">
+        <Icon className="w-5 h-5 mb-0.5" />
+        {displayLabel && <div className="text-[10px]">{displayLabel}</div>}
       </div>
-      {label && (
-        <span className="text-[10px] text-white font-medium">{label}</span>
-      )}
     </button>
   );
 }
