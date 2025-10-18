@@ -413,7 +413,7 @@ export function DraggableAppGrid() {
               style={{ '--tile': `${tileSize}px` } as React.CSSProperties}
             >
               <div className="apps-grid" ref={appsGridRef}>
-                {Object.values(APPS).map((app, idx) => (
+                {Object.values(APPS).filter(app => !pins.some(p => p.app_id === app.id)).map((app, idx) => (
                   <DraggableApp key={app.id} app={app} index={idx + 1} />
                 ))}
               </div>
