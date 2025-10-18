@@ -331,13 +331,32 @@ export default function FeaturesAdminPage() {
 
   const runFeatureScan = useCallback(async () => {
     setScanLoading(true);
-    console.log('[Scanner] Starting feature scan...');
+    console.log('[Scanner] Starting comprehensive feature scan...');
     try {
       // Load manifest from bundled raw JSON
       const manifest = JSON.parse(featuresManifestRaw);
+      
+      // Discover ALL routes in the codebase
+      const routeFiles = import.meta.glob('/src/routes/**/*.{tsx,ts}', { eager: false });
+      const discoveredRoutes = Object.keys(routeFiles).map(path => {
+        return path
+          .replace('/src/routes', '')
+          .replace(/\.tsx?$/, '')
+          .replace(/\/index$/, '')
+          .replace(/\[([^\]]+)\]/g, ':$1') // Convert [id] to :id
+          || '/';
+      });
+
+      // Discover all components with @feature annotations
+      const componentFiles = import.meta.glob('/src/**/*.{tsx,ts}', { 
+        query: '?raw',
+        eager: false 
+      });
+
+      // Collect ALL RPCs, tables, routes from features.json + discovered routes
       const allRpcs = new Set<string>();
       const allTables = new Set<string>();
-      const allRoutes = new Set<string>();
+      const allRoutes = new Set<string>([...discoveredRoutes]);
 
       for (const f of manifest.features) {
         (f.rpc || []).forEach((r: string) => allRpcs.add(r));
@@ -351,6 +370,13 @@ export default function FeaturesAdminPage() {
         routes: [...allRoutes],
       };
 
+      console.log('[Scanner] Comprehensive scan inputs:', {
+        rpcs: inputs.rpcs.length,
+        tables: inputs.tables.length,
+        routes: inputs.routes.length,
+        discoveredRoutes: discoveredRoutes.length,
+        componentFiles: Object.keys(componentFiles).length
+      });
       console.log('[Scanner] Invoking feature-scan edge function...', inputs);
       const { data, error } = await supabase.functions.invoke('feature-scan', {
         body: inputs
@@ -375,8 +401,7 @@ export default function FeaturesAdminPage() {
       const routeReach = await probeRoutes(inputs.routes);
       console.log('[Scanner] Route probe results:', routeReach);
 
-      // Vite glob for component verification
-      const componentFiles = import.meta.glob('/src/**/*.{ts,tsx}', { eager: false });
+      // Use componentFiles from earlier for verification
       const normalizeComponentPath = (p: string) => '/' + p.replace(/^\/+/, '');
       
       const checkComponentsExist = (f: any) => {
