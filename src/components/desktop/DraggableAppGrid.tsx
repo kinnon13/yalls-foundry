@@ -93,12 +93,105 @@ export function DraggableAppGrid() {
     Number(localStorage.getItem('apps.tileSize') || 112)
   );
   
+  // Grid container position and size
+  const [gridPosition, setGridPosition] = useState({ x: 20, y: 80 });
+  const [gridSize, setGridSize] = useState({ 
+    width: window.innerWidth - 600, 
+    height: window.innerHeight - 200 
+  });
+  const [isDraggingGrid, setIsDraggingGrid] = useState(false);
+  const [isResizingGrid, setIsResizingGrid] = useState<string | null>(null);
+  const [dragStartGrid, setDragStartGrid] = useState({ x: 0, y: 0 });
+  
   const { pins, folders, updatePosition, pinApp, createFolder } = useAppPins(userId);
 
-  // Persist tile size
   useEffect(() => {
     localStorage.setItem('apps.tileSize', String(tileSize));
   }, [tileSize]);
+
+  // Grid drag handlers
+  const handleGridDragStart = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, input, .app-tile, .no-drag')) {
+      return;
+    }
+    setIsDraggingGrid(true);
+    setDragStartGrid({ x: e.clientX - gridPosition.x, y: e.clientY - gridPosition.y });
+  };
+
+  useEffect(() => {
+    if (!isDraggingGrid) return;
+
+    const handleGridDragMove = (e: MouseEvent) => {
+      setGridPosition({
+        x: Math.max(0, Math.min(e.clientX - dragStartGrid.x, window.innerWidth - gridSize.width)),
+        y: Math.max(0, Math.min(e.clientY - dragStartGrid.y, window.innerHeight - gridSize.height))
+      });
+    };
+
+    const handleGridDragEnd = () => setIsDraggingGrid(false);
+
+    window.addEventListener('mousemove', handleGridDragMove);
+    window.addEventListener('mouseup', handleGridDragEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleGridDragMove);
+      window.removeEventListener('mouseup', handleGridDragEnd);
+    };
+  }, [isDraggingGrid, dragStartGrid, gridSize]);
+
+  // Grid resize handlers
+  const handleGridResizeStart = (e: React.MouseEvent, handle: string) => {
+    e.stopPropagation();
+    setIsResizingGrid(handle);
+    setDragStartGrid({ x: e.clientX, y: e.clientY });
+  };
+
+  useEffect(() => {
+    if (!isResizingGrid) return;
+
+    const handleGridResizeMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - dragStartGrid.x;
+      const deltaY = e.clientY - dragStartGrid.y;
+
+      setGridSize(prev => {
+        let newWidth = prev.width;
+        let newHeight = prev.height;
+        let newX = gridPosition.x;
+        let newY = gridPosition.y;
+
+        if (isResizingGrid.includes('left')) {
+          newWidth = Math.max(400, prev.width - deltaX);
+          newX = gridPosition.x + deltaX;
+        }
+        if (isResizingGrid.includes('right')) {
+          newWidth = Math.max(400, prev.width + deltaX);
+        }
+        if (isResizingGrid.includes('bottom')) {
+          newHeight = Math.max(300, prev.height + deltaY);
+        }
+        if (isResizingGrid.includes('top')) {
+          newHeight = Math.max(300, prev.height - deltaY);
+          newY = gridPosition.y + deltaY;
+        }
+
+        setGridPosition(p => ({ ...p, x: newX, y: newY }));
+        return { width: newWidth, height: newHeight };
+      });
+
+      setDragStartGrid({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleGridResizeEnd = () => setIsResizingGrid(null);
+
+    window.addEventListener('mousemove', handleGridResizeMove);
+    window.addEventListener('mouseup', handleGridResizeEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleGridResizeMove);
+      window.removeEventListener('mouseup', handleGridResizeEnd);
+    };
+  }, [isResizingGrid, dragStartGrid, gridPosition]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -245,38 +338,54 @@ export function DraggableAppGrid() {
 
   return (
     <>
-      {/* Size Control */}
-      <div className="px-4 py-3 flex items-center gap-3">
-        <label className="text-sm text-muted-foreground whitespace-nowrap">App size</label>
-        <input
-          type="range"
-          min={88}
-          max={160}
-          step={4}
-          value={tileSize}
-          onChange={(e) => setTileSize(Number(e.target.value))}
-          className="flex-1 max-w-xs"
-        />
-        <span className="text-xs text-muted-foreground w-12">{tileSize}px</span>
-      </div>
-
-      <DndContext 
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={({ active }) => setActiveId(normalizeId(active.id as string))}
-        onDragEnd={handleDragEnd}
+      {/* Draggable & Resizable Grid Container */}
+      <div
+        className="fixed z-20 border-2 border-primary/30 rounded-xl bg-background/40 backdrop-blur shadow-2xl overflow-hidden"
+        style={{
+          left: `${gridPosition.x}px`,
+          top: `${gridPosition.y}px`,
+          width: `${gridSize.width}px`,
+          height: `${gridSize.height}px`
+        }}
+        onMouseDown={handleGridDragStart}
       >
-        <div className="relative z-20 w-full min-h-[600vh] overflow-auto">
-          <div 
-            className="pin-canvas relative outline-dashed outline-1 outline-primary/30 max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16 min-h-[600vh]"
-            style={{ '--tile': `${tileSize}px` } as React.CSSProperties}
-          >
-            <div className="absolute top-2 left-4 text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">Pin area</div>
-            <div className="apps-grid">
-              {Object.values(APPS).map((app, idx) => (
-                <DraggableApp key={app.id} app={app} index={idx + 1} />
-              ))}
-            </div>
+        {/* Drag indicator */}
+        <div className="absolute top-2 right-2 text-[10px] px-2 py-1 rounded-full bg-primary/20 text-primary border border-primary/40 pointer-events-none">
+          Drag to move • Edges to resize
+        </div>
+
+        {/* Size Control */}
+        <div className="px-4 py-3 flex items-center gap-3 bg-background/60 border-b border-border/40">
+          <label className="text-sm text-muted-foreground whitespace-nowrap">App size</label>
+          <input
+            type="range"
+            min={88}
+            max={160}
+            step={4}
+            value={tileSize}
+            onChange={(e) => setTileSize(Number(e.target.value))}
+            className="flex-1 max-w-xs no-drag"
+            onMouseDown={(e) => e.stopPropagation()}
+          />
+          <span className="text-xs text-muted-foreground w-12">{tileSize}px</span>
+        </div>
+
+        <DndContext 
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={({ active }) => setActiveId(normalizeId(active.id as string))}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="relative w-full h-[calc(100%-60px)] overflow-auto">
+            <div 
+              className="pin-canvas relative max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16"
+              style={{ '--tile': `${tileSize}px` } as React.CSSProperties}
+            >
+              <div className="apps-grid">
+                {Object.values(APPS).map((app, idx) => (
+                  <DraggableApp key={app.id} app={app} index={idx + 1} />
+                ))}
+              </div>
 
             {/* Pinned overlay layer (absolute), aligns to 8-column grid, scrollable top-to-bottom */}
             <div className="absolute inset-0 pointer-events-none">
@@ -302,6 +411,41 @@ export function DraggableAppGrid() {
           {activeId && APPS[activeId] ? renderApp(APPS[activeId], true) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Resize Handles */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize bg-blue-500/30 hover:bg-blue-500/50 transition-colors"
+        onMouseDown={(e) => handleGridResizeStart(e, 'left')}
+      />
+      <div
+        className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize bg-green-500/30 hover:bg-green-500/50 transition-colors"
+        onMouseDown={(e) => handleGridResizeStart(e, 'right')}
+      />
+      <div
+        className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize bg-purple-500/30 hover:bg-purple-500/50 transition-colors"
+        onMouseDown={(e) => handleGridResizeStart(e, 'bottom')}
+      />
+      <div
+        className="absolute left-0 right-0 top-0 h-2 cursor-ns-resize bg-orange-500/30 hover:bg-orange-500/50 transition-colors"
+        onMouseDown={(e) => handleGridResizeStart(e, 'top')}
+      />
+      <div
+        className="absolute right-0 bottom-0 w-4 h-4 cursor-nwse-resize bg-red-500/40 hover:bg-red-500/60 transition-colors"
+        onMouseDown={(e) => handleGridResizeStart(e, 'corner-rb')}
+      />
+      <div
+        className="absolute left-0 bottom-0 w-4 h-4 cursor-nesw-resize bg-red-500/40 hover:bg-red-500/60 transition-colors"
+        onMouseDown={(e) => handleGridResizeStart(e, 'corner-lb')}
+      />
+      <div
+        className="absolute right-0 top-0 w-4 h-4 cursor-nesw-resize bg-red-500/40 hover:bg-red-500/60 transition-colors"
+        onMouseDown={(e) => handleGridResizeStart(e, 'corner-rt')}
+      />
+      <div
+        className="absolute left-0 top-0 w-4 h-4 cursor-nwse-resize bg-red-500/40 hover:bg-red-500/60 transition-colors"
+        onMouseDown={(e) => handleGridResizeStart(e, 'corner-lt')}
+      />
+    </div>
 
       {openFolder && (
         <FolderView
