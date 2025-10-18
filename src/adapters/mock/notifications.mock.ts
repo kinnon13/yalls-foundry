@@ -100,5 +100,6 @@ export const notificationsMock: NotificationsPort = {
     
     all.unshift(testNotif);
     saveNotifs(userId, all);
+    return true; // Mock always succeeds
   },
 };

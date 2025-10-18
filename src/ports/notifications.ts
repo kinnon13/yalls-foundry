@@ -37,7 +37,7 @@ export interface NotificationsPort {
   
   counts(userId: string): Promise<NotificationCounts>;
   
-  enqueueTest(userId: string, kind: NotificationType): Promise<void>;
+  enqueueTest(userId: string, kind: NotificationType): Promise<boolean>;
 }
 
 export interface UserNotifPrefs {

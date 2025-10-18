@@ -42,5 +42,6 @@ export const notificationsDb: NotificationsPort = {
       p_user_id: userId,
       p_kind: kind,
     });
+    return true; // Assume success if no error thrown
   },
 };

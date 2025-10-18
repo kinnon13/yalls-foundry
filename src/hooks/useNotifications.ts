@@ -79,10 +79,14 @@ export function useNotificationTest() {
 
   return useMutation({
     mutationFn: (kind: string) => notificationsAdapter.enqueueTest(userId, kind),
-    onSuccess: (_, kind) => {
+    onSuccess: (allowed, kind) => {
       queryClient.invalidateQueries({ queryKey: ['notifications', userId] });
       queryClient.invalidateQueries({ queryKey: ['notification-counts', userId] });
-      toast.success(`Test ${kind} notification created`);
+      if (allowed) {
+        toast.success(`Test ${kind} notification created`);
+      } else {
+        toast.info(`Notification blocked by quiet hours or daily cap`);
+      }
     }
   });
 }

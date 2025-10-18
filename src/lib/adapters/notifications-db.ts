@@ -70,8 +70,8 @@ export const notificationsDbAdapter: NotificationsAdapter = {
     return (Array.isArray(data) ? data[0] : data) as NotificationCounts;
   },
 
-  async enqueueTest(userId: string, kind: string) {
-    const { error } = await supabase.rpc('notification_enqueue_test' as any, {
+  async enqueueTest(userId: string, kind: string): Promise<boolean> {
+    const { data, error } = await supabase.rpc('notification_enqueue_test' as any, {
       p_user_id: userId,
       p_kind: kind
     });
@@ -80,6 +80,8 @@ export const notificationsDbAdapter: NotificationsAdapter = {
       console.error('[NotificationsDB] enqueueTest error:', error);
       throw error;
     }
+
+    return data as boolean;
   },
 
   async getPrefs(userId: string): Promise<NotificationPrefs> {

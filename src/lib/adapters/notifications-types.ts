@@ -75,7 +75,7 @@ export interface NotificationsAdapter {
   
   getCounts(userId: string): Promise<NotificationCounts>;
   
-  enqueueTest(userId: string, kind: string): Promise<void>;
+  enqueueTest(userId: string, kind: string): Promise<boolean>;
   
   getPrefs(userId: string): Promise<NotificationPrefs>;
   

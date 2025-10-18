@@ -76,7 +76,7 @@ export const notificationsMockAdapter: NotificationsAdapter = {
     return counts;
   },
 
-  async enqueueTest(userId: string, kind: string) {
+  async enqueueTest(userId: string, kind: string): Promise<boolean> {
     console.log('[NotificationsMock] enqueueTest', { userId, kind });
     const lane: NotificationLane = 
       kind === 'mention' || kind === 'order' ? 'priority' :
@@ -93,6 +93,8 @@ export const notificationsMockAdapter: NotificationsAdapter = {
       link: kind === 'order' ? '/orders/test' : kind === 'mention' ? '/posts/test' : undefined,
       created_at: new Date().toISOString()
     });
+    
+    return true; // Mock always succeeds
   },
 
   async getPrefs(userId: string): Promise<NotificationPrefs> {
