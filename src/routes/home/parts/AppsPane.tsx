@@ -194,11 +194,12 @@ export default function AppsPane() {
               key={app.id}
               onClick={() => handleAppClick(app)}
               className={cn(
-                "group flex flex-col items-center gap-2 p-2",
-                "aspect-square rounded-2xl transition-all duration-200",
+                "group flex flex-col items-center justify-between gap-2 p-3",
+                "rounded-2xl transition-all duration-200",
                 "hover:scale-105 active:scale-95",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               )}
+              style={{ width: tile, height: tile }}
               aria-label={app.label}
               title={app.label}
             >
@@ -228,11 +229,12 @@ export default function AppsPane() {
             key={`entity:${entity.id}`}
             onClick={() => navigate(`/entities/${entity.id}`)}
             className={cn(
-              "group flex flex-col items-center gap-2 p-2",
-              "aspect-square rounded-2xl transition-all duration-200",
+              "group flex flex-col items-center justify-between gap-2 p-3",
+              "rounded-2xl transition-all duration-200",
               "hover:scale-105 active:scale-95",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             )}
+            style={{ width: tile, height: tile }}
             title={entity.title}
           >
             <div className="flex items-center justify-center flex-1 w-full shadow-lg group-hover:shadow-xl transition-all duration-200 bg-gradient-to-br from-accent/20 to-accent/5 border border-border/60 rounded-xl">
