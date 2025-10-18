@@ -8026,6 +8026,10 @@ export type Database = {
         Args: { rpcs: string[]; tables: string[] }
         Returns: Json
       }
+      feature_probe: {
+        Args: { p_functions: string[]; p_tables: string[] }
+        Returns: Json
+      }
       feed_fusion_home: {
         Args:
           | {

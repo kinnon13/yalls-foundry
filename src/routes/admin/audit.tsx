@@ -7,8 +7,11 @@
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, AlertCircle, Play, RefreshCw } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { CheckCircle, XCircle, AlertCircle, Play, RefreshCw, Search } from 'lucide-react';
 import { kernel, GOLD_PATH_FEATURES, isProd } from '@/lib/feature-kernel';
+import { supabase } from '@/integrations/supabase/client';
+import { env } from '@/lib/env';
 
 interface AuditResult {
   check: string;
@@ -21,6 +24,8 @@ interface AuditResult {
 export default function AuditPage() {
   const [results, setResults] = useState<AuditResult[]>([]);
   const [running, setRunning] = useState(false);
+  const [liveResults, setLiveResults] = useState<any[]>([]);
+  const [scanning, setScanning] = useState(false);
 
   const runAudit = async () => {
     try {
@@ -225,6 +230,80 @@ export default function AuditPage() {
   }
 };
 
+  const runLiveScanner = async () => {
+    if (!env.FEATURE_SCANNER) return;
+    
+    setScanning(true);
+    try {
+      // Load features manifest
+      const manifestRes = await fetch('/docs/features/features.json');
+      const manifest = await manifestRes.json();
+      const features = manifest.features || [];
+
+      // 1) Route probe
+      const routeChecks = await Promise.all(
+        features.map(async (f: any) => {
+          const route = f.routes?.[0] || null;
+          if (!route) return { id: f.id, route, routeOk: false, status: f.status };
+
+          try {
+            const res = await fetch(route, { method: 'HEAD' });
+            return { id: f.id, route, routeOk: res.ok || res.status === 404, status: f.status };
+          } catch {
+            return { id: f.id, route, routeOk: false, status: f.status };
+          }
+        })
+      );
+
+      // 2) DB/RPC probe
+      const allTables = Array.from(new Set(
+        features.flatMap((f: any) => f.tables || [])
+      )) as string[];
+      const allFunctions = Array.from(new Set(
+        features.flatMap((f: any) => f.rpc || [])
+      )) as string[];
+
+      let dbReport: any = { tables: [], functions: [] };
+      try {
+        const { data, error } = await supabase.rpc('feature_probe', {
+          p_tables: allTables,
+          p_functions: allFunctions,
+        });
+        if (!error && data) dbReport = data;
+      } catch (err) {
+        console.warn('DB probe failed:', err);
+      }
+
+      // 3) Merge & score
+      const rows = routeChecks.map((rc: any) => {
+        const feature = features.find((f: any) => f.id === rc.id);
+        const rpcs = feature?.rpc || [];
+        const rpcChecks = rpcs.map((name: string) => 
+          dbReport.functions.find((x: any) => x.name === name)
+        );
+        const allRpcOk = rpcChecks.length === 0 || rpcChecks.every((x: any) => x?.exists);
+
+        const badge = rc.routeOk && allRpcOk ? 'pass' : (rc.routeOk || allRpcOk ? 'warn' : 'fail');
+        return {
+          id: rc.id,
+          title: feature?.title || rc.id,
+          area: feature?.area,
+          badge,
+          ui: rc.routeOk,
+          rpcs: allRpcOk,
+          status: rc.status,
+          route: rc.route,
+        };
+      });
+
+      setLiveResults(rows);
+    } catch (err) {
+      console.error('Scanner error:', err);
+    } finally {
+      setScanning(false);
+    }
+  };
+
   useEffect(() => {
     runAudit();
   }, []);
@@ -324,6 +403,79 @@ export default function AuditPage() {
           </div>
         )}
       </div>
+
+      {/* Live Feature Scanner (gated by env flag) */}
+      {env.FEATURE_SCANNER && (
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-2xl font-bold">Live Feature Scanner</h2>
+              <p className="text-sm text-muted-foreground">Real-time detection vs manifest status</p>
+            </div>
+            <Button 
+              onClick={runLiveScanner} 
+              disabled={scanning}
+            >
+              {scanning ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Scanning...
+                </>
+              ) : (
+                <>
+                  <Search className="h-4 w-4 mr-2" />
+                  Scan Features
+                </>
+              )}
+            </Button>
+          </div>
+
+          {liveResults.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-2">Feature</th>
+                    <th className="text-center p-2">Area</th>
+                    <th className="text-center p-2">Live</th>
+                    <th className="text-center p-2">UI</th>
+                    <th className="text-center p-2">RPCs</th>
+                    <th className="text-center p-2">Manifest</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {liveResults.map((r) => (
+                    <tr key={r.id} className="border-b">
+                      <td className="p-2">{r.title}</td>
+                      <td className="text-center p-2">
+                        <Badge variant="outline">{r.area}</Badge>
+                      </td>
+                      <td className="text-center p-2">
+                        {r.badge === 'pass' && '🟢'}
+                        {r.badge === 'warn' && '🟡'}
+                        {r.badge === 'fail' && '🔴'}
+                      </td>
+                      <td className="text-center p-2">{r.ui ? '✓' : '✗'}</td>
+                      <td className="text-center p-2">{r.rpcs ? '✓' : '✗'}</td>
+                      <td className="text-center p-2">
+                        <Badge 
+                          variant={r.status === 'wired' ? 'default' : r.status === 'full-ui' ? 'secondary' : 'outline'}
+                        >
+                          {r.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground mt-4">
+            Scanner is read-only and safe. Gated by VITE_FEATURE_SCANNER env flag.
+          </p>
+        </Card>
+      )}
     </div>
   );
 }
