@@ -14,32 +14,73 @@ export default function SocialFeedPane() {
   const initialTab = (sp.get('feed') as Tab) || 'following';
   const [tab, setTab] = useState<Tab>(initialTab);
   const [entityId, setEntityId] = useState<string | null>(sp.get('entity') || null);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // swipe left/right to switch tabs
+  // seamless drag/swipe gesture for tab switching
   const railRef = useRef<HTMLDivElement>(null);
+  const startRef = useRef<{ x: number; y: number } | null>(null);
+  
   useEffect(() => {
     const el = railRef.current;
     if (!el) return;
-    let down: { x: number; y: number } | null = null;
-    const onDown = (e: PointerEvent) => (down = { x: e.clientX, y: e.clientY });
-    const onUp = (e: PointerEvent) => {
-      if (!down) return;
-      const dx = e.clientX - down.x,
-        dy = e.clientY - down.y;
-      down = null;
-      if (Math.abs(dx) > Math.abs(dy) * 1.3 && Math.abs(dx) > 60) {
+
+    const onDown = (e: PointerEvent | TouchEvent) => {
+      const p = 'touches' in e ? e.touches[0] : e;
+      startRef.current = { x: p.clientX, y: p.clientY };
+      setIsDragging(false);
+      setDragOffset(0);
+    };
+
+    const onMove = (e: PointerEvent | TouchEvent) => {
+      if (!startRef.current) return;
+      const p = 'touches' in e ? e.touches[0] : e;
+      const dx = p.clientX - startRef.current.x;
+      const dy = p.clientY - startRef.current.y;
+
+      // Start dragging if horizontal movement dominates
+      if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > 10) {
+        setIsDragging(true);
+        setDragOffset(dx);
+        if ('preventDefault' in e) e.preventDefault();
+      }
+    };
+
+    const onUp = (e: PointerEvent | TouchEvent) => {
+      if (!startRef.current) return;
+      const p = 'changedTouches' in e ? e.changedTouches[0] : e;
+      const dx = p.clientX - startRef.current.x;
+      startRef.current = null;
+
+      // Switch tab if dragged far enough (80px threshold)
+      if (isDragging && Math.abs(dx) > 80) {
         const i = TABS.indexOf(tab);
         if (dx < 0 && i < TABS.length - 1) setTab(TABS[i + 1]);
         if (dx > 0 && i > 0) setTab(TABS[i - 1]);
       }
+
+      setIsDragging(false);
+      setDragOffset(0);
     };
+
     el.addEventListener('pointerdown', onDown, { passive: true });
-    window.addEventListener('pointerup', onUp, { passive: true });
+    el.addEventListener('touchstart', onDown, { passive: true });
+    el.addEventListener('pointermove', onMove, { passive: false });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('pointerup', onUp, { passive: true });
+    el.addEventListener('touchend', onUp, { passive: true });
+    el.addEventListener('pointercancel', onUp, { passive: true });
+
     return () => {
       el.removeEventListener('pointerdown', onDown);
-      window.removeEventListener('pointerup', onUp);
+      el.removeEventListener('touchstart', onDown);
+      el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('touchend', onUp);
+      el.removeEventListener('pointercancel', onUp);
     };
-  }, [tab]);
+  }, [tab, isDragging]);
 
   // persist state in URL (?feed=…&entity=…)
   useEffect(() => {
@@ -70,37 +111,51 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col" ref={railRef}>
+    <section className="flex h-full w-full flex-col">
       {/* Profile bubble above the feed */}
       <ProfileSummaryBar />
 
-      {/* Tabs (clickable + swipeable) */}
+      {/* Tab indicators (show current position, drag/swipe to change) */}
       <div className="sticky top-0 z-10 mb-2 flex items-center gap-2 bg-background/70 backdrop-blur px-2 py-1">
         {TABS.map((t) => (
-          <button
+          <div
             key={t}
-            onClick={() => setTab(t)}
             className={cn(
-              'px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
+              'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-default select-none',
               t === tab
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted hover:bg-muted/80'
+                ? 'bg-primary text-primary-foreground scale-105'
+                : 'bg-muted/50 text-muted-foreground scale-95'
             )}
           >
             {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
-          </button>
+          </div>
         ))}
-        <span className="ml-auto text-xs text-muted-foreground hidden md:inline">Swipe ◀︎ ▶︎</span>
+        <span className="ml-auto text-xs text-muted-foreground hidden md:inline">👆 Drag/Swipe</span>
       </div>
 
-      {/* Reel list container with vertical snap */}
-      <div className="relative flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide">
-        <div className="space-y-4 px-2 pb-4">
-          {items.map((item) => (
-            <div key={item.id} className="h-[calc(100vh-16rem)] snap-start">
-              <Reel {...item} />
-            </div>
-          ))}
+      {/* Swipeable feed container with visual drag feedback */}
+      <div 
+        ref={railRef}
+        className="relative flex-1 select-none touch-pan-y"
+        style={{ 
+          cursor: isDragging ? 'grabbing' : 'grab'
+        }}
+      >
+        <div 
+          className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
+          style={{
+            transform: isDragging ? `translateX(${dragOffset * 0.3}px)` : 'translateX(0)',
+            transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            opacity: isDragging ? 0.8 : 1
+          }}
+        >
+          <div className="space-y-4 px-2 pb-4">
+            {items.map((item) => (
+              <div key={item.id} className="h-[calc(100vh-16rem)] snap-start">
+                <Reel {...item} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
