@@ -3,9 +3,9 @@
     { "canonical": "admin",     "subareas": ["audit","claims","control"] },
     { "canonical": "ai",        "subareas": ["activity","memory","policy"] },
     { "canonical": "discovery", "subareas": ["search","marketplace","public_profiles","public_events","feed"] },
-    { "canonical": "dashboard", "subareas": ["home","entities","crm","listings","orders","incentives","calendar","farm_ops","messaging"] },
+    { "canonical": "dashboard", "subareas": ["home","entities","crm","listings","orders","programs","calendar","farm_ops","messaging"] },
     { "canonical": "events",    "subareas": ["producer_events","entrant"] },
-    { "canonical": "equistats", "subareas": ["horse_performance","earnings_programs","pedigree_crosses","compare_insights"] },
+    { "canonical": "equinestats", "subareas": ["horse_performance","earnings_programs","pedigree_crosses","compare_insights"] },
     { "canonical": "platform",  "subareas": ["auth","commerce_buyer","content_taxonomy","telemetry"] },
     { "canonical": "profile",   "subareas": ["me"] }
   ],
@@ -15,7 +15,9 @@
     "/dashboard": "/workspace",
     "/incentives/dashboard": "/workspace",
     "/crm": "/workspace",
-    "/organizer": "/workspace"
+    "/organizer": "/workspace",
+    "/equistats": "/equinestats",
+    "/workspace/:entityId/incentives": "/workspace/:entityId/programs"
   },
 
   "routeFamilies": [
@@ -30,14 +32,18 @@
 
     { "path": "/workspace/*",             "area": "dashboard", "visibility": "dashboard", "notes": "workspace hub" },
     { "path": "/listings/*",              "area": "dashboard", "visibility": "dashboard" },
-    { "path": "/incentives/*",            "area": "dashboard", "visibility": "dashboard" },
+    { "path": "/incentives/*",            "area": "dashboard", "visibility": "dashboard", "notes": "LEGACY → /workspace/:entityId/programs" },
+    { "path": "/workspace/:entityId/programs", "area": "dashboard", "visibility": "dashboard", "notes": "producer programs" },
+    { "path": "/workspace/:entityId/listings/*", "area": "dashboard", "visibility": "dashboard", "notes": "producer listings" },
     { "path": "/farm/*",                  "area": "dashboard", "visibility": "dashboard" },
     
     { "path": "/workspace/:entityId/events/*", "area": "events", "visibility": "dashboard", "notes": "producer events (business puts on races/incentives)" },
     { "path": "/organizer/*",             "area": "events",    "visibility": "dashboard", "notes": "LEGACY ALIAS → /workspace/:entityId/events/*" },
     { "path": "/entries/*",               "area": "events",    "visibility": "private", "notes": "entrant flows (rider/owner perspective)" },
 
-    { "path": "/equistats/*",             "area": "equistats", "visibility": "public", "notes": "public + workspace analytics" },
+    { "path": "/equistats/*",             "area": "equinestats", "visibility": "public", "notes": "LEGACY → /equinestats/*" },
+    { "path": "/equinestats/*",           "area": "equinestats", "visibility": "public" },
+    { "path": "/workspace/:entityId/equinestats", "area": "equinestats", "visibility": "dashboard", "notes": "private analytics + live KPIs" },
 
     { "path": "/cart",                    "area": "platform",  "visibility": "private" },
     { "path": "/orders/*",                "area": "platform",  "visibility": "private", "notes": "buyer order tracking" },
@@ -46,13 +52,13 @@
   ],
 
   "rpcsByArea": {
-    "admin":     ["feature_introspect","feature_probe","admin_clear_entitlement_override","admin_set_entitlement_override","update_feature_flags_updated_at"],
-    "ai":        ["rocker_next_best_actions","rocker_log_action","rocker_generate_followup_list","rocker_check_consent","ai_mem_get","ai_mem_mark","ai_mem_upsert","ai_mem_promote","ai_propose","ai_approve"],
-    "discovery": ["get_price_suggestions","get_event_viewable","feed_fusion_home","feed_fusion_profile","feed_fusion_home_rate_limited","feed_hide","feed_unhide","feed_pending_targets"],
-    "dashboard": ["entity_create_unclaimed","entity_claim_start","entity_claim_approve","entity_claim_reject","contributor_window_status","crm_contact_upsert","update_crm_contacts_updated_at","get_user_aggregate_counts","get_user_role","get_user_workspaces","get_workspace_summary","order_start_from_cart","decrement_listing_stock","attach_incentive_to_event","update_calendar_updated_at","dm_send"],
-    "events":    ["draw_generate","entry_submit","reservation_check_in","reservation_issue_qr"],
-    "platform":  ["cart_get","cart_merge_guest_to_user","cart_upsert_item","order_start_from_cart"],
-    "equistats": ["payout_compute"]
+    "admin":       ["feature_introspect","feature_probe","admin_clear_entitlement_override","admin_set_entitlement_override","update_feature_flags_updated_at"],
+    "ai":          ["rocker_next_best_actions","rocker_log_action","rocker_generate_followup_list","rocker_check_consent","ai_mem_get","ai_mem_mark","ai_mem_upsert","ai_mem_promote","ai_propose","ai_approve"],
+    "discovery":   ["get_price_suggestions","get_event_viewable","feed_fusion_home","feed_fusion_profile","feed_fusion_home_rate_limited","feed_hide","feed_unhide","feed_pending_targets"],
+    "dashboard":   ["entity_create_unclaimed","entity_claim_start","entity_claim_approve","entity_claim_reject","contributor_window_status","crm_contact_upsert","update_crm_contacts_updated_at","get_user_aggregate_counts","get_user_role","get_user_workspaces","get_workspace_summary","order_start_from_cart","decrement_listing_stock","listing_upsert","listing_publish","producer_program_attach_to_event","attach_incentive_to_event","update_calendar_updated_at","dm_send"],
+    "events":      ["draw_generate","entry_submit","reservation_check_in","reservation_issue_qr"],
+    "platform":    ["cart_get","cart_merge_guest_to_user","cart_upsert_item","order_start_from_cart"],
+    "equinestats": ["payout_compute","equinestats_public_overview","equinestats_live_kpis"]
   },
 
   "tableClusters": {
@@ -75,6 +81,6 @@
   "meta": { 
     "normalized": true, 
     "collapsed": true,
-    "notes": "Producer = Business entity that puts on races/incentives. Organizer is legacy alias. Public profiles at /entities/:id, private at /profile"
+    "notes": "Producer = Business entity. Programs (formerly incentives). EquineStats public + private + live KPI. Legacy: equistats→equinestats, organizer→workspace, incentives→programs"
   }
 }

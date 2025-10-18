@@ -26,7 +26,7 @@ const COLLAPSE_HEADS = new Set([
   '/stallions',
   '/cart',
   '/workspace',
-  '/equistats',
+  '/equinestats',
 ]);
 
 // Route categories for filtering/display
@@ -35,7 +35,7 @@ export const ROUTE_CATEGORIES: Record<string, string> = {
   '/entries': 'private',
   '/workspace': 'workspace',
   '/marketplace': 'public',
-  '/equistats': 'public',
+  '/equinestats': 'public',
 };
 
 export const routeIgnore = [

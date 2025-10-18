@@ -48,6 +48,12 @@ export const REDIRECT_RULES: Record<string, string> = {
   
   // Legacy organizer routes → workspace producer console
   '/organizer': '/workspace',
+  
+  // Legacy equistats → equinestats
+  '/equistats': '/equinestats',
+  
+  // Legacy incentives → programs
+  '/workspace/:entityId/incentives': '/workspace/:entityId/programs',
 };
 
 /**
@@ -78,6 +84,16 @@ export function getRedirectDestination(path: string): string | null {
   // Legacy organizer routes with paths → workspace
   if (path.startsWith('/organizer/')) {
     return '/workspace';
+  }
+  
+  // Legacy equistats → equinestats
+  if (path.startsWith('/equistats/')) {
+    return path.replace('/equistats/', '/equinestats/');
+  }
+  
+  // Legacy incentives → programs (within workspace)
+  if (path.includes('/incentives')) {
+    return path.replace('/incentives', '/programs');
   }
   
   // Profile without ID → search
