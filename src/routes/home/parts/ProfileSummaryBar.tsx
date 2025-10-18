@@ -67,22 +67,19 @@ export default function ProfileSummaryBar() {
         )}
       </div>
 
-      {/* Name + totals */}
-      <div className="min-w-0 flex-1">
-        <div className="text-base font-semibold mb-1">{name}</div>
-        <div className="flex gap-6 text-sm">
-          <div className="flex flex-col items-center">
-            <span className="text-lg font-bold text-foreground">{totals.following}</span>
-            <span className="text-xs text-muted-foreground">Following</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-lg font-bold text-foreground">{totals.followers}</span>
-            <span className="text-xs text-muted-foreground">Followers</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-lg font-bold text-foreground">{totals.likes}</span>
-            <span className="text-xs text-muted-foreground">Likes</span>
-          </div>
+      {/* Stats only */}
+      <div className="flex gap-6 text-sm justify-center w-full">
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-bold text-foreground">{totals.following}</span>
+          <span className="text-xs text-muted-foreground">Following</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-bold text-foreground">{totals.followers}</span>
+          <span className="text-xs text-muted-foreground">Followers</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-bold text-foreground">{totals.likes}</span>
+          <span className="text-xs text-muted-foreground">Likes</span>
         </div>
       </div>
     </Link>

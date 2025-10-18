@@ -112,10 +112,13 @@ export default function SocialFeedPane() {
 
   return (
     <section className="flex h-full w-full flex-col">
-      {/* Profile bubble above the feed - aligned with favorites */}
-      <div className="pt-8">
-        <ProfileSummaryBar />
+      {/* Username heading - aligned with Favorites heading */}
+      <div className="mb-2">
+        <h3 className="text-base font-semibold text-foreground text-center">{session?.email?.split('@')[0] || 'You'}</h3>
       </div>
+
+      {/* Profile bubble with stats */}
+      <ProfileSummaryBar />
 
       {/* Tab indicators (clickable or drag/swipe to change) */}
       <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-background/70 backdrop-blur px-2 py-1">
