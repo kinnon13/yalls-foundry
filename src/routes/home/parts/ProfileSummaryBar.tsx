@@ -55,7 +55,7 @@ export default function ProfileSummaryBar() {
   return (
     <Link
       to="/profile"
-      className="flex items-center gap-3 px-2 py-2 hover:bg-muted/30 rounded-lg transition-colors"
+      className="flex flex-col items-center gap-2 px-2 py-2 hover:bg-muted/30 rounded-lg transition-colors"
       aria-label="Open your profile"
     >
       {/* Avatar */}
@@ -67,19 +67,22 @@ export default function ProfileSummaryBar() {
         )}
       </div>
 
-      {/* Name + totals */}
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-medium truncate">{name}</div>
-        <div className="text-xs text-muted-foreground flex gap-4">
-          <span>
-            <b className="text-foreground">{totals.following}</b> Following
-          </span>
-          <span>
-            <b className="text-foreground">{totals.followers}</b> Followers
-          </span>
-          <span>
-            <b className="text-foreground">{totals.likes}</b> Likes
-          </span>
+      {/* Name centered */}
+      <div className="text-base font-semibold text-center">{name}</div>
+
+      {/* Totals centered */}
+      <div className="flex gap-6 text-sm">
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-bold text-foreground">{totals.following}</span>
+          <span className="text-xs text-muted-foreground">Following</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-bold text-foreground">{totals.followers}</span>
+          <span className="text-xs text-muted-foreground">Followers</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-bold text-foreground">{totals.likes}</span>
+          <span className="text-xs text-muted-foreground">Likes</span>
         </div>
       </div>
     </Link>
