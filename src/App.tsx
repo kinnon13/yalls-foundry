@@ -12,8 +12,8 @@ import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
 import InactivityNudge from '@/components/rocker/InactivityNudge';
 import { RockerDock } from '@/components/rocker/RockerDock';
-import { RockerProvider } from '@/lib/ai/rocker/context';
-import { RockerAgentProvider } from '@/lib/ai/rocker/agent';
+import { RockerChatProvider, useRockerGlobal } from '@/lib/ai/rocker/RockerChatProvider';
+import { RockerProvider } from '@/lib/ai/rocker/RockerProvider';
 import { RedirectHandler } from '@/components/navigation/RedirectHandler';
 import PreviewRoutes from '@/preview/PreviewRoutes';
 import { PreviewMessageListener } from '@/components/preview/PreviewMessageListener';
@@ -353,11 +353,11 @@ const App = () => (
       <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>
-            <RockerProvider>
-              <RockerAgentProvider>
+            <RockerChatProvider>
+              <RockerProvider>
                 <AppContent />
-              </RockerAgentProvider>
-            </RockerProvider>
+              </RockerProvider>
+            </RockerChatProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

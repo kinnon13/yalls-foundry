@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useState } from 'react';
-import { useRockerGlobal } from '@/lib/ai/rocker/context';
+import { useRockerGlobal } from '@/lib/ai/rocker/RockerChatProvider';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { AI_PROFILES, type AIRole } from '@/lib/ai/rocker/config';
 

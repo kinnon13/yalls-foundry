@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WhyThis } from './WhyThis';
-import { useRocker } from '@/lib/ai/rocker/agent/useRocker';
+import { useRocker } from '@/lib/ai/rocker/RockerProvider';
 
 interface RockerHintProps {
   suggestion: string;

@@ -1,6 +1,6 @@
 import { RockerChatUI } from './RockerChatUI';
 import { useEffect } from 'react';
-import { useRockerGlobal } from '@/lib/ai/rocker/context';
+import { useRockerChat } from '@/lib/ai/rocker/RockerChatProvider';
 import { AIRole } from '@/lib/ai/rocker/config';
 
 interface RockerChatProps {
@@ -8,7 +8,7 @@ interface RockerChatProps {
 }
 
 export function RockerChat({ actorRole }: RockerChatProps = {}) {
-  const { setActorRole, setIsOpen, sendMessage } = useRockerGlobal();
+  const { setActorRole, setIsOpen, sendMessage } = useRockerChat();
   
   useEffect(() => {
     if (actorRole) {

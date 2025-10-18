@@ -7114,6 +7114,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_consents: {
+        Row: {
+          telemetry_basic: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          telemetry_basic?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          telemetry_basic?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_feed_preferences: {
         Row: {
           boosted_topics: string[] | null
@@ -9067,15 +9085,26 @@ export type Database = {
         }[]
       }
       rocker_log_action: {
-        Args: {
-          p_action: string
-          p_agent: string
-          p_correlation_id?: string
-          p_input?: Json
-          p_output?: Json
-          p_result?: string
-          p_user_id: string
-        }
+        Args:
+          | {
+              p_action: string
+              p_agent: string
+              p_correlation_id?: string
+              p_input?: Json
+              p_output?: Json
+              p_result?: string
+              p_user_id: string
+            }
+          | {
+              p_action: string
+              p_agent: string
+              p_entity_id?: string
+              p_input?: Json
+              p_output?: Json
+              p_reason?: string
+              p_result?: string
+              p_user_id: string
+            }
         Returns: string
       }
       rocker_next_best_actions: {

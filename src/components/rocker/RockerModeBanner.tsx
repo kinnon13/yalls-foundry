@@ -6,7 +6,7 @@
 
 import { Shield, User, Brain } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useRockerGlobal } from '@/lib/ai/rocker/context';
+import { useRockerGlobal } from '@/lib/ai/rocker/RockerChatProvider';
 import { AI_PROFILES } from '@/lib/ai/rocker/config';
 
 export function RockerModeBanner() {

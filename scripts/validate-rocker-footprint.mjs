@@ -15,7 +15,7 @@ const rootDir = path.resolve(__dirname, '..');
 const SECTION_ROUTES = {
   discovery: ['src/routes/search.tsx', 'src/routes/feed/index.tsx'],
   marketplace: ['src/routes/listings/index.tsx', 'src/routes/cart/index.tsx'],
-  profile: ['src/routes/entities/[id].tsx'],
+  profiles: ['src/routes/entities/[id].tsx'],
   equinestats: ['src/routes/equinestats/index.tsx'],
   events: ['src/routes/events/index.tsx'],
   entries: ['src/routes/events/entrant/my-entries.tsx'],

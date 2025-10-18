@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { useRockerGlobal } from '@/lib/ai/rocker/context';
+import { useRockerChat } from '@/lib/ai/rocker/RockerChatProvider';
 import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 
 // Proactive nudge: shows a toast after inactivity to offer help
 // Minimal, non-intrusive: triggers once per session unless user interacts again
 export default function InactivityNudge() {
-  const { isOpen, setIsOpen, isVoiceMode, isAlwaysListening } = useRockerGlobal();
+  const { isOpen, setIsOpen, isVoiceMode, isAlwaysListening } = useRockerChat();
   const { toast } = useToast();
   const lastActivity = useRef<number>(Date.now());
   const [nudged, setNudged] = useState(false);
