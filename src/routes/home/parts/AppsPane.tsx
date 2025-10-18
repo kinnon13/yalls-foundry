@@ -139,7 +139,7 @@ export default function AppsPane() {
 
 
   return (
-    <div className="h-full">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Always-visible favorites bar with distinct background */}
       <section className="bg-muted/30 px-2 py-2">
         <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
@@ -163,7 +163,7 @@ export default function AppsPane() {
 
       {/* Grid of app tiles & pins (scalable) */}
       <div
-        className="grid gap-3 bg-muted/20"
+        className="grid gap-3 bg-muted/20 overflow-y-auto flex-1"
         style={{
           gridTemplateColumns: `repeat(auto-fill, minmax(${tile}px, 1fr))`,
         }}
