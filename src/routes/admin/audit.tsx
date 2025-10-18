@@ -240,22 +240,46 @@ export default function AuditPage() {
       const manifest = await manifestRes.json();
       const features = manifest.features || [];
 
-      // 1) Route probe
+      // Vite glob for component verification
+      const componentFiles = import.meta.glob('/src/**/*.{ts,tsx}', { eager: false });
+      const normalizeComponentPath = (p: string) => '/' + p.replace(/^\/+/, '');
+      
+      const checkComponents = (f: any) => {
+        if (!Array.isArray(f.components) || f.components.length === 0) return false;
+        return f.components.every((path: string) => {
+          const normalized = normalizeComponentPath(path);
+          return !!componentFiles[normalized];
+        });
+      };
+
+      // 1) Route probe (HEAD + 404 fallback)
       const routeChecks = await Promise.all(
         features.map(async (f: any) => {
           const route = f.routes?.[0] || null;
-          if (!route) return { id: f.id, route, routeOk: false, status: f.status };
+          if (!route) return { id: f.id, route, routeOk: false, status: f.status, componentsExist: checkComponents(f) };
 
           try {
             const res = await fetch(route, { method: 'HEAD' });
-            return { id: f.id, route, routeOk: res.ok || res.status === 404, status: f.status };
+            return { 
+              id: f.id, 
+              route, 
+              routeOk: res.ok || res.status === 404, 
+              status: f.status,
+              componentsExist: checkComponents(f)
+            };
           } catch {
-            return { id: f.id, route, routeOk: false, status: f.status };
+            return { 
+              id: f.id, 
+              route, 
+              routeOk: false, 
+              status: f.status,
+              componentsExist: checkComponents(f)
+            };
           }
         })
       );
 
-      // 2) DB/RPC probe
+      // 2) DB/RPC probe (now includes tables with RLS)
       const allTables = Array.from(new Set(
         features.flatMap((f: any) => f.tables || [])
       )) as string[];
@@ -274,7 +298,7 @@ export default function AuditPage() {
         console.warn('DB probe failed:', err);
       }
 
-      // 3) Merge & score
+      // 3) Merge & score (now includes component + table checks)
       const rows = routeChecks.map((rc: any) => {
         const feature = features.find((f: any) => f.id === rc.id);
         const rpcs = feature?.rpc || [];
@@ -283,14 +307,30 @@ export default function AuditPage() {
         );
         const allRpcOk = rpcChecks.length === 0 || rpcChecks.every((x: any) => x?.exists);
 
-        const badge = rc.routeOk && allRpcOk ? 'pass' : (rc.routeOk || allRpcOk ? 'warn' : 'fail');
+        const tables = feature?.tables || [];
+        const tableChecks = tables.map((name: string) =>
+          dbReport.tables.find((x: any) => x.name === name)
+        );
+        const allTablesOk = tableChecks.length === 0 || tableChecks.every((x: any) => x?.exists);
+
+        // Computed status: route + components + rpcs + tables
+        const badge = rc.routeOk && rc.componentsExist && allRpcOk && allTablesOk ? 'pass' : 
+                      (rc.routeOk && rc.componentsExist ? 'warn' : 'fail');
+        
         return {
           id: rc.id,
           title: feature?.title || rc.id,
           area: feature?.area,
           badge,
           ui: rc.routeOk,
+          components: rc.componentsExist,
           rpcs: allRpcOk,
+          tables: allTablesOk,
+          tableDetails: tableChecks.map((t: any) => ({
+            name: t?.name || 'unknown',
+            exists: t?.exists || false,
+            rls: t?.rls || false
+          })),
           status: rc.status,
           route: rc.route,
         };
@@ -438,28 +478,41 @@ export default function AuditPage() {
                     <th className="text-left p-2">Feature</th>
                     <th className="text-center p-2">Area</th>
                     <th className="text-center p-2">Live</th>
-                    <th className="text-center p-2">UI</th>
+                    <th className="text-center p-2">Route</th>
+                    <th className="text-center p-2">Files</th>
                     <th className="text-center p-2">RPCs</th>
+                    <th className="text-center p-2">Tables</th>
                     <th className="text-center p-2">Manifest</th>
                   </tr>
                 </thead>
                 <tbody>
                   {liveResults.map((r) => (
-                    <tr key={r.id} className="border-b">
-                      <td className="p-2">{r.title}</td>
+                    <tr key={r.id} className="border-b hover:bg-muted/50">
+                      <td className="p-2 font-medium">{r.title}</td>
                       <td className="text-center p-2">
-                        <Badge variant="outline">{r.area}</Badge>
+                        <Badge variant="outline" className="text-xs">{r.area}</Badge>
                       </td>
-                      <td className="text-center p-2">
+                      <td className="text-center p-2 text-lg">
                         {r.badge === 'pass' && '🟢'}
                         {r.badge === 'warn' && '🟡'}
                         {r.badge === 'fail' && '🔴'}
                       </td>
                       <td className="text-center p-2">{r.ui ? '✓' : '✗'}</td>
+                      <td className="text-center p-2">{r.components ? '✓' : '✗'}</td>
                       <td className="text-center p-2">{r.rpcs ? '✓' : '✗'}</td>
+                      <td className="text-center p-2">
+                        {r.tables ? (
+                          <span className="text-green-600">✓</span>
+                        ) : r.tableDetails?.length > 0 ? (
+                          <span className="text-red-600">✗</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
                       <td className="text-center p-2">
                         <Badge 
                           variant={r.status === 'wired' ? 'default' : r.status === 'full-ui' ? 'secondary' : 'outline'}
+                          className="text-xs"
                         >
                           {r.status}
                         </Badge>

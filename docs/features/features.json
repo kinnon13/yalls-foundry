@@ -11,6 +11,7 @@
       "routes": ["/profile/:id"],
       "components": ["src/components/profile/pins/PinBoard.tsx", "src/components/profile/pins/PinCard.tsx", "src/components/profile/pins/AddPinModal.tsx"],
       "rpc": ["profile_pins_list", "profile_pins_set", "profile_pins_add", "profile_pins_remove", "profile_pins_reorder"],
+      "tables": ["profile_pins"],
       "flags": ["profile_pins"],
       "docs": "docs/features/profile-pins.md",
       "tests": {
@@ -30,6 +31,7 @@
       "routes": ["/profile/:id/favorites"],
       "components": ["src/components/profile/FavoriteButton.tsx"],
       "rpc": ["favorite_toggle", "favorites_list", "favorites_check"],
+      "tables": ["favorites"],
       "flags": ["favorites"],
       "docs": "docs/features/favorites.md",
       "tests": {
@@ -48,6 +50,7 @@
       "routes": ["/profile/:id/reposts"],
       "components": ["src/components/profile/RepostButton.tsx", "src/components/profile/RepostModal.tsx"],
       "rpc": ["post_repost", "post_quote", "post_repost_entity"],
+      "tables": ["reposts", "posts", "post_targets"],
       "flags": ["reposts"],
       "docs": "docs/features/reposts.md",
       "tests": {
@@ -66,6 +69,7 @@
       "routes": ["/settings/linked-accounts"],
       "components": ["src/components/profile/LinkedAccountsList.tsx", "src/components/profile/VerifyAccountModal.tsx"],
       "rpc": ["linked_account_upsert", "linked_accounts_list"],
+      "tables": ["linked_accounts"],
       "flags": ["linked_accounts"],
       "docs": "docs/features/linked-accounts.md",
       "tests": {
@@ -84,6 +88,7 @@
       "routes": ["/entities/:id/edges"],
       "components": ["src/components/entities/EdgesManager.tsx"],
       "rpc": ["entity_edges_list", "entity_edge_create", "entity_edge_update", "entity_edge_remove", "entity_edge_permissions_set"],
+      "tables": ["entity_edges"],
       "flags": ["entity_edges"],
       "docs": "docs/features/entity-edges.md",
       "tests": {
