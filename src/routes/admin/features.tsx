@@ -125,7 +125,7 @@ export default function FeaturesAdminPage() {
       const canonArea = AREA_ALIASES[f.area] ?? f.area;
       const matchesSearch =
         search === '' ||
-        f.title.toLowerCase().includes(search.toLowerCase()) ||
+        (f.title || '').toLowerCase().includes(search.toLowerCase()) ||
         f.id.toLowerCase().includes(search.toLowerCase());
       const matchesArea = areaFilter === 'all' || canonArea === areaFilter;
       const matchesStatus = statusFilter === 'all' || f.status === statusFilter;
@@ -143,14 +143,14 @@ export default function FeaturesAdminPage() {
       result.sort((a, b) => {
         const aArea = AREA_ALIASES[a.area] ?? a.area;
         const bArea = AREA_ALIASES[b.area] ?? b.area;
-        return aArea.localeCompare(bArea) || a.title.localeCompare(b.title);
+        return aArea.localeCompare(bArea) || (a.title || '').localeCompare(b.title || '');
       });
     } else {
       const statusOrder = { 'wired': 0, 'full-ui': 1, 'shell': 2 };
       result.sort((a, b) => {
         const aStatus = statusOrder[a.status as keyof typeof statusOrder] ?? 99;
         const bStatus = statusOrder[b.status as keyof typeof statusOrder] ?? 99;
-        return aStatus - bStatus || a.title.localeCompare(b.title);
+        return aStatus - bStatus || (a.title || '').localeCompare(b.title || '');
       });
     }
     return result;
