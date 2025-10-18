@@ -14,9 +14,10 @@ const Index = () => {
       setIsLoggedIn(!!session);
       setLoading(false);
       
-      // If already logged in, show dashboard button instead of redirecting
-      // (We no longer auto-redirect to avoid unexpected navigation)
-
+      // Auto-redirect to dashboard if logged in
+      if (session) {
+        navigate('/dashboard?m=overview');
+      }
     });
 
     const {
