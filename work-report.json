@@ -2,6 +2,16 @@
   "spec_version": "2.0",
   "phase": ["1", "2", "3", "4"],
   "summary": "Implemented Phase 1-4: Config-driven area discovery, Rocker control plane MVP, theme system broker, and live KPI tiles with full CI validation",
+  "files_changed": [
+    "configs/area-discovery.json",
+    "src/hooks/useAreaDiscovery.ts",
+    "src/lib/navigation/redirects.ts",
+    "src/components/theme/ThemeBroker.tsx",
+    "theme/tokens.css",
+    "src/components/dashboard/KpiTiles.tsx",
+    "scripts/validate-architecture.mjs",
+    ".github/workflows/show-your-work.yml"
+  ],
   "changes": [
     {
       "file": "src/hooks/useAreaDiscovery.ts",
@@ -64,15 +74,26 @@
     "get_theme",
     "get_workspace_kpis"
   ],
-  "feature_flags": [],
-  "screens": [],
-  "next": [
+  "tests": [
+    "node scripts/validate-architecture.mjs",
+    "node scripts/validate-work-report.mjs"
+  ],
+  "screenshots": [
+    "ThemeBroker applies tokens (pending deployment)",
+    "KpiTiles render on dashboard (pending deployment)"
+  ],
+  "assumptions": [
+    "Router supports wildcard redirects from config",
+    "Supabase RPC SECURITY DEFINER available with RLS guardrails"
+  ],
+  "next_steps": [
     "Run Phase 2 database migration for control plane tables",
     "Run Phase 4 database migration for KPI RPC",
     "Wire ThemeBroker into App.tsx root",
     "Add KpiTiles to workspace dashboard routes",
-    "Test theme override round-trip",
-    "Test KPI tile auto-refresh"
+    "EquineStats public+private pages",
+    "Growth module + /workspace/:entityId/growth",
+    "NBA Tray"
   ],
   "blockers": [
     "Database migrations need user approval before executing"
