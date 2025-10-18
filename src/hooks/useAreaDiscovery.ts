@@ -19,9 +19,9 @@ export interface AreaDiscoveryConfig {
   kpiDefinitions: Record<string, any>;
   themeDefaults: Record<string, any>;
   nbaConfig: Record<string, any>;
-  growthConfig: Record<string, any>;
-  rockerLearning: Record<string, any>;
-  kpiFloConfig: Record<string, any>;
+  growthConfig?: Record<string, any>;
+  rockerLearning?: Record<string, any>;
+  kpiFloConfig?: Record<string, any>;
   meta: Record<string, any>;
 }
 
