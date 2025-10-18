@@ -4,6 +4,7 @@ import PhonePager from './parts/PhonePager';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { BottomDock } from '@/components/layout/BottomDock';
 import DebugHUD from '@/dev/DebugHUD';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 export default function HomePage() {
   return (
@@ -16,16 +17,24 @@ export default function HomePage() {
         </div>
 
         {/* Tablet & Desktop */}
-        <div className="hidden md:grid h-[calc(100vh-56px)] px-6 mx-auto max-w-[1600px]
-          md:grid-cols-[1fr_2fr] xl:grid-cols-[2fr_1fr]">
-          {/* Apps (left) */}
-          <div className="min-w-0">
-            <AppsPane />
-          </div>
-          {/* Reels (right) - white background extends to right edge */}
-          <div className="min-w-[360px] max-w-[560px] justify-self-end w-full bg-white relative">
-            <SocialFeedPane />
-          </div>
+        <div className="hidden md:block h-[calc(100vh-56px)] px-6 mx-auto max-w-[1600px]">
+          <ResizablePanelGroup direction="horizontal" className="h-full">
+            {/* Apps (left) - resizable */}
+            <ResizablePanel defaultSize={35} minSize={20} maxSize={60}>
+              <AppsPane />
+            </ResizablePanel>
+            
+            <ResizableHandle withHandle />
+            
+            {/* Reels (right) */}
+            <ResizablePanel defaultSize={65} minSize={40}>
+              <div className="h-full flex justify-end">
+                <div className="w-full max-w-[560px] bg-white relative">
+                  <SocialFeedPane />
+                </div>
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </div>
       </main>
       <BottomDock />
