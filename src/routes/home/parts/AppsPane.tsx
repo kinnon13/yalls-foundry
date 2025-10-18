@@ -175,9 +175,9 @@ export default function AppsPane() {
       </section>
 
       {/* Horizontal scrolling grid of app tiles & pins */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden bg-muted/20 p-2">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden bg-muted/20 px-2 pb-2">
         <div 
-          className="grid gap-3 h-full"
+          className="grid gap-3 h-full w-fit"
           style={{
             gridTemplateRows: `repeat(auto-fill, ${tile}px)`,
             gridAutoFlow: 'column',
