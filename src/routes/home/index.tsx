@@ -15,8 +15,8 @@ export default function HomePage() {
       <div
         className="
           grid h-full overflow-hidden
-          lg:grid-cols-[minmax(560px,2fr)_minmax(420px,1fr)]
-          md:grid-cols-[minmax(420px,1fr)_minmax(560px,2fr)]
+          lg:grid-cols-[minmax(320px,2fr)_minmax(280px,1fr)]
+          md:grid-cols-[minmax(280px,1fr)_minmax(320px,2fr)]
           grid-cols-1
         "
       >
