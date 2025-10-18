@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useEffect, useState, useRef, Component, ReactNode } from 'react';
+import { Suspense, lazy, useMemo, useEffect, useState, Component, ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { Wallpaper } from '@/components/appearance/Wallpaper';
@@ -7,13 +7,9 @@ import { useAppearance } from '@/hooks/useAppearance';
 import { supabase } from '@/integrations/supabase/client';
 import { DraggableAppGrid } from '@/components/desktop/DraggableAppGrid';
 import { DebugOverlay } from '@/feature-kernel/DebugOverlay';
-import { FeatureErrorBoundary } from '@/feature-kernel/ErrorBoundary';
-import { coerceModule, type ModuleKey } from '@/lib/dashUrl';
-import { TikTokFeed } from '@/components/social/TikTokFeed';
+import { TwoUpFeed } from '@/components/dashboard/TwoUpFeed';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { Button } from '@/components/ui/button';
-import { X, ChevronLeft } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 class DashboardErrorBoundary extends Component<
   { children: ReactNode },
@@ -41,21 +37,6 @@ class DashboardErrorBoundary extends Component<
   }
 }
 
-const panels = {
-  overview: lazy(() => import('./overview')),
-  business: lazy(() => import('./business')),
-  producers: lazy(() => import('./producers')),
-  incentives: lazy(() => import('./incentives')),
-  stallions: lazy(() => import('./stallions')),
-  farm_ops: lazy(() => import('./farm-ops')),
-  events: lazy(() => import('./events')),
-  orders: lazy(() => import('./orders')),
-  earnings: lazy(() => import('./earnings')),
-  messages: lazy(() => import('../messages')),
-  approvals: lazy(() => import('./approvals')),
-  settings: lazy(() => import('./settings')),
-} as const;
-
 function PanelSkeleton() {
   return (
     <div className="p-6 animate-pulse">
@@ -69,22 +50,15 @@ function PanelSkeleton() {
 export default function DashboardLayout() {
   const [sp, setSp] = useSearchParams();
   const rawModule = sp.get('m');
-  const m = coerceModule(rawModule);
   const [userId, setUserId] = useState<string | null>(null);
-  const [feedWidth, setFeedWidth] = useState(400);
-  const [feedHeight, setFeedHeight] = useState(600);
-  const [feedRightOffset] = useState(0);
-  const [feedTopOffset] = useState(64);
-  const [mainContentWidth, setMainContentWidth] = useState<number | null>(null);
-  
-  const Panel = useMemo(() => panels[m] ?? panels.overview, [m]);
+  const [activeTab, setActiveTab] = useState('following');
 
-  // Auto-close business module and return to desktop
+  // Always clear any module param to hide center panel
   useEffect(() => {
-    if (m === 'business') {
+    if (rawModule) {
       setSp({});
     }
-  }, [m, setSp]);
+  }, [rawModule, setSp]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
@@ -95,81 +69,26 @@ export default function DashboardLayout() {
     id: userId || '00000000-0000-0000-0000-000000000000' 
   });
   
-  // Always clear any module param to hide center panel
-  useEffect(() => {
-    if (rawModule) {
-      setSp({});
-    }
-  }, [rawModule, setSp]);
-  
   const isScreenSaverActive = false;
 
-  // Social Feed resizing
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const mainContentRef = useRef<HTMLDivElement | null>(null);
-  const startRef = useRef<{ x: number; y: number; w: number; h: number }>({ x: 0, y: 0, w: 0, h: 0 });
-  const MIN_W = 320;
-  const MIN_H = 400;
-  const MIN_MAIN_W = 600;
+  // Guard: if a builder tries to move nodes, snap them back
+  useEffect(() => {
+    const grid = document.getElementById('dashboard-grid');
+    if (!grid) return;
 
-  type Edge = 'corner' | 'right' | 'left' | 'bottom';
+    const fix = () => {
+      const apps = document.getElementById('apps-pane');
+      const feed = document.getElementById('sidefeed-pane');
+      if (apps && apps.parentElement !== grid) grid.appendChild(apps);
+      if (feed && feed.parentElement !== grid) grid.appendChild(feed);
+    };
 
-  const onResizeStart = (edge: Edge) => (e: React.PointerEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    startRef.current = {
-      x: e.clientX,
-      y: e.clientY,
-      w: containerRef.current?.offsetWidth || feedWidth,
-      h: containerRef.current?.offsetHeight || feedHeight,
-    };
-    const onMove = (ev: PointerEvent) => {
-      const dx = ev.clientX - startRef.current.x;
-      const dy = ev.clientY - startRef.current.y;
-      let newW = startRef.current.w;
-      let newH = startRef.current.h;
+    const obs = new MutationObserver(fix);
+    obs.observe(document.body, { childList: true, subtree: true });
+    fix();
+    return () => obs.disconnect();
+  }, []);
 
-      if (edge === 'right' || edge === 'corner') {
-        newW = Math.max(MIN_W, startRef.current.w + dx);
-      }
-      if (edge === 'left') {
-        newW = Math.max(MIN_W, startRef.current.w - dx);
-      }
-      if (edge === 'bottom' || edge === 'corner') {
-        newH = Math.max(MIN_H, startRef.current.h + dy);
-      }
-
-      setFeedWidth(Math.round(newW));
-      setFeedHeight(Math.round(newH));
-    };
-    const onUp = () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-  };
-
-  const onMainResizeStart = (side: 'left' | 'right') => (e: React.PointerEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const startWidth = mainContentRef.current?.offsetWidth || window.innerWidth - feedWidth;
-    const startX = e.clientX;
-    
-    const onMove = (ev: PointerEvent) => {
-      const dx = ev.clientX - startX;
-      const newWidth = side === 'right'
-        ? Math.max(MIN_MAIN_W, startWidth + dx)
-        : Math.max(MIN_MAIN_W, startWidth - dx);
-      setMainContentWidth(newWidth);
-    };
-    
-    const onUp = () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
-    
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-  };
   return (
     <div className="h-dvh flex flex-col bg-background overflow-hidden">
       {/* Wallpaper */}
@@ -183,99 +102,47 @@ export default function DashboardLayout() {
       {/* Global header */}
       <GlobalHeader />
 
-      {/* Container for resizable areas */}
-      <div className="flex-1 relative min-h-0 overflow-hidden flex">
-        {/* Main content area - App Grid */}
-        <div 
-          ref={mainContentRef}
-          className="relative overflow-hidden bg-background/50"
-          style={{
-            width: mainContentWidth || `calc(100vw - ${feedWidth}px)`,
-            flexShrink: 0
-          }}
-        >
+      {/* Hard-locked grid shell - APPS LEFT, FEED RIGHT */}
+      <div
+        id="dashboard-grid"
+        className="grid h-[calc(100dvh-var(--header-h,64px))] gap-4 grid-cols-[minmax(640px,1fr)_minmax(420px,520px)] px-4 overflow-hidden"
+      >
+        {/* Apps Pane - LEFT */}
+        <section id="apps-pane" className="min-w-[640px] overflow-auto">
           <DashboardErrorBoundary>
             <Suspense fallback={<div className="flex items-center justify-center h-full"><PanelSkeleton /></div>}>
               <DraggableAppGrid />
             </Suspense>
           </DashboardErrorBoundary>
-          
-          {/* LEFT EDGE - App Grid */}
-          <div
-            onPointerDown={onMainResizeStart('left')}
-            className="absolute top-0 left-0 bottom-0 w-6 cursor-ew-resize bg-blue-500/40 hover:bg-blue-500/70 transition-colors z-[100] flex items-center justify-center"
-            title="◄► Drag to resize app grid (LEFT)"
-          >
-            <div className="text-white text-xs font-bold rotate-90">LEFT</div>
-          </div>
-          
-          {/* RIGHT EDGE - App Grid */}
-          <div
-            onPointerDown={onMainResizeStart('right')}
-            className="absolute top-0 right-0 bottom-0 w-6 cursor-ew-resize bg-blue-500/40 hover:bg-blue-500/70 transition-colors z-[100] flex items-center justify-center"
-            title="◄► Drag to resize app grid (RIGHT)"
-          >
-            <div className="text-white text-xs font-bold rotate-90">RIGHT</div>
-          </div>
-        </div>
+        </section>
 
-        {/* Social Feed - Right side */}
-        <div
-          ref={containerRef}
-          className="relative bg-background border-l-4 border-r-4 border-primary shadow-xl"
-          style={{
-            width: `${feedWidth}px`,
-            height: `${feedHeight}px`,
-            flexShrink: 0
-          }}
+        {/* Social Feed - RIGHT (LOCKED) */}
+        <aside
+          id="sidefeed-pane"
+          className="sticky top-[var(--header-h,64px)] h-[calc(100dvh-var(--header-h,64px))] overflow-hidden rounded-xl border border-border/40 bg-background/60 backdrop-blur"
+          data-locked="true"
         >
-          {/* Feed Header */}
-          <div className="h-12 border-b flex items-center justify-between px-4 bg-background/95 backdrop-blur select-none">
-            <h2 className="font-semibold">Social Feed</h2>
-            <div className="text-xs text-muted-foreground">{feedWidth}×{feedHeight}px</div>
-          </div>
-
-          {/* Feed Content */}
-          <div className="h-[calc(100%-48px)] overflow-hidden">
-            <TikTokFeed />
-          </div>
-
-          {/* LEFT EDGE - Social Feed */}
-          <div
-            onPointerDown={onResizeStart('left')}
-            className="absolute top-0 left-0 bottom-0 w-6 cursor-ew-resize bg-green-500/40 hover:bg-green-500/70 transition-colors z-[100] flex items-center justify-center"
-            title="◄► Drag to resize feed (LEFT)"
-          >
-            <div className="text-white text-xs font-bold rotate-90">LEFT</div>
-          </div>
-          
-          {/* RIGHT EDGE - Social Feed */}
-          <div
-            onPointerDown={onResizeStart('right')}
-            className="absolute top-0 right-0 bottom-0 w-6 cursor-ew-resize bg-green-500/40 hover:bg-green-500/70 transition-colors z-[100] flex items-center justify-center"
-            title="◄► Drag to resize feed (RIGHT)"
-          >
-            <div className="text-white text-xs font-bold rotate-90">RIGHT</div>
-          </div>
-          
-          {/* BOTTOM EDGE - Social Feed */}
-          <div
-            onPointerDown={onResizeStart('bottom')}
-            className="absolute bottom-0 left-0 right-0 h-6 cursor-ns-resize bg-purple-500/40 hover:bg-purple-500/70 transition-colors z-[100] flex items-center justify-center"
-            title="▲▼ Drag to resize feed height"
-          >
-            <div className="text-white text-xs font-bold">BOTTOM</div>
-          </div>
-          
-          {/* CORNER - Social Feed */}
-          <div
-            onPointerDown={onResizeStart('corner')}
-            className="absolute bottom-0 right-0 h-12 w-12 cursor-nwse-resize bg-red-500/50 hover:bg-red-500/80 transition-colors z-[100] rounded-tl-lg flex items-center justify-center"
-            title="↔↕ Drag corner to resize both"
-          >
-            <div className="text-white text-xs font-bold">⇲</div>
-          </div>
-        </div>
+          {/* Tabs for feed types */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-3 h-12 rounded-none border-b">
+              <TabsTrigger value="following" className="text-sm">Following</TabsTrigger>
+              <TabsTrigger value="foryou" className="text-sm">For You</TabsTrigger>
+              <TabsTrigger value="shop" className="text-sm">Shop</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="following" className="flex-1 overflow-hidden m-0">
+              <TwoUpFeed feedKey="following" />
+            </TabsContent>
+            
+            <TabsContent value="foryou" className="flex-1 overflow-hidden m-0">
+              <TwoUpFeed feedKey="foryou" />
+            </TabsContent>
+            
+            <TabsContent value="shop" className="flex-1 overflow-hidden m-0">
+              <TwoUpFeed feedKey="shop" />
+            </TabsContent>
+          </Tabs>
+        </aside>
       </div>
 
       <DebugOverlay />

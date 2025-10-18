@@ -145,4 +145,24 @@ All colors MUST be HSL.
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Lock dashboard grid - prevent builder from moving nodes */
+  #dashboard-grid {
+    contain: layout paint;
+  }
+  
+  /* Block external drag handles without killing inner clicks */
+  #sidefeed-pane[data-locked="true"] {
+    pointer-events: none;
+  }
+  #sidefeed-pane[data-locked="true"] * {
+    pointer-events: auto;
+  }
+
+  /* Nuke common builder drag-handles if present */
+  #sidefeed-pane [class*="drag"],
+  #sidefeed-pane [data-draggable],
+  #sidefeed-pane [aria-grabbed="true"] {
+    display: none !important;
+  }
 }
