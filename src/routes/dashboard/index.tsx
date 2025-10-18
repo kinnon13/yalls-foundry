@@ -142,22 +142,22 @@ export default function DashboardLayout() {
                   variant="ghost"
                   size="sm"
                   className="gap-2"
-                  onClick={() => window.history.back()}
+                  onClick={() => {
+                    window.location.href = '/dashboard';
+                  }}
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Back to Desktop
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant="default"
                   size="sm"
                   onClick={() => {
-                    const params = new URLSearchParams(window.location.search);
-                    params.delete('m');
-                    window.history.pushState({}, '', `${window.location.pathname}?${params}`);
-                    window.location.reload();
+                    window.location.href = '/dashboard';
                   }}
                 >
                   <X className="w-4 h-4" />
+                  Close
                 </Button>
               </div>
               <DashboardErrorBoundary>
