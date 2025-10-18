@@ -46,9 +46,17 @@ export default function TestRunner() {
 
       if (error) {
         console.error('Test run error:', error);
-        toast.error('Failed to run tests', {
-          description: error.message || 'Unknown error'
-        });
+        
+        // Check if it's a function not found error
+        if (error.message?.includes('FunctionsRelayError') || error.message?.includes('not found')) {
+          toast.error('Test runner deploying', {
+            description: 'The test runner function is being deployed. Please wait a moment and try again.'
+          });
+        } else {
+          toast.error('Failed to run tests', {
+            description: error.message || 'Unknown error'
+          });
+        }
         setRunning(false);
         return;
       }
