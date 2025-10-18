@@ -10,6 +10,7 @@ import { DebugOverlay } from '@/feature-kernel/DebugOverlay';
 import { TwoUpFeed } from '@/components/dashboard/TwoUpFeed';
 import { BottomNav } from '@/components/layout/BottomNav';
 import Footer from '@/components/layout/Footer';
+import BubbleRailTop from '@/components/social/BubbleRailTop';
 
 class DashboardErrorBoundary extends Component<
   { children: ReactNode },
@@ -122,10 +123,19 @@ export default function DashboardLayout() {
       {/* Hard-locked grid shell - APPS LEFT, FEED RIGHT */}
       <div
         id="dashboard-grid"
-        className="grid h-[calc(100dvh-var(--header-h,64px))] gap-4 grid-cols-[minmax(640px,1fr)_minmax(420px,520px)] px-4 overflow-hidden"
+        className="grid h-[calc(100dvh-var(--header-h,64px))] gap-4 grid-cols-[minmax(640px,1fr)] px-4 overflow-hidden"
       >
         {/* Apps Pane - LEFT */}
-        <section id="apps-pane" className="min-w-[640px] overflow-auto">
+        <section id="apps-pane" className="min-w-[640px] overflow-auto pr-[500px] lg:pr-[540px] pb-16">
+          {/* NEW: profile bubbles at the very top */}
+          <div className="sticky top-0 z-20 bg-background/80 backdrop-blur border-b border-border/40">
+            <BubbleRailTop />
+          </div>
+
+          {/* give bubbles some breathing room */}
+          <div className="h-3" />
+
+          {/* Apps grid now starts lower on the page */}
           <DashboardErrorBoundary>
             <Suspense fallback={<div className="flex items-center justify-center h-full"><PanelSkeleton /></div>}>
               <DraggableAppGrid />
@@ -136,7 +146,7 @@ export default function DashboardLayout() {
         {/* Social Feed - RIGHT (LOCKED) */}
         <aside
           id="sidefeed-pane"
-          className="fixed z-40 right-6 top-[var(--header-h,64px)] h-[calc(100dvh-var(--header-h,64px))] w-[480px] lg:w-[520px] border-l border-border/40 bg-background/70 backdrop-blur rounded-l-xl overflow-hidden"
+          className="fixed z-40 md:right-5 right-0 top-[var(--header-h,64px)] h-[calc(100dvh-var(--header-h,64px))] md:w-[460px] lg:w-[520px] w-full border-l border-border/40 bg-background/70 backdrop-blur md:rounded-l-xl overflow-hidden"
           data-locked="true"
           aria-label="Social feed"
         >

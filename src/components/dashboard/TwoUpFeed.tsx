@@ -6,6 +6,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Heart, MessageCircle, Share2, Bookmark, Repeat2 } from 'lucide-react';
+import MediaFit from '@/components/social/MediaFit';
 import { cn } from '@/lib/utils';
 import { generateMockPosts } from '@/lib/mock/posts';
 
@@ -102,15 +103,12 @@ export function TwoUpFeed({ feedKey }: { feedKey: FeedKey }) {
 }
 
 function PostCard({ item }: { item: Post }) {
+  const mediaUrl = item.media?.[0]?.url || item.media_url;
+  const mediaType = item.media?.[0]?.type || 'image';
+
   return (
-    <article className="relative aspect-[9/16] w-full rounded-xl overflow-hidden bg-black/50">
-      {item.media_url && (
-        <img 
-          src={item.media_url} 
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-      )}
+    <article className="relative aspect-[9/16] w-full rounded-xl overflow-hidden bg-black">
+      {mediaUrl && <MediaFit m={{ url: mediaUrl, type: mediaType }} />}
       
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
       
