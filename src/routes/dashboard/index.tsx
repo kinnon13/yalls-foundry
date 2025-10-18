@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useEffect } from 'react';
+import { Suspense, lazy, useMemo, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
@@ -7,6 +7,10 @@ import FeatureHost from '@/feature-kernel/Host';
 import { DebugOverlay } from '@/feature-kernel/DebugOverlay';
 import { FeatureErrorBoundary } from '@/feature-kernel/ErrorBoundary';
 import { coerceModule, type ModuleKey } from '@/lib/dashUrl';
+import { Wallpaper } from '@/components/appearance/Wallpaper';
+import { ScreenSaver } from '@/components/appearance/ScreenSaver';
+import { useAppearance } from '@/hooks/useAppearance';
+import { supabase } from '@/integrations/supabase/client';
 
 const panels = {
   overview: lazy(() => import('./overview')),
@@ -39,8 +43,20 @@ export default function DashboardLayout() {
   const rawModule = sp.get('m');
   const m = coerceModule(rawModule);
   const f = sp.get('f'); // feature list
+  const [userId, setUserId] = useState<string | null>(null);
   
   const Panel = useMemo(() => panels[m] ?? panels.overview, [m]);
+
+  // Get user ID for appearance settings
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
+
+  // Load user appearance settings
+  const { data: appearance } = useAppearance({ 
+    type: 'user', 
+    id: userId || '' 
+  });
 
   // Update document title and focus on module change
   useEffect(() => {
@@ -62,7 +78,21 @@ export default function DashboardLayout() {
   }, [m]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Wallpaper background */}
+      {appearance?.wallpaper_url && (
+        <Wallpaper
+          url={appearance.wallpaper_url}
+          blur={(appearance.screensaver_payload as any)?.blur}
+          dim={(appearance.screensaver_payload as any)?.dim}
+        />
+      )}
+
+      {/* Screen saver overlay */}
+      {appearance?.screensaver_payload && (
+        <ScreenSaver payload={appearance.screensaver_payload as any} />
+      )}
+
       <GlobalHeader />
       <div className="flex h-[calc(100vh-64px)]">
         {!isMobile && <DashboardSidebar />}

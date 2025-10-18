@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { KpiTiles } from '@/components/dashboard/KpiTiles';
 import { NbaList } from '@/components/dashboard/NbaList';
+import { PinsWithFolders } from '@/components/dashboard/PinsWithFolders';
 import { AlertCircle, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -66,6 +67,9 @@ export function Overview() {
 
       {/* KPIs */}
       {firstEntityId && <KpiTiles entityId={firstEntityId} />}
+
+      {/* Pinned Apps & Entities with Folders */}
+      <PinsWithFolders section="home" entityId={firstEntityId} />
 
       {/* Pending Approvals Alert */}
       {pendingApprovals && pendingApprovals > 0 && (
