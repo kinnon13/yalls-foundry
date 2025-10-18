@@ -45,6 +45,9 @@ export const REDIRECT_RULES: Record<string, string> = {
   
   // Saved posts → dashboard
   '/posts/saved': '/dashboard?tab=saved',
+  
+  // Legacy organizer routes → workspace producer console
+  '/organizer': '/workspace',
 };
 
 /**
@@ -70,6 +73,11 @@ export function getRedirectDestination(path: string): string | null {
   
   if (path.startsWith('/business/')) {
     return '/dashboard';
+  }
+  
+  // Legacy organizer routes with paths → workspace
+  if (path.startsWith('/organizer/')) {
+    return '/workspace';
   }
   
   // Profile without ID → search

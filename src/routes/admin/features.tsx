@@ -829,7 +829,7 @@ export default function FeaturesAdminPage() {
         alreadyClaimed: [], 
         partiallyClaimed: [], 
         trulyNew: [],
-        byCategory: { public: [], private: [], organizer: [], workspace: [], other: [] }
+        byCategory: { public: [], private: [], workspace: [], other: [] }
       };
     }
 
@@ -876,7 +876,6 @@ export default function FeaturesAdminPage() {
     const byCategory = {
       public: [] as string[],
       private: [] as string[],
-      organizer: [] as string[],
       workspace: [] as string[],
       other: [] as string[],
     };
@@ -885,7 +884,6 @@ export default function FeaturesAdminPage() {
       const category = getRouteCategory(route);
       if (category === 'public') byCategory.public.push(route);
       else if (category === 'private') byCategory.private.push(route);
-      else if (category === 'organizer') byCategory.organizer.push(route);
       else if (category === 'workspace') byCategory.workspace.push(route);
       else byCategory.other.push(route);
     });
@@ -900,7 +898,6 @@ export default function FeaturesAdminPage() {
       byCategory: {
         public: byCategory.public.length,
         private: byCategory.private.length,
-        organizer: byCategory.organizer.length,
         workspace: byCategory.workspace.length,
         other: byCategory.other.length,
       }
@@ -1404,32 +1401,6 @@ export default function FeaturesAdminPage() {
                               <Badge variant="outline" className="text-xs">User-Specific</Badge>
                             </div>
                             {routeClassification.byCategory.private.map((route: string) => (
-                              <div key={route} className="flex items-center justify-between gap-2 p-2 hover:bg-accent/50 rounded">
-                                <Badge variant="secondary" className="text-xs">
-                                  {route}
-                                </Badge>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => handleClaimFeature(route)}
-                                  className="text-xs"
-                                >
-                                  <Plus className="h-3 w-3 mr-1" />
-                                  Claim
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {/* Organizer Routes */}
-                        {routeClassification.byCategory.organizer.length > 0 && (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 px-2">
-                              <div className="text-xs font-semibold text-muted-foreground">Organizer Routes</div>
-                              <Badge variant="outline" className="text-xs">Role-Gated</Badge>
-                            </div>
-                            {routeClassification.byCategory.organizer.map((route: string) => (
                               <div key={route} className="flex items-center justify-between gap-2 p-2 hover:bg-accent/50 rounded">
                                 <Badge variant="secondary" className="text-xs">
                                   {route}

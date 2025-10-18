@@ -9,7 +9,7 @@ const ROUTE_ALIASES: Record<string, string> = {
   '/dashboard': '/workspace',
   '/incentives/dashboard': '/workspace',
   '/crm': '/workspace',
-  '/organizer': '/workspace',
+  '/organizer': '/workspace', // Legacy redirect to workspace producer console
 };
 
 // Which route heads should be collapsed into `/<head>/*`
@@ -25,7 +25,6 @@ const COLLAPSE_HEADS = new Set([
   '/profile',
   '/stallions',
   '/cart',
-  '/organizer',
   '/workspace',
   '/equistats',
 ]);
@@ -34,7 +33,6 @@ const COLLAPSE_HEADS = new Set([
 export const ROUTE_CATEGORIES: Record<string, string> = {
   '/events': 'public',
   '/entries': 'private',
-  '/organizer': 'workspace', // Legacy alias for producer events
   '/workspace': 'workspace',
   '/marketplace': 'public',
   '/equistats': 'public',
@@ -114,7 +112,7 @@ export function getWorkspaceEntityId(p: string): string | null {
 }
 
 /**
- * Get route category (public/private/organizer/workspace)
+ * Get route category (public/private/workspace)
  */
 export function getRouteCategory(p: string): string | null {
   const normalized = normRoute(applyRouteAlias(p));
