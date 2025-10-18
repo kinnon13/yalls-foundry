@@ -1,97 +1,107 @@
 /**
  * Feature Flags Control Panel
  * 
- * Admin UI to enable/disable features in real-time.
- * Changes propagate instantly to all users via Supabase realtime.
+ * Admin UI to enable/disable local feature flags.
  */
 
-import { useState } from 'react';
-import { useFeatureFlag, type Flag } from '@/lib/flags/useFlags';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
+import { useAllFeatureFlags } from '@/hooks/useFeatureFlags';
+import { setFlag, type FlagKey } from '@/lib/flags/index';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  ShoppingCart, 
-  Calendar, 
   Mic, 
-  BarChart3, 
-  Network, 
-  Video, 
-  CreditCard, 
-  Smartphone,
-  Loader2,
-  RefreshCw
+  Calendar, 
+  ShoppingCart,
+  Search,
+  MessageSquare,
+  BarChart3
 } from 'lucide-react';
 
-const categoryIcons: Record<string, any> = {
-  commerce: ShoppingCart,
-  scheduling: Calendar,
-  ai: Mic,
-  analytics: BarChart3,
-  business: Network,
-  media: Video,
-  platform: Smartphone,
+const flagMetadata: Record<FlagKey, { name: string; description: string; icon: any; category: string }> = {
+  feedback: {
+    name: 'Feedback Widget',
+    description: 'Show feedback widget for user input',
+    icon: MessageSquare,
+    category: 'platform'
+  },
+  ai: {
+    name: 'Rocker AI',
+    description: 'Enable AI assistant features',
+    icon: Mic,
+    category: 'ai'
+  },
+  events: {
+    name: 'Events UI',
+    description: 'Enable events management interface',
+    icon: Calendar,
+    category: 'events'
+  },
+  market: {
+    name: 'Marketplace',
+    description: 'Enable marketplace features',
+    icon: ShoppingCart,
+    category: 'commerce'
+  },
+  new_search: {
+    name: 'New Search',
+    description: 'Experimental search interface',
+    icon: Search,
+    category: 'discovery'
+  },
+  feed: {
+    name: 'Feed UI',
+    description: 'Social feed interface',
+    icon: MessageSquare,
+    category: 'discovery'
+  },
+  composer_coach: {
+    name: 'Composer Coach',
+    description: 'Live writing assistance',
+    icon: Mic,
+    category: 'ai'
+  },
+  ai_rank: {
+    name: 'AI Ranking',
+    description: 'AI-powered content ranking',
+    icon: BarChart3,
+    category: 'ai'
+  }
 };
 
 const categoryColors: Record<string, string> = {
-  commerce: 'bg-emerald-500/10 text-emerald-500',
-  scheduling: 'bg-blue-500/10 text-blue-500',
+  platform: 'bg-blue-500/10 text-blue-500',
   ai: 'bg-purple-500/10 text-purple-500',
-  analytics: 'bg-orange-500/10 text-orange-500',
-  business: 'bg-pink-500/10 text-pink-500',
-  media: 'bg-red-500/10 text-red-500',
-  platform: 'bg-cyan-500/10 text-cyan-500',
+  events: 'bg-green-500/10 text-green-500',
+  commerce: 'bg-emerald-500/10 text-emerald-500',
+  discovery: 'bg-orange-500/10 text-orange-500',
 };
 
 export function FeatureFlagsPanel() {
-  const { allFlags, loading } = useFeatureFlags();
+  const flags = useAllFeatureFlags();
   const { toast } = useToast();
-  const [updating, setUpdating] = useState<string | null>(null);
 
-  const toggleFeature = async (flag: FeatureFlag) => {
-    setUpdating(flag.id);
+  const toggleFlag = (key: FlagKey) => {
+    const newValue = !flags[key];
+    setFlag(key, newValue);
     
-    const { error } = await supabase
-      .from('feature_flags')
-      .update({ enabled: !flag.enabled })
-      .eq('id', flag.id);
-
-    if (error) {
-      toast({
-        title: 'Error',
-        description: `Failed to update ${flag.name}`,
-        variant: 'destructive',
-      });
-    } else {
-      toast({
-        title: flag.enabled ? 'Feature Disabled' : 'Feature Enabled',
-        description: `${flag.name} ${flag.enabled ? 'disabled' : 'enabled'} for all users`,
-      });
-    }
-    
-    setUpdating(null);
+    toast({
+      title: newValue ? 'Feature Enabled' : 'Feature Disabled',
+      description: `${flagMetadata[key].name} ${newValue ? 'enabled' : 'disabled'}`,
+    });
   };
 
-  const groupedFlags = allFlags.reduce((acc, flag) => {
-    if (!acc[flag.category]) {
-      acc[flag.category] = [];
+  const groupedFlags = Object.entries(flags).reduce((acc, [key, enabled]) => {
+    const meta = flagMetadata[key as FlagKey];
+    if (!meta) return acc;
+    
+    if (!acc[meta.category]) {
+      acc[meta.category] = [];
     }
-    acc[flag.category].push(flag);
+    acc[meta.category].push({ key: key as FlagKey, enabled, ...meta });
     return acc;
-  }, {} as Record<string, FeatureFlag[]>);
-
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
-    );
-  }
+  }, {} as Record<string, Array<{ key: FlagKey; enabled: boolean; name: string; description: string; icon: any; category: string }>>);
 
   return (
     <div className="space-y-6">
@@ -101,40 +111,39 @@ export function FeatureFlagsPanel() {
             <div>
               <CardTitle>Feature Flags</CardTitle>
               <CardDescription>
-                Enable or disable platform features in real-time. Changes apply instantly to all users.
+                Enable or disable platform features. Changes apply instantly.
               </CardDescription>
             </div>
-            <Badge variant="outline" className="gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              Live Updates
+            <Badge variant="outline">
+              {Object.values(flags).filter(Boolean).length} / {Object.keys(flags).length} enabled
             </Badge>
           </div>
         </CardHeader>
       </Card>
 
-      {Object.entries(groupedFlags).map(([category, flags]) => {
-        const Icon = categoryIcons[category] || RefreshCw;
+      {Object.entries(groupedFlags).map(([category, categoryFlags]) => {
         const colorClass = categoryColors[category] || 'bg-gray-500/10 text-gray-500';
+        const IconComponent = categoryFlags[0]?.icon || MessageSquare;
         
         return (
           <Card key={category}>
             <CardHeader>
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${colorClass}`}>
-                  <Icon className="w-5 h-5" />
+                  <IconComponent className="w-5 h-5" />
                 </div>
                 <div>
                   <CardTitle className="text-lg capitalize">{category}</CardTitle>
                   <CardDescription>
-                    {flags.length} feature{flags.length !== 1 ? 's' : ''}
+                    {categoryFlags.length} feature{categoryFlags.length !== 1 ? 's' : ''}
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {flags.map((flag) => (
+              {categoryFlags.map((flag) => (
                 <div
-                  key={flag.id}
+                  key={flag.key}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex-1">
@@ -151,19 +160,13 @@ export function FeatureFlagsPanel() {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {flag.description || 'No description available'}
+                      {flag.description}
                     </p>
-                    {Object.keys(flag.config).length > 0 && (
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        Config: {JSON.stringify(flag.config)}
-                      </div>
-                    )}
                   </div>
                   
                   <Switch
                     checked={flag.enabled}
-                    onCheckedChange={() => toggleFeature(flag)}
-                    disabled={updating === flag.id}
+                    onCheckedChange={() => toggleFlag(flag.key)}
                     className="ml-4"
                   />
                 </div>
@@ -172,19 +175,6 @@ export function FeatureFlagsPanel() {
           </Card>
         );
       })}
-
-      <Card className="border-dashed">
-        <CardContent className="flex flex-col items-center justify-center py-8 text-center">
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <RefreshCw className="w-6 h-6 text-primary" />
-          </div>
-          <h3 className="font-semibold mb-2">Dynamic Platform</h3>
-          <p className="text-sm text-muted-foreground max-w-md">
-            Features can be toggled without redeployment. All changes propagate instantly via Supabase realtime.
-            Add new features to the database to see them appear here automatically.
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 }
