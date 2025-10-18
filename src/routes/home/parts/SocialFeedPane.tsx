@@ -112,8 +112,10 @@ export default function SocialFeedPane() {
 
   return (
     <section className="flex h-full w-full flex-col">
-      {/* Profile bubble above the feed */}
-      <ProfileSummaryBar />
+      {/* Profile bubble above the feed - aligned with favorites */}
+      <div className="pt-8">
+        <ProfileSummaryBar />
+      </div>
 
       {/* Tab indicators (clickable or drag/swipe to change) */}
       <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-background/70 backdrop-blur px-2 py-1">
