@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Heart, MessageCircle, Share2, Bookmark, MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { generateMockPosts } from '@/lib/mock/posts';
 
 interface Post {
   id: string;
@@ -36,29 +37,45 @@ export function TikTokFeed() {
     queryKey: ['tiktok-feed', page],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
 
       const pageSize = 10;
       const from = page * pageSize;
       const to = from + pageSize - 1;
 
-      // Query posts directly (not through post_targets)
-      const { data, error } = await supabase
-        .from('posts')
-        .select(`
-          id,
-          body,
-          media,
-          created_at,
-          author_user_id,
-          profiles (display_name, avatar_url),
-          entities (display_name, handle)
-        `)
-        .order('created_at', { ascending: false })
-        .range(from, to);
+      // If not signed in, fall back to mock feed
+      if (!user) {
+        return generateMockPosts(page, pageSize);
+      }
 
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await supabase
+          .from('posts')
+          .select(`
+            id,
+            body,
+            media,
+            created_at,
+            author_user_id,
+            profiles (display_name, avatar_url),
+            entities (display_name, handle)
+          `)
+          .order('created_at', { ascending: false })
+          .range(from, to);
+
+        if (error) {
+          console.warn('Feed query failed, using mock feed:', error);
+          return generateMockPosts(page, pageSize);
+        }
+
+        if (!data || data.length === 0) {
+          return generateMockPosts(page, pageSize);
+        }
+
+        return data;
+      } catch (e) {
+        console.warn('Feed query threw, using mock feed:', e);
+        return generateMockPosts(page, pageSize);
+      }
     }
   });
 
