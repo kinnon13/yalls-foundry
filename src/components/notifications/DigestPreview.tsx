@@ -4,10 +4,15 @@
  */
 
 import React from 'react';
-import type { DigestGroup } from '@/ports/notifications';
+import type { NotificationLane, Notification } from '@/lib/adapters/notifications-types';
 import { NotificationItem } from './NotificationItem';
 import { Button } from '@/components/ui/button';
 import { Mail } from 'lucide-react';
+
+interface DigestGroup {
+  lane: NotificationLane;
+  items: Notification[];
+}
 
 interface Props {
   groups: DigestGroup[];

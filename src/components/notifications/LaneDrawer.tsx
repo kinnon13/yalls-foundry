@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useNotificationCounts } from '@/hooks/useNotifications';
 import { NotificationItem } from './NotificationItem';
-import type { NotificationLane } from '@/ports/notifications';
+import type { NotificationLane } from '@/lib/adapters/notifications-types';
 import { Button } from '@/components/ui/button';
 import { CheckCheck, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

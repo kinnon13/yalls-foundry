@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import type { NotificationItem as NotificationItemType } from '@/ports/notifications';
+import type { Notification as NotificationItemType } from '@/lib/adapters/notifications-types';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 

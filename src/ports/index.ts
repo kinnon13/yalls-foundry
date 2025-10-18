@@ -15,8 +15,6 @@ export const Favorites = adapters.favorites;
 export const Reposts = adapters.reposts;
 export const LinkedAccounts = adapters.linkedAccounts;
 export const EntityEdges = adapters.entityEdges;
-export const Notifications = adapters.notifications;
-export const NotificationPrefs = adapters.notificationPrefs;
 
 // Export for debugging/observability
 export const ADAPTER_MODE = MODE;
@@ -27,4 +25,3 @@ export * from './favorites';
 export * from './reposts';
 export * from './linkedAccounts';
 export * from './entityEdges';
-export * from './notifications';
