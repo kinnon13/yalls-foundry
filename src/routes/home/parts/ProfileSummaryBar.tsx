@@ -55,7 +55,7 @@ export default function ProfileSummaryBar() {
   return (
     <Link
       to="/profile"
-      className="flex items-center gap-3 px-2 py-2 hover:bg-muted/30 rounded-lg transition-colors"
+      className="flex flex-col items-center gap-2 px-2 py-2 hover:bg-muted/30 rounded-lg transition-colors"
       aria-label="Open your profile"
     >
       {/* Avatar */}
@@ -67,8 +67,8 @@ export default function ProfileSummaryBar() {
         )}
       </div>
 
-      {/* Stats only */}
-      <div className="flex gap-6 text-sm justify-center w-full">
+      {/* Stats centered */}
+      <div className="flex gap-6 text-sm">
         <div className="flex flex-col items-center">
           <span className="text-lg font-bold text-foreground">{totals.following}</span>
           <span className="text-xs text-muted-foreground">Following</span>
