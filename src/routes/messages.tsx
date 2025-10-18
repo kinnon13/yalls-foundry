@@ -1,9 +1,9 @@
 /**
- * Messages route - iMessage-style messaging
+ * Messages route - personal inbox
  */
 
 import MessagingApp from '@/apps/messaging';
 
-export default function Messages() {
+export default function MessagesRoute() {
   return <MessagingApp />;
 }
