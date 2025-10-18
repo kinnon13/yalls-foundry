@@ -114,14 +114,14 @@ export default function SocialFeedPane() {
   return (
     <section className="flex h-full w-full flex-col">
       {/* Home button and Connected Accounts heading in same row */}
-      <div className="mb-2 flex items-center justify-between pr-2">
+      <div className="mb-2 flex items-center justify-between pr-2 py-2">
         <button
           onClick={() => navigate('/home')}
           className="text-base font-semibold text-foreground hover:text-primary transition-colors"
         >
           Home
         </button>
-        <h3 className="text-base font-semibold text-foreground">View Connected Accounts</h3>
+        <h3 className="text-base font-semibold text-foreground text-center">View Connected Accounts</h3>
         <div className="w-[60px]" aria-hidden /> {/* Spacer for balance */}
       </div>
 
