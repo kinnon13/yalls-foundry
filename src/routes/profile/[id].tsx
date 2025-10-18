@@ -7,7 +7,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
-import { PinnedBubblesRail } from '@/components/social/PinnedBubblesRail';
+import { PublicFavoritesBar } from '@/components/social/FavoritesBar';
 import { ProfileBubbles } from '@/components/profile/ProfileBubbles';
 import { ProfileLinkBars } from '@/components/profile/ProfileLinkBars';
 import { ProfileCounts } from '@/components/profile/ProfileCounts';
@@ -117,12 +117,7 @@ export default function ProfilePage() {
         {/* Pinned Favorites (public view) */}
         <div className="mb-8">
           <h3 className="text-sm font-semibold mb-3">Pinned Favorites</h3>
-          <PinnedBubblesRail 
-            userId={profile.user_id} 
-            size={64} 
-            gap={10}
-            readOnly={!profile.isOwner}
-          />
+          <PublicFavoritesBar profileUserId={profile.user_id} />
         </div>
 
         {/* Bubbles */}

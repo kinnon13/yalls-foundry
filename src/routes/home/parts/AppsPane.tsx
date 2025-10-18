@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PinnedBubblesRail } from '@/components/social/PinnedBubblesRail';
+import { FavoritesBar } from '@/components/social/FavoritesBar';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useEntityCapabilities } from '@/hooks/useEntityCapabilities';
@@ -140,10 +140,10 @@ export default function AppsPane() {
 
   return (
     <div className="space-y-4">
-      {/* Infinite pinned favorites */}
+      {/* Always-visible favorites bar */}
       <section className="mb-2">
-        <h3 className="text-sm font-medium text-foreground/80 mb-2 px-2">Pinned Favorites</h3>
-        <PinnedBubblesRail userId={userId} size={72} gap={12} mockWhenEmpty />
+        <h3 className="text-sm font-medium text-foreground/80 mb-2 px-2">Favorites</h3>
+        <FavoritesBar size={72} gap={12} />
       </section>
 
       {/* Scale control */}
