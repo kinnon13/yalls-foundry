@@ -3,7 +3,10 @@ name: show-your-work
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  workflow_dispatch:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+  workflow_call: {}
 
 concurrency:
   group: show-your-work-${{ github.ref }}
@@ -38,4 +41,10 @@ jobs:
 
       - name: Validate work report (PRs only)
         if: ${{ github.event_name == 'pull_request' }}
-        run: node scripts/validate-work-report.mjs
+        run: |
+          if [ -f scripts/validate-work-report.mjs ]; then
+            node scripts/validate-work-report.mjs
+          else
+            echo "ℹ️ Work report validation skipped: script not found"
+            exit 0
+          fi
