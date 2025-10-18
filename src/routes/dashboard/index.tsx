@@ -127,7 +127,7 @@ export default function DashboardLayout() {
       
       {/* Main content area - z-20 */}
       <div className="relative z-20 h-[calc(100vh-64px)] overflow-auto">
-        {m ? (
+        {rawModule ? (
           <div className="container mx-auto p-6">
             <DashboardErrorBoundary>
               <FeatureErrorBoundary featureId={`dashboard.${m}`}>

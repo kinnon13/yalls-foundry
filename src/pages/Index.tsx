@@ -16,7 +16,7 @@ const Index = () => {
       
       // Auto-redirect to dashboard if logged in
       if (session) {
-        navigate('/dashboard?m=overview');
+        navigate('/dashboard');
       }
     });
 
