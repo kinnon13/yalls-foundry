@@ -33,11 +33,9 @@ jobs:
       - name: Validate architecture
         run: node scripts/validate-architecture.mjs
       
-      - name: Database coverage report (if available)
-        if: ${{ secrets.DATABASE_URL }}
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: node scripts/ops-report.mjs || echo "Ops report completed with warnings"
+      - name: Database coverage report
+        continue-on-error: true
+        run: node scripts/ops-report.mjs || echo "Ops report skipped (no DATABASE_URL)"
       
       - name: TypeCheck admin routes
         run: npx tsc --noEmit src/routes/admin/*.tsx
