@@ -7,13 +7,15 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { BubbleItem } from '@/routes/social';
 import type { FeedItem } from '@/types/feed';
 import { TikTokScroller } from '@/components/reels/TikTokScroller';
-import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Pin, PinOff } from 'lucide-react';
 import { useRocker } from '@/lib/ai/rocker';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 interface ProfileDeckProps {
   currentId: string;
@@ -24,10 +26,74 @@ interface ProfileDeckProps {
 export function ProfileDeck({ currentId, allBubbles, onSwitch }: ProfileDeckProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { log } = useRocker();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const currentIndex = allBubbles.findIndex(b => b.id === currentId);
   const currentBubble = allBubbles[currentIndex];
+
+  // Get user ID
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
+
+  // Check if pinned
+  const { data: isPinned } = useQuery({
+    queryKey: ['is-pinned', userId, currentId],
+    queryFn: async () => {
+      if (!userId) return false;
+      const { data } = await supabase
+        .from('user_pins')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('pin_type', 'entity')
+        .eq('ref_id', currentId)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!userId
+  });
+
+  // Toggle pin mutation
+  const togglePin = useMutation({
+    mutationFn: async () => {
+      if (!userId) throw new Error('Not signed in');
+      
+      if (isPinned) {
+        // Unpin
+        await supabase
+          .from('user_pins')
+          .delete()
+          .eq('user_id', userId)
+          .eq('pin_type', 'entity')
+          .eq('ref_id', currentId);
+      } else {
+        // Pin
+        await supabase
+          .from('user_pins')
+          .insert({
+            user_id: userId,
+            pin_type: 'entity',
+            ref_id: currentId,
+            section: 'home',
+          });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['is-pinned', userId, currentId] });
+      queryClient.invalidateQueries({ queryKey: ['pins', userId] });
+      queryClient.invalidateQueries({ queryKey: ['social-bubbles', userId] });
+      
+      toast({
+        title: isPinned ? 'Unpinned' : 'Pinned to My Apps',
+        description: isPinned ? `Removed from dashboard` : `${currentBubble?.display_name} added to dashboard`,
+      });
+      
+      log('pin_toggle', { entity_id: currentId, action: isPinned ? 'unpin' : 'pin' });
+    },
+  });
 
   // Fetch feed for current profile
   const { data: feedItems, isLoading } = useQuery({
@@ -170,10 +236,39 @@ export function ProfileDeck({ currentId, allBubbles, onSwitch }: ProfileDeckProp
     <div ref={containerRef} className="relative">
       {/* Profile Header */}
       {currentBubble && (
-        <div className="px-6 py-4 border-b border-border bg-background/95 backdrop-blur-sm">
-          <h2 className="text-2xl font-bold">{currentBubble.display_name}</h2>
-          {currentBubble.handle && (
-            <p className="text-sm text-muted-foreground">@{currentBubble.handle}</p>
+        <div 
+          className="px-6 py-4 border-b border-border bg-background/95 backdrop-blur-sm flex items-start justify-between"
+          role="region"
+          aria-live="polite"
+          aria-label="Current profile"
+        >
+          <div>
+            <h2 className="text-2xl font-bold">{currentBubble.display_name}</h2>
+            {currentBubble.handle && (
+              <p className="text-sm text-muted-foreground">@{currentBubble.handle}</p>
+            )}
+          </div>
+          
+          {userId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => togglePin.mutate()}
+              disabled={togglePin.isPending}
+              className="gap-2"
+            >
+              {isPinned ? (
+                <>
+                  <PinOff className="w-4 h-4" />
+                  Unpin
+                </>
+              ) : (
+                <>
+                  <Pin className="w-4 h-4" />
+                  Pin
+                </>
+              )}
+            </Button>
           )}
         </div>
       )}
@@ -187,9 +282,19 @@ export function ProfileDeck({ currentId, allBubbles, onSwitch }: ProfileDeckProp
         />
       ) : (
         <div className="flex items-center justify-center h-[calc(100vh-16rem)]">
-          <div className="text-center p-8">
-            <p className="text-lg text-muted-foreground mb-2">No activity yet</p>
-            <p className="text-sm text-muted-foreground">Check back soon!</p>
+          <div className="text-center p-8 max-w-md mx-auto">
+            <div className="w-16 h-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
+              <span className="text-3xl">{currentBubble?.type === 'horse' ? '🐴' : currentBubble?.type === 'business' ? '🏢' : '👤'}</span>
+            </div>
+            <p className="text-lg font-medium text-foreground mb-2">No activity yet</p>
+            <p className="text-sm text-muted-foreground mb-6">
+              {currentBubble?.display_name} hasn't posted anything yet. Check back soon!
+            </p>
+            {currentBubble?.badge === 'Unclaimed' && (
+              <Button variant="outline" size="sm">
+                Claim Profile
+              </Button>
+            )}
           </div>
         </div>
       )}

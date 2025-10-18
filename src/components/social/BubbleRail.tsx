@@ -5,9 +5,10 @@
  * Long-press for quick actions
  */
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import type { BubbleItem } from '@/routes/social';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useReducedMotion } from '@/lib/a11y/useReducedMotion';
 
 interface BubbleRailProps {
   items: BubbleItem[];
@@ -18,6 +19,7 @@ interface BubbleRailProps {
 export function BubbleRail({ items, activeId, onChange }: BubbleRailProps) {
   const railRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLButtonElement>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   // Auto-center active bubble
   useEffect(() => {
@@ -42,6 +44,8 @@ export function BubbleRail({ items, activeId, onChange }: BubbleRailProps) {
     <div className="relative border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-40">
       <div
         ref={railRef}
+        role="listbox"
+        aria-label="Profiles"
         className="flex gap-4 px-4 py-4 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
@@ -53,12 +57,32 @@ export function BubbleRail({ items, activeId, onChange }: BubbleRailProps) {
               key={item.id}
               ref={isActive ? activeRef : null}
               onClick={() => onChange(item.id)}
-              className="flex-shrink-0 snap-center group relative"
+              role="option"
+              aria-selected={isActive}
+              tabIndex={isActive ? 0 : -1}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onChange(item.id);
+                }
+              }}
+              className="flex-shrink-0 snap-center group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-full"
               aria-label={`View ${item.display_name}`}
             >
               {/* Ring */}
               <div
-                className={`w-20 h-20 rounded-full p-1 transition-all ${
+                onMouseMove={!prefersReducedMotion ? (e) => {
+                  const r = e.currentTarget.getBoundingClientRect();
+                  const x = ((e.clientX - r.left) / r.width - 0.5) * 10;
+                  const y = ((e.clientY - r.top) / r.height - 0.5) * -10;
+                  e.currentTarget.style.transform = `perspective(600px) rotateX(${y}deg) rotateY(${x}deg) translateZ(6px)`;
+                } : undefined}
+                onMouseLeave={(e) => {
+                  if (!prefersReducedMotion) {
+                    e.currentTarget.style.transform = 'none';
+                  }
+                }}
+                className={`w-20 h-20 rounded-full p-1 transition-all will-change-transform ${
                   isActive ? 'scale-110' : 'scale-100 opacity-70 group-hover:opacity-100'
                 }`}
                 style={{

@@ -64,7 +64,7 @@ export default function SocialPage() {
         // Fallback: show some suggested entities
         const { data: suggested } = await supabase
           .from('entities')
-          .select('id, display_name, handle, kind, status')
+          .select('id, display_name, handle, kind, status, metadata')
           .limit(10);
 
         return (suggested || []).map(e => ({
@@ -72,7 +72,7 @@ export default function SocialPage() {
           type: (e.kind === 'person' ? 'person' : e.kind === 'horse' ? 'horse' : 'business') as 'person' | 'business' | 'horse' | 'app',
           display_name: e.display_name,
           handle: e.handle || undefined,
-          avatar_url: undefined,
+          avatar_url: (e.metadata as any)?.avatar_url || (e.metadata as any)?.logo_url,
           ring_color: e.kind === 'person' ? 'hsl(258 85% 60%)' : e.kind === 'horse' ? 'hsl(160 65% 50%)' : 'hsl(200 90% 55%)',
           badge: e.status === 'unclaimed' ? 'Unclaimed' : undefined,
         }));
@@ -88,7 +88,7 @@ export default function SocialPage() {
         chunk(entityIds, 100).map(ids =>
           supabase
             .from('entities')
-            .select('id, display_name, handle, kind, status')
+            .select('id, display_name, handle, kind, status, metadata')
             .in('id', ids)
         )
       );
@@ -100,7 +100,7 @@ export default function SocialPage() {
         type: (e.kind === 'person' ? 'person' : e.kind === 'horse' ? 'horse' : 'business') as 'person' | 'business' | 'horse' | 'app',
         display_name: e.display_name,
         handle: e.handle || undefined,
-        avatar_url: undefined,
+        avatar_url: (e.metadata as any)?.avatar_url || (e.metadata as any)?.logo_url,
         ring_color: e.kind === 'person' ? 'hsl(258 85% 60%)' : e.kind === 'horse' ? 'hsl(160 65% 50%)' : 'hsl(200 90% 55%)',
         badge: e.status === 'unclaimed' ? 'Unclaimed' : undefined,
       }));
