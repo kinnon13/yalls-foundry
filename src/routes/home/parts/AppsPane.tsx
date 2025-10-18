@@ -1,6 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FavoritesBar } from '@/components/social/FavoritesBar';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useEntityCapabilities } from '@/hooks/useEntityCapabilities';
@@ -49,6 +48,8 @@ const MANAGEMENT_APPS: AppTile[] = [
   { id: 'approvals', label: 'Approvals', icon: CheckCircle, module: 'approvals', color: 'from-teal-500/20 to-cyan-600/5' },
 ];
 
+type Bubble = { id: string; display_name: string; avatar_url?: string | null };
+
 export default function AppsPane() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
@@ -70,14 +71,19 @@ export default function AppsPane() {
   // Filter management apps based on capabilities
   const filteredManagementApps = useMemo(() => {
     return MANAGEMENT_APPS.filter(app => {
-      // If app requires a specific entity kind, check if user has it
       if (app.requireKind) {
         return (capabilities[app.requireKind] ?? 0) > 0;
       }
-      // Otherwise show the app (e.g., earnings, orders, approvals)
       return true;
     });
   }, [capabilities]);
+
+  // Combine all visible apps
+  const visibleApps = useMemo(() => {
+    const apps = [...CONSUMER_APPS];
+    apps.push(...filteredManagementApps);
+    return apps;
+  }, [filteredManagementApps]);
 
   // Show "Create Profile" tile if user has no managed entities
   const hasNoManagedEntities = useMemo(() => {
@@ -85,17 +91,33 @@ export default function AppsPane() {
     return totalEntities === 0;
   }, [capabilities]);
 
-  // Combine all visible apps (without create profile button)
-  const visibleApps = useMemo(() => {
-    const apps = [...CONSUMER_APPS];
-    
-    // Add filtered management apps
-    apps.push(...filteredManagementApps);
-    
-    return apps;
-  }, [filteredManagementApps]);
+  // Favorites bubbles (entity pins)
+  const { data: bubbles = [] } = useQuery({
+    queryKey: ['fav-bubbles', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<Bubble[]> => {
+      const { data: pins } = await supabase
+        .from('user_pins')
+        .select('ref_id')
+        .eq('user_id', userId!)
+        .eq('pin_type', 'entity')
+        .eq('section', 'home')
+        .order('sort_index');
+      if (!pins?.length) return [];
+      const ids = pins.map(p => p.ref_id);
+      const { data: ents } = await supabase
+        .from('entities')
+        .select('id, display_name, metadata')
+        .in('id', ids);
+      return (ents ?? []).map(e => ({
+        id: e.id,
+        display_name: e.display_name,
+        avatar_url: (e.metadata as any)?.avatar_url || (e.metadata as any)?.logo_url || null
+      }));
+    }
+  });
 
-  // Fetch pinned entities
+  // Pinned entities for bottom counter
   const { data: pinnedEntities = [] } = useQuery({
     queryKey: ['pinned-entities', userId],
     queryFn: async () => {
@@ -123,38 +145,62 @@ export default function AppsPane() {
     }
   };
 
+  const emptyCount = 8; // show 8 placeholders if none yet
 
   return (
-    <div className="space-y-4 relative pb-24">
-      {/* Sticky favorites rail at top */}
-      <section className="sticky top-0 z-10 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2 mb-2">
-        <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
-        <FavoritesBar size={72} gap={12} />
-      </section>
+    <div className="mx-auto max-w-[1100px] w-full">
+      {/* Favorites header */}
+      <div className="px-1 pb-1 text-sm font-semibold text-foreground">Favorites</div>
 
-      {/* Scale control */}
-      <div className="flex items-center gap-3 px-2">
-        <span className="text-xs text-muted-foreground whitespace-nowrap">Tile size</span>
+      {/* Sticky favorites rail */}
+      <div className="sticky top-0 z-10 bg-background/75 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2 mb-3">
+        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar px-1">
+          {(bubbles.length ? bubbles : Array.from({ length: emptyCount })).map((b, i) => (
+            <button
+              key={(b as any)?.id ?? `placeholder-${i}`}
+              className="size-12 rounded-full ring-1 ring-border overflow-hidden shrink-0 bg-muted/30"
+              title={(b as any)?.display_name ?? 'Empty'}
+            >
+              {(b as any)?.avatar_url
+                ? <img className="w-full h-full object-cover" src={(b as any).avatar_url!} alt="" />
+                : null}
+            </button>
+          ))}
+          {/* Add bubble */}
+          <button
+            onClick={() => navigate('/favorites/picker')}
+            className="size-12 shrink-0 rounded-full border border-dashed border-primary/60 text-primary grid place-items-center"
+            aria-label="Add favorite"
+            title="Add favorite"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Tile size slider */}
+      <div className="flex items-center gap-3 px-1 py-2 text-sm mb-4">
+        <span className="text-muted-foreground whitespace-nowrap">Tile size</span>
         <input
           type="range"
-          min={84}
-          max={160}
+          min={88}
+          max={156}
           step={4}
           value={tile}
           onChange={(e) => setTile(parseInt(e.target.value))}
-          className="flex-1 max-w-xs"
+          className="flex-1 max-w-[220px]"
         />
-        <span className="text-xs text-muted-foreground w-12">{tile}px</span>
+        <span className="tabular-nums text-muted-foreground w-12">{tile}px</span>
       </div>
 
-      {/* Grid of app tiles & pins (scalable) */}
+      {/* Apps grid */}
       <div
-        className="grid gap-3"
+        className="grid gap-4"
         style={{
           gridTemplateColumns: `repeat(auto-fill, minmax(${tile}px, 1fr))`,
         }}
       >
-        {/* Installed apps - now filtered by capabilities */}
+        {/* Installed apps */}
         {visibleApps.map((app) => (
           <AppIconTile
             key={app.id}

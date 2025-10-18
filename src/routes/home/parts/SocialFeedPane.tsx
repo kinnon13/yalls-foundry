@@ -1,156 +1,95 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useSession } from '@/lib/auth/context';
-import { Reel } from '@/components/reels/Reel';
-import { cn } from '@/lib/utils';
-import ProfileSummaryBar from './ProfileSummaryBar';
-
-const TABS = ['following', 'for-you', 'shop', 'profile'] as const;
-type Tab = typeof TABS[number];
+import { Heart, MessageCircle, Bookmark, Repeat2, Share2 } from 'lucide-react';
 
 export default function SocialFeedPane() {
-  const { session } = useSession();
-  const [sp, setSp] = useSearchParams();
-  const initialTab = (sp.get('feed') as Tab) || 'following';
-  const [tab, setTab] = useState<Tab>(initialTab);
-  const [entityId, setEntityId] = useState<string | null>(sp.get('entity') || null);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
+  const [tab, setTab] = useState<'following'|'for-you'|'shop'>('following');
 
-  // seamless drag/swipe gesture for tab switching
-  const railRef = useRef<HTMLDivElement>(null);
-  const startRef = useRef<{ x: number; y: number } | null>(null);
-  
+  // fake items placeholder; wire to real data later
+  const items = useMemo(() => new Array(30).fill(0).map((_,i)=>({
+    id: `${tab}-${i}`,
+    img: `https://picsum.photos/seed/${tab}-${i}/900/1600`,
+    caption: `${tab} • post #${i+1}`,
+    likes: Math.floor(Math.random()*1000),
+    comments: Math.floor(Math.random()*100)
+  })), [tab]);
+
+  // Horizontal swipe between tabs
+  const tabsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = railRef.current;
+    const el = tabsRef.current;
     if (!el) return;
-
-    const onDown = (e: PointerEvent | TouchEvent) => {
-      const p = 'touches' in e ? e.touches[0] : e;
-      startRef.current = { x: p.clientX, y: p.clientY };
-      setIsDragging(false);
-      setDragOffset(0);
-    };
-
-    const onMove = (e: PointerEvent | TouchEvent) => {
-      if (!startRef.current) return;
-      const p = 'touches' in e ? e.touches[0] : e;
-      const dx = p.clientX - startRef.current.x;
-      const dy = p.clientY - startRef.current.y;
-
-      // Start dragging if horizontal movement dominates
-      if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > 10) {
-        setIsDragging(true);
-        setDragOffset(dx);
-        if ('preventDefault' in e) e.preventDefault();
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        if (e.deltaX > 0 && tab !== 'shop') setTab(tab === 'following' ? 'for-you' : 'shop');
+        if (e.deltaX < 0 && tab !== 'following') setTab(tab === 'shop' ? 'for-you' : 'following');
       }
     };
-
-    const onUp = (e: PointerEvent | TouchEvent) => {
-      if (!startRef.current) return;
-      const p = 'changedTouches' in e ? e.changedTouches[0] : e;
-      const dx = p.clientX - startRef.current.x;
-      startRef.current = null;
-
-      // Switch tab if dragged far enough (80px threshold)
-      if (isDragging && Math.abs(dx) > 80) {
-        const i = TABS.indexOf(tab);
-        if (dx < 0 && i < TABS.length - 1) setTab(TABS[i + 1]);
-        if (dx > 0 && i > 0) setTab(TABS[i - 1]);
-      }
-
-      setIsDragging(false);
-      setDragOffset(0);
-    };
-
-    el.addEventListener('pointerdown', onDown, { passive: true });
-    el.addEventListener('touchstart', onDown, { passive: true });
-    el.addEventListener('pointermove', onMove, { passive: false });
-    el.addEventListener('touchmove', onMove, { passive: false });
-    el.addEventListener('pointerup', onUp, { passive: true });
-    el.addEventListener('touchend', onUp, { passive: true });
-    el.addEventListener('pointercancel', onUp, { passive: true });
-
-    return () => {
-      el.removeEventListener('pointerdown', onDown);
-      el.removeEventListener('touchstart', onDown);
-      el.removeEventListener('pointermove', onMove);
-      el.removeEventListener('touchmove', onMove);
-      el.removeEventListener('pointerup', onUp);
-      el.removeEventListener('touchend', onUp);
-      el.removeEventListener('pointercancel', onUp);
-    };
-  }, [tab, isDragging]);
-
-  // persist state in URL (?feed=…&entity=…)
-  useEffect(() => {
-    const next = new URLSearchParams(sp);
-    next.set('feed', tab);
-    if (entityId) next.set('entity', entityId);
-    else next.delete('entity');
-    setSp(next, { replace: true });
-  }, [tab, entityId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Generate placeholder data based on tab
-  const items = useMemo(() => {
-    return new Array(20).fill(0).map((_, i) => ({
-      id: `${tab}-${i}`,
-      src: `https://picsum.photos/seed/${tab}-${i}/900/1600`,
-      author: {
-        name: `User ${i + 1}`,
-        handle: `user${i + 1}`,
-      },
-      caption: `This is a sample post for ${tab} • #${i + 1}`,
-      stats: {
-        likes: Math.floor(Math.random() * 10000),
-        comments: Math.floor(Math.random() * 1000),
-        saves: Math.floor(Math.random() * 500),
-        reposts: Math.floor(Math.random() * 300),
-      },
-    }));
+    el.addEventListener('wheel', onWheel, { passive: true });
+    return () => el.removeEventListener('wheel', onWheel);
   }, [tab]);
 
   return (
     <div className="h-full w-full overflow-y-auto overscroll-contain">
-      <div className="mx-auto max-w-[520px] w-full px-0">
-        <section className="flex h-full w-full flex-col">
-          {/* Profile bubble above the feed */}
-          <ProfileSummaryBar />
-
-          {/* Tab indicators (clickable or drag/swipe to change) */}
-          <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-background/70 backdrop-blur px-2 py-1">
-            {TABS.map((t) => (
+      {/* Profile bubble + totals + tabs */}
+      <div ref={tabsRef} className="sticky top-0 z-10 bg-background/85 backdrop-blur px-3 py-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="size-9 rounded-full bg-muted ring-1 ring-border" />
+            <div className="text-xs text-muted-foreground">
+              <div className="font-medium text-foreground">You</div>
+              <div>0 Following • 0 Followers • 0 Likes</div>
+            </div>
+          </div>
+          {/* tabs */}
+          <div className="flex gap-2">
+            {(['following','for-you','shop'] as const).map(t => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer',
-                  t === tab
-                    ? 'bg-primary text-primary-foreground scale-105'
-                    : 'bg-muted/50 text-muted-foreground scale-95 hover:bg-muted hover:scale-100'
-                )}
+                className={`px-3 py-1 rounded-full text-xs border transition-all ${
+                  t===tab ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-accent'
+                }`}
               >
-                {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
+                {t === 'for-you' ? 'For You' : t[0].toUpperCase()+t.slice(1)}
               </button>
             ))}
           </div>
-
-          {/* Swipeable feed container */}
-          <div 
-            ref={railRef}
-            className="relative flex-1 select-none touch-pan-y"
-          >
-            <div className="space-y-4 px-2 pb-4">
-              {items.map((item) => (
-                <div key={item.id} className="h-[calc(100vh-16rem)] snap-start">
-                  <Reel {...item} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        </div>
       </div>
+
+      {/* Reels list (edge-to-edge in its column) */}
+      <ul className="mx-auto max-w-[520px] w-full px-0 py-3 flex flex-col gap-4">
+        {items.map(card => (
+          <li key={card.id} className="relative w-full aspect-[9/16] rounded-lg overflow-hidden">
+            <img src={card.img} className="absolute inset-0 w-full h-full object-cover" alt="" />
+            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/60 to-transparent" />
+            {/* right actions */}
+            <div className="absolute right-2 bottom-24 flex flex-col items-center gap-3 text-white">
+              <IconBtn label="Like"><Heart className="w-5 h-5" /></IconBtn>
+              <span className="text-xs">{card.likes}</span>
+              <IconBtn label="Comment"><MessageCircle className="w-5 h-5" /></IconBtn>
+              <span className="text-xs">{card.comments}</span>
+              <IconBtn label="Save"><Bookmark className="w-5 h-5" /></IconBtn>
+              <IconBtn label="Repost"><Repeat2 className="w-5 h-5" /></IconBtn>
+              <IconBtn label="Share"><Share2 className="w-5 h-5" /></IconBtn>
+            </div>
+            {/* caption */}
+            <div className="absolute left-3 bottom-3 pr-16 text-white text-sm">{card.caption}</div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
+function IconBtn({ children, label }: {children: React.ReactNode; label: string}) {
+  return (
+    <button
+      aria-label={label}
+      title={label}
+      className="grid place-items-center size-10 rounded-full bg-black/35 hover:bg-black/50 border border-white/20 transition-colors"
+    >
+      {children}
+    </button>
+  );
+}

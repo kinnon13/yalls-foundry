@@ -1,27 +1,35 @@
+import { GlobalHeader } from '@/components/layout/GlobalHeader';
+import { BottomDock } from '@/components/layout/BottomDock';
 import AppsPane from './parts/AppsPane';
 import SocialFeedPane from './parts/SocialFeedPane';
 import PhonePager from './parts/PhonePager';
-import { GlobalHeader } from '@/components/layout/GlobalHeader';
-import { BottomDock } from '@/components/layout/BottomDock';
 
 export default function HomePage() {
   return (
-    <div className="fixed inset-0 flex flex-col bg-background">
+    // Full-viewport shell; body must not scroll
+    <div className="fixed inset-0 grid grid-rows-[64px_1fr_56px] bg-background">
       <GlobalHeader />
 
-      {/* Split content: Left = Apps, Right = Feed */}
-      <div className="flex-1 grid overflow-hidden lg:grid-cols-[minmax(560px,2fr)_minmax(420px,1fr)] md:grid-cols-[minmax(420px,1fr)_minmax(560px,2fr)] grid-cols-[1fr]">
-        {/* Left: Apps — independent scroll */}
+      {/* Content area: NO outer scroll */}
+      <div
+        className="
+          grid h-full overflow-hidden
+          lg:grid-cols-[minmax(560px,2fr)_minmax(420px,1fr)]
+          md:grid-cols-[minmax(420px,1fr)_minmax(560px,2fr)]
+          grid-cols-1
+        "
+      >
+        {/* Left: Apps (desktop/tablet) — independent scroll */}
         <div className="hidden md:block overflow-y-auto overscroll-contain px-4 pb-24 pt-3">
           <AppsPane />
         </div>
 
-        {/* Right: Feed — independent scroll */}
+        {/* Right: Feed (desktop/tablet) — independent scroll */}
         <div className="hidden md:block overflow-y-auto overscroll-contain border-l border-border px-0 pb-24">
           <SocialFeedPane />
         </div>
 
-        {/* Phone: horizontal pager (Apps | Feed | Shop | Profile) */}
+        {/* Phone: horizontal pager */}
         <div className="md:hidden h-full overflow-hidden">
           <PhonePager />
         </div>
