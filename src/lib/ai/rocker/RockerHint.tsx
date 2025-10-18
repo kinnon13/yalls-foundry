@@ -1,13 +1,12 @@
 /**
- * RockerHint Component
- * Lightweight suggestion pill with dismiss
+ * RockerHint - Single suggestion pill with optional action
  */
 
 import { useState, useEffect } from 'react';
-import { Sparkles, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { WhyThis } from './WhyThis';
-import { useRocker } from '@/lib/ai/rocker/RockerProvider';
+import { useRocker } from './RockerProvider';
+import { RockerWhy } from './RockerWhy';
 
 interface RockerHintProps {
   suggestion: string;
@@ -75,26 +74,21 @@ export function RockerHint({
   if (!visible) return null;
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 bg-accent/50 border border-accent rounded-lg text-sm">
-      <Sparkles className="h-4 w-4 text-primary shrink-0" />
-      <span className="flex-1">{suggestion}</span>
-      <WhyThis reason={reason} />
+    <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 border border-primary/20 rounded-lg text-sm">
+      <RockerWhy reason={reason} />
+      {suggestion}
       {action && (
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={handleAccept}
-          disabled={loading}
-          className="h-7 px-2"
-        >
+        <Button onClick={handleAccept} disabled={loading} size="sm" variant="outline">
           {loading ? 'Working...' : actionLabel}
         </Button>
       )}
       <button
+        type="button"
         onClick={handleDismiss}
-        className="shrink-0 p-1 hover:bg-muted rounded transition-colors"
+        className="ml-auto text-muted-foreground hover:text-foreground"
+        aria-label="Dismiss suggestion"
       >
-        <X className="h-3 w-3" />
+        <X className="h-4 w-4" />
       </button>
     </div>
   );

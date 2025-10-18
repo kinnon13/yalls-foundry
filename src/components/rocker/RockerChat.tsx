@@ -1,6 +1,6 @@
 import { RockerChatUI } from './RockerChatUI';
 import { useEffect } from 'react';
-import { useRockerChat } from '@/lib/ai/rocker/RockerChatProvider';
+import { useRockerGlobal as useRockerChat } from '@/lib/ai/rocker';
 import { AIRole } from '@/lib/ai/rocker/config';
 
 interface RockerChatProps {

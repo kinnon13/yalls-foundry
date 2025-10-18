@@ -8,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search as SearchIcon, Loader2, ExternalLink, Flag, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useRocker } from '@/lib/ai/rocker/RockerProvider';
-import { RockerHint } from '@/components/rocker/RockerHint';
+import { useRocker } from '@/lib/ai/rocker';
+import { RockerHint } from '@/lib/ai/rocker';
 
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();

@@ -1,11 +1,9 @@
 /**
- * RockerTray Component
- * Optional container for multiple Rocker suggestions
+ * RockerTray - Multi-suggestion card (optional)
  */
 
 import { useState } from 'react';
-import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { RockerHint } from './RockerHint';
 
 interface RockerTraySuggestion {
@@ -30,14 +28,15 @@ export function RockerTray({ suggestions, maxVisible = 3 }: RockerTrayProps) {
   const hasMore = suggestions.length > maxVisible;
 
   return (
-    <Card className="p-4 space-y-3 border-accent/50">
-      <div className="flex items-center justify-between">
+    <div className="space-y-2 p-4 bg-card border rounded-lg">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Rocker Suggests</h3>
+          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+          Rocker Suggests
         </div>
         {hasMore && (
           <button
+            type="button"
             onClick={() => setCollapsed(!collapsed)}
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
@@ -55,20 +54,13 @@ export function RockerTray({ suggestions, maxVisible = 3 }: RockerTrayProps) {
           </button>
         )}
       </div>
-      
       {!collapsed && (
         <div className="space-y-2">
           {visible.map((s) => (
-            <RockerHint
-              key={s.id}
-              suggestion={s.suggestion}
-              reason={s.reason}
-              action={s.action}
-              actionLabel={s.actionLabel}
-            />
+            <RockerHint key={s.id} {...s} />
           ))}
         </div>
       )}
-    </Card>
+    </div>
   );
 }

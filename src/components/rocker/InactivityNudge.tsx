@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useRockerChat } from '@/lib/ai/rocker/RockerChatProvider';
+import { useRockerGlobal as useRockerChat } from '@/lib/ai/rocker';
 import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 

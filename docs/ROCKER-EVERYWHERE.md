@@ -14,7 +14,7 @@
 
 2. **Suggest** (Lightweight UI)
    - Single `<RockerHint>` pill or `<RockerTray>` card
-   - "Why this?" tooltip via `<WhyThis>` explains rationale
+   - "Why this?" tooltip via `<RockerWhy>` explains rationale
    - Accept/Dismiss feeds into telemetry
 
 3. **Act** (Optional, flag-gated)
@@ -27,7 +27,7 @@
 ### Single Hook: `useRocker()`
 
 ```tsx
-import { useRocker } from '@/lib/ai/rocker/RockerProvider';
+import { useRocker } from '@/lib/ai/rocker';
 
 const { 
   userId,      // string | null
@@ -70,6 +70,11 @@ Auto-derives:
 
 ## UI Components
 
+### `<RockerWhy>` - Info tooltip
+```tsx
+<RockerWhy reason="Rocker noticed you haven't explored this yet" />
+```
+
 ### `<RockerHint>` - Single suggestion pill
 ```tsx
 <RockerHint
@@ -81,11 +86,6 @@ Auto-derives:
   }}
   actionLabel="Enable"
 />
-```
-
-### `<WhyThis>` - Info tooltip
-```tsx
-<WhyThis reason="Rocker noticed you haven't explored this yet" />
 ```
 
 ### `<RockerTray>` - Multi-suggestion card
@@ -288,7 +288,7 @@ npm run validate:rocker
 ## Next Steps
 
 To add Rocker to a new section:
-1. `import { useRocker } from '@/lib/ai/rocker/RockerProvider'`
+1. `import { useRocker } from '@/lib/ai/rocker'`
 2. `const { log } = useRocker();`
 3. `useEffect(() => { log('page_view'); }, [log]);`
 4. Add `<RockerHint>` where appropriate

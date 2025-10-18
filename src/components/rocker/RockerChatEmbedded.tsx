@@ -12,7 +12,7 @@ import { ChatHeader } from './ChatHeader';
 import { MessageList } from './MessageList';
 import { Composer } from './Composer';
 import { CapabilityHighlighter } from './CapabilityHighlighter';
-import { useRockerGlobal } from '@/lib/ai/rocker/RockerChatProvider';
+import { useRockerGlobal } from '@/lib/ai/rocker';
 import { useSession } from '@/lib/auth/context';
 import { AIRole, AI_PROFILES } from '@/lib/ai/rocker/config';
 
