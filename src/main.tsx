@@ -16,8 +16,4 @@ if ('serviceWorker' in navigator) {
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element not found");
 
-createRoot(rootElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+createRoot(rootElement).render(<App />);

@@ -1,3 +1,4 @@
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 
@@ -372,21 +373,23 @@ function AppContent() {
 }
 
 const App = () => (
-  <HelmetProvider>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+  <React.StrictMode>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <AuthProvider>
-            <RockerChatProvider>
-              <RockerProvider>
-                <AppContent />
-              </RockerProvider>
-            </RockerChatProvider>
-          </AuthProvider>
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+            <AuthProvider>
+              <RockerChatProvider>
+                <RockerProvider>
+                  <AppContent />
+                </RockerProvider>
+              </RockerChatProvider>
+            </AuthProvider>
+          </ThemeProvider>
         </BrowserRouter>
-      </ThemeProvider>
-    </QueryClientProvider>
-  </HelmetProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
+  </React.StrictMode>
 );
 
 export default App;
