@@ -86,8 +86,8 @@ export function TikTokFeed() {
 
     const handleScroll = () => {
       const scrollTop = container.scrollTop;
-      const containerHeight = container.clientHeight;
-      const index = Math.round(scrollTop / containerHeight);
+      const halfContainerHeight = container.clientHeight / 2;
+      const index = Math.round(scrollTop / halfContainerHeight);
       setCurrentIndex(index);
 
       // Load next page when near the end
@@ -106,7 +106,7 @@ export function TikTokFeed() {
     if (!container) return;
     
     container.scrollTo({
-      top: index * container.clientHeight,
+      top: index * (container.clientHeight / 2),
       behavior: 'smooth'
     });
   }, []);
@@ -160,7 +160,7 @@ export function TikTokFeed() {
       {posts.map((post: Post, idx: number) => (
         <div
           key={post.id}
-          className="h-full w-full snap-start snap-always relative flex items-center justify-center"
+          className="h-[50%] w-full snap-start snap-always relative flex items-center justify-center"
         >
           {/* Background media */}
           {post.media?.url && (
