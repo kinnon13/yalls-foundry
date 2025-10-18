@@ -25,7 +25,8 @@ export const routeIgnore = [
 ];
 
 export const rpcAllow = [
-  /^(feed_|post_|entry_|draw_|cart_|order_|reservation_|payout_|search_|entity_|profile_|crm_|calendar_|notif|notification_|rocker_|feature_|price_|ai_|match_|get_|set_|update_|admin_|handle_|claim_|linked_|repost|favorite|marketplace_|farm_|incentive_|dm_|save_|unsave_|record_|decrement_|log_|check_|contributor_|cleanup_|slugify)/i,
+  /^(ai_|admin_|cart_|order_|marketplace_|entity_|entry_|draw_|reservation_|payout_|price_|dm_|feed_|feature_|notif(?:ication)?_|rocker_|crm_|calendar_)/i,
+  /^(get|set|update)_(user_|entity_|profile_|cart_|order_|calendar_|feature_|price|payout|crm_|notif)/i,
 ];
 
 export const rpcIgnore = [
@@ -35,7 +36,14 @@ export const rpcIgnore = [
   /^postgis_/i,
   /^pgis_/i,
   /^(geometry|geography|gtrgm|gin_trgm|vector|halfvec|sparsevec|ivfflat|hnsw)/i,
-  /^(sum|avg|max|min|count|json|jsonb|text|box|point|polygon|regexp_|split_part|strpos|equals|citext|textic|replace|translate)$/i,
+  /^(get_proj4_from_srid|find_srid)$/i,
+  /^(sum|avg|max|min|count|json|jsonb|text|box|point|polygon|citext)\b/i,
+  /^regexp_/i,
+  /^textic/i,
+  /^strpos/i,
+  /^replace$/i,
+  /^split_part$/i,
+  /^translate$/i,
 ];
 
 export const tableIgnore = [
@@ -49,14 +57,15 @@ export const tableIgnore = [
 
 /**
  * Normalize route paths - collapse params and trailing slashes
+ * Global replacement for all numeric/UUID segments
  */
 export function normRoute(p: string): string {
   return (p || '/')
     .replace(/\/index$/, '')
     .replace(/\/+$/, '')
     .replace(/\[([^\]]+)\]/g, ':$1')
-    .replace(/\/\d+([\/$]|$)/g, '/:id$1')
-    .replace(/\/[0-9a-f-]{8,}([\/$]|$)/i, '/:id$1') || '/';
+    .replace(/\/\d+(?:[\/$]|$)/g, '/:id$1')
+    .replace(/\/[0-9a-f-]{8,}(?:[\/$]|$)/ig, '/:id$1') || '/';
 }
 
 /**
@@ -65,22 +74,20 @@ export function normRoute(p: string): string {
  */
 export function collapseFamilies(paths: string[]): string[] {
   const families = new Map<string, Set<string>>();
-  const norm = (p: string) => ('/' + p).replace(/\/+/g, '/');
+  const add = (h: string, v: string) => {
+    if (!families.has(h)) families.set(h, new Set());
+    families.get(h)!.add(v);
+  };
 
   for (const raw of paths) {
-    const p = norm(raw);
+    const p = normRoute(('/' + raw).replace(/\/+/g, '/'));
     const parts = p.split('/').filter(Boolean);
     const head = '/' + (parts[0] ?? '');
-
-    if (!families.has(head)) {
-      families.set(head, new Set());
-    }
-
-    // Collapse everything under selected heads (except bare head)
+    
     if (COLLAPSE_HEADS.has(head) && parts.length >= 2) {
-      families.get(head)!.add(`${head}/*`);
+      add(head, `${head}/*`);
     } else {
-      families.get(head)!.add(p || '/');
+      add(head, p || '/');
     }
   }
 
@@ -90,10 +97,13 @@ export function collapseFamilies(paths: string[]): string[] {
 
 /**
  * Collapse monthly/partition tables into a single label
- * e.g. "crm_events_2025_10_v2" -> "crm_events_*"
+ * Handles: YYYY_MM[_DD][_vN], _old, _default, _partitioned
  */
 export function collapsePartitions(names: string[]): string[] {
-  const base = (n: string) => n.replace(/_\d{4}_\d{2}(?:_v\d+)?$/i, '_*');
+  const base = (n: string) =>
+    n
+      .replace(/_\d{4}_\d{2}(?:_\d{2})?(?:_v\d+)?$/i, '_*')
+      .replace(/_(?:old|default|partitioned)$/i, '_*');
   return [...new Set(names.map(base))].sort();
 }
 

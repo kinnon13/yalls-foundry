@@ -108,6 +108,11 @@ export default function FeaturesAdminPage() {
   const [exportRoutes, setExportRoutes] = useState(true);
   const [exportRpcs, setExportRpcs] = useState(true);
   const [exportTables, setExportTables] = useState(true);
+  
+  // Filter toggles
+  const [filterProductOnly, setFilterProductOnly] = useState(true);
+  const [collapseRouteFamilies, setCollapseRouteFamilies] = useState(true);
+  const [collapseTablePartitions, setCollapseTablePartitions] = useState(true);
 
   const features = kernel.features;
   const goldPath = kernel.validateGoldPath();
@@ -666,24 +671,26 @@ export default function FeaturesAdminPage() {
       const rpcScan = (data?.rpcs ?? []).map((x: any) => x.name);
       const tableScan = (data?.tables ?? []).map((x: any) => x.name);
       
-      // Filter product items only
-      const productRoutes = discoveredRoutes.filter(isProductRoute);
-      const productRpcs = rpcScan.filter(isProductRpc);
-      const productTables = tableScan.filter(isProductTable);
+      // Apply product filter if enabled
+      const productRoutes = filterProductOnly ? discoveredRoutes.filter(isProductRoute) : discoveredRoutes;
+      const productRpcs = filterProductOnly ? rpcScan.filter(isProductRpc) : rpcScan;
+      const productTables = filterProductOnly ? tableScan.filter(isProductTable) : tableScan;
       
       // Find undocumented items
       const rawUndocRoutes = productRoutes.filter(r => !documentedRoutes.has(r));
-      const undocumentedRpcs = [...new Set(productRpcs.filter((n: string) => !documentedRpcs.has(n)))].sort();
+      const rawUndocRpcs = [...new Set(productRpcs.filter((n: string) => !documentedRpcs.has(n)))].sort();
       const rawUndocTables = productTables.filter((n: string) => !documentedTables.has(n));
       
-      // Collapse route families and partition tables for cleaner display
-      const undocumentedRoutes = collapseFamilies(rawUndocRoutes);
-      const undocumentedTables = collapsePartitions(rawUndocTables);
+      // Apply collapse based on toggles
+      const undocumentedRoutes = collapseRouteFamilies ? collapseFamilies(rawUndocRoutes) : [...new Set(rawUndocRoutes)].sort();
+      const undocumentedRpcs = rawUndocRpcs;
+      const undocumentedTables = collapseTablePartitions ? collapsePartitions(rawUndocTables) : [...new Set(rawUndocTables)].sort();
 
-      console.log('[Scanner] Undocumented items (product only, collapsed):', {
+      console.log('[Scanner] Undocumented items (filters applied):', {
         routes: undocumentedRoutes.length,
         rpcs: undocumentedRpcs.length,
         tables: undocumentedTables.length,
+        filters: { productOnly: filterProductOnly, collapseRoutes: collapseRouteFamilies, collapsePartitions: collapseTablePartitions }
       });
 
       // Store undocumented items in state for display
@@ -798,7 +805,7 @@ export default function FeaturesAdminPage() {
     } finally {
       setScanLoading(false);
     }
-  }, [probeRoutes, computeStatus]);
+  }, [probeRoutes, computeStatus, filterProductOnly, collapseRouteFamilies, collapseTablePartitions]);
 
   // Summary stats
   const totalFeatures = features.length;
@@ -1088,6 +1095,35 @@ export default function FeaturesAdminPage() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-4 pt-3 border-t mt-3">
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={filterProductOnly}
+                    onChange={(e) => setFilterProductOnly(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span>Product Only (filters PostGIS/extensions)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={collapseRouteFamilies}
+                    onChange={(e) => setCollapseRouteFamilies(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span>Collapse Route Families</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={collapseTablePartitions}
+                    onChange={(e) => setCollapseTablePartitions(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span>Collapse Partitions</span>
+                </label>
+              </div>
+              <div className="flex flex-wrap gap-4 pt-2 border-t mt-2">
                 <label className="flex items-center gap-2 cursor-pointer text-sm">
                   <input
                     type="checkbox"
