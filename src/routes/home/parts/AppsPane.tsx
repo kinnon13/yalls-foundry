@@ -142,10 +142,10 @@ export default function AppsPane() {
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
       {/* Sticky header (Favorites + controls) */}
-      <section className="sticky top-0 z-20 bg-muted/30 px-2 py-2 backdrop-blur">
-        <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
+      <section className="sticky top-0 z-20 bg-muted/30 px-2 py-1 backdrop-blur">
+        <h3 className="text-base font-semibold text-foreground mb-1 text-center">Favorites</h3>
         <FavoritesBar size={72} gap={12} />
-        <div className="mt-2 flex items-center gap-3 px-0">
+        <div className="mt-1 flex items-center gap-3 px-0">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Tile size</span>
           <input
             type="range"

@@ -115,7 +115,7 @@ export default function SocialFeedPane() {
     <section className="flex h-full w-full flex-col text-[hsl(222.2_47.4%_11.2%)] overflow-hidden">
       {/* Sticky header (Home + Profile + Tabs) */}
       <div className="sticky top-0 z-20 bg-white/95 backdrop-blur">
-        <div className="flex items-center justify-between px-3 py-2">
+        <div className="flex items-center justify-between px-3 py-1">
           <button
             onClick={() => navigate('/home')}
             className="text-base font-semibold hover:text-primary transition-colors"
@@ -126,7 +126,7 @@ export default function SocialFeedPane() {
           <div className="w-[60px]" aria-hidden />
         </div>
         <ProfileSummaryBar />
-        <div className="mb-2 flex items-center justify-center gap-2 pr-2 py-1">
+        <div className="mb-1 flex items-center justify-center gap-2 pr-2 py-1">
           {TABS.map((t) => (
             <button
               key={t}
