@@ -140,16 +140,6 @@ export default function AppsPane() {
 
   return (
     <div className="space-y-4">
-      {/* Home button heading */}
-      <section className="mb-2">
-        <button
-          onClick={() => navigate('/home')}
-          className="text-base font-semibold text-foreground hover:text-primary transition-colors"
-        >
-          Home
-        </button>
-      </section>
-
       {/* Always-visible favorites bar */}
       <section className="mb-2">
         <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>

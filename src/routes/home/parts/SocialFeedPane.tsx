@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSession } from '@/lib/auth/context';
 import { Reel } from '@/components/reels/Reel';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,7 @@ type Tab = typeof TABS[number];
 
 export default function SocialFeedPane() {
   const { session } = useSession();
+  const navigate = useNavigate();
   const [sp, setSp] = useSearchParams();
   const initialTab = (sp.get('feed') as Tab) || 'following';
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -112,9 +113,16 @@ export default function SocialFeedPane() {
 
   return (
     <section className="flex h-full w-full flex-col">
-      {/* Connected Accounts heading */}
-      <div className="mb-2">
-        <h3 className="text-base font-semibold text-foreground text-center">View Connected Accounts</h3>
+      {/* Home button and Connected Accounts heading in same row */}
+      <div className="mb-2 flex items-center justify-between px-2">
+        <button
+          onClick={() => navigate('/home')}
+          className="text-base font-semibold text-foreground hover:text-primary transition-colors"
+        >
+          Home
+        </button>
+        <h3 className="text-base font-semibold text-foreground">View Connected Accounts</h3>
+        <div className="w-[60px]" aria-hidden /> {/* Spacer for balance */}
       </div>
 
       {/* Profile bubble with stats */}
