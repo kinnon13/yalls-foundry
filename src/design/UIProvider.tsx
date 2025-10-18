@@ -4,7 +4,6 @@
  */
 
 import { ThemeProvider } from 'next-themes';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { ReactNode, useEffect } from 'react';
@@ -39,11 +38,9 @@ export function UIProvider({ children }: UIProviderProps) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <TooltipProvider delayDuration={200}>
-        {children}
-        <Toaster />
-        <Sonner />
-      </TooltipProvider>
+      {children}
+      <Toaster />
+      <Sonner />
     </ThemeProvider>
   );
 }
