@@ -206,45 +206,48 @@ export function TikTokFeed() {
           </div>
 
           {/* Right sidebar actions */}
-          <div className="absolute right-4 bottom-32 flex flex-col gap-6 z-20">
+          <div className="absolute right-3 bottom-20 flex flex-col gap-4 z-20">
             {/* Follow button */}
             <button className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-primary backdrop-blur-sm flex items-center justify-center hover:bg-primary/90 transition-colors">
-                <span className="text-white font-semibold text-lg">+</span>
+              <div className="w-11 h-11 rounded-full bg-primary backdrop-blur-sm flex items-center justify-center hover:bg-primary/90 transition-colors shadow-lg">
+                <span className="text-white font-semibold text-base">+</span>
               </div>
-              <span className="text-xs text-white font-medium">Follow</span>
             </button>
 
             {/* Like button */}
             <button className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
-                <Heart className="w-6 h-6 text-white" />
+              <div className="w-11 h-11 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors shadow-lg">
+                <Heart className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xs text-white font-medium">0</span>
+              <span className="text-[10px] text-white font-medium">24.5K</span>
             </button>
 
+            {/* Comment button */}
             <button className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
-                <MessageCircle className="w-6 h-6 text-white" />
+              <div className="w-11 h-11 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors shadow-lg">
+                <MessageCircle className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xs text-white font-medium">0</span>
+              <span className="text-[10px] text-white font-medium">1.2K</span>
             </button>
 
+            {/* Save button */}
             <button className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
-                <Bookmark className="w-6 h-6 text-white" />
-              </div>
-            </button>
-
-            <button className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
-                <Share2 className="w-6 h-6 text-white" />
+              <div className="w-11 h-11 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors shadow-lg">
+                <Bookmark className="w-5 h-5 text-white" />
               </div>
             </button>
 
+            {/* Repost button */}
             <button className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
-                <MoreVertical className="w-6 h-6 text-white" />
+              <div className="w-11 h-11 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors shadow-lg">
+                <Share2 className="w-5 h-5 text-white" />
+              </div>
+            </button>
+
+            {/* More button */}
+            <button className="flex flex-col items-center gap-1">
+              <div className="w-11 h-11 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors shadow-lg">
+                <MoreVertical className="w-5 h-5 text-white" />
               </div>
             </button>
           </div>

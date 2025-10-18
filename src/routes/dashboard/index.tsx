@@ -10,6 +10,7 @@ import { DebugOverlay } from '@/feature-kernel/DebugOverlay';
 import { FeatureErrorBoundary } from '@/feature-kernel/ErrorBoundary';
 import { coerceModule, type ModuleKey } from '@/lib/dashUrl';
 import { TikTokFeed } from '@/components/social/TikTokFeed';
+import { BottomNav } from '@/components/layout/BottomNav';
 import { Button } from '@/components/ui/button';
 import { X, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -261,9 +262,9 @@ export default function DashboardLayout() {
 
       <GlobalHeader />
       
-      {/* Main content area - z-20, with right margin for feed */}
+      {/* Main content area - z-20, with right margin for feed and bottom padding for nav */}
       <div 
-        className="relative z-20 h-[calc(100vh-64px)] overflow-auto transition-all duration-200"
+        className="relative z-20 h-[calc(100vh-64px)] overflow-auto transition-all duration-200 pb-16"
         style={{ marginRight: `${feedWidth + feedRightOffset}px` }}
       >
         {rawModule ? (
@@ -368,6 +369,7 @@ export default function DashboardLayout() {
       </div>
 
       <DebugOverlay />
+      <BottomNav />
     </div>
   );
 }
