@@ -347,11 +347,8 @@ export default function FeaturesAdminPage() {
           || '/';
       });
 
-      // Discover all components with @feature annotations
-      const componentFiles = import.meta.glob('/src/**/*.{tsx,ts}', { 
-        query: '?raw',
-        eager: false 
-      });
+      // Discover all components for verification
+      const allComponentFiles = import.meta.glob('/src/**/*.{tsx,ts}', { eager: false });
 
       // Collect ALL RPCs, tables, routes from features.json + discovered routes
       const allRpcs = new Set<string>();
@@ -375,7 +372,7 @@ export default function FeaturesAdminPage() {
         tables: inputs.tables.length,
         routes: inputs.routes.length,
         discoveredRoutes: discoveredRoutes.length,
-        componentFiles: Object.keys(componentFiles).length
+        componentFiles: Object.keys(allComponentFiles).length
       });
       console.log('[Scanner] Invoking feature-scan edge function...', inputs);
       const { data, error } = await supabase.functions.invoke('feature-scan', {
@@ -401,14 +398,14 @@ export default function FeaturesAdminPage() {
       const routeReach = await probeRoutes(inputs.routes);
       console.log('[Scanner] Route probe results:', routeReach);
 
-      // Use componentFiles from earlier for verification
+      // Use allComponentFiles from earlier for verification
       const normalizeComponentPath = (p: string) => '/' + p.replace(/^\/+/, '');
       
       const checkComponentsExist = (f: any) => {
         if (!Array.isArray(f.components) || f.components.length === 0) return false;
         return f.components.every((path: string) => {
           const normalized = normalizeComponentPath(path);
-          return !!componentFiles[normalized];
+          return !!allComponentFiles[normalized];
         });
       };
 
