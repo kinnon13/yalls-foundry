@@ -129,124 +129,94 @@ export default function TestsAdminPage() {
         </TabsList>
 
         <TabsContent value="runner" className="space-y-4">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Test execution is not available in the preview environment.</strong>
+              <br />
+              Tests require Node.js, npm, and access to the project filesystem. 
+              Please run tests locally or view results in GitHub Actions CI.
+            </AlertDescription>
+          </Alert>
+
           <Card>
             <CardHeader>
-              <CardTitle>Test Execution</CardTitle>
+              <CardTitle>How to Run Tests</CardTitle>
               <CardDescription>
-                Run the test suite and view real-time results
+                Execute tests locally or in your CI pipeline
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Button onClick={runTests} disabled={running}>
-                  {running ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Running Tests...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="mr-2 h-4 w-4" />
-                      Run All Tests
-                    </>
-                  )}
-                </Button>
-                {results.length > 0 && (
-                  <>
-                    <Button variant="outline" onClick={handleExportJSON}>
-                      <Download className="mr-2 h-4 w-4" />
-                      Export JSON
-                    </Button>
-                    <Button variant="outline" onClick={handleExportCSV}>
-                      <Download className="mr-2 h-4 w-4" />
-                      Export CSV
-                    </Button>
-                  </>
-                )}
+              <div className="space-y-3">
+                <div>
+                  <h4 className="font-semibold mb-1">Local Development</h4>
+                  <code className="block bg-muted p-2 rounded text-sm">
+                    npm test
+                  </code>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Run all unit tests with coverage
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-1">Watch Mode (Development)</h4>
+                  <code className="block bg-muted p-2 rounded text-sm">
+                    npm test -- --watch
+                  </code>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Run tests in watch mode for active development
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-1">E2E Tests</h4>
+                  <code className="block bg-muted p-2 rounded text-sm">
+                    npm run test:e2e
+                  </code>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Run end-to-end tests with Playwright
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-1">GitHub Actions CI</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Tests run automatically on every push and pull request.
+                    Check the <strong>Actions</strong> tab in your GitHub repository.
+                  </p>
+                </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {unsupported && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Test execution is not supported in this preview environment.
-                    Please run <code className="font-mono">npm test</code> locally or check CI results.
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {summary && (
-                <div className="grid grid-cols-4 gap-4">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-2xl font-bold">{summary.total}</div>
-                      <div className="text-sm text-muted-foreground">Total Tests</div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-2xl font-bold text-green-600">{summary.passed}</div>
-                      <div className="text-sm text-muted-foreground">Passed</div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-2xl font-bold text-red-600">{summary.failed}</div>
-                      <div className="text-sm text-muted-foreground">Failed</div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-2xl font-bold">{summary.duration}ms</div>
-                      <div className="text-sm text-muted-foreground">Duration</div>
-                    </CardContent>
-                  </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>CI Workflows</CardTitle>
+              <CardDescription>
+                Automated testing in GitHub Actions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                  <div>
+                    <strong>.github/workflows/show-your-work.yml</strong>
+                    <p className="text-muted-foreground">
+                      Validates architecture, work reports, and runs unit tests
+                    </p>
+                  </div>
                 </div>
-              )}
-
-              {results.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Test Suites</h3>
-                  {results.map((suite, idx) => (
-                    <Card key={idx}>
-                      <CardHeader>
-                        <CardTitle className="text-base">{suite.name}</CardTitle>
-                        <CardDescription>
-                          {suite.tests.length} tests · {suite.duration}ms
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          {suite.tests.map((test, testIdx) => (
-                            <div key={testIdx} className="flex items-center gap-2 text-sm">
-                              {test.status === 'passed' && (
-                                <CheckCircle className="h-4 w-4 text-green-600" />
-                              )}
-                              {test.status === 'failed' && (
-                                <XCircle className="h-4 w-4 text-red-600" />
-                              )}
-                              {test.status === 'skipped' && (
-                                <AlertCircle className="h-4 w-4 text-yellow-600" />
-                              )}
-                              <span className="flex-1">{test.name}</span>
-                              <span className="text-muted-foreground">{test.duration}ms</span>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                  <div>
+                    <strong>.github/workflows/admin-tests.yml</strong>
+                    <p className="text-muted-foreground">
+                      Tests admin panel routes, legacy aliases, and type safety
+                    </p>
+                  </div>
                 </div>
-              )}
-
-              {!running && !results.length && !unsupported && (
-                <Alert>
-                  <TestTube className="h-4 w-4" />
-                  <AlertDescription>
-                    No test results yet. Click "Run All Tests" to execute the test suite.
-                  </AlertDescription>
-                </Alert>
-              )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
