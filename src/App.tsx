@@ -39,6 +39,7 @@ const AIActivity = lazy(() => import('./routes/ai/activity'));
 const EntitiesList = lazy(() => import('./routes/entities/index'));
 const EntityDetail = lazy(() => import('./routes/entities/[id]'));
 const Feed = lazy(() => import('./routes/feed/index'));
+const Social = lazy(() => import('./routes/social/index'));
 const Messages = lazy(() => import('./routes/messages/index'));
 const CRM = lazy(() => import('./routes/crm/index'));
 const ClaimEntity = lazy(() => import('./routes/claim/[entityId]'));
@@ -126,7 +127,7 @@ function AppContent() {
         '/farm/dashboard', '/farm/boarder/:id', '/farm/tasks', '/farm/health',
         '/incentives/dashboard', '/entrant/my-entries', '/entrant/my-draws',
         '/entrant/my-results', '/marketplace', '/marketplace/:id', '/feed',
-        '/messages', '/crm', '/settings/ai', '/ai/activity', '/entities',
+        '/social', '/messages', '/crm', '/settings/ai', '/ai/activity', '/entities',
         '/entities/:id', '/claim/:entityId', '/admin/claims'
       ]);
     });
@@ -238,6 +239,14 @@ function AppContent() {
             element={
               <Suspense fallback={<div>Loading...</div>}>
                 <Feed />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/social"
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <Social />
               </Suspense>
             }
           />
