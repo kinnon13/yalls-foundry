@@ -139,9 +139,9 @@ export default function AppsPane() {
 
 
   return (
-    <div className="space-y-4 h-full">
+    <div className="h-full">
       {/* Always-visible favorites bar with distinct background */}
-      <section className="mb-2 bg-muted/30 px-2 py-2">
+      <section className="bg-muted/30 px-2 py-2">
         <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
         <FavoritesBar size={72} gap={12} />
       </section>
