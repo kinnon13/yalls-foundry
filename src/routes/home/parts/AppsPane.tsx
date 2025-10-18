@@ -157,14 +157,57 @@ export default function AppsPane() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Favorites Section */}
-      <section className="shrink-0 bg-gradient-to-b from-muted/40 to-muted/20 px-2 py-2 border-b border-border/50">
+      <section className="shrink-0 bg-gradient-to-b from-muted/40 to-muted/20 px-4 py-3 border-b border-border/50">
         <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
         <FavoritesBar size={72} gap={12} />
       </section>
 
-
       {/* Apps Grid - Separate Box */}
-      <div className="flex-1 overflow-hidden bg-background p-4 flex flex-col items-center justify-center">
+      <div className="flex-1 overflow-auto bg-background p-4">
+        {/* Size Controls */}
+        <div className="mb-3 flex items-center gap-4 flex-wrap">
+          <label className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Width:</span>
+            <input
+              type="range"
+              min={400}
+              max={1200}
+              step={50}
+              value={containerWidth}
+              onChange={(e) => setContainerWidth(parseInt(e.target.value))}
+              className="w-32"
+            />
+            <span className="text-xs text-muted-foreground w-12">{containerWidth}px</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Height:</span>
+            <input
+              type="range"
+              min={200}
+              max={800}
+              step={50}
+              value={containerHeight}
+              onChange={(e) => setContainerHeight(parseInt(e.target.value))}
+              className="w-32"
+            />
+            <span className="text-xs text-muted-foreground w-12">{containerHeight}px</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Tile:</span>
+            <input
+              type="range"
+              min={84}
+              max={160}
+              step={4}
+              value={tile}
+              onChange={(e) => setTile(parseInt(e.target.value))}
+              className="w-32"
+            />
+            <span className="text-xs text-muted-foreground w-12">{tile}px</span>
+          </label>
+        </div>
+        
+
         <div 
           className="border-2 border-border rounded-lg bg-muted/20 p-3 relative"
           style={{ 
@@ -239,7 +282,6 @@ export default function AppsPane() {
             </button>
           </div>
         </div>
-
       </div>
     </div>
   );
