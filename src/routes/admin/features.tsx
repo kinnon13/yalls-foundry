@@ -10,6 +10,7 @@ import featuresManifestRaw from '../../../docs/features/features.json?raw';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { kernel, GOLD_PATH_FEATURES, Feature } from '@/lib/feature-kernel';
 import { isProductRpc, isProductRoute, isProductTable, collapseFamilies, collapsePartitions, normRoute } from '@/lib/feature-scan-filters';
+import { classifyUndocRoutes } from '@/utils/route-coverage';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -820,6 +821,44 @@ export default function FeaturesAdminPage() {
     [features]
   );
 
+  // Classify undocumented routes
+  const routeClassification = useMemo(() => {
+    const undoc = (window as any).__undocumented;
+    if (!undoc?.routes || undoc.routes.length === 0) {
+      return { alreadyClaimed: [], partiallyClaimed: [], trulyNew: [] };
+    }
+
+    // Collect all documented routes from features (including sub-features)
+    const documentedRoutes: string[] = [];
+    
+    // Build a map of all features by ID for lookup
+    const featureMap = new Map<string, Feature>();
+    features.forEach(f => featureMap.set(f.id, f));
+    
+    const walkFeature = (f: Feature) => {
+      documentedRoutes.push(...f.routes);
+      if (f.subFeatures) {
+        f.subFeatures.forEach((subId: string) => {
+          const subFeature = featureMap.get(subId);
+          if (subFeature) {
+            walkFeature(subFeature);
+          }
+        });
+      }
+    };
+    
+    features.forEach((f: Feature) => walkFeature(f));
+
+    const classification = classifyUndocRoutes(undoc.routes, documentedRoutes);
+    console.log('[Route Classification]', {
+      totalUndoc: undoc.routes.length,
+      alreadyClaimed: classification.alreadyClaimed.length,
+      partiallyClaimed: classification.partiallyClaimed.length,
+      trulyNew: classification.trulyNew.length,
+    });
+    return classification;
+  }, [(window as any).__undocumented?.routes, features]);
+
   return (
     <div className="container max-w-7xl py-8 space-y-6">
       {/* Header */}
@@ -1209,27 +1248,98 @@ export default function FeaturesAdminPage() {
                       {showUndocRoutes ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                       <span className="font-semibold">Undocumented Routes (Collapsed Families)</span>
                       <Badge variant="outline">{undoc.routes?.length || 0}</Badge>
+                      {routeClassification.alreadyClaimed.length > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          {routeClassification.alreadyClaimed.length} claimed
+                        </Badge>
+                      )}
+                      {routeClassification.trulyNew.length > 0 && (
+                        <Badge variant="default" className="text-xs">
+                          {routeClassification.trulyNew.length} new
+                        </Badge>
+                      )}
                     </div>
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-3">
                   <div className="space-y-2 max-h-80 overflow-y-auto p-2 border rounded-lg">
-                    {(undoc.routes || []).map((route: string) => (
-                      <div key={route} className="flex items-center justify-between gap-2 p-2 hover:bg-accent/50 rounded">
-                        <Badge variant="secondary" className="text-xs">
-                          {route}
-                        </Badge>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleClaimFeature(route)}
-                          className="text-xs"
-                        >
-                          <Plus className="h-3 w-3 mr-1" />
-                          Claim
-                        </Button>
+                    {/* Already Claimed */}
+                    {routeClassification.alreadyClaimed.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="text-xs font-semibold text-muted-foreground px-2">Already Claimed</div>
+                        {routeClassification.alreadyClaimed.map((route: string) => (
+                          <div key={route} className="flex items-center justify-between gap-2 p-2 bg-muted/30 rounded">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs opacity-50">
+                                {route}
+                              </Badge>
+                              <CheckCircle className="h-3 w-3 text-green-600" />
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              disabled
+                              className="text-xs"
+                            >
+                              Claimed
+                            </Button>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
+                    
+                    {/* Partially Claimed */}
+                    {routeClassification.partiallyClaimed.length > 0 && (
+                      <div className="space-y-2 mt-4">
+                        <div className="text-xs font-semibold text-muted-foreground px-2">Partially Claimed</div>
+                        {routeClassification.partiallyClaimed.map((route: string) => (
+                          <div key={route} className="flex items-center justify-between gap-2 p-2 bg-yellow-50 dark:bg-yellow-950/20 rounded">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {route}
+                              </Badge>
+                              <AlertCircle className="h-3 w-3 text-yellow-600" />
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                if (confirm(`Base route is already claimed. Claim family ${route}?`)) {
+                                  handleClaimFeature(route);
+                                }
+                              }}
+                              className="text-xs"
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Claim Family
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Truly New */}
+                    {routeClassification.trulyNew.length > 0 && (
+                      <div className="space-y-2 mt-4">
+                        <div className="text-xs font-semibold text-muted-foreground px-2">New Routes</div>
+                        {routeClassification.trulyNew.map((route: string) => (
+                          <div key={route} className="flex items-center justify-between gap-2 p-2 hover:bg-accent/50 rounded">
+                            <Badge variant="secondary" className="text-xs">
+                              {route}
+                            </Badge>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleClaimFeature(route)}
+                              className="text-xs"
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Claim
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </CollapsibleContent>
               </Collapsible>
