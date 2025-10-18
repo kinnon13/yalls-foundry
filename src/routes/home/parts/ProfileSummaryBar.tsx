@@ -67,21 +67,24 @@ export default function ProfileSummaryBar() {
         )}
       </div>
 
-      {/* Stats positioned to align under username */}
-      <div className="flex gap-6 text-sm ml-4">
-        <div className="flex flex-col items-center">
-          <span className="text-lg font-bold text-foreground">{totals.following}</span>
-          <span className="text-xs text-muted-foreground">Following</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-lg font-bold text-foreground">{totals.followers}</span>
-          <span className="text-xs text-muted-foreground">Followers</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-lg font-bold text-foreground">{totals.likes}</span>
-          <span className="text-xs text-muted-foreground">Likes</span>
+      {/* Stats centered in full width with right spacer to balance avatar */}
+      <div className="flex-1 flex justify-center">
+        <div className="flex gap-6 text-sm">
+          <div className="flex flex-col items-center">
+            <span className="text-lg font-bold text-foreground">{totals.following}</span>
+            <span className="text-xs text-muted-foreground">Following</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-lg font-bold text-foreground">{totals.followers}</span>
+            <span className="text-xs text-muted-foreground">Followers</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-lg font-bold text-foreground">{totals.likes}</span>
+            <span className="text-xs text-muted-foreground">Likes</span>
+          </div>
         </div>
       </div>
+      <div className="w-[72px] shrink-0" aria-hidden />
     </Link>
   );
 }
