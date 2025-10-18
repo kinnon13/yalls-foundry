@@ -9360,6 +9360,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      prune_ghost_entity_pins: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       queue_campaign_messages: {
         Args: { p_campaign_id: string }
         Returns: Json

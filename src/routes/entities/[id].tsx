@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
 import { useProfilePins } from '@/hooks/useProfilePins';
 import { useToast } from '@/hooks/use-toast';
+import { useRocker } from '@/lib/ai/rocker';
 
 type Entity = {
   id: string;
@@ -32,6 +33,7 @@ export default function EntityDetail() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { log } = useRocker();
   const pins = useProfilePins(userId);
 
   useEffect(() => {
@@ -85,12 +87,7 @@ export default function EntityDetail() {
 
     if (isPinned) {
       pins.remove.mutate({ pin_type: 'entity', ref_id: entity.id });
-      // Log telemetry
-      fetch('/api/rocker', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'pin_removed', input: { pin_type: 'entity', ref_id: entity.id } })
-      }).catch(() => {});
+      log('pin_removed', { pin_type: 'entity', ref_id: entity.id, section: 'entity_detail' });
     } else {
       pins.add.mutate({
         pin_type: 'entity',
@@ -102,12 +99,7 @@ export default function EntityDetail() {
           status: entity.status
         }
       });
-      // Log telemetry
-      fetch('/api/rocker', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'pin_added', input: { pin_type: 'entity', ref_id: entity.id } })
-      }).catch(() => {});
+      log('pin_added', { pin_type: 'entity', ref_id: entity.id, section: 'entity_detail' });
     }
   };
 

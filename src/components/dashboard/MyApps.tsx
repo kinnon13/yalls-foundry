@@ -65,16 +65,34 @@ export function MyApps({ entityId }: MyAppsProps) {
   const { data: pinnedEntities, isLoading: isLoadingPins } = useQuery({
     queryKey: ['pinned-entities', userId, pins.data],
     queryFn: async () => {
-      if (!pins.data) return [];
+      if (!pins.data) return { entities: [], ghostPins: [] };
       const entityPins = pins.data.filter(p => p.pin_type === 'entity');
-      if (entityPins.length === 0) return [];
+      if (entityPins.length === 0) return { entities: [], ghostPins: [] };
 
-      const { data } = await supabase
-        .from('entities')
-        .select('id, display_name, kind, status, handle, owner_user_id')
-        .in('id', entityPins.map(p => p.ref_id));
+      const entityIds = entityPins.map(p => p.ref_id);
+      
+      // Chunk large IN queries (100 IDs per chunk)
+      const chunk = <T,>(arr: T[], n = 100): T[][] => 
+        Array.from({ length: Math.ceil(arr.length / n) }, (_, i) => 
+          arr.slice(i * n, (i + 1) * n)
+        );
+      
+      const results = await Promise.all(
+        chunk(entityIds, 100).map(ids =>
+          supabase
+            .from('entities')
+            .select('id, display_name, kind, status, handle, owner_user_id')
+            .in('id', ids)
+        )
+      );
 
-      return data || [];
+      const entities = results.flatMap(r => r.data ?? []);
+      
+      // Track ghost pins (pins pointing to deleted entities)
+      const foundIds = new Set(entities.map(e => e.id));
+      const ghostPins = entityPins.filter(p => !foundIds.has(p.ref_id));
+      
+      return { entities, ghostPins };
     },
     enabled: !!userId && !!pins.data && pins.data.length > 0
   });
@@ -139,9 +157,9 @@ export function MyApps({ entityId }: MyAppsProps) {
               meta: app.app_catalog?.summary,
               accent: getCategoryAccent(app.app_catalog?.category || 'utility'),
               to: getAppRoute(app.app_key),
-              onClick: () => log('app_open', { app_key: app.app_key, entity_id: entityId })
+              onClick: () => log('tile_open', { section: 'apps', key: app.app_key })
             })),
-            ...(pinnedEntities || []).map((entity: any) => ({
+            ...(pinnedEntities?.entities || []).map((entity: any) => ({
               key: `entity:${entity.id}`,
               type: 'entity' as const,
               title: entity.display_name,
@@ -149,7 +167,17 @@ export function MyApps({ entityId }: MyAppsProps) {
               meta: entity.status === 'unclaimed' ? 'Unclaimed' : entity.kind,
               accent: entity.status === 'unclaimed' ? 'hsl(45 85% 60%)' : 'hsl(200 90% 55%)',
               to: getEntityRoute(entity),
-              onClick: () => log('tile_open', { key: `entity:${entity.id}`, pin_type: 'entity', ref_id: entity.id })
+              onClick: () => log('tile_open', { section: 'pins', pin_type: 'entity', ref_id: entity.id })
+            })),
+            ...(pinnedEntities?.ghostPins || []).map((pin: any) => ({
+              key: `ghost:${pin.ref_id}`,
+              type: 'ghost' as const,
+              title: pin.title || 'Deleted Item',
+              icon: Building2,
+              meta: 'No longer available',
+              accent: 'hsl(0 0% 50%)',
+              to: undefined,
+              onClick: () => pins.remove.mutate({ pin_type: pin.pin_type, ref_id: pin.ref_id })
             }))
           ]
             .sort((a, b) => a.title.localeCompare(b.title))

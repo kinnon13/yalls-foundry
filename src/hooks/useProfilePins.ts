@@ -49,12 +49,28 @@ export function useProfilePins(userId: string | null) {
         });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async (pin: PinInput) => {
+      await qc.cancelQueries({ queryKey: ['pins', userId] });
+      const prev = qc.getQueryData<Pin[]>(['pins', userId]) || [];
+      qc.setQueryData(['pins', userId], [
+        ...prev, 
+        { 
+          id: crypto.randomUUID(), 
+          user_id: userId!, 
+          sort_index: 9e15, 
+          created_at: new Date().toISOString(), 
+          ...pin 
+        }
+      ]);
+      return { prev };
+    },
+    onError: (_e: any, _pin: PinInput, ctx?: { prev: Pin[] }) => {
+      if (ctx?.prev) qc.setQueryData(['pins', userId], ctx.prev);
+      toast({ title: 'Failed to pin', description: String(_e), variant: 'destructive' });
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ['pins', userId] });
       toast({ title: 'Pinned to My Apps' });
-    },
-    onError: (error) => {
-      toast({ title: 'Failed to pin', description: String(error), variant: 'destructive' });
     },
   });
 
@@ -67,12 +83,21 @@ export function useProfilePins(userId: string | null) {
         .match({ user_id: userId, pin_type: pin.pin_type, ref_id: pin.ref_id });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async (pin: { pin_type: string; ref_id: string }) => {
+      await qc.cancelQueries({ queryKey: ['pins', userId] });
+      const prev = qc.getQueryData<Pin[]>(['pins', userId]) || [];
+      qc.setQueryData(['pins', userId], prev.filter(p => 
+        !(p.pin_type === pin.pin_type && p.ref_id === pin.ref_id)
+      ));
+      return { prev };
+    },
+    onError: (_e: any, _pin: { pin_type: string; ref_id: string }, ctx?: { prev: Pin[] }) => {
+      if (ctx?.prev) qc.setQueryData(['pins', userId], ctx.prev);
+      toast({ title: 'Failed to unpin', description: String(_e), variant: 'destructive' });
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ['pins', userId] });
       toast({ title: 'Unpinned' });
-    },
-    onError: (error) => {
-      toast({ title: 'Failed to unpin', description: String(error), variant: 'destructive' });
     },
   });
 
