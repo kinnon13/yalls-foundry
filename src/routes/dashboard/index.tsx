@@ -188,7 +188,7 @@ export default function DashboardLayout() {
         {/* Main content area - App Grid */}
         <div 
           ref={mainContentRef}
-          className="relative overflow-hidden"
+          className="relative overflow-hidden bg-background/50"
           style={{
             width: mainContentWidth || `calc(100vw - ${feedWidth}px)`,
             flexShrink: 0
@@ -200,26 +200,29 @@ export default function DashboardLayout() {
             </Suspense>
           </DashboardErrorBoundary>
           
-          {/* Right resize handle for app grid */}
-          <div
-            onPointerDown={onMainResizeStart('right')}
-            className="absolute top-1/2 right-0 -translate-y-1/2 h-32 w-3 cursor-ew-resize bg-primary/30 hover:bg-primary/60 transition-colors z-50 rounded-l"
-            aria-label="Resize app grid from right"
-            title="Drag to resize"
-          />
-          {/* Left resize handle for app grid */}
+          {/* LEFT EDGE - App Grid */}
           <div
             onPointerDown={onMainResizeStart('left')}
-            className="absolute top-1/2 left-0 -translate-y-1/2 h-32 w-3 cursor-ew-resize bg-primary/30 hover:bg-primary/60 transition-colors z-50 rounded-r"
-            aria-label="Resize app grid from left"
-            title="Drag to resize"
-          />
+            className="absolute top-0 left-0 bottom-0 w-6 cursor-ew-resize bg-blue-500/40 hover:bg-blue-500/70 transition-colors z-[100] flex items-center justify-center"
+            title="◄► Drag to resize app grid (LEFT)"
+          >
+            <div className="text-white text-xs font-bold rotate-90">LEFT</div>
+          </div>
+          
+          {/* RIGHT EDGE - App Grid */}
+          <div
+            onPointerDown={onMainResizeStart('right')}
+            className="absolute top-0 right-0 bottom-0 w-6 cursor-ew-resize bg-blue-500/40 hover:bg-blue-500/70 transition-colors z-[100] flex items-center justify-center"
+            title="◄► Drag to resize app grid (RIGHT)"
+          >
+            <div className="text-white text-xs font-bold rotate-90">RIGHT</div>
+          </div>
         </div>
 
         {/* Social Feed - Right side */}
         <div
           ref={containerRef}
-          className="relative bg-background border-l border-r shadow-xl select-none"
+          className="relative bg-background border-l-4 border-r-4 border-primary shadow-xl"
           style={{
             width: `${feedWidth}px`,
             height: `${feedHeight}px`,
@@ -237,32 +240,41 @@ export default function DashboardLayout() {
             <TikTokFeed />
           </div>
 
-          {/* Resize handles for Social Feed */}
-          {/* Corner (bottom-right) */}
-          <div
-            onPointerDown={onResizeStart('corner')}
-            className="absolute bottom-1 right-1 h-4 w-4 cursor-nwse-resize rounded bg-muted border border-border z-50"
-            aria-label="Resize social feed"
-            title="Drag to resize"
-          />
-          {/* Right edge */}
-          <div
-            onPointerDown={onResizeStart('right')}
-            className="absolute top-1/2 right-0 -translate-y-1/2 h-20 w-1 cursor-ew-resize bg-border/50 hover:bg-border z-50"
-            aria-label="Resize width from right"
-          />
-          {/* Left edge */}
+          {/* LEFT EDGE - Social Feed */}
           <div
             onPointerDown={onResizeStart('left')}
-            className="absolute top-1/2 left-0 -translate-y-1/2 h-20 w-1 cursor-ew-resize bg-border/50 hover:bg-border z-50"
-            aria-label="Resize width from left"
-          />
-          {/* Bottom edge */}
+            className="absolute top-0 left-0 bottom-0 w-6 cursor-ew-resize bg-green-500/40 hover:bg-green-500/70 transition-colors z-[100] flex items-center justify-center"
+            title="◄► Drag to resize feed (LEFT)"
+          >
+            <div className="text-white text-xs font-bold rotate-90">LEFT</div>
+          </div>
+          
+          {/* RIGHT EDGE - Social Feed */}
+          <div
+            onPointerDown={onResizeStart('right')}
+            className="absolute top-0 right-0 bottom-0 w-6 cursor-ew-resize bg-green-500/40 hover:bg-green-500/70 transition-colors z-[100] flex items-center justify-center"
+            title="◄► Drag to resize feed (RIGHT)"
+          >
+            <div className="text-white text-xs font-bold rotate-90">RIGHT</div>
+          </div>
+          
+          {/* BOTTOM EDGE - Social Feed */}
           <div
             onPointerDown={onResizeStart('bottom')}
-            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-20 h-1 cursor-ns-resize bg-border/50 hover:bg-border z-50"
-            aria-label="Resize height"
-          />
+            className="absolute bottom-0 left-0 right-0 h-6 cursor-ns-resize bg-purple-500/40 hover:bg-purple-500/70 transition-colors z-[100] flex items-center justify-center"
+            title="▲▼ Drag to resize feed height"
+          >
+            <div className="text-white text-xs font-bold">BOTTOM</div>
+          </div>
+          
+          {/* CORNER - Social Feed */}
+          <div
+            onPointerDown={onResizeStart('corner')}
+            className="absolute bottom-0 right-0 h-12 w-12 cursor-nwse-resize bg-red-500/50 hover:bg-red-500/80 transition-colors z-[100] rounded-tl-lg flex items-center justify-center"
+            title="↔↕ Drag corner to resize both"
+          >
+            <div className="text-white text-xs font-bold">⇲</div>
+          </div>
         </div>
       </div>
 
