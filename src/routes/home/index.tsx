@@ -21,12 +21,12 @@ export default function HomePage() {
         "
       >
         {/* Left: Apps (desktop/tablet) — independent scroll */}
-        <div className="overflow-y-auto overscroll-contain px-4 pb-24 pt-3">
+        <div className="hidden md:block min-w-0 min-h-0 h-full overflow-y-auto overscroll-contain px-4 pb-24 pt-3">
           <AppsPane />
         </div>
 
         {/* Right: Feed (desktop/tablet) — independent scroll */}
-        <div className="hidden md:block h-full overflow-y-auto overscroll-contain border-l border-border px-0 pb-24">
+        <div className="hidden md:block min-w-0 min-h-0 h-full overflow-y-auto overscroll-contain border-l border-border px-0 pb-24">
           <SocialFeedPane />
         </div>
 
