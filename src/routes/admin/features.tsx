@@ -331,12 +331,12 @@ export default function FeaturesAdminPage() {
 
   const runFeatureScan = useCallback(async () => {
     setScanLoading(true);
-    console.log('[Scanner] Starting comprehensive feature scan...');
+    console.log('[Scanner] Starting comprehensive database + codebase scan...');
     try {
       // Load manifest from bundled raw JSON
       const manifest = JSON.parse(featuresManifestRaw);
       
-      // Discover ALL routes in the codebase
+      // Step 1: Discover ALL routes in the codebase
       const routeFiles = import.meta.glob('/src/routes/**/*.{tsx,ts}', { eager: false });
       const discoveredRoutes = Object.keys(routeFiles).map(path => {
         return path
@@ -347,34 +347,38 @@ export default function FeaturesAdminPage() {
           || '/';
       });
 
-      // Discover all components for verification
+      // Step 2: Discover all components for verification
       const allComponentFiles = import.meta.glob('/src/**/*.{tsx,ts}', { eager: false });
 
-      // Collect ALL RPCs, tables, routes from features.json + discovered routes
-      const allRpcs = new Set<string>();
-      const allTables = new Set<string>();
-      const allRoutes = new Set<string>([...discoveredRoutes]);
+      // Step 3: Collect items from features.json
+      const documentedRpcs = new Set<string>();
+      const documentedTables = new Set<string>();
+      const documentedRoutes = new Set<string>();
 
       for (const f of manifest.features) {
-        (f.rpc || []).forEach((r: string) => allRpcs.add(r));
-        (f.tables || []).forEach((t: string) => allTables.add(t));
-        (f.routes || []).forEach((r: string) => allRoutes.add(r));
+        (f.rpc || []).forEach((r: string) => documentedRpcs.add(r));
+        (f.tables || []).forEach((t: string) => documentedTables.add(t));
+        (f.routes || []).forEach((r: string) => documentedRoutes.add(r));
       }
 
+      // Step 4: Send everything to edge function with introspectAll flag
       const inputs = {
-        rpcs: [...allRpcs],
-        tables: [...allTables],
-        routes: [...allRoutes],
+        rpcs: [...documentedRpcs],
+        tables: [...documentedTables],
+        routes: [...new Set([...discoveredRoutes, ...documentedRoutes])],
+        introspectAll: true, // Tell edge function to discover ALL tables/RPCs in DB
       };
 
       console.log('[Scanner] Comprehensive scan inputs:', {
-        rpcs: inputs.rpcs.length,
-        tables: inputs.tables.length,
-        routes: inputs.routes.length,
+        documentedRpcs: documentedRpcs.size,
+        documentedTables: documentedTables.size,
+        totalRoutes: inputs.routes.length,
         discoveredRoutes: discoveredRoutes.length,
-        componentFiles: Object.keys(allComponentFiles).length
+        componentFiles: Object.keys(allComponentFiles).length,
+        introspectAll: true
       });
-      console.log('[Scanner] Invoking feature-scan edge function...', inputs);
+
+      console.log('[Scanner] Invoking feature-scan edge function...');
       const { data, error } = await supabase.functions.invoke('feature-scan', {
         body: inputs
       });

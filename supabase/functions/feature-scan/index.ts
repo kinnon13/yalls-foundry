@@ -61,8 +61,52 @@ Deno.serve(async (req) => {
     const rpcs = Array.isArray(body.rpcs) ? body.rpcs : [];
     const tables = Array.isArray(body.tables) ? body.tables : [];
     const routes = Array.isArray(body.routes) ? body.routes : [];
+    const introspectAll = body.introspectAll === true;
 
-    const { data, error } = await admin.rpc('feature_introspect', { rpcs, tables });
+    console.log('Scanning features:', { rpcs: rpcs.length, tables: tables.length, routes: routes.length, introspectAll });
+
+    // If introspectAll, discover ALL tables and RPCs in the database
+    let allRpcs = rpcs;
+    let allTables = tables;
+
+    if (introspectAll) {
+      console.log('Introspecting ALL database objects...');
+      
+      // Query ALL public functions from pg_proc
+      try {
+        const { data: pgFunctions } = await admin
+          .from('pg_proc' as any)
+          .select('proname')
+          .limit(1000);
+        
+        if (pgFunctions) {
+          const discoveredRpcs = pgFunctions.map((f: any) => f.proname).filter(Boolean);
+          allRpcs = [...new Set([...rpcs, ...discoveredRpcs])];
+          console.log(`Discovered ${discoveredRpcs.length} total RPCs (${allRpcs.length} unique)`);
+        }
+      } catch (e) {
+        console.warn('Failed to query pg_proc:', e);
+      }
+
+      // Query ALL public tables from information_schema
+      try {
+        const { data: pgTables } = await admin
+          .from('information_schema.tables' as any)
+          .select('table_name')
+          .eq('table_schema', 'public')
+          .limit(1000);
+        
+        if (pgTables) {
+          const discoveredTables = pgTables.map((t: any) => t.table_name).filter(Boolean);
+          allTables = [...new Set([...tables, ...discoveredTables])];
+          console.log(`Discovered ${discoveredTables.length} total tables (${allTables.length} unique)`);
+        }
+      } catch (e) {
+        console.warn('Failed to query information_schema:', e);
+      }
+    }
+
+    const { data, error } = await admin.rpc('feature_introspect', { rpcs: allRpcs, tables: allTables });
     if (error) {
       console.error('feature_introspect error:', error);
       throw error;
