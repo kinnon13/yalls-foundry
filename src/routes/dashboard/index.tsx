@@ -149,14 +149,16 @@ export default function DashboardLayout() {
     window.addEventListener('pointerup', onUp);
   };
 
-  const onMainContentResize = (e: React.PointerEvent<HTMLDivElement>) => {
+  const onMainResizeStart = (side: 'left' | 'right') => (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     const startWidth = mainContentRef.current?.offsetWidth || window.innerWidth - feedWidth;
     const startX = e.clientX;
     
     const onMove = (ev: PointerEvent) => {
       const dx = ev.clientX - startX;
-      const newWidth = Math.max(MIN_MAIN_W, startWidth + dx);
+      const newWidth = side === 'right'
+        ? Math.max(MIN_MAIN_W, startWidth + dx)
+        : Math.max(MIN_MAIN_W, startWidth - dx);
       setMainContentWidth(newWidth);
     };
     
@@ -168,7 +170,6 @@ export default function DashboardLayout() {
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
   };
-
   return (
     <div className="h-dvh flex flex-col bg-background overflow-hidden">
       {/* Wallpaper */}
@@ -197,11 +198,17 @@ export default function DashboardLayout() {
           </Suspense>
         </DashboardErrorBoundary>
         
-        {/* Resize handle for main content */}
+        {/* Resize handles for app grid */}
         <div
-          onPointerDown={onMainContentResize}
+          onPointerDown={onMainResizeStart('right')}
           className="absolute top-1/2 right-0 -translate-y-1/2 h-32 w-2 cursor-ew-resize bg-primary/20 hover:bg-primary/40 transition-colors z-50"
-          aria-label="Resize app grid area"
+          aria-label="Resize app grid area from right"
+          title="Drag to resize app grid"
+        />
+        <div
+          onPointerDown={onMainResizeStart('left')}
+          className="absolute top-1/2 left-0 -translate-y-1/2 h-32 w-2 cursor-ew-resize bg-primary/20 hover:bg-primary/40 transition-colors z-50"
+          aria-label="Resize app grid area from left"
           title="Drag to resize app grid"
         />
       </div>
