@@ -13,7 +13,7 @@ interface EdgesManagerProps {
 }
 
 export function EdgesManager({ entityId, canManage = false }: EdgesManagerProps) {
-  const { data: edges = [], isLoading, update, remove } = useEntityEdges(entityId);
+  const { edges, isLoading, update, remove } = useEntityEdges(entityId);
 
   if (isLoading) {
     return <div className="animate-pulse h-48 bg-muted rounded-lg" />;
@@ -23,12 +23,13 @@ export function EdgesManager({ entityId, canManage = false }: EdgesManagerProps)
     return null;
   }
 
-  const edgeTypeLabels = {
-    owns: 'Owns',
-    manages: 'Manages',
-    parent: 'Parent',
-    sponsors: 'Sponsors',
-    partners: 'Partners with',
+  const edgeTypeLabels: Record<string, string> = {
+    parent: 'Parent of',
+    child: 'Child of',
+    member: 'Member of',
+    partner: 'Partners with',
+    sponsor: 'Sponsors',
+    affiliate: 'Affiliated with',
   };
 
   return (
@@ -67,9 +68,12 @@ export function EdgesManager({ entityId, canManage = false }: EdgesManagerProps)
                   <div className="flex items-center gap-2">
                     <Switch
                       id={`crosspost-${edge.id}`}
-                      checked={edge.allow_crosspost}
+                      checked={edge.metadata?.allow_crosspost ?? false}
                       onCheckedChange={(checked) =>
-                        update.mutate({ edge_id: edge.id, options: { allow_crosspost: checked } })
+                        update.mutate({ 
+                          edgeId: edge.id, 
+                          metadata: { ...edge.metadata, allow_crosspost: checked } 
+                        })
                       }
                     />
                     <Label htmlFor={`crosspost-${edge.id}`} className="text-sm">
@@ -80,9 +84,12 @@ export function EdgesManager({ entityId, canManage = false }: EdgesManagerProps)
                   <div className="flex items-center gap-2">
                     <Switch
                       id={`auto-${edge.id}`}
-                      checked={edge.auto_propagate}
+                      checked={edge.metadata?.auto_propagate ?? false}
                       onCheckedChange={(checked) =>
-                        update.mutate({ edge_id: edge.id, options: { auto_propagate: checked } })
+                        update.mutate({ 
+                          edgeId: edge.id, 
+                          metadata: { ...edge.metadata, auto_propagate: checked } 
+                        })
                       }
                     />
                     <Label htmlFor={`auto-${edge.id}`} className="text-sm">

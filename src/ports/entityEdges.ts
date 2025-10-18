@@ -1,18 +1,18 @@
-export type EdgeType = 'owns' | 'manages' | 'parent' | 'sponsors' | 'partners';
+export type EdgeType = 'parent' | 'child' | 'member' | 'partner' | 'sponsor' | 'affiliate';
 
 export interface EntityEdge {
   id: string;
   from_entity_id: string;
   to_entity_id: string;
   edge_type: EdgeType;
-  allow_crosspost: boolean;
-  auto_propagate: boolean;
+  metadata: Record<string, any>;
   created_at: string;
 }
 
 export interface EntityEdgesPort {
-  list(entity_id: string): Promise<EntityEdge[]>;
-  create(from_entity_id: string, to_entity_id: string, edge_type: EdgeType, options?: { allow_crosspost?: boolean; auto_propagate?: boolean }): Promise<EntityEdge>;
-  update(edge_id: string, options: { allow_crosspost?: boolean; auto_propagate?: boolean }): Promise<void>;
-  remove(edge_id: string): Promise<void>;
+  list(entityId: string, direction?: 'from' | 'to' | 'both'): Promise<EntityEdge[]>;
+  create(fromEntityId: string, toEntityId: string, edgeType: EdgeType, metadata?: Record<string, any>): Promise<string>;
+  update(edgeId: string, edgeType?: EdgeType, metadata?: Record<string, any>): Promise<void>;
+  remove(edgeId: string): Promise<void>;
+  setPermissions(entityId: string, userId: string, canPost: boolean, canManage: boolean): Promise<string>;
 }

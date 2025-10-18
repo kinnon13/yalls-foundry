@@ -15,49 +15,54 @@ function write(db: Record<string, EntityEdge[]>) {
 }
 
 export const entityEdgesMock: EntityEdgesPort = {
-  async list(entity_id) {
+  async list(entityId, direction = 'from') {
     const db = read();
-    return db[entity_id] || [];
+    return db[entityId] || [];
   },
 
-  async create(from_entity_id, to_entity_id, edge_type, options = {}) {
+  async create(fromEntityId, toEntityId, edgeType, metadata = {}) {
     const db = read();
-    const edges = db[from_entity_id] || [];
+    const edges = db[fromEntityId] || [];
     
+    const id = crypto.randomUUID();
     const newEdge: EntityEdge = {
-      id: crypto.randomUUID(),
-      from_entity_id,
-      to_entity_id,
-      edge_type,
-      allow_crosspost: options.allow_crosspost ?? true,
-      auto_propagate: options.auto_propagate ?? false,
+      id,
+      from_entity_id: fromEntityId,
+      to_entity_id: toEntityId,
+      edge_type: edgeType,
+      metadata,
       created_at: new Date().toISOString(),
     };
     
-    db[from_entity_id] = [...edges, newEdge];
+    db[fromEntityId] = [...edges, newEdge];
     write(db);
     
-    return newEdge;
+    return id;
   },
 
-  async update(edge_id, options) {
+  async update(edgeId, edgeType, metadata) {
     const db = read();
-    for (const entity_id in db) {
-      const edge = db[entity_id].find(e => e.id === edge_id);
+    for (const entityId in db) {
+      const edge = db[entityId].find(e => e.id === edgeId);
       if (edge) {
-        if (options.allow_crosspost !== undefined) edge.allow_crosspost = options.allow_crosspost;
-        if (options.auto_propagate !== undefined) edge.auto_propagate = options.auto_propagate;
+        if (edgeType) edge.edge_type = edgeType;
+        if (metadata) edge.metadata = { ...edge.metadata, ...metadata };
         write(db);
         return;
       }
     }
   },
 
-  async remove(edge_id) {
+  async remove(edgeId) {
     const db = read();
-    for (const entity_id in db) {
-      db[entity_id] = db[entity_id].filter(e => e.id !== edge_id);
+    for (const entityId in db) {
+      db[entityId] = db[entityId].filter(e => e.id !== edgeId);
     }
     write(db);
+  },
+
+  async setPermissions(entityId, userId, canPost, canManage) {
+    // Mock: just return a fake ID
+    return crypto.randomUUID();
   },
 };

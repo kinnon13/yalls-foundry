@@ -80,10 +80,10 @@
       "id": "entity_edges",
       "area": "profile",
       "title": "Entity Relationships",
-      "status": "full-ui",
+      "status": "wired",
       "routes": ["/entities/:id/edges"],
       "components": ["src/components/entities/EdgesManager.tsx"],
-      "rpc": ["entity_edges_list", "entity_edge_create", "entity_edge_update", "entity_edge_remove"],
+      "rpc": ["entity_edges_list", "entity_edge_create", "entity_edge_update", "entity_edge_remove", "entity_edge_permissions_set"],
       "flags": ["entity_edges"],
       "docs": "docs/features/entity-edges.md",
       "tests": {
@@ -92,7 +92,7 @@
       },
       "owner": "web",
       "severity": "p1",
-      "notes": "Auto-propagate + crosspost rules"
+      "notes": "Production-ready: DB-backed with RLS, permission checks, crosspost unblocked"
     },
     {
       "id": "notification_lanes",
