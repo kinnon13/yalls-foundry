@@ -9,6 +9,7 @@
 import featuresManifestRaw from '../../../docs/features/features.json?raw';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { kernel, GOLD_PATH_FEATURES, Feature } from '@/lib/feature-kernel';
+import { isProductRpc, isProductRoute, isProductTable, collapseFamilies, normRoute } from '@/lib/feature-scan-filters';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -630,15 +631,24 @@ export default function FeaturesAdminPage() {
 
       console.log('[Scanner] Edge function response:', data);
 
-      // Step 5: Compute undocumented items
+      // Step 5: Compute undocumented items (with filtering)
       const rpcScan = (data?.rpcs ?? []).map((x: any) => x.name);
       const tableScan = (data?.tables ?? []).map((x: any) => x.name);
       
-      const undocumentedRoutes = discoveredRoutes.filter(r => !documentedRoutes.has(r));
-      const undocumentedRpcs = rpcScan.filter((n: string) => !documentedRpcs.has(n));
-      const undocumentedTables = tableScan.filter((n: string) => !documentedTables.has(n));
+      // Filter product items only
+      const productRoutes = discoveredRoutes.filter(isProductRoute);
+      const productRpcs = rpcScan.filter(isProductRpc);
+      const productTables = tableScan.filter(isProductTable);
+      
+      // Find undocumented items
+      const rawUndocRoutes = productRoutes.filter(r => !documentedRoutes.has(r));
+      const undocumentedRpcs = productRpcs.filter((n: string) => !documentedRpcs.has(n));
+      const undocumentedTables = productTables.filter((n: string) => !documentedTables.has(n));
+      
+      // Collapse route families for cleaner display
+      const undocumentedRoutes = collapseFamilies(rawUndocRoutes);
 
-      console.log('[Scanner] Undocumented items:', {
+      console.log('[Scanner] Undocumented items (product only):', {
         routes: undocumentedRoutes.length,
         rpcs: undocumentedRpcs.length,
         tables: undocumentedTables.length,
