@@ -12,6 +12,10 @@ import { CheckCircle, XCircle, AlertCircle, Play, RefreshCw, Search } from 'luci
 import { kernel, GOLD_PATH_FEATURES, isProd } from '@/lib/feature-kernel';
 import { supabase } from '@/integrations/supabase/client';
 import { env } from '@/lib/env';
+// Import feature manifest as raw text (works in Vite without extra tsconfig)
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import featuresManifestRaw from '../../../docs/features/features.json?raw';
 
 interface AuditResult {
   check: string;
@@ -231,13 +235,9 @@ export default function AuditPage() {
 };
 
   const runLiveScanner = async () => {
-    if (!env.FEATURE_SCANNER) return;
-    
-    setScanning(true);
     try {
-      // Load features manifest
-      const manifestRes = await fetch('/docs/features/features.json');
-      const manifest = await manifestRes.json();
+      // Load features manifest from bundled raw JSON
+      const manifest = JSON.parse(featuresManifestRaw);
       const features = manifest.features || [];
 
       // Vite glob for component verification
@@ -444,9 +444,8 @@ export default function AuditPage() {
         )}
       </div>
 
-      {/* Live Feature Scanner (gated by env flag) */}
-      {env.FEATURE_SCANNER && (
-        <Card className="p-6">
+      {/* Live Feature Scanner */}
+      <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-2xl font-bold">Live Feature Scanner</h2>
@@ -528,7 +527,6 @@ export default function AuditPage() {
             Scanner is read-only and safe. Gated by VITE_FEATURE_SCANNER env flag.
           </p>
         </Card>
-      )}
     </div>
   );
 }
