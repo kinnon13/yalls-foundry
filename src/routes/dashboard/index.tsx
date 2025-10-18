@@ -84,11 +84,13 @@ export default function DashboardLayout() {
         />
       )}
 
-      {/* Blur/dim overlay - z-10, pointer-events-none */}
-      <div 
-        className="fixed inset-0 z-10 pointer-events-none backdrop-blur-md bg-black/20 dark:bg-black/30"
-        aria-hidden="true"
-      />
+      {/* Blur/dim overlay - only when wallpaper is present */}
+      {appearance?.wallpaper_url && (
+        <div 
+          className="fixed inset-0 z-10 pointer-events-none"
+          aria-hidden="true"
+        />
+      )}
 
       {/* Screen saver overlay - z-40 */}
       {appearance?.screensaver_payload && (
