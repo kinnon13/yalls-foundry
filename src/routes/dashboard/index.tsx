@@ -77,47 +77,63 @@ export default function DashboardLayout() {
   
   const Panel = useMemo(() => panels[m] ?? panels.overview, [m]);
 
-  // Handle left edge drag (resize width)
+  // Handle left edge drag (resize width) - Mouse + Touch
   useEffect(() => {
     if (!isDraggingLeft) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const newWidth = window.innerWidth - e.clientX - feedRightOffset;
+    const handleMove = (clientX: number) => {
+      const newWidth = window.innerWidth - clientX - feedRightOffset;
       setFeedWidth(Math.max(300, Math.min(800, newWidth)));
     };
 
-    const handleMouseUp = () => {
-      setIsDraggingLeft(false);
+    const handleMouseMove = (e: MouseEvent) => handleMove(e.clientX);
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      handleMove(e.touches[0].clientX);
     };
 
+    const handleEnd = () => setIsDraggingLeft(false);
+
     document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleEnd);
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleEnd);
     };
   }, [isDraggingLeft, feedRightOffset]);
 
-  // Handle right edge drag (move entire panel)
+  // Handle right edge drag (move entire panel) - Mouse + Touch
   useEffect(() => {
     if (!isDraggingRight) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const newRightOffset = window.innerWidth - e.clientX;
+    const handleMove = (clientX: number) => {
+      const newRightOffset = window.innerWidth - clientX;
       setFeedRightOffset(Math.max(0, Math.min(400, newRightOffset)));
     };
 
-    const handleMouseUp = () => {
-      setIsDraggingRight(false);
+    const handleMouseMove = (e: MouseEvent) => handleMove(e.clientX);
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      handleMove(e.touches[0].clientX);
     };
 
+    const handleEnd = () => setIsDraggingRight(false);
+
     document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleEnd);
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleEnd);
     };
   }, [isDraggingRight]);
 
@@ -204,11 +220,12 @@ export default function DashboardLayout() {
       {/* Left Resize Handle (adjust width) */}
       <div
         className={cn(
-          "fixed top-16 h-[calc(100vh-64px)] w-1 bg-border hover:bg-primary/50 cursor-col-resize z-50 transition-colors",
+          "fixed top-16 h-[calc(100vh-64px)] w-2 sm:w-1 bg-border hover:bg-primary/50 active:bg-primary cursor-col-resize z-50 transition-colors touch-none",
           isDraggingLeft && "bg-primary"
         )}
         style={{ right: `${feedWidth + feedRightOffset}px` }}
         onMouseDown={() => setIsDraggingLeft(true)}
+        onTouchStart={() => setIsDraggingLeft(true)}
         role="separator"
         aria-orientation="vertical"
         aria-label="Resize social feed width"
@@ -239,11 +256,12 @@ export default function DashboardLayout() {
       {/* Right Resize Handle (move panel) */}
       <div
         className={cn(
-          "fixed top-16 h-[calc(100vh-64px)] w-1 bg-border hover:bg-primary/50 cursor-col-resize z-50 transition-colors",
+          "fixed top-16 h-[calc(100vh-64px)] w-2 sm:w-1 bg-border hover:bg-primary/50 active:bg-primary cursor-col-resize z-50 transition-colors touch-none",
           isDraggingRight && "bg-primary"
         )}
         style={{ right: `${feedRightOffset}px` }}
         onMouseDown={() => setIsDraggingRight(true)}
+        onTouchStart={() => setIsDraggingRight(true)}
         role="separator"
         aria-orientation="vertical"
         aria-label="Move social feed position"
