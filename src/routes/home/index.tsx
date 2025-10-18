@@ -15,14 +15,14 @@ export default function HomePage() {
         </div>
 
         {/* Tablet & Desktop */}
-        <div className="hidden md:grid h-[calc(100vh-112px)] gap-6 px-6
+        <div className="hidden md:grid h-[calc(100vh-112px)] gap-6 px-6 mx-auto max-w-[1600px]
           md:grid-cols-[1fr_2fr] xl:grid-cols-[2fr_1fr]">
           {/* Apps (left) */}
           <div className="min-w-0">
             <AppsPane />
           </div>
-          {/* Reels (right) - white background extends to edge */}
-          <div className="min-w-[360px] max-w-[560px] justify-self-end w-full bg-white -mr-6 pr-6">
+          {/* Reels (right) - white background */}
+          <div className="min-w-[360px] max-w-[560px] justify-self-end w-full bg-white">
             <SocialFeedPane />
           </div>
         </div>
