@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { useFeatureFlags, FeatureFlag } from '@/hooks/useFeatureFlags';
+import { useFeatureFlag, type Flag } from '@/lib/flags/useFlags';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';

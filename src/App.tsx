@@ -89,6 +89,7 @@ const TestsAdmin = lazy(() => import('./routes/admin/tests'));
 const AuditAdmin = lazy(() => import('./routes/admin/audit'));
 const NotificationsSettings = lazy(() => import('./routes/settings/notifications'));
 const NotificationsPage = lazy(() => import('./routes/notifications'));
+const StubBacklog = lazy(() => import('./routes/admin/stub-backlog'));
 
 const queryClient = new QueryClient();
 const FEEDBACK_ENABLED = (import.meta.env.VITE_FEEDBACK_WIDGET ?? 'on') === 'on';
@@ -177,6 +178,7 @@ function AppContent() {
           <Route path="/admin/a11y" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><A11yAdmin /></Suspense></RequireAuth>} />
           <Route path="/admin/audit" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><AuditAdmin /></Suspense></RequireAuth>} />
           <Route path="/admin/tests" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><TestsAdmin /></Suspense></RequireAuth>} />
+          <Route path="/admin/stubs" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><StubBacklog /></Suspense></RequireAuth>} />
           <Route path="/notifications" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><NotificationsPage /></Suspense></RequireAuth>} />
           <Route path="/settings/notifications" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><NotificationsSettings /></Suspense></RequireAuth>} />
           <Route path="/discover" element={<Suspense fallback={<div>Loading...</div>}><Discover /></Suspense>} />

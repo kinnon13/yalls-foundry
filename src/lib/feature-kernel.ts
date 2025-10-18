@@ -138,15 +138,29 @@ export const GOLD_PATH_FEATURES = [
   'ai_context_compiler', 'ai_memory', 'ai_nba_ranker', 'ai_modal', 'ai_explainability'
 ];
 
+// Load auto-generated stubs
+let stubFeatures: Feature[] = [];
+try {
+  const backfillResponse = await fetch('/catalog/autogen.backfill.json');
+  if (backfillResponse.ok) {
+    const backfillData = await backfillResponse.json();
+    stubFeatures = backfillData.features || [];
+    console.log(`[FeatureKernel] Loaded ${stubFeatures.length} auto-stubs`);
+  }
+} catch (err) {
+  // Stubs not generated yet - that's ok
+  console.log('[FeatureKernel] No stub backfill found');
+}
+
 /**
  * Feature Kernel - Central API
  */
 export const kernel = {
-  features,
+  features: [...features, ...stubFeatures],
   sources: featureSources,
   
   getFeature(id: string): Feature | null {
-    return features.find(f => f.id === id) ?? null;
+    return [...features, ...stubFeatures].find(f => f.id === id) ?? null;
   },
   
   getStatus(id: string): FeatureStatus | null {
@@ -154,17 +168,20 @@ export const kernel = {
   },
   
   getByStatus(status: FeatureStatus): Feature[] {
-    return features.filter(f => f.status === status);
+    return [...features, ...stubFeatures].filter(f => f.status === status);
   },
   
   getByArea(area: string): Feature[] {
-    return features.filter(f => f.area === area);
+    return [...features, ...stubFeatures].filter(f => f.area === area);
   },
   
   isAccessible(id: string, env = import.meta.env.MODE): boolean {
     const feature = this.getFeature(id);
     
     if (!feature) return env !== 'production';
+    
+    // Stubs never accessible
+    if (feature.status === 'stub') return false;
     
     if (env === 'production' && feature.status === 'shell') {
       if (typeof window !== 'undefined' && window.Sentry) {
@@ -185,7 +202,7 @@ export const kernel = {
     
     for (const id of GOLD_PATH_FEATURES) {
       const feature = this.getFeature(id);
-      if (!feature || feature.status === 'shell') {
+      if (!feature || feature.status === 'shell' || feature.status === 'stub') {
         blocking.push(id);
       }
     }
@@ -194,36 +211,40 @@ export const kernel = {
   },
   
   getStats() {
-    const byStatus: Record<FeatureStatus, number> = {
+    const allFeatures = [...features, ...stubFeatures];
+    const byStatus: Record<FeatureStatus, number> & { stub?: number } = {
       'shell': 0,
       'full-ui': 0,
-      'wired': 0
+      'wired': 0,
+      'stub': 0
     };
     
-    const byArea: Record<string, Record<FeatureStatus, number>> = {};
+    const byArea: Record<string, Record<FeatureStatus | 'stub', number>> = {};
     
-    for (const f of features) {
+    for (const f of allFeatures) {
       byStatus[f.status] = (byStatus[f.status] ?? 0) + 1;
       
       if (!byArea[f.area]) {
-        byArea[f.area] = { shell: 0, 'full-ui': 0, wired: 0 };
+        byArea[f.area] = { shell: 0, 'full-ui': 0, wired: 0, stub: 0 };
       }
       byArea[f.area][f.status] = (byArea[f.area][f.status] ?? 0) + 1;
     }
     
-    const total = features.length;
+    const total = allFeatures.length;
     const complete = (byStatus['full-ui'] || 0) + (byStatus['wired'] || 0);
     const completionPercent = (complete / Math.max(1, total)) * 100;
     
     return {
       total,
+      documented: allFeatures.length,
+      stubBacklog: stubFeatures.length,
       byStatus,
       byArea,
       completionPercent,
       sources: featureSources,
-      withTests: features.filter(f => (f.tests?.e2e?.length ?? 0) > 0 || (f.tests?.unit?.length ?? 0) > 0).length,
-      withDocs: features.filter(f => f.docs && f.docs.length > 0).length,
-      withOwner: features.filter(f => f.owner && f.owner.length > 0).length
+      withTests: allFeatures.filter(f => (f.tests?.e2e?.length ?? 0) > 0 || (f.tests?.unit?.length ?? 0) > 0).length,
+      withDocs: allFeatures.filter(f => f.docs && f.docs.length > 0).length,
+      withOwner: allFeatures.filter(f => f.owner && f.owner.length > 0).length
     };
   }
 } as const;
