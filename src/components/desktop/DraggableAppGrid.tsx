@@ -118,8 +118,10 @@ export function DraggableAppGrid() {
     const mouseX = startX + (event.delta?.x ?? 0);
     const mouseY = startY + (event.delta?.y ?? 0);
     
-    // Calculate which grid cell the drop happened in
-    const cellWidth = rect.width / 8; // 8 columns
+    // Calculate which grid cell the drop happened in (dynamic columns)
+    const gridEl = container.querySelector('.grid') as HTMLElement | null;
+    const cols = gridEl ? getComputedStyle(gridEl).gridTemplateColumns.split(' ').length : 8;
+    const cellWidth = rect.width / cols;
     const cellHeight = 100; // approximate cell height
     const gridX = Math.floor((mouseX - rect.left) / cellWidth);
     const gridY = Math.floor((mouseY - rect.top) / cellHeight);
@@ -220,6 +222,24 @@ export function DraggableAppGrid() {
     );
   }
 
+  // Draggable pinned app overlay tile
+  function DraggablePinnedApp({ app }: { app: AppTile }) {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: app.id });
+    const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...listeners}
+        {...attributes}
+        onClick={() => !isDragging && handleAppClick(app)}
+        className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-3xl"
+      >
+        {renderApp(app, isDragging || activeId === app.id)}
+      </div>
+    );
+  }
+
   return (
     <>
       <DndContext 
@@ -235,6 +255,24 @@ export function DraggableAppGrid() {
               {Object.values(APPS).map((app, idx) => (
                 <DraggableApp key={app.id} app={app} index={idx + 1} />
               ))}
+            </div>
+
+            {/* Pinned overlay layer (absolute), aligns to 8-column grid, scrollable top-to-bottom */}
+            <div className="absolute inset-0 pointer-events-none">
+              {pins.map((pin) => {
+                const app = APPS[pin.app_id];
+                if (!app) return null;
+                const leftPercent = (pin.grid_x / 8) * 100;
+                return (
+                  <div
+                    key={pin.id}
+                    className="absolute pointer-events-auto flex justify-center"
+                    style={{ left: `${leftPercent}%`, width: 'calc(100% / 8)', top: `${pin.grid_y * 100}px` }}
+                  >
+                    <DraggablePinnedApp app={app} />
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
