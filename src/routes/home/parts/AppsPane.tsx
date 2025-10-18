@@ -59,6 +59,10 @@ export default function AppsPane() {
   const [containerHeight, setContainerHeight] = useState(() => 
     Number(localStorage.getItem('apps.containerHeight') || 400)
   );
+  const [containerWidth, setContainerWidth] = useState(() => 
+    Number(localStorage.getItem('apps.containerWidth') || 600)
+  );
+  const [currentPage, setCurrentPage] = useState(0);
 
   useEffect(() => {
     localStorage.setItem('apps.tileSize', String(tile));
@@ -67,6 +71,10 @@ export default function AppsPane() {
   useEffect(() => {
     localStorage.setItem('apps.containerHeight', String(containerHeight));
   }, [containerHeight]);
+
+  useEffect(() => {
+    localStorage.setItem('apps.containerWidth', String(containerWidth));
+  }, [containerWidth]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
@@ -115,6 +123,26 @@ export default function AppsPane() {
     
     return apps;
   }, [hasNoManagedEntities, filteredManagementApps]);
+
+  // Calculate items per page
+  const itemsPerPage = useMemo(() => {
+    const cols = Math.floor(containerWidth / (tile + 12)); // 12px gap
+    const rows = Math.floor(containerHeight / (tile + 12));
+    return Math.max(1, cols * rows);
+  }, [containerWidth, containerHeight, tile]);
+
+  // All items (apps + pinned entities)
+  const allItems = useMemo(() => [...visibleApps], [visibleApps]);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(allItems.length / itemsPerPage);
+
+  // Get current page items
+  const currentPageItems = useMemo(() => {
+    const start = currentPage * itemsPerPage;
+    const end = start + itemsPerPage;
+    return allItems.slice(start, end);
+  }, [allItems, currentPage, itemsPerPage]);
 
   // Fetch user's profile ID first
   const { data: userProfile } = useQuery({
@@ -168,23 +196,68 @@ export default function AppsPane() {
         <FavoritesBar size={72} gap={12} />
       </section>
 
+      {/* Apps Controls */}
+      <section className="shrink-0 bg-muted/30 px-3 py-2 border-b border-border/50 space-y-2">
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground whitespace-nowrap min-w-[80px]">Box Width</span>
+          <input
+            type="range"
+            min={400}
+            max={1200}
+            step={50}
+            value={containerWidth}
+            onChange={(e) => setContainerWidth(parseInt(e.target.value))}
+            className="flex-1"
+          />
+          <span className="text-xs text-muted-foreground w-16">{containerWidth}px</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground whitespace-nowrap min-w-[80px]">Box Height</span>
+          <input
+            type="range"
+            min={200}
+            max={800}
+            step={50}
+            value={containerHeight}
+            onChange={(e) => setContainerHeight(parseInt(e.target.value))}
+            className="flex-1"
+          />
+          <span className="text-xs text-muted-foreground w-16">{containerHeight}px</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground whitespace-nowrap min-w-[80px]">Tile Size</span>
+          <input
+            type="range"
+            min={84}
+            max={160}
+            step={4}
+            value={tile}
+            onChange={(e) => setTile(parseInt(e.target.value))}
+            className="flex-1"
+          />
+          <span className="text-xs text-muted-foreground w-16">{tile}px</span>
+        </div>
+      </section>
+
       {/* Apps Grid - Separate Box */}
-      <div className="flex-1 overflow-hidden bg-background p-4">
+      <div className="flex-1 overflow-hidden bg-background p-4 flex flex-col items-center justify-center">
         <div 
-          className="h-full overflow-x-auto overflow-y-hidden border-2 border-border rounded-lg bg-muted/20"
-          style={{ resize: 'vertical', minHeight: '200px' }}
+          className="border-2 border-border rounded-lg bg-muted/20 p-3 relative"
+          style={{ 
+            width: `${containerWidth}px`,
+            height: `${containerHeight}px`,
+          }}
         >
           <div 
-            className="grid gap-3 w-fit p-3 h-full"
+            className="grid gap-3 w-fit h-fit"
             style={{
-              gridTemplateRows: `repeat(auto-fill, ${tile}px)`,
-              gridAutoFlow: 'column',
-              gridAutoColumns: `${tile}px`,
+              gridTemplateColumns: `repeat(${Math.floor(containerWidth / (tile + 12))}, ${tile}px)`,
+              gridTemplateRows: `repeat(${Math.floor(containerHeight / (tile + 12))}, ${tile}px)`,
             }}
           >
 
         {/* Installed apps - now filtered by capabilities */}
-        {visibleApps.map((app) => {
+        {currentPageItems.map((app) => {
           const Icon = app.icon;
           return (
             <button
@@ -219,6 +292,29 @@ export default function AppsPane() {
             </button>
           );
         })}
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-background/80 backdrop-blur px-3 py-1 rounded-full border border-border">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+              disabled={currentPage === 0}
+              className="text-xs px-2 py-1 rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ←
+            </button>
+            <span className="text-xs text-muted-foreground">
+              {currentPage + 1} / {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={currentPage >= totalPages - 1}
+              className="text-xs px-2 py-1 rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              →
+            </button>
+          </div>
+        </div>
 
         {/* Pinned entities */}
         {pinnedEntities.map((entity) => (
@@ -242,8 +338,6 @@ export default function AppsPane() {
             </span>
           </button>
         ))}
-          </div>
-        </div>
       </div>
     </div>
   );
