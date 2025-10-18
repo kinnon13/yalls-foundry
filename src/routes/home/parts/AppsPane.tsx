@@ -142,20 +142,27 @@ export default function AppsPane() {
     return apps;
   }, [hasNoManagedEntities, filteredManagementApps]);
 
-  // Calculate items per page
-  const itemsPerPage = useMemo(() => {
-    const cols = Math.floor(containerWidth / (tile + 12)); // 12px gap
-    const rows = Math.floor(containerHeight / (tile + 12));
-    return Math.max(1, cols * rows);
+  // Grid dimensions derived from resizable box (subtract padding+border: p-3=12px each side, border-2=2px each side => 28px total)
+  const gridDims = useMemo(() => {
+    const innerW = Math.max(0, containerWidth - 28);
+    const innerH = Math.max(0, containerHeight - 28);
+    const cols = Math.max(1, Math.floor(innerW / (tile + 12))); // 12px gap
+    const rows = Math.max(1, Math.floor(innerH / (tile + 12)));
+    return { cols, rows };
   }, [containerWidth, containerHeight, tile]);
 
-  // All items (apps + pinned entities)
+  // Items per page = cols * rows in the current box
+  const itemsPerPage = useMemo(() => {
+    return gridDims.cols * gridDims.rows;
+  }, [gridDims]);
+
+  // All items (apps only)
   const allItems = useMemo(() => [...visibleApps], [visibleApps]);
 
   // Calculate total pages
   const totalPages = Math.ceil(allItems.length / itemsPerPage);
 
-  // Get current page items
+  // Current page slice
   const currentPageItems = useMemo(() => {
     const start = currentPage * itemsPerPage;
     const end = start + itemsPerPage;
@@ -186,19 +193,20 @@ export default function AppsPane() {
 
         <div 
           ref={boxRef}
-          className="border-2 border-border rounded-lg bg-muted/20 p-3 relative resize overflow-auto"
+          className="border-2 border-border rounded-lg bg-muted/20 p-3 relative resize overflow-hidden"
           style={{ 
             width: `${containerWidth}px`,
             height: `${containerHeight}px`,
           }}
         >
-          <div 
-            className="grid gap-3 w-fit h-fit"
-            style={{
-              gridTemplateColumns: `repeat(${Math.floor(containerWidth / (tile + 12))}, ${tile}px)`,
-              gridTemplateRows: `repeat(${Math.floor(containerHeight / (tile + 12))}, ${tile}px)`,
-            }}
-          >
+          <div className="w-full h-full grid place-content-center">
+            <div 
+              className="grid gap-3"
+              style={{
+                gridTemplateColumns: `repeat(${gridDims.cols}, ${tile}px)`,
+                gridTemplateRows: `repeat(${gridDims.rows}, ${tile}px)`,
+              }}
+            >
 
         {/* Installed apps - now filtered by capabilities */}
         {currentPageItems.map((app) => {
@@ -235,6 +243,7 @@ export default function AppsPane() {
             </button>
           );
         })}
+          </div>
           </div>
 
           {/* Pagination Controls */}
