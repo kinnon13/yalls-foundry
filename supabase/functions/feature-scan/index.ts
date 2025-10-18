@@ -6,6 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+function json(payload: unknown, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, 'content-type': 'application/json' },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -13,10 +20,7 @@ Deno.serve(async (req) => {
 
   try {
     if (req.method !== 'POST') {
-      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-        status: 405,
-        headers: { ...corsHeaders, 'content-type': 'application/json' },
-      });
+      return json({ error: 'Method not allowed' }, 405);
     }
 
     const auth = req.headers.get('Authorization') ?? '';
@@ -29,15 +33,10 @@ Deno.serve(async (req) => {
     });
 
     const { data: { user }, error: userErr } = await userClient.auth.getUser();
-
     if (userErr) throw userErr;
-    if (!user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'content-type': 'application/json' },
-      });
-    }
+    if (!user) return json({ error: 'Unauthorized' }, 401);
 
+    // Check if user is admin
     let isAdmin = false;
     try {
       const { data, error } = await userClient.rpc('is_admin', { _user_id: user.id });
@@ -48,72 +47,26 @@ Deno.serve(async (req) => {
       isAdmin = roles.includes('admin');
     }
 
-    if (!isAdmin) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'content-type': 'application/json' },
-      });
-    }
+    if (!isAdmin) return json({ error: 'Forbidden' }, 403);
 
     const admin = createClient(url, service);
-
     const body = await req.json().catch(() => ({}));
-    const rpcs = Array.isArray(body.rpcs) ? body.rpcs : [];
-    const tables = Array.isArray(body.tables) ? body.tables : [];
-    const routes = Array.isArray(body.routes) ? body.routes : [];
-    const rls_read_tables = Array.isArray(body.rls_read_tables) ? body.rls_read_tables : [];
-    const introspectAll = body.introspectAll === true;
 
     console.log('Scanning features:', { 
-      rpcs: rpcs.length, 
-      tables: tables.length, 
-      routes: routes.length,
-      rls_read_tables: rls_read_tables.length,
-      introspectAll 
+      rpcs: body.rpcs?.length ?? 0, 
+      tables: body.tables?.length ?? 0, 
+      routes: body.routes?.length ?? 0,
+      rls_read_tables: body.rls_read_tables?.length ?? 0,
+      introspectAll: body.introspectAll 
     });
 
-    // If introspectAll, discover ALL tables and RPCs in the database
-    let allRpcs = rpcs;
-    let allTables = tables;
+    // Call the comprehensive feature_introspect RPC
+    const { data, error } = await admin.rpc('feature_introspect', {
+      p_rpcs: body.rpcs ?? null,
+      p_tables: body.tables ?? null,
+      p_introspect_all: body.introspectAll === true,
+    });
 
-    if (introspectAll) {
-      console.log('Introspecting ALL database objects...');
-      
-      // Query ALL public functions from pg_proc
-      try {
-        const { data: pgFunctions } = await admin
-          .from('pg_proc' as any)
-          .select('proname')
-          .limit(1000);
-        
-        if (pgFunctions) {
-          const discoveredRpcs = pgFunctions.map((f: any) => f.proname).filter(Boolean);
-          allRpcs = [...new Set([...rpcs, ...discoveredRpcs])];
-          console.log(`Discovered ${discoveredRpcs.length} total RPCs (${allRpcs.length} unique)`);
-        }
-      } catch (e) {
-        console.warn('Failed to query pg_proc:', e);
-      }
-
-      // Query ALL public tables from information_schema
-      try {
-        const { data: pgTables } = await admin
-          .from('information_schema.tables' as any)
-          .select('table_name')
-          .eq('table_schema', 'public')
-          .limit(1000);
-        
-        if (pgTables) {
-          const discoveredTables = pgTables.map((t: any) => t.table_name).filter(Boolean);
-          allTables = [...new Set([...tables, ...discoveredTables])];
-          console.log(`Discovered ${discoveredTables.length} total tables (${allTables.length} unique)`);
-        }
-      } catch (e) {
-        console.warn('Failed to query information_schema:', e);
-      }
-    }
-
-    const { data, error } = await admin.rpc('feature_introspect', { rpcs: allRpcs, tables: allTables });
     if (error) {
       console.error('feature_introspect error:', error);
       throw error;
@@ -121,6 +74,8 @@ Deno.serve(async (req) => {
 
     // User RLS probe - test if user can actually read from these tables
     const userProbe: Record<string, boolean> = {};
+    const rls_read_tables = Array.isArray(body.rls_read_tables) ? body.rls_read_tables : [];
+    
     console.log('Running RLS user probes for', rls_read_tables.length, 'tables');
     for (const tbl of rls_read_tables) {
       try {
@@ -139,14 +94,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ ok: true, routes, userProbe, ...data }), {
-      headers: { ...corsHeaders, 'content-type': 'application/json' },
+    return json({ 
+      ok: true, 
+      routes: body.routes ?? [], 
+      userProbe,
+      ...data 
     });
   } catch (e) {
     console.error('feature-scan error:', e);
-    return new Response(JSON.stringify({ ok: false, error: String(e) }), {
-      status: 500,
-      headers: { ...corsHeaders, 'content-type': 'application/json' },
-    });
+    return json({ ok: false, error: String(e) }, 500);
   }
 });

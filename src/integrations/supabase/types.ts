@@ -8023,7 +8023,11 @@ export type Database = {
         }[]
       }
       feature_introspect: {
-        Args: { rpcs: string[]; tables: string[] }
+        Args: {
+          p_introspect_all?: boolean
+          p_rpcs?: string[]
+          p_tables?: string[]
+        }
         Returns: Json
       }
       feature_probe: {
