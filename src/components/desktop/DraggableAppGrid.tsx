@@ -104,6 +104,8 @@ export function DraggableAppGrid() {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
 
+  const normalizeId = (id: string) => id.startsWith('palette-') ? id.slice(8) : id;
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active } = event;
     setActiveId(null);
@@ -126,22 +128,26 @@ export function DraggableAppGrid() {
     const gridX = Math.floor((mouseX - rect.left) / cellWidth);
     const gridY = Math.floor((mouseY - rect.top) / cellHeight);
 
+    // Determine the actual app id (palette grid uses a prefix)
+    const rawId = active.id as string;
+    const appId = rawId.startsWith('palette-') ? rawId.slice(8) : rawId;
+
     // Find if this app is already pinned
-    const existingPin = pins.find(p => p.app_id === active.id);
+    const existingPin = pins.find(p => p.app_id === appId);
     
     if (existingPin) {
       // Update existing pin position
       updatePosition.mutate({
         pinId: existingPin.id,
         x: Math.max(0, Math.min(7, gridX)),
-        y: Math.max(0, gridY), // No max limit on Y
+        y: Math.max(0, gridY),
       });
     } else {
       // Create new pin at this position
       pinApp.mutate({
-        appId: active.id as string,
+        appId,
         x: Math.max(0, Math.min(7, gridX)),
-        y: Math.max(0, gridY), // No max limit on Y
+        y: Math.max(0, gridY),
       });
     }
   };
@@ -199,7 +205,7 @@ export function DraggableAppGrid() {
   // Draggable app tile wrapper
   function DraggableApp({ app, index }: { app: AppTile; index: number }) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-      id: app.id,
+      id: `palette-${app.id}`,
     });
 
     const style = transform
@@ -245,7 +251,7 @@ export function DraggableAppGrid() {
       <DndContext 
         sensors={sensors}
         collisionDetection={closestCenter}
-        onDragStart={({ active }) => setActiveId(active.id as string)}
+        onDragStart={({ active }) => setActiveId(normalizeId(active.id as string))}
         onDragEnd={handleDragEnd}
       >
         <div className="relative z-20 w-full min-h-[600vh] overflow-auto">
