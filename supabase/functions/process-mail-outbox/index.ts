@@ -102,30 +102,20 @@ Deno.serve(async (req) => {
           digestItems: record.payload.digest?.length || 0
         });
 
-        // Mark as sent
-        const { error: updateError } = await supabaseClient
-          .from('mail_outbox')
-          .update({ sent_at: new Date().toISOString() })
-          .eq('id', record.id);
+        // Mark as sent using RPC
+        const { error: rpcError } = await supabaseClient.rpc('notification_digest_mark_sent', {
+          p_outbox_id: record.id
+        });
 
-        if (updateError) {
-          console.error(`[MailOutbox] Update error for ${record.id}:`, updateError);
-          throw updateError;
+        if (rpcError) {
+          console.error(`[MailOutbox] RPC error for ${record.id}:`, rpcError);
+          throw rpcError;
         }
 
         results.processed++;
         results.succeeded++;
       } catch (error) {
         console.error(`[MailOutbox] Error processing ${record.id}:`, error);
-        
-        // Mark error
-        await supabaseClient
-          .from('mail_outbox')
-          .update({ 
-            error: error instanceof Error ? error.message : String(error)
-          })
-          .eq('id', record.id);
-
         results.processed++;
         results.failed++;
         results.errors.push(`${record.id}: ${error instanceof Error ? error.message : String(error)}`);

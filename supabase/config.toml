@@ -7,6 +7,13 @@ verify_jwt = false
 [functions.auto-sync-entities.cron]
 schedule = "0 * * * *"  # Every hour at minute 0
 
+# Process mail outbox - runs every 5 minutes
+[functions.process-mail-outbox]
+verify_jwt = false
+
+[functions.process-mail-outbox.cron]
+schedule = "*/5 * * * *"  # Every 5 minutes
+
 [functions.create-checkout-session]
 verify_jwt = true
 
