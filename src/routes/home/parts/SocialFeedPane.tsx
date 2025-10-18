@@ -12,6 +12,7 @@ const items = new Array(20).fill(0).map((_, i) => ({
 
 export default function SocialFeedPane() {
   const paneRef = useRef<HTMLDivElement | null>(null);
+  const headerRef = useRef<HTMLDivElement | null>(null);
   const [reelSize, setReelSize] = useState({ w: 360, h: 640 }); // 9:16 default
   const [tab, setTab] = useState<'following'|'for-you'|'shop'>('following');
 
@@ -23,7 +24,9 @@ export default function SocialFeedPane() {
     const resize = () => {
       const paneW = el.clientWidth;
       const paneH = el.clientHeight;
-      const wFromH = Math.floor((paneH * 9) / 16);
+      const headerH = headerRef.current?.offsetHeight ?? 0;
+      const availH = Math.max(0, paneH - headerH - 8); // subtract sticky header + a small gap
+      const wFromH = Math.floor((availH * 9) / 16);
       const w = Math.min(paneW, wFromH);
       const h = Math.floor((w * 16) / 9);
       setReelSize({ w, h });
@@ -31,14 +34,20 @@ export default function SocialFeedPane() {
 
     const ro = new ResizeObserver(resize);
     ro.observe(el);
+    // Also observe header height changes
+    let roHeader: ResizeObserver | null = null;
+    if (headerRef.current) {
+      roHeader = new ResizeObserver(resize);
+      roHeader.observe(headerRef.current);
+    }
     resize();
-    return () => ro.disconnect();
+    return () => { ro.disconnect(); roHeader?.disconnect(); };
   }, []);
 
   return (
     <div ref={paneRef} className="h-full w-full overflow-y-auto overscroll-contain">
       {/* Profile bubble + totals + tabs */}
-      <div className="sticky top-0 z-10 bg-background/85 backdrop-blur px-3 py-2 border-b border-border/40">
+      <div ref={headerRef} className="sticky top-0 z-10 bg-background/85 backdrop-blur px-3 py-2 border-b border-border/40">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="size-9 rounded-full bg-muted ring-1 ring-border" />
@@ -69,7 +78,7 @@ export default function SocialFeedPane() {
         {items.map(card => (
           <article
             key={card.id}
-            className="relative overflow-hidden shadow-lg rounded-lg"
+            className="relative overflow-hidden shadow-lg"
             style={{ width: reelSize.w, height: reelSize.h }}
           >
             {/* Media fills fully */}
