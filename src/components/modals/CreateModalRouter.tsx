@@ -39,13 +39,13 @@ export function CreateModalRouter() {
   };
 
   const handleSaved = (draftId: string) => {
-    console.log('Draft saved:', draftId);
+    // Draft saved - refetch handled by react-query
+    handleClose();
   };
 
   const handlePublished = (entityId: string) => {
-    console.log('Published:', entityId);
+    // Published - refetch handled by react-query
     handleClose();
-    // Refresh will be handled by parent components via React Query
   };
 
   const isOpen = modal?.startsWith('create_');

@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
  */
 export function PreviewMessageListener() {
   usePreviewMessage(async (event: PreviewEvent) => {
-    console.log('[PreviewMessage] Validated event:', event);
+    // Validated preview event
 
     // Audit to server (fail silently - don't block UI)
     try {

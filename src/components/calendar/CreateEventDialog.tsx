@@ -158,7 +158,7 @@ export default function CreateEventDialog({
       if (attendeeEmails.trim()) {
         const emails = attendeeEmails.split(',').map(e => e.trim()).filter(e => e);
         // TODO: Look up profile_id by email and insert into calendar_event_attendees
-        console.log('Attendees to invite:', emails);
+        // Attendees to invite
       }
 
       toast({ title: 'Event created', description: 'Your event was added to the calendar.' });

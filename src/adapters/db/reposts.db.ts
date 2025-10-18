@@ -10,23 +10,23 @@ export const repostsDb: RepostsPort = {
   async create(source_post_id: string, caption?: string, targets?: string[]) {
     // If targets provided, use entity repost
     if (targets && targets.length > 0) {
-      const { data, error } = await (supabase as any).rpc('post_repost_entity', {
+      const { data, error } = await supabase.rpc('post_repost_entity' as any, {
         p_source_post_id: source_post_id,
-        p_target_entity_id: targets[0], // Use first target
+        p_target_entity_id: targets[0],
         p_caption: caption ?? null,
       });
       if (error) throw error;
-      return { new_post_id: data.id };
+      return { new_post_id: (data as any)?.id || source_post_id };
     }
 
     // Standard repost (or quote if caption)
-    const rpcName = caption ? 'post_quote' : 'post_repost';
-    const { data, error } = await (supabase as any).rpc(rpcName, {
+    const rpcName = (caption ? 'post_quote' : 'post_repost') as any;
+    const { data, error } = await supabase.rpc(rpcName, {
       p_source_post_id: source_post_id,
       p_caption: caption ?? null,
     });
     if (error) throw error;
-    return { new_post_id: data.id };
+    return { new_post_id: (data as any)?.id || source_post_id };
   },
 
   async list(userId: string): Promise<Repost[]> {

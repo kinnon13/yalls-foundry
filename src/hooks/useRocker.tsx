@@ -44,7 +44,7 @@ async function ensureComposer(userId?: string) {
 
 // Helper to execute DOM actions from backend
 async function executeDOMAction(action: any): Promise<{ success?: boolean; message?: string } | void> {
-  console.log('[Rocker] Executing DOM action:', action);
+  // Executing DOM action
   
   // Get userId from session
   const { data: { session } } = await supabase.auth.getSession();
@@ -96,7 +96,7 @@ async function executeDOMAction(action: any): Promise<{ success?: boolean; messa
     }
     
     case 'dom_get_page_info': {
-      console.log('[Rocker] Getting page info...');
+      // Getting page info
       return { success: true };
     }
     
@@ -132,7 +132,7 @@ async function executeDOMAction(action: any): Promise<{ success?: boolean; messa
       else if (elementType === 'links') elements = links;
       else elements = [...buttons, ...fields, ...links];
       
-      console.log('[Rocker] Page elements:', elements);
+      // Page elements collected
       
       // Store this info in localStorage so backend can access it
       try {
@@ -190,7 +190,7 @@ export function useRocker(mode: 'user' | 'admin' | 'super_admin' = 'user') {
     if (failureContext) {
       try {
         const context = JSON.parse(failureContext);
-        console.log('[Rocker] Including failure context:', context);
+        // Including failure context
         enhancedContent = `${content}\n\n[Failure Context: Action "${context.action}" failed because: ${context.reason}. Route: ${context.route}. Entity: ${JSON.stringify(context.entityData)}]`;
         // Keep context for follow-up messages in this conversation
       } catch (e) {

@@ -45,5 +45,6 @@ export async function resolveTenantId(userId?: string): Promise<string> {
 
 /**
  * Get global tenant_id (for platform-wide resources)
+ * @deprecated Import from src/config/tenant.ts instead
  */
 export const GLOBAL_TENANT_ID = '00000000-0000-0000-0000-000000000000';

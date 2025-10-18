@@ -16,7 +16,7 @@ export function useRockerActions() {
 
   useEffect(() => {
     const unsubscribe = rockerBus.onAction((action) => {
-      console.log('[RockerActions] Received action:', action);
+      // Action received
 
       // Handle different action types
       switch (action.type) {
@@ -40,7 +40,7 @@ export function useRockerActions() {
 
         case 'update.memory':
           // Silent - memory updated in background
-          console.log('[Rocker] Memory updated:', action.payload);
+          // Memory updated
           break;
 
         case 'analyze.media':

@@ -37,7 +37,7 @@ export function useComposerAwareness() {
     const onTyping = (e: Event) => {
       const { type, source, length } = (e as CustomEvent).detail as RockerTypingEvent;
       
-      console.log('[Composer Awareness] Typing event:', type, source, length);
+      // Typing event tracked
 
       if (type === 'start' || type === 'update') {
         setComposerState({ isTyping: true, lastSource: source, lastLength: length });
@@ -55,27 +55,27 @@ export function useComposerAwareness() {
     const onSuggest = async (e: Event) => {
       const { source, text } = (e as CustomEvent).detail as RockerSuggestEvent;
       
-      console.log('[Composer Awareness] Suggestion requested:', source, text?.length);
+      // Suggestion requested
 
       // Check if feature is enabled globally (admin flag)
       const { isEnabled } = await import('@/lib/flags');
       const featureEnabled = isEnabled('rocker_always_on');
       if (!featureEnabled) {
-        console.log('[Composer Awareness] Composer coach disabled globally');
+        // Composer coach disabled globally
         return;
       }
 
       // Check if user has enabled suggestions via localStorage (no DB needed)
       const suggestionsEnabled = localStorage.getItem('rocker-suggestions-enabled') === 'true';
       if (!suggestionsEnabled) {
-        console.log('[Composer Awareness] Suggestions disabled by user preference');
+        // Suggestions disabled by user preference
         return;
       }
 
       // Rate limit: min 10s between suggestions
       const now = Date.now();
       if (now - lastSuggestTime < 10000) {
-        console.log('[Composer Awareness] Rate limited, skipping suggestion');
+        // Rate limited, skipping suggestion
         return;
       }
       setLastSuggestTime(now);
@@ -83,7 +83,7 @@ export function useComposerAwareness() {
       // Skip very short posts (< 5 words)
       const wordCount = text.trim().split(/\s+/).length;
       if (wordCount < 5) {
-        console.log('[Composer Awareness] Text too short, skipping suggestion');
+        // Text too short, skipping suggestion
         return;
       }
 
@@ -112,14 +112,14 @@ export function useComposerAwareness() {
             detail: { suggestion: data.suggestion, source }
           }));
 
-          console.log('[Composer Awareness] Suggestion generated:', data.suggestion);
+          // Suggestion generated
         }
       } catch (err: any) {
         console.error('[Composer Awareness] Suggestion error:', err);
         
         // Don't toast for every error, just log it
         if (err.message?.includes('disabled')) {
-          console.log('[Composer Awareness] Coaching disabled');
+          // Coaching disabled
         }
       } finally {
         setIsLoadingSuggestion(false);
@@ -158,7 +158,7 @@ export function useComposerAwareness() {
         }
       });
 
-      console.log('[Composer Awareness] Logged suggestion feedback:', accepted ? 'accepted' : 'dismissed');
+      // Logged suggestion feedback
     } catch (err) {
       console.error('[Composer Awareness] Failed to log feedback:', err);
     }

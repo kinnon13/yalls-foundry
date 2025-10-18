@@ -23,7 +23,7 @@ export async function storeMemory(
   ttl?: string
 ): Promise<void> {
   // TODO: Store in ai_user_memory table with embedding
-  console.log('Storing memory:', { userId, type, content, ttl });
+  // Storing memory
 }
 
 export async function recallMemories(
@@ -32,11 +32,11 @@ export async function recallMemories(
   limit = 5
 ): Promise<Memory[]> {
   // TODO: RAG-based retrieval using embeddings
-  console.log('Recalling memories:', { userId, query, limit });
+  // Recalling memories
   return [];
 }
 
 export async function updateMemoryScore(memoryId: string, delta: number): Promise<void> {
   // TODO: Update memory score for decay/reinforcement
-  console.log('Updating memory score:', { memoryId, delta });
+  // Updating memory score
 }
