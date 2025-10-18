@@ -42,27 +42,23 @@ export function TikTokFeed() {
       const from = page * pageSize;
       const to = from + pageSize - 1;
 
+      // Query posts directly (not through post_targets)
       const { data, error } = await supabase
-        .from('post_targets')
+        .from('posts')
         .select(`
           id,
-          posts (
-            id,
-            body,
-            media,
-            created_at,
-            author_user_id,
-            profiles (display_name, avatar_url),
-            entities (display_name, handle)
-          )
+          body,
+          media,
+          created_at,
+          author_user_id,
+          profiles (display_name, avatar_url),
+          entities (display_name, handle)
         `)
-        .eq('approved', true)
-        .not('posts.id', 'is', null)
         .order('created_at', { ascending: false })
         .range(from, to);
 
       if (error) throw error;
-      return (data || []).map((t: any) => t.posts).filter(Boolean);
+      return data || [];
     }
   });
 
@@ -116,10 +112,24 @@ export function TikTokFeed() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentIndex, posts, snapToCard]);
 
-  if (isLoading || !posts) {
+  if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      <div className="h-screen flex items-center justify-center bg-black">
+        <div className="animate-pulse text-white">Loading feed...</div>
+      </div>
+    );
+  }
+
+  if (!posts || posts.length === 0) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary/20 to-background p-6 text-center">
+        <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+          <Heart className="w-10 h-10 text-primary" />
+        </div>
+        <h2 className="text-2xl font-bold mb-2">No posts yet</h2>
+        <p className="text-muted-foreground max-w-sm">
+          Be the first to share something! Start creating content and it will appear here.
+        </p>
       </div>
     );
   }
