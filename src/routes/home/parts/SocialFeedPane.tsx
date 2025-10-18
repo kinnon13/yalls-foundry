@@ -1,141 +1,148 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { cn } from '@/lib/utils';
+import { useSearchParams } from 'react-router-dom';
+import { useSession } from '@/lib/auth/context';
 import { supabase } from '@/integrations/supabase/client';
 
-const TABS = ['following', 'for-you', 'shop'] as const;
+const TABS = ['following', 'for-you', 'shop', 'profile'] as const;
 type Tab = typeof TABS[number];
 
 export default function SocialFeedPane() {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>('following');
+  const { session } = useSession();
+  const [sp, setSp] = useSearchParams();
+  const initialTab = (sp.get('feed') as Tab) || 'following';
+  const [tab, setTab] = useState<Tab>(initialTab);
+  const [entityId, setEntityId] = useState<string | null>(sp.get('entity') || null);
+
+  // swipe left/right to switch tabs
   const railRef = useRef<HTMLDivElement>(null);
-  const down = useRef<{x:number;y:number}|null>(null);
-
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
-  }, []);
-
-  // Swipe left/right to change tab (feed stays in place)
-  useEffect(() => {
-    const el = railRef.current;
-    if (!el) return;
-
-    const onDown = (e: PointerEvent) => (down.current = { x: e.clientX, y: e.clientY });
+    const el = railRef.current; if (!el) return;
+    let down: {x:number;y:number}|null = null;
+    const onDown = (e: PointerEvent) => (down = { x: e.clientX, y: e.clientY });
     const onUp = (e: PointerEvent) => {
-      if (!down.current) return;
-      const dx = e.clientX - down.current.x;
-      const dy = e.clientY - down.current.y;
-      down.current = null;
+      if (!down) return;
+      const dx = e.clientX - down.x, dy = e.clientY - down.y;
+      down = null;
       if (Math.abs(dx) > Math.abs(dy) * 1.3 && Math.abs(dx) > 60) {
-        const idx = TABS.indexOf(tab);
-        if (dx < 0 && idx < TABS.length - 1) setTab(TABS[idx + 1]);
-        if (dx > 0 && idx > 0) setTab(TABS[idx - 1]);
+        const i = TABS.indexOf(tab);
+        if (dx < 0 && i < TABS.length - 1) setTab(TABS[i + 1]);
+        if (dx > 0 && i > 0) setTab(TABS[i - 1]);
       }
     };
-
     el.addEventListener('pointerdown', onDown, { passive: true });
     window.addEventListener('pointerup', onUp, { passive: true });
-    return () => {
-      el.removeEventListener('pointerdown', onDown);
-      window.removeEventListener('pointerup', onUp);
-    };
+    return () => { el.removeEventListener('pointerdown', onDown); window.removeEventListener('pointerup', onUp); };
   }, [tab]);
 
-  // Header with profile bubble + totals
+  // persist state in URL (?feed=…&entity=…)
+  useEffect(() => {
+    const next = new URLSearchParams(sp);
+    next.set('feed', tab);
+    if (entityId) next.set('entity', entityId); else next.delete('entity');
+    setSp(next, { replace: true });
+  }, [tab, entityId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // totals above feed (combine across connected accounts later)
   const totals = useMemo(() => ({ following: 0, followers: 0, likes: 0, views: 0 }), []);
 
   return (
-    <div ref={railRef} className="relative h-full">
-      {/* Profile summary */}
-      <div className="flex items-center justify-between mb-3">
+    <div className="relative" ref={railRef}>
+      {/* profile + totals header */}
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-muted" aria-hidden />
+          <div className="h-9 w-9 rounded-full bg-muted" />
           <div className="text-sm">
-            <div className="font-medium">{userId ? 'You' : 'Guest'}</div>
+            <div className="font-medium">{tab === 'profile' ? 'Your profile' : session ? 'You' : 'Guest'}</div>
             <div className="text-xs text-muted-foreground">
               {totals.following} Following · {totals.followers} Followers · {totals.likes} Likes
             </div>
           </div>
         </div>
+        {/* Tabs (clickable + swipeable) */}
+        <div className="flex gap-2">
+          {TABS.map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`h-8 px-3 rounded-full text-xs border font-medium transition-colors ${t===tab ? 'bg-primary text-primary-foreground border-primary' : 'border-border/60 hover:bg-accent/40'}`}
+            >
+              {t==='for-you' ? 'For You' : t[0].toUpperCase()+t.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Tabs: Following / For You / Shop */}
-      <div className="flex gap-2 mb-3">
-        {TABS.map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              'h-8 px-3 rounded-full border text-xs font-medium transition-colors',
-              tab===t ? 'bg-primary text-primary-foreground border-primary' : 'border-border/60 hover:bg-accent/40'
-            )}
-          >
-            {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {/* 2-up feed cards */}
-      <div className="grid gap-3">
-        <TwoUpFeed feedType={tab} />
-      </div>
+      <Reels feed={tab} entityId={entityId} onEntityChange={setEntityId} />
     </div>
   );
 }
 
-function TwoUpFeed({ feedType }: { feedType: 'following'|'for-you'|'shop' }) {
-  // Placeholder items - replace with real query
-  const items = new Array(16).fill(0).map((_,i)=>({
-    id:`${feedType}-${i}`, 
-    img:`https://picsum.photos/seed/${feedType}-${i}/800/1200`,
+/** One post per screen, snap scrolling, overlay actions */
+function Reels({
+  feed, entityId, onEntityChange
+}: { feed: 'following'|'for-you'|'shop'|'profile'; entityId: string|null; onEntityChange?: (id:string)=>void }) {
+  // TODO: wire real queries; placeholder images prove sizing/UX
+  const items = new Array(20).fill(0).map((_,i)=>({
+    id: `${feed}-${i}`,
+    img: `https://picsum.photos/seed/${feed}-${i}/900/1600`,
+    caption: `${feed} • post #${i+1}`,
     likes: Math.floor(Math.random() * 1000),
     comments: Math.floor(Math.random() * 100),
   }));
 
   return (
-    <div className="grid gap-3">
-      {chunk(items, 2).map((row, rowIdx) => (
-        <div key={`row-${rowIdx}`} className="grid grid-cols-2 gap-3">
-          {row.map(card => (
-            <article key={card.id} className="rounded-lg border border-border/60 overflow-hidden bg-card hover:border-primary/40 transition-colors">
-              <div className="relative w-full aspect-[9/16] md:aspect-[3/4]">
-                <img
-                  src={card.img}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover"
-                  draggable={false}
-                  loading="lazy"
-                />
-              </div>
-              {/* Action buttons */}
-              <div className="flex items-center justify-between px-3 py-2 bg-background/80 backdrop-blur">
-                <div className="flex gap-3 text-xs">
-                  <button aria-label="Like" className="hover:scale-110 transition-transform">
-                    ❤️ <span className="text-muted-foreground">{card.likes}</span>
-                  </button>
-                  <button aria-label="Comment" className="hover:scale-110 transition-transform">
-                    💬 <span className="text-muted-foreground">{card.comments}</span>
-                  </button>
-                  <button aria-label="Save" className="hover:scale-110 transition-transform">
-                    🔖
-                  </button>
-                  <button aria-label="Share" className="hover:scale-110 transition-transform">
-                    ↗︎
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+    <div
+      className="relative h-[calc(100vh-14rem)] overflow-y-auto snap-y snap-mandatory pb-4
+                 [scrollbar-width:thin]"
+      // keyboard up/down
+      onKeyDown={(e) => {
+        const scroller = e.currentTarget;
+        if (e.key === 'ArrowDown') scroller.scrollBy({ top: scroller.clientHeight, behavior: 'smooth' });
+        if (e.key === 'ArrowUp') scroller.scrollBy({ top: -scroller.clientHeight, behavior: 'smooth' });
+      }}
+      tabIndex={0}
+      aria-label="Social feed"
+    >
+      {items.map(card => (
+        <article key={card.id} className="snap-start h-[calc(100vh-14rem)] relative">
+          {/* media fills the panel, no rounded masks */}
+          <img src={card.img} alt="" className="absolute inset-0 w-full h-full object-cover select-none" draggable={false} loading="lazy" />
+
+          {/* gradient for legibility */}
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+
+          {/* right-side action cluster like TikTok */}
+          <div className="absolute right-2 bottom-24 flex flex-col items-center gap-4 text-white">
+            <IconBtn label="Like">
+              ❤️
+              <span className="text-xs mt-1">{card.likes}</span>
+            </IconBtn>
+            <IconBtn label="Comment">
+              💬
+              <span className="text-xs mt-1">{card.comments}</span>
+            </IconBtn>
+            <IconBtn label="Save">🔖</IconBtn>
+            <IconBtn label="Repost">🔁</IconBtn>
+            <IconBtn label="Share">↗︎</IconBtn>
+          </div>
+
+          {/* caption / username */}
+          <div className="absolute left-3 bottom-4 text-white text-sm drop-shadow-lg">
+            <div className="font-semibold">{card.caption}</div>
+          </div>
+        </article>
       ))}
     </div>
   );
 }
 
-function chunk<T>(arr: T[], n: number) {
-  return arr.reduce((rows: T[][], item, i) => {
-    if (i % n === 0) rows.push([]);
-    rows[rows.length - 1].push(item);
-    return rows;
-  }, []);
+function IconBtn({ children, label }: {children: React.ReactNode; label: string}) {
+  return (
+    <button 
+      aria-label={label} 
+      className="grid place-items-center h-10 w-10 rounded-full bg-black/40 backdrop-blur hover:scale-110 active:scale-95 transition-transform"
+    >
+      <div className="text-center text-lg leading-none">{children}</div>
+    </button>
+  );
 }

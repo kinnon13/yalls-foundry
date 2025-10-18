@@ -24,7 +24,7 @@ export function BottomDock() {
     {
       key: 'profile',
       label: 'Profile',
-      to: '/profile',
+      onClick: () => nav('/home?feed=profile&entity=me'),
       icon: UserCircle2,
     },
     {
