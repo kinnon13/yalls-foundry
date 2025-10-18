@@ -159,6 +159,17 @@ function AppContent() {
               </RequireAuth>
             }
           />
+          {/* Workspace route (alias target) */}
+          <Route
+            path="/workspace"
+            element={
+              <RequireAuth>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <DashboardLayout />
+                </Suspense>
+              </RequireAuth>
+            }
+          />
           <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
           <Route path="/admin/features" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FeaturesAdmin /></Suspense></RequireAuth>} />
           <Route path="/admin/routes" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><RoutesAdmin /></Suspense></RequireAuth>} />

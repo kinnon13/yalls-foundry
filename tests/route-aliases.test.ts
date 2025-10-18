@@ -4,7 +4,7 @@ import fs from 'node:fs';
 const areaConfig = JSON.parse(fs.readFileSync('configs/area-discovery.json','utf8'));
 
 const cases: Array<[string,string]> = [
-  ['/organizer', '/workspace'],
+  ['/organizer', '/workspace/:entityId/events'],
   ['/organizer/foo', '/workspace/:entityId/events/foo'],
   ['/incentives/dashboard', '/workspace/:entityId/programs'],
   ['/entrant', '/entries'],
