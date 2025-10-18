@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useState, useEffect, Component, ReactNode } from 'react';
+import { Suspense, lazy, useMemo, useEffect, useState, Component, ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { Wallpaper } from '@/components/appearance/Wallpaper';
@@ -7,12 +7,12 @@ import { useAppearance } from '@/hooks/useAppearance';
 import { supabase } from '@/integrations/supabase/client';
 import { DraggableAppGrid } from '@/components/desktop/DraggableAppGrid';
 import { DebugOverlay } from '@/feature-kernel/DebugOverlay';
+import { FeatureErrorBoundary } from '@/feature-kernel/ErrorBoundary';
 import { coerceModule, type ModuleKey } from '@/lib/dashUrl';
-import { SideFeed } from '@/components/dashboard/SideFeed';
-import { ChatDrawer } from '@/components/dashboard/ChatDrawer';
-import { DashFooter } from '@/components/dashboard/DashFooter';
+import { TikTokFeed } from '@/components/social/TikTokFeed';
+import { BottomNav } from '@/components/layout/BottomNav';
 import { Button } from '@/components/ui/button';
-import { X, MessageSquare } from 'lucide-react';
+import { X, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 class DashboardErrorBoundary extends Component<
@@ -70,23 +70,24 @@ export default function DashboardLayout() {
   const [sp] = useSearchParams();
   const rawModule = sp.get('m');
   const m = coerceModule(rawModule);
-  const [chatOpen, setChatOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [feedWidth] = useState(400);
+  const [feedHeight] = useState(600);
+  const [feedRightOffset] = useState(0);
+  const [feedTopOffset] = useState(64);
   
   const Panel = useMemo(() => panels[m] ?? panels.overview, [m]);
 
-  // Get current user ID
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
 
-  // Load appearance settings for current user
   const appearanceQuery = useAppearance({ 
     type: 'user', 
     id: userId || '00000000-0000-0000-0000-000000000000' 
   });
   
-  const isScreenSaverActive = false; // TODO: Implement screensaver detection
+  const isScreenSaverActive = false;
 
   return (
     <div className="h-dvh flex flex-col bg-background overflow-hidden">
@@ -101,12 +102,20 @@ export default function DashboardLayout() {
       {/* Global header */}
       <GlobalHeader />
 
-      {/* Main content - two column grid */}
-      <div className="flex-1 min-h-0 overflow-hidden">
+      {/* Main content area */}
+      <div className="flex-1 relative min-h-0 overflow-hidden">
         {m ? (
-          /* Module panel view */
           <div className="h-full px-4 py-2 overflow-auto">
             <div className="flex items-center justify-between mb-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2"
+                onClick={() => window.history.back()}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back to Desktop
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -117,8 +126,7 @@ export default function DashboardLayout() {
                   window.location.reload();
                 }}
               >
-                <X className="w-4 h-4 mr-2" />
-                Close Module
+                <X className="w-4 h-4" />
               </Button>
             </div>
             <DashboardErrorBoundary>
@@ -128,49 +136,38 @@ export default function DashboardLayout() {
             </DashboardErrorBoundary>
           </div>
         ) : (
-          /* Desktop view: apps grid + sidecar feed */
-          <div className="h-full grid grid-cols-1 lg:grid-cols-[minmax(640px,1fr)_minmax(420px,520px)] gap-4 px-4 py-4">
-            {/* Left: Apps Grid */}
-            <div className="relative overflow-auto">
-              <DashboardErrorBoundary>
-                <Suspense fallback={<div className="flex items-center justify-center h-full"><PanelSkeleton /></div>}>
-                  <DraggableAppGrid />
-                </Suspense>
-              </DashboardErrorBoundary>
-            </div>
-
-            {/* Right: Sidecar Feed (hidden on mobile/tablet) */}
-            <div className="hidden lg:block">
-              <SideFeed />
-            </div>
-          </div>
+          <DashboardErrorBoundary>
+            <Suspense fallback={<div className="flex items-center justify-center h-full"><PanelSkeleton /></div>}>
+              <DraggableAppGrid />
+            </Suspense>
+          </DashboardErrorBoundary>
         )}
       </div>
 
-      {/* Sticky Footer */}
-      <DashFooter />
+      {/* Social Feed Sidecar - Fixed overlay (dimensions locked) */}
+      <div
+        className="fixed bg-background border-l border-r shadow-xl z-40"
+        style={{ 
+          width: `${feedWidth}px`,
+          height: `${feedHeight}px`,
+          right: `${feedRightOffset}px`,
+          top: `${feedTopOffset}px`
+        }}
+      >
+        {/* Feed Header (locked - no drag) */}
+        <div className="h-12 border-b flex items-center justify-between px-4 bg-background/95 backdrop-blur select-none">
+          <h2 className="font-semibold">Social Feed</h2>
+          <div className="text-xs text-muted-foreground">{feedWidth}×{feedHeight}px (Locked)</div>
+        </div>
 
-      {/* Chat Drawer (overlays) */}
-      <ChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} />
-
-      {/* Floating chat trigger (bottom-right) */}
-      {!chatOpen && !m && (
-        <button
-          onClick={() => setChatOpen(true)}
-          className={cn(
-            "fixed bottom-20 right-6 z-50",
-            "w-14 h-14 rounded-full shadow-lg",
-            "bg-primary text-primary-foreground",
-            "flex items-center justify-center",
-            "hover:scale-110 transition-transform",
-            "lg:right-[540px]" // Position left of feed on desktop
-          )}
-        >
-          <MessageSquare className="w-6 h-6" strokeWidth={2} />
-        </button>
-      )}
+        {/* Feed Content */}
+        <div className="h-[calc(100%-48px)] overflow-hidden">
+          <TikTokFeed />
+        </div>
+      </div>
 
       <DebugOverlay />
+      <BottomNav />
     </div>
   );
 }
