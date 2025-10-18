@@ -30,6 +30,7 @@ import Health from "./pages/Health";
 
 // Lazy load dashboard and AI routes
 import HomePage from './routes/home';
+const MeHub = lazy(() => import('./routes/me'));
 const DashboardLayout = lazy(() => import('./routes/dashboard/index'));
 const DashboardOverview = lazy(() => import('./routes/dashboard/overview'));
 const DashboardBusiness = lazy(() => import('./routes/dashboard/business'));
@@ -154,6 +155,9 @@ function AppContent() {
           {/* Home - New unified layout */}
           <Route path="/" element={<HomePage />} />
           <Route path="/home" element={<HomePage />} />
+          
+          {/* My Profile - Private hub */}
+          <Route path="/me" element={<Suspense fallback={<div>Loading...</div>}><MeHub /></Suspense>} />
           
           {/* Redirect old dashboard to new home */}
           <Route path="/dashboard" element={<Navigate to="/home" replace />} />

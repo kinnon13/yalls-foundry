@@ -25,7 +25,7 @@ interface AppTile {
 // Consumer apps - always visible
 const CONSUMER_APPS: AppTile[] = [
   { id: 'home', label: 'Home', icon: Home, module: 'overview', color: 'from-blue-500/20 to-blue-600/5' },
-  { id: 'profile', label: 'Profile', icon: User, route: '/profile', color: 'from-purple-500/20 to-purple-600/5' },
+  { id: 'me', label: 'My Profile', icon: User, route: '/me', color: 'from-purple-500/20 to-purple-600/5' },
   { id: 'social', label: 'Four', icon: Flame, route: '/social', color: 'from-orange-500/20 to-red-600/5' },
   { id: 'marketplace', label: 'Market', icon: Store, route: '/marketplace', color: 'from-green-500/20 to-emerald-600/5' },
   { id: 'messages', label: 'Messages', icon: MessageSquare, module: 'messages', color: 'from-cyan-500/20 to-blue-600/5' },
