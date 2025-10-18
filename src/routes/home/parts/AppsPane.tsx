@@ -109,16 +109,31 @@ export default function AppsPane() {
     return apps;
   }, [hasNoManagedEntities, filteredManagementApps]);
 
+  // Fetch user's profile ID first
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+      return data;
+    },
+    enabled: !!userId,
+  });
+
   // Fetch pinned entities
   const { data: pinnedEntities = [] } = useQuery({
-    queryKey: ['pinned-entities', userId],
+    queryKey: ['pinned-entities', userProfile?.id],
     queryFn: async () => {
-      if (!userId) return [];
+      if (!userProfile?.id) return [];
       
       const { data } = await supabase
         .from('profile_pins')
         .select('item_id, item_data')
-        .eq('profile_id', userId)
+        .eq('profile_id', userProfile.id)
         .eq('item_type', 'entity');
       
       return (data || []).map(pin => ({
@@ -126,7 +141,7 @@ export default function AppsPane() {
         title: (pin.item_data as any)?.title || 'Untitled'
       }));
     },
-    enabled: !!userId,
+    enabled: !!userProfile?.id,
   });
 
   const handleAppClick = (app: AppTile) => {
