@@ -4,11 +4,12 @@ import { FavoritesBar } from '@/components/social/FavoritesBar';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useEntityCapabilities } from '@/hooks/useEntityCapabilities';
+import { AppIconTile } from '@/components/ui/AppIconTile';
 import { 
   Calendar, Settings, DollarSign, Trophy, ShoppingCart,
   Building, Users, Sparkles, Tractor, CheckCircle,
   MapPin, Flame, BookOpen, 
-  Store, Activity, Zap, Target, Award, LucideIcon, Plus
+  Store, Activity, Zap, Target, Award, LucideIcon, Plus, Circle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -154,63 +155,25 @@ export default function AppsPane() {
         }}
       >
         {/* Installed apps - now filtered by capabilities */}
-        {visibleApps.map((app) => {
-          const Icon = app.icon;
-          return (
-            <button
-              key={app.id}
-              onClick={() => handleAppClick(app)}
-              className={cn(
-                "group flex flex-col items-center gap-2 p-2",
-                "aspect-square rounded-2xl transition-all duration-200",
-                "border border-white/10 bg-white/[0.04]",
-                "shadow-[inset_0_1px_0_0_rgba(255,255,255,.06),0_10px_30px_-12px_rgba(0,0,0,.6)]",
-                "hover:bg-white/[0.08] hover:scale-105 active:scale-95",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-              )}
-              aria-label={app.label}
-              title={app.label}
-            >
-              <div 
-                className={cn(
-                  "flex items-center justify-center flex-1 w-full",
-                  "transition-all duration-200"
-                )}
-              >
-                <Icon 
-                  className="text-white/90 drop-shadow-sm w-[28px] h-[28px]"
-                  strokeWidth={1.5} 
-                />
-              </div>
-              <span className="text-[13px] leading-tight text-center font-medium text-white/80 truncate max-w-full">
-                {app.label}
-              </span>
-            </button>
-          );
-        })}
+        {visibleApps.map((app) => (
+          <AppIconTile
+            key={app.id}
+            icon={app.icon}
+            label={app.label}
+            size={tile}
+            onClick={() => handleAppClick(app)}
+          />
+        ))}
 
         {/* Pinned entities */}
         {pinnedEntities.map((entity) => (
-          <button
+          <AppIconTile
             key={`entity:${entity.id}`}
+            icon={Circle}
+            label={entity.title}
+            size={tile}
             onClick={() => navigate(`/entities/${entity.id}`)}
-            className={cn(
-              "group flex flex-col items-center gap-2 p-2",
-              "aspect-square rounded-2xl transition-all duration-200",
-              "border border-white/10 bg-white/[0.04]",
-              "shadow-[inset_0_1px_0_0_rgba(255,255,255,.06),0_10px_30px_-12px_rgba(0,0,0,.6)]",
-              "hover:bg-white/[0.08] hover:scale-105 active:scale-95",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-            )}
-            title={entity.title}
-          >
-            <div className="flex items-center justify-center flex-1 w-full transition-all duration-200">
-              <div className="w-[28px] h-[28px] rounded-full bg-muted" />
-            </div>
-            <span className="text-[13px] leading-tight text-center font-medium text-white/80 truncate max-w-full">
-              {entity.title}
-            </span>
-          </button>
+          />
         ))}
       </div>
 
