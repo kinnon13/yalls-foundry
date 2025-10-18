@@ -9,7 +9,7 @@
 import featuresManifestRaw from '../../../docs/features/features.json?raw';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { kernel, GOLD_PATH_FEATURES, Feature } from '@/lib/feature-kernel';
-import { isProductRpc, isProductRoute, isProductTable, collapseFamilies, normRoute } from '@/lib/feature-scan-filters';
+import { isProductRpc, isProductRoute, isProductTable, collapseFamilies, collapsePartitions, normRoute } from '@/lib/feature-scan-filters';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -642,13 +642,14 @@ export default function FeaturesAdminPage() {
       
       // Find undocumented items
       const rawUndocRoutes = productRoutes.filter(r => !documentedRoutes.has(r));
-      const undocumentedRpcs = productRpcs.filter((n: string) => !documentedRpcs.has(n));
-      const undocumentedTables = productTables.filter((n: string) => !documentedTables.has(n));
+      const undocumentedRpcs = [...new Set(productRpcs.filter((n: string) => !documentedRpcs.has(n)))].sort();
+      const rawUndocTables = productTables.filter((n: string) => !documentedTables.has(n));
       
-      // Collapse route families for cleaner display
+      // Collapse route families and partition tables for cleaner display
       const undocumentedRoutes = collapseFamilies(rawUndocRoutes);
+      const undocumentedTables = collapsePartitions(rawUndocTables);
 
-      console.log('[Scanner] Undocumented items (product only):', {
+      console.log('[Scanner] Undocumented items (product only, collapsed):', {
         routes: undocumentedRoutes.length,
         rpcs: undocumentedRpcs.length,
         tables: undocumentedTables.length,

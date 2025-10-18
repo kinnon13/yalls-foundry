@@ -3,45 +3,48 @@
  * Separates product surfaces from system noise (PostGIS, extensions, etc.)
  */
 
-export const routeIgnore = [
-  /^\/admin\//,
-  /^\/preview\//,
-  /^\/dev\//,
-  /^\/health$/,
-];
+// Which route heads should be collapsed into `/<head>/*`
+const COLLAPSE_HEADS = new Set([
+  '/events',
+  '/marketplace',
+  '/messages',
+  '/orders',
+  '/farm',
+  '/entrant',
+  '/entities',
+  '/listings',
+  '/profile',
+  '/stallions',
+  '/cart',
+]);
 
-export const rpcIgnore = [
-  /^st_/i,
-  /^postgis_/i,
-  /^geometry/i,
-  /^geography/i,
-  /^pgis_/i,
-  /^gtrgm/i,
-  /^vector/i,
-  /^sparsevec/i,
-  /^halfvec/i,
-  /^word_similarity/i,
-  /^(sum|min|max|avg|text|box|point|polygon|bytea|citext)\b/i, // built-ins & types
-  /^citext/i,
-  /^regexp_/i,
-  /^textic/i,
-  /^strpos/i,
-  /^replace/i,
-  /^split_part/i,
-  /^translate/i,
+export const routeIgnore = [
+  /^\/preview($|\/)/,
+  /^\/health$/,
+  /^\/admin\/(components|a11y|tests|routes)$/,
 ];
 
 export const rpcAllow = [
-  /^(ai_|admin_|cart_|order_|entity_|entry_|event_|crm_|calendar_|notif|feed_|feature_|get_|has_|is_|rocker_|search_|save_item|unsave_item|slugify|payout|price_test|dm_send|record_view|reorder_pins|reposts_list|rpc_|check_|log_|post_|favorite|connection_|entitlement_|draw_|reservation_|claim_|can_|decrement_|contributor_|cleanup_)/,
+  /^(feed_|post_|entry_|draw_|cart_|order_|reservation_|payout_|search_|entity_|profile_|crm_|calendar_|notif|notification_|rocker_|feature_|price_|ai_|match_|get_|set_|update_|admin_|handle_|claim_|linked_|repost|favorite|marketplace_|farm_|incentive_|dm_|save_|unsave_|record_|decrement_|log_|check_|contributor_|cleanup_|slugify)/i,
+];
+
+export const rpcIgnore = [
+  /^_/i,
+  /^st_/i,
+  /^_st_/i,
+  /^postgis_/i,
+  /^pgis_/i,
+  /^(geometry|geography|gtrgm|gin_trgm|vector|halfvec|sparsevec|ivfflat|hnsw)/i,
+  /^(sum|avg|max|min|count|json|jsonb|text|box|point|polygon|regexp_|split_part|strpos|equals|citext|textic|replace|translate)$/i,
 ];
 
 export const tableIgnore = [
-  /^spatial_ref_sys$/,
-  /^geography_columns$/,
-  /^geometry_columns$/,
-  /^raster_/,
-  /^pg_/,
-  /^_/,
+  /^spatial_ref_sys$/i,
+  /^pg_/i,
+  /^information_schema\./i,
+  /^geography_columns$/i,
+  /^geometry_columns$/i,
+  /^raster_/i,
 ];
 
 /**
@@ -58,37 +61,40 @@ export function normRoute(p: string): string {
 
 /**
  * Collapse route families - group related routes
- * /events/123 and /events/456/details → /events/*
+ * Uses controlled list of heads that should be collapsed
  */
 export function collapseFamilies(paths: string[]): string[] {
   const families = new Map<string, Set<string>>();
-  
+  const norm = (p: string) => ('/' + p).replace(/\/+/g, '/');
+
   for (const raw of paths) {
-    const p = normRoute(raw);
+    const p = norm(raw);
     const parts = p.split('/').filter(Boolean);
     const head = '/' + (parts[0] ?? '');
-    
+
     if (!families.has(head)) {
       families.set(head, new Set());
     }
-    
-    // If more than 2 segments, it's part of a family
-    if (parts.length > 2) {
+
+    // Collapse everything under selected heads (except bare head)
+    if (COLLAPSE_HEADS.has(head) && parts.length >= 2) {
       families.get(head)!.add(`${head}/*`);
     } else {
       families.get(head)!.add(p || '/');
     }
   }
-  
-  // Flatten and dedupe
-  const result = new Set<string>();
-  for (const routes of families.values()) {
-    for (const route of routes) {
-      result.add(route);
-    }
-  }
-  
-  return [...result].sort();
+
+  // Flatten + stable sort
+  return [...new Set([...families.values()].flatMap(s => [...s]))].sort();
+}
+
+/**
+ * Collapse monthly/partition tables into a single label
+ * e.g. "crm_events_2025_10_v2" -> "crm_events_*"
+ */
+export function collapsePartitions(names: string[]): string[] {
+  const base = (n: string) => n.replace(/_\d{4}_\d{2}(?:_v\d+)?$/i, '_*');
+  return [...new Set(names.map(base))].sort();
 }
 
 /**
