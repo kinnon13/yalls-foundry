@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useEffect, useState } from 'react';
+import { Suspense, lazy, useMemo, useEffect, useState, Component, ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { Wallpaper } from '@/components/appearance/Wallpaper';
@@ -9,6 +9,32 @@ import { DraggableAppGrid } from '@/components/desktop/DraggableAppGrid';
 import { DebugOverlay } from '@/feature-kernel/DebugOverlay';
 import { FeatureErrorBoundary } from '@/feature-kernel/ErrorBoundary';
 import { coerceModule, type ModuleKey } from '@/lib/dashUrl';
+
+class DashboardErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-6 border rounded-md bg-amber-50 dark:bg-amber-950 text-amber-900 dark:text-amber-100">
+          <h3 className="font-semibold mb-2">Dashboard Component Error</h3>
+          <p className="text-sm">{this.state.error?.message || 'Something went wrong'}</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const panels = {
   overview: lazy(() => import('./overview')),
@@ -103,14 +129,20 @@ export default function DashboardLayout() {
       <div className="relative z-20 h-[calc(100vh-64px)] overflow-auto">
         {m ? (
           <div className="container mx-auto p-6">
-            <FeatureErrorBoundary featureId={`dashboard.${m}`}>
-              <Suspense fallback={<PanelSkeleton />}>
-                <Panel />
-              </Suspense>
-            </FeatureErrorBoundary>
+            <DashboardErrorBoundary>
+              <FeatureErrorBoundary featureId={`dashboard.${m}`}>
+                <Suspense fallback={<PanelSkeleton />}>
+                  <Panel />
+                </Suspense>
+              </FeatureErrorBoundary>
+            </DashboardErrorBoundary>
           </div>
         ) : (
-          <DraggableAppGrid />
+          <DashboardErrorBoundary>
+            <Suspense fallback={<div className="flex items-center justify-center h-full"><PanelSkeleton /></div>}>
+              <DraggableAppGrid />
+            </Suspense>
+          </DashboardErrorBoundary>
         )}
       </div>
 
