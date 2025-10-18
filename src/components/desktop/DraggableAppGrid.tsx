@@ -2,7 +2,7 @@
  * Draggable App Grid - iOS/Mac style with free positioning
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   DndContext, 
@@ -93,6 +93,11 @@ export function DraggableAppGrid() {
     Number(localStorage.getItem('apps.tileSize') || 112)
   );
   
+  // Apps grid measuring
+  const appsGridRef = useRef<HTMLDivElement>(null);
+  const [gridCols, setGridCols] = useState(8);
+  const [rowGap, setRowGap] = useState(16);
+  
   // Grid container position and size
   const [gridPosition, setGridPosition] = useState({ x: 20, y: 80 });
   const [gridSize, setGridSize] = useState({ 
@@ -104,6 +109,7 @@ export function DraggableAppGrid() {
   const [dragStartGrid, setDragStartGrid] = useState({ x: 0, y: 0 });
   
   const { pins, folders, updatePosition, pinApp, createFolder } = useAppPins(userId);
+  const [optimisticPins, setOptimisticPins] = useState<typeof pins>([]);
 
   useEffect(() => {
     localStorage.setItem('apps.tileSize', String(tileSize));
@@ -196,7 +202,7 @@ export function DraggableAppGrid() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // 8px movement required before drag starts
+        distance: 2, // start dragging after 2px movement for snappier UX
       },
     })
   );
@@ -205,49 +211,66 @@ export function DraggableAppGrid() {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
 
+  // Observe grid size to compute columns and gap
+  useEffect(() => {
+    const el = appsGridRef.current;
+    if (!el) return;
+
+    const compute = () => {
+      const style = getComputedStyle(el);
+      const gap = parseInt(style.rowGap || '16', 10) || 16;
+      setRowGap(gap);
+      const cols = Math.max(1, Math.floor(el.clientWidth / (tileSize + gap)));
+      setGridCols(cols);
+    };
+
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [tileSize, appsGridRef]);
+
   const normalizeId = (id: string) => id.startsWith('palette-') ? id.slice(8) : id;
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active } = event;
     setActiveId(null);
 
-    // Get the container's bounding rect to calculate grid position
-    const container = document.querySelector('.pin-canvas');
+    const container = document.querySelector('.pin-canvas') as HTMLElement | null;
     if (!container) return;
-    
+
     const rect = container.getBoundingClientRect();
+    const scroller = container.parentElement as HTMLElement | null;
+    const scrollTop = scroller ? scroller.scrollTop : 0;
+
     const startX = (event as any).activatorEvent?.clientX ?? rect.left;
     const startY = (event as any).activatorEvent?.clientY ?? rect.top;
     const mouseX = startX + (event.delta?.x ?? 0);
-    const mouseY = startY + (event.delta?.y ?? 0);
-    
-    // Calculate which grid cell the drop happened in (dynamic columns)
-    const gridEl = container.querySelector('.grid') as HTMLElement | null;
-    const cols = gridEl ? getComputedStyle(gridEl).gridTemplateColumns.split(' ').length : 8;
+    const mouseY = startY + (event.delta?.y ?? 0) + scrollTop;
+
+    const cols = Math.max(1, gridCols);
     const cellWidth = rect.width / cols;
-    const cellHeight = 100; // approximate cell height
+    const cellHeight = tileSize + rowGap;
+
     const gridX = Math.floor((mouseX - rect.left) / cellWidth);
     const gridY = Math.floor((mouseY - rect.top) / cellHeight);
 
-    // Determine the actual app id (palette grid uses a prefix)
     const rawId = active.id as string;
     const appId = rawId.startsWith('palette-') ? rawId.slice(8) : rawId;
 
-    // Find if this app is already pinned
     const existingPin = pins.find(p => p.app_id === appId);
-    
+    const maxX = Math.max(0, cols - 1);
+
     if (existingPin) {
-      // Update existing pin position
       updatePosition.mutate({
         pinId: existingPin.id,
-        x: Math.max(0, Math.min(7, gridX)),
+        x: Math.max(0, Math.min(maxX, gridX)),
         y: Math.max(0, gridY),
       });
     } else {
-      // Create new pin at this position
       pinApp.mutate({
         appId,
-        x: Math.max(0, Math.min(7, gridX)),
+        x: Math.max(0, Math.min(maxX, gridX)),
         y: Math.max(0, gridY),
       });
     }
@@ -389,7 +412,7 @@ export function DraggableAppGrid() {
               className="pin-canvas relative max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16"
               style={{ '--tile': `${tileSize}px` } as React.CSSProperties}
             >
-              <div className="apps-grid">
+              <div className="apps-grid" ref={appsGridRef}>
                 {Object.values(APPS).map((app, idx) => (
                   <DraggableApp key={app.id} app={app} index={idx + 1} />
                 ))}
