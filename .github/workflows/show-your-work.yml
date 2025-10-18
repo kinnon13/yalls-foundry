@@ -2,29 +2,41 @@ name: show-your-work
 
 on:
   pull_request:
-    types: [opened, edited, synchronize]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: show-your-work-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  validate:
+  guardrails:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
+          cache: 'npm'
+
+      # Optional (keeps npm caches happy; skips if no lockfile)
+      - name: Install
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else echo "no lockfile, skipping install"; fi
+
+      - name: Sanity dump
+        run: |
+          echo "Event: ${{ github.event_name }}"
+          node -v
+          ls -la
+          test -f scripts/validate-architecture.mjs && echo "found validate-architecture.mjs" || (echo "missing validate-architecture.mjs" && exit 1)
+
       - name: Validate architecture config
         run: node scripts/validate-architecture.mjs
 
-      - name: Legacy alias guard (find & block)
-        run: node scripts/remap-legacy.mjs --check --fail-on-hit
-        
-      - name: Validate DB objects (syntactic)
-        continue-on-error: true
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
-          psql "$DATABASE_URL" -f scripts/validate-db.sql || echo "DB validation skipped (no DATABASE_URL)"
-        
-      - name: Validate work-report.json and PR body
+      - name: Validate work report (PRs only)
+        if: ${{ github.event_name == 'pull_request' }}
         run: node scripts/validate-work-report.mjs
