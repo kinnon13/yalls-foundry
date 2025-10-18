@@ -10,14 +10,14 @@ export default function HomePage() {
   return (
     <>
       <GlobalHeader />
-      <main className="pt-14 pb-16">
+      <main className="pt-14 pb-16 h-screen overflow-hidden">
         {/* Phone: horizontal pager (Apps | Feed | Shop | Profile) */}
-        <div className="md:hidden">
+        <div className="md:hidden h-[calc(100vh-56px-64px)] overflow-y-auto">
           <PhonePager />
         </div>
 
         {/* Tablet & Desktop */}
-        <div className="hidden md:block h-[calc(100vh-56px)] px-6 mx-auto max-w-[1600px]">
+        <div className="hidden md:block h-[calc(100vh-56px-64px)] px-6 mx-auto max-w-[1600px]">
           <ResizablePanelGroup direction="horizontal" className="h-full">
             {/* Apps (left) - resizable */}
             <ResizablePanel defaultSize={35} minSize={20} maxSize={60}>
