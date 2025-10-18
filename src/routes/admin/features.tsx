@@ -828,13 +828,29 @@ export default function FeaturesAdminPage() {
       return { alreadyClaimed: [], partiallyClaimed: [], trulyNew: [] };
     }
 
-    // Collect all documented routes from features (including sub-features)
+    // Collect all documented routes from features (including deeply nested sub-features)
     const documentedRoutes: string[] = [];
     
-    // Build a map of all features by ID for lookup
+    // Build a complete feature map by recursively walking the tree
     const featureMap = new Map<string, Feature>();
-    features.forEach(f => featureMap.set(f.id, f));
+    const indexFeature = (f: Feature) => {
+      featureMap.set(f.id, f);
+      // If subFeatures exist as full objects (not just IDs), index them too
+      if (f.subFeatures) {
+        f.subFeatures.forEach((subId: string) => {
+          // Try to find the sub-feature in the features array
+          const subFeature = features.find(feat => feat.id === subId);
+          if (subFeature && !featureMap.has(subId)) {
+            indexFeature(subFeature);
+          }
+        });
+      }
+    };
     
+    // Index all features
+    features.forEach(indexFeature);
+    
+    // Walk the tree to collect all routes (handles subs of subs)
     const walkFeature = (f: Feature) => {
       documentedRoutes.push(...f.routes);
       if (f.subFeatures) {
@@ -855,6 +871,8 @@ export default function FeaturesAdminPage() {
       alreadyClaimed: classification.alreadyClaimed.length,
       partiallyClaimed: classification.partiallyClaimed.length,
       trulyNew: classification.trulyNew.length,
+      totalDocumented: documentedRoutes.length,
+      featureMapSize: featureMap.size,
     });
     return classification;
   }, [(window as any).__undocumented?.routes, features]);
