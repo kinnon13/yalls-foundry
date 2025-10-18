@@ -53,8 +53,9 @@ type FeatureStatus = 'shell' | 'full-ui' | 'wired';
 interface ScanChecks {
   routeReachable: boolean;
   componentsExist: boolean;
-  rpcs: { name: string; exists: boolean }[];
+  rpcs: { name: string; exists: boolean; security_definer?: boolean; arg_count?: number }[];
   tables: { name: string; exists: boolean; rls: boolean }[];
+  rlsProbes?: { table: string; userCanRead: boolean }[];
 }
 
 interface ScannedFeature extends Feature {
@@ -350,15 +351,25 @@ export default function FeaturesAdminPage() {
       // Step 2: Discover all components for verification
       const allComponentFiles = import.meta.glob('/src/**/*.{tsx,ts}', { eager: false });
 
-      // Step 3: Collect items from features.json
+      // Step 3: Collect items from features.json (including sub-features)
       const documentedRpcs = new Set<string>();
       const documentedTables = new Set<string>();
       const documentedRoutes = new Set<string>();
+      const rlsReadTables = new Set<string>();
 
-      for (const f of manifest.features) {
+      const walkFeature = (f: any) => {
         (f.rpc || []).forEach((r: string) => documentedRpcs.add(r));
         (f.tables || []).forEach((t: string) => documentedTables.add(t));
         (f.routes || []).forEach((r: string) => documentedRoutes.add(r));
+        (f.rls_read_tables || []).forEach((t: string) => rlsReadTables.add(t));
+        // Recurse into sub-features
+        if (f.subFeatures) {
+          f.subFeatures.forEach(walkFeature);
+        }
+      };
+
+      for (const f of manifest.features) {
+        walkFeature(f);
       }
 
       // Step 4: Send everything to edge function with introspectAll flag
@@ -366,6 +377,7 @@ export default function FeaturesAdminPage() {
         rpcs: [...documentedRpcs],
         tables: [...documentedTables],
         routes: [...new Set([...discoveredRoutes, ...documentedRoutes])],
+        rls_read_tables: [...rlsReadTables],
         introspectAll: true, // Tell edge function to discover ALL tables/RPCs in DB
       };
 
@@ -374,6 +386,7 @@ export default function FeaturesAdminPage() {
         documentedTables: documentedTables.size,
         totalRoutes: inputs.routes.length,
         discoveredRoutes: discoveredRoutes.length,
+        rlsReadTables: rlsReadTables.size,
         componentFiles: Object.keys(allComponentFiles).length,
         introspectAll: true
       });
@@ -390,56 +403,98 @@ export default function FeaturesAdminPage() {
 
       console.log('[Scanner] Edge function response:', data);
 
-      const rpcMap = new Map<string, boolean>();
-      for (const r of (data?.rpcs ?? [])) rpcMap.set(r.name, !!r.exists);
+      const rpcMap = new Map<string, { exists: boolean; security_definer?: boolean }>();
+      for (const r of (data?.rpcs ?? [])) {
+        rpcMap.set(r.name, { 
+          exists: !!r.exists,
+          security_definer: r.security_definer
+        });
+      }
       
       const tableMap = new Map<string, {exists: boolean; rls: boolean}>();
       for (const t of (data?.tables ?? [])) {
         tableMap.set(t.name, { exists: !!t.exists, rls: !!t.rls });
       }
 
+      const userProbeMap = new Map<string, boolean>();
+      for (const [tbl, ok] of Object.entries(data?.userProbe ?? {})) {
+        userProbeMap.set(tbl, !!ok);
+      }
+
       console.log('[Scanner] Probing routes...');
       const routeReach = await probeRoutes(inputs.routes);
       console.log('[Scanner] Route probe results:', routeReach);
 
-      // Use allComponentFiles from earlier for verification
-      const normalizeComponentPath = (p: string) => '/' + p.replace(/^\/+/, '');
-      
-      const checkComponentsExist = (f: any) => {
+      // Use dynamic imports to really test component loading
+      const canImportComponent = async (path: string): Promise<boolean> => {
+        try {
+          await import(/* @vite-ignore */ `/${path}`);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
+      const checkComponentsDeep = async (f: any): Promise<boolean> => {
         if (!Array.isArray(f.components) || f.components.length === 0) return false;
-        return f.components.every((path: string) => {
-          const normalized = normalizeComponentPath(path);
-          return !!allComponentFiles[normalized];
-        });
+        const results = await Promise.all(
+          f.components.map((path: string) => canImportComponent(path))
+        );
+        return results.every(Boolean);
       };
 
       const scanned = new Map<string, ScannedFeature>();
       
-      for (const f of manifest.features as any[]) {
+      // Process each feature and its sub-features recursively
+      const processFeature = async (f: any, parentId?: string) => {
+        const featureId = parentId ? `${parentId}.${f.id}` : f.id;
         const hasRoute = (f.routes || []).some((r: string) => routeReach[r]);
-        const componentsExist = checkComponentsExist(f);
-        const rpcs = (f.rpc || []).map((name: string) => ({ 
-          name, 
-          exists: !!rpcMap.get(name) 
-        }));
+        const componentsExist = await checkComponentsDeep(f);
+        
+        const rpcs = (f.rpc || []).map((name: string) => {
+          const rpcInfo = rpcMap.get(name) ?? { exists: false };
+          return { 
+            name, 
+            exists: rpcInfo.exists,
+            security_definer: rpcInfo.security_definer
+          };
+        });
         const rpcAll = rpcs.length ? rpcs.every(x => x.exists) : true;
+        
         const tables = (f.tables || []).map((name: string) => {
           const t = tableMap.get(name) ?? { exists: false, rls: false };
           return { name, ...t };
         });
 
+        const rlsProbes = (f.rls_read_tables || []).map((name: string) => ({
+          table: name,
+          userCanRead: userProbeMap.get(name) ?? false
+        }));
+
         const computed = computeStatus(hasRoute, componentsExist, rpcAll);
         
-        scanned.set(f.id, {
+        scanned.set(featureId, {
           ...f,
           computed,
           checks: {
             routeReachable: hasRoute,
             componentsExist,
             rpcs,
-            tables
+            tables,
+            rlsProbes
           }
         } as ScannedFeature);
+
+        // Recurse into sub-features
+        if (f.subFeatures) {
+          for (const sub of f.subFeatures) {
+            await processFeature(sub, featureId);
+          }
+        }
+      };
+
+      for (const f of manifest.features as any[]) {
+        await processFeature(f);
       }
 
       console.log('[Scanner] Scan complete. Features scanned:', scanned.size);

@@ -61,9 +61,16 @@ Deno.serve(async (req) => {
     const rpcs = Array.isArray(body.rpcs) ? body.rpcs : [];
     const tables = Array.isArray(body.tables) ? body.tables : [];
     const routes = Array.isArray(body.routes) ? body.routes : [];
+    const rls_read_tables = Array.isArray(body.rls_read_tables) ? body.rls_read_tables : [];
     const introspectAll = body.introspectAll === true;
 
-    console.log('Scanning features:', { rpcs: rpcs.length, tables: tables.length, routes: routes.length, introspectAll });
+    console.log('Scanning features:', { 
+      rpcs: rpcs.length, 
+      tables: tables.length, 
+      routes: routes.length,
+      rls_read_tables: rls_read_tables.length,
+      introspectAll 
+    });
 
     // If introspectAll, discover ALL tables and RPCs in the database
     let allRpcs = rpcs;
@@ -112,7 +119,27 @@ Deno.serve(async (req) => {
       throw error;
     }
 
-    return new Response(JSON.stringify({ ok: true, routes, ...data }), {
+    // User RLS probe - test if user can actually read from these tables
+    const userProbe: Record<string, boolean> = {};
+    console.log('Running RLS user probes for', rls_read_tables.length, 'tables');
+    for (const tbl of rls_read_tables) {
+      try {
+        const tableName = tbl.replace(/^public\./, '');
+        const { error: rlsError } = await userClient
+          .from(tableName)
+          .select('id')
+          .limit(1);
+        userProbe[tbl] = !rlsError;
+        if (rlsError) {
+          console.log(`RLS probe failed for ${tbl}:`, rlsError.message);
+        }
+      } catch (e) {
+        console.warn(`RLS probe error for ${tbl}:`, e);
+        userProbe[tbl] = false;
+      }
+    }
+
+    return new Response(JSON.stringify({ ok: true, routes, userProbe, ...data }), {
       headers: { ...corsHeaders, 'content-type': 'application/json' },
     });
   } catch (e) {
