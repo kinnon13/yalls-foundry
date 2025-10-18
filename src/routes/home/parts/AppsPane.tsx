@@ -64,10 +64,8 @@ export default function AppsPane() {
   );
   const [currentPage, setCurrentPage] = useState(0);
   
-  // Middle layer state
-  const [middleHeight, setMiddleHeight] = useState(() => 
-    Number(localStorage.getItem('middle.height') || 80)
-  );
+  // App overlay state
+  const [openApp, setOpenApp] = useState<AppTile | null>(null);
 
   useEffect(() => {
     localStorage.setItem('apps.tileSize', String(tile));
@@ -80,10 +78,6 @@ export default function AppsPane() {
   useEffect(() => {
     localStorage.setItem('apps.containerWidth', String(containerWidth));
   }, [containerWidth]);
-  
-  useEffect(() => {
-    localStorage.setItem('middle.height', String(middleHeight));
-  }, [middleHeight]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
@@ -180,11 +174,7 @@ export default function AppsPane() {
 
 
   const handleAppClick = (app: AppTile) => {
-    if (app.route) {
-      navigate(app.route);
-    } else if (app.module) {
-      navigate(`/dashboard?m=${app.module}`);
-    }
+    setOpenApp(app);
   };
 
   // Resizer handlers
@@ -247,43 +237,6 @@ export default function AppsPane() {
     window.addEventListener('mouseup', onUp);
   };
 
-  // Middle layer resize handlers
-  const startMiddleTopResize = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const startY = e.clientY;
-    const startH = middleHeight;
-    const onMove = (ev: MouseEvent) => {
-      const h = Math.max(40, startH - (ev.clientY - startY));
-      setMiddleHeight(h);
-      localStorage.setItem('middle.height', String(h));
-    };
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  };
-
-  const startMiddleBottomResize = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const startY = e.clientY;
-    const startH = middleHeight;
-    const onMove = (ev: MouseEvent) => {
-      const h = Math.max(40, startH + (ev.clientY - startY));
-      setMiddleHeight(h);
-      localStorage.setItem('middle.height', String(h));
-    };
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  };
-
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Favorites Section */}
@@ -291,17 +244,6 @@ export default function AppsPane() {
         <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
         <FavoritesBar size={72} gap={12} />
       </section>
-
-      {/* Middle Layer - Resizable */}
-      <div className="flex-1 overflow-auto bg-background px-4">
-        <section className="relative bg-muted/30 rounded-lg border-2 border-border my-4 mx-auto max-w-4xl" style={{ height: `${middleHeight}px` }}>
-          <div onMouseDown={startMiddleTopResize} className="absolute top-0 left-1/2 -translate-x-1/2 h-1.5 w-16 bg-foreground/30 cursor-ns-resize rounded-b hover:bg-foreground/50" />
-          <div className="h-full flex items-center justify-center">
-            <h3 className="text-base font-semibold text-foreground">Middle Layer</h3>
-          </div>
-          <div onMouseDown={startMiddleBottomResize} className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1.5 w-16 bg-foreground/30 cursor-ns-resize rounded-t hover:bg-foreground/50" />
-        </section>
-      </div>
 
       {/* Apps Grid - Separate Box */}
       <div className="flex-1 overflow-auto bg-background p-4">
@@ -316,50 +258,69 @@ export default function AppsPane() {
           }}
         >
           <div className="w-full h-full">
+            {/* App Icons Grid - Background Layer */}
             <div 
-              className="grid gap-3"
+              className={cn("grid gap-3 transition-opacity duration-200", openApp && "opacity-20")}
               style={{
                 gridTemplateColumns: `repeat(${gridDims.cols}, ${tile}px)`,
                 gridTemplateRows: `repeat(${gridDims.rows}, ${tile}px)`,
               }}
             >
+              {currentPageItems.map((app) => {
+                const Icon = app.icon;
+                return (
+                  <button
+                    key={app.id}
+                    onClick={() => handleAppClick(app)}
+                    className={cn(
+                      "flex flex-col items-center justify-between gap-2 p-3",
+                      "rounded-2xl",
+                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    )}
+                    style={{ width: tile, height: tile }}
+                    aria-label={app.label}
+                    title={app.label}
+                  >
+                    <div 
+                      className={cn(
+                        "flex items-center justify-center flex-1 w-full",
+                        "shadow-sm",
+                        `bg-gradient-to-br ${app.color || 'from-primary/20 to-primary/5'}`,
+                        "border border-border/60 rounded-xl"
+                      )}
+                    >
+                      <Icon 
+                        className="text-white drop-shadow-sm w-1/2 h-1/2"
+                        strokeWidth={1.5} 
+                      />
+                    </div>
+                    <span className="text-[10px] leading-tight text-center font-medium truncate max-w-full">
+                      {app.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
 
-        {/* Installed apps - now filtered by capabilities */}
-        {currentPageItems.map((app) => {
-          const Icon = app.icon;
-          return (
-            <button
-              key={app.id}
-              onClick={() => handleAppClick(app)}
-              className={cn(
-                "flex flex-col items-center justify-between gap-2 p-3",
-                "rounded-2xl",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-              )}
-              style={{ width: tile, height: tile }}
-              aria-label={app.label}
-              title={app.label}
-            >
-              <div 
-                className={cn(
-                  "flex items-center justify-center flex-1 w-full",
-                  "shadow-sm",
-                  `bg-gradient-to-br ${app.color || 'from-primary/20 to-primary/5'}`,
-                  "border border-border/60 rounded-xl"
-                )}
-              >
-                <Icon 
-                  className="text-white drop-shadow-sm w-1/2 h-1/2"
-                  strokeWidth={1.5} 
-                />
+            {/* Opened App Overlay - Foreground Layer */}
+            {openApp && (
+              <div className="absolute inset-0 bg-background/95 backdrop-blur-sm flex flex-col">
+                <div className="flex items-center justify-between p-3 border-b border-border">
+                  <h2 className="text-lg font-semibold">{openApp.label}</h2>
+                  <button 
+                    onClick={() => setOpenApp(null)}
+                    className="px-3 py-1 text-sm rounded-lg bg-muted hover:bg-muted/80"
+                  >
+                    Close
+                  </button>
+                </div>
+                <div className="flex-1 overflow-auto p-4">
+                  <p className="text-muted-foreground">
+                    Content for {openApp.label} would go here...
+                  </p>
+                </div>
               </div>
-              <span className="text-[10px] leading-tight text-center font-medium truncate max-w-full">
-                {app.label}
-              </span>
-            </button>
-          );
-        })}
-          </div>
+            )}
           </div>
           
           <div onMouseDown={startCornerResize} className="absolute bottom-1 right-1 h-3 w-3 rounded bg-foreground/60 cursor-nwse-resize" />
