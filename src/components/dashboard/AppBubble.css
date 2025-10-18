@@ -1,0 +1,121 @@
+.app-bubble {
+  position: relative;
+  border-radius: 22px;
+  background: var(--bubble-bg, rgba(255,255,255,0.75));
+  box-shadow: var(--bubble-shadow-1, 0 2px 6px rgba(0,0,0,0.08)), 
+              var(--bubble-shadow-2, 0 12px 28px rgba(0,0,0,0.12));
+  border: 1px solid var(--bubble-border, rgba(255,255,255,0.9));
+  overflow: hidden;
+  transform-style: preserve-3d;
+  will-change: transform, box-shadow, filter;
+  transition: transform 220ms ease, box-shadow 220ms ease, filter 220ms ease;
+  -webkit-backdrop-filter: saturate(140%) blur(12px);
+  backdrop-filter: saturate(140%) blur(12px);
+}
+
+.app-bubble::before,
+.app-bubble::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.app-bubble::before {
+  /* soft gloss */
+  background: var(--bubble-gloss, radial-gradient(120% 140% at 0% 0%, rgba(255,255,255,0.8), rgba(255,255,255,0) 60%));
+  mix-blend-mode: screen;
+}
+
+.app-bubble::after {
+  /* sheen overlay */
+  background: var(--bubble-sheen, conic-gradient(from 180deg at 30% 10%, rgba(255,255,255,0.45), rgba(255,255,255,0) 40%, rgba(255,255,255,0.35) 60%, rgba(255,255,255,0) 100%));
+  opacity: 0.35;
+  transition: opacity 200ms ease;
+}
+
+.app-bubble:hover { 
+  transform: translateY(-2px) scale(1.015);
+  box-shadow:
+    0 6px 14px rgba(0,0,0,0.10),
+    0 24px 60px rgba(0,0,0,0.18);
+}
+
+.app-bubble__inner {
+  position: relative;
+  padding: 16px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 10px;
+  min-height: 120px;
+}
+
+.app-bubble__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--bubble-accent, hsl(258 85% 60%)) 35%, #fff 0%), transparent 60%);
+  color: white;
+  filter: drop-shadow(0 6px 10px color-mix(in srgb, var(--bubble-accent, hsl(258 85% 60%)) 30%, transparent));
+}
+
+.app-bubble__title {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.app-bubble__meta {
+  font-size: 12px;
+  opacity: .75;
+  color: hsl(var(--muted-foreground));
+}
+
+.app-bubble__badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--bubble-accent, hsl(258 85% 60%));
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--bubble-accent, hsl(258 85% 60%)) 40%, transparent);
+}
+
+.app-bubble:focus-visible {
+  outline: none;
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bubble-accent, hsl(258 85% 60%)) 32%, transparent), 
+              var(--bubble-shadow-2, 0 12px 28px rgba(0,0,0,0.12));
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .app-bubble {
+    --bubble-bg: rgba(20,20,28,0.55);
+    --bubble-border: rgba(255,255,255,0.12);
+    --bubble-shadow-1: 0 2px 6px rgba(0,0,0,0.55);
+    --bubble-shadow-2: 0 20px 40px rgba(0,0,0,0.65);
+    --bubble-gloss: radial-gradient(120% 140% at 0% 0%, rgba(255,255,255,0.12), rgba(255,255,255,0) 60%);
+    --bubble-sheen: conic-gradient(from 180deg at 30% 10%, rgba(255,255,255,0.08), rgba(255,255,255,0) 40%, rgba(255,255,255,0.12) 60%, rgba(255,255,255,0) 100%);
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .app-bubble,
+  .app-bubble:hover {
+    transform: none !important;
+    transition: box-shadow 120ms ease;
+  }
+  .app-bubble::after { 
+    opacity: 0.2 !important; 
+  }
+}

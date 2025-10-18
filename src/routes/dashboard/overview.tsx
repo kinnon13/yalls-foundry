@@ -5,7 +5,10 @@ import { DashboardEntitySwitcher } from '@/components/dashboard/DashboardEntityS
 import { DashboardBreadcrumbs } from '@/components/dashboard/DashboardBreadcrumbs';
 import { UpcomingFromNetwork } from '@/components/dashboard/UpcomingFromNetwork';
 import { PortalTiles } from '@/components/dashboard/PortalTiles';
+import { MyApps } from '@/components/dashboard/MyApps';
 import { useRocker } from '@/lib/ai/rocker';
+import { useSession } from '@/lib/auth/context';
+import { useQuery } from '@tanstack/react-query';
 
 type NBA = { action: string; why: string; cta: string; href: string };
 
@@ -13,6 +16,25 @@ export default function Overview() {
   const [items, setItems] = useState<NBA[]>([]);
   const [loading, setLoading] = useState(true);
   const { log, section } = useRocker();
+  const { session } = useSession();
+
+  // Get user's primary entity for app context
+  const { data: primaryEntity } = useQuery({
+    queryKey: ['user-primary-entity', session?.userId],
+    queryFn: async () => {
+      if (!session?.userId) return null;
+      
+      const { data } = await supabase
+        .from('entities')
+        .select('id')
+        .eq('owner_user_id', session.userId)
+        .limit(1)
+        .single();
+      
+      return data;
+    },
+    enabled: !!session?.userId,
+  });
 
   useEffect(() => {
     log('page_view', { section });
@@ -47,6 +69,8 @@ export default function Overview() {
       </div>
 
       <DashboardKPIs kpis={null} isLoading={false} />
+
+      {primaryEntity?.id && <MyApps entityId={primaryEntity.id} />}
 
       <UpcomingFromNetwork />
 

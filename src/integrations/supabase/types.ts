@@ -1258,6 +1258,42 @@ export type Database = {
         }
         Relationships: []
       }
+      app_catalog: {
+        Row: {
+          category: string | null
+          config_schema: Json | null
+          created_at: string | null
+          icon: string | null
+          key: string
+          name: string
+          pricing: string | null
+          scopes: string[] | null
+          summary: string | null
+        }
+        Insert: {
+          category?: string | null
+          config_schema?: Json | null
+          created_at?: string | null
+          icon?: string | null
+          key: string
+          name: string
+          pricing?: string | null
+          scopes?: string[] | null
+          summary?: string | null
+        }
+        Update: {
+          category?: string | null
+          config_schema?: Json | null
+          created_at?: string | null
+          icon?: string | null
+          key?: string
+          name?: string
+          pricing?: string | null
+          scopes?: string[] | null
+          summary?: string | null
+        }
+        Relationships: []
+      }
       billing_plans: {
         Row: {
           id: string
@@ -4348,6 +4384,104 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      installed_apps: {
+        Row: {
+          app_key: string
+          config: Json | null
+          entity_id: string
+          installed_at: string | null
+          installed_by: string
+        }
+        Insert: {
+          app_key: string
+          config?: Json | null
+          entity_id: string
+          installed_at?: string | null
+          installed_by: string
+        }
+        Update: {
+          app_key?: string
+          config?: Json | null
+          entity_id?: string
+          installed_at?: string | null
+          installed_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installed_apps_app_key_fkey"
+            columns: ["app_key"]
+            isOneToOne: false
+            referencedRelation: "app_catalog"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "installed_apps_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "installed_apps_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
+        ]
+      }
+      integration_connections: {
+        Row: {
+          app_key: string | null
+          created_at: string | null
+          entity_id: string | null
+          id: string
+          provider: string | null
+          scopes: string[] | null
+          status: string | null
+        }
+        Insert: {
+          app_key?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          id?: string
+          provider?: string | null
+          scopes?: string[] | null
+          status?: string | null
+        }
+        Update: {
+          app_key?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          id?: string
+          provider?: string | null
+          scopes?: string[] | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_connections_app_key_fkey"
+            columns: ["app_key"]
+            isOneToOne: false
+            referencedRelation: "app_catalog"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "integration_connections_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_connections_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
+        ]
       }
       kernel_contexts: {
         Row: {
@@ -8620,6 +8754,10 @@ export type Database = {
         Args: { p_horse_id: string; p_incentive_id: string; p_metadata?: Json }
         Returns: string
       }
+      install_app: {
+        Args: { p_app_key: string; p_config?: Json; p_entity_id: string }
+        Returns: undefined
+      }
       is_admin: {
         Args: Record<PropertyKey, never> | { _user_id: string }
         Returns: boolean
@@ -8681,6 +8819,10 @@ export type Database = {
           p_proof_data?: Json
           p_verification_method: string
         }
+        Returns: Json
+      }
+      list_apps: {
+        Args: { p_entity_id?: string; p_q?: string }
         Returns: Json
       }
       log_usage_event_v2: {
@@ -10296,6 +10438,10 @@ export type Database = {
       text: {
         Args: { "": unknown }
         Returns: string
+      }
+      uninstall_app: {
+        Args: { p_app_key: string; p_entity_id: string }
+        Returns: undefined
       }
       unlockrows: {
         Args: { "": string }
