@@ -55,7 +55,7 @@ export default function ProfileSummaryBar() {
   return (
     <Link
       to="/profile"
-      className="flex items-center px-2 py-2 hover:bg-muted/30 rounded-lg transition-colors"
+      className="flex items-center hover:bg-muted/30 rounded-lg transition-colors"
       aria-label="Open your profile"
     >
       {/* Avatar on left */}
