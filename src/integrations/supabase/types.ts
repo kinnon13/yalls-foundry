@@ -5940,6 +5940,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           display_name: string | null
+          email: string | null
           id: string
           updated_at: string
           user_id: string
@@ -5952,6 +5953,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           display_name?: string | null
+          email?: string | null
           id?: string
           updated_at?: string
           user_id: string
@@ -5964,6 +5966,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           display_name?: string | null
+          email?: string | null
           id?: string
           updated_at?: string
           user_id?: string
@@ -7729,6 +7732,13 @@ export type Database = {
         }
         Returns: string
       }
+      assign_role: {
+        Args: {
+          target_role: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
+        }
+        Returns: undefined
+      }
       attach_incentive_to_event: {
         Args: {
           p_entity_id: string
@@ -8990,6 +9000,13 @@ export type Database = {
       }
       record_view: {
         Args: { p_listing_id: string; p_session_id?: string }
+        Returns: undefined
+      }
+      remove_role: {
+        Args: {
+          target_role: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
+        }
         Returns: undefined
       }
       reorder_pins: {
