@@ -5,72 +5,78 @@
 
 import { normRoute } from '@/lib/feature-scan-filters';
 
-/** single-segment wildcard match: :param matches any one segment */
-function segMatch(a: string, b: string) {
-  return a === b || a.startsWith(':') || b.startsWith(':');
+/**
+ * Extract the head segment of a route (e.g., "/events/123" -> "/events")
+ */
+function headOf(p: string): string {
+  const parts = normRoute(p).split('/').filter(Boolean);
+  return '/' + (parts[0] ?? '');
 }
 
-function isFamily(p: string) { 
-  return p.endsWith('/*'); 
-}
+/**
+ * Check if route A covers route B
+ * Handles families (/head/*), params (:id), and exact matches
+ */
+export function routeCovers(a: string, b: string): boolean {
+  const A = normRoute(a);
+  const B = normRoute(b);
 
-function familyHead(p: string) { 
-  return p.replace(/\/\*$/, ''); 
-}
-
-/** true if A covers B (A may be a route, param route, or family) */
-export function routeCovers(aRaw: string, bRaw: string) {
-  const a = normRoute(aRaw);
-  const b = normRoute(bRaw);
-
-  if (a === b) return true;
-
-  // family coverage
-  if (isFamily(a)) {
-    const head = familyHead(a);
-    return b === head || b.startsWith(head + '/');
+  // Family wildcard: "/head/*"
+  if (/^\/[^/]+\/\*$/.test(A)) {
+    const head = A.slice(0, A.indexOf('/*'));
+    return B === head || B.startsWith(head + '/');
   }
-  if (isFamily(b)) {
-    const head = familyHead(b);
-    // exact or parent coverage counts as covered either way
-    return a === head || a.startsWith(head + '/');
+  if (/^\/[^/]+\/\*$/.test(B)) {
+    const head = B.slice(0, B.indexOf('/*'));
+    return A === head || A.startsWith(head + '/');
   }
 
-  // param-aware same-depth match
-  const as = a.split('/').filter(Boolean);
-  const bs = b.split('/').filter(Boolean);
+  const as = A.split('/').filter(Boolean);
+  const bs = B.split('/').filter(Boolean);
   if (as.length !== bs.length) return false;
+
   for (let i = 0; i < as.length; i++) {
-    if (!segMatch(as[i], bs[i])) return false;
+    if (as[i] === ':id' || bs[i] === ':id') continue;
+    if (as[i] !== bs[i]) return false;
   }
   return true;
 }
 
-/** Classify undocumented families against claimed routes */
+/**
+ * Classify undocumented routes against claimed routes
+ * Uses head indexing for O(n) performance
+ */
 export function classifyUndocRoutes(
-  undocFamilies: string[],
-  claimedRoutes: string[]
-) {
-  const claimed = [...new Set(claimedRoutes.map(normRoute))];
+  undocumented: string[],
+  claimed: string[]
+): { alreadyClaimed: string[]; partiallyClaimed: string[]; trulyNew: string[] } {
+  const claimedNorm = [...new Set(claimed.map(normRoute))];
+  const claimedByHead = new Map<string, string[]>();
+  
+  for (const c of claimedNorm) {
+    const h = headOf(c);
+    const list = claimedByHead.get(h) ?? [];
+    if (list.length === 0) claimedByHead.set(h, list);
+    list.push(c);
+  }
 
   const alreadyClaimed: string[] = [];
   const partiallyClaimed: string[] = [];
   const trulyNew: string[] = [];
 
-  for (const u of undocFamilies) {
+  for (const u of new Set(undocumented)) {
     const uNorm = normRoute(u);
+    const head = headOf(uNorm);
+    const candidates = claimedByHead.get(head) ?? [];
 
-    // covered by any claimed route/family/param?
-    const covered = claimed.some(c => routeCovers(c, uNorm) || routeCovers(uNorm, c));
-    if (covered) {
+    // exact/family/param coverage
+    if (candidates.some(c => routeCovers(c, uNorm) || routeCovers(uNorm, c))) {
       alreadyClaimed.push(u);
       continue;
     }
 
-    // same head present (e.g., '/events' claimed but not '/events/*')
-    const head = '/' + (uNorm.split('/').filter(Boolean)[0] ?? '');
-    const sameHeadClaimed = claimed.some(c => normRoute(c) === head);
-    if (sameHeadClaimed) {
+    // base head claimed but no family: e.g., have "/events" but not "/events/*"
+    if (candidates.some(c => normRoute(c) === head)) {
       partiallyClaimed.push(u);
       continue;
     }

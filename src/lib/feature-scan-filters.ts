@@ -57,17 +57,23 @@ export const tableIgnore = [
 
 /**
  * Normalize route paths - collapse params and trailing slashes
- * Global replacement for all numeric/UUID segments
+ * Canonicalize all params to :id, strip query/hash, use strict UUID pattern
  */
 export function normRoute(p: string): string {
-  return (p || '/')
+  const s = (p || '/')
+    .split('?')[0]                        // strip query string
+    .split('#')[0]                        // strip hash
     .replace(/\/index$/, '')
-    .replace(/\/+/g, '/')                 // collapse double slashes
-    .replace(/\/+$/g, '')                 // trim trailing slash (except root)
-    .replace(/\[([^\]]+)\]/g, ':$1')      // next.js style => :param
+    .replace(/\/+$/g, '')                 // trim trailing slash
+    .replace(/\[([^\]]+)\]/g, ':$1')      // file-based params → :name
+    .replace(/\/:([A-Za-z][\w-]*)/g, '/:id') // any :name → :id (canonical)
     .replace(/\/\d+(?=\/|$)/g, '/:id')    // numeric ids
-    .replace(/\/[0-9a-f-]{8,}(?=\/|$)/gi, '/:id') // uuids
-    || '/';
+    // strict UUID (v1-v5) to avoid clobbering slugs like "dead-beef-burger"
+    .replace(
+      /\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}(?=\/|$)/gi,
+      '/:id'
+    );
+  return s || '/';
 }
 
 /**
