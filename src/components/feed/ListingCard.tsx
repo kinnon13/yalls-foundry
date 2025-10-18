@@ -16,10 +16,10 @@ export function ListingCard({ listing }: ListingCardProps) {
   const priceFormatted = (listing.price_cents / 100).toFixed(2);
 
   return (
-    <Card className="overflow-hidden shadow-md rounded-xl">
+    <Card className="overflow-hidden shadow-md rounded-2xl aspect-square flex flex-col">
       {/* Media */}
       {hasMedia && (
-        <div className="relative aspect-square bg-muted">
+        <div className="relative flex-1 bg-muted">
           <img
             src={listing.media[0].url}
             alt={listing.title}
@@ -34,7 +34,7 @@ export function ListingCard({ listing }: ListingCardProps) {
       )}
 
       {/* Content */}
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-2 flex-shrink-0">
         <h3 className="font-semibold line-clamp-2">{listing.title}</h3>
         
         <div className="flex items-center justify-between">

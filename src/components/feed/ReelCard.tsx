@@ -19,7 +19,7 @@ export function ReelCard({ post }: ReelCardProps) {
   };
 
   return (
-    <div className="relative flex flex-col h-screen w-full bg-background">
+    <div className="relative flex flex-col aspect-square w-full bg-background overflow-hidden rounded-2xl">
       {/* Media */}
       {post.media && post.media.length > 0 && (
         <div className="absolute inset-0 -z-10">
