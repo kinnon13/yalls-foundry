@@ -1,5 +1,8 @@
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { UIProvider } from '@/design/UIProvider';
+import { ThemeProvider } from 'next-themes';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
 import { Suspense, lazy, useEffect } from 'react';
@@ -348,6 +351,8 @@ function AppContent() {
       <RockerChat />
       <RockerSuggestions />
       <DevHUD isOpen={devHUDOpen} onClose={closeDevHUD} />
+      <Toaster />
+      <Sonner />
     </>
   );
 }
@@ -355,17 +360,19 @@ function AppContent() {
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
-      <UIProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <RockerChatProvider>
-              <RockerProvider>
-                <AppContent />
-              </RockerProvider>
-            </RockerChatProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </UIProvider>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <TooltipProvider>
+          <BrowserRouter>
+            <AuthProvider>
+              <RockerChatProvider>
+                <RockerProvider>
+                  <AppContent />
+                </RockerProvider>
+              </RockerChatProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </HelmetProvider>
 );
