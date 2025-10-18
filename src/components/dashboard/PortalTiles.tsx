@@ -84,7 +84,7 @@ export function PortalTiles() {
             <Link
               key={n.entity_id}
               className="inline-flex items-center gap-2.5 rounded-full bg-card/50 backdrop-blur-sm border border-border/50 px-4 py-2.5 hover:bg-card/80 hover:scale-105 transition-all hover:shadow-md"
-              to={`/workspace/${n.entity_id}/dashboard`}
+              to={`/dashboard?m=overview`}
               onClick={() => log('portal_open', { entity_id: n.entity_id, rel: n.rel })}
             >
               <span className="inline-flex h-7 w-7 rounded-full bg-muted/60 items-center justify-center">

@@ -335,15 +335,29 @@ function AppContent() {
           {/* Auth Route (handles both login & signup via tabs) */}
           <Route path="/login" element={<Login />} />
 
+          {/* Preview Routes (dev/staging only) - nested inside main Routes */}
+          {import.meta.env.VITE_PREVIEW_ENABLED === 'true' && (
+            <>
+              <Route path="/preview" element={
+                <div className="p-6 space-y-6">
+                  <div className="fixed top-4 right-4 bg-yellow-500 text-black px-3 py-1 text-xs font-bold uppercase tracking-wider rotate-12 shadow-lg z-50">
+                    Preview Mode
+                  </div>
+                  <h1 className="text-xl font-semibold">Preview Index</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Safe UI previews for Pay/Admin/Data experiences. No writes, no money moves.
+                  </p>
+                </div>
+              } />
+            </>
+          )}
+
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
       </Routes>
 
-      {/* Preview Routes (dev/staging only) */}
-      <PreviewRoutes />
-
       {/* Preview message handler */}
-      <PreviewMessageListener />
+      {import.meta.env.VITE_PREVIEW_ENABLED === 'true' && <PreviewMessageListener />}
 
       {FEEDBACK_ENABLED && <FeedbackWidget />}
       <InactivityNudge />
