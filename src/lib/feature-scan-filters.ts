@@ -3,6 +3,11 @@
  * Separates product surfaces from system noise (PostGIS, extensions, etc.)
  */
 
+// Route aliases for canonical naming
+const ROUTE_ALIASES: Record<string, string> = {
+  '/entrant': '/entries',
+};
+
 // Which route heads should be collapsed into `/<head>/*`
 const COLLAPSE_HEADS = new Set([
   '/events',
@@ -10,13 +15,21 @@ const COLLAPSE_HEADS = new Set([
   '/messages',
   '/orders',
   '/farm',
-  '/entrant',
+  '/entries',
   '/entities',
   '/listings',
   '/profile',
   '/stallions',
   '/cart',
+  '/organizer',
 ]);
+
+// Route categories for filtering/display
+export const ROUTE_CATEGORIES: Record<string, string> = {
+  '/events': 'public',
+  '/entries': 'private',
+  '/organizer': 'organizer',
+};
 
 export const routeIgnore = [
   /^\/$/,                               // root/home page
@@ -57,11 +70,39 @@ export const tableIgnore = [
 ];
 
 /**
+ * Apply route aliases (e.g., /entrant → /entries)
+ */
+export function applyRouteAlias(p: string): string {
+  const parts = p.split('/').filter(Boolean);
+  if (parts.length === 0) return p;
+  
+  const head = '/' + parts[0];
+  if (ROUTE_ALIASES[head]) {
+    parts[0] = ROUTE_ALIASES[head].slice(1); // remove leading /
+    return '/' + parts.join('/');
+  }
+  return p;
+}
+
+/**
+ * Get route category (public/private/organizer)
+ */
+export function getRouteCategory(p: string): string | null {
+  const normalized = normRoute(applyRouteAlias(p));
+  const parts = normalized.split('/').filter(Boolean);
+  if (parts.length === 0) return null;
+  
+  const head = '/' + parts[0];
+  return ROUTE_CATEGORIES[head] || null;
+}
+
+/**
  * Normalize route paths - collapse params and trailing slashes
  * Canonicalize all params to :id, strip query/hash, use strict UUID pattern
  */
 export function normRoute(p: string): string {
-  const s = (p || '/')
+  const aliased = applyRouteAlias(p);
+  const s = (aliased || '/')
     .split('?')[0]                        // strip query string
     .split('#')[0]                        // strip hash
     .replace(/\/index$/, '')

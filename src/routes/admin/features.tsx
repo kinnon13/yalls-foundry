@@ -9,7 +9,7 @@
 import featuresManifestRaw from '../../../docs/features/features.json?raw';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { kernel, GOLD_PATH_FEATURES, Feature } from '@/lib/feature-kernel';
-import { isProductRpc, isProductRoute, isProductTable, collapseFamilies, collapsePartitions, normRoute } from '@/lib/feature-scan-filters';
+import { isProductRpc, isProductRoute, isProductTable, collapseFamilies, collapsePartitions, normRoute, getRouteCategory } from '@/lib/feature-scan-filters';
 import { classifyUndocRoutes } from '@/utils/route-coverage';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -821,11 +821,16 @@ export default function FeaturesAdminPage() {
     [features]
   );
 
-  // Classify undocumented routes
+  // Classify undocumented routes by category
   const routeClassification = useMemo(() => {
     const undoc = (window as any).__undocumented;
     if (!undoc?.routes || undoc.routes.length === 0) {
-      return { alreadyClaimed: [], partiallyClaimed: [], trulyNew: [] };
+      return { 
+        alreadyClaimed: [], 
+        partiallyClaimed: [], 
+        trulyNew: [],
+        byCategory: { public: [], private: [], organizer: [], other: [] }
+      };
     }
 
     // Collect all documented routes from features (including deeply nested sub-features)
@@ -866,6 +871,23 @@ export default function FeaturesAdminPage() {
     features.forEach((f: Feature) => walkFeature(f));
 
     const classification = classifyUndocRoutes(undoc.routes, documentedRoutes);
+    
+    // Categorize new routes
+    const byCategory = {
+      public: [] as string[],
+      private: [] as string[],
+      organizer: [] as string[],
+      other: [] as string[],
+    };
+    
+    classification.trulyNew.forEach((route: string) => {
+      const category = getRouteCategory(route);
+      if (category === 'public') byCategory.public.push(route);
+      else if (category === 'private') byCategory.private.push(route);
+      else if (category === 'organizer') byCategory.organizer.push(route);
+      else byCategory.other.push(route);
+    });
+    
     console.log('[Route Classification]', {
       totalUndoc: undoc.routes.length,
       alreadyClaimed: classification.alreadyClaimed.length,
@@ -873,8 +895,14 @@ export default function FeaturesAdminPage() {
       trulyNew: classification.trulyNew.length,
       totalDocumented: documentedRoutes.length,
       featureMapSize: featureMap.size,
+      byCategory: {
+        public: byCategory.public.length,
+        private: byCategory.private.length,
+        organizer: byCategory.organizer.length,
+        other: byCategory.other.length,
+      }
     });
-    return classification;
+    return { ...classification, byCategory };
   }, [(window as any).__undocumented?.routes, features]);
 
   return (
@@ -1336,26 +1364,109 @@ export default function FeaturesAdminPage() {
                       </div>
                     )}
                     
-                    {/* Truly New */}
+                    {/* Truly New - Categorized */}
                     {routeClassification.trulyNew.length > 0 && (
-                      <div className="space-y-2 mt-4">
-                        <div className="text-xs font-semibold text-muted-foreground px-2">New Routes</div>
-                        {routeClassification.trulyNew.map((route: string) => (
-                          <div key={route} className="flex items-center justify-between gap-2 p-2 hover:bg-accent/50 rounded">
-                            <Badge variant="secondary" className="text-xs">
-                              {route}
-                            </Badge>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => handleClaimFeature(route)}
-                              className="text-xs"
-                            >
-                              <Plus className="h-3 w-3 mr-1" />
-                              Claim
-                            </Button>
+                      <div className="space-y-4 mt-4">
+                        {/* Public Routes */}
+                        {routeClassification.byCategory.public.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 px-2">
+                              <div className="text-xs font-semibold text-muted-foreground">Public Routes</div>
+                              <Badge variant="outline" className="text-xs">Browse & Share</Badge>
+                            </div>
+                            {routeClassification.byCategory.public.map((route: string) => (
+                              <div key={route} className="flex items-center justify-between gap-2 p-2 hover:bg-accent/50 rounded">
+                                <Badge variant="secondary" className="text-xs">
+                                  {route}
+                                </Badge>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleClaimFeature(route)}
+                                  className="text-xs"
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Claim
+                                </Button>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
+                        
+                        {/* Private Routes */}
+                        {routeClassification.byCategory.private.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 px-2">
+                              <div className="text-xs font-semibold text-muted-foreground">Private Routes</div>
+                              <Badge variant="outline" className="text-xs">User-Specific</Badge>
+                            </div>
+                            {routeClassification.byCategory.private.map((route: string) => (
+                              <div key={route} className="flex items-center justify-between gap-2 p-2 hover:bg-accent/50 rounded">
+                                <Badge variant="secondary" className="text-xs">
+                                  {route}
+                                </Badge>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleClaimFeature(route)}
+                                  className="text-xs"
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Claim
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Organizer Routes */}
+                        {routeClassification.byCategory.organizer.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 px-2">
+                              <div className="text-xs font-semibold text-muted-foreground">Organizer Routes</div>
+                              <Badge variant="outline" className="text-xs">Role-Gated</Badge>
+                            </div>
+                            {routeClassification.byCategory.organizer.map((route: string) => (
+                              <div key={route} className="flex items-center justify-between gap-2 p-2 hover:bg-accent/50 rounded">
+                                <Badge variant="secondary" className="text-xs">
+                                  {route}
+                                </Badge>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleClaimFeature(route)}
+                                  className="text-xs"
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Claim
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Other Routes */}
+                        {routeClassification.byCategory.other.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="text-xs font-semibold text-muted-foreground px-2">Other Routes</div>
+                            {routeClassification.byCategory.other.map((route: string) => (
+                              <div key={route} className="flex items-center justify-between gap-2 p-2 hover:bg-accent/50 rounded">
+                                <Badge variant="secondary" className="text-xs">
+                                  {route}
+                                </Badge>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleClaimFeature(route)}
+                                  className="text-xs"
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Claim
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
