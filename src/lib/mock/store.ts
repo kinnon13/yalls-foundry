@@ -6,6 +6,13 @@
  */
 
 import { generateULID } from '@/lib/utils/ulid';
+import { 
+  generateMockPeople, 
+  generateMockHomes, 
+  generateMockFarms, 
+  generateMockProducts, 
+  generateMockBusinesses 
+} from './entities';
 
 interface MockProfile {
   id: string;
@@ -33,6 +40,11 @@ interface MockEvent {
 interface MockStore {
   profiles: MockProfile[];
   events: MockEvent[];
+  people: any[];
+  homes: any[];
+  farms: any[];
+  products: any[];
+  businesses: any[];
 }
 
 // Session seed for deterministic IDs (set once per page load)
@@ -42,6 +54,11 @@ let idCounter = 0;
 const store: MockStore = {
   profiles: [],
   events: [],
+  people: [],
+  homes: [],
+  farms: [],
+  products: [],
+  businesses: [],
 };
 
 /**
@@ -134,4 +151,43 @@ export function getProfiles(): MockProfile[] {
  */
 export function getEvents(): MockEvent[] {
   return [...store.events];
+}
+
+/**
+ * Seed mock entities (people, homes, farms, products, businesses)
+ */
+export function seedEntities(): void {
+  store.people = generateMockPeople(10);
+  store.homes = generateMockHomes(8);
+  store.farms = generateMockFarms(10);
+  store.products = generateMockProducts(12);
+  store.businesses = generateMockBusinesses(10);
+}
+
+/**
+ * Get all mock entities
+ */
+export function getEntities() {
+  if (store.people.length === 0) {
+    seedEntities();
+  }
+  
+  return {
+    people: [...store.people],
+    homes: [...store.homes],
+    farms: [...store.farms],
+    products: [...store.products],
+    businesses: [...store.businesses],
+  };
+}
+
+/**
+ * Get entities by kind
+ */
+export function getEntitiesByKind(kind: 'person' | 'home' | 'farm' | 'product' | 'business') {
+  if (store[`${kind}s` as keyof MockStore].length === 0) {
+    seedEntities();
+  }
+  
+  return [...(store[`${kind}s` as keyof MockStore] as any[])];
 }
