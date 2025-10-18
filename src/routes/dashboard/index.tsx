@@ -144,7 +144,9 @@ export default function DashboardLayout() {
     if (!isDraggingBottom) return;
 
     const handleMove = (clientY: number) => {
-      const newHeight = window.innerHeight - clientY - 64; // 64px for header
+      // Calculate height from top of feed to cursor position
+      const feedTop = 64; // header height
+      const newHeight = clientY - feedTop;
       setFeedHeight(Math.max(300, Math.min(window.innerHeight - 100, newHeight)));
     };
 

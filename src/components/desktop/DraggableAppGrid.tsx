@@ -11,7 +11,8 @@ import {
   useSensor,
   useSensors,
   PointerSensor,
-  closestCenter
+  closestCenter,
+  useDraggable
 } from '@dnd-kit/core';
 import { 
   Calendar, Settings, DollarSign, Trophy, ShoppingCart,
@@ -109,16 +110,38 @@ export function DraggableAppGrid() {
 
     if (!over || active.id === over.id) return;
 
-    // Calculate grid position from drop location
-    // This is simplified - you'd calculate based on actual mouse position
-    const gridX = Math.floor(Math.random() * 8);
-    const gridY = Math.floor(Math.random() * 6);
+    // Get the container's bounding rect to calculate grid position
+    const container = document.querySelector('.grid');
+    if (!container) return;
+    
+    const rect = container.getBoundingClientRect();
+    const mouseX = (event as any).activatorEvent?.clientX || 0;
+    const mouseY = (event as any).activatorEvent?.clientY || 0;
+    
+    // Calculate which grid cell the drop happened in
+    const cellWidth = rect.width / 8; // 8 columns
+    const cellHeight = 100; // approximate cell height
+    const gridX = Math.floor((mouseX - rect.left) / cellWidth);
+    const gridY = Math.floor((mouseY - rect.top) / cellHeight);
 
-    updatePosition.mutate({
-      pinId: active.id as string,
-      x: gridX,
-      y: gridY,
-    });
+    // Find if this app is already pinned
+    const existingPin = pins.find(p => p.app_id === active.id);
+    
+    if (existingPin) {
+      // Update existing pin position
+      updatePosition.mutate({
+        pinId: existingPin.id,
+        x: Math.max(0, Math.min(7, gridX)),
+        y: Math.max(0, Math.min(5, gridY)),
+      });
+    } else {
+      // Create new pin at this position
+      pinApp.mutate({
+        appId: active.id as string,
+        x: Math.max(0, Math.min(7, gridX)),
+        y: Math.max(0, Math.min(5, gridY)),
+      });
+    }
   };
 
   const handleAppClick = (app: AppTile) => {
@@ -129,17 +152,22 @@ export function DraggableAppGrid() {
     }
   };
 
-  const renderApp = (app: AppTile, isDragging?: boolean) => {
+  const renderApp = (app: AppTile, isDraggingThis?: boolean) => {
     const Icon = app.icon;
+    const isPinned = pins.some(p => p.app_id === app.id);
+    
     return (
       <div
         className={cn(
-          "flex flex-col items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2",
+          "flex flex-col items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 relative",
           "rounded-2xl sm:rounded-3xl transition-all duration-200",
-          !isDragging && "hover:scale-105 active:scale-95",
-          isDragging && "opacity-50"
+          !isDraggingThis && "hover:scale-105 active:scale-95 cursor-grab active:cursor-grabbing",
+          isDraggingThis && "opacity-50"
         )}
       >
+        {isPinned && (
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background z-10" />
+        )}
         <div className={cn(
           "relative flex items-center justify-center shadow-lg",
           `bg-gradient-to-br ${app.color || 'from-primary/20 to-primary/5'}`,
@@ -161,6 +189,32 @@ export function DraggableAppGrid() {
     );
   };
 
+  // Draggable app tile wrapper
+  function DraggableApp({ app }: { app: AppTile }) {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+      id: app.id,
+    });
+
+    const style = transform
+      ? {
+          transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        }
+      : undefined;
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...listeners}
+        {...attributes}
+        onClick={() => !isDragging && handleAppClick(app)}
+        className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-3xl"
+      >
+        {renderApp(app, isDragging || activeId === app.id)}
+      </div>
+    );
+  }
+
   return (
     <>
       <DndContext 
@@ -173,13 +227,7 @@ export function DraggableAppGrid() {
           <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16">
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-4 sm:gap-6 md:gap-7 lg:gap-8">
               {Object.values(APPS).map((app) => (
-                <button
-                  key={app.id}
-                  onClick={() => handleAppClick(app)}
-                  className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-3xl"
-                >
-                  {renderApp(app, activeId === app.id)}
-                </button>
+                <DraggableApp key={app.id} app={app} />
               ))}
             </div>
           </div>
