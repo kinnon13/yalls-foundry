@@ -116,7 +116,7 @@ export default function SocialFeedPane() {
       <ProfileSummaryBar />
 
       {/* Tab indicators (show current position, drag/swipe to change) */}
-      <div className="sticky top-0 z-10 mb-2 flex items-center gap-2 bg-background/70 backdrop-blur px-2 py-1">
+      <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-background/70 backdrop-blur px-2 py-1">
         {TABS.map((t) => (
           <div
             key={t}
@@ -130,7 +130,6 @@ export default function SocialFeedPane() {
             {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
           </div>
         ))}
-        <span className="ml-auto text-xs text-muted-foreground hidden md:inline">👆 Drag/Swipe</span>
       </div>
 
       {/* Swipeable feed container with visual drag feedback */}
