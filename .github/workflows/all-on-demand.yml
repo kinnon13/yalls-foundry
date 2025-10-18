@@ -32,9 +32,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { ref: ${{ github.event.inputs.branch }} }
+        with:
+          ref: ${{ github.event.inputs.branch }}
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ github.event.inputs.node }}, cache: 'npm' }
+        with:
+          node-version: ${{ github.event.inputs.node }}
+          cache: 'npm'
       - run: npm ci
       - name: Architecture + Work Report guards
         run: |
@@ -49,9 +52,12 @@ jobs:
     needs: [lint]
     steps:
       - uses: actions/checkout@v4
-        with: { ref: ${{ github.event.inputs.branch }} }
+        with:
+          ref: ${{ github.event.inputs.branch }}
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ github.event.inputs.node }}, cache: 'npm' }
+        with:
+          node-version: ${{ github.event.inputs.node }}
+          cache: 'npm'
       - run: npm ci
       - run: npm run typecheck
 
@@ -61,9 +67,12 @@ jobs:
     needs: [lint, typecheck]
     steps:
       - uses: actions/checkout@v4
-        with: { ref: ${{ github.event.inputs.branch }} }
+        with:
+          ref: ${{ github.event.inputs.branch }}
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ github.event.inputs.node }}, cache: 'npm' }
+        with:
+          node-version: ${{ github.event.inputs.node }}
+          cache: 'npm'
       - run: npm ci
       - run: npm test -- --reporter=junit --outputFile=./junit.xml || npm test
       - uses: actions/upload-artifact@v4
@@ -82,9 +91,12 @@ jobs:
     if: ${{ github.event.inputs.run-e2e == 'true' }}
     steps:
       - uses: actions/checkout@v4
-        with: { ref: ${{ github.event.inputs.branch }} }
+        with:
+          ref: ${{ github.event.inputs.branch }}
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ github.event.inputs.node }}, cache: 'npm' }
+        with:
+          node-version: ${{ github.event.inputs.node }}
+          cache: 'npm'
       - run: npm ci
       - name: Install Playwright deps
         run: npx playwright install --with-deps || true
@@ -114,9 +126,12 @@ jobs:
     if: ${{ secrets.DATABASE_URL != '' }}
     steps:
       - uses: actions/checkout@v4
-        with: { ref: ${{ github.event.inputs.branch }} }
+        with:
+          ref: ${{ github.event.inputs.branch }}
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ github.event.inputs.node }}, cache: 'npm' }
+        with:
+          node-version: ${{ github.event.inputs.node }}
+          cache: 'npm'
       - run: npm ci
       - name: Generate Ops Report
         env:
