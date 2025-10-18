@@ -20,11 +20,28 @@ export function PortalTiles() {
       const uid = session?.session?.user.id;
       if (!uid) return [];
       
-      // Use functions.invoke until types regenerate
-      const { data } = await supabase.functions.invoke('get_user_network', {
-        body: { p_user_id: uid }
-      });
-      return Array.isArray(data) ? data : [];
+      // Defensive fetch with fallback
+      try {
+        const { data, error } = await supabase.functions.invoke('get_user_network', {
+          body: { p_user_id: uid }
+        });
+        if (!error && Array.isArray(data)) return data;
+      } catch (_) {
+        // Swallow 404/network errors
+      }
+
+      // Fallback: query entities user owns directly
+      const { data: entities } = await supabase
+        .from('entities')
+        .select('id')
+        .eq('owner_user_id', uid)
+        .limit(10);
+
+      return (entities || []).map(e => ({
+        entity_id: e.id,
+        rel: 'owner',
+        weight: 1.0
+      }));
     }
   });
 

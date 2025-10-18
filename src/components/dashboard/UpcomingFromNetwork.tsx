@@ -21,14 +21,38 @@ export function UpcomingFromNetwork() {
       const { data: session } = await supabase.auth.getSession();
       const uid = session?.session?.user.id;
       if (!uid) return [];
-      
-      // Use functions.invoke until types regenerate
-      const { data, error } = await supabase.functions.invoke('get_dashboard_upcoming_events', {
-        body: { p_user_id: uid, p_horizon: '30d' }
-      });
-      
-      if (error) throw error;
-      return Array.isArray(data) ? data : (data ? [data] : []);
+
+      // Defensive fetch with multiple fallbacks
+      // 1) Try edge function
+      try {
+        const { data, error } = await supabase.functions.invoke('get_dashboard_upcoming_events', {
+          body: { p_user_id: uid, p_horizon: '30d' }
+        });
+        if (!error && Array.isArray(data)) return data;
+        if (!error && data) return [data];
+      } catch (_) {
+        // Swallow 404/network errors and fall back
+      }
+
+      // 2) Fallback: direct table query (public upcoming next 30d)
+      const { data: events } = await supabase
+        .from('events')
+        .select('id, title, starts_at, location')
+        .gte('starts_at', new Date().toISOString())
+        .lte('starts_at', new Date(Date.now() + 30 * 864e5).toISOString())
+        .order('starts_at', { ascending: true })
+        .limit(6);
+
+      return (events || []).map(ev => ({
+        event_id: ev.id,
+        entity_id: null, // Not available in fallback
+        title: ev.title,
+        starts_at: ev.starts_at,
+        location: ev.location,
+        image: null,
+        enterable: true,
+        enter_route: `/events/${ev.id}/enter`
+      }));
     }
   });
 

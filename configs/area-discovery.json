@@ -50,13 +50,13 @@
   "routeAliases": {
     "/organizer/*": "/workspace/:entityId/events/*",
     "/incentives/dashboard": "/workspace/:entityId/programs",
-    "/dashboard": "/workspace",
     "/entrant": "/entries",
     "/equistats/*": "/equinestats/*",
     "/crm": "/workspace/:entityId/dashboard"
   },
 
   "collapsedHeads": [
+    "/dashboard",
     "/search",
     "/marketplace",
     "/entities",
