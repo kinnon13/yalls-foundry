@@ -17,9 +17,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Bell, Mail, Smartphone, MessageSquare } from 'lucide-react';
 
 export default function NotificationSettings() {
-  const { session } = useSession();
-  const userId = session?.userId || '';
-  const { prefs, isLoading, update, digestPreview, sendTestDigest } = useNotificationPrefs(userId);
+  const { prefs, isLoading, update, digestPreview, sendTestDigest } = useNotificationPrefs();
   const [showDigestPreview, setShowDigestPreview] = useState(false);
 
   if (isLoading || !prefs) {
@@ -274,7 +272,7 @@ export default function NotificationSettings() {
         {showDigestPreview && digestPreview.data && (
           <div className="mt-4 p-4 rounded-lg border bg-muted/30">
             <DigestPreview
-              groups={digestPreview.data}
+              groups={digestPreview.data as any}
               onSendTest={() => sendTestDigest.mutate()}
               isLoading={sendTestDigest.isPending}
             />

@@ -52,8 +52,10 @@ export interface NotificationPrefs {
       sms: boolean;
     };
   };
-  quiet_start?: string;
-  quiet_end?: string;
+  quiet_hours?: {
+    start: string;
+    end: string;
+  };
   daily_cap: number;
   digest_frequency: 'off' | 'daily' | 'weekly';
   updated_at: string;

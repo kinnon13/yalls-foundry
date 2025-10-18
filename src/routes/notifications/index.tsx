@@ -3,7 +3,7 @@
  * Production-grade notification center with Mac polish
  */
 
-import { useNotifications } from '@/hooks/useNotifications';
+import { useNotifications, useNotificationCounts } from '@/hooks/useNotifications';
 import { useSession } from '@/lib/auth/context';
 import { Button } from '@/components/ui/button';
 import { CheckCheck, Bell } from 'lucide-react';
@@ -14,10 +14,9 @@ import { useState } from 'react';
 import type { NotificationLane } from '@/ports/notifications';
 
 export default function NotificationsPage() {
-  const { session } = useSession();
-  const userId = session?.userId || '';
   const [activeLane, setActiveLane] = useState<NotificationLane>('priority');
-  const { notifications, unreadCount, isLoading, markRead, markAllRead } = useNotifications(userId, activeLane);
+  const { counts } = useNotificationCounts();
+  const { notifications, unreadCount, isLoading, markRead, markAllRead } = useNotifications(activeLane);
 
   if (isLoading) {
     return (

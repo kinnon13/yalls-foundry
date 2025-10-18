@@ -16,7 +16,7 @@ import type { NotificationLane } from '@/lib/adapters/notifications-types';
 
 export default function NotificationsPage() {
   const [activeLane, setActiveLane] = useState<NotificationLane>('priority');
-  const { data: counts } = useNotificationCounts();
+  const { counts } = useNotificationCounts();
   
   const { 
     notifications, 
@@ -91,7 +91,7 @@ export default function NotificationsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => markAllRead()}
+                    onClick={() => markAllRead.mutate()}
                   >
                     <CheckCheck className="h-4 w-4 mr-2" />
                     Mark all read
@@ -119,7 +119,7 @@ export default function NotificationsPage() {
                           ? 'bg-card/50'
                           : 'bg-card border-primary/20'
                       }`}
-                      onClick={() => !notif.read_at && markRead([notif.id])}
+                      onClick={() => !notif.read_at && markRead.mutate([notif.id])}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">

@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
-import { useNotificationCounts } from '@/hooks/useNotificationCounts';
+import { useNotificationCounts } from '@/hooks/useNotifications';
 import { NotificationItem } from './NotificationItem';
 import type { NotificationLane } from '@/ports/notifications';
 import { Button } from '@/components/ui/button';
@@ -24,8 +24,8 @@ export function LaneDrawer({ userId, open, onOpenChange }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
 
-  const { counts } = useNotificationCounts(userId);
-  const { notifications, isLoading, markRead, markAllRead } = useNotifications(userId, activeLane);
+  const { counts } = useNotificationCounts();
+  const { notifications, isLoading, markRead, markAllRead } = useNotifications(activeLane);
 
   const unreadInLane = notifications.filter(n => !n.read_at);
 
@@ -100,7 +100,7 @@ export function LaneDrawer({ userId, open, onOpenChange }: Props) {
               aria-controls="priority-panel"
             >
               Priority
-              {counts.priority > 0 && (
+              {counts && counts.priority > 0 && (
                 <span
                   className="ml-2 px-2 py-0.5 text-xs rounded-full bg-primary text-primary-foreground"
                   aria-live="polite"
@@ -118,7 +118,7 @@ export function LaneDrawer({ userId, open, onOpenChange }: Props) {
               aria-controls="social-panel"
             >
               Social
-              {counts.social > 0 && (
+              {counts && counts.social > 0 && (
                 <span
                   className="ml-2 px-2 py-0.5 text-xs rounded-full bg-primary text-primary-foreground"
                   aria-live="polite"
@@ -136,7 +136,7 @@ export function LaneDrawer({ userId, open, onOpenChange }: Props) {
               aria-controls="system-panel"
             >
               System
-              {counts.system > 0 && (
+              {counts && counts.system > 0 && (
                 <span
                   className="ml-2 px-2 py-0.5 text-xs rounded-full bg-primary text-primary-foreground"
                   aria-live="polite"
@@ -186,7 +186,7 @@ export function LaneDrawer({ userId, open, onOpenChange }: Props) {
                 {notifications.map((notif) => (
                   <NotificationItem
                     key={notif.id}
-                    notification={notif}
+                    notification={notif as any}
                     selected={selected.has(notif.id)}
                     onToggleSelect={() => toggleSelect(notif.id)}
                     onMarkRead={() => markRead.mutate([notif.id])}

@@ -14,7 +14,7 @@ import type {
 
 export const notificationsDbAdapter: NotificationsAdapter = {
   async listNotifications(userId: string, lane: NotificationLane, before?: string, limit = 50) {
-    const { data, error } = await supabase.rpc('notifications_list', {
+    const { data, error } = await supabase.rpc('notifications_list' as any, {
       p_user_id: userId,
       p_lane: lane,
       p_before: before || null,
@@ -30,7 +30,7 @@ export const notificationsDbAdapter: NotificationsAdapter = {
   },
 
   async markRead(userId: string, notificationIds: string[]) {
-    const { error } = await supabase.rpc('notifications_mark_read', {
+    const { error } = await supabase.rpc('notifications_mark_read' as any, {
       p_user_id: userId,
       p_ids: notificationIds
     });
@@ -42,7 +42,7 @@ export const notificationsDbAdapter: NotificationsAdapter = {
   },
 
   async markAllRead(userId: string, lane: NotificationLane) {
-    const { error } = await supabase.rpc('notifications_mark_all_read', {
+    const { error } = await supabase.rpc('notifications_mark_all_read' as any, {
       p_user_id: userId,
       p_lane: lane
     });
@@ -54,7 +54,7 @@ export const notificationsDbAdapter: NotificationsAdapter = {
   },
 
   async getCounts(userId: string): Promise<NotificationCounts> {
-    const { data, error } = await supabase.rpc('notifications_counts', {
+    const { data, error } = await supabase.rpc('notifications_counts' as any, {
       p_user_id: userId
     });
 
@@ -63,15 +63,15 @@ export const notificationsDbAdapter: NotificationsAdapter = {
       throw error;
     }
 
-    if (!data || data.length === 0) {
+    if (!data || (Array.isArray(data) && data.length === 0)) {
       return { priority: 0, social: 0, system: 0 };
     }
 
-    return data[0] as NotificationCounts;
+    return (Array.isArray(data) ? data[0] : data) as NotificationCounts;
   },
 
   async enqueueTest(userId: string, kind: string) {
-    const { error } = await supabase.rpc('notification_enqueue_test', {
+    const { error } = await supabase.rpc('notification_enqueue_test' as any, {
       p_user_id: userId,
       p_kind: kind
     });
@@ -83,7 +83,7 @@ export const notificationsDbAdapter: NotificationsAdapter = {
   },
 
   async getPrefs(userId: string): Promise<NotificationPrefs> {
-    const { data, error } = await supabase.rpc('notification_prefs_get', {
+    const { data, error } = await supabase.rpc('notification_prefs_get' as any, {
       p_user_id: userId
     });
 
@@ -96,10 +96,10 @@ export const notificationsDbAdapter: NotificationsAdapter = {
   },
 
   async updatePrefs(userId: string, patch: Partial<NotificationPrefs>): Promise<NotificationPrefs> {
-    const { data, error } = await supabase.rpc('notification_prefs_update', {
+    const { data, error } = await supabase.rpc('notification_prefs_update' as any, {
       p_user_id: userId,
       p_patch: patch as any
-    }) as any; // Type assertions until Supabase types regenerate
+    });
 
     if (error) {
       console.error('[NotificationsDB] updatePrefs error:', error);
@@ -110,9 +110,9 @@ export const notificationsDbAdapter: NotificationsAdapter = {
   },
 
   async getDigestPreview(userId: string) {
-    const { data, error } = await supabase.rpc('notification_digest_preview', {
+    const { data, error } = await supabase.rpc('notification_digest_preview' as any, {
       p_user_id: userId
-    }) as any; // Type assertions until Supabase types regenerate
+    });
 
     if (error) {
       console.error('[NotificationsDB] getDigestPreview error:', error);
@@ -123,7 +123,7 @@ export const notificationsDbAdapter: NotificationsAdapter = {
   },
 
   async sendTestDigest(userId: string) {
-    const { error } = await supabase.rpc('notification_digest_send_test', {
+    const { error } = await supabase.rpc('notification_digest_send_test' as any, {
       p_user_id: userId
     });
 
