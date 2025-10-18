@@ -53,6 +53,13 @@ export default function DashboardLayout() {
   const rawModule = sp.get('m');
   const [userId, setUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'following' | 'foryou' | 'shop'>('following');
+  
+  // Social feed position and size state
+  const [feedPosition, setFeedPosition] = useState({ x: window.innerWidth - 540, y: 64 });
+  const [feedSize, setFeedSize] = useState({ width: 520, height: window.innerHeight - 64 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState<string | null>(null);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   // Always clear any module param to hide center panel
   useEffect(() => {
@@ -77,6 +84,81 @@ export default function DashboardLayout() {
     window.addEventListener('feed-swipe', handleSwipe as any);
     return () => window.removeEventListener('feed-swipe', handleSwipe as any);
   }, [activeTab]);
+
+  // Drag handlers
+  const handleDragStart = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - feedPosition.x, y: e.clientY - feedPosition.y });
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleDragMove = (e: MouseEvent) => {
+      setFeedPosition({
+        x: Math.max(0, Math.min(e.clientX - dragStart.x, window.innerWidth - feedSize.width)),
+        y: Math.max(0, Math.min(e.clientY - dragStart.y, window.innerHeight - feedSize.height))
+      });
+    };
+
+    const handleDragEnd = () => setIsDragging(false);
+
+    window.addEventListener('mousemove', handleDragMove);
+    window.addEventListener('mouseup', handleDragEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleDragMove);
+      window.removeEventListener('mouseup', handleDragEnd);
+    };
+  }, [isDragging, dragStart, feedSize]);
+
+  // Resize handlers
+  const handleResizeStart = (e: React.MouseEvent, handle: string) => {
+    e.stopPropagation();
+    setIsResizing(handle);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleResizeMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - dragStart.x;
+      const deltaY = e.clientY - dragStart.y;
+
+      setFeedSize(prev => {
+        let newWidth = prev.width;
+        let newHeight = prev.height;
+        let newX = feedPosition.x;
+
+        if (isResizing.includes('left')) {
+          newWidth = Math.max(320, prev.width - deltaX);
+          newX = feedPosition.x + deltaX;
+        }
+        if (isResizing.includes('right')) {
+          newWidth = Math.max(320, prev.width + deltaX);
+        }
+        if (isResizing.includes('bottom') || isResizing.includes('corner')) {
+          newHeight = Math.max(400, prev.height + deltaY);
+        }
+
+        setFeedPosition(p => ({ ...p, x: newX }));
+        return { width: newWidth, height: newHeight };
+      });
+
+      setDragStart({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleResizeEnd = () => setIsResizing(null);
+
+    window.addEventListener('mousemove', handleResizeMove);
+    window.addEventListener('mouseup', handleResizeEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleResizeMove);
+      window.removeEventListener('mouseup', handleResizeEnd);
+    };
+  }, [isResizing, dragStart, feedPosition]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
@@ -143,15 +225,23 @@ export default function DashboardLayout() {
           </DashboardErrorBoundary>
         </section>
 
-        {/* Social Feed - RIGHT (LOCKED) */}
+        {/* Social Feed - DRAGGABLE & RESIZABLE */}
         <aside
           id="sidefeed-pane"
-          className="fixed z-40 md:right-5 right-0 top-[var(--header-h,64px)] h-[calc(100dvh-var(--header-h,64px))] md:w-[460px] lg:w-[520px] w-full border-l border-border/40 bg-background/70 backdrop-blur md:rounded-l-xl overflow-hidden"
-          data-locked="true"
+          style={{
+            left: `${feedPosition.x}px`,
+            top: `${feedPosition.y}px`,
+            width: `${feedSize.width}px`,
+            height: `${feedSize.height}px`
+          }}
+          className="fixed z-40 border border-border/40 bg-background/70 backdrop-blur rounded-xl overflow-hidden shadow-2xl"
           aria-label="Social feed"
         >
-          {/* Header: profile + totals + scrollable tabs */}
-          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b border-border/40">
+          {/* Drag Handle Header */}
+          <div 
+            className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b border-border/40 cursor-move"
+            onMouseDown={handleDragStart}
+          >
             <div className="px-3 py-2 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <div className="h-8 w-8 rounded-full bg-muted flex-shrink-0" />
@@ -171,6 +261,7 @@ export default function DashboardLayout() {
                     <button
                       key={k}
                       onClick={() => setActiveTab(k)}
+                      onMouseDown={(e) => e.stopPropagation()}
                       className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
                         activeTab === k 
                           ? 'bg-primary text-primary-foreground' 
@@ -186,6 +277,24 @@ export default function DashboardLayout() {
           </div>
 
           <TwoUpFeed feedKey={activeTab} />
+
+          {/* Resize Handles */}
+          <div
+            className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize bg-blue-500/20 hover:bg-blue-500/40 transition-colors"
+            onMouseDown={(e) => handleResizeStart(e, 'left')}
+          />
+          <div
+            className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize bg-green-500/20 hover:bg-green-500/40 transition-colors"
+            onMouseDown={(e) => handleResizeStart(e, 'right')}
+          />
+          <div
+            className="absolute left-0 right-0 bottom-0 h-2 cursor-ns-resize bg-purple-500/20 hover:bg-purple-500/40 transition-colors"
+            onMouseDown={(e) => handleResizeStart(e, 'bottom')}
+          />
+          <div
+            className="absolute right-0 bottom-0 w-4 h-4 cursor-nwse-resize bg-red-500/30 hover:bg-red-500/50 transition-colors"
+            onMouseDown={(e) => handleResizeStart(e, 'corner-right-bottom')}
+          />
         </aside>
       </div>
 
