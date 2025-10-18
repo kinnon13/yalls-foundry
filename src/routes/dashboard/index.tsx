@@ -159,9 +159,13 @@ export default function DashboardLayout() {
       {/* Global header */}
       <GlobalHeader />
 
-      {/* Main content area - hidden per user request */}
-      <div className="flex-1 relative min-h-0 overflow-hidden hidden">
-        {/* Center dashboard hidden */}
+      {/* Main content area */}
+      <div className="flex-1 relative min-h-0 overflow-hidden">
+        <DashboardErrorBoundary>
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><PanelSkeleton /></div>}>
+            <DraggableAppGrid />
+          </Suspense>
+        </DashboardErrorBoundary>
       </div>
 
       {/* Social Feed Sidecar - Resizable overlay */}
