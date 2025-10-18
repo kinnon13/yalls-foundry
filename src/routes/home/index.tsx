@@ -1,8 +1,9 @@
-import { GlobalHeader } from '@/components/layout/GlobalHeader';
-import { BottomDock } from '@/components/layout/BottomDock';
 import AppsPane from './parts/AppsPane';
 import SocialFeedPane from './parts/SocialFeedPane';
 import PhonePager from './parts/PhonePager';
+import WorkspaceHost from './parts/WorkspaceHost';
+import { GlobalHeader } from '@/components/layout/GlobalHeader';
+import { BottomDock } from '@/components/layout/BottomDock';
 
 export default function HomePage() {
   return (
@@ -35,8 +36,10 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Always on top of the grid */}
+      <WorkspaceHost />
+
       <BottomDock />
     </div>
   );
 }
-

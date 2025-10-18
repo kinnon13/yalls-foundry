@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useEntityCapabilities } from '@/hooks/useEntityCapabilities';
 import { AppIconTile } from '@/components/ui/AppIconTile';
+import { openInWorkspace } from './WorkspaceHost';
 import { 
   Calendar, Settings, DollarSign, Trophy, ShoppingCart,
   Building, Users, Sparkles, Tractor, CheckCircle,
@@ -52,6 +53,7 @@ type Bubble = { id: string; display_name: string; avatar_url?: string | null };
 
 export default function AppsPane() {
   const navigate = useNavigate();
+  const [sp, setSp] = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
   const [tile, setTile] = useState(() => 
     Number(localStorage.getItem('apps.tileSize') || 112)
@@ -138,6 +140,12 @@ export default function AppsPane() {
   });
 
   const handleAppClick = (app: AppTile) => {
+    // Open in workspace for supported apps
+    if (app.id === 'social') return openInWorkspace(sp, setSp, 'social');
+    if (app.id === 'marketplace') return openInWorkspace(sp, setSp, 'marketplace');
+    if (app.id === 'discover') return openInWorkspace(sp, setSp, 'discover');
+    
+    // Fallback for module-based apps or unsupported routes
     if (app.route) {
       navigate(app.route);
     } else if (app.module) {

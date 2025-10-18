@@ -1,7 +1,8 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MessageCircle, Plus, Store, Globe2, AppWindow } from 'lucide-react';
 import { useState } from 'react';
 import { ChatDrawer } from '@/components/chat/ChatDrawer';
+import { openInWorkspace } from '@/routes/home/parts/WorkspaceHost';
 import {
   Sheet,
   SheetContent,
@@ -11,6 +12,7 @@ import {
 
 export function BottomDock() {
   const nav = useNavigate();
+  const [sp, setSp] = useSearchParams();
   const [chatOpen, setChatOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -43,7 +45,7 @@ export function BottomDock() {
           <Item onClick={() => setCreateOpen(true)} label="Create">
             <Plus className="w-5 h-5" />
           </Item>
-          <Item onClick={() => nav('/marketplace')} label="Marketplace">
+          <Item onClick={() => openInWorkspace(sp, setSp, 'marketplace')} label="Marketplace">
             <Store className="w-5 h-5" />
           </Item>
           <Item onClick={() => nav('/unclaimed')} label="Unclaimed">
