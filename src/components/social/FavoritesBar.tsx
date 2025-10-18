@@ -296,7 +296,7 @@ export function FavoritesBar({
   const { data: realBubbles = [], isLoading } = useFavoriteBubbles(userId, { publicOnly });
   const { add, remove } = useFavoriteMutations(userId);
 
-  // Mock bubbles for visual testing
+  // Mock bubbles for visual testing - always show these for now
   const mockBubbles: Bubble[] = [
     { id: 'mock-1', display_name: 'Casey Morales', handle: 'caseymorales', kind: 'person', status: 'verified', avatar_url: null },
     { id: 'mock-2', display_name: 'Wild River Stables', handle: 'wildriverstables', kind: 'business', status: 'verified', avatar_url: null },
@@ -307,8 +307,8 @@ export function FavoritesBar({
     { id: 'mock-7', display_name: 'Sarah Johnson', handle: 'sarahjohnson', kind: 'person', status: 'verified', avatar_url: null },
   ];
 
-  // Use real bubbles if available, otherwise show mocks for testing
-  const bubbles = realBubbles.length > 0 ? realBubbles : mockBubbles;
+  // Always show mock bubbles for testing
+  const bubbles = mockBubbles;
 
   const [sheetOpen, setSheetOpen] = useState(false);
 
