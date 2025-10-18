@@ -79,12 +79,18 @@ export default function EntityDetail() {
 
   const handlePin = () => {
     if (!userId) {
-      toast({ title: 'Please sign in to pin entities', variant: 'destructive' });
+      toast({ title: 'Sign in to pin entities', variant: 'default' });
       return;
     }
 
     if (isPinned) {
       pins.remove.mutate({ pin_type: 'entity', ref_id: entity.id });
+      // Log telemetry
+      fetch('/api/rocker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'pin_removed', input: { pin_type: 'entity', ref_id: entity.id } })
+      }).catch(() => {});
     } else {
       pins.add.mutate({
         pin_type: 'entity',
@@ -96,6 +102,12 @@ export default function EntityDetail() {
           status: entity.status
         }
       });
+      // Log telemetry
+      fetch('/api/rocker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'pin_added', input: { pin_type: 'entity', ref_id: entity.id } })
+      }).catch(() => {});
     }
   };
 

@@ -34,7 +34,15 @@ export function MyApps({ entityId }: MyAppsProps) {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id || null));
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const pins = useProfilePins(userId);
@@ -63,7 +71,7 @@ export function MyApps({ entityId }: MyAppsProps) {
 
       const { data } = await supabase
         .from('entities')
-        .select('id, display_name, kind, status, handle')
+        .select('id, display_name, kind, status, handle, owner_user_id')
         .in('id', entityPins.map(p => p.ref_id));
 
       return data || [];
@@ -96,6 +104,12 @@ export function MyApps({ entityId }: MyAppsProps) {
       'themes': `/workspace/${entityId}/settings?tab=theme`,
     };
     return routes[appKey] || `/workspace/${entityId}/dashboard`;
+  };
+
+  const getEntityRoute = (entity: { id: string; owner_user_id?: string | null }) => {
+    return entity.owner_user_id === userId 
+      ? `/workspace/${entity.id}/dashboard` 
+      : `/entities/${entity.id}`;
   };
 
   if (isLoading) {
@@ -134,8 +148,8 @@ export function MyApps({ entityId }: MyAppsProps) {
               icon: Building2,
               meta: entity.status === 'unclaimed' ? 'Unclaimed' : entity.kind,
               accent: entity.status === 'unclaimed' ? 'hsl(45 85% 60%)' : 'hsl(200 90% 55%)',
-              to: `/workspace/${entity.id}/dashboard`,
-              onClick: () => log('pinned_entity_open', { entity_id: entity.id })
+              to: getEntityRoute(entity),
+              onClick: () => log('tile_open', { key: `entity:${entity.id}`, pin_type: 'entity', ref_id: entity.id })
             }))
           ]
             .sort((a, b) => a.title.localeCompare(b.title))

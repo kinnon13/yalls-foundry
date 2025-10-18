@@ -7861,6 +7861,10 @@ export type Database = {
         Args: { p_profile_id: string }
         Returns: string
       }
+      _pin_next_index: {
+        Args: { p_user: string }
+        Returns: number
+      }
       _postgis_deprecate: {
         Args: { newname: string; oldname: string; version: string }
         Returns: undefined
