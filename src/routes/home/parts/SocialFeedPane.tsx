@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useSession } from '@/lib/auth/context';
 import { Reel } from '@/components/reels/Reel';
 import { cn } from '@/lib/utils';
+import ProfileSummaryBar from './ProfileSummaryBar';
 
 const TABS = ['following', 'for-you', 'shop', 'profile'] as const;
 type Tab = typeof TABS[number];
@@ -70,7 +71,7 @@ export default function SocialFeedPane() {
 
   return (
     <section className="flex h-full w-full flex-col" ref={railRef}>
-      {/* Profile summary above feed */}
+      {/* Profile bubble above the feed */}
       <ProfileSummaryBar />
 
       {/* Tabs (clickable + swipeable) */}
@@ -106,35 +107,3 @@ export default function SocialFeedPane() {
   );
 }
 
-/** Profile summary bar with aggregated stats */
-function ProfileSummaryBar() {
-  const [stats] = useState({
-    name: 'You',
-    avatar: undefined,
-    following: 124,
-    followers: 987,
-    likes: 3204,
-  });
-
-  return (
-    <div className="flex items-center gap-3 px-2 py-2 border-b border-border/60">
-      {stats.avatar ? (
-        <img src={stats.avatar} className="h-8 w-8 rounded-full object-cover" alt="" />
-      ) : (
-        <div className="h-8 w-8 rounded-full bg-muted" />
-      )}
-      <div className="text-sm font-medium">{stats.name}</div>
-      <div className="ml-2 grid auto-cols-max grid-flow-col gap-4 text-xs text-muted-foreground">
-        <div>
-          <span className="font-semibold text-foreground">{stats.following}</span> Following
-        </div>
-        <div>
-          <span className="font-semibold text-foreground">{stats.followers}</span> Followers
-        </div>
-        <div>
-          <span className="font-semibold text-foreground">{stats.likes}</span> Likes
-        </div>
-      </div>
-    </div>
-  );
-}
