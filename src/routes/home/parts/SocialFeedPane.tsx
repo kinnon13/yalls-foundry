@@ -112,16 +112,16 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col">
+    <section className="flex h-full w-full flex-col text-[hsl(222.2_47.4%_11.2%)]">
       {/* Home button and Connected Accounts heading in same row */}
       <div className="flex items-center justify-between pr-2 py-2">
         <button
           onClick={() => navigate('/home')}
-          className="text-base font-semibold text-foreground hover:text-primary transition-colors"
+          className="text-base font-semibold hover:text-primary transition-colors"
         >
           Home
         </button>
-        <h3 className="text-base font-semibold text-foreground text-center">View Connected Accounts</h3>
+        <h3 className="text-base font-semibold text-center">View Connected Accounts</h3>
         <div className="w-[60px]" aria-hidden /> {/* Spacer for balance */}
       </div>
 
