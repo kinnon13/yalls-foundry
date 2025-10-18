@@ -14,7 +14,7 @@ const cacheHitRate = new Rate('cache_hits');
 const feedLatency = new Trend('feed_latency');
 
 const API_URL = __ENV.API_URL || 'http://localhost:54321';
-const DURATION = __ENV.K6_DURATION || '60s';
+const DURATION = __ENV.K6_DURATION ? `${__ENV.K6_DURATION}s` : '60s';
 const VUS = parseInt(__ENV.K6_VUS || '100', 10);
 
 export const options = {

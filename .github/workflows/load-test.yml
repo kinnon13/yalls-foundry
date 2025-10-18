@@ -37,6 +37,7 @@ jobs:
           K6_DURATION: ${{ github.event.inputs.duration }}
           K6_VUS: ${{ github.event.inputs.users }}
           API_URL: ${{ secrets.API_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
       
       - name: Upload Results
         if: always()
