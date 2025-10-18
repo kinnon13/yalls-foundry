@@ -9,6 +9,7 @@ const ROUTE_ALIASES: Record<string, string> = {
   '/dashboard': '/workspace',
   '/incentives/dashboard': '/workspace',
   '/crm': '/workspace',
+  '/organizer': '/workspace',
 };
 
 // Which route heads should be collapsed into `/<head>/*`
@@ -33,7 +34,7 @@ const COLLAPSE_HEADS = new Set([
 export const ROUTE_CATEGORIES: Record<string, string> = {
   '/events': 'public',
   '/entries': 'private',
-  '/organizer': 'organizer',
+  '/organizer': 'workspace', // Legacy alias for producer events
   '/workspace': 'workspace',
   '/marketplace': 'public',
   '/equistats': 'public',

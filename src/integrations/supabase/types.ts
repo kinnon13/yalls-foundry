@@ -3826,6 +3826,8 @@ export type Database = {
           host_entity_id: string | null
           host_profile_id: string | null
           id: string
+          incentive_id: string | null
+          kind: Database["public"]["Enums"]["event_kind"] | null
           location: Json | null
           slug: string
           starts_at: string
@@ -3842,6 +3844,8 @@ export type Database = {
           host_entity_id?: string | null
           host_profile_id?: string | null
           id?: string
+          incentive_id?: string | null
+          kind?: Database["public"]["Enums"]["event_kind"] | null
           location?: Json | null
           slug: string
           starts_at: string
@@ -3858,6 +3862,8 @@ export type Database = {
           host_entity_id?: string | null
           host_profile_id?: string | null
           id?: string
+          incentive_id?: string | null
+          kind?: Database["public"]["Enums"]["event_kind"] | null
           location?: Json | null
           slug?: string
           starts_at?: string
@@ -3892,6 +3898,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_incentive_id_fkey"
+            columns: ["incentive_id"]
+            isOneToOne: false
+            referencedRelation: "incentives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_incentive_id_fkey"
+            columns: ["incentive_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["incentive_id"]
           },
         ]
       }
@@ -10290,6 +10310,7 @@ export type Database = {
         | "rider"
         | "stable"
         | "event"
+      event_kind: "race" | "incentive" | "clinic" | "sale" | "other"
       event_visibility: "public" | "private" | "busy"
       memory_type:
         | "preference"
@@ -10484,6 +10505,7 @@ export const Constants = {
         "stable",
         "event",
       ],
+      event_kind: ["race", "incentive", "clinic", "sale", "other"],
       event_visibility: ["public", "private", "busy"],
       memory_type: [
         "preference",

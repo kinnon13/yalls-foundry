@@ -4,7 +4,7 @@
     { "canonical": "ai",        "subareas": ["activity","memory","policy"] },
     { "canonical": "discovery", "subareas": ["search","marketplace","public_profiles","public_events","feed"] },
     { "canonical": "dashboard", "subareas": ["home","entities","crm","listings","orders","incentives","calendar","farm_ops","messaging"] },
-    { "canonical": "events",    "subareas": ["organizer","entrant"] },
+    { "canonical": "events",    "subareas": ["producer_events","entrant"] },
     { "canonical": "equistats", "subareas": ["horse_performance","earnings_programs","pedigree_crosses","compare_insights"] },
     { "canonical": "platform",  "subareas": ["auth","commerce_buyer","content_taxonomy","telemetry"] },
     { "canonical": "profile",   "subareas": ["me"] }
@@ -14,7 +14,8 @@
     "/entrant": "/entries",
     "/dashboard": "/workspace",
     "/incentives/dashboard": "/workspace",
-    "/crm": "/workspace"
+    "/crm": "/workspace",
+    "/organizer": "/workspace"
   },
 
   "routeFamilies": [
@@ -23,23 +24,25 @@
     { "path": "/search",                  "area": "discovery", "visibility": "public" },
     { "path": "/marketplace/*",           "area": "discovery", "visibility": "public" },
     { "path": "/stallions/*",             "area": "discovery", "visibility": "public" },
-    { "path": "/entities/*",              "area": "discovery", "visibility": "public" },
-    { "path": "/events/*",                "area": "discovery", "visibility": "public" },
-    { "path": "/feed",                    "area": "discovery", "visibility": "private" },
+    { "path": "/entities/*",              "area": "discovery", "visibility": "public", "notes": "public entity pages" },
+    { "path": "/events/*",                "area": "discovery", "visibility": "public", "notes": "public browse/results" },
+    { "path": "/feed",                    "area": "discovery", "visibility": "private", "notes": "personalized feed (auth required)" },
 
-    { "path": "/workspace/*",             "area": "dashboard", "visibility": "dashboard" },
+    { "path": "/workspace/*",             "area": "dashboard", "visibility": "dashboard", "notes": "workspace hub" },
     { "path": "/listings/*",              "area": "dashboard", "visibility": "dashboard" },
-    { "path": "/orders/*",                "area": "dashboard", "visibility": "dashboard", "notes": "seller console" },
     { "path": "/incentives/*",            "area": "dashboard", "visibility": "dashboard" },
     { "path": "/farm/*",                  "area": "dashboard", "visibility": "dashboard" },
-    { "path": "/entries/*",               "area": "events",    "visibility": "private" },
-    { "path": "/organizer/*",             "area": "events",    "visibility": "organizer" },
+    
+    { "path": "/workspace/:entityId/events/*", "area": "events", "visibility": "dashboard", "notes": "producer events (business puts on races/incentives)" },
+    { "path": "/organizer/*",             "area": "events",    "visibility": "dashboard", "notes": "LEGACY ALIAS → /workspace/:entityId/events/*" },
+    { "path": "/entries/*",               "area": "events",    "visibility": "private", "notes": "entrant flows (rider/owner perspective)" },
 
-    { "path": "/equistats/*",             "area": "equistats", "visibility": "public" },
+    { "path": "/equistats/*",             "area": "equistats", "visibility": "public", "notes": "public + workspace analytics" },
 
     { "path": "/cart",                    "area": "platform",  "visibility": "private" },
+    { "path": "/orders/*",                "area": "platform",  "visibility": "private", "notes": "buyer order tracking" },
     { "path": "/login",                   "area": "platform",  "visibility": "public" },
-    { "path": "/profile",                 "area": "profile",   "visibility": "private" }
+    { "path": "/profile",                 "area": "profile",   "visibility": "private", "notes": "my profile; public is /entities/:id" }
   ],
 
   "rpcsByArea": {
@@ -69,5 +72,9 @@
 
   "piiLikely": ["profiles","orders","order_line_items","payments","notifications","messages","crm_contacts","entity_members","contributors","user_roles","contact_identities"],
 
-  "meta": { "normalized": true, "collapsed": true }
+  "meta": { 
+    "normalized": true, 
+    "collapsed": true,
+    "notes": "Producer = Business entity that puts on races/incentives. Organizer is legacy alias. Public profiles at /entities/:id, private at /profile"
+  }
 }
