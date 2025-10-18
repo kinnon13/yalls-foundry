@@ -39,6 +39,9 @@ jobs:
       - name: Validate architecture config
         run: node scripts/validate-architecture.mjs
 
+      - name: Validate Rocker footprint
+        run: node scripts/validate-rocker-footprint.mjs
+
       - name: Validate work report (PRs only)
         if: ${{ github.event_name == 'pull_request' }}
         run: |

@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search as SearchIcon, Loader2, ExternalLink, Flag, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useRocker } from '@/lib/ai/rocker/agent';
+import { RockerHint } from '@/components/rocker/agent/RockerHint';
 
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,6 +17,12 @@ export default function Search() {
   const [category, setCategory] = useState(searchParams.get('category') || 'all');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const { log } = useRocker();
+
+  useEffect(() => {
+    // Log page view
+    log('page_view', { section: 'discovery_search' });
+  }, [log]);
 
   useEffect(() => {
     const q = searchParams.get('q');
@@ -83,6 +91,7 @@ export default function Search() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    log('search_query', { query, category });
     setSearchParams({ q: query, category });
     performSearch(query, category);
   };
@@ -93,6 +102,13 @@ export default function Search() {
       <GlobalHeader />
       <main className="min-h-screen p-6">
         <div className="max-w-4xl mx-auto space-y-6">
+          {/* Rocker Hint */}
+          <RockerHint
+            suggestion="Try searching for horses, events, or businesses to discover the community"
+            reason="Search helps you find profiles, upcoming events, and connect with other users"
+            rateLimit="rocker_search_hint"
+          />
+          
           <div className="space-y-4">
             <h1 className="text-3xl font-bold">Search</h1>
             

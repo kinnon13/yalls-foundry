@@ -13,6 +13,7 @@ import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
 import InactivityNudge from '@/components/rocker/InactivityNudge';
 import { RockerDock } from '@/components/rocker/RockerDock';
 import { RockerProvider } from '@/lib/ai/rocker/context';
+import { RockerAgentProvider } from '@/lib/ai/rocker/agent';
 import { RedirectHandler } from '@/components/navigation/RedirectHandler';
 import PreviewRoutes from '@/preview/PreviewRoutes';
 import { PreviewMessageListener } from '@/components/preview/PreviewMessageListener';
@@ -353,7 +354,9 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <RockerProvider>
-              <AppContent />
+              <RockerAgentProvider>
+                <AppContent />
+              </RockerAgentProvider>
             </RockerProvider>
           </AuthProvider>
         </BrowserRouter>
