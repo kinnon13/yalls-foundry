@@ -101,6 +101,12 @@ export default function FeaturesAdminPage() {
   const [showUndocRoutes, setShowUndocRoutes] = useState(false);
   const [showUndocRpcs, setShowUndocRpcs] = useState(false);
   const [showUndocTables, setShowUndocTables] = useState(false);
+  
+  // Export selection state
+  const [exportAreaDiscovery, setExportAreaDiscovery] = useState(true);
+  const [exportRoutes, setExportRoutes] = useState(true);
+  const [exportRpcs, setExportRpcs] = useState(true);
+  const [exportTables, setExportTables] = useState(true);
 
   const features = kernel.features;
   const goldPath = kernel.validateGoldPath();
@@ -303,19 +309,34 @@ export default function FeaturesAdminPage() {
       return;
     }
 
-    const data = {
-      timestamp: new Date().toISOString(),
-      summary: {
-        routes: undoc.routes?.length || 0,
-        rpcs: undoc.rpcs?.length || 0,
-        tables: undoc.tables?.length || 0,
-      },
-      undocumented: {
-        routes: undoc.routes || [],
-        rpcs: undoc.rpcs || [],
-        tables: undoc.tables || [],
+    const data: any = { timestamp: new Date().toISOString() };
+    let totalItems = 0;
+
+    if (exportAreaDiscovery) {
+      data.areaDiscovery = areasDebug;
+      totalItems += areasDebug.raw.length + areasDebug.canonical.length + areasDebug.inferred.length;
+    }
+
+    if (exportRoutes || exportRpcs || exportTables) {
+      data.undocumented = {};
+      if (exportRoutes) {
+        data.undocumented.routes = undoc.routes || [];
+        totalItems += undoc.routes?.length || 0;
       }
-    };
+      if (exportRpcs) {
+        data.undocumented.rpcs = undoc.rpcs || [];
+        totalItems += undoc.rpcs?.length || 0;
+      }
+      if (exportTables) {
+        data.undocumented.tables = undoc.tables || [];
+        totalItems += undoc.tables?.length || 0;
+      }
+    }
+
+    if (totalItems === 0) {
+      toast.error('Please select at least one section to export');
+      return;
+    }
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -324,7 +345,7 @@ export default function FeaturesAdminPage() {
     a.download = `undocumented-items-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success(`Exported ${data.summary.routes + data.summary.rpcs + data.summary.tables} undocumented items`);
+    toast.success(`Exported ${totalItems} items to JSON`);
   };
 
   const handleExportUndocumentedCSV = () => {
@@ -337,21 +358,52 @@ export default function FeaturesAdminPage() {
     // Create CSV content with BOM for Excel compatibility
     const BOM = '\uFEFF';
     let csv = BOM + 'Type,Name\n';
+    let totalItems = 0;
+
+    // Add area discovery
+    if (exportAreaDiscovery) {
+      areasDebug.raw.forEach((area: string) => {
+        csv += `"Area (Raw)","${area.replace(/"/g, '""')}"\n`;
+        totalItems++;
+      });
+      areasDebug.canonical.forEach((area: string) => {
+        csv += `"Area (Canonical)","${area.replace(/"/g, '""')}"\n`;
+        totalItems++;
+      });
+      areasDebug.inferred.forEach((area: string) => {
+        csv += `"Area (Inferred)","${area.replace(/"/g, '""')}"\n`;
+        totalItems++;
+      });
+    }
 
     // Add routes
-    (undoc.routes || []).forEach((route: string) => {
-      csv += `Route,"${route.replace(/"/g, '""')}"\n`;
-    });
+    if (exportRoutes) {
+      (undoc.routes || []).forEach((route: string) => {
+        csv += `Route,"${route.replace(/"/g, '""')}"\n`;
+        totalItems++;
+      });
+    }
 
     // Add RPCs
-    (undoc.rpcs || []).forEach((rpc: string) => {
-      csv += `RPC,"${rpc.replace(/"/g, '""')}"\n`;
-    });
+    if (exportRpcs) {
+      (undoc.rpcs || []).forEach((rpc: string) => {
+        csv += `RPC,"${rpc.replace(/"/g, '""')}"\n`;
+        totalItems++;
+      });
+    }
 
     // Add tables
-    (undoc.tables || []).forEach((table: string) => {
-      csv += `Table,"${table.replace(/"/g, '""')}"\n`;
-    });
+    if (exportTables) {
+      (undoc.tables || []).forEach((table: string) => {
+        csv += `Table,"${table.replace(/"/g, '""')}"\n`;
+        totalItems++;
+      });
+    }
+
+    if (totalItems === 0) {
+      toast.error('Please select at least one section to export');
+      return;
+    }
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -361,8 +413,7 @@ export default function FeaturesAdminPage() {
     a.click();
     URL.revokeObjectURL(url);
     
-    const total = (undoc.routes?.length || 0) + (undoc.rpcs?.length || 0) + (undoc.tables?.length || 0);
-    toast.success(`Exported ${total} undocumented items to CSV`);
+    toast.success(`Exported ${totalItems} items to CSV`);
   };
 
   // Extract areas from features (both raw and canonical)
@@ -993,6 +1044,44 @@ export default function FeaturesAdminPage() {
                     Export JSON
                   </Button>
                 </div>
+              </div>
+              <div className="flex flex-wrap gap-4 pt-3 border-t mt-3">
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={exportAreaDiscovery}
+                    onChange={(e) => setExportAreaDiscovery(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span>Area Discovery</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={exportRoutes}
+                    onChange={(e) => setExportRoutes(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span>Routes</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={exportRpcs}
+                    onChange={(e) => setExportRpcs(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span>RPCs</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={exportTables}
+                    onChange={(e) => setExportTables(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span>Tables</span>
+                </label>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
