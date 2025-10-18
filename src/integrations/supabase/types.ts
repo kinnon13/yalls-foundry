@@ -8412,6 +8412,10 @@ export type Database = {
         Args: { "": string }
         Returns: unknown
       }
+      get_dashboard_upcoming_events: {
+        Args: { p_horizon?: string; p_user_id: string }
+        Returns: Json
+      }
       get_entitlements: {
         Args: { p_user_id?: string }
         Returns: {
@@ -8484,6 +8488,15 @@ export type Database = {
           kernel_type: string
           priority: number
           source: string
+        }[]
+      }
+      get_user_network: {
+        Args: { p_user_id: string }
+        Returns: {
+          entity_id: string
+          rel: string
+          updated_at: string
+          weight: number
         }[]
       }
       get_user_role: {

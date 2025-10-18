@@ -3,12 +3,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardKPIs } from '@/components/dashboard/DashboardKPIs';
 import { DashboardEntitySwitcher } from '@/components/dashboard/DashboardEntitySwitcher';
 import { DashboardBreadcrumbs } from '@/components/dashboard/DashboardBreadcrumbs';
+import { UpcomingFromNetwork } from '@/components/dashboard/UpcomingFromNetwork';
+import { PortalTiles } from '@/components/dashboard/PortalTiles';
+import { useRocker } from '@/lib/ai/rocker';
 
 type NBA = { action: string; why: string; cta: string; href: string };
 
 export default function Overview() {
   const [items, setItems] = useState<NBA[]>([]);
   const [loading, setLoading] = useState(true);
+  const { log, section } = useRocker();
+
+  useEffect(() => {
+    log('page_view', { section });
+  }, [log, section]);
 
   useEffect(() => {
     (async () => {
@@ -39,6 +47,10 @@ export default function Overview() {
       </div>
 
       <DashboardKPIs kpis={null} isLoading={false} />
+
+      <UpcomingFromNetwork />
+
+      <PortalTiles />
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold">Next Best Actions</h2>
