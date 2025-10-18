@@ -56,10 +56,17 @@ export default function AppsPane() {
   const [tile, setTile] = useState(() => 
     Number(localStorage.getItem('apps.tileSize') || 112)
   );
+  const [containerHeight, setContainerHeight] = useState(() => 
+    Number(localStorage.getItem('apps.containerHeight') || 400)
+  );
 
   useEffect(() => {
     localStorage.setItem('apps.tileSize', String(tile));
   }, [tile]);
+
+  useEffect(() => {
+    localStorage.setItem('apps.containerHeight', String(containerHeight));
+  }, [containerHeight]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
@@ -172,13 +179,27 @@ export default function AppsPane() {
           />
           <span className="text-xs text-muted-foreground w-12">{tile}px</span>
         </div>
+        <div className="mt-1 flex items-center gap-3 px-0">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Box height</span>
+          <input
+            type="range"
+            min={200}
+            max={800}
+            step={10}
+            value={containerHeight}
+            onChange={(e) => setContainerHeight(parseInt(e.target.value))}
+            className="flex-1 max-w-xs"
+          />
+          <span className="text-xs text-muted-foreground w-12">{containerHeight}px</span>
+        </div>
       </section>
 
       {/* Horizontal scrolling grid of app tiles & pins */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden bg-muted/20 px-2 pb-2">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden bg-muted/20 px-2 pb-2 flex items-start">
         <div 
-          className="grid gap-3 h-full w-fit"
+          className="grid gap-3 w-fit border-2 border-dashed border-primary/30 rounded-lg p-2"
           style={{
+            height: `${containerHeight}px`,
             gridTemplateRows: `repeat(auto-fill, ${tile}px)`,
             gridAutoFlow: 'column',
             gridAutoColumns: `${tile}px`,
