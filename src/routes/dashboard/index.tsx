@@ -70,32 +70,8 @@ export default function DashboardLayout() {
   const rawModule = sp.get('m');
   const m = coerceModule(rawModule);
   const [userId, setUserId] = useState<string | null>(null);
-  const [feedWidth, setFeedWidth] = useState(400);
-  const [isDragging, setIsDragging] = useState(false);
   
   const Panel = useMemo(() => panels[m] ?? panels.overview, [m]);
-
-  // Handle drag resize
-  useEffect(() => {
-    if (!isDragging) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const newWidth = window.innerWidth - e.clientX;
-      setFeedWidth(Math.max(300, Math.min(800, newWidth)));
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging]);
 
   // Get user ID for appearance settings
   useEffect(() => {
@@ -153,11 +129,8 @@ export default function DashboardLayout() {
 
       <GlobalHeader />
       
-      {/* Main content area - z-20, with right margin for feed */}
-      <div 
-        className="relative z-20 h-[calc(100vh-64px)] overflow-auto transition-all duration-200"
-        style={{ marginRight: `${feedWidth}px` }}
-      >
+      {/* Main content area - z-20 */}
+      <div className="relative z-20 h-[calc(100vh-64px)] overflow-auto">
         {rawModule ? (
           <div className="container mx-auto p-6">
             <DashboardErrorBoundary>
@@ -175,38 +148,6 @@ export default function DashboardLayout() {
             </Suspense>
           </DashboardErrorBoundary>
         )}
-      </div>
-
-      {/* Resize Handle */}
-      <div
-        className={cn(
-          "fixed top-16 h-[calc(100vh-64px)] w-1 bg-border hover:bg-primary/50 cursor-col-resize z-50 transition-colors",
-          isDragging && "bg-primary"
-        )}
-        style={{ right: `${feedWidth}px` }}
-        onMouseDown={() => setIsDragging(true)}
-        role="separator"
-        aria-orientation="vertical"
-        aria-label="Resize social feed"
-      >
-        <div className="absolute inset-y-0 -left-2 -right-2" />
-      </div>
-
-      {/* Social Feed Sidecar - Permanently open */}
-      <div
-        className="fixed top-16 right-0 h-[calc(100vh-64px)] bg-background border-l shadow-xl z-40"
-        style={{ width: `${feedWidth}px` }}
-      >
-        {/* Feed Header */}
-        <div className="h-12 border-b flex items-center justify-between px-4 bg-background/95 backdrop-blur">
-          <h2 className="font-semibold">Social Feed</h2>
-          <div className="text-xs text-muted-foreground">{feedWidth}px</div>
-        </div>
-
-        {/* Feed Content */}
-        <div className="h-[calc(100%-48px)] overflow-hidden">
-          <TikTokFeed />
-        </div>
       </div>
 
       <DebugOverlay />
