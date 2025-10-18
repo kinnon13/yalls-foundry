@@ -59,11 +59,11 @@ export default function ProfileSummaryBar() {
       aria-label="Open your profile"
     >
       {/* Avatar */}
-      <div className="relative h-9 w-9 rounded-full overflow-hidden ring-2 ring-primary/60 shrink-0">
+      <div className="relative h-14 w-14 rounded-full overflow-hidden ring-2 ring-primary/60 shrink-0">
         {avatar ? (
           <img src={avatar} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="grid h-full w-full place-items-center bg-muted text-sm">👤</div>
+          <div className="grid h-full w-full place-items-center bg-muted text-base">👤</div>
         )}
       </div>
 
