@@ -232,8 +232,7 @@ export default function AppsPane() {
               onClick={() => handleAppClick(app)}
               className={cn(
                 "group flex flex-col items-center justify-between gap-2 p-3",
-                "rounded-2xl transition-all duration-200",
-                "hover:scale-105 active:scale-95",
+                "rounded-2xl",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               )}
               style={{ width: tile, height: tile }}
