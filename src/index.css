@@ -1,5 +1,5 @@
-@import './apps-grid.css';
-@import './bubbles.css';
+@import './styles/apps-grid.css';
+@import './styles/bubbles.css';
 
 @tailwind base;
 @tailwind components;
