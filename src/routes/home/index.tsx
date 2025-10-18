@@ -8,7 +8,7 @@ export default function HomePage() {
   return (
     <>
       <GlobalHeader />
-      <main className="pt-14 pb-16">
+      <main className="pt-14 pb-16 bg-white">
         {/* Phone: horizontal pager (Apps | Feed | Shop | Profile) */}
         <div className="md:hidden">
           <PhonePager />
