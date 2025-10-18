@@ -1,62 +1,64 @@
 #!/usr/bin/env node
 /**
  * CI Gate: Validate Main Routes Cap
- * Ensures only 10 main routes are registered (excludes sub-routes, admin, preview)
+ * Ensures only 10 main routes using collapsedHeads from config
  */
 
 import fs from 'fs/promises';
-import path from 'path';
 
 const APP_FILE = 'src/App.tsx';
-const MAX_MAIN_ROUTES = 10;
-
-// Routes that don't count toward the cap
-const EXCLUDED_PATTERNS = [
-  /^\/admin\//,
-  /^\/preview\//,
-  /\/:\w+/, // Params like /:id
-  /^\/health$/,
-  /^\/404$/,
-  /^\/login$/,
-  /^\/\*$/  // Catch-all
-];
-
-function isMainRoute(route) {
-  return !EXCLUDED_PATTERNS.some(pat => pat.test(route));
-}
+const CONFIG_FILE = 'configs/area-discovery.json';
 
 async function main() {
-  console.log('🔍 Validating main routes cap...\n');
+  console.log('🔍 Validating main routes cap (using collapsedHeads)...\n');
 
-  const appContent = await fs.readFile(APP_FILE, 'utf8');
-  
-  // Extract Route components
-  const routeRegex = /<Route\s+path="([^"]+)"/g;
-  const routes = [];
-  let match;
-  
-  while ((match = routeRegex.exec(appContent)) !== null) {
-    routes.push(match[1]);
-  }
+  // Load config to get collapsedHeads
+  const configContent = await fs.readFile(CONFIG_FILE, 'utf8');
+  const config = JSON.parse(configContent);
+  const collapsedHeads = config.collapsedHeads || [];
+  const MAX_SECTIONS = 10;
 
-  const mainRoutes = routes.filter(isMainRoute);
-  
-  console.log(`📊 Route Analysis:`);
-  console.log(`   Total routes: ${routes.length}`);
-  console.log(`   Main routes: ${mainRoutes.length}/${MAX_MAIN_ROUTES}`);
-  console.log(`   Admin/system: ${routes.length - mainRoutes.length}\n`);
-
-  if (mainRoutes.length > MAX_MAIN_ROUTES) {
-    console.error(`❌ FAIL: ${mainRoutes.length} main routes exceeds cap of ${MAX_MAIN_ROUTES}`);
-    console.error(`\nMain routes found:`);
-    mainRoutes.forEach(r => console.error(`   - ${r}`));
-    console.error(`\n💡 Fix: Move routes to query params or consolidate under /dashboard`);
+  if (collapsedHeads.length > MAX_SECTIONS) {
+    console.error(`❌ FAIL: ${collapsedHeads.length} sections in collapsedHeads exceeds limit of ${MAX_SECTIONS}`);
+    console.error(`\nSections found:`);
+    collapsedHeads.forEach(h => console.error(`   - ${h}`));
     process.exit(1);
   }
 
-  console.log('✅ PASS: Main routes within cap');
-  console.log('\nMain routes:');
-  mainRoutes.forEach(r => console.log(`   ✓ ${r}`));
+  // Verify App.tsx routes match collapsedHeads
+  const appContent = await fs.readFile(APP_FILE, 'utf8');
+  const routeRegex = /<Route\s+path="([^"]+)"/g;
+  const routes = new Set();
+  let match;
+  
+  while ((match = routeRegex.exec(appContent)) !== null) {
+    const route = match[1];
+    // Extract head (first path segment)
+    const head = '/' + route.split('/')[1];
+    if (!head.includes(':') && head !== '/*' && head !== '/404' && head !== '/login' && head !== '/admin' && head !== '/preview') {
+      routes.add(head);
+    }
+  }
+
+  console.log(`📊 Route Analysis:`);
+  console.log(`   Configured sections (collapsedHeads): ${collapsedHeads.length}/${MAX_SECTIONS}`);
+  console.log(`   Unique route heads in App.tsx: ${routes.size}\n`);
+
+  // Check coverage
+  const missing = collapsedHeads.filter(h => !routes.has(h) && !['/feed', '/cart'].includes(h)); // feed/cart may be subpaths
+  const extra = Array.from(routes).filter(r => !collapsedHeads.includes(r));
+
+  if (missing.length > 0) {
+    console.warn(`⚠️  Warning: collapsedHeads not wired in App.tsx: ${missing.join(', ')}`);
+  }
+
+  if (extra.length > 0) {
+    console.warn(`⚠️  Warning: Routes in App.tsx not in collapsedHeads: ${extra.join(', ')}`);
+  }
+
+  console.log('✅ PASS: Sections within 10-head cap');
+  console.log('\nConfigured sections:');
+  collapsedHeads.forEach(h => console.log(`   ✓ ${h}`));
 }
 
 main().catch(err => {

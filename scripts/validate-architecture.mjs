@@ -71,21 +71,26 @@ for (const [from, to] of requiredAliases) {
 
 ok(`All required route aliases present (${requiredAliases.length})`);
 
-// Validate collapsed heads
+// Validate collapsed heads (10-section limit enforced)
 const heads = new Set(cfg.collapsedHeads || []);
-const requiredHeads = ['/equinestats', '/workspace', '/events', '/marketplace'];
+const MAX_SECTIONS = 10;
+
+if (heads.size > MAX_SECTIONS) {
+  fail(`Too many top-level heads: ${heads.size} (limit ${MAX_SECTIONS})`);
+}
+
+ok(`Collapsed heads within limit: ${heads.size}/${MAX_SECTIONS}`);
+
+// Validate required heads are present
+const requiredHeads = ['/equinestats', '/workspace', '/events', '/marketplace', '/entities', '/entries', '/search'];
 
 for (const head of requiredHeads) {
   if (!heads.has(head)) {
-    warn(`collapsedHeads missing recommended entry: "${head}"`);
+    fail(`collapsedHeads missing required entry: "${head}"`);
   }
 }
 
-if (heads.has('/equinestats')) {
-  ok('collapsedHeads includes "/equinestats"');
-} else {
-  fail('collapsedHeads must include "/equinestats"');
-}
+ok('All required heads present in collapsedHeads');
 
 // Validate areas structure
 if (!Array.isArray(cfg.areas) || cfg.areas.length === 0) {
