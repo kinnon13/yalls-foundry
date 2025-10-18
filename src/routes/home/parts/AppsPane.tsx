@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import BubbleRailTop from '@/components/social/BubbleRailTop';
+import { TopBubbleRail } from '@/components/social/TopBubbleRail';
+import { useTopBubbles, useReorderTopBubbles, useToggleTopBubblePublic } from '@/hooks/useTopBubbles';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useEntityCapabilities } from '@/hooks/useEntityCapabilities';
@@ -137,12 +138,37 @@ export default function AppsPane() {
     }
   };
 
+  // Pinned favorites (Top 8 bubbles)
+  const { data: bubbles = [] } = useTopBubbles({ userId, limit: 8 });
+  const reorder = useReorderTopBubbles(userId);
+  const togglePublic = useToggleTopBubblePublic(userId);
+  
+  // Track public states for toggle UI
+  const [publicStates, setPublicStates] = useState(new Map<string, boolean>());
+  useEffect(() => {
+    if (bubbles.length) {
+      const states = new Map(bubbles.map(b => [b.id, true])); // default public
+      setPublicStates(states);
+    }
+  }, [bubbles]);
+
   return (
     <div className="space-y-4">
-      {/* Bubbles across the very top, sticky below header */}
-      <div className="sticky top-[56px] z-10 bg-background/70 backdrop-blur pb-2">
-        <BubbleRailTop />
-      </div>
+      {/* Pinned favorites - MySpace Top 8 style bubbles */}
+      {bubbles.length > 0 && (
+        <div className="sticky top-[56px] z-10 bg-background/70 backdrop-blur pb-2">
+          <TopBubbleRail
+            bubbles={bubbles}
+            canReorder
+            onReorder={(ids) => reorder.mutate(ids)}
+            onTogglePublic={(ref_id, is_public) => {
+              togglePublic.mutate({ ref_id, is_public });
+              setPublicStates(prev => new Map(prev).set(ref_id, is_public));
+            }}
+            publicStates={publicStates}
+          />
+        </div>
+      )}
 
       {/* Scale control */}
       <div className="flex items-center gap-3 px-2">

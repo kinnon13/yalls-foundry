@@ -7535,6 +7535,7 @@ export type Database = {
           created_at: string | null
           folder_id: string | null
           id: string
+          is_public: boolean
           metadata: Json | null
           pin_type: Database["public"]["Enums"]["pin_type"]
           ref_id: string
@@ -7547,6 +7548,7 @@ export type Database = {
           created_at?: string | null
           folder_id?: string | null
           id?: string
+          is_public?: boolean
           metadata?: Json | null
           pin_type: Database["public"]["Enums"]["pin_type"]
           ref_id: string
@@ -7559,6 +7561,7 @@ export type Database = {
           created_at?: string | null
           folder_id?: string | null
           id?: string
+          is_public?: boolean
           metadata?: Json | null
           pin_type?: Database["public"]["Enums"]["pin_type"]
           ref_id?: string

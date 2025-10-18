@@ -62,29 +62,37 @@ export function BottomDock() {
           'px-2 pb-[max(0px,env(safe-area-inset-bottom))]'
         )}
       >
-      <div className="mx-auto max-w-[800px] h-16 grid grid-cols-5 gap-2">
+      <div className="mx-auto max-w-[800px] h-16 grid grid-cols-5 gap-2 items-end">
         {items.map((it) => {
           const Icon = it.icon;
           const isCreate = it.key === 'create';
           const content = (
             <div
               className={cn(
-                'flex flex-col items-center justify-center h-full',
-                isCreate ? '' : 'pt-1'
+                'flex flex-col items-center gap-1',
+                isCreate && 'translate-y-[-12px]'
               )}
             >
               <div
                 className={cn(
-                  'grid place-items-center rounded-full',
+                  'grid place-items-center rounded-2xl shadow-lg transition-all duration-200',
+                  'border border-white/10',
                   isCreate 
-                    ? 'h-14 w-14 bg-primary text-primary-foreground shadow-lg border-2 border-background' 
-                    : 'h-10 w-10 border border-border/60 bg-gradient-to-br from-primary/10 to-primary/5'
+                    ? 'h-14 w-14 bg-gradient-to-br from-primary/30 to-primary/10'
+                    : 'h-12 w-12 bg-gradient-to-br from-primary/20 to-primary/5'
                 )}
                 aria-hidden
               >
-                <Icon className={cn(isCreate ? 'h-7 w-7' : 'h-5 w-5')} />
+                <Icon 
+                  className={cn(
+                    'text-white drop-shadow-sm',
+                    isCreate ? 'w-7 h-7' : 'w-6 h-6'
+                  )} 
+                />
               </div>
-              {!isCreate && <span className="text-[11px] leading-none mt-1 font-medium">{it.label}</span>}
+              <span className="text-[10px] leading-tight font-medium truncate max-w-full">
+                {it.label}
+              </span>
             </div>
           );
 
@@ -92,10 +100,9 @@ export function BottomDock() {
             <Link
               key={it.key}
               to={it.to}
-              className={cn(
-                'relative rounded-lg hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition-all',
-                isCreate && 'translate-y-[-8px]'
-              )}
+              className="relative flex flex-col items-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition-all"
+              aria-label={it.label}
+              title={it.label}
             >
               {content}
             </Link>
@@ -103,10 +110,9 @@ export function BottomDock() {
             <button
               key={it.key}
               onClick={it.onClick}
-              className={cn(
-                'relative rounded-lg hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition-all',
-                isCreate && 'translate-y-[-8px]'
-              )}
+              className="relative flex flex-col items-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition-all"
+              aria-label={it.label}
+              title={it.label}
             >
               {content}
             </button>
