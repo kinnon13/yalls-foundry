@@ -71,21 +71,23 @@ export default function DashboardLayout() {
   const m = coerceModule(rawModule);
   const [userId, setUserId] = useState<string | null>(null);
   const [feedWidth, setFeedWidth] = useState(400);
-  const [isDragging, setIsDragging] = useState(false);
+  const [feedRightOffset, setFeedRightOffset] = useState(0);
+  const [isDraggingLeft, setIsDraggingLeft] = useState(false);
+  const [isDraggingRight, setIsDraggingRight] = useState(false);
   
   const Panel = useMemo(() => panels[m] ?? panels.overview, [m]);
 
-  // Handle drag resize
+  // Handle left edge drag (resize width)
   useEffect(() => {
-    if (!isDragging) return;
+    if (!isDraggingLeft) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const newWidth = window.innerWidth - e.clientX;
+      const newWidth = window.innerWidth - e.clientX - feedRightOffset;
       setFeedWidth(Math.max(300, Math.min(800, newWidth)));
     };
 
     const handleMouseUp = () => {
-      setIsDragging(false);
+      setIsDraggingLeft(false);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -95,7 +97,29 @@ export default function DashboardLayout() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging]);
+  }, [isDraggingLeft, feedRightOffset]);
+
+  // Handle right edge drag (move entire panel)
+  useEffect(() => {
+    if (!isDraggingRight) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newRightOffset = window.innerWidth - e.clientX;
+      setFeedRightOffset(Math.max(0, Math.min(400, newRightOffset)));
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingRight(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingRight]);
 
   // Get user ID for appearance settings
   useEffect(() => {
@@ -156,7 +180,7 @@ export default function DashboardLayout() {
       {/* Main content area - z-20, with right margin for feed */}
       <div 
         className="relative z-20 h-[calc(100vh-64px)] overflow-auto transition-all duration-200"
-        style={{ marginRight: `${feedWidth}px` }}
+        style={{ marginRight: `${feedWidth + feedRightOffset}px` }}
       >
         {rawModule ? (
           <div className="container mx-auto p-6">
@@ -177,25 +201,28 @@ export default function DashboardLayout() {
         )}
       </div>
 
-      {/* Resize Handle */}
+      {/* Left Resize Handle (adjust width) */}
       <div
         className={cn(
           "fixed top-16 h-[calc(100vh-64px)] w-1 bg-border hover:bg-primary/50 cursor-col-resize z-50 transition-colors",
-          isDragging && "bg-primary"
+          isDraggingLeft && "bg-primary"
         )}
-        style={{ right: `${feedWidth}px` }}
-        onMouseDown={() => setIsDragging(true)}
+        style={{ right: `${feedWidth + feedRightOffset}px` }}
+        onMouseDown={() => setIsDraggingLeft(true)}
         role="separator"
         aria-orientation="vertical"
-        aria-label="Resize social feed"
+        aria-label="Resize social feed width"
       >
         <div className="absolute inset-y-0 -left-2 -right-2" />
       </div>
 
       {/* Social Feed Sidecar - Permanently open */}
       <div
-        className="fixed top-16 right-0 h-[calc(100vh-64px)] bg-background border-l shadow-xl z-40"
-        style={{ width: `${feedWidth}px` }}
+        className="fixed top-16 h-[calc(100vh-64px)] bg-background border-l border-r shadow-xl z-40"
+        style={{ 
+          width: `${feedWidth}px`,
+          right: `${feedRightOffset}px`
+        }}
       >
         {/* Feed Header */}
         <div className="h-12 border-b flex items-center justify-between px-4 bg-background/95 backdrop-blur">
@@ -207,6 +234,21 @@ export default function DashboardLayout() {
         <div className="h-[calc(100%-48px)] overflow-hidden">
           <TikTokFeed />
         </div>
+      </div>
+
+      {/* Right Resize Handle (move panel) */}
+      <div
+        className={cn(
+          "fixed top-16 h-[calc(100vh-64px)] w-1 bg-border hover:bg-primary/50 cursor-col-resize z-50 transition-colors",
+          isDraggingRight && "bg-primary"
+        )}
+        style={{ right: `${feedRightOffset}px` }}
+        onMouseDown={() => setIsDraggingRight(true)}
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Move social feed position"
+      >
+        <div className="absolute inset-y-0 -left-2 -right-2" />
       </div>
 
       <DebugOverlay />
