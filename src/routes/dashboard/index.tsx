@@ -5,7 +5,7 @@ import { Wallpaper } from '@/components/appearance/Wallpaper';
 import { ScreenSaver } from '@/components/appearance/ScreenSaver';
 import { useAppearance } from '@/hooks/useAppearance';
 import { supabase } from '@/integrations/supabase/client';
-import { AppGrid } from '@/components/desktop/AppGrid';
+import { DraggableAppGrid } from '@/components/desktop/DraggableAppGrid';
 import { DebugOverlay } from '@/feature-kernel/DebugOverlay';
 import { FeatureErrorBoundary } from '@/feature-kernel/ErrorBoundary';
 import { coerceModule, type ModuleKey } from '@/lib/dashUrl';
@@ -108,7 +108,7 @@ export default function DashboardLayout() {
             </FeatureErrorBoundary>
           </div>
         ) : (
-          <AppGrid />
+          <DraggableAppGrid />
         )}
       </div>
 
