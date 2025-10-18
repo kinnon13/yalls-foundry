@@ -141,26 +141,24 @@ export default function AppsPane() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
-      {/* Always-visible favorites bar with distinct background - STICKY */}
-      <section className="sticky top-14 z-20 bg-muted/30 px-2 py-2 backdrop-blur">
+      {/* Sticky header (Favorites + controls) */}
+      <section className="sticky top-0 z-20 bg-muted/30 px-2 py-2 backdrop-blur">
         <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
         <FavoritesBar size={72} gap={12} />
+        <div className="mt-2 flex items-center gap-3 px-0">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Tile size</span>
+          <input
+            type="range"
+            min={84}
+            max={160}
+            step={4}
+            value={tile}
+            onChange={(e) => setTile(parseInt(e.target.value))}
+            className="flex-1 max-w-xs"
+          />
+          <span className="text-xs text-muted-foreground w-12">{tile}px</span>
+        </div>
       </section>
-
-      {/* Scale control - STICKY */}
-      <div className="sticky top-[156px] z-20 bg-background/95 backdrop-blur flex items-center gap-3 px-2 py-2">
-        <span className="text-xs text-muted-foreground whitespace-nowrap">Tile size</span>
-        <input
-          type="range"
-          min={84}
-          max={160}
-          step={4}
-          value={tile}
-          onChange={(e) => setTile(parseInt(e.target.value))}
-          className="flex-1 max-w-xs"
-        />
-        <span className="text-xs text-muted-foreground w-12">{tile}px</span>
-      </div>
 
       {/* Grid of app tiles & pins (scrollable) */}
       <div
