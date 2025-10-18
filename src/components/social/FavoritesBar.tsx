@@ -196,7 +196,7 @@ function AddFavoritesSheet({
                 kind === k ? "bg-primary text-primary-foreground border-primary" : "border-border"
               )}
             >
-              {k[0].toUpperCase()+k.slice(1)}
+              {k === 'horse' ? 'Horses' : k[0].toUpperCase()+k.slice(1)}
             </button>
           ))}
         </div>

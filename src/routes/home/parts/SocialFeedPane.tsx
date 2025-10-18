@@ -115,20 +115,21 @@ export default function SocialFeedPane() {
       {/* Profile bubble above the feed */}
       <ProfileSummaryBar />
 
-      {/* Tab indicators (show current position, drag/swipe to change) */}
+      {/* Tab indicators (clickable or drag/swipe to change) */}
       <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-background/70 backdrop-blur px-2 py-1">
         {TABS.map((t) => (
-          <div
+          <button
             key={t}
+            onClick={() => setTab(t)}
             className={cn(
-              'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-default select-none',
+              'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer',
               t === tab
                 ? 'bg-primary text-primary-foreground scale-105'
-                : 'bg-muted/50 text-muted-foreground scale-95'
+                : 'bg-muted/50 text-muted-foreground scale-95 hover:bg-muted hover:scale-100'
             )}
           >
             {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
-          </div>
+          </button>
         ))}
       </div>
 
