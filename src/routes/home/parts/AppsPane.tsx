@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FavoritesBar } from '@/components/social/FavoritesBar';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+
 import { useEntityCapabilities } from '@/hooks/useEntityCapabilities';
 import { 
   Calendar, Settings, DollarSign, Trophy, ShoppingCart,
@@ -144,40 +144,6 @@ export default function AppsPane() {
     return allItems.slice(start, end);
   }, [allItems, currentPage, itemsPerPage]);
 
-  // Fetch user's profile ID first
-  const { data: userProfile } = useQuery({
-    queryKey: ['user-profile', userId],
-    queryFn: async () => {
-      if (!userId) return null;
-      const { data } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', userId)
-        .single();
-      return data;
-    },
-    enabled: !!userId,
-  });
-
-  // Fetch pinned entities
-  const { data: pinnedEntities = [] } = useQuery({
-    queryKey: ['pinned-entities', userProfile?.id],
-    queryFn: async () => {
-      if (!userProfile?.id) return [];
-      
-      const { data } = await supabase
-        .from('profile_pins')
-        .select('item_id, item_data')
-        .eq('profile_id', userProfile.id)
-        .eq('item_type', 'entity');
-      
-      return (data || []).map(pin => ({
-        id: pin.item_id,
-        title: (pin.item_data as any)?.title || 'Untitled'
-      }));
-    },
-    enabled: !!userProfile?.id,
-  });
 
   const handleAppClick = (app: AppTile) => {
     if (app.route) {
@@ -196,48 +162,6 @@ export default function AppsPane() {
         <FavoritesBar size={72} gap={12} />
       </section>
 
-      {/* Apps Controls */}
-      <section className="shrink-0 bg-muted/30 px-3 py-2 border-b border-border/50 space-y-2">
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground whitespace-nowrap min-w-[80px]">Box Width</span>
-          <input
-            type="range"
-            min={400}
-            max={1200}
-            step={50}
-            value={containerWidth}
-            onChange={(e) => setContainerWidth(parseInt(e.target.value))}
-            className="flex-1"
-          />
-          <span className="text-xs text-muted-foreground w-16">{containerWidth}px</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground whitespace-nowrap min-w-[80px]">Box Height</span>
-          <input
-            type="range"
-            min={200}
-            max={800}
-            step={50}
-            value={containerHeight}
-            onChange={(e) => setContainerHeight(parseInt(e.target.value))}
-            className="flex-1"
-          />
-          <span className="text-xs text-muted-foreground w-16">{containerHeight}px</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground whitespace-nowrap min-w-[80px]">Tile Size</span>
-          <input
-            type="range"
-            min={84}
-            max={160}
-            step={4}
-            value={tile}
-            onChange={(e) => setTile(parseInt(e.target.value))}
-            className="flex-1"
-          />
-          <span className="text-xs text-muted-foreground w-16">{tile}px</span>
-        </div>
-      </section>
 
       {/* Apps Grid - Separate Box */}
       <div className="flex-1 overflow-hidden bg-background p-4 flex flex-col items-center justify-center">
@@ -316,28 +240,6 @@ export default function AppsPane() {
           </div>
         </div>
 
-        {/* Pinned entities */}
-        {pinnedEntities.map((entity) => (
-          <button
-            key={`entity:${entity.id}`}
-            onClick={() => navigate(`/entities/${entity.id}`)}
-            className={cn(
-              "group flex flex-col items-center justify-between gap-2 p-3",
-              "rounded-2xl transition-all duration-200",
-              "hover:scale-105 active:scale-95",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-            )}
-            style={{ width: tile, height: tile }}
-            title={entity.title}
-          >
-            <div className="flex items-center justify-center flex-1 w-full shadow-lg group-hover:shadow-xl transition-all duration-200 bg-gradient-to-br from-accent/20 to-accent/5 border border-border/60 rounded-xl">
-              <div className="w-1/2 h-1/2 rounded-full bg-muted" />
-            </div>
-            <span className="text-[10px] leading-tight text-center font-medium truncate max-w-full">
-              {entity.title}
-            </span>
-          </button>
-        ))}
       </div>
     </div>
   );
