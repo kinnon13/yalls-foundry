@@ -6,7 +6,7 @@
  */
 
 import { useRef, useEffect, useState } from 'react';
-import type { BubbleItem } from '@/routes/social';
+import type { BubbleItem } from '@/types/social';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useReducedMotion } from '@/lib/a11y/useReducedMotion';
 

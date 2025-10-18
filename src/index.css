@@ -136,4 +136,13 @@ All colors MUST be HSL.
     );
     background-attachment: fixed;
   }
+
+  /* Hide scrollbar for TikTok feed */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

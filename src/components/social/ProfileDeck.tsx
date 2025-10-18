@@ -9,7 +9,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { BubbleItem } from '@/routes/social';
+import type { BubbleItem } from '@/types/social';
 import type { FeedItem } from '@/types/feed';
 import { TikTokScroller } from '@/components/reels/TikTokScroller';
 import { Loader2, ChevronLeft, ChevronRight, Pin, PinOff } from 'lucide-react';
