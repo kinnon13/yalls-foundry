@@ -87,7 +87,7 @@
     "/organizer/*": "/workspace/:entityId/events/*",
     "/incentives/dashboard": "/workspace/:entityId/programs",
     "/workspace/:entityId/incentives": "/workspace/:entityId/programs",
-    "/dashboard": "/workspace",
+    "/workspace": "/dashboard",
     "/entrant": "/entries",
     "/equistats": "/equinestats",
     "/equistats/*": "/equinestats/*",
