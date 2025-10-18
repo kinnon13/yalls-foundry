@@ -170,6 +170,69 @@ export default function FeaturesAdminPage() {
     toast.success('Exported features to JSON');
   };
 
+  const handleExportScanResults = () => {
+    if (scannedFeatures.size === 0) {
+      toast.error('No scan results to export');
+      return;
+    }
+
+    const scanData = {
+      timestamp: new Date().toISOString(),
+      summary: {
+        totalFeatures: scannedFeatures.size,
+        byComputedStatus: {
+          shell: 0,
+          'full-ui': 0,
+          wired: 0,
+        },
+        issues: {
+          missingRoutes: 0,
+          missingComponents: 0,
+          missingRpcs: 0,
+          missingTables: 0,
+          tablesWithoutRls: 0,
+        }
+      },
+      features: [] as any[],
+    };
+
+    Array.from(scannedFeatures.values()).forEach(f => {
+      // Update summary counts
+      if (f.computed) {
+        scanData.summary.byComputedStatus[f.computed]++;
+      }
+      if (f.checks) {
+        if (!f.checks.routeReachable) scanData.summary.issues.missingRoutes++;
+        if (!f.checks.componentsExist) scanData.summary.issues.missingComponents++;
+        if (f.checks.rpcs.some(r => !r.exists)) scanData.summary.issues.missingRpcs++;
+        if (f.checks.tables.some(t => !t.exists)) scanData.summary.issues.missingTables++;
+        if (f.checks.tables.some(t => t.exists && !t.rls)) scanData.summary.issues.tablesWithoutRls++;
+      }
+
+      scanData.features.push({
+        id: f.id,
+        title: f.title,
+        area: f.area,
+        status: f.status,
+        computed: f.computed,
+        checks: f.checks,
+        routes: f.routes || [],
+        components: (f as any).components || [],
+        rpc: (f as any).rpc || [],
+        tables: (f as any).tables || [],
+      });
+    });
+
+    const blob = new Blob([JSON.stringify(scanData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `feature-scan-results-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Exported scan results to JSON');
+  };
+
   const fetchTestResults = async () => {
     setTestLoading(true);
     try {
@@ -395,6 +458,12 @@ export default function FeaturesAdminPage() {
             <Scan className={`h-4 w-4 mr-2 ${scanLoading ? 'animate-spin' : ''}`} />
             {scanLoading ? 'Scanning...' : 'Scan Features'}
           </Button>
+          {scannedFeatures.size > 0 && (
+            <Button onClick={handleExportScanResults} variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export Scan Results
+            </Button>
+          )}
           <Button onClick={handleExportJSON} variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Export JSON
