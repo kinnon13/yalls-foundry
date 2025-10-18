@@ -25,7 +25,13 @@ jobs:
         run: npm install
       
       - name: Run admin route tests
-        run: npm test -- tests/route-aliases.test.ts || echo "Tests not configured yet"
+        continue-on-error: true
+        run: |
+          if npm run | grep -q "test"; then
+            npm test -- tests/route-aliases.test.ts
+          else
+            echo "No test script configured, skipping tests"
+          fi
       
       - name: Check legacy aliases
         run: node scripts/remap-legacy.mjs --check
