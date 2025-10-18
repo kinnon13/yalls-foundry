@@ -9,6 +9,10 @@ import { DraggableAppGrid } from '@/components/desktop/DraggableAppGrid';
 import { DebugOverlay } from '@/feature-kernel/DebugOverlay';
 import { FeatureErrorBoundary } from '@/feature-kernel/ErrorBoundary';
 import { coerceModule, type ModuleKey } from '@/lib/dashUrl';
+import { TikTokFeed } from '@/components/social/TikTokFeed';
+import { Button } from '@/components/ui/button';
+import { X, ChevronLeft } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 class DashboardErrorBoundary extends Component<
   { children: ReactNode },
@@ -66,6 +70,7 @@ export default function DashboardLayout() {
   const rawModule = sp.get('m');
   const m = coerceModule(rawModule);
   const [userId, setUserId] = useState<string | null>(null);
+  const [socialOpen, setSocialOpen] = useState(false);
   
   const Panel = useMemo(() => panels[m] ?? panels.overview, [m]);
 
@@ -125,8 +130,31 @@ export default function DashboardLayout() {
 
       <GlobalHeader />
       
+      {/* Social Feed Toggle Button - Fixed position */}
+      <Button
+        onClick={() => setSocialOpen(!socialOpen)}
+        className={cn(
+          "fixed right-4 top-20 z-30 rounded-full w-12 h-12 p-0 shadow-lg transition-all",
+          socialOpen && "right-[420px]"
+        )}
+        variant="default"
+        size="icon"
+        aria-label="Toggle social feed"
+      >
+        {socialOpen ? <ChevronLeft className="h-5 w-5" /> : (
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+        )}
+      </Button>
+      
       {/* Main content area - z-20 */}
-      <div className="relative z-20 h-[calc(100vh-64px)] overflow-auto">
+      <div className={cn(
+        "relative z-20 h-[calc(100vh-64px)] overflow-auto transition-all duration-300",
+        socialOpen && "mr-[400px]"
+      )}>
         {rawModule ? (
           <div className="container mx-auto p-6">
             <DashboardErrorBoundary>
@@ -145,6 +173,41 @@ export default function DashboardLayout() {
           </DashboardErrorBoundary>
         )}
       </div>
+
+      {/* Social Feed Sidecar - Right docked overlay */}
+      <div
+        className={cn(
+          "fixed top-0 right-0 h-screen w-[400px] bg-background border-l shadow-2xl z-50 transition-transform duration-300 ease-out",
+          socialOpen ? "translate-x-0" : "translate-x-full"
+        )}
+      >
+        {/* Sidecar Header */}
+        <div className="h-16 border-b flex items-center justify-between px-4 bg-background/95 backdrop-blur">
+          <h2 className="font-semibold text-lg">Social Feed</h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSocialOpen(false)}
+            aria-label="Close social feed"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Feed Content */}
+        <div className="h-[calc(100vh-64px)] overflow-hidden">
+          {socialOpen && <TikTokFeed />}
+        </div>
+      </div>
+
+      {/* Backdrop overlay when social is open */}
+      {socialOpen && (
+        <div
+          className="fixed inset-0 bg-black/20 z-40 backdrop-blur-sm transition-opacity"
+          onClick={() => setSocialOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
       <DebugOverlay />
     </div>
