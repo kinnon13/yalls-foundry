@@ -43,15 +43,10 @@ try {
 }
 
 const features: Feature[] = fjson.features ?? [];
-const featureIds = new Set(features.map(f => f.id));
 const areas = [...new Set(features.map(f => f.area))].sort();
 
 const routes = (rmanifest.routes ?? []) as { path: string; file: string; features?: string[] }[];
 const components = (creg.components ?? []) as { path: string; features?: string[]; exports: string[] }[];
-
-// Coverage from annotations
-const annotatedRouteFeatures = new Set(routes.flatMap(r => r.features ?? []));
-const annotatedComponentFeatures = new Set(components.flatMap(c => c.features ?? []));
 
 const totalRoutes = routes.length;
 const routesWithFeature = routes.filter(r => (r.features ?? []).length > 0).length;

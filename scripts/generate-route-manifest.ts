@@ -5,7 +5,6 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 import { glob } from 'glob';
 
 interface RouteEntry {
@@ -46,9 +45,9 @@ async function main() {
     const flags = Array.from(content.matchAll(FLAG_REGEX)).map(m => m[1]);
 
     // Extract component imports (simple heuristic)
-    const componentMatches = content.match(/from ['"]@\/components\/([\w\/]+)['"]/g) || [];
+    const componentMatches = content.match(/from ['"]@\/components\/([\w/]+)['"]/g) || [];
     const components = componentMatches.map(m => {
-      const match = m.match(/from ['"]@\/components\/([\w\/]+)['"]/);
+      const match = m.match(/from ['"]@\/components\/([\w/]+)['"]/);
       return match ? `src/components/${match[1]}` : '';
     }).filter(Boolean);
 

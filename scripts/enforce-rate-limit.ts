@@ -4,7 +4,9 @@
 
 import { expandGlob } from "https://deno.land/std@0.224.0/fs/expand_glob.ts";
 
-const TIERS: Record<string, keyof typeof Tier> = {
+type TierKey = "standard" | "auth" | "admin" | "high" | "expensive";
+
+const TIERS: Record<string, TierKey> = {
   "outbox-drain": "admin",
   "delete-account": "auth",
   "health-liveness": "high",
@@ -16,7 +18,6 @@ const TIERS: Record<string, keyof typeof Tier> = {
   "kb-search": "high",
   "kb-ingest": "expensive",
 };
-const Tier = { standard: "standard", auth: "auth", admin: "admin", high: "high", expensive: "expensive" } as const;
 
 for await (const f of expandGlob("supabase/functions/*/index.ts")) {
   const path = f.path;

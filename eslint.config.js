@@ -26,4 +26,11 @@ export default tseslint.config(
       "no-console": ["warn", { allow: ["warn", "error"] }],
     },
   },
+  // Allow console in scripts
+  {
+    files: ["scripts/**/*.{ts,tsx}"],
+    rules: {
+      "no-console": "off",
+    },
+  },
 );
