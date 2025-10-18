@@ -237,6 +237,42 @@ export default function AppsPane() {
     window.addEventListener('mouseup', onUp);
   };
 
+  const startNorthResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startY = e.clientY;
+    const startH = containerHeight;
+    const onMove = (ev: MouseEvent) => {
+      const h = Math.max(200, startH - (ev.clientY - startY));
+      setContainerHeight(h);
+      localStorage.setItem('apps.containerHeight', String(h));
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  const startWestResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startW = containerWidth;
+    const onMove = (ev: MouseEvent) => {
+      const w = Math.max(320, startW - (ev.clientX - startX));
+      setContainerWidth(w);
+      localStorage.setItem('apps.containerWidth', String(w));
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Favorites Section */}
@@ -323,6 +359,9 @@ export default function AppsPane() {
             )}
           </div>
           
+          
+          <div onMouseDown={startNorthResize} className="absolute top-0 left-1/2 -translate-x-1/2 h-2 w-12 bg-primary/50 hover:bg-primary/70 cursor-ns-resize rounded-b" />
+          <div onMouseDown={startWestResize} className="absolute left-0 top-1/2 -translate-y-1/2 h-12 w-2 bg-primary/50 hover:bg-primary/70 cursor-ew-resize rounded-r" />
           <div onMouseDown={startCornerResize} className="absolute bottom-0 right-0 h-4 w-4 rounded-tl bg-primary/70 hover:bg-primary cursor-nwse-resize" />
           <div onMouseDown={startEastResize} className="absolute right-0 top-1/2 -translate-y-1/2 h-12 w-2 bg-primary/50 hover:bg-primary/70 cursor-ew-resize rounded-l" />
           <div onMouseDown={startSouthResize} className="absolute bottom-0 left-1/2 -translate-x-1/2 h-2 w-12 bg-primary/50 hover:bg-primary/70 cursor-ns-resize rounded-t" />
