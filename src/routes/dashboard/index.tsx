@@ -286,23 +286,9 @@ export default function DashboardLayout() {
         )}
       </div>
 
-      {/* Left Resize Handle (adjust width) */}
-      <div
-        className={cn(
-          "fixed w-2 sm:w-1 bg-border hover:bg-primary/50 active:bg-primary cursor-col-resize z-50 transition-colors touch-none",
-          isDraggingLeft && "bg-primary"
-        )}
-        style={{ right: `${feedWidth + feedRightOffset}px`, top: `${feedTopOffset}px`, height: `${feedHeight}px` }}
-        onMouseDown={() => setIsDraggingLeft(true)}
-        onTouchStart={() => setIsDraggingLeft(true)}
-        role="separator"
-        aria-orientation="vertical"
-        aria-label="Resize social feed width"
-      >
-        <div className="absolute inset-y-0 -left-2 -right-2" />
-      </div>
-
-      {/* Social Feed Sidecar - Permanently open */}
+      {/* Left Resize Handle - DISABLED (dimensions locked) */}
+      
+      {/* Social Feed Sidecar - Permanently open with locked dimensions */}
       <div
         className="fixed bg-background border-l border-r shadow-xl z-40"
         style={{ 
@@ -312,14 +298,12 @@ export default function DashboardLayout() {
           top: `${feedTopOffset}px`
         }}
       >
-        {/* Feed Header (drag to move vertically) */}
+        {/* Feed Header (locked - no drag) */}
         <div
-          className="h-12 border-b flex items-center justify-between px-4 bg-background/95 backdrop-blur cursor-move select-none"
-          onMouseDown={() => setIsDraggingTop(true)}
-          onTouchStart={() => setIsDraggingTop(true)}
+          className="h-12 border-b flex items-center justify-between px-4 bg-background/95 backdrop-blur select-none"
         >
           <h2 className="font-semibold">Social Feed</h2>
-          <div className="text-xs text-muted-foreground">{feedWidth}×{feedHeight}px</div>
+          <div className="text-xs text-muted-foreground">{feedWidth}×{feedHeight}px (Locked)</div>
         </div>
 
         {/* Feed Content */}
@@ -328,45 +312,7 @@ export default function DashboardLayout() {
         </div>
       </div>
 
-      {/* Right Resize Handle (move panel horizontally) */}
-      <div
-        className={cn(
-          "fixed w-2 sm:w-1 bg-border hover:bg-primary/50 active:bg-primary cursor-col-resize z-50 transition-colors touch-none",
-          isDraggingRight && "bg-primary"
-        )}
-        style={{ 
-          right: `${feedRightOffset}px`,
-          height: `${feedHeight}px`,
-          top: `${feedTopOffset}px`
-        }}
-        onMouseDown={() => setIsDraggingRight(true)}
-        onTouchStart={() => setIsDraggingRight(true)}
-        role="separator"
-        aria-orientation="vertical"
-        aria-label="Move social feed position"
-      >
-        <div className="absolute inset-y-0 -left-2 -right-2" />
-      </div>
-
-      {/* Bottom Resize Handle (adjust height) */}
-      <div
-        className={cn(
-          "fixed h-2 sm:h-1 bg-border hover:bg-primary/50 active:bg-primary cursor-row-resize z-50 transition-colors touch-none",
-          isDraggingBottom && "bg-primary"
-        )}
-        style={{ 
-          right: `${feedRightOffset}px`,
-          width: `${feedWidth}px`,
-          top: `${feedTopOffset + feedHeight}px`
-        }}
-        onMouseDown={() => setIsDraggingBottom(true)}
-        onTouchStart={() => setIsDraggingBottom(true)}
-        role="separator"
-        aria-orientation="horizontal"
-        aria-label="Resize social feed height"
-      >
-        <div className="absolute inset-x-0 -top-2 -bottom-2" />
-      </div>
+      {/* Right & Bottom Resize Handles - DISABLED (dimensions locked) */}
 
       <DebugOverlay />
       <BottomNav />

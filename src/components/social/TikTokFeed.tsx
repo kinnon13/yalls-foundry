@@ -175,7 +175,7 @@ export function TikTokFeed() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
           {/* Content overlay */}
-          <div className="relative z-10 w-full h-full flex flex-col justify-end p-6 pb-24">
+          <div className="relative z-10 w-full h-full flex flex-col justify-end p-6 pb-32">
             {/* Author info */}
             <div className="flex items-center gap-3 mb-4">
               {post.profiles?.avatar_url ? (
@@ -206,7 +206,7 @@ export function TikTokFeed() {
           </div>
 
           {/* Right sidebar actions */}
-          <div className="absolute right-3 bottom-20 flex flex-col gap-4 z-20">
+          <div className="absolute right-3 bottom-32 flex flex-col gap-4 z-20">
             {/* Follow button */}
             <button className="flex flex-col items-center gap-1">
               <div className="w-11 h-11 rounded-full bg-primary backdrop-blur-sm flex items-center justify-center hover:bg-primary/90 transition-colors shadow-lg">
