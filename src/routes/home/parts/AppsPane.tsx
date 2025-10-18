@@ -162,11 +162,16 @@ export default function AppsPane() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Sticky header (Favorites + controls) */}
-      <section className="shrink-0 bg-muted/30 px-2 py-1 backdrop-blur">
-        <h3 className="text-base font-semibold text-foreground mb-1 text-center">Favorites</h3>
+      {/* Favorites Section */}
+      <section className="shrink-0 bg-gradient-to-b from-muted/40 to-muted/20 px-2 py-2 border-b border-border/50">
+        <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
         <FavoritesBar size={72} gap={12} />
-        <div className="mt-1 flex items-center gap-3 px-0">
+      </section>
+
+      {/* Apps Controls */}
+      <section className="shrink-0 bg-muted/30 px-2 py-1 backdrop-blur border-b border-border/50">
+        <h3 className="text-sm font-semibold text-foreground mb-1 text-center">Apps</h3>
+        <div className="flex items-center gap-3 px-0">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Tile size</span>
           <input
             type="range"
@@ -194,7 +199,7 @@ export default function AppsPane() {
         </div>
       </section>
 
-      {/* Horizontal scrolling grid of app tiles & pins */}
+      {/* Apps Grid */}
       <div className="flex-1 overflow-x-auto overflow-y-hidden bg-muted/20 px-2 pb-2 flex items-start">
         <div 
           className="grid gap-3 w-fit border-2 border-dashed border-primary/30 rounded-lg p-2"
