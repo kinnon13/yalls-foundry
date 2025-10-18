@@ -4,14 +4,14 @@
  * Complete feature management with sub-features
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { kernel, GOLD_PATH_FEATURES, Feature } from '@/lib/feature-kernel';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Shield, AlertCircle, Download, RefreshCw, CheckCircle, XCircle, Clock, ExternalLink } from 'lucide-react';
+import { Plus, Shield, AlertCircle, Download, RefreshCw, CheckCircle, XCircle, Clock, ExternalLink, Scan } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FeatureCard } from '@/components/admin/FeatureCard';
@@ -47,6 +47,18 @@ interface Job {
 
 type FeatureStatus = 'shell' | 'full-ui' | 'wired';
 
+interface ScanChecks {
+  routeReachable: boolean;
+  componentsExist: boolean;
+  rpcs: { name: string; exists: boolean }[];
+  tables: { name: string; exists: boolean; rls: boolean }[];
+}
+
+interface ScannedFeature extends Feature {
+  computed?: FeatureStatus;
+  checks?: ScanChecks;
+}
+
 // Area aliases for canonical naming
 const AREA_ALIASES: Record<string, string> = {
   dashboard: 'business',
@@ -76,6 +88,9 @@ export default function FeaturesAdminPage() {
   const [latestJobs, setLatestJobs] = useState<Job[]>([]);
   const [repoInfo, setRepoInfo] = useState({ owner: '', repo: '' });
   const [showTests, setShowTests] = useState(false);
+  const [scanLoading, setScanLoading] = useState(false);
+  const [scannedFeatures, setScannedFeatures] = useState<Map<string, ScannedFeature>>(new Map());
+  const [showScanner, setShowScanner] = useState(false);
 
   const features = kernel.features;
   const goldPath = kernel.validateGoldPath();
@@ -224,6 +239,107 @@ export default function FeaturesAdminPage() {
 
   const latestRun = runs[0];
 
+  // Scanner logic
+  const checkComponents = useCallback((f: any) => {
+    return !!(f.components && f.components.length);
+  }, []);
+
+  const probeRoutes = useCallback(async (routes: string[]) => {
+    const out: Record<string, boolean> = {};
+    await Promise.all(routes.map(async (r) => {
+      try {
+        const res = await fetch(r, { method: 'HEAD', cache: 'no-store' });
+        out[r] = res.ok || res.status === 404; // 404 means route exists in router
+      } catch { 
+        out[r] = false; 
+      }
+    }));
+    return out;
+  }, []);
+
+  const computeStatus = useCallback((hasRoute: boolean, hasComponents: boolean, rpcAll: boolean): FeatureStatus => {
+    if (hasRoute && hasComponents && rpcAll) return 'wired';
+    if (hasRoute && hasComponents) return 'full-ui';
+    return 'shell';
+  }, []);
+
+  const runFeatureScan = useCallback(async () => {
+    setScanLoading(true);
+    try {
+      // Fetch manifest dynamically
+      const manifestRes = await fetch('/docs/features/features.json');
+      const manifestData = await manifestRes.json();
+      
+      const allRpcs = new Set<string>();
+      const allTables = new Set<string>();
+      const allRoutes = new Set<string>();
+
+      for (const f of manifestData.features) {
+        (f.rpc || []).forEach((r: string) => allRpcs.add(r));
+        (f.routes || []).forEach((r: string) => allRoutes.add(r));
+      }
+
+      const inputs = {
+        rpcs: [...allRpcs],
+        tables: [...allTables],
+        routes: [...allRoutes],
+      };
+
+      const { data, error } = await supabase.functions.invoke('feature-scan', {
+        body: inputs
+      });
+
+      if (error) throw error;
+
+      const rpcMap = new Map<string, boolean>();
+      for (const r of (data?.rpcs ?? [])) rpcMap.set(r.name, !!r.exists);
+      
+      const tableMap = new Map<string, {exists: boolean; rls: boolean}>();
+      for (const t of (data?.tables ?? [])) {
+        tableMap.set(t.name, { exists: !!t.exists, rls: !!t.rls });
+      }
+
+      const routeReach = await probeRoutes(inputs.routes);
+
+      const scanned = new Map<string, ScannedFeature>();
+      
+      for (const f of manifestData.features as any[]) {
+        const hasRoute = (f.routes || []).some((r: string) => routeReach[r]);
+        const componentsExist = checkComponents(f);
+        const rpcs = (f.rpc || []).map((name: string) => ({ 
+          name, 
+          exists: !!rpcMap.get(name) 
+        }));
+        const rpcAll = rpcs.length ? rpcs.every(x => x.exists) : true;
+        const tables = (f.tables || []).map((name: string) => {
+          const t = tableMap.get(name) ?? { exists: false, rls: false };
+          return { name, ...t };
+        });
+
+        const computed = computeStatus(hasRoute, componentsExist, rpcAll);
+        
+        scanned.set(f.id, {
+          ...f,
+          computed,
+          checks: {
+            routeReachable: hasRoute,
+            componentsExist,
+            rpcs,
+            tables
+          }
+        } as ScannedFeature);
+      }
+
+      setScannedFeatures(scanned);
+      toast.success('Feature scan complete');
+    } catch (e: any) {
+      console.error('Scan error:', e);
+      toast.error(e.message || 'Failed to scan features');
+    } finally {
+      setScanLoading(false);
+    }
+  }, [checkComponents, probeRoutes, computeStatus]);
+
   // Summary stats
   const totalFeatures = features.length;
   const byStatus = stats.byStatus;
@@ -251,6 +367,10 @@ export default function FeaturesAdminPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={runFeatureScan} disabled={scanLoading} variant="default">
+            <Scan className={`h-4 w-4 mr-2 ${scanLoading ? 'animate-spin' : ''}`} />
+            {scanLoading ? 'Scanning...' : 'Scan Features'}
+          </Button>
           <Button onClick={handleExportJSON} variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Export JSON
@@ -458,18 +578,99 @@ export default function FeaturesAdminPage() {
         )}
       </Card>
 
+      {/* Scanner Results */}
+      {scannedFeatures.size > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Live Feature Status</CardTitle>
+                <CardDescription>Real-time scan results vs. manifest claims</CardDescription>
+              </div>
+              <Button onClick={() => setShowScanner(!showScanner)} variant="ghost" size="sm">
+                {showScanner ? 'Hide' : 'Show'}
+              </Button>
+            </div>
+          </CardHeader>
+          {showScanner && (
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2">Feature</th>
+                      <th className="text-center p-2">Area</th>
+                      <th className="text-center p-2">Manifest</th>
+                      <th className="text-center p-2">Computed</th>
+                      <th className="text-center p-2">Route</th>
+                      <th className="text-center p-2">Components</th>
+                      <th className="text-left p-2">RPCs</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((feature) => {
+                      const scan = scannedFeatures.get(feature.id);
+                      return (
+                        <tr key={feature.id} className="border-b hover:bg-accent">
+                          <td className="p-2">{feature.title}</td>
+                          <td className="text-center p-2">{feature.area}</td>
+                          <td className="text-center p-2">
+                            <StatusBadge status={feature.status} />
+                          </td>
+                          <td className="text-center p-2">
+                            {scan?.computed ? (
+                              <StatusBadge status={scan.computed} />
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          <td className="text-center p-2">
+                            {scan?.checks?.routeReachable ? '🟢' : '🔴'}
+                          </td>
+                          <td className="text-center p-2">
+                            {scan?.checks?.componentsExist ? '🟢' : '🔴'}
+                          </td>
+                          <td className="p-2">
+                            {scan?.checks?.rpcs?.length ? (
+                              <div className="space-y-1">
+                                {scan.checks.rpcs.map(rpc => (
+                                  <div key={rpc.name} className="text-xs flex items-center gap-1">
+                                    <span>{rpc.exists ? '🟢' : '🔴'}</span>
+                                    <span>{rpc.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          )}
+        </Card>
+      )}
+
       {/* Features Grid */}
       <div className="space-y-3">
-        {filtered.map((feature) => (
-          <FeatureCard
-            key={feature.id}
-            feature={feature}
-            isGoldPath={GOLD_PATH_FEATURES.includes(feature.id)}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onAddSubFeature={handleAddSubFeature}
-          />
-        ))}
+        {filtered.map((feature) => {
+          const scan = scannedFeatures.get(feature.id);
+          const displayFeature = scan || feature;
+          return (
+            <FeatureCard
+              key={feature.id}
+              feature={displayFeature}
+              isGoldPath={GOLD_PATH_FEATURES.includes(feature.id)}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onAddSubFeature={handleAddSubFeature}
+            />
+          );
+        })}
       </div>
 
       {filtered.length === 0 && (
@@ -491,5 +692,19 @@ export default function FeaturesAdminPage() {
         parentId={addingSubFeatureTo || undefined}
       />
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: FeatureStatus }) {
+  const colors = {
+    wired: 'bg-green-500 text-white',
+    'full-ui': 'bg-amber-500 text-white',
+    shell: 'bg-gray-400 text-white'
+  };
+  
+  return (
+    <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status]}`}>
+      {status}
+    </span>
   );
 }

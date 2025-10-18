@@ -8022,6 +8022,10 @@ export type Database = {
           tags: string[]
         }[]
       }
+      feature_introspect: {
+        Args: { rpcs: string[]; tables: string[] }
+        Returns: Json
+      }
       feed_fusion_home: {
         Args:
           | {
