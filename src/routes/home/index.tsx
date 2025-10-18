@@ -22,7 +22,7 @@ export default function HomePage() {
             <AppsPane />
           </div>
           {/* Reels (right) - white background extends to right edge */}
-          <div className="min-w-[360px] max-w-[560px] justify-self-end w-full bg-white relative">
+          <div className="min-w-[360px] max-w-[560px] justify-self-end w-full bg-white relative pr-6">
             <div className="absolute inset-y-0 -right-[100vw] w-[100vw] bg-white -z-10 pointer-events-none"></div>
             <SocialFeedPane />
           </div>
