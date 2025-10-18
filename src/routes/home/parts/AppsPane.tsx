@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BubbleRailTop from '@/components/social/BubbleRailTop';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { useEntityCapabilities } from '@/hooks/useEntityCapabilities';
 import { 
   Calendar, Settings, DollarSign, Trophy, ShoppingCart,
   Building, Users, Sparkles, Tractor, CheckCircle,
   MessageSquare, User, MapPin, Flame, BookOpen, 
-  Home, Store, Activity, Zap, Target, Award, LucideIcon
+  Home, Store, Activity, Zap, Target, Award, LucideIcon, Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -18,23 +19,17 @@ interface AppTile {
   route?: string;
   module?: string;
   color?: string;
+  requireKind?: 'business' | 'farm' | 'horse' | 'stallion' | 'producer' | 'incentive';
 }
 
-const APPS: AppTile[] = [
+// Consumer apps - always visible
+const CONSUMER_APPS: AppTile[] = [
   { id: 'home', label: 'Home', icon: Home, module: 'overview', color: 'from-blue-500/20 to-blue-600/5' },
   { id: 'profile', label: 'Profile', icon: User, route: '/profile', color: 'from-purple-500/20 to-purple-600/5' },
   { id: 'social', label: 'Four', icon: Flame, route: '/social', color: 'from-orange-500/20 to-red-600/5' },
   { id: 'marketplace', label: 'Market', icon: Store, route: '/marketplace', color: 'from-green-500/20 to-emerald-600/5' },
   { id: 'messages', label: 'Messages', icon: MessageSquare, module: 'messages', color: 'from-cyan-500/20 to-blue-600/5' },
   { id: 'calendar', label: 'Calendar', icon: Calendar, module: 'events', color: 'from-red-500/20 to-orange-600/5' },
-  { id: 'earnings', label: 'Earnings', icon: DollarSign, module: 'earnings', color: 'from-green-500/20 to-teal-600/5' },
-  { id: 'orders', label: 'Orders', icon: ShoppingCart, module: 'orders', color: 'from-blue-500/20 to-indigo-600/5' },
-  { id: 'business', label: 'Business', icon: Building, module: 'business', color: 'from-gray-500/20 to-slate-600/5' },
-  { id: 'producers', label: 'Producers', icon: Users, module: 'producers', color: 'from-purple-500/20 to-fuchsia-600/5' },
-  { id: 'stallions', label: 'Stallions', icon: Sparkles, module: 'stallions', color: 'from-amber-500/20 to-yellow-600/5' },
-  { id: 'farm_ops', label: 'Farm Ops', icon: Tractor, module: 'farm_ops', color: 'from-lime-500/20 to-green-600/5' },
-  { id: 'incentives', label: 'Incentives', icon: Trophy, module: 'incentives', color: 'from-yellow-500/20 to-amber-600/5' },
-  { id: 'approvals', label: 'Approvals', icon: CheckCircle, module: 'approvals', color: 'from-teal-500/20 to-cyan-600/5' },
   { id: 'activity', label: 'Activity', icon: Activity, route: '/activity', color: 'from-pink-500/20 to-rose-600/5' },
   { id: 'discover', label: 'Discover', icon: Zap, route: '/discover', color: 'from-violet-500/20 to-purple-600/5' },
   { id: 'map', label: 'Map', icon: MapPin, route: '/map', color: 'from-emerald-500/20 to-green-600/5' },
@@ -42,6 +37,18 @@ const APPS: AppTile[] = [
   { id: 'goals', label: 'Goals', icon: Target, route: '/goals', color: 'from-indigo-500/20 to-blue-600/5' },
   { id: 'awards', label: 'Awards', icon: Award, route: '/awards', color: 'from-rose-500/20 to-pink-600/5' },
   { id: 'settings', label: 'Settings', icon: Settings, module: 'settings', color: 'from-slate-500/20 to-gray-600/5' },
+];
+
+// Management apps - only visible if user owns relevant entity type
+const MANAGEMENT_APPS: AppTile[] = [
+  { id: 'business', label: 'Business', icon: Building, module: 'business', color: 'from-gray-500/20 to-slate-600/5', requireKind: 'business' },
+  { id: 'farm_ops', label: 'Farm', icon: Tractor, module: 'farm_ops', color: 'from-lime-500/20 to-green-600/5', requireKind: 'farm' },
+  { id: 'producers', label: 'Producers', icon: Users, module: 'producers', color: 'from-purple-500/20 to-fuchsia-600/5', requireKind: 'producer' },
+  { id: 'stallions', label: 'Stallions', icon: Sparkles, module: 'stallions', color: 'from-amber-500/20 to-yellow-600/5', requireKind: 'stallion' },
+  { id: 'incentives', label: 'Incentives', icon: Trophy, module: 'incentives', color: 'from-yellow-500/20 to-amber-600/5', requireKind: 'incentive' },
+  { id: 'earnings', label: 'Earnings', icon: DollarSign, module: 'earnings', color: 'from-green-500/20 to-teal-600/5' },
+  { id: 'orders', label: 'Orders', icon: ShoppingCart, module: 'orders', color: 'from-blue-500/20 to-indigo-600/5' },
+  { id: 'approvals', label: 'Approvals', icon: CheckCircle, module: 'approvals', color: 'from-teal-500/20 to-cyan-600/5' },
 ];
 
 export default function AppsPane() {
@@ -58,6 +65,50 @@ export default function AppsPane() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
+
+  // Get entity capabilities
+  const { data: capabilities = {} } = useEntityCapabilities(userId);
+
+  // Filter management apps based on capabilities
+  const filteredManagementApps = useMemo(() => {
+    return MANAGEMENT_APPS.filter(app => {
+      // If app requires a specific entity kind, check if user has it
+      if (app.requireKind) {
+        return (capabilities[app.requireKind] ?? 0) > 0;
+      }
+      // Otherwise show the app (e.g., earnings, orders, approvals)
+      return true;
+    });
+  }, [capabilities]);
+
+  // Show "Create Profile" tile if user has no managed entities
+  const hasNoManagedEntities = useMemo(() => {
+    const totalEntities = Object.values(capabilities).reduce((sum, count) => sum + count, 0);
+    return totalEntities === 0;
+  }, [capabilities]);
+
+  // Combine all visible apps
+  const visibleApps = useMemo(() => {
+    const apps = [...CONSUMER_APPS];
+    
+    // Add "Create Profile" tile after Profile if user has no entities
+    if (hasNoManagedEntities) {
+      const createProfileTile: AppTile = {
+        id: 'create-profile',
+        label: 'Create Profile',
+        icon: Plus,
+        route: '/profiles/new',
+        color: 'from-primary/30 to-primary/10',
+      };
+      // Insert after Profile (index 1)
+      apps.splice(2, 0, createProfileTile);
+    }
+    
+    // Add filtered management apps
+    apps.push(...filteredManagementApps);
+    
+    return apps;
+  }, [hasNoManagedEntities, filteredManagementApps]);
 
   // Fetch pinned entities
   const { data: pinnedEntities = [] } = useQuery({
@@ -116,8 +167,8 @@ export default function AppsPane() {
           gridTemplateColumns: `repeat(auto-fill, minmax(${tile}px, 1fr))`,
         }}
       >
-        {/* Installed apps */}
-        {APPS.map((app) => {
+        {/* Installed apps - now filtered by capabilities */}
+        {visibleApps.map((app) => {
           const Icon = app.icon;
           return (
             <button

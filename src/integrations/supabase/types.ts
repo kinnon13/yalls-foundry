@@ -8424,6 +8424,13 @@ export type Database = {
         }
         Returns: string
       }
+      entity_counts_by_kind: {
+        Args: { p_user_id: string }
+        Returns: {
+          count: number
+          kind: string
+        }[]
+      }
       entity_create_unclaimed: {
         Args: {
           p_contributor_user_id?: string
