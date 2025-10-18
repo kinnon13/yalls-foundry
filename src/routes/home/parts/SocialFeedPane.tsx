@@ -22,13 +22,20 @@ export default function SocialFeedPane() {
     if (!el) return;
 
     const resize = () => {
-      const paneW = el.clientWidth;
-      const paneH = el.clientHeight;
+      const elRect = el.getBoundingClientRect();
+      const paneW = el.clientWidth || elRect.width || window.innerWidth;
       const headerH = headerRef.current?.offsetHeight ?? 0;
-      const availH = Math.max(0, paneH - headerH - 8); // subtract sticky header + a small gap
+
+      // Prefer container height; if it's 0 (e.g. nested auto/overflow context),
+      // fall back to viewport height minus global header/footer.
+      const paneHRaw = el.clientHeight || elRect.height;
+      const fallbackH = window.innerHeight - 64 /* GlobalHeader */ - 56 /* BottomDock */;
+      const paneH = Math.max(paneHRaw, 0) || Math.max(fallbackH, 0);
+
+      const availH = Math.max(0, paneH - headerH - 8);
       const wFromH = Math.floor((availH * 9) / 16);
       const w = Math.min(paneW, wFromH);
-      const h = Math.floor((w * 16) / 9);
+      const h = Math.max(0, Math.floor((w * 16) / 9));
       setReelSize({ w, h });
     };
 
