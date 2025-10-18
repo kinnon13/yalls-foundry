@@ -16,17 +16,24 @@ export const repostsDb: RepostsPort = {
         p_caption: caption ?? null,
       });
       if (error) throw error;
-      return { new_post_id: (data as any)?.id || source_post_id };
+      // Handle new return shape with status
+      return { 
+        new_post_id: (data as any)?.id || source_post_id,
+        status: (data as any)?.status || 'inserted'
+      };
     }
 
-    // Standard repost (or quote if caption)
-    const rpcName = (caption ? 'post_quote' : 'post_repost') as any;
-    const { data, error } = await supabase.rpc(rpcName, {
+    // Standard repost (with or without caption - quote is just repost with caption)
+    const { data, error } = await supabase.rpc('post_repost' as any, {
       p_source_post_id: source_post_id,
       p_caption: caption ?? null,
     });
     if (error) throw error;
-    return { new_post_id: (data as any)?.id || source_post_id };
+    // Handle new return shape with status
+    return { 
+      new_post_id: (data as any)?.id || source_post_id,
+      status: (data as any)?.status || 'inserted'
+    };
   },
 
   async list(userId: string): Promise<Repost[]> {

@@ -20,6 +20,14 @@ export const repostsMock: RepostsPort = {
     const userId = 'mock-user';
     const reposts = db[userId] || [];
     
+    // Check for existing plain repost (idempotency simulation)
+    if (!caption && !targets) {
+      const existing = reposts.find(r => r.source_post_id === source_post_id);
+      if (existing) {
+        return { new_post_id: existing.new_post_id, status: 'existing' };
+      }
+    }
+    
     const newRepost: Repost = {
       id: crypto.randomUUID(),
       source_post_id,
@@ -31,7 +39,7 @@ export const repostsMock: RepostsPort = {
     db[userId] = [newRepost, ...reposts];
     write(db);
     
-    return { new_post_id: newRepost.new_post_id };
+    return { new_post_id: newRepost.new_post_id, status: 'inserted' };
   },
 
   async list(userId) {

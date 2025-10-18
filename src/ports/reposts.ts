@@ -7,6 +7,9 @@ export interface Repost {
 }
 
 export interface RepostsPort {
-  create(source_post_id: string, caption?: string, targets?: string[]): Promise<{ new_post_id: string }>;
+  create(source_post_id: string, caption?: string, targets?: string[]): Promise<{ 
+    new_post_id: string; 
+    status?: 'inserted' | 'existing';
+  }>;
   list(userId: string): Promise<Repost[]>;
 }
