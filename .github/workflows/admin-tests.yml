@@ -1,0 +1,43 @@
+name: Admin Panel Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/routes/admin/**'
+      - 'scripts/ops-report.mjs'
+      - 'scripts/remap-legacy.mjs'
+  pull_request:
+    paths:
+      - 'src/routes/admin/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run admin route tests
+        run: npm test -- tests/route-aliases.test.ts
+      
+      - name: Check legacy aliases
+        run: node scripts/remap-legacy.mjs --check
+      
+      - name: Validate architecture
+        run: node scripts/validate-architecture.mjs
+      
+      - name: Database coverage report (if available)
+        if: ${{ secrets.DATABASE_URL }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/ops-report.mjs || echo "Ops report completed with warnings"
+      
+      - name: TypeCheck admin routes
+        run: npx tsc --noEmit src/routes/admin/*.tsx
