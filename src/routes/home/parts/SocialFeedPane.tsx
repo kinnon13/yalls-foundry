@@ -112,9 +112,9 @@ export default function SocialFeedPane() {
 
   return (
     <section className="flex h-full w-full flex-col">
-      {/* Username heading - aligned with Favorites heading */}
+      {/* Connected Accounts heading */}
       <div className="mb-2">
-        <h3 className="text-base font-semibold text-foreground text-center">{session?.email?.split('@')[0] || 'You'}</h3>
+        <h3 className="text-base font-semibold text-foreground text-center">View Connected Accounts</h3>
       </div>
 
       {/* Profile bubble with stats */}
