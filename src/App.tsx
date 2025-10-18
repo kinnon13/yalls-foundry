@@ -7,7 +7,7 @@ import { ThemeProvider } from 'next-themes';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
 import { Suspense, lazy, useEffect } from 'react';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider } from '@/lib/auth/context';
 import { RequireAuth } from '@/lib/auth/guards';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import { RockerChat } from '@/components/rocker/RockerChat';
