@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Plus, MessageCircle, Store, UserCircle2, Globe2, AppWindow } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ChatDrawer } from '@/components/chat/ChatDrawer';
 
 type DockItem = {
   key: string;
@@ -13,12 +15,13 @@ type DockItem = {
 
 export function BottomDock() {
   const nav = useNavigate();
+  const [chatOpen, setChatOpen] = useState(false);
 
   const items: DockItem[] = [
     {
       key: 'messages',
       label: 'Messages',
-      to: '/messages',
+      onClick: () => setChatOpen(true),
       icon: MessageCircle,
     },
     {
@@ -54,14 +57,17 @@ export function BottomDock() {
   ];
 
   return (
-    <nav
-      role="navigation"
-      aria-label="Bottom dock"
-      className={cn(
-        'fixed bottom-0 inset-x-0 z-40 bg-background/90 backdrop-blur border-t border-border/60',
-        'px-2 pb-[max(0px,env(safe-area-inset-bottom))]'
-      )}
-    >
+    <>
+      <ChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} />
+      
+      <nav
+        role="navigation"
+        aria-label="Bottom dock"
+        className={cn(
+          'fixed bottom-0 inset-x-0 z-40 bg-background/90 backdrop-blur border-t border-border/60',
+          'px-2 pb-[max(0px,env(safe-area-inset-bottom))]'
+        )}
+      >
       <div className="mx-auto max-w-[800px] h-16 grid grid-cols-6 gap-2">
         {items.map((it) => {
           const Icon = it.icon;
@@ -112,5 +118,6 @@ export function BottomDock() {
         })}
       </div>
     </nav>
+    </>
   );
 }
