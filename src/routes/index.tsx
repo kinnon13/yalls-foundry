@@ -96,8 +96,8 @@ export default function Index() {
             </section>
           </>
         ) : (
-          <div className="container mx-auto px-4 pb-8">
-            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="container mx-auto lg:px-4 pb-8">
+            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 lg:gap-6">
               <div className="lg:col-span-8 space-y-6">
                 <CreatePost onPostCreated={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
                 

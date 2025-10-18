@@ -34,7 +34,7 @@ export function TikTokScroller({ items, onLoadMore, hasNextPage, isLoading, lane
   }, [inView, hasNextPage, isLoading, onLoadMore]);
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto pb-24">
+    <div className="flex flex-col gap-4 w-full lg:max-w-2xl lg:mx-auto pb-24">
       {items.map((item) => {
         // Prevent back-to-back same seller (listings only)
         if (item.kind === 'listing') {
