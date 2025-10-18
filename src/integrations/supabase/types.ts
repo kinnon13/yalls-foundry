@@ -1294,6 +1294,33 @@ export type Database = {
         }
         Relationships: []
       }
+      appearance_settings: {
+        Row: {
+          id: string
+          screensaver_payload: Json | null
+          subject_id: string
+          subject_type: string
+          updated_at: string
+          wallpaper_url: string | null
+        }
+        Insert: {
+          id?: string
+          screensaver_payload?: Json | null
+          subject_id: string
+          subject_type: string
+          updated_at?: string
+          wallpaper_url?: string | null
+        }
+        Update: {
+          id?: string
+          screensaver_payload?: Json | null
+          subject_id?: string
+          subject_type?: string
+          updated_at?: string
+          wallpaper_url?: string | null
+        }
+        Relationships: []
+      }
       billing_plans: {
         Row: {
           id: string
@@ -7459,6 +7486,50 @@ export type Database = {
         }
         Relationships: []
       }
+      user_pin_folders: {
+        Row: {
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          parent_folder_id: string | null
+          section: string
+          sort_index: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          parent_folder_id?: string | null
+          section: string
+          sort_index?: number
+          title: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          parent_folder_id?: string | null
+          section?: string
+          sort_index?: number
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_pin_folders_parent_folder_id_fkey"
+            columns: ["parent_folder_id"]
+            isOneToOne: false
+            referencedRelation: "user_pin_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_pins: {
         Row: {
           created_at: string | null
@@ -7467,6 +7538,7 @@ export type Database = {
           metadata: Json | null
           pin_type: Database["public"]["Enums"]["pin_type"]
           ref_id: string
+          section: string | null
           sort_index: number | null
           title: string | null
           user_id: string
@@ -7478,6 +7550,7 @@ export type Database = {
           metadata?: Json | null
           pin_type: Database["public"]["Enums"]["pin_type"]
           ref_id: string
+          section?: string | null
           sort_index?: number | null
           title?: string | null
           user_id: string
@@ -7489,6 +7562,7 @@ export type Database = {
           metadata?: Json | null
           pin_type?: Database["public"]["Enums"]["pin_type"]
           ref_id?: string
+          section?: string | null
           sort_index?: number | null
           title?: string | null
           user_id?: string
@@ -9530,6 +9604,15 @@ export type Database = {
           id: string
           name: string
         }[]
+      }
+      set_appearance: {
+        Args: {
+          p_screensaver: Json
+          p_subject_id: string
+          p_subject_type: string
+          p_wallpaper: string
+        }
+        Returns: undefined
       }
       set_limit: {
         Args: { "": number }
