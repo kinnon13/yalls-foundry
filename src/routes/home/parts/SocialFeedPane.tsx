@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Heart, MessageCircle, Bookmark, Repeat2, Share2 } from 'lucide-react';
 
 // TEMP data – wire to real feed later
 const items = new Array(20).fill(0).map((_, i) => ({
@@ -81,11 +82,21 @@ export default function SocialFeedPane() {
 
             {/* Right-side action stack (kept inside the box) */}
             <div className="absolute right-2 bottom-20 flex flex-col gap-3 text-white/95">
-              <IconBtn label="Like">❤️ {card.likes}</IconBtn>
-              <IconBtn label="Comment">💬 {card.comments}</IconBtn>
-              <IconBtn label="Save">🔖</IconBtn>
-              <IconBtn label="Repost">🔁</IconBtn>
-              <IconBtn label="Share">↗︎</IconBtn>
+              <IconBtn label="Like" count={card.likes}>
+                <Heart className="w-5 h-5" />
+              </IconBtn>
+              <IconBtn label="Comment" count={card.comments}>
+                <MessageCircle className="w-5 h-5" />
+              </IconBtn>
+              <IconBtn label="Save">
+                <Bookmark className="w-5 h-5" />
+              </IconBtn>
+              <IconBtn label="Repost">
+                <Repeat2 className="w-5 h-5" />
+              </IconBtn>
+              <IconBtn label="Share">
+                <Share2 className="w-5 h-5" />
+              </IconBtn>
             </div>
 
             {/* Caption gradient + text */}
@@ -100,15 +111,20 @@ export default function SocialFeedPane() {
   );
 }
 
-function IconBtn({ children, label }: { children: React.ReactNode; label: string }) {
+function IconBtn({ children, label, count }: { children: React.ReactNode; label: string; count?: number }) {
   return (
-    <button
-      aria-label={label}
-      title={label}
-      className="grid place-items-center rounded-xl bg-black/35 px-2 py-1 backdrop-blur
-                 hover:bg-black/45 transition-colors"
-    >
-      <span className="text-sm leading-none">{children}</span>
-    </button>
+    <div className="flex flex-col items-center gap-1">
+      <button
+        aria-label={label}
+        title={label}
+        className="grid place-items-center size-10 rounded-full bg-black/35 backdrop-blur
+                   hover:bg-black/50 border border-white/20 transition-colors"
+      >
+        {children}
+      </button>
+      {count !== undefined && (
+        <span className="text-xs font-medium">{count > 999 ? `${(count/1000).toFixed(1)}K` : count}</span>
+      )}
+    </div>
   );
 }
