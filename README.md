@@ -4,6 +4,7 @@
 [![All Checks (on-demand)](https://github.com/kinnon13/yalls-foundry/actions/workflows/all-on-demand.yml/badge.svg?branch=main)](https://github.com/kinnon13/yalls-foundry/actions/workflows/all-on-demand.yml)
 [![Tests (on-demand)](https://github.com/kinnon13/yalls-foundry/actions/workflows/tests-only.yml/badge.svg?branch=main)](https://github.com/kinnon13/yalls-foundry/actions/workflows/tests-only.yml)
 [![show-your-work](https://github.com/kinnon13/yalls-foundry/actions/workflows/show-your-work.yml/badge.svg?branch=main)](https://github.com/kinnon13/yalls-foundry/actions/workflows/show-your-work.yml)
+[![Verify Platform](https://github.com/kinnon13/yalls-foundry/actions/workflows/verify-platform.yml/badge.svg?branch=main)](https://github.com/kinnon13/yalls-foundry/actions/workflows/verify-platform.yml)
 
 ## Project info
 
