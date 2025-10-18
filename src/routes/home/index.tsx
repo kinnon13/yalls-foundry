@@ -8,7 +8,7 @@ export default function HomePage() {
   return (
     <>
       <GlobalHeader />
-      <main className="pt-14 pb-16 bg-white">
+      <main className="pt-14 pb-16">
         {/* Phone: horizontal pager (Apps | Feed | Shop | Profile) */}
         <div className="md:hidden">
           <PhonePager />
@@ -21,8 +21,8 @@ export default function HomePage() {
           <div className="min-w-0">
             <AppsPane />
           </div>
-          {/* Reels (right) */}
-          <div className="min-w-[360px] max-w-[560px] justify-self-end w-full bg-white">
+          {/* Reels (right) - white background extends to edge */}
+          <div className="min-w-[360px] max-w-[560px] justify-self-end w-full bg-white -mr-6 pr-6">
             <SocialFeedPane />
           </div>
         </div>
