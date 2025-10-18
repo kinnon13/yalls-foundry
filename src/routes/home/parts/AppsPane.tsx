@@ -178,6 +178,65 @@ export default function AppsPane() {
     }
   };
 
+  // Resizer handlers
+  const startCornerResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startW = containerWidth;
+    const startH = containerHeight;
+    const onMove = (ev: MouseEvent) => {
+      const w = Math.max(320, startW + (ev.clientX - startX));
+      const h = Math.max(200, startH + (ev.clientY - startY));
+      setContainerWidth(w);
+      setContainerHeight(h);
+      localStorage.setItem('apps.containerWidth', String(w));
+      localStorage.setItem('apps.containerHeight', String(h));
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  const startEastResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startW = containerWidth;
+    const onMove = (ev: MouseEvent) => {
+      const w = Math.max(320, startW + (ev.clientX - startX));
+      setContainerWidth(w);
+      localStorage.setItem('apps.containerWidth', String(w));
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  const startSouthResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startY = e.clientY;
+    const startH = containerHeight;
+    const onMove = (ev: MouseEvent) => {
+      const h = Math.max(200, startH + (ev.clientY - startY));
+      setContainerHeight(h);
+      localStorage.setItem('apps.containerHeight', String(h));
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -199,7 +258,7 @@ export default function AppsPane() {
             height: `${containerHeight}px`,
           }}
         >
-          <div className="w-full h-full grid place-content-center">
+          <div className="w-full h-full">
             <div 
               className="grid gap-3"
               style={{
@@ -245,6 +304,10 @@ export default function AppsPane() {
         })}
           </div>
           </div>
+          
+          <div onMouseDown={startCornerResize} className="absolute bottom-1 right-1 h-3 w-3 rounded bg-foreground/60 cursor-nwse-resize" />
+          <div onMouseDown={startEastResize} className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-1.5 bg-foreground/30 cursor-ew-resize rounded" />
+          <div onMouseDown={startSouthResize} className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1.5 w-8 bg-foreground/30 cursor-ns-resize rounded" />
 
           {/* Pagination Controls */}
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-background/80 backdrop-blur px-3 py-1 rounded-full border border-border">
