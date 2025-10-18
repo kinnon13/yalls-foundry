@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/hooks/useSession';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 type EntityKind = 'person' | 'business' | 'horse' | 'event';
 
@@ -81,10 +82,14 @@ function useFavoriteBubbles(userId: string | null, { publicOnly = false }: { pub
 /** Mutations: add/remove pin */
 function useFavoriteMutations(userId: string | null) {
   const qc = useQueryClient();
+  const { toast } = useToast();
 
   const add = useMutation({
     mutationFn: async (entityId: string) => {
       if (!userId) throw new Error('Not signed in');
+      
+      console.log('Adding favorite:', { userId, entityId });
+      
       // get next sort_index
       const { data: existing } = await supabase
         .from('user_pins')
@@ -95,7 +100,9 @@ function useFavoriteMutations(userId: string | null) {
         .order('sort_index', { ascending: false })
         .limit(1);
 
-      const nextIndex = (existing?.[0]?.sort_index ?? 0) + 1;
+      const nextIndex = (existing?.[0]?.sort_index ?? -1) + 1;
+      
+      console.log('Next sort index:', nextIndex);
 
       const { error } = await supabase
         .from('user_pins')
@@ -108,10 +115,27 @@ function useFavoriteMutations(userId: string | null) {
           is_public: true,
         }, { onConflict: 'user_id,pin_type,ref_id,section' });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding favorite:', error);
+        throw error;
+      }
+      
+      console.log('Favorite added successfully');
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['favorite-bubbles', userId] });
+      toast({
+        title: "Added to favorites",
+        description: "Profile added to your favorites bar",
+      });
+    },
+    onError: (error: Error) => {
+      console.error('Mutation error:', error);
+      toast({
+        title: "Failed to add favorite",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   });
 
@@ -126,6 +150,17 @@ function useFavoriteMutations(userId: string | null) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['favorite-bubbles', userId] });
+      toast({
+        title: "Removed from favorites",
+        description: "Profile removed from your favorites bar",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to remove favorite",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   });
 
@@ -264,8 +299,13 @@ export function FavoritesBar({
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const handlePick = async (id: string) => {
-    await add.mutateAsync(id);
-    setSheetOpen(false);
+    try {
+      await add.mutateAsync(id);
+      setSheetOpen(false);
+    } catch (error) {
+      console.error('Failed to add favorite:', error);
+      // Sheet stays open so user can try again
+    }
   };
 
   const handleBubbleClick = (id: string) => {
