@@ -7992,12 +7992,14 @@ export type Database = {
         Returns: boolean
       }
       favorite_toggle: {
-        Args: {
-          p_fav_type: string
-          p_note?: string
-          p_ref_id: string
-          p_tags?: string[]
-        }
+        Args:
+          | {
+              p_fav_type: string
+              p_note?: string
+              p_ref_id: string
+              p_tags?: string[]
+            }
+          | { p_fav_type: string; p_ref_id: string }
         Returns: Json
       }
       favorites_check: {
@@ -8008,7 +8010,9 @@ export type Database = {
         }[]
       }
       favorites_list: {
-        Args: { p_fav_type?: string; p_limit?: number; p_offset?: number }
+        Args:
+          | { p_fav_type?: string; p_limit?: number; p_offset?: number }
+          | { p_fav_type?: string; p_user_id: string }
         Returns: {
           created_at: string
           fav_type: string

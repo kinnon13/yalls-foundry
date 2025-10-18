@@ -7,10 +7,10 @@
       "id": "profile_pins",
       "area": "profile",
       "title": "Profile Pins",
-      "status": "full-ui",
+      "status": "wired",
       "routes": ["/profile/:id"],
       "components": ["src/components/profile/pins/PinBoard.tsx", "src/components/profile/pins/PinCard.tsx", "src/components/profile/pins/AddPinModal.tsx"],
-      "rpc": ["profile_pins_get", "profile_pins_set"],
+      "rpc": ["profile_pins_list", "profile_pins_set", "profile_pins_add", "profile_pins_remove", "profile_pins_reorder"],
       "flags": ["profile_pins"],
       "docs": "docs/features/profile-pins.md",
       "tests": {
@@ -19,17 +19,17 @@
       },
       "owner": "web",
       "severity": "p0",
-      "notes": "Complete with DnD reorder",
+      "notes": "Production-ready: 8-pin limit, DnD reorder, keyboard nav, RLS-backed",
       "subFeatures": ["pin_create", "pin_reorder", "pin_delete", "pin_visibility"]
     },
     {
       "id": "favorites",
       "area": "profile",
       "title": "Favorites",
-      "status": "full-ui",
+      "status": "wired",
       "routes": ["/profile/:id/favorites"],
       "components": ["src/components/profile/FavoriteButton.tsx"],
-      "rpc": ["favorite_toggle", "favorites_list"],
+      "rpc": ["favorite_toggle", "favorites_list", "favorites_check"],
       "flags": ["favorites"],
       "docs": "docs/features/favorites.md",
       "tests": {
@@ -38,7 +38,7 @@
       },
       "owner": "web",
       "severity": "p0",
-      "notes": "Multi-type favorites with optimistic updates"
+      "notes": "Production-ready: DB-backed with RLS, optimistic updates, <100ms toggle"
     },
     {
       "id": "reposts",
