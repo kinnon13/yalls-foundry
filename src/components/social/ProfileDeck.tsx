@@ -77,7 +77,7 @@ export function ProfileDeck({ currentId, allBubbles, onSwitch }: ProfileDeckProp
             user_id: userId,
             pin_type: 'entity',
             ref_id: currentId,
-            section: 'home',
+            section: 'dashboard',
           });
       }
     },
@@ -233,7 +233,7 @@ export function ProfileDeck({ currentId, allBubbles, onSwitch }: ProfileDeckProp
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative" style={{ touchAction: 'pan-y' }}>
       {/* Profile Header */}
       {currentBubble && (
         <div 

@@ -47,7 +47,7 @@ export function BubbleRail({ items, activeId, onChange }: BubbleRailProps) {
         role="listbox"
         aria-label="Profiles"
         className="flex gap-4 px-4 py-4 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', touchAction: 'pan-x' }}
       >
         {items.map((item) => {
           const isActive = item.id === activeId;
@@ -93,7 +93,12 @@ export function BubbleRail({ items, activeId, onChange }: BubbleRailProps) {
                 }}
               >
                 <Avatar className="w-full h-full border-2 border-background">
-                  <AvatarImage src={item.avatar_url} alt={item.display_name} />
+                  <AvatarImage 
+                    src={item.avatar_url} 
+                    alt={item.display_name}
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <AvatarFallback className="text-sm font-medium">
                     {getBubbleInitials(item.display_name)}
                   </AvatarFallback>
