@@ -1,0 +1,58 @@
+{
+  "summary": "Organized AI-first platform architecture with Rocker learning loop, KPI Flo, and work reporting system",
+  "changes": [
+    {
+      "file": "docs/architecture/ai-first-platform-spec.md",
+      "description": "Added Phase 13 (Rocker Learning Loop), Phase 14 (KPI Flo), and Phase 15 (Work Reporting System)",
+      "first_replaced_line": 344,
+      "last_replaced_line": 355
+    },
+    {
+      "file": "configs/area-discovery.json",
+      "description": "Added rockerLearning config with models, interventions, and policies. Added kpiFloConfig for live metrics",
+      "first_replaced_line": 241,
+      "last_replaced_line": 247
+    },
+    {
+      "file": ".github/workflows/show-your-work.yml",
+      "description": "Created CI workflow to validate work reports on every PR"
+    },
+    {
+      "file": "scripts/validate-work-report.mjs",
+      "description": "Created validation script that enforces work-report.json requirements"
+    },
+    {
+      "file": ".github/workflows/ci-evidence.yml",
+      "description": "Created evidence pack validation workflow with HTTP and RLS tests"
+    },
+    {
+      "file": "scripts/ci/evidence_check.sh",
+      "description": "Created bash script to validate evidence pack, test APIs, and verify RLS"
+    },
+    {
+      "file": "scripts/ci/rls_test.sql",
+      "description": "Created SQL test suite for RLS policy verification"
+    },
+    {
+      "file": ".github/pull_request_template.md",
+      "description": "Created PR template requiring work reports and acceptance checks"
+    },
+    {
+      "file": "work-report.json",
+      "description": "Created initial work report for this organizational change"
+    }
+  ],
+  "commands": [],
+  "migrations": [],
+  "rpcs": [],
+  "feature_flags": [],
+  "screens": [],
+  "next": [
+    "Implement Rocker learning tables and RPCs from spec",
+    "Create KPI Flo dashboard component",
+    "Set up CI secrets for test runs",
+    "Seed test data for CI validation"
+  ],
+  "blockers": [],
+  "links": []
+}

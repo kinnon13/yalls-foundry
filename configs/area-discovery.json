@@ -238,10 +238,59 @@
     "termsVersion": "v1"
   },
 
+  "rockerLearning": {
+    "models": {
+      "buy_intent": {
+        "features": ["views_7d","adds_to_cart_14d","price_sensitivity","time_of_day"],
+        "label": "p(purchase_7d)",
+        "metrics": {"auc": 0.82}
+      },
+      "churn_risk": {
+        "features": ["days_since_last_visit","actions_30d","support_tickets"],
+        "label": "p(churn_7d)",
+        "metrics": {"auc": 0.78}
+      }
+    },
+    "interventions": {
+      "merchandising": {
+        "actuators": ["reorder_listings","add_badges"],
+        "risk_tier": "low"
+      },
+      "theme_override": {
+        "actuators": ["set_brand_color","adjust_density"],
+        "risk_tier": "low"
+      },
+      "module_pin": {
+        "actuators": ["pin_to_nav","show_onboarding"],
+        "risk_tier": "medium"
+      }
+    },
+    "policies": {
+      "safe_rollout": {
+        "quiet_hours": {"start": "21:00", "end": "08:00"},
+        "max_assignments_per_user_day": 2,
+        "kpi_floors": {
+          "ret_7d": -0.5,
+          "complaints_rate": 0.02
+        }
+      }
+    }
+  },
+
+  "kpiFloConfig": {
+    "north_stars": ["gmv", "net_earnings", "sellers_active", "buyers_active"],
+    "activation_ladder": ["view", "follow_save", "list", "first_sale", "repeat"],
+    "event_ladder": ["view", "enter", "checkin", "result", "payout"],
+    "diagnostics": ["price_fit", "content_freshness", "response_time", "inventory_coverage"],
+    "experiment_overlay_enabled": true
+  },
+
   "meta": {
     "normalized": true,
     "collapsed": true,
     "rockerEnabled": true,
-    "notes": "Producer = Business entity. Programs (formerly incentives). EquineStats public + private + live KPI. Legacy: equistats→equinestats, organizer→workspace, incentives→programs. Network & Affiliates = compliant MLM growth module."
+    "rockerLearningEnabled": true,
+    "kpiFloEnabled": true,
+    "notes": "Producer = Business entity. Programs (formerly incentives). EquineStats public + private + live KPI. Legacy: equistats→equinestats, organizer→workspace, incentives→programs. Network & Affiliates = compliant MLM growth module. Rocker learning loop: predict → act → measure → learn."
   }
 }

@@ -1102,6 +1102,352 @@ export function WhyThis({ reason }: { reason: string }) {
 
 ---
 
+## Phase 13: Rocker Learning Loop (Predict → Act → Measure)
+
+### 13.1 Core Capabilities
+
+**What Rocker Predicts**:
+- Buy intent (7/30d) per user & workspace
+- Listing conversion uplift per intervention
+- Churn risk / retention lift
+- Creator earnings forecast
+- Entry likelihood for events
+- Message reply probability
+- Referral/affiliate activation
+- Theme/UX affinity
+- Module value probability
+- Optimal send time/quiet hours
+
+**How Rocker Creates Change (Actuators)**:
+- Merchandising: reorder listings/cards, add badges
+- Pricing nudges: show AI suggestions
+- Onboarding: pin modules to workspace nav
+- EquineStats surfaces: auto-add tiles
+- Messaging: DM templates, follow-ups, channel choice
+- Notifications: digests vs real-time, throttling
+- Theme & UX: brand color, density, layout
+- Search/Feed ranking: boost categories
+- Referral hooks: show "Invite & earn"
+
+**Testing Reactions**:
+- Tier 0: Holdouts/canaries + guardrails
+- Tier 1: RCT A/B for new interventions
+- Tier 2: Contextual bandits (Thompson/LinUCB)
+- Tier 3: Offline evaluation (IPS/DR)
+- Tier 4: Long-horizon RL for sequences
+
+### 13.2 New Tables
+
+```sql
+-- Model registry
+CREATE TABLE rocker_models (
+  model_id TEXT PRIMARY KEY,
+  card JSONB NOT NULL,
+  status TEXT DEFAULT 'active',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Intervention catalog
+CREATE TABLE rocker_interventions (
+  intervention_id TEXT PRIMARY KEY,
+  spec JSONB NOT NULL,
+  enabled BOOLEAN DEFAULT true,
+  risk_tier TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Policy guardrails
+CREATE TABLE rocker_policies (
+  policy_id TEXT PRIMARY KEY,
+  scope TEXT NOT NULL,
+  rules JSONB NOT NULL,
+  enabled BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Assignment tracking
+CREATE TABLE rocker_assignments (
+  assignment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  subject_type TEXT NOT NULL,
+  subject_id UUID NOT NULL,
+  intervention_id TEXT REFERENCES rocker_interventions(intervention_id),
+  variant TEXT,
+  context JSONB,
+  exp_id TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Outcome logging
+CREATE TABLE rocker_outcomes (
+  outcome_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  assignment_id UUID REFERENCES rocker_assignments(assignment_id),
+  observed_at TIMESTAMPTZ DEFAULT now(),
+  metrics JSONB NOT NULL
+);
+
+-- Counterfactual logging for offline eval
+CREATE TABLE rocker_counterfactual_log (
+  event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  propensities JSONB,
+  features JSONB,
+  ts TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### 13.3 New RPCs
+
+```sql
+-- Predict interventions
+CREATE OR REPLACE FUNCTION rocker_predict(
+  p_subject_type TEXT,
+  p_subject_id UUID,
+  p_context JSONB
+) RETURNS SETOF JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Return ranked interventions with scores
+  RETURN QUERY
+  SELECT jsonb_build_object(
+    'intervention_id', intervention_id,
+    'variant', 'default',
+    'score', 0.75,
+    'uncertainty', 0.1,
+    'why', 'Predicted based on similar user patterns'
+  )
+  FROM rocker_interventions
+  WHERE enabled = true
+  LIMIT 5;
+END;
+$$;
+
+-- Enact intervention
+CREATE OR REPLACE FUNCTION rocker_enact(
+  p_assignment JSONB
+) RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_assignment_id UUID;
+BEGIN
+  -- Validate policy checks
+  -- Write assignment
+  INSERT INTO rocker_assignments (
+    subject_type,
+    subject_id,
+    intervention_id,
+    variant,
+    context
+  ) VALUES (
+    p_assignment->>'subject_type',
+    (p_assignment->>'subject_id')::uuid,
+    p_assignment->>'intervention_id',
+    p_assignment->>'variant',
+    p_assignment->'context'
+  ) RETURNING assignment_id INTO v_assignment_id;
+  
+  -- Log to action ledger
+  INSERT INTO ai_action_ledger (user_id, agent, action, input, result)
+  VALUES (auth.uid(), 'rocker', 'enact', p_assignment, 'success');
+  
+  RETURN v_assignment_id;
+END;
+$$;
+
+-- Log outcome
+CREATE OR REPLACE FUNCTION rocker_log_outcome(
+  p_assignment_id UUID,
+  p_metrics JSONB
+) RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO rocker_outcomes (assignment_id, metrics)
+  VALUES (p_assignment_id, p_metrics);
+END;
+$$;
+```
+
+### 13.4 Example Model Card
+
+```json
+{
+  "model_id": "buy_intent_v3",
+  "owner": "ai@platform",
+  "features": ["views_7d","adds_to_cart_14d","price_sensitivity"],
+  "label": "p(purchase_7d)",
+  "training": {"start":"2024-10-01","end":"2025-01-01"},
+  "metrics": {"auc":0.82,"calibration_ece":0.03},
+  "bias_checks": {"region":"ok","role":"ok"}
+}
+```
+
+### 13.5 Example Policy
+
+```json
+{
+  "policy_id": "safe_rollout_v1",
+  "quiet_hours": {"start":"21:00","end":"08:00","tz":"user"},
+  "max_assignments_per_user_day": 2,
+  "allowed_actuators": ["merchandising","theme","notification_digest"],
+  "blocked_segments": ["age:<18"],
+  "kpi_floors": {"ret_7d": -0.5, "complaints_rate": 0.02}
+}
+```
+
+**Acceptance criteria**:
+- ✅ Rocker can predict interventions with scores
+- ✅ Enactment validates policies before executing
+- ✅ Outcomes logged for learning
+- ✅ Model cards tracked in registry
+
+---
+
+## Phase 14: KPI Flo (Live Business Health Dashboard)
+
+### 14.1 Core Metrics
+
+**North-Stars**:
+- GMV
+- Net earnings
+- Sellers active
+- Buyers active
+
+**Activation Ladder**:
+- View → Follow/Save → List → First sale → Repeat
+
+**Event Ladder**:
+- View → Enter → Check-in → Result → Payout
+
+**Diagnostic Tiles**:
+- Price fit
+- Content freshness
+- Response time
+- Inventory coverage
+
+**Experiment Overlay**:
+- Shows what Rocker is testing
+- Wins/losses
+- Lift measurements
+
+### 14.2 Component
+
+```typescript
+// src/components/dashboard/KpiFlo.tsx
+interface KpiFloProps {
+  entityId: string;
+  horizon: string;
+}
+
+export function KpiFlo({ entityId, horizon }: KpiFloProps) {
+  const { data: kpis, isLoading } = useQuery({
+    queryKey: ['kpi-flo', entityId, horizon],
+    queryFn: async () => {
+      const { data } = await supabase.rpc('get_workspace_kpis', {
+        p_entity_id: entityId,
+        p_horizon: horizon
+      });
+      return data;
+    },
+    refetchInterval: 120000 // 2 minutes
+  });
+
+  return (
+    <div className="grid grid-cols-4 gap-4">
+      {/* North star metrics */}
+      {/* Activation funnel */}
+      {/* Experiment overlay */}
+    </div>
+  );
+}
+```
+
+**Purpose**: Rocker uses Flo as reward signals and to halt tests if floors are breached.
+
+**Acceptance criteria**:
+- ✅ KPI tiles update within 2 minutes
+- ✅ Shows north-star metrics
+- ✅ Displays activation funnel
+- ✅ Experiment overlay visible
+
+---
+
+## Phase 15: Work Reporting System
+
+### 15.1 Required Artifacts
+
+Every PR must include:
+1. `work-report.json` in repo root
+2. PR body with Work Report section
+3. Evidence pack in `docs/release/EVIDENCE-<id>/`
+
+### 15.2 Schema
+
+```json
+{
+  "summary": "Short human summary",
+  "changes": [
+    {
+      "file": "path/to/file.ts",
+      "description": "What changed",
+      "first_replaced_line": 14,
+      "last_replaced_line": 28
+    }
+  ],
+  "commands": [
+    {"cmd": "pnpm test", "exitCode": 0, "notes": "All tests passed"}
+  ],
+  "migrations": [
+    {"id": "2025-01-18_rocker_enact", "notes": "Adds rocker_enact RPC"}
+  ],
+  "rpcs": ["rocker_predict","rocker_enact"],
+  "feature_flags": ["workspace_kpi_flo"],
+  "screens": ["docs/screenshots/kpi-flo.png"],
+  "next": ["Wire KPI tile"],
+  "blockers": []
+}
+```
+
+### 15.3 CI Enforcement
+
+**Workflow**: `.github/workflows/show-your-work.yml`
+- Validates `work-report.json` exists and is complete
+- Checks PR body includes Work Report section
+- Verifies changed files are documented
+- Fails if evidence is missing
+
+**Script**: `scripts/validate-work-report.mjs`
+- Validates JSON schema
+- Checks required fields
+- Compares reported files vs git diff
+- Allows lockfiles and screenshots to be omitted
+
+### 15.4 Evidence Pack
+
+Required in `docs/release/EVIDENCE-<id>/`:
+1. **Demo video** (≤5 min) - Walkthrough of changes
+2. **Screenshots** (4+ PNGs) - Before/after, key features
+3. **API proofs** (curl/Postman) - RPC round-trips
+4. **DB & Security** - Migration snippets, RLS tests
+5. **Telemetry** - Sample action ledger entries
+6. **Config** - Final area-discovery.json
+7. **Quickstart** - README with verification commands
+
+**Acceptance criteria**:
+- ✅ work-report.json present and valid
+- ✅ PR body includes Work Report section
+- ✅ Evidence pack complete
+- ✅ CI validates all artifacts
+- ✅ Changed files documented
+
+---
+
 ## Migration Checklist
 
 ### Database Migrations

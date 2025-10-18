@@ -1,0 +1,40 @@
+name: Evidence & API Checks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    env:
+      # HTTP test config (set these in repo/org secrets)
+      API_BASE_URL: ${{ secrets.API_BASE_URL }}
+      API_TOKEN: ${{ secrets.CI_TEST_USER_JWT }}
+      API_ANON_KEY: ${{ secrets.API_ANON_KEY }}
+      TEST_USER_ID: ${{ secrets.TEST_USER_ID }}
+      TEST_ENTITY_ID: ${{ secrets.TEST_ENTITY_ID }}
+      TEST_FOREIGN_ENTITY_ID: ${{ secrets.TEST_FOREIGN_ENTITY_ID }}
+
+      # DB (RLS) test config
+      PG_CONNECTION: ${{ secrets.PG_CONNECTION }}
+
+      # Optional flags to temporarily skip parts
+      SKIP_HTTP_TESTS: "0"
+      SKIP_DB_TESTS: "0"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jq postgresql-client
+
+      - name: Make CI scripts executable
+        run: chmod +x scripts/ci/evidence_check.sh
+
+      - name: Run CI evidence & API checks
+        run: scripts/ci/evidence_check.sh

@@ -258,6 +258,114 @@ src/components/shared/
 
 ---
 
+## Phase 12: Rocker Learning Loop 🤖
+
+### Checklist
+- [ ] Create rocker learning tables
+- [ ] Create `rocker_predict` RPC
+- [ ] Create `rocker_enact` RPC
+- [ ] Create `rocker_log_outcome` RPC
+- [ ] Add model registry
+- [ ] Add intervention catalog
+- [ ] Add policy guardrails
+- [ ] Test: prediction returns scored interventions
+- [ ] Test: enactment validates policies
+- [ ] Test: outcomes logged correctly
+
+### Files to Create
+```
+src/lib/rocker/
+  learning.ts                   # Learning loop client
+  models.ts                     # Model registry utilities
+  interventions.ts              # Intervention management
+  
+src/components/rocker/
+  InterventionCard.tsx          # Display intervention suggestions
+  ModelRegistry.tsx             # Model management UI
+```
+
+---
+
+## Phase 13: KPI Flo (Live Dashboard) 📊
+
+### Checklist
+- [ ] Create `KpiFlo` component
+- [ ] Add north-star metrics
+- [ ] Add activation ladder
+- [ ] Add event ladder
+- [ ] Add diagnostic tiles
+- [ ] Add experiment overlay
+- [ ] Wire to `get_workspace_kpis`
+- [ ] Test: KPIs update within 2 minutes
+- [ ] Test: All metric types display correctly
+
+### Files to Create
+```
+src/components/dashboard/
+  KpiFlo.tsx                    # Live KPI dashboard
+  MetricTile.tsx                # Individual metric display
+  ActivationFunnel.tsx          # Funnel visualization
+  ExperimentOverlay.tsx         # A/B test results
+```
+
+---
+
+## Phase 14: Work Reporting System 📝
+
+### Checklist
+- [ ] Create `work-report.json` schema
+- [ ] Create CI workflow for validation
+- [ ] Create validation script
+- [ ] Create evidence check workflow
+- [ ] Create RLS test suite
+- [ ] Update PR template
+- [ ] Test: CI fails without work report
+- [ ] Test: CI validates all fields
+- [ ] Test: Evidence pack verified
+
+### Files to Create
+```
+.github/workflows/
+  show-your-work.yml            # Work report validation
+  ci-evidence.yml               # Evidence pack checks
+
+scripts/
+  validate-work-report.mjs      # Validation logic
+
+scripts/ci/
+  evidence_check.sh             # Evidence verification
+  rls_test.sql                  # RLS test suite
+```
+
+---
+
+## Phase 15: Integration & Polish ✨
+
+### Checklist
+- [ ] Integrate all phases
+- [ ] Update documentation
+- [ ] Seed test data
+- [ ] Configure CI secrets
+- [ ] Run full test suite
+- [ ] Create evidence pack
+- [ ] Deploy to staging
+- [ ] QA all features
+- [ ] Deploy to production
+
+### Files to Update
+```
+configs/
+  area-discovery.json           # Final config with all modules
+  
+docs/
+  README.md                     # Updated with new features
+  
+.github/
+  pull_request_template.md      # Complete checklist
+```
+
+---
+
 ## Testing Matrix
 
 | Feature | Manual Test | Unit Test | E2E Test |

@@ -1,0 +1,18 @@
+name: show-your-work
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Validate work-report.json and PR body
+        run: |
+          node scripts/validate-work-report.mjs
