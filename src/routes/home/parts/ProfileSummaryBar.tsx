@@ -69,7 +69,7 @@ export default function ProfileSummaryBar() {
 
       {/* Stats centered with username above */}
       <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="text-base font-semibold mb-2">{name}</div>
+        <div className="text-base font-semibold mb-2">@{name}</div>
         <div className="flex gap-6 text-sm">
           <div className="flex flex-col items-center">
             <span className="text-lg font-bold text-foreground">{totals.following}</span>
