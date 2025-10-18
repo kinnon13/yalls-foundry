@@ -13,13 +13,15 @@
     "scripts/validate-architecture.mjs",
     "scripts/validate-db.sql",
     "scripts/ops-report.mjs",
+    "scripts/remap-legacy.mjs",
     "scripts/health/check-repo.mjs",
     "scripts/health/check-db.mjs",
     "scripts/health/generate-report.mjs",
     ".github/workflows/show-your-work.yml",
     ".github/workflows/health-report.yml",
     "docs/SMOKE_TESTS.md",
-    "src/routes/admin/system.tsx"
+    "src/routes/admin/system.tsx",
+    "tests/route-aliases.test.ts"
   ],
   "changes": [
     {
