@@ -303,6 +303,37 @@ export default function FeaturesAdminPage() {
     setSelectedForExport(newSelection);
   };
 
+  const handleClaimFeature = (routeFamily: string) => {
+    // Extract area from route (e.g., /marketplace/* -> marketplace)
+    const area = routeFamily.replace(/^\//, '').replace(/\/.*$/, '').replace(/\*$/, '');
+    const id = `${area}_main`;
+    const title = area.charAt(0).toUpperCase() + area.slice(1).replace(/-/g, ' ');
+    
+    const featureStub = {
+      id,
+      title: `${title} (Claimed)`,
+      area,
+      status: "shell",
+      routes: [routeFamily],
+      components: [],
+      rpc: [],
+      tables: [],
+      notes: `Auto-generated stub for ${routeFamily}. Add components, RPCs, and tables to complete.`
+    };
+
+    const blob = new Blob([JSON.stringify(featureStub, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `feature-${area}-stub.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast.success(`Feature stub created for ${routeFamily}`, {
+      description: 'Copy this into features.json and fill in the details'
+    });
+  };
+
   const handleExportUndocumented = () => {
     const undoc = (window as any).__undocumented;
     if (!undoc) {
@@ -1140,17 +1171,28 @@ export default function FeaturesAdminPage() {
                   <Button variant="ghost" className="w-full justify-between hover:bg-accent">
                     <div className="flex items-center gap-2">
                       {showUndocRoutes ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                      <span className="font-semibold">Undocumented Routes</span>
+                      <span className="font-semibold">Undocumented Routes (Collapsed Families)</span>
                       <Badge variant="outline">{undoc.routes?.length || 0}</Badge>
                     </div>
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-3">
-                  <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto p-2 border rounded-lg">
+                  <div className="space-y-2 max-h-80 overflow-y-auto p-2 border rounded-lg">
                     {(undoc.routes || []).map((route: string) => (
-                      <Badge key={route} variant="secondary" className="text-xs">
-                        {route}
-                      </Badge>
+                      <div key={route} className="flex items-center justify-between gap-2 p-2 hover:bg-accent/50 rounded">
+                        <Badge variant="secondary" className="text-xs">
+                          {route}
+                        </Badge>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleClaimFeature(route)}
+                          className="text-xs"
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Claim
+                        </Button>
+                      </div>
                     ))}
                   </div>
                 </CollapsibleContent>
