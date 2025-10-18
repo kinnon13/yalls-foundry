@@ -114,7 +114,7 @@ export default function SocialFeedPane() {
   return (
     <section className="flex h-full w-full flex-col text-[hsl(222.2_47.4%_11.2%)] overflow-hidden">
       {/* Home button and Connected Accounts heading - STICKY */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur flex items-center justify-between px-3 py-2">
+      <div className="sticky top-14 z-20 bg-white/95 backdrop-blur flex items-center justify-between px-3 py-2">
         <button
           onClick={() => navigate('/home')}
           className="text-base font-semibold hover:text-primary transition-colors"
@@ -126,12 +126,12 @@ export default function SocialFeedPane() {
       </div>
 
       {/* Profile bubble with stats - STICKY */}
-      <div className="sticky top-[44px] z-20 bg-white/95 backdrop-blur">
+      <div className="sticky top-[100px] z-20 bg-white/95 backdrop-blur">
         <ProfileSummaryBar />
       </div>
 
       {/* Tab indicators - STICKY */}
-      <div className="sticky top-[124px] z-20 mb-2 flex items-center justify-center gap-2 bg-white/95 backdrop-blur pr-2 py-1">
+      <div className="sticky top-[180px] z-20 mb-2 flex items-center justify-center gap-2 bg-white/95 backdrop-blur pr-2 py-1">
         {TABS.map((t) => (
           <button
             key={t}

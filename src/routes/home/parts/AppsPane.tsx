@@ -141,13 +141,13 @@ export default function AppsPane() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Always-visible favorites bar with distinct background - STICKY */}
-      <section className="sticky top-0 z-20 bg-muted/30 px-2 py-2 backdrop-blur">
+      <section className="sticky top-14 z-20 bg-muted/30 px-2 py-2 backdrop-blur">
         <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
         <FavoritesBar size={72} gap={12} />
       </section>
 
       {/* Scale control - STICKY */}
-      <div className="sticky top-[100px] z-20 bg-background/95 backdrop-blur flex items-center gap-3 px-2 py-2">
+      <div className="sticky top-[156px] z-20 bg-background/95 backdrop-blur flex items-center gap-3 px-2 py-2">
         <span className="text-xs text-muted-foreground whitespace-nowrap">Tile size</span>
         <input
           type="range"
