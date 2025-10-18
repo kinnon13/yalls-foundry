@@ -115,8 +115,10 @@ export function DraggableAppGrid() {
     if (!container) return;
     
     const rect = container.getBoundingClientRect();
-    const mouseX = (event as any).activatorEvent?.clientX || 0;
-    const mouseY = (event as any).activatorEvent?.clientY || 0;
+    const startX = (event as any).activatorEvent?.clientX ?? rect.left;
+    const startY = (event as any).activatorEvent?.clientY ?? rect.top;
+    const mouseX = startX + (event.delta?.x ?? 0);
+    const mouseY = startY + (event.delta?.y ?? 0);
     
     // Calculate which grid cell the drop happened in
     const cellWidth = rect.width / 8; // 8 columns
@@ -223,7 +225,7 @@ export function DraggableAppGrid() {
         onDragStart={({ active }) => setActiveId(active.id as string)}
         onDragEnd={handleDragEnd}
       >
-        <div className="relative z-20 w-full min-h-[200vh] overflow-auto">
+        <div className="relative z-20 w-full min-h-[400vh] overflow-auto">
           <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16">
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-4 sm:gap-6 md:gap-7 lg:gap-8">
               {Object.values(APPS).map((app) => (
