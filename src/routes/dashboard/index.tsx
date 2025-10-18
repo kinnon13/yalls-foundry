@@ -67,7 +67,7 @@ function PanelSkeleton() {
 }
 
 export default function DashboardLayout() {
-  const [sp] = useSearchParams();
+  const [sp, setSp] = useSearchParams();
   const rawModule = sp.get('m');
   const m = coerceModule(rawModule);
   const [userId, setUserId] = useState<string | null>(null);
@@ -77,6 +77,13 @@ export default function DashboardLayout() {
   const [feedTopOffset] = useState(64);
   
   const Panel = useMemo(() => panels[m] ?? panels.overview, [m]);
+
+  // Auto-close business module and return to desktop
+  useEffect(() => {
+    if (m === 'business') {
+      setSp({});
+    }
+  }, [m, setSp]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
