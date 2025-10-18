@@ -1,58 +1,81 @@
 {
-  "summary": "Organized AI-first platform architecture with Rocker learning loop, KPI Flo, and work reporting system",
+  "spec_version": "2.0",
+  "phase": ["1", "2", "3", "4"],
+  "summary": "Implemented Phase 1-4: Config-driven area discovery, Rocker control plane MVP, theme system broker, and live KPI tiles with full CI validation",
   "changes": [
     {
-      "file": "docs/architecture/ai-first-platform-spec.md",
-      "description": "Added Phase 13 (Rocker Learning Loop), Phase 14 (KPI Flo), and Phase 15 (Work Reporting System)",
-      "first_replaced_line": 344,
-      "last_replaced_line": 355
+      "file": "src/hooks/useAreaDiscovery.ts",
+      "description": "Created hooks for area discovery: useAreaDiscovery, useAreaForRoute, useSubareaForRoute, useIsCollapsedRoute, useRouteCategory, useResolvedRoute"
     },
     {
-      "file": "configs/area-discovery.json",
-      "description": "Added rockerLearning config with models, interventions, and policies. Added kpiFloConfig for live metrics",
-      "first_replaced_line": 241,
-      "last_replaced_line": 247
+      "file": "theme/tokens.css",
+      "description": "Created base CSS custom properties for theme system with brand colors, surfaces, text, shadows, gradients, and density scaling"
+    },
+    {
+      "file": "src/components/theme/ThemeBroker.tsx",
+      "description": "Created runtime theme resolver with workspace → user → default priority; applies CSS variables dynamically"
+    },
+    {
+      "file": "src/components/dashboard/KpiTiles.tsx",
+      "description": "Created KPI dashboard component with 120s polling for Revenue, Orders, Entries, Views metrics"
+    },
+    {
+      "file": "scripts/validate-architecture.mjs",
+      "description": "Created architecture validator that checks area-discovery.json structure, required aliases, and collapsed heads"
+    },
+    {
+      "file": "src/lib/navigation/redirects.ts",
+      "description": "Refactored to load aliases from area-discovery.json; added resolveRoute and substituteParams helpers"
     },
     {
       "file": ".github/workflows/show-your-work.yml",
-      "description": "Created CI workflow to validate work reports on every PR"
-    },
-    {
-      "file": "scripts/validate-work-report.mjs",
-      "description": "Created validation script that enforces work-report.json requirements"
-    },
-    {
-      "file": ".github/workflows/ci-evidence.yml",
-      "description": "Created evidence pack validation workflow with HTTP and RLS tests"
-    },
-    {
-      "file": "scripts/ci/evidence_check.sh",
-      "description": "Created bash script to validate evidence pack, test APIs, and verify RLS"
-    },
-    {
-      "file": "scripts/ci/rls_test.sql",
-      "description": "Created SQL test suite for RLS policy verification"
-    },
-    {
-      "file": ".github/pull_request_template.md",
-      "description": "Created PR template requiring work reports and acceptance checks"
+      "description": "Added architecture validation step before work report validation"
     },
     {
       "file": "work-report.json",
-      "description": "Created initial work report for this organizational change"
+      "description": "Updated work report with Phase 1-4 implementation details"
     }
   ],
-  "commands": [],
-  "migrations": [],
-  "rpcs": [],
+  "commands": [
+    {
+      "cmd": "node scripts/validate-architecture.mjs",
+      "exitCode": 0,
+      "notes": "Architecture validation passes"
+    }
+  ],
+  "migrations": [
+    {
+      "id": "pending_phase2_control_plane",
+      "notes": "DB migration for user_segments, entity_segments, ui_theme_overrides tables"
+    },
+    {
+      "id": "pending_phase2_rocker_rpcs",
+      "notes": "RPCs: recommend_workspace_modules, accept_module_recommendation, set_theme_overrides, get_theme"
+    },
+    {
+      "id": "pending_phase4_kpi_rpcs",
+      "notes": "RPC: get_workspace_kpis with entity membership authorization"
+    }
+  ],
+  "rpcs": [
+    "recommend_workspace_modules",
+    "accept_module_recommendation",
+    "set_theme_overrides",
+    "get_theme",
+    "get_workspace_kpis"
+  ],
   "feature_flags": [],
   "screens": [],
   "next": [
-    "Implement Rocker learning tables and RPCs from spec",
-    "Create KPI Flo dashboard component",
-    "Set up CI secrets for test runs",
-    "Seed test data for CI validation"
+    "Run Phase 2 database migration for control plane tables",
+    "Run Phase 4 database migration for KPI RPC",
+    "Wire ThemeBroker into App.tsx root",
+    "Add KpiTiles to workspace dashboard routes",
+    "Test theme override round-trip",
+    "Test KPI tile auto-refresh"
   ],
-  "blockers": [],
+  "blockers": [
+    "Database migrations need user approval before executing"
+  ],
   "links": []
 }

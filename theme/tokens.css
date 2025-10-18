@@ -1,0 +1,117 @@
+/**
+ * Base Theme Tokens
+ * These are the default theme variables that can be overridden
+ * by ThemeBroker at runtime based on user/workspace preferences
+ */
+
+:root {
+  /* Brand Colors */
+  --brand-primary: hsl(221, 83%, 53%);
+  --brand-primary-glow: hsl(221, 83%, 63%);
+  --brand-accent: hsl(142, 71%, 45%);
+  --brand-accent-glow: hsl(142, 71%, 55%);
+  
+  /* Surface Colors */
+  --surface-bg: hsl(222, 47%, 11%);
+  --surface-card: hsl(220, 27%, 18%);
+  --surface-elevated: hsl(220, 27%, 22%);
+  --surface-hover: hsl(220, 27%, 25%);
+  
+  /* Text Colors */
+  --text-primary: hsl(220, 9%, 90%);
+  --text-secondary: hsl(220, 9%, 75%);
+  --text-muted: hsl(220, 9%, 61%);
+  --text-disabled: hsl(220, 9%, 45%);
+  
+  /* Semantic Colors */
+  --success: hsl(142, 71%, 45%);
+  --warning: hsl(38, 92%, 50%);
+  --error: hsl(0, 72%, 51%);
+  --info: hsl(199, 89%, 48%);
+  
+  /* Borders */
+  --border-subtle: hsl(220, 27%, 30%);
+  --border-default: hsl(220, 27%, 40%);
+  --border-strong: hsl(220, 27%, 50%);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-elegant: 0 10px 30px -10px hsla(221, 83%, 53%, 0.3);
+  --shadow-glow: 0 0 40px hsla(221, 83%, 63%, 0.4);
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, hsl(221, 83%, 53%), hsl(221, 83%, 63%));
+  --gradient-accent: linear-gradient(135deg, hsl(142, 71%, 45%), hsl(142, 71%, 55%));
+  --gradient-subtle: linear-gradient(180deg, hsl(222, 47%, 11%), hsl(220, 27%, 18%));
+  
+  /* Density Scale (1.0 = normal, 0.8 = compact, 1.2 = comfortable) */
+  --density-scale: 1.0;
+  
+  /* Spacing (multiplied by density-scale) */
+  --space-xs: calc(0.25rem * var(--density-scale));
+  --space-sm: calc(0.5rem * var(--density-scale));
+  --space-md: calc(1rem * var(--density-scale));
+  --space-lg: calc(1.5rem * var(--density-scale));
+  --space-xl: calc(2rem * var(--density-scale));
+  --space-2xl: calc(3rem * var(--density-scale));
+  
+  /* Typography */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  
+  /* Font Sizes (scaled by density) */
+  --text-xs: calc(0.75rem * var(--density-scale));
+  --text-sm: calc(0.875rem * var(--density-scale));
+  --text-base: calc(1rem * var(--density-scale));
+  --text-lg: calc(1.125rem * var(--density-scale));
+  --text-xl: calc(1.25rem * var(--density-scale));
+  --text-2xl: calc(1.5rem * var(--density-scale));
+  --text-3xl: calc(1.875rem * var(--density-scale));
+  
+  /* Border Radius */
+  --radius-sm: calc(0.125rem * var(--density-scale));
+  --radius-md: calc(0.375rem * var(--density-scale));
+  --radius-lg: calc(0.5rem * var(--density-scale));
+  --radius-xl: calc(0.75rem * var(--density-scale));
+  --radius-full: 9999px;
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Z-Index Scale */
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-fixed: 1200;
+  --z-modal-backdrop: 1300;
+  --z-modal: 1400;
+  --z-popover: 1500;
+  --z-tooltip: 1600;
+}
+
+/* Dark mode adjustments (if needed) */
+.dark {
+  /* Override specific tokens for dark mode if different from default */
+}
+
+/* Light mode (if implementing light mode) */
+.light {
+  --surface-bg: hsl(0, 0%, 98%);
+  --surface-card: hsl(0, 0%, 100%);
+  --surface-elevated: hsl(0, 0%, 100%);
+  --surface-hover: hsl(0, 0%, 96%);
+  
+  --text-primary: hsl(220, 9%, 10%);
+  --text-secondary: hsl(220, 9%, 25%);
+  --text-muted: hsl(220, 9%, 39%);
+  --text-disabled: hsl(220, 9%, 55%);
+  
+  --border-subtle: hsl(220, 27%, 90%);
+  --border-default: hsl(220, 27%, 80%);
+  --border-strong: hsl(220, 27%, 70%);
+}

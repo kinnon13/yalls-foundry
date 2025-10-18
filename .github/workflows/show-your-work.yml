@@ -13,6 +13,8 @@ jobs:
         with:
           node-version: '20'
       
+      - name: Validate architecture config
+        run: node scripts/validate-architecture.mjs
+      
       - name: Validate work-report.json and PR body
-        run: |
-          node scripts/validate-work-report.mjs
+        run: node scripts/validate-work-report.mjs

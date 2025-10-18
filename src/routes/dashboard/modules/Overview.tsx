@@ -16,6 +16,21 @@ import { Badge } from '@/components/ui/badge';
 export function Overview() {
   const { session } = useSession();
 
+  // Get first entity ID for KPI display
+  const { data: firstEntityId } = useQuery({
+    queryKey: ['first-entity', session?.userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('entities')
+        .select('id')
+        .eq('owner_user_id', session?.userId)
+        .limit(1)
+        .single();
+      return data?.id;
+    },
+    enabled: !!session?.userId,
+  });
+
   // Fetch pending approvals count
   const { data: pendingApprovals } = useQuery({
     queryKey: ['pending-approvals', session?.userId],
@@ -50,7 +65,7 @@ export function Overview() {
       </div>
 
       {/* KPIs */}
-      <KpiTiles />
+      {firstEntityId && <KpiTiles entityId={firstEntityId} />}
 
       {/* Pending Approvals Alert */}
       {pendingApprovals && pendingApprovals > 0 && (
