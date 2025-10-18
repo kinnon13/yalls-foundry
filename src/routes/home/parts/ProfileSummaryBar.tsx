@@ -55,7 +55,7 @@ export default function ProfileSummaryBar() {
   return (
     <Link
       to="/profile"
-      className="flex items-center gap-3 px-2 py-2 hover:bg-muted/30 rounded-lg transition-colors"
+      className="flex items-center px-2 py-2 hover:bg-muted/30 rounded-lg transition-colors"
       aria-label="Open your profile"
     >
       {/* Avatar on left */}
@@ -67,21 +67,19 @@ export default function ProfileSummaryBar() {
         )}
       </div>
 
-      {/* Stats centered in remaining space */}
-      <div className="flex-1 flex justify-center">
-        <div className="flex gap-6 text-sm">
-          <div className="flex flex-col items-center">
-            <span className="text-lg font-bold text-foreground">{totals.following}</span>
-            <span className="text-xs text-muted-foreground">Following</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-lg font-bold text-foreground">{totals.followers}</span>
-            <span className="text-xs text-muted-foreground">Followers</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-lg font-bold text-foreground">{totals.likes}</span>
-            <span className="text-xs text-muted-foreground">Likes</span>
-          </div>
+      {/* Stats positioned to align under username */}
+      <div className="flex gap-6 text-sm ml-4">
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-bold text-foreground">{totals.following}</span>
+          <span className="text-xs text-muted-foreground">Following</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-bold text-foreground">{totals.followers}</span>
+          <span className="text-xs text-muted-foreground">Followers</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-bold text-foreground">{totals.likes}</span>
+          <span className="text-xs text-muted-foreground">Likes</span>
         </div>
       </div>
     </Link>
