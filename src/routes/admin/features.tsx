@@ -742,6 +742,18 @@ export default function FeaturesAdminPage() {
         tables: undocumentedTables,
       };
 
+      // Define copy helper right after setting data
+      (window as any).__copyUndoc = () => {
+        const data = (window as any).__undocumented;
+        if (data) {
+          navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+          console.log('✅ Copied undocumented items to clipboard');
+        } else {
+          console.warn('⚠️ No undocumented data available yet. Run a scan first.');
+        }
+      };
+      console.log('%c💡 Run __copyUndoc() to copy all gaps to clipboard.', 'color:#10b981; font-weight:bold');
+
       const rpcMap = new Map<string, { exists: boolean; security_definer?: boolean }>();
       for (const r of (data?.rpcs ?? [])) {
         rpcMap.set(r.name, { 
