@@ -105,10 +105,8 @@ export function DraggableAppGrid() {
   }, []);
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+    const { active } = event;
     setActiveId(null);
-
-    if (!over || active.id === over.id) return;
 
     // Get the container's bounding rect to calculate grid position
     const container = document.querySelector('.pin-canvas');
@@ -231,7 +229,8 @@ export function DraggableAppGrid() {
         onDragEnd={handleDragEnd}
       >
         <div className="relative z-20 w-full min-h-[600vh] overflow-auto">
-          <div className="pin-canvas max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16 min-h-[600vh]">
+          <div className="pin-canvas relative outline-dashed outline-1 outline-primary/30 max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16 min-h-[600vh]">
+            <div className="absolute top-2 left-4 text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">Pin area</div>
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-4 sm:gap-6 md:gap-7 lg:gap-8">
               {Object.values(APPS).map((app, idx) => (
                 <DraggableApp key={app.id} app={app} index={idx + 1} />
