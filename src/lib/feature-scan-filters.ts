@@ -6,6 +6,9 @@
 // Route aliases for canonical naming
 const ROUTE_ALIASES: Record<string, string> = {
   '/entrant': '/entries',
+  '/dashboard': '/workspace',
+  '/incentives/dashboard': '/workspace',
+  '/crm': '/workspace',
 };
 
 // Which route heads should be collapsed into `/<head>/*`
@@ -22,6 +25,7 @@ const COLLAPSE_HEADS = new Set([
   '/stallions',
   '/cart',
   '/organizer',
+  '/workspace',
 ]);
 
 // Route categories for filtering/display
@@ -29,6 +33,8 @@ export const ROUTE_CATEGORIES: Record<string, string> = {
   '/events': 'public',
   '/entries': 'private',
   '/organizer': 'organizer',
+  '/workspace': 'workspace',
+  '/marketplace': 'public',
 };
 
 export const routeIgnore = [
@@ -85,7 +91,27 @@ export function applyRouteAlias(p: string): string {
 }
 
 /**
- * Get route category (public/private/organizer)
+ * Check if route is a workspace route
+ */
+export function isWorkspaceRoute(p: string): boolean {
+  const normalized = normRoute(applyRouteAlias(p));
+  return normalized.startsWith('/workspace');
+}
+
+/**
+ * Get workspace entity ID from route if present
+ */
+export function getWorkspaceEntityId(p: string): string | null {
+  const normalized = normRoute(applyRouteAlias(p));
+  const match = normalized.match(/^\/workspace\/([^/]+)/);
+  if (match && match[1] !== 'personal') {
+    return match[1]; // Return :id placeholder or actual ID
+  }
+  return null;
+}
+
+/**
+ * Get route category (public/private/organizer/workspace)
  */
 export function getRouteCategory(p: string): string | null {
   const normalized = normRoute(applyRouteAlias(p));
