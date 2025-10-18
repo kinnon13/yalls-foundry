@@ -3,6 +3,7 @@ import SocialFeedPane from './parts/SocialFeedPane';
 import PhonePager from './parts/PhonePager';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { BottomDock } from '@/components/layout/BottomDock';
+import DebugHUD from '@/dev/DebugHUD';
 
 export default function HomePage() {
   return (
@@ -29,6 +30,7 @@ export default function HomePage() {
         </div>
       </main>
       <BottomDock />
+      {import.meta.env.DEV && <DebugHUD />}
     </>
   );
 }

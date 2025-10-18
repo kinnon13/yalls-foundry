@@ -168,4 +168,24 @@ All colors MUST be HSL.
   #sidefeed-pane [aria-grabbed="true"] {
     display: none !important;
   }
+
+  /* BOX OUTLINES - Debug mode */
+  html[data-debug='boxes'] * {
+    outline: 1px dashed rgba(0, 200, 255, .45) !important;
+    outline-offset: -1px;
+  }
+
+  /* 8px GRID OVERLAY - Debug mode */
+  html[data-debug='grid']::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, rgba(0,200,255,.18) 0 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,0,150,.18) 0 1px, transparent 1px);
+    background-size: 8px 100%, 100% 8px;
+    mix-blend-mode: multiply;
+  }
 }
