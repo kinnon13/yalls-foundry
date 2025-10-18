@@ -42,8 +42,8 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
           className="inline-flex items-center gap-2 font-semibold tracking-tight"
           aria-label="Yalls.ai Home"
         >
-          <Home className="h-5 w-5" />
           <span className="hidden sm:inline">yalls.ai</span>
+          <Home className="h-5 w-5" />
         </Link>
 
         {/* Search (desktop/tablet) */}
