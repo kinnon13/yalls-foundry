@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FavoritesBar } from '@/components/social/FavoritesBar';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useProfilePins } from '@/hooks/useProfilePins';
 
 import { useEntityCapabilities } from '@/hooks/useEntityCapabilities';
 import { 
@@ -104,6 +106,27 @@ export default function AppsPane() {
   // Get entity capabilities
   const { data: capabilities = {} } = useEntityCapabilities(userId);
 
+  // Fetch pinned entities
+  const pins = useProfilePins(userId);
+
+  const { data: pinnedEntities = [] } = useQuery({
+    queryKey: ['pinned-entities', userId, pins.data],
+    queryFn: async () => {
+      if (!pins.data) return [];
+      const entityPins = pins.data.filter(p => p.pin_type === 'entity');
+      if (entityPins.length === 0) return [];
+
+      const entityIds = entityPins.map(p => p.ref_id);
+      const { data } = await supabase
+        .from('entities')
+        .select('id, display_name, kind, status, handle, owner_user_id')
+        .in('id', entityIds);
+      
+      return data || [];
+    },
+    enabled: !!userId && !!pins.data && pins.data.length > 0
+  });
+
   // Filter management apps based on capabilities
   const filteredManagementApps = useMemo(() => {
     return MANAGEMENT_APPS.filter(app => {
@@ -122,7 +145,7 @@ export default function AppsPane() {
     return totalEntities === 0;
   }, [capabilities]);
 
-  // Combine all visible apps
+  // Combine all visible apps + pinned entities
   const visibleApps = useMemo(() => {
     const apps = [...CONSUMER_APPS];
     
@@ -145,6 +168,22 @@ export default function AppsPane() {
     return apps;
   }, [hasNoManagedEntities, filteredManagementApps]);
 
+  // All items (apps + pinned entities)
+  const allItems = useMemo(() => {
+    const items = [...visibleApps];
+    // Add pinned entities
+    pinnedEntities.forEach((entity: any) => {
+      items.push({
+        id: `entity:${entity.id}`,
+        label: entity.display_name,
+        icon: Building,
+        route: `/entities/${entity.id}`,
+        color: 'from-accent/20 to-accent/5',
+      });
+    });
+    return items;
+  }, [visibleApps, pinnedEntities]);
+
   // Grid dimensions derived from resizable box (subtract padding+border: p-3=12px each side, border-2=2px each side => 28px total)
   const gridDims = useMemo(() => {
     const innerW = Math.max(0, containerWidth - 28);
@@ -158,9 +197,6 @@ export default function AppsPane() {
   const itemsPerPage = useMemo(() => {
     return gridDims.cols * gridDims.rows;
   }, [gridDims]);
-
-  // All items (apps only)
-  const allItems = useMemo(() => [...visibleApps], [visibleApps]);
 
   // Calculate total pages
   const totalPages = Math.ceil(allItems.length / itemsPerPage);
