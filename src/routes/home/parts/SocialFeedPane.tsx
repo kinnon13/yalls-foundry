@@ -129,7 +129,7 @@ export default function SocialFeedPane() {
       <ProfileSummaryBar />
 
       {/* Tab indicators (clickable or drag/swipe to change) */}
-      <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-background/70 backdrop-blur px-2 py-1">
+      <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-white/90 backdrop-blur px-2 py-1">
         {TABS.map((t) => (
           <button
             key={t}
@@ -149,10 +149,10 @@ export default function SocialFeedPane() {
       {/* Swipeable feed container */}
       <div 
         ref={railRef}
-        className="relative flex-1 select-none touch-pan-y"
+        className="relative flex-1 select-none touch-pan-y bg-white"
       >
         <div 
-          className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
+          className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide bg-white"
         >
           <div className="space-y-4 px-2 pb-4">
             {items.map((item) => (
