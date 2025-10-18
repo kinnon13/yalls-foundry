@@ -75,6 +75,7 @@ export default function DashboardLayout() {
   const [feedHeight, setFeedHeight] = useState(600);
   const [feedRightOffset] = useState(0);
   const [feedTopOffset] = useState(64);
+  const [mainContentWidth, setMainContentWidth] = useState<number | null>(null);
   
   const Panel = useMemo(() => panels[m] ?? panels.overview, [m]);
 
@@ -105,9 +106,11 @@ export default function DashboardLayout() {
 
   // Social Feed resizing
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const mainContentRef = useRef<HTMLDivElement | null>(null);
   const startRef = useRef<{ x: number; y: number; w: number; h: number }>({ x: 0, y: 0, w: 0, h: 0 });
   const MIN_W = 320;
   const MIN_H = 400;
+  const MIN_MAIN_W = 600;
 
   type Edge = 'corner' | 'right' | 'left' | 'bottom';
 
@@ -146,6 +149,26 @@ export default function DashboardLayout() {
     window.addEventListener('pointerup', onUp);
   };
 
+  const onMainContentResize = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const startWidth = mainContentRef.current?.offsetWidth || window.innerWidth - feedWidth;
+    const startX = e.clientX;
+    
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      const newWidth = Math.max(MIN_MAIN_W, startWidth + dx);
+      setMainContentWidth(newWidth);
+    };
+    
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+
   return (
     <div className="h-dvh flex flex-col bg-background overflow-hidden">
       {/* Wallpaper */}
@@ -160,12 +183,27 @@ export default function DashboardLayout() {
       <GlobalHeader />
 
       {/* Main content area */}
-      <div className="flex-1 relative min-h-0 overflow-hidden">
+      <div 
+        ref={mainContentRef}
+        className="flex-1 relative min-h-0 overflow-hidden"
+        style={{
+          width: mainContentWidth ? `${mainContentWidth}px` : undefined,
+          marginRight: `${feedWidth}px`
+        }}
+      >
         <DashboardErrorBoundary>
           <Suspense fallback={<div className="flex items-center justify-center h-full"><PanelSkeleton /></div>}>
             <DraggableAppGrid />
           </Suspense>
         </DashboardErrorBoundary>
+        
+        {/* Resize handle for main content */}
+        <div
+          onPointerDown={onMainContentResize}
+          className="absolute top-1/2 right-0 -translate-y-1/2 h-32 w-2 cursor-ew-resize bg-primary/20 hover:bg-primary/40 transition-colors z-50"
+          aria-label="Resize app grid area"
+          title="Drag to resize app grid"
+        />
       </div>
 
       {/* Social Feed Sidecar - Resizable overlay */}
