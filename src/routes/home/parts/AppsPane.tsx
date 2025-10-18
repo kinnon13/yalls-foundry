@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FavoritesBar } from '@/components/social/FavoritesBar';
 import { supabase } from '@/integrations/supabase/client';
@@ -80,6 +80,24 @@ export default function AppsPane() {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
 
+  // Observe box resize to update pagination + persist size
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!boxRef.current) return;
+    const obs = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        const w = Math.round(width);
+        const h = Math.round(height);
+        setContainerWidth(w);
+        setContainerHeight(h);
+        localStorage.setItem('apps.containerWidth', String(w));
+        localStorage.setItem('apps.containerHeight', String(h));
+      }
+    });
+    obs.observe(boxRef.current);
+    return () => obs.disconnect();
+  }, []);
   // Get entity capabilities
   const { data: capabilities = {} } = useEntityCapabilities(userId);
 
@@ -164,52 +182,11 @@ export default function AppsPane() {
 
       {/* Apps Grid - Separate Box */}
       <div className="flex-1 overflow-auto bg-background p-4">
-        {/* Size Controls */}
-        <div className="mb-3 flex items-center gap-4 flex-wrap">
-          <label className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Width:</span>
-            <input
-              type="range"
-              min={400}
-              max={1200}
-              step={50}
-              value={containerWidth}
-              onChange={(e) => setContainerWidth(parseInt(e.target.value))}
-              className="w-32"
-            />
-            <span className="text-xs text-muted-foreground w-12">{containerWidth}px</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Height:</span>
-            <input
-              type="range"
-              min={200}
-              max={800}
-              step={50}
-              value={containerHeight}
-              onChange={(e) => setContainerHeight(parseInt(e.target.value))}
-              className="w-32"
-            />
-            <span className="text-xs text-muted-foreground w-12">{containerHeight}px</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Tile:</span>
-            <input
-              type="range"
-              min={84}
-              max={160}
-              step={4}
-              value={tile}
-              onChange={(e) => setTile(parseInt(e.target.value))}
-              className="w-32"
-            />
-            <span className="text-xs text-muted-foreground w-12">{tile}px</span>
-          </label>
-        </div>
         
 
         <div 
-          className="border-2 border-border rounded-lg bg-muted/20 p-3 relative"
+          ref={boxRef}
+          className="border-2 border-border rounded-lg bg-muted/20 p-3 relative resize overflow-auto"
           style={{ 
             width: `${containerWidth}px`,
             height: `${containerHeight}px`,
@@ -231,7 +208,7 @@ export default function AppsPane() {
               key={app.id}
               onClick={() => handleAppClick(app)}
               className={cn(
-                "group flex flex-col items-center justify-between gap-2 p-3",
+                "flex flex-col items-center justify-between gap-2 p-3",
                 "rounded-2xl",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               )}
@@ -242,9 +219,9 @@ export default function AppsPane() {
               <div 
                 className={cn(
                   "flex items-center justify-center flex-1 w-full",
-                  "shadow-lg group-hover:shadow-xl transition-all duration-200",
+                  "shadow-sm",
                   `bg-gradient-to-br ${app.color || 'from-primary/20 to-primary/5'}`,
-                  "border border-white/10 rounded-xl"
+                  "border border-border/60 rounded-xl"
                 )}
               >
                 <Icon 
