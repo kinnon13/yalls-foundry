@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { downloadJSON, downloadCSV } from '@/lib/export/download';
 import { PlayCircle, Download, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 type TestResult = {
   name: string;
@@ -39,64 +41,40 @@ export default function TestRunner() {
   const runTests = async () => {
     setRunning(true);
 
-    // Simulate test run (in real implementation, this would call vitest API or run via shell)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      const { data, error } = await supabase.functions.invoke('run-tests');
 
-    // Mock results for demonstration
-    const mockResults: TestSuite[] = [
-      {
-        name: 'Auth Tests',
-        duration: 450,
-        tests: [
-          { name: 'should fetch user role', status: 'passed', duration: 120 },
-          { name: 'should handle sign-in', status: 'passed', duration: 180 },
-          { name: 'should default to guest on error', status: 'passed', duration: 150 },
-        ],
-      },
-      {
-        name: 'RBAC Tests',
-        duration: 320,
-        tests: [
-          { name: 'admin can access admin.area', status: 'passed', duration: 80 },
-          { name: 'guest cannot claim profiles', status: 'passed', duration: 90 },
-          { name: 'business_owner can claim', status: 'passed', duration: 150 },
-        ],
-      },
-      {
-        name: 'Profile Service Tests',
-        duration: 280,
-        tests: [
-          { name: 'should create profile', status: 'passed', duration: 100 },
-          { name: 'should fetch by ID', status: 'passed', duration: 90 },
-          { name: 'should update profile', status: 'passed', duration: 90 },
-        ],
-      },
-    ];
+      if (error) {
+        console.error('Test run error:', error);
+        toast.error('Failed to run tests', {
+          description: error.message || 'Unknown error'
+        });
+        setRunning(false);
+        return;
+      }
 
-    const totalTests = mockResults.reduce((acc, suite) => acc + suite.tests.length, 0);
-    const passed = mockResults.reduce(
-      (acc, suite) => acc + suite.tests.filter((t) => t.status === 'passed').length,
-      0
-    );
-    const failed = mockResults.reduce(
-      (acc, suite) => acc + suite.tests.filter((t) => t.status === 'failed').length,
-      0
-    );
-    const skipped = mockResults.reduce(
-      (acc, suite) => acc + suite.tests.filter((t) => t.status === 'skipped').length,
-      0
-    );
-    const totalDuration = mockResults.reduce((acc, suite) => acc + suite.duration, 0);
+      if (data?.error) {
+        console.error('Test execution error:', data.error);
+        toast.error('Test execution failed', {
+          description: data.error
+        });
+        setRunning(false);
+        return;
+      }
 
-    setResults(mockResults);
-    setSummary({
-      total: totalTests,
-      passed,
-      failed,
-      skipped,
-      duration: totalDuration,
-    });
-    setRunning(false);
+      setResults(data.suites || []);
+      setSummary(data.summary || null);
+      toast.success('Tests completed', {
+        description: `${data.summary?.passed || 0} passed, ${data.summary?.failed || 0} failed`
+      });
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast.error('Failed to run tests', {
+        description: err instanceof Error ? err.message : 'Unknown error'
+      });
+    } finally {
+      setRunning(false);
+    }
   };
 
   const handleExportJSON = () => {

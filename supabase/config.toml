@@ -170,3 +170,6 @@ verify_jwt = true
 [functions.feed-api]
 verify_jwt = false
 
+[functions.run-tests]
+verify_jwt = true
+
