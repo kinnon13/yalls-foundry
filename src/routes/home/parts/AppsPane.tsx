@@ -7,7 +7,7 @@ import { useEntityCapabilities } from '@/hooks/useEntityCapabilities';
 import { 
   Calendar, Settings, DollarSign, Trophy, ShoppingCart,
   Building, Users, Sparkles, Tractor, CheckCircle,
-  MessageSquare, User, MapPin, Flame, BookOpen, 
+  MapPin, Flame, BookOpen, 
   Store, Activity, Zap, Target, Award, LucideIcon, Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -22,9 +22,8 @@ interface AppTile {
   requireKind?: 'business' | 'farm' | 'horse' | 'stallion' | 'producer' | 'incentive';
 }
 
-// Consumer apps - always visible
+// Consumer apps - always visible (Messages and My Profile removed - they're in dock/feed header)
 const CONSUMER_APPS: AppTile[] = [
-  { id: 'me', label: 'My Profile', icon: User, route: '/me', color: 'from-purple-500/20 to-purple-600/5' },
   { id: 'social', label: 'Four', icon: Flame, route: '/social', color: 'from-orange-500/20 to-red-600/5' },
   { id: 'marketplace', label: 'Market', icon: Store, route: '/marketplace', color: 'from-green-500/20 to-emerald-600/5' },
   { id: 'calendar', label: 'Calendar', icon: Calendar, module: 'events', color: 'from-red-500/20 to-orange-600/5' },
@@ -164,7 +163,9 @@ export default function AppsPane() {
               className={cn(
                 "group flex flex-col items-center gap-2 p-2",
                 "aspect-square rounded-2xl transition-all duration-200",
-                "hover:scale-105 active:scale-95",
+                "border border-white/10 bg-white/[0.04]",
+                "shadow-[inset_0_1px_0_0_rgba(255,255,255,.06),0_10px_30px_-12px_rgba(0,0,0,.6)]",
+                "hover:bg-white/[0.08] hover:scale-105 active:scale-95",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               )}
               aria-label={app.label}
@@ -173,17 +174,15 @@ export default function AppsPane() {
               <div 
                 className={cn(
                   "flex items-center justify-center flex-1 w-full",
-                  "shadow-lg group-hover:shadow-xl transition-all duration-200",
-                  `bg-gradient-to-br ${app.color || 'from-primary/20 to-primary/5'}`,
-                  "border border-white/10 rounded-xl"
+                  "transition-all duration-200"
                 )}
               >
                 <Icon 
-                  className="text-white drop-shadow-sm w-1/2 h-1/2"
+                  className="text-white/90 drop-shadow-sm w-[28px] h-[28px]"
                   strokeWidth={1.5} 
                 />
               </div>
-              <span className="text-[10px] leading-tight text-center font-medium truncate max-w-full">
+              <span className="text-[13px] leading-tight text-center font-medium text-white/80 truncate max-w-full">
                 {app.label}
               </span>
             </button>
@@ -198,15 +197,17 @@ export default function AppsPane() {
             className={cn(
               "group flex flex-col items-center gap-2 p-2",
               "aspect-square rounded-2xl transition-all duration-200",
-              "hover:scale-105 active:scale-95",
+              "border border-white/10 bg-white/[0.04]",
+              "shadow-[inset_0_1px_0_0_rgba(255,255,255,.06),0_10px_30px_-12px_rgba(0,0,0,.6)]",
+              "hover:bg-white/[0.08] hover:scale-105 active:scale-95",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             )}
             title={entity.title}
           >
-            <div className="flex items-center justify-center flex-1 w-full shadow-lg group-hover:shadow-xl transition-all duration-200 bg-gradient-to-br from-accent/20 to-accent/5 border border-border/60 rounded-xl">
-              <div className="w-1/2 h-1/2 rounded-full bg-muted" />
+            <div className="flex items-center justify-center flex-1 w-full transition-all duration-200">
+              <div className="w-[28px] h-[28px] rounded-full bg-muted" />
             </div>
-            <span className="text-[10px] leading-tight text-center font-medium truncate max-w-full">
+            <span className="text-[13px] leading-tight text-center font-medium text-white/80 truncate max-w-full">
               {entity.title}
             </span>
           </button>
@@ -221,26 +222,21 @@ export default function AppsPane() {
             className={cn(
               "group flex flex-col items-center gap-2 p-2",
               "w-20 aspect-square rounded-2xl transition-all duration-300",
-              "hover:scale-110 active:scale-95",
+              "border border-white/10 bg-white/[0.04]",
+              "shadow-[inset_0_1px_0_0_rgba(255,255,255,.06),0_10px_30px_-12px_rgba(0,0,0,.6)]",
+              "hover:bg-white/[0.08] hover:scale-110 active:scale-95",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             )}
             aria-label="Create new profile"
             title="Create new profile"
           >
-            <div 
-              className={cn(
-                "flex items-center justify-center flex-1 w-full",
-                "shadow-xl group-hover:shadow-2xl group-hover:shadow-primary/30 transition-all duration-300",
-                "bg-gradient-to-br from-primary/30 to-primary/10",
-                "border border-white/20 rounded-xl"
-              )}
-            >
+            <div className="flex items-center justify-center flex-1 w-full transition-all duration-300">
               <Plus 
-                className="text-white drop-shadow-md w-1/2 h-1/2 group-hover:scale-110 transition-transform duration-300"
+                className="text-primary drop-shadow-md w-[28px] h-[28px] group-hover:scale-110 transition-transform duration-300"
                 strokeWidth={2.5} 
               />
             </div>
-            <span className="text-[10px] leading-tight text-center font-semibold truncate max-w-full">
+            <span className="text-[13px] leading-tight text-center font-semibold text-white/80 truncate max-w-full">
               Create new profile
             </span>
           </button>

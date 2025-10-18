@@ -1,125 +1,152 @@
+import { Link, useNavigate } from 'react-router-dom';
+import { MessageCircle, Plus, Store, Globe2, AppWindow } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { PlusCircle, MessageCircle, Store, Globe2, AppWindow } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { ChatDrawer } from '@/components/chat/ChatDrawer';
-
-type DockItem = {
-  key: string;
-  label: string;
-  to?: string;
-  onClick?: () => void;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: number;
-};
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 
 export function BottomDock() {
-  const nav = useNavigate();
+  const [createOpen, setCreateOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const nav = useNavigate();
 
-  const items: DockItem[] = [
-    {
-      key: 'messages',
-      label: 'Messages',
-      onClick: () => setChatOpen(true),
-      icon: MessageCircle,
-    },
-    {
-      key: 'create',
-      label: 'Create',
-      onClick: () => nav('/create'),
-      icon: PlusCircle,
-    },
-    {
-      key: 'market',
-      label: 'Marketplace',
-      to: '/marketplace',
-      icon: Store,
-    },
-    {
-      key: 'unclaimed',
-      label: 'Unclaimed',
-      to: '/unclaimed',
-      icon: Globe2,
-    },
-    {
-      key: 'appstore',
-      label: 'App Store',
-      to: '/app-store',
-      icon: AppWindow,
-    },
-  ];
+  const handleCreate = (route: string) => {
+    setCreateOpen(false);
+    nav(route);
+  };
 
   return (
     <>
       <ChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} />
-      
-      <nav
-        role="navigation"
-        aria-label="Bottom dock"
-        className={cn(
-          'fixed bottom-0 inset-x-0 z-40 bg-background/90 backdrop-blur border-t border-border/60',
-          'px-2 pb-[max(0px,env(safe-area-inset-bottom))]'
-        )}
-      >
-      <div className="mx-auto max-w-[800px] h-16 grid grid-cols-5 gap-2 items-end">
-        {items.map((it) => {
-          const Icon = it.icon;
-          const isCreate = it.key === 'create';
-          const content = (
-            <div
-              className={cn(
-                'flex flex-col items-center gap-1',
-                isCreate && 'translate-y-[-12px]'
-              )}
-            >
-              <div
-                className={cn(
-                  'grid place-items-center rounded-2xl shadow-lg transition-all duration-200',
-                  'border border-white/10',
-                  isCreate 
-                    ? 'h-14 w-14 bg-gradient-to-br from-primary/30 to-primary/10'
-                    : 'h-12 w-12 bg-gradient-to-br from-primary/20 to-primary/5'
-                )}
-                aria-hidden
-              >
-                <Icon 
-                  className={cn(
-                    'text-white drop-shadow-sm',
-                    isCreate ? 'w-7 h-7' : 'w-6 h-6'
-                  )} 
-                />
-              </div>
-              <span className="text-[10px] leading-tight font-medium truncate max-w-full">
-                {it.label}
-              </span>
-            </div>
-          );
+      <CreateSheet open={createOpen} onClose={() => setCreateOpen(false)} onSelect={handleCreate} />
 
-          return it.to ? (
-            <Link
-              key={it.key}
-              to={it.to}
-              className="relative flex flex-col items-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition-all"
-              aria-label={it.label}
-              title={it.label}
-            >
-              {content}
-            </Link>
-          ) : (
-            <button
-              key={it.key}
-              onClick={it.onClick}
-              className="relative flex flex-col items-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition-all"
-              aria-label={it.label}
-              title={it.label}
-            >
-              {content}
-            </button>
-          );
-        })}
+      <div className="pointer-events-none fixed inset-x-0 bottom-3 z-40 flex justify-center px-4">
+        <div className="
+          pointer-events-auto
+          flex items-center gap-8
+          rounded-full border border-white/10 bg-[color-mix(in_srgb,var(--background),transparent_20%)]
+          shadow-[0_10px_30px_-10px_rgba(0,0,0,.6)]
+          backdrop-blur-md px-6 py-3
+        ">
+          <DockItem onClick={() => setChatOpen(true)} label="Messages">
+            <MessageCircle />
+          </DockItem>
+
+          {/* Center create button */}
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="group grid place-items-center rounded-full size-12
+                       bg-gradient-to-b from-primary/90 to-primary text-white
+                       shadow-[0_8px_20px_-6px_rgba(0,0,0,.5)]
+                       hover:scale-105 transition-all duration-200"
+            aria-label="Create"
+          >
+            <Plus className="size-6" />
+          </button>
+
+          <DockItem to="/marketplace" label="Marketplace">
+            <Store />
+          </DockItem>
+          <DockItem to="/unclaimed" label="Unclaimed">
+            <Globe2 />
+          </DockItem>
+          <DockItem to="/app-store" label="App Store">
+            <AppWindow />
+          </DockItem>
+        </div>
       </div>
-    </nav>
     </>
+  );
+}
+
+function DockItem({ 
+  to, 
+  onClick, 
+  label, 
+  children 
+}: { 
+  to?: string; 
+  onClick?: () => void;
+  label: string; 
+  children: React.ReactNode;
+}) {
+  const content = (
+    <>
+      <div className="
+        grid place-items-center rounded-2xl size-10
+        bg-white/[0.04] border border-white/10
+        shadow-[inset_0_1px_0_0_rgba(255,255,255,.06)]
+        group-hover:bg-white/[0.08] transition-all duration-200
+      ">
+        <span className="[&>*]:size-[22px] text-white/90">{children}</span>
+      </div>
+      <span className="text-white/70">{label}</span>
+    </>
+  );
+
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className="group flex flex-col items-center gap-1 text-[13px] leading-none"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className="group flex flex-col items-center gap-1 text-[13px] leading-none"
+    >
+      {content}
+    </button>
+  );
+}
+
+function CreateSheet({
+  open,
+  onClose,
+  onSelect
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSelect: (route: string) => void;
+}) {
+  const createOptions = [
+    { label: 'Profile', route: '/profiles/new' },
+    { label: 'Business', route: '/businesses/new' },
+    { label: 'Horse', route: '/horses/new' },
+    { label: 'Farm', route: '/farms/new' },
+    { label: 'Post', route: '/post/new' },
+    { label: 'Listing', route: '/listings/new' },
+    { label: 'Event', route: '/events/new' },
+  ];
+
+  return (
+    <Sheet open={open} onOpenChange={onClose}>
+      <SheetContent side="bottom" className="rounded-t-2xl">
+        <SheetHeader>
+          <SheetTitle>Create</SheetTitle>
+        </SheetHeader>
+        <div className="grid grid-cols-2 gap-2 mt-4">
+          {createOptions.map((option) => (
+            <button
+              key={option.route}
+              onClick={() => onSelect(option.route)}
+              className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3 text-left
+                         hover:bg-white/[0.08] transition-all duration-200"
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -6,8 +6,8 @@ import { BottomDock } from '@/components/layout/BottomDock';
 
 export default function HomePage() {
   return (
-    // Full-viewport shell: header / content / dock - no body scroll
-    <div className="fixed inset-0 grid grid-rows-[64px_1fr_80px] bg-background">
+    // Full-viewport shell: header / content - dock floats above
+    <div className="fixed inset-0 grid grid-rows-[64px_1fr] bg-background">
       <GlobalHeader />
 
       {/* Split content: Left = Apps, Right = Feed (no outer scroll) */}
