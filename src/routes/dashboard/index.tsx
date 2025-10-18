@@ -105,35 +105,37 @@ export default function DashboardLayout() {
       {/* Main content area */}
       <div className="flex-1 relative min-h-0 overflow-hidden">
         {m ? (
-          <div className="h-full px-4 py-2 overflow-auto">
-            <div className="flex items-center justify-between mb-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-2"
-                onClick={() => window.history.back()}
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Back to Desktop
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  const params = new URLSearchParams(window.location.search);
-                  params.delete('m');
-                  window.history.pushState({}, '', `${window.location.pathname}?${params}`);
-                  window.location.reload();
-                }}
-              >
-                <X className="w-4 h-4" />
-              </Button>
+          <div className="h-full overflow-auto">
+            <div className="max-w-7xl mx-auto px-4 py-6">
+              <div className="flex items-center justify-between mb-6">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => window.history.back()}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Back to Desktop
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const params = new URLSearchParams(window.location.search);
+                    params.delete('m');
+                    window.history.pushState({}, '', `${window.location.pathname}?${params}`);
+                    window.location.reload();
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              <DashboardErrorBoundary>
+                <Suspense fallback={<PanelSkeleton />}>
+                  <Panel />
+                </Suspense>
+              </DashboardErrorBoundary>
             </div>
-            <DashboardErrorBoundary>
-              <Suspense fallback={<PanelSkeleton />}>
-                <Panel />
-              </Suspense>
-            </DashboardErrorBoundary>
           </div>
         ) : (
           <DashboardErrorBoundary>
