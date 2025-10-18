@@ -246,6 +246,12 @@ export default function AppsPane() {
         <FavoritesBar size={72} gap={12} />
       </section>
 
+      {/* Middle Layer */}
+      <section className="shrink-0 bg-muted/30 px-4 py-3 border-b border-border/50">
+        <h3 className="text-base font-semibold text-foreground mb-2 text-center">Middle Layer</h3>
+        <div className="h-20 bg-background/50 rounded-lg border border-border/50"></div>
+      </section>
+
       {/* Apps Grid - Separate Box */}
       <div className="flex-1 overflow-auto bg-background p-4">
         
