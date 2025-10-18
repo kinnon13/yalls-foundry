@@ -1,12 +1,9 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRocker } from '@/lib/ai/rocker';
 import { Link } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
-import { RockerHint } from '@/lib/ai/rocker';
 
 export function UpcomingFromNetwork() {
   const { log, section } = useRocker();
@@ -58,97 +55,45 @@ export function UpcomingFromNetwork() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Upcoming from your network</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="animate-pulse space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="rounded border p-3">
-                <div className="h-4 bg-muted rounded w-3/4 mb-2" />
-                <div className="h-3 bg-muted rounded w-1/2" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold px-2">Upcoming</h2>
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="animate-pulse rounded-2xl bg-muted/30 backdrop-blur-sm p-4 h-28" />
+          ))}
+        </div>
+      </section>
     );
   }
 
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Upcoming from your network</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">Failed to load events.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!data || data.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Upcoming from your network</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground">
-            No upcoming events yet. Follow organizers to see their events here.
-          </p>
-          <RockerHint
-            suggestion="Follow 3 organizers to see events here"
-            reason="Building your network helps you discover relevant events"
-            action={async () => {
-              window.location.href = '/search?category=events';
-            }}
-            actionLabel="Find Organizers"
-            rateLimit="hint:follow-organizers:v1"
-          />
-        </CardContent>
-      </Card>
-    );
-  }
+  if (error || !data || data.length === 0) return null;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          Upcoming from your network
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-        {data.map((ev: any) => (
-          <div key={ev.event_id} className="rounded border p-3 flex flex-col gap-2 hover:border-primary/50 transition-colors">
-            <div className="font-medium">{ev.title}</div>
+    <section className="space-y-4">
+      <h2 className="text-lg font-semibold px-2 flex items-center gap-2">
+        <Calendar className="h-5 w-5" />
+        Upcoming
+      </h2>
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        {data.slice(0, 6).map((ev: any) => (
+          <Link
+            key={ev.event_id}
+            to={ev.enterable ? ev.enter_route! : `/events/${ev.event_id}`}
+            className="rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 p-4 flex flex-col gap-2 hover:bg-card/80 hover:scale-[1.02] transition-all hover:shadow-lg"
+            onClick={() => log('enter_event_click', { event_id: ev.event_id })}
+          >
+            <div className="font-medium line-clamp-2">{ev.title}</div>
             <div className="text-sm text-muted-foreground">
-              {new Date(ev.starts_at).toLocaleString()}
+              {new Date(ev.starts_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
             </div>
             {ev.location && (
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground line-clamp-1">
                 {typeof ev.location === 'string' ? ev.location : ev.location.name || 'Location TBD'}
               </div>
             )}
-            {ev.enterable ? (
-              <Button 
-                asChild 
-                size="sm"
-                onClick={() => log('enter_event_click', { event_id: ev.event_id })}
-              >
-                <Link to={ev.enter_route!}>Enter</Link>
-              </Button>
-            ) : (
-              <Button variant="outline" size="sm" asChild>
-                <Link to={`/events/${ev.event_id}`}>View Details</Link>
-              </Button>
-            )}
-          </div>
+          </Link>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

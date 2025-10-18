@@ -1,17 +1,11 @@
-import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRocker } from '@/lib/ai/rocker';
-import { Building2, ExternalLink } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 
 export function PortalTiles() {
   const { log, section } = useRocker();
-
-  useEffect(() => {
-    log('page_view', { section, component: 'portal_tiles' });
-  }, [log, section]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['dash', 'network'],
@@ -62,32 +56,26 @@ export function PortalTiles() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Your portals</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="animate-pulse h-10 w-32 bg-muted rounded" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold px-2">Network</h2>
+        <div className="flex flex-wrap gap-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="animate-pulse h-12 w-36 bg-muted/30 rounded-full backdrop-blur-sm" />
+          ))}
+        </div>
+      </section>
     );
   }
 
   if (!Array.isArray(data) || data.length === 0) return null;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Building2 className="h-5 w-5" />
-          Your portals
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-wrap gap-2">
+    <section className="space-y-4">
+      <h2 className="text-lg font-semibold px-2 flex items-center gap-2">
+        <Building2 className="h-5 w-5" />
+        Network
+      </h2>
+      <div className="flex flex-wrap gap-3">
         {Array.isArray(data) && data.map((n: any) => {
           const entity = entities?.find((e: any) => e.id === n.entity_id);
           const label = entity?.display_name || entity?.handle || 'Workspace';
@@ -95,19 +83,18 @@ export function PortalTiles() {
           return (
             <Link
               key={n.entity_id}
-              className="inline-flex items-center gap-2 rounded border px-3 py-2 hover:bg-accent hover:border-primary/50 transition-colors"
+              className="inline-flex items-center gap-2.5 rounded-full bg-card/50 backdrop-blur-sm border border-border/50 px-4 py-2.5 hover:bg-card/80 hover:scale-105 transition-all hover:shadow-md"
               to={`/workspace/${n.entity_id}/dashboard`}
               onClick={() => log('portal_open', { entity_id: n.entity_id, rel: n.rel })}
             >
-              <span className="inline-flex h-6 w-6 rounded bg-muted items-center justify-center">
+              <span className="inline-flex h-7 w-7 rounded-full bg-muted/60 items-center justify-center">
                 <Building2 className="h-4 w-4" />
               </span>
               <span className="text-sm font-medium">{label}</span>
-              <ExternalLink className="h-3 w-3 text-muted-foreground" />
             </Link>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

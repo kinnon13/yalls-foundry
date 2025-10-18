@@ -58,39 +58,25 @@ export function CollectionsBar() {
     },
   });
 
-  if (!collections || collections.length === 0) {
-    return (
-      <div className="flex items-center gap-4 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => createMutation.mutate()}
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Create Folder
-        </Button>
-      </div>
-    );
-  }
+  if (!collections || collections.length === 0) return null;
 
   return (
     <>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      <section className="space-y-4">
+        <div className="flex items-center justify-between px-2">
           <h2 className="text-lg font-semibold">Collections</h2>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => createMutation.mutate()}
-            className="gap-2"
+            className="gap-2 rounded-full"
           >
             <Plus className="h-4 w-4" />
-            New Folder
+            New
           </Button>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
           {collections.map((collection) => (
             <CollectionBubble
               key={collection.id}
@@ -106,7 +92,7 @@ export function CollectionsBar() {
             />
           ))}
         </div>
-      </div>
+      </section>
 
       <CollectionDrawer
         collection={selectedCollection}

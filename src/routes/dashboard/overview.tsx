@@ -59,56 +59,68 @@ export default function Overview() {
   }, []);
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <DashboardBreadcrumbs />
-          <h1 className="text-2xl md:text-3xl font-bold mt-2">Dashboard Overview</h1>
-          <p className="text-muted-foreground">Your daily operations at a glance</p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      {/* Mac-style header bar */}
+      <div className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border/50">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500/80" />
+              <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+              <div className="w-3 h-3 rounded-full bg-green-500/80" />
+            </div>
+            <h1 className="text-sm font-medium">Dashboard</h1>
+          </div>
+          <DashboardEntitySwitcher />
         </div>
-        <DashboardEntitySwitcher />
       </div>
 
-      <DashboardKPIs kpis={null} isLoading={false} />
+      {/* iOS-style app grid container */}
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-12">
+        {/* Collections (folders) */}
+        <CollectionsBar />
 
-      {primaryEntity?.id && <MyApps entityId={primaryEntity.id} />}
+        {/* My Apps grid */}
+        {primaryEntity?.id && <MyApps entityId={primaryEntity.id} />}
 
-      <CollectionsBar />
+        {/* Portal/Network tiles */}
+        <PortalTiles />
 
-      <UpcomingFromNetwork />
+        {/* Upcoming events - compact */}
+        <UpcomingFromNetwork />
 
-      <PortalTiles />
-
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Next Best Actions</h2>
-        <div className="grid md:grid-cols-2 gap-3">
-          {loading && (
-            <div className="rounded-lg border bg-card p-6">
-              <div className="animate-pulse space-y-3">
-                <div className="h-4 bg-muted rounded w-3/4"></div>
-                <div className="h-3 bg-muted rounded w-full"></div>
-              </div>
+        {/* Next Best Actions - iOS card style */}
+        {(loading || items.length > 0) && (
+          <section className="space-y-4">
+            <h2 className="text-lg font-semibold px-2">Suggested</h2>
+            <div className="grid gap-3 md:grid-cols-2">
+              {loading && (
+                <div className="rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 p-6">
+                  <div className="animate-pulse space-y-3">
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                    <div className="h-3 bg-muted rounded w-full"></div>
+                  </div>
+                </div>
+              )}
+              {items.map((a, i) => (
+                <div 
+                  className="rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 p-6 space-y-3 hover:bg-card/80 transition-all hover:scale-[1.02] hover:shadow-lg" 
+                  key={i}
+                >
+                  <div className="font-medium text-base">{a.cta}</div>
+                  <p className="text-sm text-muted-foreground">{a.why}</p>
+                  <a 
+                    className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors" 
+                    href={a.href}
+                  >
+                    Do it
+                  </a>
+                </div>
+              ))}
             </div>
-          )}
-          {!loading && items.length === 0 && (
-            <div className="rounded-lg border bg-card p-6">
-              <p className="text-center text-muted-foreground">You're all set for now 🎉</p>
-            </div>
-          )}
-          {items.map((a, i) => (
-            <div className="rounded-lg border bg-card p-6 space-y-3" key={i}>
-              <div className="font-medium text-lg">{a.cta}</div>
-              <p className="text-sm text-muted-foreground">{a.why}</p>
-              <a 
-                className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors" 
-                href={a.href}
-              >
-                Do it
-              </a>
-            </div>
-          ))}
-        </div>
-      </section>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

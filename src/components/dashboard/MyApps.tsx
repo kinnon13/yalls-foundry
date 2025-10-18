@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AppBubble } from './AppBubble';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRocker } from '@/lib/ai/rocker';
 import { 
   Building2, MessageSquare, Calendar, 
@@ -74,59 +73,51 @@ export function MyApps({ entityId }: MyAppsProps) {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>My Apps</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="animate-pulse h-32 bg-muted rounded-[22px]" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold px-2">My Apps</h2>
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="animate-pulse h-32 bg-muted/30 rounded-[22px] backdrop-blur-sm" />
+          ))}
+        </div>
+      </section>
     );
   }
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>My Apps</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {installedApps && installedApps.map((app: any) => {
-              const catalog = app.app_catalog;
-              const IconComponent = iconMap[catalog?.icon] || Building2;
-              
-              return (
-                <AppBubble
-                  key={app.app_key}
-                  to={getAppRoute(app.app_key)}
-                  icon={<IconComponent className="h-6 w-6" />}
-                  title={catalog?.name || app.app_key}
-                  meta={catalog?.summary}
-                  accent={getCategoryAccent(catalog?.category)}
-                  onClick={() => log('app_open', { app_key: app.app_key, entity_id: entityId })}
-                />
-              );
-            })}
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold px-2">My Apps</h2>
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          {installedApps && installedApps.map((app: any) => {
+            const catalog = app.app_catalog;
+            const IconComponent = iconMap[catalog?.icon] || Building2;
             
-            <AppBubble
-              icon={<Plus className="h-6 w-6" />}
-              title="Add Apps"
-              meta="Browse app store"
-              onClick={() => {
-                log('app_store_open', { entity_id: entityId });
-                setShowAppStore(true);
-              }}
-              accent="hsl(var(--primary))"
-            />
-          </div>
-        </CardContent>
-      </Card>
+            return (
+              <AppBubble
+                key={app.app_key}
+                to={getAppRoute(app.app_key)}
+                icon={<IconComponent className="h-6 w-6" />}
+                title={catalog?.name || app.app_key}
+                meta={catalog?.summary}
+                accent={getCategoryAccent(catalog?.category)}
+                onClick={() => log('app_open', { app_key: app.app_key, entity_id: entityId })}
+              />
+            );
+          })}
+          
+          <AppBubble
+            icon={<Plus className="h-6 w-6" />}
+            title="Add Apps"
+            meta="Browse app store"
+            onClick={() => {
+              log('app_store_open', { entity_id: entityId });
+              setShowAppStore(true);
+            }}
+            accent="hsl(var(--primary))"
+          />
+        </div>
+      </section>
 
       {showAppStore && (
         <AppStoreModal 
