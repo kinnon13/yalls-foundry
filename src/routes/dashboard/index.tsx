@@ -183,84 +183,87 @@ export default function DashboardLayout() {
       {/* Global header */}
       <GlobalHeader />
 
-      {/* Main content area */}
-      <div 
-        ref={mainContentRef}
-        className="flex-1 relative min-h-0 overflow-hidden"
-        style={{
-          width: mainContentWidth ? `${mainContentWidth}px` : undefined,
-          marginRight: `${feedWidth}px`
-        }}
-      >
-        <DashboardErrorBoundary>
-          <Suspense fallback={<div className="flex items-center justify-center h-full"><PanelSkeleton /></div>}>
-            <DraggableAppGrid />
-          </Suspense>
-        </DashboardErrorBoundary>
-        
-        {/* Resize handles for app grid */}
-        <div
-          onPointerDown={onMainResizeStart('right')}
-          className="absolute top-1/2 right-0 -translate-y-1/2 h-32 w-2 cursor-ew-resize bg-primary/20 hover:bg-primary/40 transition-colors z-50"
-          aria-label="Resize app grid area from right"
-          title="Drag to resize app grid"
-        />
-        <div
-          onPointerDown={onMainResizeStart('left')}
-          className="absolute top-1/2 left-0 -translate-y-1/2 h-32 w-2 cursor-ew-resize bg-primary/20 hover:bg-primary/40 transition-colors z-50"
-          aria-label="Resize app grid area from left"
-          title="Drag to resize app grid"
-        />
-      </div>
-
-      {/* Social Feed Sidecar - Resizable overlay */}
-      <div
-        ref={containerRef}
-        className="fixed bg-background border-l border-r shadow-xl z-40 relative select-none"
-        style={{
-          width: `${feedWidth}px`,
-          height: `${feedHeight}px`,
-          right: `${feedRightOffset}px`,
-          top: `${feedTopOffset}px`
-        }}
-      >
-        {/* Feed Header */}
-        <div className="h-12 border-b flex items-center justify-between px-4 bg-background/95 backdrop-blur select-none">
-          <h2 className="font-semibold">Social Feed</h2>
-          <div className="text-xs text-muted-foreground">{feedWidth}×{feedHeight}px</div>
+      {/* Container for resizable areas */}
+      <div className="flex-1 relative min-h-0 overflow-hidden flex">
+        {/* Main content area - App Grid */}
+        <div 
+          ref={mainContentRef}
+          className="relative overflow-hidden"
+          style={{
+            width: mainContentWidth || `calc(100vw - ${feedWidth}px)`,
+            flexShrink: 0
+          }}
+        >
+          <DashboardErrorBoundary>
+            <Suspense fallback={<div className="flex items-center justify-center h-full"><PanelSkeleton /></div>}>
+              <DraggableAppGrid />
+            </Suspense>
+          </DashboardErrorBoundary>
+          
+          {/* Right resize handle for app grid */}
+          <div
+            onPointerDown={onMainResizeStart('right')}
+            className="absolute top-1/2 right-0 -translate-y-1/2 h-32 w-3 cursor-ew-resize bg-primary/30 hover:bg-primary/60 transition-colors z-50 rounded-l"
+            aria-label="Resize app grid from right"
+            title="Drag to resize"
+          />
+          {/* Left resize handle for app grid */}
+          <div
+            onPointerDown={onMainResizeStart('left')}
+            className="absolute top-1/2 left-0 -translate-y-1/2 h-32 w-3 cursor-ew-resize bg-primary/30 hover:bg-primary/60 transition-colors z-50 rounded-r"
+            aria-label="Resize app grid from left"
+            title="Drag to resize"
+          />
         </div>
 
-        {/* Feed Content */}
-        <div className="h-[calc(100%-48px)] overflow-hidden">
-          <TikTokFeed />
-        </div>
+        {/* Social Feed - Right side */}
+        <div
+          ref={containerRef}
+          className="relative bg-background border-l border-r shadow-xl select-none"
+          style={{
+            width: `${feedWidth}px`,
+            height: `${feedHeight}px`,
+            flexShrink: 0
+          }}
+        >
+          {/* Feed Header */}
+          <div className="h-12 border-b flex items-center justify-between px-4 bg-background/95 backdrop-blur select-none">
+            <h2 className="font-semibold">Social Feed</h2>
+            <div className="text-xs text-muted-foreground">{feedWidth}×{feedHeight}px</div>
+          </div>
 
-        {/* Resize handles */}
-        {/* Corner (bottom-right) */}
-        <div
-          onPointerDown={onResizeStart('corner')}
-          className="absolute bottom-1 right-1 h-4 w-4 cursor-nwse-resize rounded bg-muted border border-border"
-          aria-label="Resize social feed"
-          title="Drag to resize"
-        />
-        {/* Right edge */}
-        <div
-          onPointerDown={onResizeStart('right')}
-          className="absolute top-1/2 right-0 -translate-y-1/2 h-20 w-1 cursor-ew-resize bg-border/50"
-          aria-label="Resize width from right"
-        />
-        {/* Left edge */}
-        <div
-          onPointerDown={onResizeStart('left')}
-          className="absolute top-1/2 left-0 -translate-y-1/2 h-20 w-1 cursor-ew-resize bg-border/50"
-          aria-label="Resize width from left"
-        />
-        {/* Bottom edge */}
-        <div
-          onPointerDown={onResizeStart('bottom')}
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-20 h-1 cursor-ns-resize bg-border/50"
-          aria-label="Resize height"
-        />
+          {/* Feed Content */}
+          <div className="h-[calc(100%-48px)] overflow-hidden">
+            <TikTokFeed />
+          </div>
+
+          {/* Resize handles for Social Feed */}
+          {/* Corner (bottom-right) */}
+          <div
+            onPointerDown={onResizeStart('corner')}
+            className="absolute bottom-1 right-1 h-4 w-4 cursor-nwse-resize rounded bg-muted border border-border z-50"
+            aria-label="Resize social feed"
+            title="Drag to resize"
+          />
+          {/* Right edge */}
+          <div
+            onPointerDown={onResizeStart('right')}
+            className="absolute top-1/2 right-0 -translate-y-1/2 h-20 w-1 cursor-ew-resize bg-border/50 hover:bg-border z-50"
+            aria-label="Resize width from right"
+          />
+          {/* Left edge */}
+          <div
+            onPointerDown={onResizeStart('left')}
+            className="absolute top-1/2 left-0 -translate-y-1/2 h-20 w-1 cursor-ew-resize bg-border/50 hover:bg-border z-50"
+            aria-label="Resize width from left"
+          />
+          {/* Bottom edge */}
+          <div
+            onPointerDown={onResizeStart('bottom')}
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-20 h-1 cursor-ns-resize bg-border/50 hover:bg-border z-50"
+            aria-label="Resize height"
+          />
+        </div>
       </div>
 
       <DebugOverlay />
