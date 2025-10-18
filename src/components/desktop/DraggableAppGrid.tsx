@@ -111,7 +111,7 @@ export function DraggableAppGrid() {
     if (!over || active.id === over.id) return;
 
     // Get the container's bounding rect to calculate grid position
-    const container = document.querySelector('.grid');
+    const container = document.querySelector('.pin-canvas');
     if (!container) return;
     
     const rect = container.getBoundingClientRect();
@@ -154,7 +154,7 @@ export function DraggableAppGrid() {
     }
   };
 
-  const renderApp = (app: AppTile, isDraggingThis?: boolean) => {
+  const renderApp = (app: AppTile, isDraggingThis?: boolean, index?: number) => {
     const Icon = app.icon;
     const isPinned = pins.some(p => p.app_id === app.id);
     
@@ -169,6 +169,11 @@ export function DraggableAppGrid() {
       >
         {isPinned && (
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-background z-10" />
+        )}
+        {typeof index !== 'undefined' && (
+          <div className="absolute top-1 left-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center border border-border shadow z-10">
+            {index}
+          </div>
         )}
         <div className={cn(
           "relative flex items-center justify-center shadow-lg",
@@ -192,7 +197,7 @@ export function DraggableAppGrid() {
   };
 
   // Draggable app tile wrapper
-  function DraggableApp({ app }: { app: AppTile }) {
+  function DraggableApp({ app, index }: { app: AppTile; index: number }) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
       id: app.id,
     });
@@ -212,7 +217,7 @@ export function DraggableAppGrid() {
         onClick={() => !isDragging && handleAppClick(app)}
         className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-3xl"
       >
-        {renderApp(app, isDragging || activeId === app.id)}
+        {renderApp(app, isDragging || activeId === app.id, index)}
       </div>
     );
   }
@@ -225,11 +230,11 @@ export function DraggableAppGrid() {
         onDragStart={({ active }) => setActiveId(active.id as string)}
         onDragEnd={handleDragEnd}
       >
-        <div className="relative z-20 w-full min-h-[400vh] overflow-auto">
-          <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16">
+        <div className="relative z-20 w-full min-h-[600vh] overflow-auto">
+          <div className="pin-canvas max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-16 min-h-[600vh]">
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-4 sm:gap-6 md:gap-7 lg:gap-8">
-              {Object.values(APPS).map((app) => (
-                <DraggableApp key={app.id} app={app} />
+              {Object.values(APPS).map((app, idx) => (
+                <DraggableApp key={app.id} app={app} index={idx + 1} />
               ))}
             </div>
           </div>
