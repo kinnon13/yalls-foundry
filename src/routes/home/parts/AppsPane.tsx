@@ -86,9 +86,9 @@ export default function AppsPane() {
     if (!boxRef.current) return;
     const obs = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        const w = Math.round(width);
-        const h = Math.round(height);
+        const el = entry.target as HTMLElement;
+        const w = Math.round(el.offsetWidth);
+        const h = Math.round(el.offsetHeight);
         setContainerWidth(w);
         setContainerHeight(h);
         localStorage.setItem('apps.containerWidth', String(w));
