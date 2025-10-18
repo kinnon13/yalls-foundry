@@ -241,13 +241,13 @@ export default function AppsPane() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Favorites Section */}
-      <section className="shrink-0 bg-gradient-to-b from-muted/40 to-muted/20 px-4 py-3 border-b border-border/50">
+      <section className="shrink-0 bg-gradient-to-b from-muted/40 to-muted/20 px-4 py-3 mb-4">
         <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
         <FavoritesBar size={72} gap={12} />
       </section>
 
       {/* Middle Layer */}
-      <section className="shrink-0 bg-muted/30 px-4 py-3 border-b border-border/50">
+      <section className="shrink-0 bg-muted/30 px-4 py-3 mt-4 mb-4 rounded-lg">
         <h3 className="text-base font-semibold text-foreground mb-2 text-center">Middle Layer</h3>
         <div className="h-20 bg-background/50 rounded-lg border border-border/50"></div>
       </section>
