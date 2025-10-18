@@ -365,6 +365,35 @@ export default function FeaturesAdminPage() {
     toast.success(`Exported ${total} undocumented items to CSV`);
   };
 
+  // Extract areas from features (both raw and canonical)
+  const areasDebug = useMemo(() => {
+    const rawAreas = new Set<string>();
+    const canonicalAreas = new Set<string>();
+    
+    features.forEach(f => {
+      rawAreas.add(f.area);
+      canonicalAreas.add(AREA_ALIASES[f.area] ?? f.area);
+    });
+
+    // Also extract inferred areas from undocumented routes
+    const inferredAreas = new Set<string>();
+    const undoc = (window as any).__undocumented;
+    if (undoc?.routes) {
+      undoc.routes.forEach((route: string) => {
+        const match = route.match(/^\/([^\/]+)/);
+        if (match && match[1]) {
+          inferredAreas.add(match[1]);
+        }
+      });
+    }
+
+    return {
+      raw: Array.from(rawAreas).sort(),
+      canonical: Array.from(canonicalAreas).sort(),
+      inferred: Array.from(inferredAreas).sort(),
+    };
+  }, [features]);
+
   const fetchTestResults = async () => {
     setTestLoading(true);
     try {
@@ -967,6 +996,44 @@ export default function FeaturesAdminPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Area Debug Info */}
+              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                <div className="text-sm font-semibold">Area Discovery</div>
+                <div className="grid grid-cols-3 gap-4 text-xs">
+                  <div>
+                    <div className="font-medium mb-2">Raw Areas in Features ({areasDebug.raw.length})</div>
+                    <div className="flex flex-wrap gap-1">
+                      {areasDebug.raw.map(area => (
+                        <Badge key={area} variant="secondary" className="text-xs">{area}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="font-medium mb-2">After Aliasing ({areasDebug.canonical.length})</div>
+                    <div className="flex flex-wrap gap-1">
+                      {areasDebug.canonical.map(area => (
+                        <Badge key={area} variant="outline" className="text-xs">{area}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="font-medium mb-2">Inferred from Routes ({areasDebug.inferred.length})</div>
+                    <div className="flex flex-wrap gap-1">
+                      {areasDebug.inferred.slice(0, 15).map(area => (
+                        <Badge key={area} variant="secondary" className="text-xs">{area}</Badge>
+                      ))}
+                      {areasDebug.inferred.length > 15 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{areasDebug.inferred.length - 15} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Aliases: dashboard → business, biz → business, shop → marketplace
+                </div>
+              </div>
               {/* Undocumented Routes */}
               <Collapsible open={showUndocRoutes} onOpenChange={setShowUndocRoutes}>
                 <CollapsibleTrigger asChild>
