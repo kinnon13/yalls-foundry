@@ -175,11 +175,8 @@ export default function DashboardLayout() {
             </div>
           </div>
         ) : (
-          <DashboardErrorBoundary>
-            <Suspense fallback={<div className="flex items-center justify-center h-full"><PanelSkeleton /></div>}>
-              <DraggableAppGrid />
-            </Suspense>
-          </DashboardErrorBoundary>
+          /* Clean desktop view with just the social feed */
+          <div className="h-full w-full bg-background" />
         )}
       </div>
 
