@@ -37,8 +37,8 @@ export function MessageList({ conversationId }: MessageListProps) {
   const { data: messages, isLoading } = useQuery({
     queryKey: ['messages', conversationId],
     queryFn: async () => {
-      const { data } = await (supabase
-        .from as any)('messages')
+      const { data } = await supabase
+        .from('messages' as any)
         .select(`
           id,
           body,
@@ -62,7 +62,7 @@ export function MessageList({ conversationId }: MessageListProps) {
 
   const markReadMutation = useMutation({
     mutationFn: async (messageId: string) => {
-      await (supabase.rpc as any)('mark_read', {
+      await supabase.rpc('mark_read' as any, {
         p_conversation_id: conversationId,
         p_message_id: messageId,
       });

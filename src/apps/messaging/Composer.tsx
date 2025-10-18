@@ -21,7 +21,7 @@ export function Composer({ conversationId }: ComposerProps) {
 
   const sendMutation = useMutation({
     mutationFn: async (body: string) => {
-      const { error } = await (supabase.rpc as any)('send_message', {
+      const { error } = await supabase.rpc('send_message' as any, {
         p_conversation_id: conversationId,
         p_body: body,
         p_rich: {},

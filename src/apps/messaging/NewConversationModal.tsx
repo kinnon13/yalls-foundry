@@ -37,8 +37,8 @@ export function NewConversationModal({
     queryKey: ['users', search],
     queryFn: async () => {
       // Search profiles
-      let query = (supabase
-        .from as any)('profiles')
+      let query = supabase
+        .from('profiles' as any)
         .select('id, user_id, display_name, avatar_url')
         .limit(20);
 
@@ -58,8 +58,8 @@ export function NewConversationModal({
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) return [];
 
-      let query = (supabase
-        .from as any)('contacts')
+      let query = supabase
+        .from('contacts' as any)
         .select('id, full_name, email')
         .eq('owner_user_id', session.session.user.id)
         .limit(20);
@@ -81,13 +81,13 @@ export function NewConversationModal({
 
       const participantIds = [session.session.user.id, ...selected];
 
-      const { data, error } = await (supabase.rpc as any)('create_conversation', {
+      const { data, error } = await supabase.rpc('create_conversation' as any, {
         p_user_ids: participantIds,
         p_type: selected.length > 1 ? 'group' : 'direct',
       });
 
       if (error) throw error;
-      return data as string;
+      return String(data);
     },
     onSuccess: (conversationId: string) => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });

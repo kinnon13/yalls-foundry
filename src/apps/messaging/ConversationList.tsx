@@ -36,31 +36,36 @@ export function ConversationList({ onSelect, selectedId }: ConversationListProps
   const { data: conversations, isLoading } = useQuery({
     queryKey: ['conversations'],
     queryFn: async () => {
-      const { data: convos } = await (supabase
-        .from as any)('conversations')
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session?.user) return [];
+
+      const { data: convos } = await supabase
+        .from('conversations' as any)
         .select(`
           id,
           type,
           last_message_at,
-          conversation_members!inner(user_id),
-          messages(body, sender_id, sent_at)
+          conversation_members!inner(user_id, profiles:user_id(display_name, avatar_url))
         `)
-        .order('last_message_at', { ascending: false })
+        .order('last_message_at', { ascending: false, nullsFirst: false })
         .limit(50);
 
       if (!convos) return [];
 
       return convos.map((c: any) => {
-        const msgs = c.messages || [];
-        const lastMsg = msgs[0];
+        const members = c.conversation_members || [];
+        const otherMembers = members.filter((m: any) => m.user_id !== session.session?.user.id);
         
         return {
           id: c.id,
           type: c.type,
           last_message_at: c.last_message_at,
-          last_message: lastMsg ? { body: lastMsg.body, sender_id: lastMsg.sender_id } : undefined,
-          participants: c.conversation_members || [],
-          unread_count: 0, // TODO: calculate unread
+          last_message: undefined,
+          participants: otherMembers.map((m: any) => ({
+            user_id: m.user_id,
+            full_name: m.profiles?.display_name || 'Unknown'
+          })),
+          unread_count: 0,
         };
       });
     },
