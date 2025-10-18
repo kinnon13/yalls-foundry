@@ -323,9 +323,9 @@ export default function AppsPane() {
             )}
           </div>
           
-          <div onMouseDown={startCornerResize} className="absolute bottom-1 right-1 h-3 w-3 rounded bg-foreground/60 cursor-nwse-resize" />
-          <div onMouseDown={startEastResize} className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-1.5 bg-foreground/30 cursor-ew-resize rounded" />
-          <div onMouseDown={startSouthResize} className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1.5 w-8 bg-foreground/30 cursor-ns-resize rounded" />
+          <div onMouseDown={startCornerResize} className="absolute bottom-0 right-0 h-4 w-4 rounded-tl bg-primary/70 hover:bg-primary cursor-nwse-resize" />
+          <div onMouseDown={startEastResize} className="absolute right-0 top-1/2 -translate-y-1/2 h-12 w-2 bg-primary/50 hover:bg-primary/70 cursor-ew-resize rounded-l" />
+          <div onMouseDown={startSouthResize} className="absolute bottom-0 left-1/2 -translate-x-1/2 h-2 w-12 bg-primary/50 hover:bg-primary/70 cursor-ns-resize rounded-t" />
 
           {/* Pagination Controls */}
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-background/80 backdrop-blur px-3 py-1 rounded-full border border-border">
