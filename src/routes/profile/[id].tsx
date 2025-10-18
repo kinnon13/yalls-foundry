@@ -92,7 +92,7 @@ export default function ProfilePage() {
                 <img
                   src={profile.avatar_url}
                   alt={profile.display_name}
-                  className="w-20 h-20 rounded-full"
+                  className="w-16 h-16 rounded-full"
                 />
               )}
               <div>

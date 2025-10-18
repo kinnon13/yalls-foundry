@@ -87,7 +87,7 @@ export default function ProfileSummaryBar() {
           </div>
         </div>
       </div>
-      <div className="w-[72px] shrink-0" aria-hidden />
+      
     </Link>
   );
 }
