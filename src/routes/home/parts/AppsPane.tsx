@@ -200,16 +200,22 @@ export default function AppsPane() {
       </section>
 
       {/* Apps Grid */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden bg-muted/20 px-2 pb-2 flex items-start">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden bg-muted/20 px-2 pb-2 flex items-start relative">
         <div 
-          className="grid gap-3 w-fit border-2 border-dashed border-primary/30 rounded-lg p-2"
+          className="grid gap-3 w-fit border-2 border-dashed border-primary/30 rounded-lg p-2 relative group"
           style={{
             height: `${containerHeight}px`,
             gridTemplateRows: `repeat(auto-fill, ${tile}px)`,
             gridAutoFlow: 'column',
             gridAutoColumns: `${tile}px`,
+            resize: 'vertical',
+            overflow: 'auto',
+            minHeight: '200px',
+            maxHeight: '100%',
           }}
         >
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-20 bg-primary/50 rounded-full cursor-ns-resize group-hover:bg-primary transition-colors" />
+
         {/* Installed apps - now filtered by capabilities */}
         {visibleApps.map((app) => {
           const Icon = app.icon;
