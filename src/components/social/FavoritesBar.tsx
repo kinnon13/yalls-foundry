@@ -293,8 +293,22 @@ export function FavoritesBar({
   const userId = propUserId ?? sessionUserId;
   const navigate = useNavigate();
 
-  const { data: bubbles = [], isLoading } = useFavoriteBubbles(userId, { publicOnly });
+  const { data: realBubbles = [], isLoading } = useFavoriteBubbles(userId, { publicOnly });
   const { add, remove } = useFavoriteMutations(userId);
+
+  // Mock bubbles for visual testing
+  const mockBubbles: Bubble[] = [
+    { id: 'mock-1', display_name: 'Casey Morales', handle: 'caseymorales', kind: 'person', status: 'verified', avatar_url: null },
+    { id: 'mock-2', display_name: 'Wild River Stables', handle: 'wildriverstables', kind: 'business', status: 'verified', avatar_url: null },
+    { id: 'mock-3', display_name: 'Spring Classic Show 2025', handle: null, kind: 'event', status: 'verified', avatar_url: null },
+    { id: 'mock-4', display_name: 'Starfire', handle: 'starfire', kind: 'horse', status: 'verified', avatar_url: null },
+    { id: 'mock-5', display_name: 'Mountain View Ranch', handle: 'mountainview', kind: 'business', status: 'verified', avatar_url: null },
+    { id: 'mock-6', display_name: 'Thunder', handle: 'thunder', kind: 'horse', status: 'verified', avatar_url: null },
+    { id: 'mock-7', display_name: 'Sarah Johnson', handle: 'sarahjohnson', kind: 'person', status: 'verified', avatar_url: null },
+  ];
+
+  // Use real bubbles if available, otherwise show mocks for testing
+  const bubbles = realBubbles.length > 0 ? realBubbles : mockBubbles;
 
   const [sheetOpen, setSheetOpen] = useState(false);
 
