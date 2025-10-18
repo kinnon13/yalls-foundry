@@ -168,41 +168,10 @@ export default function AppsPane() {
         <FavoritesBar size={72} gap={12} />
       </section>
 
-      {/* Apps Controls */}
-      <section className="shrink-0 bg-muted/30 px-2 py-1 backdrop-blur border-b border-border/50">
-        <h3 className="text-sm font-semibold text-foreground mb-1 text-center">Apps</h3>
-        <div className="flex items-center gap-3 px-0">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Tile size</span>
-          <input
-            type="range"
-            min={84}
-            max={160}
-            step={4}
-            value={tile}
-            onChange={(e) => setTile(parseInt(e.target.value))}
-            className="flex-1 max-w-xs"
-          />
-          <span className="text-xs text-muted-foreground w-12">{tile}px</span>
-        </div>
-        <div className="mt-1 flex items-center gap-3 px-0">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Box height</span>
-          <input
-            type="range"
-            min={200}
-            max={800}
-            step={10}
-            value={containerHeight}
-            onChange={(e) => setContainerHeight(parseInt(e.target.value))}
-            className="flex-1 max-w-xs"
-          />
-          <span className="text-xs text-muted-foreground w-12">{containerHeight}px</span>
-        </div>
-      </section>
-
       {/* Apps Grid */}
       <div className="flex-1 overflow-x-auto overflow-y-hidden bg-muted/20 px-2 pb-2 flex items-start relative">
         <div 
-          className="grid gap-3 w-fit border-2 border-dashed border-primary/30 rounded-lg p-2 relative group"
+          className="grid gap-3 w-fit border border-border/60 rounded-lg p-2 relative group"
           style={{
             height: `${containerHeight}px`,
             gridTemplateRows: `repeat(auto-fill, ${tile}px)`,
