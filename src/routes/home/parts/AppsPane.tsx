@@ -176,12 +176,13 @@ export default function AppsPane() {
       </section>
 
       {/* Horizontal scrolling grid of app tiles & pins */}
-      <div className="flex gap-3 bg-muted/20 p-2 pt-4 pb-20 overflow-x-auto overflow-y-hidden">
+      <div className="flex gap-3 bg-muted/20 p-2 pt-4 pb-20 overflow-x-auto overflow-y-hidden h-full">
         <div 
-          className="grid gap-3 auto-cols-max"
+          className="grid gap-3"
           style={{
-            gridTemplateRows: `repeat(auto-fill, minmax(${tile}px, 1fr))`,
+            gridTemplateRows: `repeat(3, ${tile}px)`,
             gridAutoFlow: 'column',
+            gridAutoColumns: `${tile}px`,
           }}
         >
         {/* Installed apps - now filtered by capabilities */}
