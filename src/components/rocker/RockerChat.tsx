@@ -21,7 +21,6 @@ export function RockerChat({ actorRole }: RockerChatProps = {}) {
     // Listen for failure feedback events
     const handleFailureFeedback = (event: CustomEvent) => {
       const { prompt, action, reason, route, entityData } = event.detail;
-      console.log('[RockerChat] Failure feedback triggered:', { action, reason, route });
       
       // Store failure context for the conversation
       sessionStorage.setItem('rocker:failure-context', JSON.stringify({

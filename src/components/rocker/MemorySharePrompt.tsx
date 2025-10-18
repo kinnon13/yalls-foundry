@@ -60,7 +60,7 @@ export function MemorySharePrompt({
       await onShare(useSoftened && moderationResult?.decision === 'soften');
       onOpenChange(false);
     } catch (error) {
-      console.error('Share error:', error);
+      // Error already shown in parent component
     } finally {
       setLoading(false);
     }

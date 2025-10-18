@@ -43,7 +43,7 @@ export function ConversationSidebar({
       if (error) throw error;
       setConversations(data || []);
     } catch (error) {
-      console.error('Error loading conversations:', error);
+      // Silent fail - sidebar can be empty
     } finally {
       setLoading(false);
     }
@@ -80,7 +80,6 @@ export function ConversationSidebar({
         onNewConversation();
       }
     } catch (error) {
-      console.error('Error deleting conversation:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete conversation',

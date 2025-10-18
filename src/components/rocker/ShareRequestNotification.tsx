@@ -58,7 +58,7 @@ export function ShareRequestNotification({
       await onAccept(request.id);
       onOpenChange(false);
     } catch (error) {
-      console.error('Accept error:', error);
+      // Error handled in parent
     } finally {
       setLoading(false);
     }
@@ -70,7 +70,7 @@ export function ShareRequestNotification({
       await onDecline(request.id);
       onOpenChange(false);
     } catch (error) {
-      console.error('Decline error:', error);
+      // Error handled in parent
     } finally {
       setLoading(false);
     }

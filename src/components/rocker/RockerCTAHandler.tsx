@@ -13,18 +13,12 @@ export function handleRockerCTA(cta: { rpc: string; params?: any }): 'success' |
       if (typeof window !== 'undefined' && (window as any).__rockerFeatureHandler) {
         (window as any).__rockerFeatureHandler(cta.params);
       } else {
-        console.warn('Feature handler not registered');
         result = 'error';
       }
     } else {
-      // Handle other CTAs as needed
-      console.warn('Unknown Rocker CTA:', cta.rpc);
       result = 'error';
     }
   } catch (err) {
-    if (import.meta.env.DEV) {
-      console.error('Rocker CTA handler failed:', err);
-    }
     result = 'error';
   }
 

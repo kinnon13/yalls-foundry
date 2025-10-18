@@ -69,7 +69,7 @@ export function ConversationHistory({ onLoadSession, onNewChat, currentSessionId
 
       setSessions(Array.from(sessionMap.values()));
     } catch (error) {
-      console.error('Failed to load conversation history:', error);
+      // Silent fail - not critical to user flow
     } finally {
       setLoading(false);
     }
@@ -97,7 +97,6 @@ export function ConversationHistory({ onLoadSession, onNewChat, currentSessionId
       }
     } catch (error) {
       toast.error('Failed to delete conversation');
-      console.error(error);
     }
   }
 

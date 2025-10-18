@@ -52,10 +52,6 @@ export function RockerMessageActions({ messageIndex, messageContent }: RockerMes
           }
         });
 
-      if (logError) {
-        console.error('[Rocker Feedback] Log error:', logError);
-      }
-
       // Also add to feedback table
       const { error: feedbackError } = await supabase
         .from('ai_feedback')
@@ -72,7 +68,6 @@ export function RockerMessageActions({ messageIndex, messageContent }: RockerMes
         });
 
       if (feedbackError) {
-        console.error('[Rocker Feedback] Feedback error:', feedbackError);
         throw feedbackError;
       }
 
@@ -81,7 +76,6 @@ export function RockerMessageActions({ messageIndex, messageContent }: RockerMes
       setCorrection('');
       setFeedbackType('incorrect');
     } catch (error) {
-      console.error('[Rocker Feedback] Submit error:', error);
       toast.error('Failed to submit feedback. Please try again.');
     } finally {
       setSubmitting(false);

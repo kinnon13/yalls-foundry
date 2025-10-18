@@ -149,7 +149,6 @@ export function TeachingModeOverlay({ isActive, onClose }: TeachingModeOverlayPr
       setTeachingName('');
       setTeachingDescription('');
     } catch (error) {
-      console.error('Error saving teaching:', error);
       toast({
         title: 'Error',
         description: 'Failed to save teaching',
