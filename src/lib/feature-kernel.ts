@@ -138,19 +138,21 @@ export const GOLD_PATH_FEATURES = [
   'ai_context_compiler', 'ai_memory', 'ai_nba_ranker', 'ai_modal', 'ai_explainability'
 ];
 
-// Load auto-generated stubs
+// Load auto-generated stubs asynchronously (avoid top-level await)
 let stubFeatures: Feature[] = [];
-try {
-  const backfillResponse = await fetch('/catalog/autogen.backfill.json');
-  if (backfillResponse.ok) {
-    const backfillData = await backfillResponse.json();
-    stubFeatures = backfillData.features || [];
-    console.log(`[FeatureKernel] Loaded ${stubFeatures.length} auto-stubs`);
+void (async () => {
+  try {
+    const backfillResponse = await fetch('/catalog/autogen.backfill.json', { cache: 'no-store' });
+    if (backfillResponse.ok) {
+      const backfillData = await backfillResponse.json();
+      stubFeatures = Array.isArray(backfillData?.features) ? backfillData.features : [];
+      console.log(`[FeatureKernel] Loaded ${stubFeatures.length} auto-stubs`);
+    }
+  } catch (err) {
+    // Stubs not generated yet - that's ok
+    console.log('[FeatureKernel] No stub backfill found');
   }
-} catch (err) {
-  // Stubs not generated yet - that's ok
-  console.log('[FeatureKernel] No stub backfill found');
-}
+})();
 
 /**
  * Feature Kernel - Central API
