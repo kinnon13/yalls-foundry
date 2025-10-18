@@ -114,7 +114,7 @@ export default function SocialFeedPane() {
   return (
     <section className="flex h-full w-full flex-col">
       {/* Home button and Connected Accounts heading in same row */}
-      <div className="mb-2 flex items-center justify-between pl-2 pr-2">
+      <div className="mb-2 flex items-center justify-between pr-2">
         <button
           onClick={() => navigate('/home')}
           className="text-base font-semibold text-foreground hover:text-primary transition-colors"
@@ -129,7 +129,7 @@ export default function SocialFeedPane() {
       <ProfileSummaryBar />
 
       {/* Tab indicators (clickable or drag/swipe to change) */}
-      <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 backdrop-blur px-2 py-1">
+      <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 backdrop-blur pr-2 py-1">
         {TABS.map((t) => (
           <button
             key={t}
@@ -154,7 +154,7 @@ export default function SocialFeedPane() {
         <div 
           className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
-          <div className="space-y-4 px-2 pb-4">
+          <div className="space-y-4 pr-2 pb-4">
             {items.map((item) => (
               <div key={item.id} className="h-[calc(100vh-16rem)] snap-start">
                 <Reel {...item} />
