@@ -63,6 +63,11 @@ export default function AppsPane() {
     Number(localStorage.getItem('apps.containerWidth') || 600)
   );
   const [currentPage, setCurrentPage] = useState(0);
+  
+  // Middle layer state
+  const [middleHeight, setMiddleHeight] = useState(() => 
+    Number(localStorage.getItem('middle.height') || 80)
+  );
 
   useEffect(() => {
     localStorage.setItem('apps.tileSize', String(tile));
@@ -75,6 +80,10 @@ export default function AppsPane() {
   useEffect(() => {
     localStorage.setItem('apps.containerWidth', String(containerWidth));
   }, [containerWidth]);
+  
+  useEffect(() => {
+    localStorage.setItem('middle.height', String(middleHeight));
+  }, [middleHeight]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
@@ -238,6 +247,43 @@ export default function AppsPane() {
     window.addEventListener('mouseup', onUp);
   };
 
+  // Middle layer resize handlers
+  const startMiddleTopResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startY = e.clientY;
+    const startH = middleHeight;
+    const onMove = (ev: MouseEvent) => {
+      const h = Math.max(40, startH - (ev.clientY - startY));
+      setMiddleHeight(h);
+      localStorage.setItem('middle.height', String(h));
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  const startMiddleBottomResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startY = e.clientY;
+    const startH = middleHeight;
+    const onMove = (ev: MouseEvent) => {
+      const h = Math.max(40, startH + (ev.clientY - startY));
+      setMiddleHeight(h);
+      localStorage.setItem('middle.height', String(h));
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Favorites Section */}
@@ -246,11 +292,16 @@ export default function AppsPane() {
         <FavoritesBar size={72} gap={12} />
       </section>
 
-      {/* Middle Layer */}
-      <section className="shrink-0 bg-muted/30 px-4 py-3 mt-4 mb-4 rounded-lg">
-        <h3 className="text-base font-semibold text-foreground mb-2 text-center">Middle Layer</h3>
-        <div className="h-20 bg-background/50 rounded-lg border border-border/50"></div>
-      </section>
+      {/* Middle Layer - Resizable */}
+      <div className="flex-1 overflow-auto bg-background px-4">
+        <section className="relative bg-muted/30 rounded-lg border-2 border-border my-4 mx-auto max-w-4xl" style={{ height: `${middleHeight}px` }}>
+          <div onMouseDown={startMiddleTopResize} className="absolute top-0 left-1/2 -translate-x-1/2 h-1.5 w-16 bg-foreground/30 cursor-ns-resize rounded-b hover:bg-foreground/50" />
+          <div className="h-full flex items-center justify-center">
+            <h3 className="text-base font-semibold text-foreground">Middle Layer</h3>
+          </div>
+          <div onMouseDown={startMiddleBottomResize} className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1.5 w-16 bg-foreground/30 cursor-ns-resize rounded-t hover:bg-foreground/50" />
+        </section>
+      </div>
 
       {/* Apps Grid - Separate Box */}
       <div className="flex-1 overflow-auto bg-background p-4">
