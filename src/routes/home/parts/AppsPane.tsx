@@ -162,7 +162,7 @@ export default function AppsPane() {
 
       {/* Grid of app tiles & pins (scrollable) */}
       <div
-        className="grid gap-3 bg-muted/20 p-2 pt-4"
+        className="grid gap-3 bg-muted/20 p-2 pt-4 pb-20"
         style={{
           gridTemplateColumns: `repeat(auto-fill, minmax(${tile}px, 1fr))`,
         }}
