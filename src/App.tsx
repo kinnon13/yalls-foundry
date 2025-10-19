@@ -35,8 +35,6 @@ import '@/kernel'; // Register app contracts
 // 10 Canonical Routes
 import HomeShell from './routes/home-shell/index';
 import Login from './routes/login';
-import LoginPage from './routes/auth/login';
-import SignupPage from './routes/auth/signup';
 import NotFound from './pages/NotFound';
 import Health from './pages/Health';
 
@@ -234,10 +232,11 @@ function AppContent() {
           } 
         />
         
-        {/* Auth */}
+        {/* Auth - Single unified route */}
         <Route path="/login" element={<Login />} />
-        <Route path="/auth/login" element={<LoginPage />} />
-        <Route path="/auth/signup" element={<SignupPage />} />
+        <Route path="/signup" element={<Navigate to="/login" replace />} />
+        <Route path="/auth/login" element={<Navigate to="/login" replace />} />
+        <Route path="/auth/signup" element={<Navigate to="/login" replace />} />
         
         {/* Health check */}
         <Route path="/health" element={<Health />} />

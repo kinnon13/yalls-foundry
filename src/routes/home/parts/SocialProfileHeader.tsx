@@ -33,7 +33,7 @@ export default function SocialProfileHeader({ showProfile = true }: { showProfil
       await supabase.auth.signOut();
       toast({ title: 'Signed out successfully' });
     } else {
-      navigate('/auth/login');
+      navigate('/login');
     }
   };
 
