@@ -40,22 +40,24 @@ export default function HomePage() {
       <GlobalHeader />
       <main className="pt-14 pb-16">
         {/* Desktop/Tablet Layout: Sidebar + Center + Feed */}
-        <div className="hidden md:flex h-[calc(100vh-112px)] gap-0">
-          {/* Left: Apps Sidebar */}
-          <div className="w-[280px]">
+        <div className="hidden md:flex h-[calc(100vh-112px)]">
+          {/* Left: Apps Sidebar - Fixed */}
+          <div className="w-[280px] flex-shrink-0 overflow-hidden">
             <LeftAppSidebar onAppClick={handleAppClick} />
           </div>
 
-          {/* Center: Content Area */}
-          <CenterContentArea
-            openApps={openApps}
-            activeApp={activeApp}
-            onCloseApp={handleCloseApp}
-            onSelectApp={setActiveApp}
-          />
+          {/* Center: Content Area - Scrollable */}
+          <div className="flex-1 overflow-y-auto">
+            <CenterContentArea
+              openApps={openApps}
+              activeApp={activeApp}
+              onCloseApp={handleCloseApp}
+              onSelectApp={setActiveApp}
+            />
+          </div>
 
-          {/* Right: Social Feed */}
-          <div className="w-[420px] border-l">
+          {/* Right: Social Feed - Fixed */}
+          <div className="w-[420px] flex-shrink-0 border-l overflow-hidden">
             <SocialFeedPane />
           </div>
         </div>

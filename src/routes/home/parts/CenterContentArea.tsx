@@ -24,61 +24,43 @@ export default function CenterContentArea({
 }: CenterContentAreaProps) {
   if (openApps.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center text-muted-foreground">
+      <div className="flex items-center justify-center h-screen text-muted-foreground">
         <p>Click an app to open it here</p>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-background">
-      {/* Tabs */}
-      <div className="flex items-center gap-1 border-b px-2 py-2 bg-muted/20">
-        {openApps.map((app) => (
+    <div className="flex flex-col">
+      {/* Render all open apps stacked vertically */}
+      {openApps.map((app) => (
+        <div
+          key={app.key}
+          className="min-h-screen relative border-b"
+        >
+          {/* Close button for each app */}
           <button
-            key={app.key}
-            onClick={() => onSelectApp(app.key)}
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-t-lg transition-colors
-              ${activeApp === app.key ? 'bg-background border border-b-0' : 'bg-muted/50 hover:bg-muted'}
-            `}
+            onClick={() => onCloseApp(app.key)}
+            className="absolute top-4 right-4 z-10 p-2 bg-background/80 backdrop-blur-sm rounded-full hover:bg-destructive/20 hover:text-destructive transition-colors"
           >
-            <span className="text-sm font-medium">{app.label}</span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onCloseApp(app.key);
-              }}
-              className="hover:text-destructive transition-colors"
-            >
-              <X className="w-3 h-3" />
-            </button>
+            <X className="w-5 h-5" />
           </button>
-        ))}
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto">
-        {openApps.map((app) => (
-          <div
-            key={app.key}
-            className={activeApp === app.key ? 'block h-full' : 'hidden'}
-          >
-            <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-              {app.route === '/market' ? (
-                <MarketplacePage />
-              ) : (
-                <div className="p-6">
-                  <h2 className="text-2xl font-bold mb-4">{app.label}</h2>
-                  <p className="text-muted-foreground">
-                    {app.label} content coming soon...
-                  </p>
-                </div>
-              )}
-            </Suspense>
-          </div>
-        ))}
-      </div>
+          {/* App content */}
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            {app.route === '/market' ? (
+              <MarketplacePage />
+            ) : (
+              <div className="p-6 h-screen flex flex-col items-center justify-center">
+                <h2 className="text-2xl font-bold mb-4">{app.label}</h2>
+                <p className="text-muted-foreground">
+                  {app.label} content coming soon...
+                </p>
+              </div>
+            )}
+          </Suspense>
+        </div>
+      ))}
     </div>
   );
 }
