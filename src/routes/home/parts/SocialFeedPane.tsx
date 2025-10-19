@@ -23,6 +23,7 @@ export default function SocialFeedPane() {
   const [feedWidth, setFeedWidth] = useState(() => 
     Number(localStorage.getItem('feed.itemWidth') || 400)
   );
+  const [resizing, setResizing] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('feed.itemHeight', String(feedHeight));
@@ -31,6 +32,36 @@ export default function SocialFeedPane() {
   useEffect(() => {
     localStorage.setItem('feed.itemWidth', String(feedWidth));
   }, [feedWidth]);
+
+  const startResize = (e: React.MouseEvent, edge: 'width' | 'height' | 'both') => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startW = feedWidth;
+    const startH = feedHeight;
+    setResizing(true);
+    
+    const onMove = (ev: MouseEvent) => {
+      if (edge === 'width' || edge === 'both') {
+        const w = Math.max(200, Math.min(800, startW + (ev.clientX - startX)));
+        setFeedWidth(w);
+      }
+      if (edge === 'height' || edge === 'both') {
+        const h = Math.max(300, Math.min(1200, startH + (ev.clientY - startY)));
+        setFeedHeight(h);
+      }
+    };
+    
+    const onUp = () => {
+      setResizing(false);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
 
   // seamless drag/swipe gesture for tab switching
   const railRef = useRef<HTMLDivElement>(null);
@@ -156,50 +187,6 @@ export default function SocialFeedPane() {
             </button>
           ))}
         </div>
-        
-        {/* Size Controls */}
-        <div className="flex flex-col gap-2 py-2 px-4 bg-background/95 backdrop-blur border-t border-border/50">
-          <div className="flex items-center gap-3">
-            <label className="text-xs font-medium min-w-[40px]">Width:</label>
-            <input
-              type="range"
-              min="200"
-              max="800"
-              value={feedWidth}
-              onChange={(e) => setFeedWidth(Number(e.target.value))}
-              className="flex-1"
-            />
-            <input
-              type="number"
-              min="200"
-              max="800"
-              value={feedWidth}
-              onChange={(e) => setFeedWidth(Number(e.target.value))}
-              className="w-16 px-2 py-1 text-xs border rounded"
-            />
-            <span className="text-xs text-muted-foreground">px</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <label className="text-xs font-medium min-w-[40px]">Height:</label>
-            <input
-              type="range"
-              min="300"
-              max="1200"
-              value={feedHeight}
-              onChange={(e) => setFeedHeight(Number(e.target.value))}
-              className="flex-1"
-            />
-            <input
-              type="number"
-              min="300"
-              max="1200"
-              value={feedHeight}
-              onChange={(e) => setFeedHeight(Number(e.target.value))}
-              className="w-16 px-2 py-1 text-xs border rounded"
-            />
-            <span className="text-xs text-muted-foreground">px</span>
-          </div>
-        </div>
       </div>
 
       {/* Swipeable feed container - SCROLLABLE */}
@@ -214,13 +201,30 @@ export default function SocialFeedPane() {
             {items.map((item) => (
               <div 
                 key={item.id} 
-                className="snap-start mb-4" 
+                className="snap-start mb-4 relative" 
                 style={{ 
                   height: `${feedHeight}px`,
                   width: `${feedWidth}px`
                 }}
               >
                 <Reel {...item} />
+                
+                {/* Resize Handles */}
+                <div 
+                  onMouseDown={(e) => startResize(e, 'width')}
+                  className="absolute right-0 top-0 bottom-0 w-2 border-r-2 border-dashed border-primary/50 hover:border-primary cursor-ew-resize z-10"
+                  title="Drag to resize width"
+                />
+                <div 
+                  onMouseDown={(e) => startResize(e, 'height')}
+                  className="absolute left-0 right-0 bottom-0 h-2 border-b-2 border-dashed border-primary/50 hover:border-primary cursor-ns-resize z-10"
+                  title="Drag to resize height"
+                />
+                <div 
+                  onMouseDown={(e) => startResize(e, 'both')}
+                  className="absolute right-0 bottom-0 w-4 h-4 border-r-2 border-b-2 border-dashed border-primary/70 hover:border-primary cursor-nwse-resize z-10 rounded-bl"
+                  title="Drag to resize both"
+                />
               </div>
             ))}
           </div>
