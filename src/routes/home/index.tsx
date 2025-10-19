@@ -27,7 +27,7 @@ export default function HomePage() {
             <ResizableHandle withHandle className="hidden lg:flex z-30" />
             
             {/* Reels/Feed (right) - z=40 */}
-            <ResizablePanel defaultSize={65} minSize={50} className="z-40">
+            <ResizablePanel defaultSize={65} minSize={50} className="z-40 relative overflow-hidden">
               <SocialFeedPane />
             </ResizablePanel>
           </ResizablePanelGroup>

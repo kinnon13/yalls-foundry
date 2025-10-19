@@ -156,7 +156,7 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col text-[hsl(222.2_47.4%_11.2%)] overflow-hidden bg-black">
+    <section className="flex h-full w-full flex-col text-[hsl(222.2_47.4%_11.2%)] overflow-hidden bg-black relative">
       {/* Sticky header (Home + Profile + Tabs) */}
       <div className="sticky top-0 z-20 bg-white/95 backdrop-blur">
         <div className="flex items-center justify-between px-3 py-1">
@@ -203,8 +203,8 @@ export default function SocialFeedPane() {
               <div 
                 key={item.id} 
                 className="snap-start snap-always relative shrink-0 w-full"
-                style={{ 
-                  height: '100vh'
+                style={{
+                  height: isMobile ? '100vh' : `${feedHeight}px`
                 }}
               >
                 <Reel {...item} />
