@@ -16,10 +16,20 @@ export default function HomePage() {
   const [activeApp, setActiveApp] = useState<string | null>(null);
 
   const handleAppClick = (app: { key: string; label: string; route?: string }) => {
-    // Check if app is already open
-    if (!openApps.find(a => a.key === app.key)) {
-      setOpenApps([...openApps, app]);
+    // Deduplicate: if already open, just focus it
+    const existing = openApps.find(a => a.key === app.key);
+    if (existing) {
+      setActiveApp(app.key);
+      // Scroll to that app in the center
+      setTimeout(() => {
+        const element = document.querySelector(`[data-app-key="${app.key}"]`);
+        element?.scrollIntoView({ behavior: 'smooth' });
+      }, 0);
+      return;
     }
+    
+    // Add new app
+    setOpenApps([...openApps, app]);
     setActiveApp(app.key);
   };
 
@@ -53,6 +63,7 @@ export default function HomePage() {
               activeApp={activeApp}
               onCloseApp={handleCloseApp}
               onSelectApp={setActiveApp}
+              onAppClick={handleAppClick}
             />
           </div>
 
