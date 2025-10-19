@@ -126,11 +126,22 @@ class CommandBus {
   }
 
   /**
-   * Log to AI ledger (stub)
+   * Log to AI ledger
    */
-  private logToLedger(data: any): void {
-    // TODO: Write to ai_action_ledger table
-    console.log('[CommandBus] Ledger entry:', data);
+  private async logToLedger(data: any): Promise<void> {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      await supabase.from('ai_action_ledger').insert({
+        user_id: data.context.userId,
+        agent: 'rocker',
+        action: `${data.appId}.${data.actionId}`,
+        input: data.params || {},
+        output: data.result?.data || {},
+        result: data.result?.success ? 'success' : 'error',
+      });
+    } catch (e) {
+      console.error('[CommandBus] Failed to log to ledger:', e);
+    }
   }
 }
 

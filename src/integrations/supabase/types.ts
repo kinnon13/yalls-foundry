@@ -144,33 +144,39 @@ export type Database = {
           action: string
           agent: string
           correlation_id: string | null
-          created_at: string
+          hash: string | null
           id: string
           input: Json
           output: Json
+          prev_hash: string | null
           result: string
+          timestamp: string
           user_id: string | null
         }
         Insert: {
           action: string
           agent: string
           correlation_id?: string | null
-          created_at?: string
+          hash?: string | null
           id?: string
           input?: Json
           output?: Json
+          prev_hash?: string | null
           result: string
+          timestamp?: string
           user_id?: string | null
         }
         Update: {
           action?: string
           agent?: string
           correlation_id?: string | null
-          created_at?: string
+          hash?: string | null
           id?: string
           input?: Json
           output?: Json
+          prev_hash?: string | null
           result?: string
+          timestamp?: string
           user_id?: string | null
         }
         Relationships: []
@@ -6678,6 +6684,33 @@ export type Database = {
           metadata?: Json | null
           role?: string
           session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rocker_events: {
+        Row: {
+          id: string
+          payload: Json
+          session_id: string | null
+          timestamp: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          payload?: Json
+          session_id?: string | null
+          timestamp?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          payload?: Json
+          session_id?: string | null
+          timestamp?: string
+          type?: string
           user_id?: string
         }
         Relationships: []
