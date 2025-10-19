@@ -7,7 +7,6 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Heart, UserPlus, UserCheck } from 'lucide-react';
 import { useConnection, usePublicCounters } from '@/hooks/usePublicApps';
-import { ConsentModal } from './ConsentModal';
 import { UnfollowModal } from './UnfollowModal';
 import { toast } from 'sonner';
 import { rocker } from '@/lib/rocker/event-bus';
@@ -21,55 +20,45 @@ interface ConnectionActionsProps {
 export function ConnectionActions({ entityId, entityName }: ConnectionActionsProps) {
   const { isFollowing, isFavorited, toggleFollow, toggleFavorite, loading } = useConnection(entityId);
   const counters = usePublicCounters(entityId);
-  const [showConsentModal, setShowConsentModal] = useState(false);
   const [showUnfollowModal, setShowUnfollowModal] = useState(false);
 
-  const handleFollowClick = () => {
+  const handleFollowClick = async () => {
     if (isFollowing) {
       setShowUnfollowModal(true);
-    } else {
-      setShowConsentModal(true);
+      return;
     }
-  };
 
-  const handleConsentConfirm = async () => {
-    setShowConsentModal(false);
-    
+    // Instant follow: one RPC does follow + pin + CRM
     rocker.emit('connection_follow_initiated', {
       metadata: { entityId, entityName }
     });
 
     try {
-      // Get user profile for CRM
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) {
-        toast.error('Please sign in to follow');
-        return;
-      }
+      const { data, error } = await supabase.rpc('follow_and_pin', {
+        p_business_id: entityId,
+        p_apps: [],
+      });
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('display_name')
-        .eq('user_id', user.user.id)
-        .single();
+      if (error) throw error;
 
-      // Follow + auto-pin
-      const result = await toggleFollow();
+      const result = data as { ok: boolean; pin_id?: string; contact_id?: string } | null;
+
+      toast.success(`Following ${entityName}. Pinned to dashboard.`);
       
-      if (result) {
-        // Create CRM contact
-        await supabase.rpc('crm_upsert_contact', {
-          p_business_id: entityId,
-          p_name: profile?.display_name || user.user.email?.split('@')[0] || 'User',
-          p_phone: null, // Phone not on profiles table yet
-        });
+      rocker.emit('connection_follow_completed', {
+        metadata: { entityId, entityName, pinId: result?.pin_id }
+      });
 
-        toast.success(`Following ${entityName}. Added to your pinboard.`);
-        
-        rocker.emit('connection_follow_completed', {
-          metadata: { entityId, entityName }
-        });
-      }
+      rocker.emit('pin_autocreated', {
+        metadata: { entityId, pinId: result?.pin_id }
+      });
+
+      rocker.emit('crm_contact_upserted', {
+        metadata: { entityId, contactId: result?.contact_id }
+      });
+
+      // Force refresh
+      window.location.reload();
     } catch (error) {
       console.error('Follow error:', error);
       toast.error('Failed to follow. Please try again.');
@@ -82,10 +71,9 @@ export function ConnectionActions({ entityId, entityName }: ConnectionActionsPro
     });
 
     try {
-      // Call unfollow RPC with action
-      const { data, error } = await supabase.rpc('connection_unfollow', {
-        p_entity_id: entityId,
-        p_action: action,
+      const { error } = await supabase.rpc('unfollow_options', {
+        p_business_id: entityId,
+        p_mode: action,
       });
 
       if (error) throw error;
@@ -102,7 +90,6 @@ export function ConnectionActions({ entityId, entityName }: ConnectionActionsPro
         metadata: { entityId, action }
       });
 
-      // Reload connection state
       window.location.reload();
     } catch (error) {
       console.error('Unfollow error:', error);
@@ -163,13 +150,6 @@ export function ConnectionActions({ entityId, entityName }: ConnectionActionsPro
           )}
         </Button>
       </div>
-
-      <ConsentModal
-        open={showConsentModal}
-        onOpenChange={setShowConsentModal}
-        onConfirm={handleConsentConfirm}
-        businessName={entityName}
-      />
 
       <UnfollowModal
         open={showUnfollowModal}

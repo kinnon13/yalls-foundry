@@ -8777,6 +8777,10 @@ export type Database = {
         }
         Returns: string
       }
+      follow_and_pin: {
+        Args: { p_apps?: string[]; p_business_id: string }
+        Returns: Json
+      }
       geography: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
@@ -10914,6 +10918,10 @@ export type Database = {
       text: {
         Args: { "": unknown }
         Returns: string
+      }
+      unfollow_options: {
+        Args: { p_business_id: string; p_mode: string }
+        Returns: Json
       }
       uninstall_app: {
         Args: { p_app_key: string; p_entity_id: string }
