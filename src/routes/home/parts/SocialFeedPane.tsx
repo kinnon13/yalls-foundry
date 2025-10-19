@@ -203,18 +203,18 @@ export default function SocialFeedPane() {
       {/* Swipeable feed container - SCROLLABLE */}
       <div 
         ref={railRef}
-        className="relative flex-1 w-screen overflow-y-auto overflow-x-hidden select-none touch-pan-y bg-black -mx-3 md:mx-0 md:w-full"
+        className="relative flex-1 w-full overflow-y-auto overflow-x-hidden select-none touch-pan-y bg-transparent"
       >
         <div 
           className="h-full w-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
-          <div className="flex flex-col items-center w-full">
+          <div className="flex flex-col items-stretch w-full">
             {items.map((item) => (
               <div 
                 key={item.id} 
                 className={cn(
                   "snap-start snap-always relative shrink-0",
-                  isMobile || isTablet ? "w-screen" : "w-auto"
+                  isMobile || isTablet ? "w-full" : "w-auto"
                 )}
                 style={{ 
                   height: isMobile ? '100vh' : `${feedHeight}px`,
