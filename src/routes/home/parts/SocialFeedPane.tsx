@@ -17,9 +17,14 @@ export default function SocialFeedPane() {
   const [entityId, setEntityId] = useState<string | null>(sp.get('entity') || null);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [feedHeight, setFeedHeight] = useState(() => 
-    Number(localStorage.getItem('feed.itemHeight') || 600)
-  );
+  
+  // Calculate 9:16 aspect ratio dimensions (TikTok style)
+  // Default: 1080x1920 scaled down to fit typical desktop panels
+  const [feedHeight, setFeedHeight] = useState(() => {
+    const saved = Number(localStorage.getItem('feed.itemHeight'));
+    return saved || 800; // ~9:16 ratio when panel width is ~450px
+  });
+  
   const [resizing, setResizing] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
