@@ -469,7 +469,7 @@ export default function AppsPane() {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className="border-2 border-border rounded-lg bg-muted/20 relative resize overflow-hidden cursor-move touch-pan-x overscroll-none"
+          className="border-2 border-border rounded-lg bg-muted/20 relative resize overflow-hidden cursor-move touch-pan-x overscroll-none z-20"
           style={{ 
             width: `${containerWidth}px`,
             height: `${containerHeight}px`,
