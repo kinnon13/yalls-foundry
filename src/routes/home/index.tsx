@@ -80,8 +80,8 @@ export default function HomePage() {
       <main className={cn(mobileView === 'feed' ? 'pt-0 pb-16' : 'pt-14 pb-16')}>
         {/* Desktop Layout: Sidebar + Center + Feed (large screens only) */}
         <div className="hidden lg:flex h-[calc(100dvh-112px)]">
-          {/* Left: Y'all Library - Fixed */}
-          <div className="w-[320px] flex-shrink-0 overflow-hidden border-r bg-background/95 backdrop-blur">
+          {/* Left: Y'all Library - Elevated Mac style */}
+          <div className="w-[340px] flex-shrink-0 overflow-hidden border-r shadow-sm">
             <AppLibrary onAppClick={handleAppClick} />
           </div>
 

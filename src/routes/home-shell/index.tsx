@@ -109,7 +109,7 @@ export default function HomeShell() {
 
         {/* Desktop: three-column shell */}
         <div className="hidden lg:grid grid-social">
-          <div className="w-[320px] flex-shrink-0 overflow-hidden border-r bg-background/95 backdrop-blur">
+          <div className="w-[340px] flex-shrink-0 overflow-hidden border-r shadow-sm">
             <AppLibrary onAppClick={handleAppClick} />
           </div>
           
