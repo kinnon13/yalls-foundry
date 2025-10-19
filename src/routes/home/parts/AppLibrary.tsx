@@ -4,7 +4,7 @@ import {
   Building, Users, TrendingUp, Zap, 
   Package, ShoppingCart, DollarSign, MessageSquare,
   Calendar, BarChart3, Video, Settings, LucideIcon,
-  Bell, Heart, Mail, User
+  Bell, Heart, Mail, User, ShoppingBag
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,7 @@ interface AppTile {
 
 const allApps: AppTile[] = [
   // Commerce
+  { key: 'marketplace', label: 'Marketplace', icon: ShoppingBag, description: 'Browse & buy listings', category: 'Commerce', color: 'text-white', gradient: 'from-green-500 via-emerald-500 to-teal-400', installed: true },
   { key: 'orders', label: 'Orders', icon: ShoppingCart, description: 'Manage order lifecycle', category: 'Commerce', color: 'text-white', gradient: 'from-blue-500 via-blue-600 to-cyan-500', installed: true },
   { key: 'cart', label: 'Cart', icon: ShoppingCart, description: 'Shopping cart & checkout', category: 'Commerce', color: 'text-white', gradient: 'from-cyan-400 via-teal-400 to-emerald-300', installed: true },
   { key: 'inventory', label: 'Inventory', icon: Package, description: 'Track stock & SKUs', category: 'Commerce', color: 'text-white', gradient: 'from-purple-500 via-purple-600 to-indigo-500', installed: true },
