@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSession } from '@/lib/auth/context';
 import { Reel } from '@/components/reels/Reel';
 import { cn } from '@/lib/utils';
+import SocialProfileHeader from './SocialProfileHeader';
 import FavoritesSection from './FavoritesSection';
 
 const TABS = ['following', 'for-you', 'shop', 'profile'] as const;
@@ -113,6 +114,9 @@ export default function SocialFeedPane() {
 
   return (
     <section className="flex h-full w-full flex-col bg-white">
+      {/* Profile Header */}
+      <SocialProfileHeader />
+      
       {/* Favorites Bar */}
       <FavoritesSection />
 

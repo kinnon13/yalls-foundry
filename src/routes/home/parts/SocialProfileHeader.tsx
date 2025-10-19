@@ -3,6 +3,7 @@ import { useSession } from '@/lib/auth/context';
 import { supabase } from '@/integrations/supabase/client';
 import { Share2, Menu, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import profileAvatar from '@/assets/profile-avatar.jpg';
 
 export default function SocialProfileHeader() {
   const { session } = useSession();
@@ -11,7 +12,7 @@ export default function SocialProfileHeader() {
 
   const [name, setName] = useState('User');
   const [handle, setHandle] = useState('username');
-  const [avatar, setAvatar] = useState<string | undefined>(undefined);
+  const [avatar, setAvatar] = useState<string>(profileAvatar);
   const [totals, setTotals] = useState({ following: 0, followers: 0, likes: 0 });
 
   useEffect(() => {
@@ -26,7 +27,9 @@ export default function SocialProfileHeader() {
 
       setName(prof?.display_name ?? userEmail?.split('@')[0] ?? 'User');
       setHandle(prof?.display_name?.toLowerCase().replace(/\s+/g, '') ?? 'username');
-      setAvatar(prof?.avatar_url ?? undefined);
+      if (prof?.avatar_url) {
+        setAvatar(prof.avatar_url);
+      }
 
       try {
         const { data } = await supabase.rpc('get_user_aggregate_counts', { p_user_id: userId }).single();
@@ -64,13 +67,7 @@ export default function SocialProfileHeader() {
       <div className="flex justify-center mb-3">
         <div className="relative">
           <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-primary/20">
-            {avatar ? (
-              <img src={avatar} alt={name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-muted flex items-center justify-center text-3xl">
-                👤
-              </div>
-            )}
+            <img src={avatar} alt={name} className="w-full h-full object-cover" />
           </div>
           <button className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-lg">
             +
