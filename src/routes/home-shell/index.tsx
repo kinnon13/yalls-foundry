@@ -42,14 +42,17 @@ export default function HomeShell() {
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
-              background: 'rgba(12, 12, 14, 0.4)'
+              background: 'rgba(20, 20, 26, 0.5)',
+              position: 'relative'
             }}>
               <div style={{ 
                 textAlign: 'center', 
-                color: 'rgba(255,255,255,0.3)',
-                fontSize: '14px' 
+                color: 'rgba(255,255,255,0.25)',
+                fontSize: '13px',
+                fontWeight: '500',
+                letterSpacing: '0.5px'
               }}>
-                Click an app to open
+                Select an app to begin
               </div>
             </div>
             
