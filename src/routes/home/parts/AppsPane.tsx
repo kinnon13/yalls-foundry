@@ -77,7 +77,7 @@ export default function AppsPane() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [tile, setTile] = useState(() => 
-    Number(localStorage.getItem('apps.tileSize') || 112)
+    Number(localStorage.getItem('apps.tileSize') || 128)
   );
   const [containerHeight, setContainerHeight] = useState(() => 
     Number(localStorage.getItem('apps.containerHeight') || 400)
@@ -250,8 +250,8 @@ export default function AppsPane() {
   const gridDims = useMemo(() => {
     const innerW = Math.max(0, containerWidth - 20);
     const innerH = Math.max(0, containerHeight - 20);
-    const cols = Math.max(1, Math.floor(innerW / (tile + 4))); // 4px gap
-    const rows = Math.max(1, Math.floor(innerH / (tile + 4)));
+    const cols = Math.max(1, Math.floor(innerW / (tile + 16))); // 16px gap like Launchpad
+    const rows = Math.max(1, Math.floor(innerH / (tile + 16)));
     return { cols, rows };
   }, [containerWidth, containerHeight, tile]);
 
@@ -421,7 +421,7 @@ export default function AppsPane() {
           <div className="w-full h-full p-2">
             {/* App Icons Grid - Background Layer */}
             <div 
-              className={cn("grid gap-1 place-content-center w-full h-full transition-opacity duration-200", openApp && "opacity-20")}
+              className={cn("grid gap-4 place-content-center w-full h-full transition-opacity duration-200", openApp && "opacity-20")}
               style={{
                 gridTemplateColumns: `repeat(${gridDims.cols}, ${tile}px)`,
                 gridTemplateRows: `repeat(${gridDims.rows}, ${tile}px)`,
