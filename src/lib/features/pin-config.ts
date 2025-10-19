@@ -8,7 +8,7 @@ export const PIN_FEATURES = {
   PIN_ON_FOLLOW: true,
   
   /** Number of days to lock auto-pinned items */
-  PIN_LOCK_DAYS: 14,
+  PIN_LOCK_DAYS: 7,
   
   /** Minimum interactions before early unlock */
   PIN_MIN_INTERACTIONS: 3,

@@ -32,7 +32,7 @@ import { rocker } from '@/lib/rocker/event-bus';
 import '@/kernel'; // Register app contracts
 
 // 10 Canonical Routes
-import HomeShell from './routes/home-shell';
+import HomeShell from './routes/home-shell/index';
 import Login from './routes/login';
 import NotFound from './pages/NotFound';
 import Health from './pages/Health';
