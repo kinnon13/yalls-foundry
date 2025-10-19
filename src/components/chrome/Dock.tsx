@@ -2,7 +2,7 @@
  * Dock - Mac-style bottom bar with pinned apps
  */
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import type { OverlayKey } from '@/lib/overlay/types';
 import { 
   MessageSquare, ShoppingBag, Calendar, Users, Brain, Package, 
@@ -54,10 +54,14 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
   const { setIsOpen } = useRockerGlobal();
   const { pinnedApps, unpinApp, reorderApps } = usePinnedApps();
   const [isEditMode, setIsEditMode] = useState(false);
-  const longPressTimer = useRef<NodeJS.Timeout>();
   
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: 500,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -90,51 +94,37 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
     }
   };
 
-  const handleLongPress = () => {
+  const handleDragStart = () => {
     setIsEditMode(true);
   };
 
-  const handleMouseDown = () => {
-    longPressTimer.current = setTimeout(handleLongPress, 500);
-  };
-
-  const handleMouseUp = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
+  const handleProfileClick = () => {
+    if (!isEditMode) {
+      window.dispatchEvent(new CustomEvent('navigate-profile'));
     }
   };
 
-  const handleProfileClick = () => {
-    window.dispatchEvent(new CustomEvent('navigate-profile'));
-  };
-
   const handleRockerClick = () => {
-    setIsOpen(true);
-  };
-
-  // Exit edit mode when clicking outside
-  const handleBackgroundClick = () => {
-    if (isEditMode) {
-      setIsEditMode(false);
+    if (!isEditMode) {
+      setIsOpen(true);
     }
   };
 
   return (
     <>
       {isEditMode && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={handleBackgroundClick}
-        />
+        <div className="fixed bottom-20 left-0 right-0 flex justify-center z-50 pointer-events-none">
+          <button
+            onClick={() => setIsEditMode(false)}
+            className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-semibold shadow-lg pointer-events-auto hover:scale-105 transition-transform"
+          >
+            Done
+          </button>
+        </div>
       )}
       <nav 
         aria-label="Bottom dock" 
         className="dock relative z-50"
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onTouchStart={handleMouseDown}
-        onTouchEnd={handleMouseUp}
       >
         {/* Profile Picture - First item - Always visible */}
         <button
@@ -158,6 +148,7 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
+          onDragStart={handleDragStart}
         >
           <SortableContext
             items={pinnedApps.map(app => app.id)}
