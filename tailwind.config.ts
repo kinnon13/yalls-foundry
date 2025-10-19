@@ -105,7 +105,8 @@ export default {
         "scale-in": "scale-in 0.2s ease-out",
         "scale-out": "scale-out 0.2s ease-out",
         "slide-up": "slide-up 0.4s ease-out",
-        "pulse-subtle": "pulse-subtle 2s ease-in-out infinite"
+        "pulse-subtle": "pulse-subtle 2s ease-in-out infinite",
+        "spin-slow": "spin 3s linear infinite"
       },
     },
   },
