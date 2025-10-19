@@ -79,13 +79,13 @@ export function FollowsStep({ onComplete, onBack }: FollowsStepProps) {
       if (selected.length > 0) {
         // Batch insert follows
         const follows = selected.map(followeeId => ({
-          follower_id: user.id,
-          followee_id: followeeId
+          follower_user_id: user.id,
+          followee_user_id: followeeId
         }));
 
         const { error } = await supabase
           .from('follows')
-          .upsert(follows, { onConflict: 'follower_id,followee_id' });
+          .upsert(follows, { onConflict: 'follower_user_id,followee_user_id' });
 
         if (error) throw error;
       }

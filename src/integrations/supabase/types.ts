@@ -1623,6 +1623,36 @@ export type Database = {
         }
         Relationships: []
       }
+      business_profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          kind: string
+          meta: Json | null
+          name: string
+          owner_user_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          kind: string
+          meta?: Json | null
+          name: string
+          owner_user_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          kind?: string
+          meta?: Json | null
+          name?: string
+          owner_user_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       business_team: {
         Row: {
           business_id: string
@@ -4727,6 +4757,27 @@ export type Database = {
           },
         ]
       }
+      interests_catalog: {
+        Row: {
+          category: string
+          id: string
+          sort_order: number | null
+          tag: string
+        }
+        Insert: {
+          category: string
+          id: string
+          sort_order?: number | null
+          tag: string
+        }
+        Update: {
+          category?: string
+          id?: string
+          sort_order?: number | null
+          tag?: string
+        }
+        Relationships: []
+      }
       kernel_contexts: {
         Row: {
           context_data: Json
@@ -6409,8 +6460,11 @@ export type Database = {
           email: string | null
           handle: string | null
           id: string
+          interests: Json | null
           invite_source: string | null
           invited_by: string | null
+          notifications_enabled: boolean | null
+          onboarding_complete: boolean | null
           updated_at: string
           user_id: string
         }
@@ -6427,8 +6481,11 @@ export type Database = {
           email?: string | null
           handle?: string | null
           id?: string
+          interests?: Json | null
           invite_source?: string | null
           invited_by?: string | null
+          notifications_enabled?: boolean | null
+          onboarding_complete?: boolean | null
           updated_at?: string
           user_id: string
         }
@@ -6445,9 +6502,33 @@ export type Database = {
           email?: string | null
           handle?: string | null
           id?: string
+          interests?: Json | null
           invite_source?: string | null
           invited_by?: string | null
+          notifications_enabled?: boolean | null
+          onboarding_complete?: boolean | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles_onboarding_progress: {
+        Row: {
+          data: Json | null
+          step: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          data?: Json | null
+          step: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          data?: Json | null
+          step?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -8845,6 +8926,10 @@ export type Database = {
         Args: { p_identifier: string; p_window_sec?: number }
         Returns: Json
       }
+      check_handle_available: {
+        Args: { p_handle: string }
+        Returns: boolean
+      }
       check_rate_limit: {
         Args: { p_limit: number; p_scope: string; p_window_sec?: number }
         Returns: Json
@@ -8916,6 +9001,10 @@ export type Database = {
       commission_expire_old: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      complete_onboarding: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       connection_metrics: {
         Args: { p_window_hours?: number }
@@ -10285,6 +10374,10 @@ export type Database = {
         Args: { "": number }
         Returns: number
       }
+      set_user_acquisition: {
+        Args: { p_payload: Json }
+        Returns: undefined
+      }
       show_limit: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -11414,6 +11507,10 @@ export type Database = {
           schema_name: string
           table_name: string
         }
+        Returns: string
+      }
+      upsert_business_profile: {
+        Args: { p_kind: string; p_meta?: Json; p_name: string }
         Returns: string
       }
       user_aggregate_social_stats: {
