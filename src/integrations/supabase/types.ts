@@ -9691,6 +9691,14 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_embedding_freshness: {
+        Row: {
+          ct: number | null
+          hour_bucket: string | null
+          last_write: string | null
+        }
+        Relationships: []
+      }
       vw_events_queue_health: {
         Row: {
           ct: number | null
@@ -9741,6 +9749,24 @@ export type Database = {
           last_impression: string | null
           policy: string | null
           reward_stddev: number | null
+        }
+        Relationships: []
+      }
+      vw_profile_embeddings: {
+        Row: {
+          interests_embedding: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          interests_embedding?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          interests_embedding?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -11540,7 +11566,7 @@ export type Database = {
       }
       recompute_profile_embedding: {
         Args: { p_user_id: string }
-        Returns: undefined
+        Returns: Json
       }
       record_view: {
         Args: { p_listing_id: string; p_session_id?: string }
