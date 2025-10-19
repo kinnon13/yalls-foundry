@@ -157,7 +157,7 @@ export function RockerChatUI() {
   }
 
   return (
-    <div className="fixed bottom-0 right-0 left-0 sm:bottom-6 sm:right-6 sm:left-auto z-50 flex sm:w-[1000px] w-full h-[100dvh] sm:h-[600px] bg-background border-t sm:border border-border sm:rounded-lg shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-[60] flex sm:bottom-6 sm:right-6 sm:inset-auto sm:w-[1000px] sm:h-[600px] w-full h-[100dvh] bg-background border-t sm:border border-border sm:rounded-lg shadow-2xl overflow-hidden">
       {showSidebar && (
         <div className="w-64 flex-shrink-0 border-r border-border">
           <ConversationSidebar
