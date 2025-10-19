@@ -32,7 +32,7 @@ import { rocker } from '@/lib/rocker/event-bus';
 import '@/kernel'; // Register app contracts
 
 // 10 Canonical Routes
-import HomePage from './routes/home';
+import HomeShell from './routes/home-shell';
 import Login from './routes/login';
 import NotFound from './pages/NotFound';
 import Health from './pages/Health';
@@ -89,7 +89,7 @@ function AppContent() {
       
       <Routes>
         {/* 1. Home - Shell with Apps + Feed */}
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<HomeShell />} />
         
         {/* 2. Discover - For You / Trending / Latest */}
         <Route 
