@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Heart, MessageCircle, Share2, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { rocker } from '@/lib/rocker/event-bus';
+import { CalendarWidget } from './CalendarWidget';
 
 interface Reel {
   id: string;
@@ -65,26 +66,34 @@ export function FeedPane() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
-        <TabsList className="w-full justify-start border-b rounded-none h-12 bg-transparent">
-          <TabsTrigger value="for-you">For You</TabsTrigger>
-          <TabsTrigger value="following">Following</TabsTrigger>
-          <TabsTrigger value="shop">Shop</TabsTrigger>
-        </TabsList>
+    <div className="h-full flex bg-background">
+      {/* Main feed area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
+          <TabsList className="w-full justify-start border-b rounded-none h-12 bg-transparent">
+            <TabsTrigger value="for-you">For You</TabsTrigger>
+            <TabsTrigger value="following">Following</TabsTrigger>
+            <TabsTrigger value="shop">Shop</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="for-you" className="flex-1 overflow-hidden m-0">
-          <ReelScroller reels={MOCK_REELS} currentIndex={currentIndex} />
-        </TabsContent>
+          <TabsContent value="for-you" className="flex-1 overflow-hidden m-0">
+            <ReelScroller reels={MOCK_REELS} currentIndex={currentIndex} />
+          </TabsContent>
 
-        <TabsContent value="following" className="flex-1 overflow-hidden m-0">
-          <ReelScroller reels={MOCK_REELS.slice(0, 5)} currentIndex={currentIndex} />
-        </TabsContent>
+          <TabsContent value="following" className="flex-1 overflow-hidden m-0">
+            <ReelScroller reels={MOCK_REELS.slice(0, 5)} currentIndex={currentIndex} />
+          </TabsContent>
 
-        <TabsContent value="shop" className="flex-1 overflow-hidden m-0">
-          <ReelScroller reels={MOCK_REELS.slice(0, 10)} currentIndex={currentIndex} />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="shop" className="flex-1 overflow-hidden m-0">
+            <ReelScroller reels={MOCK_REELS.slice(0, 10)} currentIndex={currentIndex} />
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Right rail with calendar widget */}
+      <div className="hidden lg:block w-80 border-l overflow-y-auto p-4">
+        <CalendarWidget />
+      </div>
     </div>
   );
 }

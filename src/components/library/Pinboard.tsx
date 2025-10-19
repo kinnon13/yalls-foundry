@@ -3,33 +3,42 @@
  * Display pinned apps for current context
  */
 
-import { usePinboard } from '@/library/pinboard';
+import { usePinboard, PRODUCER_PRE_PINS } from '@/library/pinboard';
 import { useContextManager } from '@/kernel/context-manager';
 import { libraryRegistry } from '@/library/registry';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import type { AppId } from '@/kernel/types';
 
 interface PinboardProps {
   contextId?: string;
 }
 
 export function Pinboard({ contextId }: PinboardProps) {
-  const { activeId } = useContextManager();
+  const { activeId, activeType } = useContextManager();
   const { getPins, unpin } = usePinboard();
   
   const id = contextId || activeId || 'home';
-  const pins = getPins(id);
+  const userPins = getPins(id);
+  
+  // Show pre-pins for business/producer contexts
+  const isBusinessContext = activeType === 'business' || activeType === 'producer';
+  const displayPins = isBusinessContext && userPins.length === 0
+    ? PRODUCER_PRE_PINS.map((appId, i) => ({ appId, context: activeType, contextId: id, order: i }))
+    : userPins;
 
   return (
     <div className="p-4 space-y-2">
-      <h3 className="font-semibold text-sm text-muted-foreground mb-3">Pinned Apps</h3>
+      <h3 className="font-semibold text-sm text-muted-foreground mb-3">
+        {isBusinessContext ? 'Business Tools' : 'Pinned Apps'}
+      </h3>
       
-      {pins.length === 0 && (
+      {displayPins.length === 0 && (
         <p className="text-sm text-muted-foreground">No pinned apps. Search and click to pin.</p>
       )}
 
       <div className="grid grid-cols-2 gap-2">
-        {pins.map((pin) => {
+        {displayPins.map((pin) => {
           const entry = libraryRegistry.get(pin.appId);
           if (!entry) return null;
 

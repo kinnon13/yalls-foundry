@@ -38,7 +38,7 @@ import NotFound from './pages/NotFound';
 import Health from './pages/Health';
 
 const Discover = lazy(() => import('./routes/discover-v2'));
-const DashboardLayout = lazy(() => import('./routes/dashboard/index'));
+const DashboardLayout = lazy(() => import('./routes/dashboard-new/index'));
 const Messages = lazy(() => import('./routes/messages/index'));
 const ProfilePageDynamic = lazy(() => import('./routes/profile/[id]'));
 const EntitiesList = lazy(() => import('./routes/entities/index'));
