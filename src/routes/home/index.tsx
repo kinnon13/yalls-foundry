@@ -78,15 +78,15 @@ export default function HomePage() {
     <>
       <GlobalHeader className={mobileView === 'feed' ? 'hidden lg:block' : undefined} />
       <main className={cn(mobileView === 'feed' ? 'pt-0 pb-16' : 'pt-14 pb-16')}>
-        {/* Desktop Layout: Sidebar + Center + Feed (large screens only) */}
-        <div className="hidden lg:flex h-[calc(100dvh-112px)] gap-6 pl-2 pr-6 py-6 bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20">
-          {/* Left: Y'all Library - Elevated */}
-          <div className="w-[380px] flex-shrink-0 overflow-hidden rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow z-20">
+        {/* Desktop Layout: Three-column precision grid */}
+        <div className="hidden lg:flex h-[calc(100dvh-112px)] gap-6 p-6 bg-gradient-to-br from-muted/40 via-muted/30 to-background/95">
+          {/* Left: Y'all Library - Primary elevation */}
+          <div className="w-[380px] flex-shrink-0 overflow-hidden rounded-[24px] border border-border/50 bg-gradient-to-b from-background via-background to-background/98 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_12px_24px_rgba(0,0,0,0.08),0_24px_48px_rgba(0,0,0,0.12)] backdrop-blur-xl hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_32px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.16)] transition-all duration-300">
             <AppLibrary onAppClick={handleAppClick} />
           </div>
 
-          {/* Center: Content Area - Scrollable */}
-          <div className="flex-1 overflow-y-auto rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow z-10">
+          {/* Center: Content Canvas - Secondary elevation */}
+          <div className="flex-1 overflow-y-auto rounded-[24px] border border-border/40 bg-gradient-to-b from-muted/30 via-background/80 to-background/95 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_16px_rgba(0,0,0,0.08)] backdrop-blur-sm hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_12px_24px_rgba(0,0,0,0.12)] transition-all duration-300">
             <CenterContentArea
               openApps={openApps}
               activeApp={activeApp}
@@ -96,8 +96,8 @@ export default function HomePage() {
             />
           </div>
 
-          {/* Right: Social Feed - Fixed */}
-          <div className="w-[380px] flex-shrink-0 overflow-hidden rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow">
+          {/* Right: Social Feed - Primary elevation */}
+          <div className="w-[380px] flex-shrink-0 overflow-hidden rounded-[24px] border border-border/50 bg-gradient-to-b from-background via-background to-background/98 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_12px_24px_rgba(0,0,0,0.08),0_24px_48px_rgba(0,0,0,0.12)] backdrop-blur-xl hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_32px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.16)] transition-all duration-300">
             <SocialFeedPane />
           </div>
         </div>
