@@ -56,7 +56,7 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
       )}
       role="banner"
     >
-      <div className="mx-auto max-w-screen-2xl h-full px-4 flex items-center gap-3">
+      <div className="mx-auto max-w-screen-2xl h-full px-4 grid grid-cols-[auto_1fr_auto] items-center gap-3">
         {/* Brand / Home */}
         <Link
           to="/home"
@@ -68,18 +68,20 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
         </Link>
 
         {/* Search (desktop/tablet) - Centered */}
-        <form onSubmit={onSearch} className="hidden md:flex items-center gap-2 flex-1 justify-center max-w-2xl mx-auto">
-          <div className="relative grow">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search people, businesses, apps…"
-              className="w-full h-10 pl-9 pr-3 rounded-md border border-border/60 bg-background"
-              aria-label="Search"
-            />
-          </div>
-        </form>
+        <div className="hidden md:flex flex-1 justify-center">
+          <form onSubmit={onSearch} className="w-full max-w-2xl flex items-center gap-2">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search people, businesses, apps…"
+                className="w-full h-10 pl-9 pr-3 rounded-md border border-border/60 bg-background"
+                aria-label="Search"
+              />
+            </div>
+          </form>
+        </div>
 
         {/* Mobile search toggle */}
         <button
