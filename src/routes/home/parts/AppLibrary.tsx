@@ -4,11 +4,13 @@ import {
   Building, Users, TrendingUp, Zap, 
   Package, ShoppingCart, DollarSign, MessageSquare,
   Calendar, BarChart3, Video, Settings, LucideIcon,
-  Bell, Heart, Mail, User, ShoppingBag
+  Bell, Heart, Mail, User, ShoppingBag, Pin, PinOff
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useRockerGlobal } from '@/lib/ai/rocker';
+import { usePinnedApps } from '@/hooks/usePinnedApps';
+import { useToast } from '@/hooks/use-toast';
 
 interface AppTile {
   key: string;
@@ -53,6 +55,26 @@ const allApps: AppTile[] = [
   { key: 'settings', label: 'Settings', icon: Settings, description: 'App preferences', category: 'System', color: 'text-white', gradient: 'from-gray-600 via-gray-700 to-slate-700', installed: true },
 ];
 
+// Icon name mapping for dock
+const APP_ICON_NAMES: Record<string, string> = {
+  marketplace: 'ShoppingBag',
+  orders: 'ShoppingCart',
+  cart: 'ShoppingCart',
+  inventory: 'Package',
+  listings: 'Store',
+  earnings: 'DollarSign',
+  messages: 'MessageSquare',
+  notifications: 'Bell',
+  calendar: 'Calendar',
+  favorites: 'Heart',
+  rocker: 'Sparkles',
+  mlm: 'Users',
+  analytics: 'BarChart3',
+  studio: 'Video',
+  profile: 'User',
+  settings: 'Settings',
+};
+
 const categories = ['All', 'Commerce', 'Money', 'Ops', 'Growth', 'Creator', 'System'];
 
 interface AppLibraryProps {
@@ -64,6 +86,8 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const { setIsOpen } = useRockerGlobal();
+  const { pinApp, unpinApp, isPinned } = usePinnedApps();
+  const { toast } = useToast();
   const filteredApps = allApps.filter(app => {
     // Filter by scope
     if (scope === 'installed' && !app.installed) return false;
@@ -160,38 +184,64 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
       {/* App Grid - Perfect Mac Spacing */}
       <div className="flex-1 overflow-y-auto px-7 pb-6">
         <div className="grid grid-cols-3 gap-6">
-          {filteredApps.map((app) => (
-            <button
-              key={app.key}
-              onClick={() => {
-                if (app.key === 'rocker') { setIsOpen(true); return; }
-                onAppClick({ 
-                  key: app.key, 
-                  label: app.label, 
-                  icon: app.icon,
-                  color: app.color 
-                });
-              }}
-              className="group relative flex flex-col items-center p-4 rounded-3xl hover:bg-accent/50 active:scale-95 transition-all duration-200"
-            >
-              {/* Icon - Apple-Grade Premium with True Depth */}
-              <div className={`relative w-20 h-20 rounded-[24%] bg-gradient-to-br ${app.gradient} flex items-center justify-center mb-3.5 group-hover:scale-110 group-active:scale-105 transition-all duration-300 shadow-[0_10px_25px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.25)] border border-white/10`}>
-                <app.icon className={`w-10 h-10 drop-shadow-lg ${app.color}`} strokeWidth={1.75} />
-                {/* Subsurface glow effect */}
-                <div className="absolute inset-0 rounded-[24%] bg-gradient-to-t from-white/5 to-transparent opacity-50" />
+          {filteredApps.map((app) => {
+            const pinned = isPinned(app.key);
+            return (
+              <div key={app.key} className="group relative">
+                <button
+                  onClick={() => {
+                    if (app.key === 'rocker') { setIsOpen(true); return; }
+                    onAppClick({ 
+                      key: app.key, 
+                      label: app.label, 
+                      icon: app.icon,
+                      color: app.color 
+                    });
+                  }}
+                  className="w-full flex flex-col items-center p-4 rounded-3xl hover:bg-accent/50 active:scale-95 transition-all duration-200"
+                >
+                  {/* Icon - Apple-Grade Premium with True Depth */}
+                  <div className={`relative w-20 h-20 rounded-[24%] bg-gradient-to-br ${app.gradient} flex items-center justify-center mb-3.5 group-hover:scale-110 group-active:scale-105 transition-all duration-300 shadow-[0_10px_25px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.25)] border border-white/10`}>
+                    <app.icon className={`w-10 h-10 drop-shadow-lg ${app.color}`} strokeWidth={1.75} />
+                    {/* Subsurface glow effect */}
+                    <div className="absolute inset-0 rounded-[24%] bg-gradient-to-t from-white/5 to-transparent opacity-50" />
+                  </div>
+
+                  {/* Label - Perfect Typography */}
+                  <span className="text-[11px] font-semibold text-center leading-tight tracking-tight px-1">
+                    {app.label}
+                  </span>
+
+                  {/* Update Indicator */}
+                  {app.updateAvailable && (
+                    <div className="absolute top-3 right-3 w-2.5 h-2.5 bg-primary rounded-full shadow-sm animate-pulse" />
+                  )}
+                </button>
+                
+                {/* Pin/Unpin button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (pinned) {
+                      unpinApp(app.key);
+                      toast({ title: 'Unpinned', description: `${app.label} removed from dock` });
+                    } else {
+                      pinApp({ 
+                        id: app.key, 
+                        label: app.label, 
+                        icon: APP_ICON_NAMES[app.key] || 'MessageSquare'
+                      });
+                      toast({ title: 'Pinned', description: `${app.label} added to dock` });
+                    }
+                  }}
+                  className="absolute top-2 right-2 h-6 w-6 rounded-full bg-background/90 backdrop-blur-sm border border-border/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-accent"
+                  title={pinned ? 'Unpin from dock' : 'Pin to dock'}
+                >
+                  {pinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+                </button>
               </div>
-
-              {/* Label - Perfect Typography */}
-              <span className="text-[11px] font-semibold text-center leading-tight tracking-tight px-1">
-                {app.label}
-              </span>
-
-              {/* Update Indicator */}
-              {app.updateAvailable && (
-                <div className="absolute top-3 right-3 w-2.5 h-2.5 bg-primary rounded-full shadow-sm animate-pulse" />
-              )}
-            </button>
-          ))}
+            );
+          })}
         </div>
 
         {filteredApps.length === 0 && (

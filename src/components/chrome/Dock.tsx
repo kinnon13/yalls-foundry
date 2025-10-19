@@ -4,24 +4,39 @@
 
 import { useOpenApp } from '@/lib/nav/useOpenApp';
 import type { OverlayKey } from '@/lib/overlay/types';
-import { MessageSquare, ShoppingBag, Calendar, Users, Brain } from 'lucide-react';
+import { 
+  MessageSquare, ShoppingBag, Calendar, Users, Brain, Package, 
+  DollarSign, Bell, Heart, LucideIcon, ShoppingCart, Store, 
+  Sparkles, BarChart3, Video, User, Settings 
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CreateButton } from '@/components/dock/CreateButton';
 import { useRockerGlobal } from '@/lib/ai/rocker';
+import { usePinnedApps } from '@/hooks/usePinnedApps';
 
-const DOCK_APPS_LEFT: Array<{ id: OverlayKey; icon: any; label: string }> = [
-  { id: 'messages', icon: MessageSquare, label: 'Messages' },
-  { id: 'marketplace', icon: ShoppingBag, label: 'Marketplace' },
-];
-
-const DOCK_APPS_RIGHT: Array<{ id: OverlayKey; icon: any; label: string }> = [
-  { id: 'events', icon: Calendar, label: 'Events' },
-  { id: 'orders', icon: Users, label: 'Orders' },
-];
+// Icon mapping
+const ICON_MAP: Record<string, LucideIcon> = {
+  MessageSquare,
+  ShoppingBag,
+  Calendar,
+  Users,
+  Package,
+  DollarSign,
+  Bell,
+  Heart,
+  ShoppingCart,
+  Store,
+  Sparkles,
+  BarChart3,
+  Video,
+  User,
+  Settings,
+};
 
 export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => void }) {
   const { setIsOpen } = useRockerGlobal();
+  const { pinnedApps } = usePinnedApps();
   
   // Fetch current user profile
   const { data: profile } = useQuery({
@@ -67,14 +82,14 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
         )}
       </button>
       
-      {/* Left side apps */}
-      {DOCK_APPS_LEFT.map(app => {
-        const Icon = app.icon;
+      {/* Pinned apps */}
+      {pinnedApps.map(app => {
+        const Icon = ICON_MAP[app.icon] || MessageSquare;
         return (
           <button
             key={app.id}
             className="dock-icon"
-            onClick={() => onAppClick(app.id)}
+            onClick={() => onAppClick(app.id as OverlayKey)}
             title={app.label}
           >
             <Icon />
@@ -84,21 +99,6 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
 
       {/* Center Create Button */}
       <CreateButton />
-
-      {/* Right side apps */}
-      {DOCK_APPS_RIGHT.map(app => {
-        const Icon = app.icon;
-        return (
-          <button
-            key={app.id}
-            className="dock-icon"
-            onClick={() => onAppClick(app.id)}
-            title={app.label}
-          >
-            <Icon />
-          </button>
-        );
-      })}
 
       {/* Rocker Icon - Last item */}
       <button
