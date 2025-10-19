@@ -24,6 +24,13 @@ export default function SocialFeedPane() {
     Number(localStorage.getItem('feed.itemWidth') || 400)
   );
   const [resizing, setResizing] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('feed.itemHeight', String(feedHeight));
@@ -201,30 +208,34 @@ export default function SocialFeedPane() {
             {items.map((item) => (
               <div 
                 key={item.id} 
-                className="snap-start snap-always relative shrink-0" 
+                className="snap-start snap-always relative shrink-0 w-full md:w-auto" 
                 style={{ 
-                  height: `${feedHeight}px`,
-                  width: `${feedWidth}px`
+                  height: isMobile ? '100vh' : `${feedHeight}px`,
+                  width: isMobile ? '100vw' : `${feedWidth}px`
                 }}
               >
                 <Reel {...item} />
                 
-                {/* Resize Handles */}
-                <div 
-                  onMouseDown={(e) => startResize(e, 'width')}
-                  className="absolute right-0 top-0 bottom-0 w-2 border-r-2 border-dashed border-primary/50 hover:border-primary cursor-ew-resize z-10"
-                  title="Drag to resize width"
-                />
-                <div 
-                  onMouseDown={(e) => startResize(e, 'height')}
-                  className="absolute left-0 right-0 bottom-0 h-2 border-b-2 border-dashed border-primary/50 hover:border-primary cursor-ns-resize z-10"
-                  title="Drag to resize height"
-                />
-                <div 
-                  onMouseDown={(e) => startResize(e, 'both')}
-                  className="absolute right-0 bottom-0 w-4 h-4 border-r-2 border-b-2 border-dashed border-primary/70 hover:border-primary cursor-nwse-resize z-10 rounded-bl"
-                  title="Drag to resize both"
-                />
+                {/* Resize Handles - only on desktop */}
+                {!isMobile && (
+                  <>
+                    <div 
+                      onMouseDown={(e) => startResize(e, 'width')}
+                      className="absolute right-0 top-0 bottom-0 w-2 border-r-2 border-dashed border-primary/50 hover:border-primary cursor-ew-resize z-10"
+                      title="Drag to resize width"
+                    />
+                    <div 
+                      onMouseDown={(e) => startResize(e, 'height')}
+                      className="absolute left-0 right-0 bottom-0 h-2 border-b-2 border-dashed border-primary/50 hover:border-primary cursor-ns-resize z-10"
+                      title="Drag to resize height"
+                    />
+                    <div 
+                      onMouseDown={(e) => startResize(e, 'both')}
+                      className="absolute right-0 bottom-0 w-4 h-4 border-r-2 border-b-2 border-dashed border-primary/70 hover:border-primary cursor-nwse-resize z-10 rounded-bl"
+                      title="Drag to resize both"
+                    />
+                  </>
+                )}
               </div>
             ))}
           </div>
