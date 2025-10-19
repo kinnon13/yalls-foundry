@@ -56,7 +56,7 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
       )}
       role="banner"
     >
-      <div className="mx-auto max-w-[1400px] h-full px-3 md:px-4 flex items-center gap-3">
+      <div className="mx-auto max-w-screen-2xl h-full px-4 flex items-center gap-3">
         {/* Brand / Home */}
         <Link
           to="/home"
@@ -67,8 +67,8 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
           <span className="hidden sm:inline">yalls.ai</span>
         </Link>
 
-        {/* Search (desktop/tablet) */}
-        <form onSubmit={onSearch} className="hidden md:flex items-center gap-2 grow max-w-2xl ml-2">
+        {/* Search (desktop/tablet) - Centered */}
+        <form onSubmit={onSearch} className="hidden md:flex items-center gap-2 flex-1 justify-center max-w-2xl mx-auto">
           <div className="relative grow">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
