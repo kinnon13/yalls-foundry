@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useEntityCapabilities } from '@/hooks/useEntityCapabilities';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,7 +40,6 @@ interface LeftAppSidebarProps {
 }
 
 export default function LeftAppSidebar({ onAppClick }: LeftAppSidebarProps) {
-  const navigate = useNavigate();
   const { data: entities = [] } = useQuery({
     queryKey: ['my-entities'],
     queryFn: async () => {
@@ -55,9 +53,16 @@ export default function LeftAppSidebar({ onAppClick }: LeftAppSidebarProps) {
   });
 
   const handleClick = (app: AppConfig) => {
-    if (app.route) {
-      onAppClick(app);
-    }
+    onAppClick(app);
+  };
+
+  const handleEntityClick = (entity: any) => {
+    onAppClick({
+      key: `entity-${entity.id}`,
+      label: entity.display_name,
+      route: `/entity/${entity.id}`,
+      icon: Building
+    });
   };
 
   return (
@@ -97,7 +102,7 @@ export default function LeftAppSidebar({ onAppClick }: LeftAppSidebarProps) {
               {entities.slice(0, 6).map((entity) => (
                 <button
                   key={entity.id}
-                  onClick={() => navigate(`/entity/${entity.id}`)}
+                  onClick={() => handleEntityClick(entity)}
                   className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">

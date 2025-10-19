@@ -27,14 +27,8 @@ export default function MarketplaceIndex() {
   });
 
   return (
-    <>
-      <SEOHelmet 
-        title="Marketplace" 
-        description="Browse and purchase products from the yalls.ai marketplace" 
-      />
-      <GlobalHeader />
-      <div className="min-h-screen p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
+    <div className="h-full overflow-auto p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
@@ -145,6 +139,5 @@ export default function MarketplaceIndex() {
           </div>
         </div>
       </div>
-    </>
-  );
-}
+    );
+  }
