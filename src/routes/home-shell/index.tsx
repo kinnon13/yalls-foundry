@@ -109,7 +109,7 @@ export default function HomeShell() {
 
         {/* Desktop: three-column shell */}
         <div className="hidden lg:grid grid-social gap-6 p-6 bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20">
-          <div className="w-[340px] flex-shrink-0 overflow-hidden rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow">
+          <div className="w-[380px] flex-shrink-0 overflow-hidden rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow">
             <AppLibrary onAppClick={handleAppClick} />
           </div>
           

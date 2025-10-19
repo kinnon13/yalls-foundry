@@ -81,7 +81,7 @@ export default function HomePage() {
         {/* Desktop Layout: Sidebar + Center + Feed (large screens only) */}
         <div className="hidden lg:flex h-[calc(100dvh-112px)] gap-6 p-6 bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20">
           {/* Left: Y'all Library - Elevated */}
-          <div className="w-[340px] flex-shrink-0 overflow-hidden rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow">
+          <div className="w-[380px] flex-shrink-0 overflow-hidden rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow">
             <AppLibrary onAppClick={handleAppClick} />
           </div>
 
@@ -97,7 +97,7 @@ export default function HomePage() {
           </div>
 
           {/* Right: Social Feed - Fixed */}
-          <div className="w-[420px] flex-shrink-0 overflow-hidden rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow">
+          <div className="w-[380px] flex-shrink-0 overflow-hidden rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow">
             <SocialFeedPane />
           </div>
         </div>
