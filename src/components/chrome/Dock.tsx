@@ -36,7 +36,7 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        delay: 500,
+        delay: 300, // Reduced from 500ms for faster response
         tolerance: 5,
       },
     }),
@@ -70,10 +70,15 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
       const newIndex = pinnedApps.findIndex(app => app.id === over.id);
       reorderApps(arrayMove(pinnedApps, oldIndex, newIndex));
     }
+    // Stay in edit mode after dragging
   };
 
   const handleDragStart = () => {
     setIsEditMode(true);
+  };
+
+  const handleDragCancel = () => {
+    // Don't exit edit mode on cancel, let user click Done
   };
 
   const handleProfileClick = () => {
@@ -91,10 +96,10 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
   return (
     <>
       {isEditMode && (
-        <div className="fixed bottom-20 left-0 right-0 flex justify-center z-50 pointer-events-none">
+        <div className="fixed bottom-24 left-0 right-0 flex justify-center z-50 pointer-events-none animate-fade-in">
           <button
             onClick={() => setIsEditMode(false)}
-            className="px-6 py-2 bg-primary text-primary-foreground rounded-full font-semibold shadow-lg pointer-events-auto hover:scale-105 transition-transform"
+            className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold shadow-xl pointer-events-auto hover:scale-105 transition-transform text-sm"
           >
             Done
           </button>
@@ -127,6 +132,7 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
           onDragStart={handleDragStart}
+          onDragCancel={handleDragCancel}
         >
           <SortableContext
             items={pinnedApps.map(app => app.id)}
