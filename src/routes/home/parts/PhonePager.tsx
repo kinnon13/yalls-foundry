@@ -1,15 +1,48 @@
 import AppsPane from './AppsPane';
 import SocialFeedPane from './SocialFeedPane';
 import { User } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function PhonePager() {
   const pages = ['apps', 'feed', 'shop', 'profile'] as const;
-  
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [startX, setStartX] = useState<number | null>(null);
+const [endX, setEndX] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setStartX(e.touches[0].clientX);
+    setEndX(null);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (startX === null) return;
+    setEndX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (startX === null || endX === null) return;
+    const delta = startX - endX;
+    const threshold = 50;
+    const el = containerRef.current;
+    if (!el) return;
+    const width = el.clientWidth;
+    const currentIndex = Math.round(el.scrollLeft / width);
+    let next = currentIndex;
+    if (delta > threshold) next = Math.min(currentIndex + 1, pages.length - 1);
+    if (delta < -threshold) next = Math.max(currentIndex - 1, 0);
+    el.scrollTo({ left: next * width, behavior: 'smooth' });
+    setStartX(null);
+    setEndX(null);
+  };
+
   return (
     <div 
+      ref={containerRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       className="w-screen h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory flex no-scrollbar touch-pan-x"
       style={{ 
         scrollBehavior: 'smooth',
