@@ -19,14 +19,15 @@ export default function HomePage() {
         {/* Tablet & Desktop */}
         <div className="hidden md:block h-[calc(100vh-56px-64px)] mx-auto max-w-[1600px]">
           <ResizablePanelGroup direction="horizontal" className="h-full">
-            {/* Apps (left) - z=30 */}
-            <ResizablePanel defaultSize={35} minSize={20} maxSize={50} className="z-30">
+            {/* Apps (left) - highest z to ensure visibility */}
+            <ResizablePanel defaultSize={35} minSize={20} maxSize={50} className="relative z-40">
               <AppsPane />
             </ResizablePanel>
             
-            <ResizableHandle withHandle className="z-30" />
+            <ResizableHandle withHandle className="relative z-40" />
             
-            <ResizablePanel defaultSize={65} minSize={50} className="min-w-0">
+            {/* Reels/Feed (right) */}
+            <ResizablePanel defaultSize={65} minSize={50} className="relative z-30 min-w-0">
               <div className="h-full w-full relative overflow-hidden">
                 <SocialFeedPane />
               </div>
