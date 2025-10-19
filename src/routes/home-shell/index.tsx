@@ -108,17 +108,16 @@ export default function HomeShell() {
         </div>
 
         {/* Desktop: three-column shell */}
-        <div className="hidden lg:grid grid-social">
-          <div className="w-[340px] flex-shrink-0 overflow-hidden border-r shadow-sm">
+        <div className="hidden lg:grid grid-social gap-4 p-4 bg-muted/30">
+          <div className="w-[340px] flex-shrink-0 overflow-hidden rounded-2xl border bg-background/95 backdrop-blur-xl shadow-2xl">
             <AppLibrary onAppClick={handleAppClick} />
           </div>
           
           {/* Center area - becomes the active app */}
-          <div className="card" style={{ 
+          <div className="rounded-2xl border bg-background/95 backdrop-blur-xl shadow-2xl" style={{ 
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
-            background: 'rgba(20, 20, 26, 0.5)',
             position: 'relative'
           }}>
             {activeApp ? (
@@ -140,7 +139,9 @@ export default function HomeShell() {
             )}
           </div>
           
-          <SocialFeedPane />
+          <div className="rounded-2xl border bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+            <SocialFeedPane />
+          </div>
         </div>
       </main>
       

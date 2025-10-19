@@ -79,14 +79,14 @@ export default function HomePage() {
       <GlobalHeader className={mobileView === 'feed' ? 'hidden lg:block' : undefined} />
       <main className={cn(mobileView === 'feed' ? 'pt-0 pb-16' : 'pt-14 pb-16')}>
         {/* Desktop Layout: Sidebar + Center + Feed (large screens only) */}
-        <div className="hidden lg:flex h-[calc(100dvh-112px)]">
-          {/* Left: Y'all Library - Elevated Mac style */}
-          <div className="w-[340px] flex-shrink-0 overflow-hidden border-r shadow-sm">
+        <div className="hidden lg:flex h-[calc(100dvh-112px)] gap-4 p-4 bg-muted/30">
+          {/* Left: Y'all Library - Elevated */}
+          <div className="w-[340px] flex-shrink-0 overflow-hidden rounded-2xl border bg-background/95 backdrop-blur-xl shadow-2xl">
             <AppLibrary onAppClick={handleAppClick} />
           </div>
 
           {/* Center: Content Area - Scrollable */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto rounded-2xl border bg-background/95 backdrop-blur-xl shadow-2xl">
             <CenterContentArea
               openApps={openApps}
               activeApp={activeApp}
@@ -97,7 +97,7 @@ export default function HomePage() {
           </div>
 
           {/* Right: Social Feed - Fixed */}
-          <div className="w-[420px] flex-shrink-0 border-l overflow-hidden">
+          <div className="w-[420px] flex-shrink-0 overflow-hidden rounded-2xl border bg-background/95 backdrop-blur-xl shadow-2xl">
             <SocialFeedPane />
           </div>
         </div>
