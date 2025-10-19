@@ -12,6 +12,8 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from '@/lib/auth/context';
 import { RequireAuth } from '@/lib/auth/guards';
+import { RequireAuthGuard } from '@/lib/auth/guards/RequireAuthGuard';
+import { PublicOnlyGuard } from '@/lib/auth/guards/PublicOnlyGuard';
 import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
 import { RockerDock } from '@/components/rocker/RockerDock';
@@ -96,6 +98,15 @@ function AppContent() {
         {/* 1. Home - Shell with Apps + Feed */}
         <Route path="/" element={<HomeShell />} />
         
+        {/* Auth - Public only (redirects if already logged in) */}
+        <Route element={<PublicOnlyGuard />}>
+          <Route path="/auth" element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <AuthPage />
+            </Suspense>
+          } />
+        </Route>
+        
         {/* 2. Discover - For You / Trending / Latest */}
         <Route 
           path="/discover" 
@@ -176,70 +187,56 @@ function AppContent() {
           } 
         />
         
-        {/* 9. Cart - Checkout & Purchase */}
-        <Route 
-          path="/cart" 
-          element={
-            <RequireAuth>
+        {/* Protected Routes Group - Require Authentication */}
+        <Route element={<RequireAuthGuard />}>
+          {/* 9. Cart - Checkout & Purchase */}
+          <Route 
+            path="/cart" 
+            element={
               <Suspense fallback={<div>Loading...</div>}>
                 <CartPage />
               </Suspense>
-            </RequireAuth>
-          } 
-        />
-        
-        {/* 10. Orders - List + Detail */}
-        <Route 
-          path="/orders" 
-          element={
-            <RequireAuth>
+            } 
+          />
+          
+          {/* 10. Orders - List + Detail */}
+          <Route 
+            path="/orders" 
+            element={
               <Suspense fallback={<div>Loading...</div>}>
                 <OrdersIndex />
               </Suspense>
-            </RequireAuth>
-          } 
-        />
-        <Route 
-          path="/orders/:id" 
-          element={
-            <RequireAuth>
+            } 
+          />
+          <Route 
+            path="/orders/:id" 
+            element={
               <Suspense fallback={<div>Loading...</div>}>
                 <OrderDetail />
               </Suspense>
-            </RequireAuth>
-          } 
-        />
-        
-        {/* MLM Network */}
-        <Route 
-          path="/mlm" 
-          element={
-            <RequireAuth>
+            } 
+          />
+          
+          {/* MLM Network */}
+          <Route 
+            path="/mlm" 
+            element={
               <Suspense fallback={<div>Loading...</div>}>
                 <MLMPage />
               </Suspense>
-            </RequireAuth>
-          } 
-        />
-        
-        {/* Admin Dashboard */}
-        <Route 
-          path="/admin" 
-          element={
-            <RequireAuth>
+            } 
+          />
+          
+          {/* Admin Dashboard */}
+          <Route 
+            path="/admin" 
+            element={
               <Suspense fallback={<div>Loading...</div>}>
                 <AdminDashboard />
               </Suspense>
-            </RequireAuth>
-          } 
-        />
-        
-        {/* Auth - Single canonical route with redirects */}
-        <Route path="/auth" element={
-          <Suspense fallback={<div>Loading...</div>}>
-            <AuthPage />
-          </Suspense>
-        } />
+            } 
+          />
+        </Route>
         
         {/* Health check */}
         <Route path="/health" element={<Health />} />

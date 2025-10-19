@@ -16,9 +16,8 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { z } from 'zod';
-import { ArrowLeft, Sparkles } from 'lucide-react';
-import { emitRockerEvent } from '@/lib/ai/rocker/bus';
-import { useRockerEvent } from '@/hooks/useRockerEvent';
+import { ArrowLeft, Sparkles, Mail, Apple } from 'lucide-react';
+import { emitEvent } from '@/lib/telemetry/events';
 
 const emailSchema = z.string().email('Invalid email address').max(255);
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(128);
@@ -33,19 +32,20 @@ export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const { session } = useSession();
   const navigate = useNavigate();
-  const { emit: emitRockerTelemetry } = useRockerEvent();
 
   // Log auth page view
   useEffect(() => {
-    emitRockerTelemetry('auth.page_view', { metadata: { mode, source: next } });
+    emitEvent('auth_view', { mode, next });
   }, [mode, next]);
 
-  // Guard: If already authenticated, redirect to home or next
+  // Guard: If already authenticated, redirect to next or home
   useEffect(() => {
     if (session) {
-      navigate(next, { replace: true });
+      const destination = next && next !== '/' ? next : '/home?tab=for-you';
+      navigate(destination, { replace: true });
     }
   }, [session, navigate, next]);
 
@@ -63,41 +63,31 @@ export default function AuthPage() {
     const passwordResult = passwordSchema.safeParse(password);
     
     if (!emailResult.success) {
-      emitRockerTelemetry('auth.validation_error', { metadata: { mode: 'signup', field: 'email', error: emailResult.error.errors[0].message } });
+      emitEvent('auth_error', { mode: 'signup', field: 'email', error: emailResult.error.errors[0].message });
       toast({ title: emailResult.error.errors[0].message, variant: 'destructive' });
       return;
     }
     if (!passwordResult.success) {
-      emitRockerTelemetry('auth.validation_error', { metadata: { mode: 'signup', field: 'password', error: passwordResult.error.errors[0].message } });
+      emitEvent('auth_error', { mode: 'signup', field: 'password', error: passwordResult.error.errors[0].message });
       toast({ title: passwordResult.error.errors[0].message, variant: 'destructive' });
       return;
     }
 
     setLoading(true);
-    const startTime = Date.now();
+    emitEvent('auth_submit', { mode: 'signup' });
+    
     try {
-      const { error, session: newSession } = await signUpWithPassword(email, password);
+      const { error } = await signUpWithPassword(email, password);
       if (error) throw error;
       
-      // Log successful signup to Rocker
-      await emitRockerEvent('user.create.profile', newSession?.userId || 'unknown', {
-        email,
-        source: next,
-        duration_ms: Date.now() - startTime,
-      });
-      emitRockerTelemetry('auth.signup_success', { metadata: { email, duration_ms: Date.now() - startTime } });
+      // Show confirmation screen
+      emitEvent('auth_success', { mode: 'signup' });
+      setShowConfirmation(true);
       
-      toast({ title: '✓ Account created', description: 'You can now sign in' });
-      setMode('login');
-      setPassword('');
     } catch (err) {
-      // Log failure to Rocker
-      emitRockerTelemetry('auth.signup_error', { 
-        metadata: { 
-          email, 
-          error: err instanceof Error ? err.message : 'Unknown error',
-          duration_ms: Date.now() - startTime 
-        }
+      emitEvent('auth_error', { 
+        mode: 'signup',
+        error: err instanceof Error ? err.message : 'Unknown error'
       });
       
       toast({
@@ -118,41 +108,37 @@ export default function AuthPage() {
     const passwordResult = passwordSchema.safeParse(password);
     
     if (!emailResult.success) {
-      emitRockerTelemetry('auth.validation_error', { metadata: { mode: 'login', field: 'email', error: emailResult.error.errors[0].message } });
+      emitEvent('auth_error', { mode: 'login', field: 'email', error: emailResult.error.errors[0].message });
       toast({ title: emailResult.error.errors[0].message, variant: 'destructive' });
       return;
     }
     if (!passwordResult.success) {
-      emitRockerTelemetry('auth.validation_error', { metadata: { mode: 'login', field: 'password', error: passwordResult.error.errors[0].message } });
+      emitEvent('auth_error', { mode: 'login', field: 'password', error: passwordResult.error.errors[0].message });
       toast({ title: passwordResult.error.errors[0].message, variant: 'destructive' });
       return;
     }
 
     setLoading(true);
-    const startTime = Date.now();
+    emitEvent('auth_submit', { mode: 'login' });
+    
     try {
       const { error, session: newSession } = await signInWithPassword(email, password);
       if (error) throw error;
       
-      // Log successful login to Rocker
-      await emitRockerEvent('user.view.profile', newSession?.userId || 'unknown', {
-        email,
-        source: next,
-        duration_ms: Date.now() - startTime,
-        returning_user: true,
-      });
-      emitRockerTelemetry('auth.login_success', { metadata: { email, duration_ms: Date.now() - startTime } });
+      // Profile bootstrap: ensure profile exists
+      if (newSession?.userId) {
+        await bootstrapProfile(newSession.userId, email);
+      }
       
+      emitEvent('auth_success', { mode: 'login' });
       toast({ title: '✓ Signed in' });
-      navigate(next, { replace: true });
+      
+      const destination = next && next !== '/' ? next : '/home?tab=for-you';
+      navigate(destination, { replace: true });
     } catch (err) {
-      // Log failure to Rocker
-      emitRockerTelemetry('auth.login_error', { 
-        metadata: { 
-          email, 
-          error: err instanceof Error ? err.message : 'Invalid credentials',
-          duration_ms: Date.now() - startTime 
-        }
+      emitEvent('auth_error', { 
+        mode: 'login',
+        error: err instanceof Error ? err.message : 'Invalid credentials'
       });
       
       toast({
@@ -170,35 +156,27 @@ export default function AuthPage() {
     
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
-      emitRockerTelemetry('auth.validation_error', { metadata: { mode: 'reset', field: 'email', error: emailResult.error.errors[0].message } });
+      emitEvent('auth_error', { mode: 'reset', field: 'email', error: emailResult.error.errors[0].message });
       toast({ title: emailResult.error.errors[0].message, variant: 'destructive' });
       return;
     }
 
     setLoading(true);
-    const startTime = Date.now();
+    emitEvent('auth_submit', { mode: 'reset' });
+    
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth?mode=login`
       });
       if (error) throw error;
       
-      // Log password reset to Rocker
-      emitRockerTelemetry('auth.reset_success', { metadata: { email, duration_ms: Date.now() - startTime } });
+      emitEvent('auth_success', { mode: 'reset' });
+      setShowConfirmation(true);
       
-      toast({ 
-        title: '✓ Check your email', 
-        description: 'Password reset link sent' 
-      });
-      setMode('login');
     } catch (err) {
-      // Log failure to Rocker
-      emitRockerTelemetry('auth.reset_error', { 
-        metadata: { 
-          email, 
-          error: err instanceof Error ? err.message : 'Unknown error',
-          duration_ms: Date.now() - startTime 
-        }
+      emitEvent('auth_error', { 
+        mode: 'reset',
+        error: err instanceof Error ? err.message : 'Unknown error'
       });
       
       toast({
@@ -210,6 +188,99 @@ export default function AuthPage() {
       setLoading(false);
     }
   };
+
+  const handleSSO = async (provider: 'google' | 'apple') => {
+    setLoading(true);
+    emitEvent('auth_submit', { mode: 'sso', provider });
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}${next || '/home?tab=for-you'}`
+        }
+      });
+      
+      if (error) throw error;
+      emitEvent('auth_success', { mode: 'sso', provider });
+    } catch (err) {
+      emitEvent('auth_error', { mode: 'sso', provider, error: err instanceof Error ? err.message : 'SSO failed' });
+      toast({
+        title: 'SSO failed',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'destructive'
+      });
+      setLoading(false);
+    }
+  };
+
+  // Bootstrap profile on first login
+  const bootstrapProfile = async (userId: string, userEmail: string) => {
+    try {
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+      
+      if (!existing) {
+        await supabase.from('profiles').upsert({
+          user_id: userId,
+          display_name: null,
+          handle: null,
+          created_at: new Date().toISOString()
+        });
+      }
+    } catch (err) {
+      console.error('[Auth] Profile bootstrap error:', err);
+    }
+  };
+
+  // Confirmation screen after signup/reset
+  if (showConfirmation) {
+    return (
+      <>
+        <SEOHelmet title="Check Your Email" description="Verification email sent" />
+        
+        <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background flex items-center justify-center p-4">
+          <Card className="w-full max-w-md p-8 text-center bg-background/80 backdrop-blur-xl">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+              <Mail className="h-8 w-8 text-primary-foreground" />
+            </div>
+            
+            <h1 className="text-2xl font-bold mb-2">Check Your Email</h1>
+            <p className="text-muted-foreground mb-6">
+              {mode === 'signup' 
+                ? `We sent a confirmation link to ${email}. Click the link to activate your account.`
+                : `We sent a password reset link to ${email}. Click the link to reset your password.`
+              }
+            </p>
+            
+            <p className="text-sm text-muted-foreground mb-6">
+              Didn't receive it? Check your spam folder or{' '}
+              <button
+                onClick={() => setShowConfirmation(false)}
+                className="text-primary font-medium hover:underline"
+              >
+                try again
+              </button>
+            </p>
+            
+            <Button 
+              onClick={() => {
+                setShowConfirmation(false);
+                setMode('login');
+              }}
+              variant="outline"
+              className="w-full"
+            >
+              Back to Sign In
+            </Button>
+          </Card>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -283,6 +354,49 @@ export default function AuthPage() {
 
           {/* Form */}
           <div className="p-8">
+            {/* SSO Buttons - Only for login/signup */}
+            {mode !== 'reset' && (
+              <div className="space-y-3 mb-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 font-medium"
+                  onClick={() => handleSSO('google')}
+                  disabled={loading}
+                  data-testid="sso-google"
+                >
+                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  Continue with Google
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 font-medium"
+                  onClick={() => handleSSO('apple')}
+                  disabled={loading}
+                  data-testid="sso-apple"
+                >
+                  <Apple className="w-5 h-5 mr-2" />
+                  Continue with Apple
+                </Button>
+                
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border/40" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <form onSubmit={mode === 'reset' ? handleReset : mode === 'signup' ? handleSignUp : handleSignIn} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">Email</Label>

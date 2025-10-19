@@ -10,7 +10,11 @@ type EventType =
   | 'nav_footer_click'
   | 'search_result_click'
   | 'rocker_open'
-  | 'rocker_message';
+  | 'rocker_message'
+  | 'auth_view'
+  | 'auth_submit'
+  | 'auth_success'
+  | 'auth_error';
 
 interface EventPayload {
   [key: string]: any;
