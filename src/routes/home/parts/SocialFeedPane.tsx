@@ -113,7 +113,7 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col bg-white">
+    <section className="flex h-full w-full flex-col">
       {/* Profile Header */}
       <SocialProfileHeader />
       
@@ -121,7 +121,7 @@ export default function SocialFeedPane() {
       <FavoritesSection />
 
       {/* Tab indicators (clickable or drag/swipe to change) */}
-      <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-white/90 backdrop-blur px-2 py-1">
+      <div className="sticky top-0 z-10 flex items-center justify-center gap-2 px-0 py-1">
         {TABS.map((t) => (
           <button
             key={t}
@@ -141,12 +141,12 @@ export default function SocialFeedPane() {
       {/* Swipeable feed container */}
       <div 
         ref={railRef}
-        className="relative flex-1 select-none touch-pan-y bg-white"
+        className="relative flex-1 select-none touch-pan-y"
       >
         <div 
-          className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide bg-white"
+          className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
-          <div className="space-y-4 px-2 pb-4">
+          <div className="space-y-0 px-0 pb-0">
             {items.map((item) => (
               <div key={item.id} className="h-[calc(100vh-16rem)] snap-start">
                 <Reel {...item} />

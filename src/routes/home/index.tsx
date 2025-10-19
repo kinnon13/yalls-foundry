@@ -21,8 +21,8 @@ export default function HomePage() {
           <div className="min-w-0">
             <AppsPane />
           </div>
-          {/* Reels (right) - white background extends to edge */}
-          <div className="min-w-[360px] max-w-[560px] justify-self-end w-full bg-white -mr-6 pr-6">
+          {/* Reels (right) */}
+          <div className="min-w-[360px] max-w-[560px] justify-self-end w-full">
             <SocialFeedPane />
           </div>
         </div>
