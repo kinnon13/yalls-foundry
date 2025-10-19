@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Heart, Repeat2, UserPlus, UserMinus } from 'lucide-react';
+import { Heart, Repeat2, UserPlus, UserMinus, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useSession } from '@/lib/auth/context';
 
 interface UserProfileViewProps {
   userId: string;
   onBack: () => void;
+  onViewProfile: (userId: string) => void;
 }
 
 // Mock user data
@@ -60,11 +64,79 @@ const mockUsers: Record<string, {
   }
 };
 
-export default function UserProfileView({ userId, onBack }: UserProfileViewProps) {
+export default function UserProfileView({ userId, onBack, onViewProfile }: UserProfileViewProps) {
   const user = mockUsers[userId];
   const { toast } = useToast();
+  const { session } = useSession();
+  const currentUserId = session?.userId;
+  const queryClient = useQueryClient();
   const [following, setFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'reposts' | 'tagged'>('posts');
+
+  // Check if profile is favorited
+  const { data: isFavorited = false } = useQuery({
+    queryKey: ['is-favorited', currentUserId, userId],
+    enabled: !!currentUserId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('user_pins')
+        .select('id')
+        .eq('user_id', currentUserId!)
+        .eq('pin_type', 'entity')
+        .eq('ref_id', userId)
+        .eq('section', 'home')
+        .maybeSingle();
+      return !!data;
+    }
+  });
+
+  // Toggle favorite mutation
+  const toggleFavorite = useMutation({
+    mutationFn: async () => {
+      if (!currentUserId) throw new Error('Not signed in');
+      
+      if (isFavorited) {
+        // Remove favorite
+        await supabase
+          .from('user_pins')
+          .delete()
+          .match({ user_id: currentUserId, pin_type: 'entity', ref_id: userId, section: 'home' });
+      } else {
+        // Add favorite
+        const { data: existing } = await supabase
+          .from('user_pins')
+          .select('sort_index')
+          .eq('user_id', currentUserId)
+          .eq('pin_type', 'entity')
+          .eq('section', 'home')
+          .order('sort_index', { ascending: false })
+          .limit(1);
+
+        const nextIndex = (existing?.[0]?.sort_index ?? -1) + 1;
+        
+        await supabase
+          .from('user_pins')
+          .insert({
+            user_id: currentUserId,
+            pin_type: 'entity',
+            ref_id: userId,
+            section: 'home',
+            sort_index: nextIndex,
+            is_public: true,
+          });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['is-favorited', currentUserId, userId] });
+      queryClient.invalidateQueries({ queryKey: ['favorite-bubbles', currentUserId] });
+      toast({
+        title: isFavorited ? 'Removed from favorites' : 'Added to favorites',
+        description: isFavorited 
+          ? `You removed ${user?.name} from your favorites`
+          : `You added ${user?.name} to your favorites`
+      });
+    }
+  });
 
   if (!user) {
     return (
@@ -174,6 +246,14 @@ export default function UserProfileView({ userId, onBack }: UserProfileViewProps
               </>
             )}
           </Button>
+          <Button 
+            onClick={() => toggleFavorite.mutate()} 
+            variant={isFavorited ? 'default' : 'outline'} 
+            size="icon"
+            disabled={!currentUserId}
+          >
+            <Star className={cn("h-4 w-4", isFavorited && "fill-current")} />
+          </Button>
           <Button onClick={handleLike} variant="outline" size="icon">
             <Heart className="h-4 w-4" />
           </Button>
@@ -186,22 +266,23 @@ export default function UserProfileView({ userId, onBack }: UserProfileViewProps
         {user.favoriteProfiles.length > 0 && (
           <div className="mb-4">
             <h3 className="text-xs font-semibold text-muted-foreground mb-3 px-1">FAVORITE PROFILES</h3>
-            <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4">
+            <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
               {user.favoriteProfiles.map((profile) => (
-                <div key={profile.id} className="flex flex-col items-center gap-1 min-w-[70px]">
+                <button
+                  key={profile.id}
+                  onClick={() => onViewProfile(profile.id)}
+                  className="flex flex-col items-center gap-1 min-w-[70px] active:scale-95 transition-transform"
+                >
                   <div 
-                    className="w-16 h-16 rounded-full p-[2px] flex-shrink-0"
+                    className="w-16 h-16 rounded-[18px] overflow-hidden flex-shrink-0 shadow-lg"
                     style={{
-                      background: 'linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7)',
+                      background: 'linear-gradient(135deg, rgba(249, 206, 52, 0.1), rgba(238, 42, 123, 0.1), rgba(98, 40, 215, 0.1))',
                     }}
                   >
-                    <div className="w-full h-full rounded-full overflow-hidden bg-background p-[1.5px]">
-                      <img src={profile.avatar} alt={profile.name} className="w-full h-full object-cover rounded-full" />
-                    </div>
+                    <img src={profile.avatar} alt={profile.name} className="w-full h-full object-cover" />
                   </div>
                   <span className="text-xs text-center truncate w-full">{profile.name}</span>
-                  <span className="text-[10px] text-muted-foreground truncate w-full text-center">@{profile.handle}</span>
-                </div>
+                </button>
               ))}
             </div>
           </div>

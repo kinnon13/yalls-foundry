@@ -22,6 +22,15 @@ export default function SocialFeedPane() {
   const [feedH, setFeedH] = useState<number | null>(null);
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
 
+  // Listen for profile view events
+  useEffect(() => {
+    const handleViewProfile = (e: CustomEvent) => {
+      setViewingUserId(e.detail.userId);
+    };
+    window.addEventListener('view-profile', handleViewProfile as EventListener);
+    return () => window.removeEventListener('view-profile', handleViewProfile as EventListener);
+  }, []);
+
   // Listen for home navigation
   useEffect(() => {
     const handleNavigateHome = () => {
@@ -230,7 +239,8 @@ export default function SocialFeedPane() {
           // Viewing another user's profile
           <UserProfileView 
             userId={viewingUserId} 
-            onBack={() => setViewingUserId(null)} 
+            onBack={() => setViewingUserId(null)}
+            onViewProfile={(id) => setViewingUserId(id)}
           />
         ) : tab === 'profile' ? (
           // Profile tab: 3-column grid

@@ -368,8 +368,14 @@ export function FavoritesBar({
     }
   };
 
-  const handleBubbleClick = (id: string) => {
-    navigate(`/entities/${id}`);
+  const handleBubbleClick = (id: string, kind: string) => {
+    // For person/AI profiles, navigate to their profile in the social feed
+    if (kind === 'person' || kind === 'ai') {
+      window.dispatchEvent(new CustomEvent('view-profile', { detail: { userId: id } }));
+    } else {
+      // For other entities, navigate to entity page
+      navigate(`/entities/${id}`);
+    }
   };
 
   return (
@@ -394,7 +400,7 @@ export function FavoritesBar({
           </>
         )}
 
-        {/* Real bubbles */}
+        {/* Real bubbles - Apple App Icon Style */}
         {bubbles.map((b) => {
           const isRocker = b.id === ROCKER_ID;
           const isAI = isRocker || b.kind === 'ai';
@@ -403,9 +409,9 @@ export function FavoritesBar({
               key={b.id}
               role="option"
               aria-label={`Open ${b.display_name}`}
-              className="relative group shrink-0 hover:scale-105 transition-transform"
+              className="relative group shrink-0 hover:scale-105 active:scale-95 transition-transform"
               title={b.display_name}
-              onClick={() => handleBubbleClick(b.id)}
+              onClick={() => handleBubbleClick(b.id, b.kind)}
               onContextMenu={(e) => {
                 e.preventDefault();
                 // Don't allow removing Rocker
@@ -416,13 +422,14 @@ export function FavoritesBar({
             >
               <div
                 className={cn(
-                  "rounded-full overflow-hidden grid place-items-center",
+                  "overflow-hidden grid place-items-center shadow-md",
                   isAI && !b.avatar_url ? "bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-400" : "bg-gradient-to-br from-background to-muted"
                 )}
                 style={{
                   width: size,
                   height: size,
-                  border: `2px solid ${ringColor(isAI ? 'ai' : b.kind)}`
+                  borderRadius: size * 0.2222, // Apple's magic ratio for rounded squares
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
                 }}
               >
                 {b.avatar_url ? (
@@ -435,7 +442,7 @@ export function FavoritesBar({
                   <span className="text-sm font-medium">{initials(b.display_name)}</span>
                 )}
                 {b.is_mock && (
-                  <div className="absolute top-0 left-0 w-5 h-5 bg-yellow-500 rounded-full border-2 border-background flex items-center justify-center">
+                  <div className="absolute top-1 left-1 w-5 h-5 bg-yellow-500 rounded-full border-2 border-background flex items-center justify-center">
                     <span className="text-[10px] font-bold text-black">M</span>
                   </div>
                 )}
