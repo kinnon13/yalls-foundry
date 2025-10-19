@@ -142,11 +142,12 @@ export default function HomeShell() {
         <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
       </div>
 
-      {/* Mobile: Full-screen feed */}
+      {/* Mobile: Full-screen feed with footer */}
       <div className="lg:hidden flex flex-col h-screen">
         <div className="flex-1 overflow-hidden bg-background">
           <SocialFeedPane />
         </div>
+        <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
       </div>
       <LinkInterceptor />
     </>
