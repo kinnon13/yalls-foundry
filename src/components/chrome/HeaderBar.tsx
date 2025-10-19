@@ -2,7 +2,7 @@
  * Global Header - Mac-style top bar
  */
 
-import { Bell, ShoppingCart } from 'lucide-react';
+
 import { UserProfileMenu } from '@/components/profile/UserProfileMenu';
 import { RockerIcon } from '@/components/ai/RockerIcon';
 import { AdminIcon } from '@/components/admin/AdminIcon';
@@ -28,12 +28,6 @@ export default function HeaderBar() {
           onClick={() => setIsOpen(true)}
         >
           <RockerIcon className="w-6 h-6" />
-        </button>
-        <button className="dock-icon" title="Notifications">
-          <Bell className="h-5 w-5" />
-        </button>
-        <button className="dock-icon" title="Cart">
-          <ShoppingCart className="h-5 w-5" />
         </button>
         <AdminIcon />
         <UserProfileMenu />

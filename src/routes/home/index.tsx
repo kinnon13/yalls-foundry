@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import LeftAppSidebar from './parts/LeftAppSidebar';
+import AppLibrary from './parts/AppLibrary';
 import CenterContentArea from './parts/CenterContentArea';
 import SocialFeedPane from './parts/SocialFeedPane';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { BottomDock } from '@/components/layout/BottomDock';
-import { Store, Grid, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AppTab {
@@ -81,9 +80,9 @@ export default function HomePage() {
       <main className={cn(mobileView === 'feed' ? 'pt-0 pb-16' : 'pt-14 pb-16')}>
         {/* Desktop Layout: Sidebar + Center + Feed (large screens only) */}
         <div className="hidden lg:flex h-[calc(100dvh-112px)]">
-          {/* Left: Apps Sidebar - Fixed */}
-          <div className="w-[280px] flex-shrink-0 overflow-hidden">
-            <LeftAppSidebar onAppClick={handleAppClick} />
+          {/* Left: Y'all Library - Fixed */}
+          <div className="w-[320px] flex-shrink-0 overflow-hidden border-r bg-background/95 backdrop-blur">
+            <AppLibrary onAppClick={handleAppClick} />
           </div>
 
           {/* Center: Content Area - Scrollable */}
