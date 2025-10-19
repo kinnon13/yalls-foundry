@@ -8504,6 +8504,10 @@ export type Database = {
         Args: { p_apps?: string[]; p_edge_type: string; p_entity_id: string }
         Returns: Json
       }
+      connection_unfollow: {
+        Args: { p_action?: string; p_entity_id: string }
+        Returns: Json
+      }
       contributor_window_status: {
         Args: { p_entity_id: string }
         Returns: Json
@@ -8515,6 +8519,10 @@ export type Database = {
           p_phone?: string
           p_tags?: Json
         }
+        Returns: string
+      }
+      crm_upsert_contact: {
+        Args: { p_business_id: string; p_name: string; p_phone?: string }
         Returns: string
       }
       decrement_listing_stock: {
