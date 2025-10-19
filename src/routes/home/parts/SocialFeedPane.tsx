@@ -162,12 +162,12 @@ export default function SocialFeedPane() {
         <div className="flex items-center justify-between px-3 py-1">
           <button
             onClick={() => navigate('/home')}
-            className="text-base font-semibold hover:text-primary transition-colors md:hidden"
+            className="text-base font-semibold hover:text-primary transition-colors"
           >
             Home
           </button>
-          <h3 className="text-base font-semibold text-center md:hidden">View Connected Accounts</h3>
-          <div className="w-[60px] md:hidden" aria-hidden />
+          <h3 className="text-base font-semibold text-center">View Connected Accounts</h3>
+          <div className="w-[60px]" aria-hidden />
         </div>
         <div>
           <ProfileSummaryBar />
@@ -204,19 +204,12 @@ export default function SocialFeedPane() {
                 key={item.id} 
                 className="snap-start snap-always relative shrink-0 w-full"
                 style={{ 
-                  height: isMobile ? '100vh' : `${feedHeight}px`
+                  height: '100vh'
                 }}
               >
                 <Reel {...item} />
                 
-                {/* Resize Handle - height only on desktop */}
-                {!isMobile && (
-                  <div 
-                    onMouseDown={startResize}
-                    className="absolute left-0 right-0 bottom-0 h-2 border-b-2 border-dashed border-primary/50 hover:border-primary cursor-ns-resize z-10"
-                    title="Drag to resize height"
-                  />
-                )}
+                {/* Resize disabled to avoid stretching */}
               </div>
             ))}
           </div>
