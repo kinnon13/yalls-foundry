@@ -265,29 +265,27 @@ export default function SocialFeedPane() {
         {/* Navigation Bar - always visible */}
         <SocialProfileHeader showProfile={tab === 'profile' && !viewingUserId} />
         
-        {/* Favorites Bar and Tabs - hide when viewing other profiles */}
-        {!viewingUserId && (
-          <>
-            <FavoritesSection />
+        {/* Favorites Bar - always show on own profile, hide when viewing others */}
+        {!viewingUserId && <FavoritesSection />}
 
-            {/* Tab indicators integrated with header */}
-            <div className="sticky top-0 z-10 flex items-center justify-center gap-2 px-0 py-2 bg-background">
-              {TABS.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer',
-                    t === tab
-                      ? 'bg-primary text-primary-foreground scale-105'
-                      : 'bg-muted/50 text-muted-foreground scale-95 hover:bg-muted hover:scale-100'
-                  )}
-                >
-                  {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
-                </button>
-              ))}
-            </div>
-          </>
+        {/* Tabs - hide when viewing other profiles */}
+        {!viewingUserId && (
+          <div className="sticky top-0 z-10 flex items-center justify-center gap-2 px-0 py-2 bg-background">
+            {TABS.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer',
+                  t === tab
+                    ? 'bg-primary text-primary-foreground scale-105'
+                    : 'bg-muted/50 text-muted-foreground scale-95 hover:bg-muted hover:scale-100'
+                )}
+              >
+                {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
+              </button>
+            ))}
+          </div>
         )}
       </div>
 
