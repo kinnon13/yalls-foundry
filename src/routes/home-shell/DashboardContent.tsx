@@ -20,9 +20,9 @@ const Earnings = lazy(() => import('@/routes/dashboard/modules/Earnings'));
 
 export function DashboardContent() {
   return (
-    <div className="h-full overflow-auto pt-4 px-6">
+    <div className="h-full overflow-auto px-6">
       <Tabs defaultValue="mlm" className="h-full">
-        <TabsList className="mb-4">
+        <TabsList className="mb-6">
           <TabsTrigger value="overview" className="gap-2">
             <LayoutDashboard className="h-4 w-4" />
             Overview
