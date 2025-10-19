@@ -12,17 +12,17 @@ export default function FavoritesSection() {
   ];
 
   return (
-    <div className="bg-background border-b py-3 px-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Heart className="w-4 h-4 fill-red-500 text-red-500" />
-        <h2 className="text-sm font-semibold">Favorites</h2>
+    <div className="h-full">
+      <div className="flex items-center gap-1 mb-2">
+        <Heart className="w-3 h-3 fill-red-500 text-red-500" />
+        <h2 className="text-xs font-semibold">Favorites</h2>
       </div>
       
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+      <div className="flex flex-col gap-2 overflow-y-auto max-h-[calc(100vh-20rem)]">
         {favorites.map((fav) => (
           <button
             key={fav.id}
-            className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden hover:opacity-80 transition-opacity"
+            className="w-full aspect-square rounded-lg overflow-hidden hover:opacity-80 transition-opacity"
           >
             <img
               src={fav.image}

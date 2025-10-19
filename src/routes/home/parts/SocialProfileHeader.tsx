@@ -3,6 +3,7 @@ import { useSession } from '@/lib/auth/context';
 import { supabase } from '@/integrations/supabase/client';
 import { Share2, Menu, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import FavoritesSection from './FavoritesSection';
 
 export default function SocialProfileHeader() {
   const { session } = useSession();
@@ -51,14 +52,17 @@ export default function SocialProfileHeader() {
 
   return (
     <div className="bg-background py-3 px-4 border-b">
-      {/* Top bar - icons */}
-      <div className="flex items-center justify-between mb-3">
-        <UserPlus className="w-5 h-5" />
-        <div className="flex items-center gap-3">
-          <Share2 className="w-5 h-5" />
-          <Menu className="w-5 h-5" />
-        </div>
-      </div>
+      <div className="flex gap-4">
+        {/* Left side - Profile */}
+        <div className="flex-1">
+          {/* Top bar - icons */}
+          <div className="flex items-center justify-between mb-3">
+            <UserPlus className="w-5 h-5" />
+            <div className="flex items-center gap-3">
+              <Share2 className="w-5 h-5" />
+              <Menu className="w-5 h-5" />
+            </div>
+          </div>
 
       {/* Profile picture */}
       <div className="flex justify-center mb-3">
@@ -126,17 +130,24 @@ export default function SocialProfileHeader() {
         </a>
       </div>
 
-      {/* Bottom actions */}
-      <div className="flex justify-center gap-6 text-xs">
-        <button className="flex items-center gap-1 text-primary">
-          <span>👤</span> TikTok Studio
-        </button>
-        <button className="flex items-center gap-1 text-primary">
-          <span>🛍️</span> Your orders
-        </button>
-        <button className="flex items-center gap-1 text-primary">
-          <span>💼</span> Showcase
-        </button>
+          {/* Bottom actions */}
+          <div className="flex justify-center gap-6 text-xs">
+            <button className="flex items-center gap-1 text-primary">
+              <span>👤</span> TikTok Studio
+            </button>
+            <button className="flex items-center gap-1 text-primary">
+              <span>🛍️</span> Your orders
+            </button>
+            <button className="flex items-center gap-1 text-primary">
+              <span>💼</span> Showcase
+            </button>
+          </div>
+        </div>
+
+        {/* Right side - Favorites */}
+        <div className="w-32">
+          <FavoritesSection />
+        </div>
       </div>
     </div>
   );
