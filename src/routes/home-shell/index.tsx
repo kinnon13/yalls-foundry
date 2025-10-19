@@ -15,6 +15,7 @@ import AppsRail from '@/components/home/AppsRail';
 import { FeedPane } from '@/components/home/FeedPane';
 import LinkInterceptor from '@/components/chrome/LinkInterceptor';
 import { X } from 'lucide-react';
+import SocialFeedPane from '../home/parts/SocialFeedPane';
 
 function ActiveAppContent({ appId, onClose }: { appId: OverlayKey; onClose: () => void }) {
   const config = OVERLAY_REGISTRY[appId];
@@ -95,10 +96,19 @@ export default function HomeShell() {
 
   return (
     <div className="shell">
-      <HeaderBar />
+      {/* Desktop header only */}
+      <div className="hidden lg:block">
+        <HeaderBar />
+      </div>
       
       <main className="content">
-        <div className="grid-social">
+        {/* Mobile: full-screen social feed only */}
+        <div className="lg:hidden h-[100dvh] overflow-hidden">
+          <SocialFeedPane />
+        </div>
+
+        {/* Desktop: three-column shell */}
+        <div className="hidden lg:grid grid-social">
           <AppsRail onAppClick={openApp} />
           
           {/* Center area - becomes the active app */}
@@ -132,7 +142,10 @@ export default function HomeShell() {
         </div>
       </main>
       
-      <Dock onAppClick={openApp} />
+      {/* Desktop dock only */}
+      <div className="hidden lg:block">
+        <Dock onAppClick={openApp} />
+      </div>
       <LinkInterceptor />
     </div>
   );

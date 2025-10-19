@@ -5,7 +5,7 @@ import { Reel } from '@/components/reels/Reel';
 import { cn } from '@/lib/utils';
 import SocialProfileHeader from './SocialProfileHeader';
 import FavoritesSection from './FavoritesSection';
-
+import { X } from 'lucide-react';
 const TABS = ['following', 'for-you', 'shop', 'profile'] as const;
 type Tab = typeof TABS[number];
 
@@ -166,9 +166,17 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col">
+    <section className="relative flex h-full w-full flex-col">
+      {/* Mobile close (no global header on mobile) */}
+      <button
+        onClick={() => navigate('/?mode=manage')}
+        className="sm:hidden absolute top-2 right-2 z-20 h-9 w-9 rounded-full border border-border/60 bg-background/70 backdrop-blur grid place-items-center"
+        aria-label="Close feed"
+      >
+        <X className="h-5 w-5" />
+      </button>
       {/* Header stack (measured) */}
-      <div ref={headerRef}>
+      <div ref={headerRef} className="hidden sm:block">
         {/* Profile Header */}
         <SocialProfileHeader />
         
