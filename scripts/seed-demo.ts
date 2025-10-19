@@ -84,16 +84,21 @@ async function seedDemoOrder() {
     tenant_id: 'demo'
   };
 
-  console.log('📊 Demo Order Breakdown:');
-  console.log(`  GMV: $${SALE_AMOUNT.toFixed(2)}`);
-  console.log(`  Processing Fee (2.9% + $0.30): $${PROCESSING_FEE.toFixed(2)}`);
-  console.log(`  Platform Fee (4%): $${PLATFORM_FEE.toFixed(2)}`);
-  console.log(`  Buyer Chain Commission (1%): $${BUYER_CHAIN_COMMISSION.toFixed(2)}`);
-  console.log(`  Seller Chain Commission (1%): $${SELLER_CHAIN_COMMISSION.toFixed(2)}`);
-  console.log(`  Seller Net: $${SELLER_NET.toFixed(2)}`);
+  console.log('📊 Demo Order Breakdown ($22 Sale):');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`  GMV:                      $${SALE_AMOUNT.toFixed(2)}`);
+  console.log(`  Processing Fee (2.9%+$0.30): -$${PROCESSING_FEE.toFixed(2)}`);
+  console.log(`  Platform Fee (4%):        -$${PLATFORM_FEE.toFixed(2)}`);
+  console.log(`  Buyer Chain Comm (1%):    -$${BUYER_CHAIN_COMMISSION.toFixed(2)}`);
+  console.log(`  Seller Chain Comm (1%):   -$${SELLER_CHAIN_COMMISSION.toFixed(2)}`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`  SELLER NET:               $${SELLER_NET.toFixed(2)}`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('');
   console.log('✅ Demo data structure ready');
-  console.log('   Run this script with DB credentials to seed actual data');
+  console.log('💡 Use tenant_id="demo" or DEMO_MODE=true to gate this data');
+  console.log('📝 Display these exact numbers in order detail UI');
+  console.log('🔍 SQL verification: SELECT SUM(amount_cents) FROM commission_ledger WHERE order_id=\'O123\'');
 }
 
 seedDemoOrder();

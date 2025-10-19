@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { PlusCircle, MessageSquare, Store, Globe2, AppWindow } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChatDrawer } from '@/components/chat/ChatDrawer';
 import { trackFooterClick } from '@/lib/telemetry/events';
+import { supabase } from '@/integrations/supabase/client';
+import { useSession } from '@/lib/auth/context';
 
 type DockItem = {
   key: string;
@@ -17,6 +19,28 @@ type DockItem = {
 export function BottomDock() {
   const nav = useNavigate();
   const [chatOpen, setChatOpen] = useState(false);
+  const { session } = useSession();
+  const [pinnedApps, setPinnedApps] = useState<any[]>([]);
+
+  // Load pinned apps from DB
+  useEffect(() => {
+    if (!session?.userId) return;
+    
+    const loadPinnedApps = async () => {
+      const { data, error } = await supabase
+        .from('user_app_layout')
+        .select('app_id, order_index')
+        .eq('user_id', session.userId)
+        .eq('pinned', true)
+        .order('order_index', { ascending: true });
+      
+      if (!error && data) {
+        setPinnedApps(data);
+      }
+    };
+    
+    loadPinnedApps();
+  }, [session?.userId]);
 
   const items: DockItem[] = [
     {
@@ -47,7 +71,6 @@ export function BottomDock() {
       key: 'profile',
       label: 'Profile',
       onClick: () => {
-        // Navigate to user's own profile
         nav('/profile/me');
       },
       icon: AppWindow,

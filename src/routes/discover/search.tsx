@@ -3,7 +3,7 @@
  * Search across users, videos, products, sounds, hashtags
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { trackSearchResultClick } from '@/lib/telemetry/events';
+import { useSession } from '@/lib/auth/context';
 
 type SearchTab = 'all' | 'users' | 'videos' | 'products' | 'hashtags' | 'sounds' | 'apps';
 
@@ -26,6 +27,8 @@ export default function SearchPage() {
   const [searchInput, setSearchInput] = useState(query);
   const [activeTab, setActiveTab] = useState<SearchTab>('all');
   const navigate = useNavigate();
+  const { session } = useSession();
+  const [installedAppIds, setInstalledAppIds] = useState<Set<string>>(new Set());
 
   // Search users
   const { data: users = [] } = useQuery({
@@ -80,17 +83,38 @@ export default function SearchPage() {
     enabled: !!query && (activeTab === 'all' || activeTab === 'products'),
   });
 
-  // Mock apps data - in production this would come from app_catalog
-  const apps = query ? [
-    { id: 'orders', name: 'Orders', description: 'Manage your orders', installed: true, icon: '📦' },
-    { id: 'calendar', name: 'Calendar', description: 'Events & scheduling', installed: false, icon: '📅' },
-    { id: 'marketplace', name: 'Marketplace', description: 'Buy & sell', installed: true, icon: '🛍️' },
-    { id: 'messages', name: 'Messages', description: 'Chat with others', installed: true, icon: '💬' },
-    { id: 'earnings', name: 'Earnings', description: 'Track your income', installed: false, icon: '💰' },
-  ].filter(app => 
-    app.name.toLowerCase().includes(query.toLowerCase()) ||
-    app.description.toLowerCase().includes(query.toLowerCase())
-  ) : [];
+  // Search apps from DB
+  const { data: apps = [] } = useQuery({
+    queryKey: ['search-apps', query],
+    queryFn: async () => {
+      if (!query) return [];
+      const { data } = await supabase
+        .from('apps')
+        .select('id, name, tagline, icon_url')
+        .ilike('name', `%${query}%`)
+        .limit(20);
+      return data || [];
+    },
+    enabled: !!query && (activeTab === 'all' || activeTab === 'apps'),
+  });
+
+  // Load installed apps
+  useEffect(() => {
+    if (!session?.userId) return;
+    
+    const loadInstalled = async () => {
+      const { data } = await supabase
+        .from('user_apps')
+        .select('app_id')
+        .eq('user_id', session.userId);
+      
+      if (data) {
+        setInstalledAppIds(new Set(data.map(a => a.app_id)));
+      }
+    };
+    
+    loadInstalled();
+  }, [session?.userId]);
 
   const handleOpenApp = (appId: string) => {
     trackSearchResultClick('app', appId, 'open');
@@ -99,55 +123,70 @@ export default function SearchPage() {
   };
 
   const handleInstallApp = async (appId: string) => {
-    try {
-      trackSearchResultClick('app', appId, 'install');
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('Please log in to install apps');
-        return;
-      }
+    if (!session?.userId) {
+      toast.error('Please sign in to install apps');
+      return;
+    }
 
+    trackSearchResultClick('app', appId, 'install');
+
+    try {
       const { error } = await supabase
         .from('user_apps')
         .upsert({ 
-          user_id: user.id, 
+          user_id: session.userId, 
           app_id: appId, 
           installed_at: new Date().toISOString() 
         });
 
-      if (error) throw error;
-      toast.success(`Installed ${appId}`);
-    } catch (error) {
-      console.error('Install error:', error);
-      toast.error('Failed to install app');
+      if (error) {
+        if (error.message.includes('violates row-level security')) {
+          toast.error('Access denied. Please check your permissions.');
+        } else {
+          toast.error(`Failed to install: ${error.message}`);
+        }
+        console.error('Install error:', error);
+      } else {
+        setInstalledAppIds(prev => new Set(prev).add(appId));
+        toast.success(`Installed ${appId}`);
+      }
+    } catch (err) {
+      toast.error('Network error. Please try again.');
+      console.error('Install error:', err);
     }
   };
 
   const handlePinApp = async (appId: string) => {
-    try {
-      trackSearchResultClick('app', appId, 'pin');
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('Please log in to pin apps');
-        return;
-      }
+    if (!session?.userId) {
+      toast.error('Please sign in to pin apps');
+      return;
+    }
 
+    trackSearchResultClick('app', appId, 'pin');
+
+    try {
       const { error } = await supabase
         .from('user_app_layout')
         .upsert({ 
-          user_id: user.id, 
+          user_id: session.userId, 
           app_id: appId, 
           pinned: true, 
           order_index: 999 
         });
 
-      if (error) throw error;
-      toast.success(`Pinned ${appId} to Dock`);
-    } catch (error) {
-      console.error('Pin error:', error);
-      toast.error('Failed to pin app');
+      if (error) {
+        if (error.message.includes('violates row-level security')) {
+          toast.error('Access denied. Please check your permissions.');
+        } else {
+          toast.error(`Failed to pin: ${error.message}`);
+        }
+        console.error('Pin error:', error);
+      } else {
+        toast.success(`Pinned ${appId} to Dock`);
+      }
+    } catch (err) {
+      toast.error('Network error. Please try again.');
+      console.error('Pin error:', err);
     }
   };
 
@@ -274,30 +313,33 @@ export default function SearchPage() {
                     Apps
                   </h3>
                   <div className="space-y-2">
-                    {apps.slice(0, 3).map((app) => (
-                      <Card key={app.id} className="p-4">
-                        <div className="flex items-center gap-4">
-                          <div className="text-3xl">{app.icon}</div>
-                          <div className="flex-1">
-                            <p className="font-semibold">{app.name}</p>
-                            <p className="text-sm text-muted-foreground">{app.description}</p>
-                          </div>
-                          <div className="flex gap-2">
-                            {app.installed ? (
-                              <Button size="sm" onClick={() => handleOpenApp(app.id)}>Open</Button>
-                            ) : (
-                              <Button size="sm" variant="outline" onClick={() => handleInstallApp(app.id)}>
-                                <Plus className="h-4 w-4 mr-1" />
-                                Install
+                    {apps.slice(0, 3).map((app) => {
+                      const isInstalled = installedAppIds.has(app.id);
+                      return (
+                        <Card key={app.id} className="p-4">
+                          <div className="flex items-center gap-4">
+                            <div className="text-3xl">{app.icon_url}</div>
+                            <div className="flex-1">
+                              <p className="font-semibold">{app.name}</p>
+                              <p className="text-sm text-muted-foreground">{app.tagline}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              {isInstalled ? (
+                                <Button size="sm" onClick={() => handleOpenApp(app.id)}>Open</Button>
+                              ) : (
+                                <Button size="sm" variant="outline" onClick={() => handleInstallApp(app.id)}>
+                                  <Plus className="h-4 w-4 mr-1" />
+                                  Install
+                                </Button>
+                              )}
+                              <Button size="sm" variant="ghost" onClick={() => handlePinApp(app.id)}>
+                                Pin
                               </Button>
-                            )}
-                            <Button size="sm" variant="ghost" onClick={() => handlePinApp(app.id)}>
-                              Pin
-                            </Button>
+                            </div>
                           </div>
-                        </div>
-                      </Card>
-                    ))}
+                        </Card>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -363,30 +405,33 @@ export default function SearchPage() {
                   </p>
                 </div>
               ) : (
-                apps.map((app) => (
-                  <Card key={app.id} className="p-4">
-                    <div className="flex items-center gap-4">
-                      <div className="text-4xl">{app.icon}</div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{app.name}</h3>
-                        <p className="text-sm text-muted-foreground">{app.description}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        {app.installed ? (
-                          <Button size="sm" onClick={() => handleOpenApp(app.id)}>Open</Button>
-                        ) : (
-                          <Button size="sm" variant="outline" onClick={() => handleInstallApp(app.id)}>
-                            <Plus className="h-4 w-4 mr-1" />
-                            Install
+                apps.map((app) => {
+                  const isInstalled = installedAppIds.has(app.id);
+                  return (
+                    <Card key={app.id} className="p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="text-4xl">{app.icon_url}</div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{app.name}</h3>
+                          <p className="text-sm text-muted-foreground">{app.tagline}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          {isInstalled ? (
+                            <Button size="sm" onClick={() => handleOpenApp(app.id)}>Open</Button>
+                          ) : (
+                            <Button size="sm" variant="outline" onClick={() => handleInstallApp(app.id)}>
+                              <Plus className="h-4 w-4 mr-1" />
+                              Install
+                            </Button>
+                          )}
+                          <Button size="sm" variant="ghost" onClick={() => handlePinApp(app.id)}>
+                            Pin
                           </Button>
-                        )}
-                        <Button size="sm" variant="ghost" onClick={() => handlePinApp(app.id)}>
-                          Pin
-                        </Button>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
-                ))
+                    </Card>
+                  );
+                })
               )}
             </TabsContent>
           </Tabs>

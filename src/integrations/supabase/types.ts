@@ -1327,6 +1327,36 @@ export type Database = {
         }
         Relationships: []
       }
+      apps: {
+        Row: {
+          created_at: string | null
+          deeplink_template: string
+          icon_url: string | null
+          id: string
+          is_core: boolean | null
+          name: string
+          tagline: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deeplink_template?: string
+          icon_url?: string | null
+          id: string
+          is_core?: boolean | null
+          name: string
+          tagline?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deeplink_template?: string
+          icon_url?: string | null
+          id?: string
+          is_core?: boolean | null
+          name?: string
+          tagline?: string | null
+        }
+        Relationships: []
+      }
       billing_plans: {
         Row: {
           id: string
