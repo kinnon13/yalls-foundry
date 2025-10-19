@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { PlusCircle, MessageCircle, Store, Globe2, AppWindow } from 'lucide-react';
+import { PlusCircle, MessageSquare, Store, Globe2, AppWindow } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChatDrawer } from '@/components/chat/ChatDrawer';
 
@@ -22,7 +22,7 @@ export function BottomDock() {
       key: 'messages',
       label: 'Messages',
       onClick: () => setChatOpen(true),
-      icon: MessageCircle,
+      icon: MessageSquare,
     },
     {
       key: 'create',
@@ -69,26 +69,20 @@ export function BottomDock() {
           const content = (
             <div
               className={cn(
-                'flex flex-col items-center gap-1',
+                'relative flex flex-col items-center gap-1',
                 isCreate && 'translate-y-[-12px]'
               )}
             >
               <div
                 className={cn(
-                  'grid place-items-center rounded-2xl shadow-lg transition-all duration-200',
-                  'border border-white/10',
-                  isCreate 
-                    ? 'h-14 w-14 bg-gradient-to-br from-primary/30 to-primary/10'
-                    : 'h-12 w-12 bg-gradient-to-br from-primary/20 to-primary/5'
+                  'relative h-14 w-14 rounded-3xl bg-gradient-to-br from-accent/40 to-accent/20',
+                  'backdrop-blur-md ring-1 ring-border/60 shadow-lg transition-transform duration-200',
+                  'hover:scale-105 active:scale-95'
                 )}
                 aria-hidden
               >
-                <Icon 
-                  className={cn(
-                    'text-white drop-shadow-sm',
-                    isCreate ? 'w-7 h-7' : 'w-6 h-6'
-                  )} 
-                />
+                <div className="absolute inset-x-2 top-1 h-5 rounded-b-full bg-foreground/10 opacity-70 blur-[2px] pointer-events-none" />
+                <Icon className="absolute inset-0 m-auto text-foreground w-7 h-7" />
               </div>
               <span className="text-[10px] leading-tight font-medium truncate max-w-full">
                 {it.label}
