@@ -10,10 +10,10 @@ import { Network, BarChart3, Users } from 'lucide-react';
 
 export default function MLMModule() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div>
-        <h1 className="text-3xl font-bold">Affiliate Network</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-2xl font-bold">Affiliate Network</h1>
+        <p className="text-muted-foreground text-sm mt-0.5">
           Track your downline, commissions, and team performance
         </p>
       </div>
@@ -32,11 +32,11 @@ export default function MLMModule() {
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="tree" className="mt-6">
+        <TabsContent value="tree" className="mt-3">
           <TreeVisualization />
         </TabsContent>
         
-        <TabsContent value="leaderboard" className="mt-6">
+        <TabsContent value="leaderboard" className="mt-3">
           <Leaderboard />
         </TabsContent>
       </Tabs>
