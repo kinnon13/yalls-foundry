@@ -5,6 +5,8 @@ import CenterContentArea from './parts/CenterContentArea';
 import SocialFeedPane from './parts/SocialFeedPane';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { BottomDock } from '@/components/layout/BottomDock';
+import { Store, Grid, MessageCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface AppTab {
   key: string;
@@ -18,6 +20,7 @@ export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [openApps, setOpenApps] = useState<AppTab[]>([]);
   const [activeApp, setActiveApp] = useState<string | null>(null);
+  const [mobileView, setMobileView] = useState<'library' | 'apps' | 'feed'>('apps');
 
   // Restore tabs from URL on mount
   useEffect(() => {
@@ -100,9 +103,79 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Mobile: Show social feed only for now */}
-        <div className="md:hidden">
-          <SocialFeedPane />
+        {/* Mobile/Tablet: Tabbed view with icons */}
+        <div className="md:hidden h-[calc(100vh-112px)] flex flex-col">
+          {/* Tab bar */}
+          <div className="flex items-center justify-around border-b bg-background">
+            <button
+              onClick={() => setMobileView('library')}
+              className={cn(
+                'flex-1 flex flex-col items-center gap-1 py-3 transition-colors',
+                mobileView === 'library'
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Store className="w-5 h-5" />
+              <span className="text-xs font-medium">Library</span>
+            </button>
+            
+            <button
+              onClick={() => setMobileView('apps')}
+              className={cn(
+                'flex-1 flex flex-col items-center gap-1 py-3 transition-colors',
+                mobileView === 'apps'
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Grid className="w-5 h-5" />
+              <span className="text-xs font-medium">Apps</span>
+            </button>
+            
+            <button
+              onClick={() => setMobileView('feed')}
+              className={cn(
+                'flex-1 flex flex-col items-center gap-1 py-3 transition-colors',
+                mobileView === 'feed'
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <MessageCircle className="w-5 h-5" />
+              <span className="text-xs font-medium">Feed</span>
+            </button>
+          </div>
+
+          {/* Content area */}
+          <div className="flex-1 overflow-hidden">
+            {mobileView === 'library' && (
+              <div className="h-full overflow-y-auto p-4">
+                <LeftAppSidebar onAppClick={(app) => {
+                  handleAppClick(app);
+                  setMobileView('apps'); // Switch to apps view after selecting
+                }} />
+              </div>
+            )}
+            
+            {mobileView === 'apps' && (
+              <div className="h-full overflow-y-auto">
+                <CenterContentArea
+                  openApps={openApps}
+                  activeApp={activeApp}
+                  onCloseApp={handleCloseApp}
+                  onSelectApp={setActiveApp}
+                  onAppClick={handleAppClick}
+                />
+              </div>
+            )}
+            
+            {mobileView === 'feed' && (
+              <div className="h-full overflow-hidden">
+                <SocialFeedPane />
+              </div>
+            )}
+          </div>
         </div>
       </main>
       <BottomDock />
