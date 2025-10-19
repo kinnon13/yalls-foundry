@@ -86,10 +86,10 @@ export default function AppsPane() {
     Number(localStorage.getItem('apps.containerWidth') || 600)
   );
   const [containerX, setContainerX] = useState(() => 
-    Number(localStorage.getItem('apps.containerX') || 0)
+    Number(localStorage.getItem('apps.containerX') || 20)
   );
   const [containerY, setContainerY] = useState(() => 
-    Number(localStorage.getItem('apps.containerY') || 0)
+    Number(localStorage.getItem('apps.containerY') || 20)
   );
   const [currentPage, setCurrentPage] = useState(0);
   
@@ -450,7 +450,7 @@ export default function AppsPane() {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className="border-2 border-border rounded-lg bg-muted/20 relative resize overflow-hidden cursor-move touch-pan-x overscroll-none select-none"
+          className="border-2 border-border rounded-lg bg-muted/20 relative resize overflow-hidden cursor-move touch-pan-x overscroll-none"
           style={{ 
             width: `${containerWidth}px`,
             height: `${containerHeight}px`,
@@ -475,6 +475,9 @@ export default function AppsPane() {
                     key={app.id}
                     onClick={() => handleAppClick(app)}
                     onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
                     className={cn(
                       "flex flex-col items-center justify-between gap-1 p-1",
                       "rounded-2xl",
