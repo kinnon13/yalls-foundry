@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Check, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -62,8 +62,36 @@ function formatBubble(e: any): Bubble {
 
 /** Query: pinned entities (favorites) for the rail */
 function useFavoriteBubbles(userId: string | null, { publicOnly = false }: { publicOnly?: boolean } = {}) {
+  const queryClient = useQueryClient();
+  const queryKey = ['favorite-bubbles', userId, publicOnly];
+
+  // Setup realtime subscription
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel('user_pins_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_pins',
+          filter: `user_id=eq.${userId}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, queryClient, queryKey]);
+
   return useQuery({
-    queryKey: ['favorite-bubbles', userId, publicOnly],
+    queryKey,
     enabled: !!userId,
     queryFn: async () => {
       if (!userId) return [] as Bubble[];
