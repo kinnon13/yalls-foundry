@@ -73,7 +73,7 @@ export function useRequireAuth() {
   useEffect(() => {
     if (!loading && !session) {
       // Redirect to login if not authenticated
-      window.location.href = '/login';
+      window.location.href = '/auth?mode=login';
     }
   }, [session, loading]);
 

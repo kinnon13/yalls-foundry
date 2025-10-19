@@ -59,7 +59,7 @@ export default function Index() {
                 </p>
                 <div className="flex gap-4 justify-center">
                   <Button size="lg" asChild>
-                    <Link to="/login">Get Started</Link>
+                    <Link to="/auth?mode=login">Get Started</Link>
                   </Button>
                   <Button size="lg" variant="outline" asChild>
                     <Link to="/discover">Explore</Link>

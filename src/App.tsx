@@ -34,7 +34,6 @@ import '@/kernel'; // Register app contracts
 
 // 10 Canonical Routes
 import HomeShell from './routes/home-shell/index';
-import Login from './routes/login';
 import NotFound from './pages/NotFound';
 import Health from './pages/Health';
 
@@ -51,6 +50,7 @@ const OrdersIndex = lazy(() => import('./routes/orders/index'));
 const OrderDetail = lazy(() => import('./routes/orders/[id]'));
 const MLMPage = lazy(() => import('./routes/mlm/index'));
 const AdminDashboard = lazy(() => import('./routes/admin'));
+const AuthPage = lazy(() => import('./routes/auth'));
 
 const queryClient = new QueryClient();
 
@@ -232,11 +232,18 @@ function AppContent() {
           } 
         />
         
-        {/* Auth - Single unified route */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Navigate to="/login" replace />} />
-        <Route path="/auth/login" element={<Navigate to="/login" replace />} />
-        <Route path="/auth/signup" element={<Navigate to="/login" replace />} />
+        {/* Auth - Single canonical route with redirects */}
+        <Route path="/auth" element={
+          <Suspense fallback={<div>Loading...</div>}>
+            <AuthPage />
+          </Suspense>
+        } />
+        <Route path="/login" element={<Navigate to="/auth?mode=login" replace />} />
+        <Route path="/signup" element={<Navigate to="/auth?mode=signup" replace />} />
+        <Route path="/auth/login" element={<Navigate to="/auth?mode=login" replace />} />
+        <Route path="/auth/signup" element={<Navigate to="/auth?mode=signup" replace />} />
+        <Route path="/reset" element={<Navigate to="/auth?mode=reset" replace />} />
+        <Route path="/auth/reset" element={<Navigate to="/auth?mode=reset" replace />} />
         
         {/* Health check */}
         <Route path="/health" element={<Health />} />

@@ -72,7 +72,7 @@ function AuthPanel() {
         ) : (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">Not signed in</p>
-            <Link to="/login">
+            <Link to="/auth?mode=login">
               <Button size="sm" className="w-full">
                 Go to Login
               </Button>

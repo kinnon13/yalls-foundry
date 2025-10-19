@@ -20,7 +20,7 @@ export function ProtectedRoute({ children, requireAdmin, requireModerator }: Pro
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/auth?mode=login" replace />;
   }
 
   if (requireAdmin && !isAdmin) {

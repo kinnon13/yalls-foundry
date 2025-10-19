@@ -56,7 +56,7 @@ export default function MessagingApp() {
           <p className="text-sm text-muted-foreground mb-6">
             You need to be signed in to access your messages
           </p>
-          <Button onClick={() => window.location.href = '/login'}>
+          <Button onClick={() => window.location.href = '/auth?mode=login'}>
             Sign In
           </Button>
         </div>
