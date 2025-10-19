@@ -346,6 +346,17 @@ body {
   height: 28px;
 }
 
+.dock-profile {
+  padding: 0;
+  overflow: hidden;
+}
+
+.dock-profile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 /* Window Manager */
 .wm-layer {
   position: fixed;
