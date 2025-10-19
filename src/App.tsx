@@ -252,17 +252,17 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <BrowserRouter>
-              <RockerProvider>
-                <RockerChatProvider>
-  <AuthProvider>
+              <AuthProvider>
+                <RockerProvider>
+                  <RockerChatProvider>
                     <OverlayProvider>
                       <AppContent />
                       <PreviewMessageListener />
                       <PreviewRoutes />
                     </OverlayProvider>
-                  </AuthProvider>
-                </RockerChatProvider>
-              </RockerProvider>
+                  </RockerChatProvider>
+                </RockerProvider>
+              </AuthProvider>
             </BrowserRouter>
           </ThemeProvider>
         </QueryClientProvider>
