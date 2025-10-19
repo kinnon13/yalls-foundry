@@ -21,7 +21,7 @@ interface CommissionSummary {
   pending: number;
   payable: number;
   total_orders: number;
-  level_breakdown: Record<string, number>;
+  type_breakdown: Record<string, number>;
 }
 
 interface LeaderboardEntry {

@@ -50,15 +50,20 @@ export async function rockerPurchaseCompleted(params: {
   userId: string;
   listingId: string;
   amount: number;
+  orderId: string;
+  affiliateReferrerId?: string;
   sessionId?: string;
 }): Promise<void> {
   await emitRockerEvent('user.purchase.listing', params.userId, {
     listingId: params.listingId,
     amount: params.amount,
+    orderId: params.orderId,
+    affiliateReferrerId: params.affiliateReferrerId,
   }, params.sessionId);
 
   // Rocker should:
   // - Update purchase history
   // - Suggest related products
-  // - Track MLM referral chain
+  // - Track MLM referral chain (buyer → seller → affiliate uplines)
+  // - Commission distribution triggers automatically via order status='paid'
 }

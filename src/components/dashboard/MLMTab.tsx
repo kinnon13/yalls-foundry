@@ -29,7 +29,7 @@ export function MLMTab() {
     enabled: !!session?.userId,
   });
 
-  const unpaidTotal = commissions?.filter(c => !c.paid_out).reduce((sum, c) => sum + c.amount_cents, 0) || 0;
+  const unpaidTotal = commissions?.filter(c => c.status !== 'paid').reduce((sum, c) => sum + (c.amount * 100), 0) || 0;
   const referralLink = `${window.location.origin}/?ref=${session?.userId}`;
 
   const copyReferralLink = () => {
@@ -130,10 +130,10 @@ export function MLMTab() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold">
-                      {formatCents(commission.amount_cents)}
+                      {formatCents(Math.round(commission.amount * 100))}
                     </p>
-                    <Badge variant={commission.paid_out ? 'default' : 'secondary'}>
-                      {commission.paid_out ? 'Paid' : 'Pending'}
+                    <Badge variant={commission.status === 'paid' ? 'default' : 'secondary'}>
+                      {commission.status === 'paid' ? 'Paid' : commission.status === 'hold' ? 'Hold' : 'Pending'}
                     </Badge>
                   </div>
                 </div>

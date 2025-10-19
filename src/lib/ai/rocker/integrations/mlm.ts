@@ -26,12 +26,20 @@ export async function rockerPayoutTriggered(params: {
   userId: string;
   amount: number;
   reason: string;
+  commissionType?: string;
   sessionId?: string;
 }): Promise<void> {
   await emitRockerEvent('mlm.payout.triggered', params.userId, {
     amount: params.amount,
     reason: params.reason,
+    commissionType: params.commissionType,
   }, params.sessionId);
 
   // Rocker confirms payout
+  // Commission types:
+  // - platform_buyer_upline: 4% of platform fee to buyer's upline
+  // - platform_seller_upline: 4% of platform fee to seller's upline
+  // - bonus_affiliate_direct: 80% of seller bonus to affiliate
+  // - bonus_platform: 10% of seller bonus to platform
+  // - bonus_affiliate_upline: 10% of seller bonus to affiliate's upline
 }

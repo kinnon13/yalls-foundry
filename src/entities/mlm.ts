@@ -24,13 +24,11 @@ export type MLMRank = z.infer<typeof mlmRankEnum>;
  * MLM Commission Type Enum
  */
 export const mlmCommissionTypeEnum = z.enum([
-  'direct_sale',
-  'level_2',
-  'level_3',
-  'level_4',
-  'level_5',
-  'override_bonus',
-  'team_bonus',
+  'platform_buyer_upline',
+  'platform_seller_upline',
+  'bonus_affiliate_direct',
+  'bonus_platform',
+  'bonus_affiliate_upline',
 ]);
 export type MLMCommissionType = z.infer<typeof mlmCommissionTypeEnum>;
 
@@ -102,20 +100,38 @@ export type MLMUserStats = z.infer<typeof mlmUserStatsSchema>;
  */
 export const mlmCommissionSchema = z.object({
   id: z.string().uuid(),
-  earner_user_id: z.string().uuid(),
-  source_user_id: z.string().uuid(),
-  transaction_id: z.string().uuid(),
+  order_id: z.string().uuid(),
+  buyer_kind: z.enum(['user', 'business']),
+  buyer_id: z.string().uuid(),
+  seller_kind: z.enum(['user', 'business']),
+  seller_id: z.string().uuid(),
+  payee_kind: z.enum(['user', 'business']),
+  payee_id: z.string().uuid(),
   commission_type: mlmCommissionTypeEnum,
-  level_depth: z.number().int().min(1).max(5),
-  amount_cents: z.number().int(),
-  percentage_applied: z.number(),
-  earner_rank_at_time: mlmRankEnum,
-  transaction_amount_cents: z.number().int(),
-  paid_out: z.boolean(),
-  payout_id: z.string().uuid().nullable(),
+  level: z.number().int().min(0),
+  base_amount: z.number(),
+  pct_applied: z.number(),
+  amount: z.number(),
+  status: z.enum(['hold', 'payable', 'paid', 'reversed']),
+  hold_until: z.string().datetime(),
+  paid_at: z.string().datetime().nullable(),
   created_at: z.string().datetime(),
 });
 export type MLMCommission = z.infer<typeof mlmCommissionSchema>;
+
+/**
+ * Helper: Format commission type for display
+ */
+export function formatCommissionType(type: MLMCommissionType): string {
+  const labels: Record<MLMCommissionType, string> = {
+    platform_buyer_upline: 'Platform Fee (Buyer)',
+    platform_seller_upline: 'Platform Fee (Seller)',
+    bonus_affiliate_direct: 'Bonus (Direct)',
+    bonus_platform: 'Bonus (Platform)',
+    bonus_affiliate_upline: 'Bonus (Upline)',
+  };
+  return labels[type];
+}
 
 /**
  * Referral Tree Node (for genealogy visualization)

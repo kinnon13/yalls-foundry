@@ -97,7 +97,7 @@ export default function Dashboard() {
   });
 
   // Calculate totals
-  const unpaidTotal = commissions?.filter(c => !c.paid_out).reduce((sum, c) => sum + c.amount_cents, 0) || 0;
+  const unpaidTotal = commissions?.filter(c => c.status !== 'paid').reduce((sum, c) => sum + (c.amount * 100), 0) || 0;
   const totalBusinesses = businesses?.length || 0;
   const totalEntities = entities?.length || 0;
 
@@ -285,10 +285,10 @@ export default function Dashboard() {
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-bold">
-                              {formatCents(commission.amount_cents)}
+                              {formatCents(Math.round(commission.amount * 100))}
                             </p>
-                            <Badge variant={commission.paid_out ? 'default' : 'secondary'}>
-                              {commission.paid_out ? 'Paid' : 'Pending'}
+                            <Badge variant={commission.status === 'paid' ? 'default' : 'secondary'}>
+                              {commission.status === 'paid' ? 'Paid' : commission.status === 'hold' ? 'Hold' : 'Pending'}
                             </Badge>
                           </div>
                         </div>

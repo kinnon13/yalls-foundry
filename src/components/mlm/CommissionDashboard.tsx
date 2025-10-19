@@ -53,6 +53,14 @@ export function CommissionDashboard() {
     },
   ];
 
+  const commissionTypeLabels: Record<string, string> = {
+    platform_buyer_upline: 'Platform Fee (Buyer Upline)',
+    platform_seller_upline: 'Platform Fee (Seller Upline)',
+    bonus_affiliate_direct: 'Bonus (Affiliate Direct - 80%)',
+    bonus_platform: 'Bonus (Platform - 10%)',
+    bonus_affiliate_upline: 'Bonus (Affiliate Upline - 10%)',
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -69,16 +77,18 @@ export function CommissionDashboard() {
         ))}
       </div>
 
-      {summary.level_breakdown && (
+      {summary.type_breakdown && Object.keys(summary.type_breakdown).length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Commission by Level</CardTitle>
+            <CardTitle>Commission by Type</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {Object.entries(summary.level_breakdown).map(([level, amount]) => (
-                <div key={level} className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">{level}</span>
+              {Object.entries(summary.type_breakdown).map(([type, amount]) => (
+                <div key={type} className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    {commissionTypeLabels[type] || type}
+                  </span>
                   <span className="text-sm font-medium">${Number(amount).toFixed(2)}</span>
                 </div>
               ))}
