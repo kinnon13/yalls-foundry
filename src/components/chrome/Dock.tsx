@@ -88,11 +88,14 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
         return (
           <button
             key={app.id}
-            className="dock-icon"
+            className="dock-icon relative"
             onClick={() => onAppClick(app.id as OverlayKey)}
             title={app.label}
           >
-            <Icon />
+            <div className={`w-full h-full rounded-[24%] bg-gradient-to-br ${app.gradient} flex items-center justify-center shadow-[0_10px_25px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.25)] border border-white/10`}>
+              <Icon className={`w-7 h-7 drop-shadow-lg ${app.color}`} strokeWidth={1.75} />
+              <div className="absolute inset-0 rounded-[24%] bg-gradient-to-t from-white/5 to-transparent opacity-50" />
+            </div>
           </button>
         );
       })}

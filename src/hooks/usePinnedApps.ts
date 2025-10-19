@@ -9,14 +9,16 @@ import type { LucideIcon } from 'lucide-react';
 export interface PinnedApp {
   id: string;
   label: string;
-  icon: string; // We'll store icon name as string
+  icon: string;
+  gradient: string;
+  color: string;
 }
 
 const DEFAULT_PINNED_APPS: PinnedApp[] = [
-  { id: 'messages', label: 'Messages', icon: 'MessageSquare' },
-  { id: 'marketplace', label: 'Marketplace', icon: 'ShoppingBag' },
-  { id: 'events', label: 'Events', icon: 'Calendar' },
-  { id: 'orders', label: 'Orders', icon: 'Users' },
+  { id: 'messages', label: 'Messages', icon: 'MessageSquare', gradient: 'from-violet-600 via-purple-600 to-fuchsia-500', color: 'text-white' },
+  { id: 'marketplace', label: 'Marketplace', icon: 'ShoppingBag', gradient: 'from-green-500 via-emerald-500 to-teal-400', color: 'text-white' },
+  { id: 'events', label: 'Events', icon: 'Calendar', gradient: 'from-red-500 via-orange-500 to-amber-400', color: 'text-white' },
+  { id: 'orders', label: 'Orders', icon: 'ShoppingCart', gradient: 'from-blue-500 via-blue-600 to-cyan-500', color: 'text-white' },
 ];
 
 const STORAGE_KEY = 'yalls-pinned-apps';

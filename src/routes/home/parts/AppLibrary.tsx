@@ -226,7 +226,9 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
                       pinApp({ 
                         id: app.key, 
                         label: app.label, 
-                        icon: APP_ICON_NAMES[app.key] || 'MessageSquare'
+                        icon: APP_ICON_NAMES[app.key] || 'MessageSquare',
+                        gradient: app.gradient,
+                        color: app.color
                       });
                       toast({ title: 'Pinned', description: `${app.label} added to dock` });
                     } else {
