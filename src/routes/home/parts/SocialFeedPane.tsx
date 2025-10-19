@@ -7,6 +7,7 @@ import SocialProfileHeader from './SocialProfileHeader';
 import FavoritesSection from './FavoritesSection';
 import UserProfileView from './UserProfileView';
 import { X } from 'lucide-react';
+import { useFeedPosts } from '@/hooks/useFeedPosts';
 const TABS = ['following', 'for-you', 'shop', 'profile'] as const;
 type Tab = typeof TABS[number];
 
@@ -22,6 +23,9 @@ export default function SocialFeedPane() {
   const [feedH, setFeedH] = useState<number | null>(null);
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
   const [profileHistory, setProfileHistory] = useState<string[]>([]);
+  
+  // Fetch real posts from database
+  const { data: realPosts, isLoading } = useFeedPosts(tab as 'following' | 'for-you' | 'shop' | 'profile');
 
   // Listen for profile view events
   useEffect(() => {
@@ -179,11 +183,32 @@ export default function SocialFeedPane() {
     setSp(next, { replace: true });
   }, [tab, entityId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Generate placeholder data based on tab
+  // Use real data if available, fallback to placeholder for demo
   const items = useMemo(() => {
+    // If we have real posts, use them
+    if (realPosts && realPosts.length > 0) {
+      return realPosts.map((post, i) => ({
+        id: post.id,
+        userId: post.author_id,
+        src: post.media?.[0]?.url || `https://picsum.photos/seed/${post.id}/1080/1920`,
+        author: {
+          name: post.author.display_name || 'User',
+          handle: post.author.handle || 'user',
+          avatar: post.author.avatar_url || `https://i.pravatar.cc/150?img=${i + 1}`,
+        },
+        caption: post.body || 'Check this out! 🔥',
+        stats: {
+          likes: Math.floor(Math.random() * 50000) + 1000,
+          comments: Math.floor(Math.random() * 5000) + 100,
+          saves: Math.floor(Math.random() * 2000) + 50,
+          reposts: Math.floor(Math.random() * 1000) + 25,
+        },
+      }));
+    }
+    
+    // Fallback to placeholder data if no real posts
     const themes = ['nature', 'city', 'fashion', 'food', 'travel', 'art', 'fitness', 'tech'];
     return new Array(20).fill(0).map((_, i) => {
-      // Map certain indices to our mock users
       const userId = i === 0 ? 'nature1' : i === 1 ? 'city1' : null;
       
       return {
@@ -204,7 +229,7 @@ export default function SocialFeedPane() {
         },
       };
     });
-  }, [tab]);
+  }, [tab, realPosts]);
 
   return (
     <section className="relative flex h-full w-full flex-col">

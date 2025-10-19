@@ -4376,6 +4376,27 @@ export type Database = {
           },
         ]
       }
+      follows: {
+        Row: {
+          created_at: string
+          followee_user_id: string
+          follower_user_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          followee_user_id: string
+          follower_user_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          followee_user_id?: string
+          follower_user_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
       horse_feed: {
         Row: {
           caption: string | null

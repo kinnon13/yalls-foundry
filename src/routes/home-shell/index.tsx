@@ -142,12 +142,14 @@ export default function HomeShell() {
         <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
       </div>
 
-      {/* Mobile: Full-screen feed with footer */}
-      <div className="lg:hidden flex flex-col h-[100dvh]">
-        <div className="flex-1 overflow-hidden bg-background">
+      {/* Mobile: Full-screen feed with proper safe area */}
+      <div className="lg:hidden flex flex-col min-h-[100dvh] max-h-[100dvh] bg-background">
+        <div className="flex-1 overflow-y-auto -webkit-overflow-scrolling-touch pb-[calc(env(safe-area-inset-bottom,0px)+64px)]">
           <SocialFeedPane />
         </div>
-        <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
+        <div className="fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom,0px)]">
+          <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
+        </div>
       </div>
       <LinkInterceptor />
     </>
