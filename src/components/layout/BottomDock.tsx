@@ -42,7 +42,8 @@ export function BottomDock() {
     loadPinnedApps();
   }, [session?.userId]);
 
-  const items: DockItem[] = [
+  // Merge pinned apps into dock items (show last 2 pinned on right side)
+  const coreItems: DockItem[] = [
     {
       key: 'home',
       label: 'Home',
@@ -61,21 +62,30 @@ export function BottomDock() {
       onClick: () => nav('/create'),
       icon: PlusCircle,
     },
-    {
-      key: 'messages',
-      label: 'Inbox',
-      to: '/messages',
-      icon: MessageSquare,
-    },
-    {
-      key: 'profile',
-      label: 'Profile',
-      onClick: () => {
-        nav('/profile/me');
-      },
-      icon: AppWindow,
-    },
   ];
+
+  const rightItems: DockItem[] = [];
+  
+  // Add up to 2 pinned apps before profile
+  if (pinnedApps.length > 0) {
+    pinnedApps.slice(-2).forEach(app => {
+      rightItems.push({
+        key: app.app_id,
+        label: app.app_id,
+        to: `/?app=${app.app_id}`,
+        icon: Store, // Could be dynamic based on app
+      });
+    });
+  }
+  
+  rightItems.push({
+    key: 'profile',
+    label: 'Profile',
+    onClick: () => nav('/profile/me'),
+    icon: AppWindow,
+  });
+
+  const items = [...coreItems, ...rightItems];
 
   return (
     <>

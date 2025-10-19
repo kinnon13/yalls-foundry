@@ -325,14 +325,16 @@ export default function SearchPage() {
                             </div>
                             <div className="flex gap-2">
                               {isInstalled ? (
-                                <Button size="sm" onClick={() => handleOpenApp(app.id)}>Open</Button>
+                                <Button size="sm" onClick={() => handleOpenApp(app.id)} data-testid={`app-open-${app.id}`}>
+                                  Open
+                                </Button>
                               ) : (
-                                <Button size="sm" variant="outline" onClick={() => handleInstallApp(app.id)}>
+                                <Button size="sm" variant="outline" onClick={() => handleInstallApp(app.id)} data-testid={`app-install-${app.id}`}>
                                   <Plus className="h-4 w-4 mr-1" />
                                   Install
                                 </Button>
                               )}
-                              <Button size="sm" variant="ghost" onClick={() => handlePinApp(app.id)}>
+                              <Button size="sm" variant="ghost" onClick={() => handlePinApp(app.id)} data-testid={`app-pin-${app.id}`}>
                                 Pin
                               </Button>
                             </div>
@@ -417,14 +419,16 @@ export default function SearchPage() {
                         </div>
                         <div className="flex gap-2">
                           {isInstalled ? (
-                            <Button size="sm" onClick={() => handleOpenApp(app.id)}>Open</Button>
+                            <Button size="sm" onClick={() => handleOpenApp(app.id)} data-testid={`app-open-${app.id}`}>
+                              Open
+                            </Button>
                           ) : (
-                            <Button size="sm" variant="outline" onClick={() => handleInstallApp(app.id)}>
+                            <Button size="sm" variant="outline" onClick={() => handleInstallApp(app.id)} data-testid={`app-install-${app.id}`}>
                               <Plus className="h-4 w-4 mr-1" />
                               Install
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" onClick={() => handlePinApp(app.id)}>
+                          <Button size="sm" variant="ghost" onClick={() => handlePinApp(app.id)} data-testid={`app-pin-${app.id}`}>
                             Pin
                           </Button>
                         </div>
