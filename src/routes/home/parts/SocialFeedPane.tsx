@@ -208,15 +208,15 @@ export default function SocialFeedPane() {
         <div 
           className="h-full w-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
-          <div className="flex flex-col items-center w-full">
+          <div className="flex flex-col items-stretch w-full">
             {items.map((item) => (
               <div 
                 key={item.id} 
                 className="snap-start snap-always relative shrink-0 w-full"
                 style={{ 
                   height: isMobile ? '100vh' : `${feedHeight}px`,
-                  width: isMobile || isTablet ? '100vw' : `${feedWidth}px`,
-                  maxWidth: isMobile || isTablet ? '100vw' : 'none'
+                  width: isMobile ? '100vw' : isTablet ? '100%' : `${feedWidth}px`,
+                  maxWidth: isMobile ? '100vw' : isTablet ? '100%' : 'none'
                 }}
               >
                 <Reel {...item} />
