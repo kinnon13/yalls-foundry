@@ -70,6 +70,7 @@ body {
   align-items: center;
   gap: 16px;
   padding: 0 24px;
+  height: var(--header-h);
   border-bottom: 1px solid var(--stroke);
   background: rgba(30, 30, 36, 0.9);
   backdrop-filter: blur(32px) saturate(180%);
@@ -299,6 +300,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 16px;
+  height: var(--dock-h);
   border-top: 1px solid var(--stroke);
   background: rgba(30, 30, 36, 0.9);
   backdrop-filter: blur(32px) saturate(180%);
