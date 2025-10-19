@@ -222,22 +222,22 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (pinned) {
-                      unpinApp(app.key);
-                      toast({ title: 'Unpinned', description: `${app.label} removed from dock` });
-                    } else {
+                    if (!pinned) {
                       pinApp({ 
                         id: app.key, 
                         label: app.label, 
                         icon: APP_ICON_NAMES[app.key] || 'MessageSquare'
                       });
                       toast({ title: 'Pinned', description: `${app.label} added to dock` });
+                    } else {
+                      unpinApp(app.key);
+                      toast({ title: 'Unpinned', description: `${app.label} removed from dock` });
                     }
                   }}
                   className="absolute top-2 right-2 h-6 w-6 rounded-full bg-background/90 backdrop-blur-sm border border-border/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-accent"
-                  title={pinned ? 'Unpin from dock' : 'Pin to dock'}
+                  title={!pinned ? 'Pin to dock' : 'Unpin from dock'}
                 >
-                  {pinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+                  {!pinned ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
                 </button>
               </div>
             );
