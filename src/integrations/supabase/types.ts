@@ -4832,6 +4832,24 @@ export type Database = {
         }
         Relationships: []
       }
+      kv_counters: {
+        Row: {
+          expires_at: string | null
+          k: string
+          v: number
+        }
+        Insert: {
+          expires_at?: string | null
+          k: string
+          v?: number
+        }
+        Update: {
+          expires_at?: string | null
+          k?: string
+          v?: number
+        }
+        Relationships: []
+      }
       leaderboard_entries: {
         Row: {
           created_at: string
@@ -6350,6 +6368,8 @@ export type Database = {
           email: string | null
           handle: string | null
           id: string
+          invite_source: string | null
+          invited_by: string | null
           updated_at: string
           user_id: string
         }
@@ -6366,6 +6386,8 @@ export type Database = {
           email?: string | null
           handle?: string | null
           id?: string
+          invite_source?: string | null
+          invited_by?: string | null
           updated_at?: string
           user_id: string
         }
@@ -6382,6 +6404,8 @@ export type Database = {
           email?: string | null
           handle?: string | null
           id?: string
+          invite_source?: string | null
+          invited_by?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -8693,6 +8717,10 @@ export type Database = {
       box3dtobox: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      bump_counter: {
+        Args: { p_key: string; p_ttl_sec?: number }
+        Returns: number
       }
       bytea: {
         Args: { "": unknown } | { "": unknown }

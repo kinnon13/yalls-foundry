@@ -125,6 +125,7 @@ export function BottomDock() {
               className="relative flex flex-col items-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition-all"
               aria-label={it.label}
               title={it.label}
+              data-testid={`dock-${it.key}`}
             >
               {content}
             </Link>
@@ -138,6 +139,7 @@ export function BottomDock() {
               className="relative flex flex-col items-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition-all"
               aria-label={it.label}
               title={it.label}
+              data-testid={`dock-${it.key}`}
             >
               {content}
             </button>

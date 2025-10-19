@@ -31,30 +31,23 @@ export async function emitEvent(
       return;
     }
 
-    const eventData = {
-      user_id: user.id,
-      event_type: eventType,
-      payload,
-      timestamp: new Date().toISOString(),
-      session_id: sessionStorage.getItem('session_id') || generateSessionId()
-    };
+    const session_id = sessionStorage.getItem('session_id') || generateSessionId();
 
-    console.log('[Telemetry] Emitting event:', eventType, payload);
-
-    // In production, you would send this to a telemetry service or database
-    // For now, we'll use console logging
-    // You can extend this to use Supabase realtime or a dedicated events table
-    
-    // Example: Insert into events table
-    /*
+    // Insert into rocker_events table
     const { error } = await supabase
-      .from('telemetry_events')
-      .insert(eventData);
+      .from('rocker_events')
+      .insert([{
+        user_id: user.id,
+        event_type: eventType,
+        payload: payload as any,
+        session_id
+      }] as any);
     
     if (error) {
       console.error('[Telemetry] Error inserting event:', error);
+    } else {
+      console.log('[Telemetry] Event logged:', eventType, payload);
     }
-    */
     
   } catch (error) {
     console.error('[Telemetry] Error emitting event:', error);
