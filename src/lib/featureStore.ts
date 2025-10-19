@@ -23,6 +23,15 @@ export interface ItemFeatures {
   };
 }
 
+/**
+ * Add TTL jitter (±10%) to prevent thundering herd on cache expiry
+ */
+function jitterSeconds(base: number, pct = 0.1): number {
+  const delta = Math.floor(base * pct);
+  const j = Math.floor(Math.random() * (2 * delta + 1)) - delta;
+  return Math.max(1, base + j);
+}
+
 // In-memory cache for development (replace with Redis in production)
 const cache = new Map<string, { data: any; expires: number }>();
 
@@ -54,7 +63,7 @@ export async function getUserFeatures(
  * Set user features (write to cache)
  * @param userId - User ID
  * @param features - Feature object
- * @param ttlSeconds - Time to live (default 1 hour)
+ * @param ttlSeconds - Time to live (default 1 hour with jitter)
  */
 export function setUserFeatures(
   userId: string,
@@ -62,14 +71,16 @@ export function setUserFeatures(
   ttlSeconds = 3600
 ): void {
   const key = `feat:user:${userId}:v1`;
+  const jitteredTtl = jitterSeconds(ttlSeconds);
+  
   cache.set(key, {
     data: features,
-    expires: Date.now() + ttlSeconds * 1000,
+    expires: Date.now() + jitteredTtl * 1000,
   });
 
-  // In production, write to Redis:
+  // In production, write to Redis with jitter:
   // const redis = getRedisClient();
-  // await redis.set(key, JSON.stringify(features), { EX: ttlSeconds });
+  // await redis.set(key, JSON.stringify(features), { EX: jitteredTtl });
 }
 
 /**
@@ -94,7 +105,7 @@ export async function getItemFeatures(
  * Set item features (write to cache)
  * @param itemId - Item ID
  * @param features - Feature object
- * @param ttlSeconds - Time to live (default 1 hour)
+ * @param ttlSeconds - Time to live (default 1 hour with jitter)
  */
 export function setItemFeatures(
   itemId: string,
@@ -102,10 +113,16 @@ export function setItemFeatures(
   ttlSeconds = 3600
 ): void {
   const key = `feat:item:${itemId}:v1`;
+  const jitteredTtl = jitterSeconds(ttlSeconds);
+  
   cache.set(key, {
     data: features,
-    expires: Date.now() + ttlSeconds * 1000,
+    expires: Date.now() + jitteredTtl * 1000,
   });
+
+  // In production, write to Redis with jitter:
+  // const redis = getRedisClient();
+  // await redis.set(key, JSON.stringify(features), { EX: jitteredTtl });
 }
 
 /**

@@ -1,25 +1,14 @@
 /**
  * Bandit Exploration & Ranking
- * Production-grade ε-greedy with surface-specific tuning and fallback strategies
+ * Production-grade ε-greedy with surface-specific tuning
  */
 
-export interface Candidate {
-  id: string;
-  score: number;
-}
-
-export interface RankResult {
-  ranked: Candidate[];
-  explored: boolean;
-  epsilon: number;
-}
-
+export type Candidate = { id: string; score: number };
 export type Surface = 'feed' | 'pdp' | 'market';
 export type Device = 'mobile' | 'desktop';
 
 /**
- * Get optimal epsilon for surface and device
- * Mobile users tolerate more exploration (scrolling UX)
+ * Get epsilon for surface and device
  */
 export function epsilonForSurface(surface: Surface, device: Device): number {
   if (surface === 'feed') return device === 'mobile' ? 0.12 : 0.08;
@@ -28,20 +17,15 @@ export function epsilonForSurface(surface: Surface, device: Device): number {
 }
 
 /**
- * Rank candidates with epsilon-greedy exploration
- * @param items - Candidates with scores
- * @param epsilon - Exploration probability (use epsilonForSurface for optimal value)
- * @returns Ranked items with exploration flag
+ * Epsilon-greedy ranking with exploration
  */
 export function rankWithEpsilonGreedy<T extends { score: number }>(
   items: T[],
-  epsilon = 0.08
+  epsilon: number
 ): { ranked: T[]; explored: boolean; epsilon: number } {
-  if (items.length <= 1) {
-    return { ranked: items, explored: false, epsilon };
-  }
-
-  // EXPLORE: Fisher-Yates shuffle for uniform randomness
+  if (items.length <= 1) return { ranked: items, explored: false, epsilon };
+  
+  // Explore: Fisher-Yates shuffle
   if (Math.random() < epsilon) {
     const shuffled = [...items];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -50,16 +34,13 @@ export function rankWithEpsilonGreedy<T extends { score: number }>(
     }
     return { ranked: shuffled, explored: true, epsilon };
   }
-
-  // EXPLOIT: Rank by predicted score
-  const sorted = [...items].sort((a, b) => b.score - a.score);
-  return { ranked: sorted, explored: false, epsilon };
+  
+  // Exploit: by score
+  return { ranked: [...items].sort((a, b) => b.score - a.score), explored: false, epsilon };
 }
 
 /**
- * Calculate normalized reward (0..1) from various signals
- * @param outcome - Raw engagement signals
- * @returns Normalized reward score
+ * Calculate reward from user outcome
  */
 export function calculateReward(outcome: {
   watched?: boolean;
@@ -67,31 +48,26 @@ export function calculateReward(outcome: {
   liked?: boolean;
   commented?: boolean;
   shared?: boolean;
-  followed?: boolean;
   purchased?: boolean;
 }): number {
   let reward = 0;
-
-  // Engagement actions
+  
   if (outcome.liked) reward += 0.3;
   if (outcome.commented) reward += 0.2;
   if (outcome.shared) reward += 0.5;
-  if (outcome.followed) reward += 0.25;
-  if (outcome.purchased) reward += 1.0; // Max reward
-
-  // Watch completion
+  if (outcome.purchased) reward += 1.0;
+  
   if (outcome.watched && outcome.watchTimeMs) {
-    // Normalize: 5s+ = full watch reward
+    // Normalize watch time: 5s+ = full watch reward
     const watchReward = Math.min(outcome.watchTimeMs / 5000, 1.0) * 0.4;
     reward += watchReward;
   }
-
+  
   return Math.min(reward, 1.0);
 }
 
 /**
  * Fallback candidates when primary suggestions are empty
- * Prioritizes: popular in domain → recent → global popular
  */
 export function fallbackCandidates<T>(ctx: {
   topDomain?: string;

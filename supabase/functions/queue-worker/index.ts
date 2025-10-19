@@ -32,10 +32,12 @@ async function handleDiscoverySignup(row: QueueRow, supabase: any) {
 
   if (!interests?.length) return;
 
-  // Enqueue discovery for each interest
+  // Ensure categories and enqueue discovery
   for (const { interest_id } of interests) {
     await supabase.rpc("ensure_category_for_interest", { p_interest_id: interest_id });
   }
+  
+  await supabase.rpc("enqueue_discovery_for_user", { p_user_id: user_id }).catch(() => {});
 }
 
 async function handleDiscoveryNewInterest(row: QueueRow, supabase: any) {
@@ -83,13 +85,13 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { topic = "discovery.user-signup", limit = 20 } = await req.json().catch(() => ({}));
+    const { topic = "discovery.user-signup", limit = 20, ttl = 120 } = await req.json().catch(() => ({}));
 
-    // Lease events from queue
+    // Lease events from queue (dead-letter after 4 attempts)
     const { data: leased, error: leaseError } = await supabase.rpc("lease_events", {
       p_topic: topic,
       p_limit: limit,
-      p_ttl_seconds: 120, // 2 minute lease
+      p_ttl_seconds: ttl,
     });
 
     if (leaseError) {
@@ -134,7 +136,7 @@ Deno.serve(async (req) => {
       } catch (e: any) {
         console.error(`Error processing event ${row.id}:`, e);
 
-        // Mark as failed
+        // Mark as failed (auto-promotes to 'error' after 4 attempts)
         await supabase.rpc("fail_event", {
           p_id: row.id,
           p_token: row.lease_token,
@@ -145,8 +147,16 @@ Deno.serve(async (req) => {
       }
     }
 
+    console.log(`Processed ${results.length} events for topic: ${topic}`);
+
     return new Response(
-      JSON.stringify({ processed: results.length, results }),
+      JSON.stringify({ 
+        processed: results.length, 
+        results,
+        topic,
+        success_ct: results.filter(r => r.status === 'success').length,
+        failed_ct: results.filter(r => r.status === 'failed').length,
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
@@ -162,3 +172,4 @@ Deno.serve(async (req) => {
     );
   }
 });
+

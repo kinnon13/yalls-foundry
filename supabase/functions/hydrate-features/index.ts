@@ -78,8 +78,9 @@ Deno.serve(async (req) => {
       // TODO: Add watch_time_7d and ctr_7d from telemetry aggregates
     };
 
-    // In production, write to Redis here:
-    // await redis.set(`feat:user:${user.id}:v1`, JSON.stringify(features), { EX: 3600 });
+    // In production, write to Redis with TTL jitter (prevents thundering herd):
+    // const jitteredTtl = 3600 + Math.floor(Math.random() * 720) - 360; // 3600 ± 10%
+    // await redis.set(`feat:user:${user.id}:v1`, JSON.stringify(features), { EX: jitteredTtl });
 
     return new Response(JSON.stringify({ features }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

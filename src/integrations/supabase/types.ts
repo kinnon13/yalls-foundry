@@ -10679,6 +10679,10 @@ export type Database = {
         Args: { p_campaign_id: string }
         Returns: Json
       }
+      recompute_profile_embedding: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       record_view: {
         Args: { p_listing_id: string; p_session_id?: string }
         Returns: undefined
