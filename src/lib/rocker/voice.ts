@@ -16,6 +16,12 @@ export interface VoiceMessageOptions {
   phoneNumber?: string;
 }
 
+export interface SMSOptions {
+  message: string;
+  phoneNumber?: string;
+  metadata?: Record<string, any>;
+}
+
 /**
  * Initiate a voice call to the user
  */
@@ -26,6 +32,23 @@ export async function initiateVoiceCall(options: VoiceCallOptions) {
       message: options.message,
       to: options.phoneNumber,
       approval_id: options.approvalId,
+    },
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Send an SMS text message to the user
+ */
+export async function sendSMS(options: SMSOptions) {
+  const { data, error } = await supabase.functions.invoke('rocker-voice-call', {
+    body: {
+      action: 'send_sms',
+      message: options.message,
+      to: options.phoneNumber,
+      metadata: options.metadata,
     },
   });
 
