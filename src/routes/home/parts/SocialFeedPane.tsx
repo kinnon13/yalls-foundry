@@ -176,10 +176,10 @@ export default function SocialFeedPane() {
         <X className="h-5 w-5" />
       </button>
       {/* Header stack (measured) */}
-      <div ref={headerRef} className={cn("hidden sm:block", tab === 'profile' && 'block')}>
+      <div ref={headerRef}>
 
-        {/* Profile Header - only on profile tab */}
-        {tab === 'profile' && <SocialProfileHeader />}
+        {/* Profile Header - always visible */}
+        <SocialProfileHeader />
         
         {/* Favorites Bar - only on profile tab */}
         {tab === 'profile' && <FavoritesSection />}
