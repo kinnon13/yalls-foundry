@@ -10,10 +10,10 @@ import { Network, BarChart3, Users } from 'lucide-react';
 
 export default function MLMModule() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h1 className="text-3xl font-bold">Affiliate Network</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-2xl font-bold">Affiliate Network</h1>
+        <p className="text-muted-foreground text-sm">
           Track your downline, commissions, and team performance
         </p>
       </div>
