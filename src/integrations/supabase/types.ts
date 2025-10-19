@@ -4800,6 +4800,36 @@ export type Database = {
           },
         ]
       }
+      intent_signals: {
+        Row: {
+          id: number
+          metadata: Json
+          name: string
+          target_id: string | null
+          target_kind: string | null
+          ts: string
+          user_id: string
+        }
+        Insert: {
+          id?: number
+          metadata?: Json
+          name: string
+          target_id?: string | null
+          target_kind?: string | null
+          ts?: string
+          user_id: string
+        }
+        Update: {
+          id?: number
+          metadata?: Json
+          name?: string
+          target_id?: string | null
+          target_kind?: string | null
+          ts?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       interest_catalog: {
         Row: {
           category: string
@@ -5234,6 +5264,237 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      marketplace_candidates: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          currency: string | null
+          id: string
+          image_url: string | null
+          interest_id: string
+          metadata: Json
+          price_cents: number | null
+          score: number
+          source: string
+          title: string
+          url: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          image_url?: string | null
+          interest_id: string
+          metadata?: Json
+          price_cents?: number | null
+          score?: number
+          source: string
+          title: string
+          url?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          image_url?: string | null
+          interest_id?: string
+          metadata?: Json
+          price_cents?: number | null
+          score?: number
+          source?: string
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_candidates_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_candidates_interest_id_fkey"
+            columns: ["interest_id"]
+            isOneToOne: false
+            referencedRelation: "interest_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_categories: {
+        Row: {
+          category: string
+          created_at: string
+          domain: string
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          domain: string
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          domain?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketplace_discovery_queue: {
+        Row: {
+          attempts: number
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          interest_id: string
+          last_error: string | null
+          reason: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          interest_id: string
+          last_error?: string | null
+          reason: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          interest_id?: string
+          last_error?: string | null
+          reason?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_discovery_queue_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_discovery_queue_interest_id_fkey"
+            columns: ["interest_id"]
+            isOneToOne: false
+            referencedRelation: "interest_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_gaps: {
+        Row: {
+          category_id: string | null
+          gap_level: string
+          interest_id: string
+          inventory_ct: number
+          last_checked: string
+        }
+        Insert: {
+          category_id?: string | null
+          gap_level?: string
+          interest_id: string
+          inventory_ct?: number
+          last_checked?: string
+        }
+        Update: {
+          category_id?: string | null
+          gap_level?: string
+          interest_id?: string
+          inventory_ct?: number
+          last_checked?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_gaps_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_gaps_interest_id_fkey"
+            columns: ["interest_id"]
+            isOneToOne: true
+            referencedRelation: "interest_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_interest_map: {
+        Row: {
+          category_id: string
+          confidence: number
+          created_at: string
+          interest_id: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          confidence?: number
+          created_at?: string
+          interest_id: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          confidence?: number
+          created_at?: string
+          interest_id?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_interest_map_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_interest_map_interest_id_fkey"
+            columns: ["interest_id"]
+            isOneToOne: false
+            referencedRelation: "interest_catalog"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -9189,6 +9450,15 @@ export type Database = {
           | { table_name: string }
         Returns: string
       }
+      emit_signal: {
+        Args: {
+          p_metadata?: Json
+          p_name: string
+          p_target_id?: string
+          p_target_kind?: string
+        }
+        Returns: undefined
+      }
       enable_mfa: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -9200,6 +9470,14 @@ export type Database = {
       end_price_test: {
         Args: { p_test_id: string; p_winner?: string }
         Returns: Json
+      }
+      enqueue_discovery_for_user: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
+      ensure_category_for_interest: {
+        Args: { p_interest_id: string }
+        Returns: string
       }
       entitlement_gate_metrics: {
         Args: { p_window_minutes?: number }
@@ -9994,6 +10272,20 @@ export type Database = {
       longtransactionsenabled: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      marketplace_suggestions_for_user: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          category_id: string
+          currency: string
+          image_url: string
+          interest_id: string
+          price_cents: number
+          score: number
+          source: string
+          title: string
+          url: string
+        }[]
       }
       match_knowledge_chunks: {
         Args: {
