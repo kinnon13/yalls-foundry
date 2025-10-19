@@ -149,7 +149,7 @@ export default function SocialFeedPane() {
     const themes = ['nature', 'city', 'fashion', 'food', 'travel', 'art', 'fitness', 'tech'];
     return new Array(20).fill(0).map((_, i) => ({
       id: `${tab}-${i}`,
-      src: `https://images.unsplash.com/photo-${1500000000000 + i * 1000000}?w=1080&h=1920&fit=crop&auto=format&q=80`,
+      src: `https://picsum.photos/seed/${tab}-${i}/1080/1920`,
       author: {
         name: `${themes[i % themes.length]} Creator ${i + 1}`,
         handle: `${themes[i % themes.length].toLowerCase()}${i + 1}`,
