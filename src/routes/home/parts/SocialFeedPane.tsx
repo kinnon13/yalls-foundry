@@ -201,14 +201,14 @@ export default function SocialFeedPane() {
       >
         <X className="h-5 w-5" />
       </button>
-      {/* Header stack (measured) - hide when viewing other profiles */}
+      {/* Header stack (measured) */}
       <div ref={headerRef}>
+        {/* Navigation Bar - always visible */}
+        <SocialProfileHeader showProfile={!viewingUserId} />
+        
+        {/* Favorites Bar and Tabs - hide when viewing other profiles */}
         {!viewingUserId && (
           <>
-            {/* Profile Header - only visible on your feed */}
-            <SocialProfileHeader />
-            
-            {/* Favorites Bar - only visible on your feed */}
             <FavoritesSection />
 
             {/* Tab indicators integrated with header */}
