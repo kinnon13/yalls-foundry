@@ -208,7 +208,10 @@ export default function SocialFeedPane() {
         <div 
           className="h-full w-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
-          <div className="flex flex-col items-stretch w-full">
+          <div className={cn(
+            "flex flex-col w-full",
+            isMobile || isTablet ? "items-stretch" : "items-center"
+          )}>
             {items.map((item) => (
               <div 
                 key={item.id} 
