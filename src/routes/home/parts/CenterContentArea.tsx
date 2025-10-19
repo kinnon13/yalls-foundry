@@ -108,21 +108,23 @@ export default function CenterContentArea({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Top bar with app icons */}
-      <div className="sticky top-0 z-20 bg-muted/20 border-b flex items-center gap-3 px-4 py-3">
+      {/* Top bar with app icons - macOS dock style */}
+      <div className="sticky top-0 z-20 bg-gradient-to-b from-muted/90 to-muted/70 backdrop-blur-xl border-b border-border/50 flex items-center gap-2 px-6 py-3 shadow-lg">
         {openApps.map((app) => (
           <div key={app.key} className="relative group">
             <button
               onClick={() => scrollToApp(app.key)}
               className={`
-                w-12 h-12 rounded-lg flex items-center justify-center transition-all
+                w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200
+                bg-gradient-to-br from-background to-muted
+                border shadow-md hover:scale-110 hover:shadow-xl
                 ${activeApp === app.key 
-                  ? 'bg-background border-2 border-primary shadow-md' 
-                  : 'bg-background border hover:border-primary'
+                  ? 'border-primary/60 ring-2 ring-primary/30 scale-105' 
+                  : 'border-border/50 hover:border-primary/40'
                 }
               `}
             >
-              {app.icon && <app.icon className="w-5 h-5" />}
+              {app.icon && <app.icon className="w-6 h-6" />}
             </button>
             
             {/* Close button on hover */}
@@ -131,7 +133,7 @@ export default function CenterContentArea({
                 e.stopPropagation();
                 onCloseApp(app.key);
               }}
-              className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
             >
               <X className="w-3 h-3" />
             </button>
