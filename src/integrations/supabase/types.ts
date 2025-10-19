@@ -7486,6 +7486,83 @@ export type Database = {
         }
         Relationships: []
       }
+      rocker_memories: {
+        Row: {
+          content: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          importance: number
+          kind: string
+          tags: string[]
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          importance?: number
+          kind?: string
+          tags?: string[]
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          importance?: number
+          kind?: string
+          tags?: string[]
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rocker_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: number
+          meta: Json
+          role: string
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: number
+          meta?: Json
+          role: string
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: number
+          meta?: Json
+          role?: string
+          thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rocker_notifications: {
         Row: {
           created_at: string
@@ -7557,6 +7634,27 @@ export type Database = {
           status?: string | null
           suggestion_type?: string
           title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rocker_threads: {
+        Row: {
+          created_at: string
+          id: string
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string | null
           user_id?: string
         }
         Relationships: []
@@ -9369,6 +9467,15 @@ export type Database = {
         }
         Returns: string
       }
+      append_rocker_message: {
+        Args: {
+          p_content: string
+          p_meta?: Json
+          p_role: string
+          p_thread: string
+        }
+        Returns: number
+      }
       assign_role: {
         Args: {
           target_role: Database["public"]["Enums"]["app_role"]
@@ -10315,6 +10422,10 @@ export type Database = {
         Args: { "": unknown[] }
         Returns: number
       }
+      has_app_role: {
+        Args: { p_role: string }
+        Returns: boolean
+      }
       has_calendar_access: {
         Args: {
           cal_id: string
@@ -10416,7 +10527,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: {
-        Args: { _user_id: string }
+        Args: Record<PropertyKey, never> | { _user_id: string }
         Returns: boolean
       }
       is_user_hidden_from_admin: {
@@ -10876,6 +10987,18 @@ export type Database = {
         Args: { p_campaign_id: string }
         Returns: Json
       }
+      recall_memories: {
+        Args: { p_k?: number; p_query: string }
+        Returns: {
+          content: string
+          id: string
+          importance: number
+          kind: string
+          score: number
+          tags: string[]
+          title: string
+        }[]
+      }
       recompute_profile_embedding: {
         Args: { p_user_id: string }
         Returns: undefined
@@ -11025,6 +11148,17 @@ export type Database = {
       save_item: {
         Args: { p_listing_id: string }
         Returns: undefined
+      }
+      save_memory: {
+        Args: {
+          p_content: string
+          p_expires_at?: string
+          p_importance?: number
+          p_kind?: string
+          p_tags?: string[]
+          p_title: string
+        }
+        Returns: string
       }
       search_entities: {
         Args: { p_limit?: number; p_query: string; p_tenant_id: string }
@@ -12159,6 +12293,10 @@ export type Database = {
       }
       start_price_test: {
         Args: { p_listing_id: string; p_variants: Json }
+        Returns: string
+      }
+      start_rocker_thread: {
+        Args: { p_title?: string }
         Returns: string
       }
       text: {

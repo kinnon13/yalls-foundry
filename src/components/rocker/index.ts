@@ -1,0 +1,1 @@
+export { RockerChatWidget } from './RockerChatWidget';

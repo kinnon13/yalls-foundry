@@ -19,6 +19,7 @@ import { setupAuthInterceptor } from '@/lib/auth/interceptors';
 import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
 import { RockerDock } from '@/components/rocker/RockerDock';
+import { RockerChatWidget } from '@/components/rocker';
 import { RockerChatProvider } from '@/lib/ai/rocker';
 import { RockerProvider } from '@/lib/ai/rocker';
 import { RedirectHandler } from '@/components/navigation/RedirectHandler';
@@ -277,6 +278,7 @@ function AppContent() {
       <RockerDock />
       <RockerSuggestions />
       <RockerChat />
+      <RockerChatWidget />
       {devHUDOpen && <DevHUD isOpen={devHUDOpen} onClose={closeDevHUD} />}
       
       {/* Bottom Dock - 5 icons everywhere except auth/create-recording/live */}
