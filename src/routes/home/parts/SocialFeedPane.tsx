@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useLayoutEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSession } from '@/lib/auth/context';
 import { Reel } from '@/components/reels/Reel';
@@ -18,6 +18,24 @@ export default function SocialFeedPane() {
   const [entityId, setEntityId] = useState<string | null>(sp.get('entity') || null);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+
+  // measured header stack height (profile header + favorites + tabs)
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerH, setHeaderH] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const measure = () => setHeaderH(el.getBoundingClientRect().height);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener('resize', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, []);
 
   // seamless drag/swipe gesture for tab switching
   const railRef = useRef<HTMLDivElement>(null);
@@ -114,41 +132,45 @@ export default function SocialFeedPane() {
 
   return (
     <section className="flex h-full w-full flex-col">
-      {/* Profile Header */}
-      <SocialProfileHeader />
-      
-      {/* Favorites Bar */}
-      <FavoritesSection />
+      {/* Header stack (measured) */}
+      <div ref={headerRef}>
+        {/* Profile Header */}
+        <SocialProfileHeader />
+        
+        {/* Favorites Bar */}
+        <FavoritesSection />
 
-      {/* Tab indicators (clickable or drag/swipe to change) */}
-      <div className="sticky top-0 z-10 flex items-center justify-center gap-2 px-0 py-1">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer',
-              t === tab
-                ? 'bg-primary text-primary-foreground scale-105'
-                : 'bg-muted/50 text-muted-foreground scale-95 hover:bg-muted hover:scale-100'
-            )}
-          >
-            {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
-          </button>
-        ))}
+        {/* Tab indicators (clickable or drag/swipe to change) */}
+        <div className="sticky top-0 z-10 flex items-center justify-center gap-2 px-0 py-1">
+          {TABS.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={cn(
+                'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer',
+                t === tab
+                  ? 'bg-primary text-primary-foreground scale-105'
+                  : 'bg-muted/50 text-muted-foreground scale-95 hover:bg-muted hover:scale-100'
+              )}
+            >
+              {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Swipeable feed container */}
       <div 
         ref={railRef}
         className="relative flex-1 overflow-hidden select-none touch-pan-y"
+        style={{ height: `calc(100dvh - 56px - 64px - ${headerH}px)` }}
       >
         <div 
           className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
           <div className="space-y-0 px-0 pb-0">
             {items.map((item) => (
-              <div key={item.id} className="snap-start" style={{ height: 'calc(100vh - 56px - 64px - 180px)' }}>
+              <div key={item.id} className="snap-start h-full">
                 <Reel {...item} />
               </div>
             ))}
