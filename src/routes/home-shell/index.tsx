@@ -11,7 +11,7 @@ import type { OverlayKey } from '@/lib/overlay/types';
 import { OVERLAY_REGISTRY } from '@/lib/overlay/registry';
 import HeaderBar from '@/components/chrome/HeaderBar';
 import Dock from '@/components/chrome/Dock';
-import AppsRail from '@/components/home/AppsRail';
+import AppLibrary from '../home/parts/AppLibrary';
 import { FeedPane } from '@/components/home/FeedPane';
 import LinkInterceptor from '@/components/chrome/LinkInterceptor';
 import { X } from 'lucide-react';
@@ -82,9 +82,9 @@ export default function HomeShell() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeApp = searchParams.get('app') as OverlayKey | null;
 
-  const openApp = (appId: OverlayKey) => {
+  const handleAppClick = (app: { key: string; label: string; icon?: any; color?: string }) => {
     const next = new URLSearchParams(searchParams);
-    next.set('app', appId);
+    next.set('app', app.key);
     setSearchParams(next, { replace: true });
   };
 
@@ -109,7 +109,9 @@ export default function HomeShell() {
 
         {/* Desktop: three-column shell */}
         <div className="hidden lg:grid grid-social">
-          <AppsRail onAppClick={openApp} />
+          <div className="w-[320px] flex-shrink-0 overflow-hidden border-r bg-background/95 backdrop-blur">
+            <AppLibrary onAppClick={handleAppClick} />
+          </div>
           
           {/* Center area - becomes the active app */}
           <div className="card" style={{ 
@@ -144,7 +146,7 @@ export default function HomeShell() {
       
       {/* Desktop dock only */}
       <div className="hidden lg:block">
-        <Dock onAppClick={openApp} />
+        <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
       </div>
       <LinkInterceptor />
     </div>
