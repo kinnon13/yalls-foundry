@@ -296,19 +296,13 @@ export function FavoritesBar({
   const { data: realBubbles = [], isLoading } = useFavoriteBubbles(userId, { publicOnly });
   const { add, remove } = useFavoriteMutations(userId);
 
-  // Mock bubbles for visual testing - always show these for now
-  const mockBubbles: Bubble[] = [
-    { id: 'mock-1', display_name: 'Casey Morales', handle: 'caseymorales', kind: 'person', status: 'verified', avatar_url: null },
-    { id: 'mock-2', display_name: 'Wild River Stables', handle: 'wildriverstables', kind: 'business', status: 'verified', avatar_url: null },
-    { id: 'mock-3', display_name: 'Spring Classic Show 2025', handle: null, kind: 'event', status: 'verified', avatar_url: null },
-    { id: 'mock-4', display_name: 'Starfire', handle: 'starfire', kind: 'horse', status: 'verified', avatar_url: null },
-    { id: 'mock-5', display_name: 'Mountain View Ranch', handle: 'mountainview', kind: 'business', status: 'verified', avatar_url: null },
-    { id: 'mock-6', display_name: 'Thunder', handle: 'thunder', kind: 'horse', status: 'verified', avatar_url: null },
-    { id: 'mock-7', display_name: 'Sarah Johnson', handle: 'sarahjohnson', kind: 'person', status: 'verified', avatar_url: null },
-  ];
-
-  // Always show mock bubbles for testing
-  const bubbles = mockBubbles;
+  // Ensure Rocker is always first and pinned
+  const ROCKER_ID = '00000000-0000-0000-0000-000000000001';
+  const rockerBubble = realBubbles.find(b => b.id === ROCKER_ID);
+  const otherBubbles = realBubbles.filter(b => b.id !== ROCKER_ID);
+  
+  // Put Rocker first, then the rest
+  const bubbles = rockerBubble ? [rockerBubble, ...otherBubbles] : realBubbles;
 
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -349,35 +343,44 @@ export function FavoritesBar({
         )}
 
         {/* Real bubbles */}
-        {bubbles.map((b) => (
-          <button
-            key={b.id}
-            role="option"
-            aria-label={`Open ${b.display_name}`}
-            className="relative group shrink-0 hover:scale-105 transition-transform"
-            title={b.display_name}
-            onClick={() => handleBubbleClick(b.id)}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              remove.mutate(b.id);
-            }}
-          >
-            <div
-              className="rounded-full overflow-hidden grid place-items-center bg-gradient-to-br from-background to-muted"
-              style={{
-                width: size,
-                height: size,
-                border: `2px solid ${ringColor(b.kind)}`
+        {bubbles.map((b) => {
+          const isRocker = b.id === ROCKER_ID;
+          return (
+            <button
+              key={b.id}
+              role="option"
+              aria-label={`Open ${b.display_name}`}
+              className="relative group shrink-0 hover:scale-105 transition-transform"
+              title={b.display_name}
+              onClick={() => handleBubbleClick(b.id)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                // Don't allow removing Rocker
+                if (!isRocker) {
+                  remove.mutate(b.id);
+                }
               }}
             >
-              {b.avatar_url ? (
-                <img src={b.avatar_url} alt={b.display_name} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-sm font-medium">{initials(b.display_name)}</span>
+              <div
+                className="rounded-full overflow-hidden grid place-items-center bg-gradient-to-br from-background to-muted"
+                style={{
+                  width: size,
+                  height: size,
+                  border: `2px solid ${ringColor(b.kind)}`
+                }}
+              >
+                {b.avatar_url ? (
+                  <img src={b.avatar_url} alt={b.display_name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-sm font-medium">{initials(b.display_name)}</span>
+                )}
+              </div>
+              {isRocker && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full border-2 border-background" title="Pinned" />
               )}
-            </div>
-          </button>
-        ))}
+            </button>
+          );
+        })}
 
         {/* Trailing + bubble — ALWAYS visible */}
         {!publicOnly && (
