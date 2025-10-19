@@ -8,6 +8,7 @@ import { MessageSquare, ShoppingBag, Calendar, Users, Brain } from 'lucide-react
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CreateButton } from '@/components/dock/CreateButton';
+import { useRockerGlobal } from '@/lib/ai/rocker';
 
 const DOCK_APPS_LEFT: Array<{ id: OverlayKey; icon: any; label: string }> = [
   { id: 'messages', icon: MessageSquare, label: 'Messages' },
@@ -20,6 +21,8 @@ const DOCK_APPS_RIGHT: Array<{ id: OverlayKey; icon: any; label: string }> = [
 ];
 
 export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => void }) {
+  const { setIsOpen } = useRockerGlobal();
+  
   // Fetch current user profile
   const { data: profile } = useQuery({
     queryKey: ['currentProfile'],
@@ -42,8 +45,7 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
   };
 
   const handleRockerClick = () => {
-    // Navigate to rocker/AI assistant
-    window.dispatchEvent(new CustomEvent('open-rocker'));
+    setIsOpen(true);
   };
 
   return (
