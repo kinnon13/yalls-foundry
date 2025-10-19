@@ -14,6 +14,7 @@ import { AppearanceSheet } from '@/components/profile/AppearanceSheet';
 import { ProfileFeedTab } from '@/components/profile/ProfileFeedTab';
 import { PublicAppPack } from '@/components/profile/PublicAppPack';
 import { ConnectionActions } from '@/components/profile/ConnectionActions';
+import { MessageButton } from '@/components/profile/MessageButton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
@@ -137,9 +138,13 @@ export default function ProfilePage() {
           />
         </div>
 
-        {/* Connection Actions */}
+        {/* Connection Actions & Messaging */}
         {!profile.isOwner && (
-          <div className="mb-8">
+          <div className="mb-8 space-y-4">
+            <MessageButton 
+              recipientId={profile.user_id}
+              recipientName={profile.display_name || 'User'}
+            />
             <ConnectionActions 
               entityId={profile.id}
               entityName={profile.display_name || 'User'}

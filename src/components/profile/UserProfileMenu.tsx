@@ -79,6 +79,13 @@ export function UserProfileMenu() {
   // Backend apps available to all profiles
   const backendApps: BackendApp[] = [
     {
+      id: 'messages',
+      label: 'Messages',
+      icon: Network,
+      route: '/messages',
+      description: 'Direct messages & chat',
+    },
+    {
       id: 'earnings',
       label: 'Earnings',
       icon: DollarSign,
