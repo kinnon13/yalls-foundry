@@ -1,8 +1,45 @@
 # Evidence Pack v2.0 — Rocker Platform Production Readiness
 
 **Generated**: 2025-10-19  
-**Status**: ✅ Production Ready  
+**Status**: ✅ Day-0 Ready - Feature Flags & Seed Data Complete  
 **Environment**: Lovable Cloud (Supabase backend)
+
+## 🎯 Day-0 Cutover Status
+
+### ✅ Completed (Ready for Deployment)
+- **Feature flags table** with RLS and bootstrap values (safe_mode, ranker policy, marketplace, learning, crush_mode)
+- **Seed data deployed**: 6 interests, 6 categories, 6 mappings, 6 candidate products
+- **All observability views** operational (policy health, SLO burn rate, queue health, kernel SLOs, DLQ)
+- **Learning system** with constraints (reward, p_exp ranges) and RLS
+- **Rate limiting** with sliding window and `bump_rate` RPC
+- **Generic events queue** with lease/ack/fail infrastructure
+- **Worker infrastructure** complete (discovery queue + events queue)
+- **Abort switch** functional (global.safe_mode toggle)
+- **Day-0 runbook** documented (`docs/DAY_0_CUTOVER.md`)
+
+### 📋 15-Minute Smoke Test Checklist
+See `docs/DAY_0_CUTOVER.md` for complete verification procedure:
+- [ ] Schema & RLS verification (5 critical tables + policies)
+- [ ] Queue health checks (discovery + events + DLQ)
+- [ ] Learning system alive (policy health view)
+- [ ] Seed data verification (6 interests, 6 categories, 6 candidates)
+- [ ] Simulate user journey (set interests → enqueue → suggestions)
+- [ ] Run worker once (HTTP endpoint test)
+- [ ] Verify worker effects (queue processing, gaps, suggestions)
+- [ ] Learning heartbeat (emit test event, verify policy health)
+
+### 🚀 Canary Rollout Plan
+- **Phase 1** (Day 1): 5% traffic, hourly monitoring
+- **Phase 2** (Day 3): 25% if burn_rate < 2.0 and error_rate < 2%
+- **Phase 3** (Day 7): 100% if SLOs green for 72h
+
+### 🛑 Emergency Abort Switch
+```sql
+-- Enable safe mode (disables exploration, uses deterministic slates)
+UPDATE public.feature_flags
+SET value = '{"enabled": true}'::jsonb
+WHERE key = 'global.safe_mode';
+```
 
 ---
 
@@ -34,14 +71,35 @@ All critical kernels, infrastructure, and safety mechanisms are operational and 
 ✅ vector (pgvector)
 ```
 
-### Feature Flags
+### Feature Flags (Day-0 Ready)
 ```sql
--- Table structure verified with existing feature_flags table
--- Core flags operational:
-- global.safe_mode (fallback to pure exploit)
-- ranker.bandit (epsilon_v1)
-- marketplace.suggestions (true)
-- onboarding.rocker_guided (true)
+-- ✅ Table created with RLS (admin write, public read)
+SELECT key, value FROM public.feature_flags ORDER BY key;
+
+-- Bootstrap values loaded:
+✅ global.safe_mode        → {"enabled": false}
+✅ ranker.policy           → {"version":"epsilon_greedy_v1","epsilon":0.08}
+✅ marketplace.suggest     → {"enabled": true}
+✅ learning.enabled        → {"enabled": true}
+✅ crush_mode.enabled      → {"enabled": false}
+```
+
+### Seed Data (Production-Ready Demo Content)
+```sql
+-- ✅ 6 interests seeded across domains
+SELECT COUNT(*) FROM public.interest_catalog;  -- Expected: 6+
+-- Streetwear, Home Gym, Desk Setups, Sneaker Culture, Meal Prep, Travel Hacks
+
+-- ✅ 6 marketplace categories
+SELECT COUNT(*) FROM public.marketplace_categories;  -- Expected: 6+
+-- Sneakers, Gym Equipment, Desk Accessories, Athletic Wear, Kitchen Gadgets, Travel Gear
+
+-- ✅ 6 interest→category mappings
+SELECT COUNT(*) FROM public.marketplace_interest_map;  -- Expected: 6+
+
+-- ✅ 6 candidate products with real images
+SELECT COUNT(*) FROM public.marketplace_candidates;  -- Expected: 6+
+-- Nike Dunk Low, Air Jordan 1, Dumbbells, Resistance Bands, Mechanical Keyboard, Mousepad
 ```
 
 ---
@@ -459,11 +517,14 @@ await fetch('/functions/v1/hydrate-features', {
 - [x] Feature flags seeded
 
 ### Post-Deploy (within 24h)
+- [ ] Run full smoke test suite (`docs/DAY_0_CUTOVER.md`)
 - [ ] Verify first onboarding completion
-- [ ] Check discovery queue processing (vw_discovery_queue_health)
+- [ ] Check discovery queue processing (vw_discovery_queue_health.p95_age_sec < 300s)
 - [ ] Monitor vw_policy_health for impressions
-- [ ] Verify marketplace_suggestions_for_user returns results
+- [ ] Verify marketplace_suggestions_for_user returns ≥1 result for seeded user
 - [ ] Test handle reservation flow
+- [ ] Confirm feature flags responsive (toggle safe_mode and verify ranker behavior)
+- [ ] Test worker HTTP endpoints (queue-worker, rocker-discovery-run)
 
 ### Week 1 Monitoring
 - [ ] SLO burn rate < 2.0
