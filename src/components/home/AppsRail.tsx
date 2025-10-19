@@ -24,7 +24,6 @@ const ALL_APPS: Array<{ id: OverlayKey; icon: any; label: string; gradient: stri
   { id: 'earnings', icon: DollarSign, label: 'Earnings', gradient: 'from-green-500 to-emerald-500' },
   { id: 'marketplace', icon: Package, label: 'Shop', gradient: 'from-purple-500 to-pink-500' },
   { id: 'orders', icon: ShoppingCart, label: 'Orders', gradient: 'from-orange-500 to-red-500' },
-  { id: 'messages', icon: MessageCircle, label: 'Messages', gradient: 'from-blue-400 to-indigo-500' },
   { id: 'events', icon: Calendar, label: 'Events', gradient: 'from-red-500 to-rose-500' },
   { id: 'listings', icon: Receipt, label: 'Listings', gradient: 'from-yellow-500 to-amber-500' },
   { id: 'analytics', icon: BarChart3, label: 'Analytics', gradient: 'from-teal-500 to-cyan-500' },

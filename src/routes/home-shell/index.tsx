@@ -12,7 +12,6 @@ import HeaderBar from '@/components/chrome/HeaderBar';
 import Dock from '@/components/chrome/Dock';
 import AppsRail from '@/components/home/AppsRail';
 import { FeedPane } from '@/components/home/FeedPane';
-import { DashboardContent } from './DashboardContent';
 import LinkInterceptor from '@/components/chrome/LinkInterceptor';
 
 export default function HomeShell() {
@@ -35,13 +34,23 @@ export default function HomeShell() {
         <div className="grid-social">
           <AppsRail />
           
-          {/* Center - Dashboard content with MLM tree */}
-          <div className="card" style={{ 
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column'
+          {/* Center canvas - apps open as overlays */}
+          <div className="window-canvas card" style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            background: 'rgba(20, 20, 26, 0.5)',
+            position: 'relative'
           }}>
-            <DashboardContent />
+            <div style={{ 
+              textAlign: 'center', 
+              color: 'rgba(255,255,255,0.25)',
+              fontSize: '13px',
+              fontWeight: '500',
+              letterSpacing: '0.5px'
+            }}>
+              Select an app to begin
+            </div>
           </div>
           
           <FeedPane />
