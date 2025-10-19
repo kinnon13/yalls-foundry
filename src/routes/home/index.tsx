@@ -79,14 +79,14 @@ export default function HomePage() {
       <GlobalHeader className={mobileView === 'feed' ? 'hidden lg:block' : undefined} />
       <main className={cn(mobileView === 'feed' ? 'pt-0 pb-16' : 'pt-14 pb-16')}>
         {/* Desktop Layout: Sidebar + Center + Feed (large screens only) */}
-        <div className="hidden lg:flex h-[calc(100dvh-112px)] gap-6 p-6 bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20">
+        <div className="hidden lg:flex h-[calc(100dvh-112px)] gap-6 pl-2 pr-6 py-6 bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20">
           {/* Left: Y'all Library - Elevated */}
-          <div className="w-[380px] flex-shrink-0 overflow-hidden rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow">
+          <div className="w-[380px] flex-shrink-0 overflow-hidden rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow z-20">
             <AppLibrary onAppClick={handleAppClick} />
           </div>
 
           {/* Center: Content Area - Scrollable */}
-          <div className="flex-1 overflow-y-auto rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow">
+          <div className="flex-1 overflow-y-auto rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow z-10">
             <CenterContentArea
               openApps={openApps}
               activeApp={activeApp}

@@ -4,10 +4,11 @@ import {
   Building, Users, TrendingUp, Zap, 
   Package, ShoppingCart, DollarSign, MessageSquare,
   Calendar, BarChart3, Video, Settings, LucideIcon,
-  Bell, Heart, Mail
+  Bell, Heart, Mail, User
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { useRockerGlobal } from '@/lib/ai/rocker';
 
 interface AppTile {
   key: string;
@@ -36,14 +37,17 @@ const allApps: AppTile[] = [
   { key: 'notifications', label: 'Notifications', icon: Bell, description: 'Alerts & updates', category: 'Ops', color: 'text-amber-500', installed: true },
   { key: 'calendar', label: 'Calendar', icon: Calendar, description: 'Events & bookings', category: 'Ops', color: 'text-red-400', installed: true },
   { key: 'favorites', label: 'Favorites', icon: Heart, description: 'Saved items & likes', category: 'Ops', color: 'text-pink-500', installed: true },
+  { key: 'rocker', label: 'Rocker AI', icon: Sparkles, description: 'Your AI copilot', category: 'Ops', color: 'text-primary', installed: true },
   
   // Growth
+  { key: 'mlm', label: 'Affiliate', icon: Users, description: 'Grow your network', category: 'Growth', color: 'text-violet-600', installed: true },
   { key: 'analytics', label: 'Analytics', icon: BarChart3, description: 'Insights & metrics', category: 'Growth', color: 'text-slate-500', installed: true },
   
   // Creator
   { key: 'studio', label: 'Creator Studio', icon: Video, description: 'Video editing & publishing', category: 'Creator', color: 'text-rose-500' },
   
   // System
+  { key: 'profile', label: 'My Profile', icon: User, description: 'View and edit your profile', category: 'System', color: 'text-blue-600', installed: true },
   { key: 'settings', label: 'Settings', icon: Settings, description: 'App preferences', category: 'System', color: 'text-gray-500', installed: true },
 ];
 
@@ -57,7 +61,7 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
   const [scope, setScope] = useState<'installed' | 'all' | 'updates'>('installed');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-
+  const { setIsOpen } = useRockerGlobal();
   const filteredApps = allApps.filter(app => {
     // Filter by scope
     if (scope === 'installed' && !app.installed) return false;
@@ -157,12 +161,15 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
           {filteredApps.map((app) => (
             <button
               key={app.key}
-              onClick={() => onAppClick({ 
-                key: app.key, 
-                label: app.label, 
-                icon: app.icon,
-                color: app.color 
-              })}
+              onClick={() => {
+                if (app.key === 'rocker') { setIsOpen(true); return; }
+                onAppClick({ 
+                  key: app.key, 
+                  label: app.label, 
+                  icon: app.icon,
+                  color: app.color 
+                });
+              }}
               className="group relative flex flex-col items-center p-3 rounded-2xl hover:bg-accent/50 active:scale-95 transition-all duration-200"
             >
               {/* Icon - Mac style with elevation */}
