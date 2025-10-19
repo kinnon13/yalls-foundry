@@ -222,8 +222,8 @@ export default function AppsPane() {
   const gridDims = useMemo(() => {
     const innerW = Math.max(0, containerWidth - 4);
     const innerH = Math.max(0, containerHeight - 4);
-    const cols = Math.max(1, Math.floor(innerW / (tile + 12))); // 12px gap
-    const rows = Math.max(1, Math.floor(innerH / (tile + 12)));
+    const cols = Math.max(1, Math.floor(innerW / (tile + 4))); // 4px gap
+    const rows = Math.max(1, Math.floor(innerH / (tile + 4)));
     return { cols, rows };
   }, [containerWidth, containerHeight, tile]);
 
@@ -366,7 +366,7 @@ export default function AppsPane() {
           <div className="w-full h-full">
             {/* App Icons Grid - Background Layer */}
             <div 
-              className={cn("grid gap-3 place-content-center w-full h-full transition-opacity duration-200", openApp && "opacity-20")}
+              className={cn("grid gap-1 place-content-center w-full h-full transition-opacity duration-200", openApp && "opacity-20")}
               style={{
                 gridTemplateColumns: `repeat(${gridDims.cols}, ${tile}px)`,
                 gridTemplateRows: `repeat(${gridDims.rows}, ${tile}px)`,
@@ -379,7 +379,7 @@ export default function AppsPane() {
                     key={app.id}
                     onClick={() => handleAppClick(app)}
                     className={cn(
-                      "flex flex-col items-center justify-between gap-2 p-3",
+                      "flex flex-col items-center justify-between gap-1 p-1",
                       "rounded-2xl",
                       "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                     )}
