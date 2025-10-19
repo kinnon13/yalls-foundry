@@ -16,7 +16,6 @@ import { FeedPane } from '@/components/home/FeedPane';
 import LinkInterceptor from '@/components/chrome/LinkInterceptor';
 import { X } from 'lucide-react';
 import SocialFeedPane from '../home/parts/SocialFeedPane';
-import Footer from '@/components/layout/Footer';
 
 function ActiveAppContent({ appId, onClose }: { appId: OverlayKey; onClose: () => void }) {
   const config = OVERLAY_REGISTRY[appId];
@@ -141,15 +140,13 @@ export default function HomeShell() {
         </main>
         
         <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
-        <Footer />
       </div>
 
-      {/* Mobile: Full-screen feed with proper boundaries */}
+      {/* Mobile: Full-screen feed */}
       <div className="lg:hidden flex flex-col h-screen">
         <div className="flex-1 overflow-hidden bg-background">
           <SocialFeedPane />
         </div>
-        <Footer />
       </div>
       <LinkInterceptor />
     </>
