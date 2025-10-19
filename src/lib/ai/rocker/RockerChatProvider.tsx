@@ -1336,8 +1336,8 @@ export function RockerProvider({ children }: { children: ReactNode }) {
     <RockerContext.Provider value={value}>
       {children}
       
-      {/* Microphone activation banner */}
-      {voiceStatus === 'disconnected' && !initializingRef.current && !isAlwaysListening && !voiceBannerDismissed && (
+      {/* Microphone activation banner - disabled per user request */}
+      {false && voiceStatus === 'disconnected' && !initializingRef.current && !isAlwaysListening && !voiceBannerDismissed && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-card border border-primary/20 rounded-lg shadow-lg p-4 max-w-md flex items-center gap-3 z-50 animate-in slide-in-from-bottom">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
             <Mic className="h-5 w-5 text-primary" />

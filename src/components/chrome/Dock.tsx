@@ -4,13 +4,17 @@
 
 import { useOpenApp } from '@/lib/nav/useOpenApp';
 import type { OverlayKey } from '@/lib/overlay/types';
-import { MessageSquare, ShoppingBag, Calendar, Users } from 'lucide-react';
+import { MessageSquare, ShoppingBag, Calendar, Users, Zap } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { CreateButton } from '@/components/dock/CreateButton';
 
-const DOCK_APPS: Array<{ id: OverlayKey; icon: any; label: string }> = [
+const DOCK_APPS_LEFT: Array<{ id: OverlayKey; icon: any; label: string }> = [
   { id: 'messages', icon: MessageSquare, label: 'Messages' },
   { id: 'marketplace', icon: ShoppingBag, label: 'Marketplace' },
+];
+
+const DOCK_APPS_RIGHT: Array<{ id: OverlayKey; icon: any; label: string }> = [
   { id: 'events', icon: Calendar, label: 'Events' },
   { id: 'orders', icon: Users, label: 'Orders' },
 ];
@@ -37,6 +41,11 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
     window.dispatchEvent(new CustomEvent('navigate-profile'));
   };
 
+  const handleRockerClick = () => {
+    // Navigate to rocker/AI assistant
+    window.dispatchEvent(new CustomEvent('open-rocker'));
+  };
+
   return (
     <nav aria-label="Bottom dock" className="dock">
       {/* Profile Picture - First item */}
@@ -54,7 +63,8 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
         </button>
       )}
       
-      {DOCK_APPS.map(app => {
+      {/* Left side apps */}
+      {DOCK_APPS_LEFT.map(app => {
         const Icon = app.icon;
         return (
           <button
@@ -67,6 +77,33 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
           </button>
         );
       })}
+
+      {/* Center Create Button */}
+      <CreateButton />
+
+      {/* Right side apps */}
+      {DOCK_APPS_RIGHT.map(app => {
+        const Icon = app.icon;
+        return (
+          <button
+            key={app.id}
+            className="dock-icon"
+            onClick={() => onAppClick(app.id)}
+            title={app.label}
+          >
+            <Icon />
+          </button>
+        );
+      })}
+
+      {/* Rocker Icon - Last item */}
+      <button
+        className="dock-icon dock-rocker"
+        onClick={handleRockerClick}
+        title="Rocker AI"
+      >
+        <Zap className="w-7 h-7" />
+      </button>
     </nav>
   );
 }
