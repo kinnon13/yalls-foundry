@@ -168,21 +168,23 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col text-[hsl(222.2_47.4%_11.2%)] overflow-hidden">
+    <section className="flex h-full w-full flex-col text-[hsl(222.2_47.4%_11.2%)] overflow-hidden bg-black md:bg-transparent">
       {/* Sticky header (Home + Profile + Tabs) */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur">
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur md:bg-transparent md:backdrop-blur-none">
         <div className="flex items-center justify-between px-3 py-1">
           <button
             onClick={() => navigate('/home')}
-            className="text-base font-semibold hover:text-primary transition-colors"
+            className="text-base font-semibold hover:text-primary transition-colors md:hidden"
           >
             Home
           </button>
-          <h3 className="text-base font-semibold text-center">View Connected Accounts</h3>
-          <div className="w-[60px]" aria-hidden />
+          <h3 className="text-base font-semibold text-center md:hidden">View Connected Accounts</h3>
+          <div className="w-[60px] md:hidden" aria-hidden />
         </div>
-        <ProfileSummaryBar />
-        <div className="mb-1 flex items-center justify-center gap-2 pr-2 py-1">
+        <div className="md:hidden">
+          <ProfileSummaryBar />
+        </div>
+        <div className="mb-1 flex items-center justify-center gap-2 pr-2 py-1 md:hidden">
           {TABS.map((t) => (
             <button
               key={t}

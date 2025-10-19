@@ -18,19 +18,17 @@ export default function HomePage() {
 
         {/* Tablet & Desktop */}
         <div className="hidden md:block h-[calc(100vh-56px-64px)] mx-auto max-w-[1600px]">
-          <ResizablePanelGroup direction="horizontal" className="h-full hidden md:flex">
+          <ResizablePanelGroup direction="horizontal" className="h-full">
             {/* Apps (left) - resizable */}
-            <ResizablePanel defaultSize={28} minSize={12} maxSize={50}>
+            <ResizablePanel defaultSize={35} minSize={20} maxSize={50} className="hidden lg:block">
               <AppsPane />
             </ResizablePanel>
-
-            <ResizableHandle withHandle />
-
+            
+            <ResizableHandle withHandle className="hidden lg:flex" />
+            
             {/* Reels (right) */}
-            <ResizablePanel defaultSize={72} minSize={40}>
-              <div className="h-full w-full flex justify-end items-start bg-black overflow-hidden">
-                <SocialFeedPane />
-              </div>
+            <ResizablePanel defaultSize={65} minSize={50}>
+              <SocialFeedPane />
             </ResizablePanel>
           </ResizablePanelGroup>
         </div>
