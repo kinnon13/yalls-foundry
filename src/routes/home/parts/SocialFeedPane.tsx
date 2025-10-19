@@ -17,6 +17,13 @@ export default function SocialFeedPane() {
   const [entityId, setEntityId] = useState<string | null>(sp.get('entity') || null);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [feedHeight, setFeedHeight] = useState(() => 
+    Number(localStorage.getItem('feed.itemHeight') || 600)
+  );
+
+  useEffect(() => {
+    localStorage.setItem('feed.itemHeight', String(feedHeight));
+  }, [feedHeight]);
 
   // seamless drag/swipe gesture for tab switching
   const railRef = useRef<HTMLDivElement>(null);
@@ -142,6 +149,25 @@ export default function SocialFeedPane() {
             </button>
           ))}
         </div>
+        
+        {/* Size Controls */}
+        <div className="flex items-center justify-center gap-2 py-1 bg-background/80 backdrop-blur border-t border-border/50">
+          <button
+            onClick={() => setFeedHeight(Math.max(300, feedHeight - 50))}
+            className="text-xs px-2 py-1 rounded hover:bg-muted"
+            title="Decrease size"
+          >
+            −
+          </button>
+          <span className="text-xs text-muted-foreground">{feedHeight}px</span>
+          <button
+            onClick={() => setFeedHeight(Math.min(1200, feedHeight + 50))}
+            className="text-xs px-2 py-1 rounded hover:bg-muted"
+            title="Increase size"
+          >
+            +
+          </button>
+        </div>
       </div>
 
       {/* Swipeable feed container - SCROLLABLE */}
@@ -154,7 +180,7 @@ export default function SocialFeedPane() {
         >
           <div className="pr-2 pb-4">
             {items.map((item) => (
-              <div key={item.id} className="h-[calc(100vh-16rem)] snap-start">
+              <div key={item.id} className="snap-start" style={{ height: `${feedHeight}px` }}>
                 <Reel {...item} />
               </div>
             ))}
