@@ -20,7 +20,7 @@ export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [openApps, setOpenApps] = useState<AppTab[]>([]);
   const [activeApp, setActiveApp] = useState<string | null>(null);
-  const [mobileView, setMobileView] = useState<'library' | 'apps' | 'feed'>('apps');
+  const [mobileView, setMobileView] = useState<'library' | 'apps' | 'feed'>('feed');
 
   // Restore tabs from URL on mount
   useEffect(() => {
@@ -77,8 +77,8 @@ export default function HomePage() {
 
   return (
     <>
-      <GlobalHeader />
-      <main className="pt-14 pb-16">
+      <GlobalHeader className={mobileView === 'feed' ? 'hidden lg:block' : undefined} />
+      <main className={cn(mobileView === 'feed' ? 'pt-0 pb-16' : 'pt-14 pb-16')}>
         {/* Desktop Layout: Sidebar + Center + Feed (large screens only) */}
         <div className="hidden lg:flex h-[calc(100dvh-112px)]">
           {/* Left: Apps Sidebar - Fixed */}
@@ -103,79 +103,9 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Mobile/Tablet: Tabbed view with icons */}
-        <div className="lg:hidden h-[calc(100dvh-112px)] flex flex-col overflow-hidden">
-          {/* Tab bar */}
-          <div className="flex items-center justify-around border-b bg-background">
-            <button
-              onClick={() => setMobileView('library')}
-              className={cn(
-                'flex-1 flex flex-col items-center gap-1 py-3 transition-colors',
-                mobileView === 'library'
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <Store className="w-5 h-5" />
-              <span className="text-xs font-medium">Library</span>
-            </button>
-            
-            <button
-              onClick={() => setMobileView('apps')}
-              className={cn(
-                'flex-1 flex flex-col items-center gap-1 py-3 transition-colors',
-                mobileView === 'apps'
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <Grid className="w-5 h-5" />
-              <span className="text-xs font-medium">Apps</span>
-            </button>
-            
-            <button
-              onClick={() => setMobileView('feed')}
-              className={cn(
-                'flex-1 flex flex-col items-center gap-1 py-3 transition-colors',
-                mobileView === 'feed'
-                  ? 'text-primary border-b-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <MessageCircle className="w-5 h-5" />
-              <span className="text-xs font-medium">Feed</span>
-            </button>
-          </div>
-
-          {/* Content area */}
-          <div className="flex-1 overflow-hidden">
-            {mobileView === 'library' && (
-              <div className="h-full overflow-y-auto p-4 max-w-screen-md mx-auto w-full">
-                <LeftAppSidebar onAppClick={(app) => {
-                  handleAppClick(app);
-                  setMobileView('apps'); // Switch to apps view after selecting
-                }} />
-              </div>
-            )}
-            
-            {mobileView === 'apps' && (
-              <div className="h-full overflow-y-auto px-3 max-w-screen-md mx-auto w-full">
-                <CenterContentArea
-                  openApps={openApps}
-                  activeApp={activeApp}
-                  onCloseApp={handleCloseApp}
-                  onSelectApp={setActiveApp}
-                  onAppClick={handleAppClick}
-                />
-              </div>
-            )}
-            
-            {mobileView === 'feed' && (
-              <div className="h-full overflow-hidden max-w-screen-sm mx-auto w-full">
-                <SocialFeedPane />
-              </div>
-            )}
-          </div>
+        {/* Mobile/Tablet: Feed-only full-screen */}
+        <div className="lg:hidden h-[100dvh] overflow-hidden">
+          <SocialFeedPane />
         </div>
       </main>
       <BottomDock />
