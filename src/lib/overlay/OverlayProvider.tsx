@@ -118,41 +118,13 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
     close: closeOverlay  // Alias
   };
 
-  // Lock body scroll when overlay is open
-  useEffect(() => {
-    if (isOpen) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = prev; };
-    }
-  }, [isOpen]);
+  // Body scroll remains enabled; overlays are rendered in-center by HomeShell
+  // (We intentionally disable body locking here)
+  // useEffect removed
 
   return (
     <OverlayContext.Provider value={value}>
       {children}
-      
-      {/* Render active overlay with Mac-style window */}
-      {isOpen && activeKey && (
-        <div className="wm-layer">
-          <div className="wm-scrim" onClick={closeOverlay} />
-          <div className="wm-window" data-ready role="dialog" aria-modal="true">
-            <div className="wm-titlebar">
-              <div className="wm-traffic">
-                <button className="dot red" onClick={closeOverlay} aria-label="Close" />
-                <span className="dot yellow" />
-                <span className="dot green" />
-              </div>
-              <div className="wm-title">{OVERLAY_REGISTRY[activeKey]?.title || activeKey}</div>
-              <div className="wm-tools" />
-            </div>
-            <div className="wm-content">
-              <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
-                {React.createElement(OVERLAY_REGISTRY[activeKey].component, { params })}
-              </Suspense>
-            </div>
-          </div>
-        </div>
-      )}
     </OverlayContext.Provider>
   );
 }
