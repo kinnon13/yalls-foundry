@@ -8951,6 +8951,9 @@ export type Database = {
       vw_discovery_queue_health: {
         Row: {
           ct: number | null
+          high_retry_ct: number | null
+          last_activity: string | null
+          oldest_queued: string | null
           p95_age_sec: number | null
           status: string | null
         }
@@ -8958,11 +8961,18 @@ export type Database = {
       }
       vw_gap_severity: {
         Row: {
+          avg_inventory: number | null
           category: string | null
+          ct: number | null
           domain: string | null
           gap_level: string | null
-          inventory_ct: number | null
-          last_checked: string | null
+        }
+        Relationships: []
+      }
+      vw_kernel_slos: {
+        Row: {
+          p95_ms: number | null
+          path: string | null
         }
         Relationships: []
       }
