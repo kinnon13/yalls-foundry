@@ -112,16 +112,7 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col bg-white relative">
-      {/* Grid overlay for layout visualization */}
-      <div className="absolute inset-0 pointer-events-none z-50" style={{
-        backgroundImage: `
-          linear-gradient(to right, rgba(59, 130, 246, 0.1) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(59, 130, 246, 0.1) 1px, transparent 1px)
-        `,
-        backgroundSize: '20px 20px'
-      }} />
-      
+    <section className="flex h-full w-full flex-col bg-white">
       {/* Profile Header */}
       <SocialProfileHeader />
 
