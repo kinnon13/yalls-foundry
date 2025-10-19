@@ -43,7 +43,7 @@ export function RockerChatUI() {
   const aiProfile = AI_PROFILES[actorRole || 'user'];
 
   const [isMinimized, setIsMinimized] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(false); // Hidden by default for mobile
   const [currentSessionId, setCurrentSessionId] = useState<string>();
   const [showRockerLabels, setShowRockerLabels] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -157,9 +157,9 @@ export function RockerChatUI() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex w-[1000px] h-[600px] bg-background border border-border rounded-lg shadow-2xl overflow-hidden">
+    <div className="fixed bottom-0 right-0 left-0 sm:bottom-6 sm:right-6 sm:left-auto z-50 flex sm:w-[1000px] w-full h-[100dvh] sm:h-[600px] bg-background border-t sm:border border-border sm:rounded-lg shadow-2xl overflow-hidden">
       {showSidebar && (
-        <div className="w-64 flex-shrink-0">
+        <div className="w-64 flex-shrink-0 border-r border-border">
           <ConversationSidebar
             currentSessionId={currentSessionId}
             onSelectSession={handleSelectSession}
