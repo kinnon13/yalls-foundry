@@ -38,6 +38,27 @@ const CONSUMER_APPS: AppTile[] = [
   { id: 'goals', label: 'Goals', icon: Target, route: '/goals', color: 'from-indigo-500/20 to-blue-600/5' },
   { id: 'awards', label: 'Awards', icon: Award, route: '/awards', color: 'from-rose-500/20 to-pink-600/5' },
   { id: 'settings', label: 'Settings', icon: Settings, module: 'settings', color: 'from-slate-500/20 to-gray-600/5' },
+  // Test boxes for pagination
+  { id: 'test1', label: 'Test 1', icon: Plus, route: '/test1', color: 'from-red-500/20 to-red-600/5' },
+  { id: 'test2', label: 'Test 2', icon: Plus, route: '/test2', color: 'from-blue-500/20 to-blue-600/5' },
+  { id: 'test3', label: 'Test 3', icon: Plus, route: '/test3', color: 'from-green-500/20 to-green-600/5' },
+  { id: 'test4', label: 'Test 4', icon: Plus, route: '/test4', color: 'from-yellow-500/20 to-yellow-600/5' },
+  { id: 'test5', label: 'Test 5', icon: Plus, route: '/test5', color: 'from-purple-500/20 to-purple-600/5' },
+  { id: 'test6', label: 'Test 6', icon: Plus, route: '/test6', color: 'from-pink-500/20 to-pink-600/5' },
+  { id: 'test7', label: 'Test 7', icon: Plus, route: '/test7', color: 'from-indigo-500/20 to-indigo-600/5' },
+  { id: 'test8', label: 'Test 8', icon: Plus, route: '/test8', color: 'from-cyan-500/20 to-cyan-600/5' },
+  { id: 'test9', label: 'Test 9', icon: Plus, route: '/test9', color: 'from-teal-500/20 to-teal-600/5' },
+  { id: 'test10', label: 'Test 10', icon: Plus, route: '/test10', color: 'from-lime-500/20 to-lime-600/5' },
+  { id: 'test11', label: 'Test 11', icon: Plus, route: '/test11', color: 'from-orange-500/20 to-orange-600/5' },
+  { id: 'test12', label: 'Test 12', icon: Plus, route: '/test12', color: 'from-rose-500/20 to-rose-600/5' },
+  { id: 'test13', label: 'Test 13', icon: Plus, route: '/test13', color: 'from-violet-500/20 to-violet-600/5' },
+  { id: 'test14', label: 'Test 14', icon: Plus, route: '/test14', color: 'from-fuchsia-500/20 to-fuchsia-600/5' },
+  { id: 'test15', label: 'Test 15', icon: Plus, route: '/test15', color: 'from-amber-500/20 to-amber-600/5' },
+  { id: 'test16', label: 'Test 16', icon: Plus, route: '/test16', color: 'from-emerald-500/20 to-emerald-600/5' },
+  { id: 'test17', label: 'Test 17', icon: Plus, route: '/test17', color: 'from-sky-500/20 to-sky-600/5' },
+  { id: 'test18', label: 'Test 18', icon: Plus, route: '/test18', color: 'from-red-500/20 to-red-600/5' },
+  { id: 'test19', label: 'Test 19', icon: Plus, route: '/test19', color: 'from-blue-500/20 to-blue-600/5' },
+  { id: 'test20', label: 'Test 20', icon: Plus, route: '/test20', color: 'from-green-500/20 to-green-600/5' },
 ];
 
 // Management apps - only visible if user owns relevant entity type
