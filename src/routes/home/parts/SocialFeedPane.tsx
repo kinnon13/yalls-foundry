@@ -156,9 +156,9 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col text-[hsl(222.2_47.4%_11.2%)] overflow-hidden bg-black md:bg-transparent">
+    <section className="flex h-full w-full flex-col text-[hsl(222.2_47.4%_11.2%)] overflow-hidden bg-black">
       {/* Sticky header (Home + Profile + Tabs) */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur md:bg-transparent md:backdrop-blur-none">
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur">
         <div className="flex items-center justify-between px-3 py-1">
           <button
             onClick={() => navigate('/home')}
@@ -193,7 +193,7 @@ export default function SocialFeedPane() {
       {/* Swipeable feed container - SCROLLABLE */}
       <div 
         ref={railRef}
-        className="relative flex-1 w-full overflow-y-auto overflow-x-hidden select-none touch-pan-y bg-transparent"
+        className="relative flex-1 w-full overflow-y-auto overflow-x-hidden select-none touch-pan-y bg-black"
       >
         <div 
           className="h-full w-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
