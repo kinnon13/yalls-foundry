@@ -76,7 +76,7 @@ export default function UserProfileView({ userId, onBack, onViewProfile }: UserP
   // Check if profile is favorited
   const { data: isFavorited = false } = useQuery({
     queryKey: ['is-favorited', currentUserId, userId],
-    enabled: !!currentUserId,
+    enabled: !!currentUserId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId),
     queryFn: async () => {
       const { data } = await supabase
         .from('user_pins')
@@ -94,6 +94,11 @@ export default function UserProfileView({ userId, onBack, onViewProfile }: UserP
   const toggleFavorite = useMutation({
     mutationFn: async () => {
       if (!currentUserId) throw new Error('Not signed in');
+      
+      // Prevent favoriting mock profiles with non-UUID IDs
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+        throw new Error('Cannot favorite this profile');
+      }
       
       if (isFavorited) {
         // Remove favorite
@@ -250,7 +255,8 @@ export default function UserProfileView({ userId, onBack, onViewProfile }: UserP
             onClick={() => toggleFavorite.mutate()} 
             variant={isFavorited ? 'default' : 'outline'} 
             size="icon"
-            disabled={!currentUserId}
+            disabled={!currentUserId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)}
+            title={!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId) ? "Cannot favorite demo profiles" : ""}
           >
             <Star className={cn("h-4 w-4", isFavorited && "fill-current")} />
           </Button>

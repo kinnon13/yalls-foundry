@@ -111,15 +111,28 @@ function useFavoriteBubbles(userId: string | null, { publicOnly = false }: { pub
       const { data: pins, error } = await q;
       if (error || !pins?.length) return [] as Bubble[];
 
-      const ids = pins.map(p => p.ref_id);
+      // Filter out invalid UUIDs (like mock user IDs "nature1", "city1", etc.)
+      const validUuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const validIds = pins
+        .map(p => p.ref_id)
+        .filter(id => typeof id === 'string' && validUuidPattern.test(id));
+
+      if (validIds.length === 0) return [] as Bubble[];
+
       const { data: ents } = await supabase
         .from('entities')
         .select('id, display_name, handle, kind, status, metadata, is_mock')
-        .in('id', ids.map(id => id as any));
+        .in('id', validIds);
 
       const map = new Map(ents?.map(e => [e.id, e]) ?? []);
       return pins
-        .map(p => map.get(p.ref_id as any))
+        .map(p => {
+          // Skip invalid UUIDs
+          if (typeof p.ref_id !== 'string' || !validUuidPattern.test(p.ref_id)) {
+            return null;
+          }
+          return map.get(p.ref_id as any);
+        })
         .filter(Boolean)
         .map(formatBubble) as Bubble[];
     }
