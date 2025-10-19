@@ -10,11 +10,11 @@ const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
 type Turn = { role: "user" | "assistant"; content: string };
 
-function systemPrompt(context: any) {
+function systemPrompt(context: any, guardrails: any) {
   const memories = context?.memories || [];
   const interests = context?.top_interests || [];
   
-  return `You are Rocker: upbeat, curious, concise AI assistant. Act like meeting someone new—ask 1 thoughtful question at a time when useful.
+  const basePrompt = `You are Rocker: upbeat, curious, concise AI assistant. Act like meeting someone new—ask 1 thoughtful question at a time when useful.
 
 Context about user:
 - Interests: ${interests.map((i: any) => i.id).join(", ") || "none yet"}
@@ -26,10 +26,37 @@ Guidelines:
 2. Prefer button choices first (2-4 options), then free-text
 3. Reflect back 1 specific detail they mentioned
 4. Be warm, capable, playful - zero cringe
-5. Never ask about medical/financial/identity topics
-6. Keep responses under 3 sentences unless explaining something complex
+5. Keep responses under 3 sentences unless explaining something complex
 
 If user has <3 interests or sparse memories, ask a focused question to learn more.`;
+
+  // Build guardrails section
+  const guardrailsList = [];
+  
+  if (guardrails?.civic_integrity_enabled) {
+    guardrailsList.push("• CIVIC INTEGRITY: Refuse political persuasion, election influence, partisan advocacy, or targeted voting messaging. Remain neutral on candidates, policies, and political outcomes.");
+  }
+  
+  if (guardrails?.toxicity_filter_enabled) {
+    guardrailsList.push("• TOXICITY: Block harassment, hate speech, threats, slurs, or abusive language. Maintain respectful tone.");
+  }
+  
+  if (guardrails?.harm_prevention_enabled) {
+    guardrailsList.push("• HARM PREVENTION: Refuse guidance on violence, self-harm, illegal activities, fraud, hacking, or dangerous behavior. Redirect to appropriate resources for crisis situations.");
+  }
+  
+  if (guardrails?.manipulation_detection_enabled) {
+    guardrailsList.push("• MANIPULATION: Detect and refuse social engineering, phishing attempts, credential requests, deceptive patterns, or exploitation attempts.");
+  }
+  
+  // Always include basic safety
+  guardrailsList.push("• BASIC SAFETY: No medical/financial advice; avoid collecting unnecessary PII.");
+
+  const guardrailsSection = guardrailsList.length > 0 
+    ? `\n\nSAFETY GUARDRAILS (ENFORCED):\n${guardrailsList.join('\n')}`
+    : '';
+
+  return basePrompt + guardrailsSection;
 }
 
 async function fetchContext(supabase: any, userId: string, threadId: string) {
@@ -150,7 +177,19 @@ Deno.serve(async (req) => {
 
     // Fetch context
     const ctx = await fetchContext(supabase, user.id, thread_id);
-    const sys = systemPrompt(ctx);
+    
+    // Get guardrail settings (defaults to all enabled for non-super-admins)
+    const { data: guardrailsData } = await supabase.rpc('get_guardrail_settings', { 
+      p_user_id: user.id 
+    });
+    const guardrails = guardrailsData || {
+      civic_integrity_enabled: true,
+      toxicity_filter_enabled: true,
+      harm_prevention_enabled: true,
+      manipulation_detection_enabled: true,
+    };
+    
+    const sys = systemPrompt(ctx, guardrails);
 
     // Build message window
     const recent: Turn[] = ctx.history.slice(-8);

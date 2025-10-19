@@ -8063,6 +8063,36 @@ export type Database = {
         }
         Relationships: []
       }
+      super_admin_guardrails: {
+        Row: {
+          civic_integrity_enabled: boolean
+          harm_prevention_enabled: boolean
+          id: string
+          manipulation_detection_enabled: boolean
+          toxicity_filter_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          civic_integrity_enabled?: boolean
+          harm_prevention_enabled?: boolean
+          id?: string
+          manipulation_detection_enabled?: boolean
+          toxicity_filter_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          civic_integrity_enabled?: boolean
+          harm_prevention_enabled?: boolean
+          id?: string
+          manipulation_detection_enabled?: boolean
+          toxicity_filter_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           created_at: string
@@ -10320,6 +10350,10 @@ export type Database = {
           start_at: string
           title: string
         }[]
+      }
+      get_guardrail_settings: {
+        Args: { p_user_id: string }
+        Returns: Json
       }
       get_knowledge_scope_filter: {
         Args: { p_tenant_id?: string; p_user_id: string }

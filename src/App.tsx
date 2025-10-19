@@ -53,6 +53,7 @@ const MarketplaceIndex = lazy(() => import('./routes/marketplace/index'));
 const ListingDetail = lazy(() => import('./routes/listings/[id]'));
 const CartPage = lazy(() => import('./routes/cart/index'));
 const OrdersIndex = lazy(() => import('./routes/orders/index'));
+const GuardrailsControl = lazy(() => import('./routes/admin/guardrails'));
 const OrderDetail = lazy(() => import('./routes/orders/[id]'));
 const MLMPage = lazy(() => import('./routes/mlm/index'));
 const AdminDashboard = lazy(() => import('./routes/admin'));
@@ -251,6 +252,16 @@ function AppContent() {
             element={
               <Suspense fallback={<div>Loading...</div>}>
                 <AdminDashboard />
+              </Suspense>
+            } 
+          />
+          
+          {/* Super Admin Guardrails Control */}
+          <Route 
+            path="/admin/guardrails" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <GuardrailsControl />
               </Suspense>
             } 
           />
