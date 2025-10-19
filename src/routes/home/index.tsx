@@ -79,8 +79,8 @@ export default function HomePage() {
     <>
       <GlobalHeader />
       <main className="pt-14 pb-16">
-        {/* Desktop/Tablet Layout: Sidebar + Center + Feed */}
-        <div className="hidden md:flex h-[calc(100vh-112px)]">
+        {/* Desktop Layout: Sidebar + Center + Feed (large screens only) */}
+        <div className="hidden lg:flex h-[calc(100vh-112px)]">
           {/* Left: Apps Sidebar - Fixed */}
           <div className="w-[280px] flex-shrink-0 overflow-hidden">
             <LeftAppSidebar onAppClick={handleAppClick} />
@@ -104,7 +104,7 @@ export default function HomePage() {
         </div>
 
         {/* Mobile/Tablet: Tabbed view with icons */}
-        <div className="md:hidden h-[calc(100vh-112px)] flex flex-col">
+        <div className="lg:hidden h-[calc(100vh-112px)] flex flex-col">
           {/* Tab bar */}
           <div className="flex items-center justify-around border-b bg-background">
             <button
