@@ -313,13 +313,8 @@ export function FavoritesBar({
   const { data: realBubbles = [], isLoading } = useFavoriteBubbles(userId, { publicOnly });
   const { add, remove } = useFavoriteMutations(userId);
 
-  // Ensure Rocker is always first and pinned
-  const ROCKER_ID = '00000000-0000-0000-0000-000000000001';
-  const rockerBubble = realBubbles.find(b => b.id === ROCKER_ID);
-  const otherBubbles = realBubbles.filter(b => b.id !== ROCKER_ID);
-  
-  // Put Rocker first, then the rest
-  const bubbles = rockerBubble ? [rockerBubble, ...otherBubbles] : realBubbles;
+  // Filter out AI entities - they have their own UI (RockerDock)
+  const bubbles = realBubbles.filter(b => b.kind !== 'ai');
 
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -360,52 +355,35 @@ export function FavoritesBar({
         )}
 
         {/* Real bubbles */}
-        {bubbles.map((b) => {
-          const isRocker = b.id === ROCKER_ID;
-          const isAI = isRocker || b.kind === 'ai';
-          return (
-            <button
-              key={b.id}
-              role="option"
-              aria-label={`Open ${b.display_name}`}
-              className="relative group shrink-0 hover:scale-105 transition-transform"
-              title={b.display_name}
-              onClick={() => handleBubbleClick(b.id)}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                // Don't allow removing Rocker
-                if (!isRocker) {
-                  remove.mutate(b.id);
-                }
+        {bubbles.map((b) => (
+          <button
+            key={b.id}
+            role="option"
+            aria-label={`Open ${b.display_name}`}
+            className="relative group shrink-0 hover:scale-105 transition-transform"
+            title={b.display_name}
+            onClick={() => handleBubbleClick(b.id)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              remove.mutate(b.id);
+            }}
+          >
+            <div
+              className="rounded-full overflow-hidden grid place-items-center bg-gradient-to-br from-background to-muted"
+              style={{
+                width: size,
+                height: size,
+                border: `2px solid ${ringColor(b.kind)}`
               }}
             >
-              <div
-                className={cn(
-                  "rounded-full overflow-hidden grid place-items-center",
-                  isAI && !b.avatar_url ? "bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-400" : "bg-gradient-to-br from-background to-muted"
-                )}
-                style={{
-                  width: size,
-                  height: size,
-                  border: `2px solid ${ringColor(isAI ? 'ai' : b.kind)}`
-                }}
-              >
-                {b.avatar_url ? (
-                  <img src={b.avatar_url} alt={b.display_name} className="w-full h-full object-cover" />
-                ) : isAI ? (
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                ) : (
-                  <span className="text-sm font-medium">{initials(b.display_name)}</span>
-                )}
-              </div>
-              {isRocker && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-full border-2 border-background animate-pulse" title="AI Assistant" />
+              {b.avatar_url ? (
+                <img src={b.avatar_url} alt={b.display_name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-medium">{initials(b.display_name)}</span>
               )}
-            </button>
-          );
-        })}
+            </div>
+          </button>
+        ))}
 
         {/* Trailing + bubble — ALWAYS visible */}
         {!publicOnly && (
