@@ -5089,6 +5089,48 @@ export type Database = {
           },
         ]
       }
+      learning_events: {
+        Row: {
+          candidate_id: string
+          context: Json
+          explored: boolean
+          id: number
+          p_exp: number
+          policy: string
+          reward: number | null
+          score: number | null
+          surface: string
+          ts: string
+          user_id: string
+        }
+        Insert: {
+          candidate_id: string
+          context?: Json
+          explored?: boolean
+          id?: number
+          p_exp: number
+          policy: string
+          reward?: number | null
+          score?: number | null
+          surface: string
+          ts?: string
+          user_id: string
+        }
+        Update: {
+          candidate_id?: string
+          context?: Json
+          explored?: boolean
+          id?: number
+          p_exp?: number
+          policy?: string
+          reward?: number | null
+          score?: number | null
+          surface?: string
+          ts?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ledger_entries: {
         Row: {
           amount_cents: number
@@ -7081,6 +7123,24 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          bucket: string
+          count: number
+          expires_at: string
+        }
+        Insert: {
+          bucket: string
+          count?: number
+          expires_at: string
+        }
+        Update: {
+          bucket?: string
+          count?: number
+          expires_at?: string
+        }
+        Relationships: []
+      }
       reposts: {
         Row: {
           caption: string | null
@@ -8996,6 +9056,26 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_policy_health: {
+        Row: {
+          avg_epsilon: number | null
+          avg_reward: number | null
+          exploration_rate: number | null
+          impression_count: number | null
+          last_impression: string | null
+          policy: string | null
+          reward_stddev: number | null
+        }
+        Relationships: []
+      }
+      vw_slo_burnrate: {
+        Row: {
+          burn_rate: number | null
+          calculated_at: string | null
+          surface: string | null
+        }
+        Relationships: []
+      }
       vw_suggestions_coverage: {
         Row: {
           coverage_pct: number | null
@@ -9317,6 +9397,10 @@ export type Database = {
       bump_counter: {
         Args: { p_key: string; p_ttl_sec?: number }
         Returns: number
+      }
+      bump_rate: {
+        Args: { p_bucket: string; p_limit: number; p_window_seconds: number }
+        Returns: boolean
       }
       bytea: {
         Args: { "": unknown } | { "": unknown }
@@ -9761,6 +9845,10 @@ export type Database = {
       follow_and_pin: {
         Args: { p_apps?: string[]; p_business_id: string }
         Returns: Json
+      }
+      gc_learning_events: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       geography: {
         Args: { "": string } | { "": unknown }
