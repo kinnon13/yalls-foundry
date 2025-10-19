@@ -53,10 +53,11 @@ export default function SocialProfileHeader() {
   };
 
   return (
-    <div className="bg-background px-4 py-3 border-b">
-      {/* Profile picture with gradient ring */}
-      <div className="flex justify-center mb-3">
-        <div className="relative">
+    <div className="bg-background px-4 py-4 border-b">
+      {/* Top row: Avatar + Stats */}
+      <div className="flex items-start gap-4 mb-3">
+        {/* Profile picture with gradient ring */}
+        <div className="relative flex-shrink-0">
           <div 
             className="w-20 h-20 rounded-full p-[3px]"
             style={{
@@ -68,33 +69,34 @@ export default function SocialProfileHeader() {
             </div>
           </div>
         </div>
+
+        {/* Username + Stats */}
+        <div className="flex-1 min-w-0">
+          {/* Username with verified badge */}
+          <div className="flex items-center gap-1.5 mb-3">
+            <h1 className="text-base font-semibold">{handle}</h1>
+            <svg className="w-4 h-4 text-blue-500 flex-shrink-0" viewBox="0 0 40 40" fill="currentColor">
+              <path d="M19.998.002C8.952.002 0 8.954 0 19.998s8.952 19.996 19.998 19.996 19.998-8.952 19.998-19.996S31.044.002 19.998.002zm10.292 14.866l-11.764 11.764c-.292.292-.678.438-1.061.438-.383 0-.77-.146-1.061-.438l-5.884-5.882c-.586-.586-.586-1.535 0-2.121.586-.586 1.535-.586 2.121 0l4.823 4.823 10.703-10.703c.586-.586 1.535-.586 2.121 0 .588.585.588 1.534.002 2.119z"/>
+            </svg>
+          </div>
+
+          {/* Stats */}
+          <div className="flex gap-4">
+            <div>
+              <span className="font-semibold text-sm">{formatNumber(totals.followers)}</span>
+              <span className="text-xs text-muted-foreground ml-1">followers</span>
+            </div>
+            <div>
+              <span className="font-semibold text-sm">{formatNumber(totals.following)}</span>
+              <span className="text-xs text-muted-foreground ml-1">following</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Username with verified badge */}
-      <div className="text-center mb-2">
-        <div className="flex items-center justify-center gap-1.5">
-          <h1 className="text-sm font-semibold">{handle}</h1>
-          <svg className="w-4 h-4 text-blue-500" viewBox="0 0 40 40" fill="currentColor">
-            <path d="M19.998.002C8.952.002 0 8.954 0 19.998s8.952 19.996 19.998 19.996 19.998-8.952 19.998-19.996S31.044.002 19.998.002zm10.292 14.866l-11.764 11.764c-.292.292-.678.438-1.061.438-.383 0-.77-.146-1.061-.438l-5.884-5.882c-.586-.586-.586-1.535 0-2.121.586-.586 1.535-.586 2.121 0l4.823 4.823 10.703-10.703c.586-.586 1.535-.586 2.121 0 .588.585.588 1.534.002 2.119z"/>
-          </svg>
-        </div>
-        <p className="text-sm text-foreground mt-0.5">{name}</p>
-      </div>
-
-      {/* Stats */}
-      <div className="flex justify-center gap-6 mb-3">
-        <div className="text-center">
-          <div className="text-sm font-semibold">{formatNumber(totals.followers)}</div>
-          <div className="text-xs text-muted-foreground">followers</div>
-        </div>
-        <div className="text-center">
-          <div className="text-sm font-semibold">{formatNumber(totals.following)}</div>
-          <div className="text-xs text-muted-foreground">following</div>
-        </div>
-      </div>
-
-      {/* Bio */}
-      <div className="text-center text-xs space-y-0.5 mb-3">
+      {/* Name + Bio */}
+      <div className="text-sm space-y-1">
+        <p className="font-semibold">{name}</p>
         <p className="text-foreground">utah | 📧 wecklesco@gmail.com</p>
         <p className="text-foreground">@{handle}</p>
       </div>
