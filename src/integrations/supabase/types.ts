@@ -8172,6 +8172,10 @@ export type Database = {
         }
         Returns: Json
       }
+      auto_pin_rocker_for_user: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       badge_grant: {
         Args: {
           p_badge_id: string
@@ -10806,7 +10810,7 @@ export type Database = {
       discount_type: "percent" | "amount"
       draft_kind: "post" | "listing" | "event"
       draft_status: "draft" | "scheduled" | "published"
-      entity_kind: "person" | "business" | "horse" | "event"
+      entity_kind: "person" | "business" | "horse" | "event" | "ai"
       entity_status: "unclaimed" | "claimed" | "verified"
       entity_type:
         | "profile"
@@ -11002,7 +11006,7 @@ export const Constants = {
       discount_type: ["percent", "amount"],
       draft_kind: ["post", "listing", "event"],
       draft_status: ["draft", "scheduled", "published"],
-      entity_kind: ["person", "business", "horse", "event"],
+      entity_kind: ["person", "business", "horse", "event", "ai"],
       entity_status: ["unclaimed", "claimed", "verified"],
       entity_type: [
         "profile",
