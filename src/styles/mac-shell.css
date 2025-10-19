@@ -339,10 +339,10 @@ body {
 .wm-scrim {
   position: absolute;
   inset: 0;
-  background: var(--scrim);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(2px);
   pointer-events: auto;
-  animation: fade-in 0.2s ease-out;
+  animation: fade-in 0.15s ease-out;
 }
 
 .wm-window {
@@ -350,30 +350,27 @@ body {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: min(calc(100vw - 48px), 1000px);
-  height: min(calc(100vh - 140px), 680px);
-  border-radius: 18px;
-  background: rgba(20, 20, 26, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: var(--shadow-xxl);
-  backdrop-filter: var(--blur);
+  width: min(calc(100vw - 48px), 960px);
+  height: min(calc(100vh - 140px), 640px);
+  border-radius: 16px;
+  background: rgba(12, 12, 14, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.55);
+  backdrop-filter: saturate(180%) blur(24px);
   pointer-events: auto;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: window-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 0.92;
+  transform: translate(-50%, -50%) scale(0.98);
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-@keyframes window-enter {
-  from {
-    transform: translate(-50%, -54%) scale(0.96);
-    opacity: 0;
-  }
-  to {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
+.wm-window[data-ready] {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }
+
 
 @keyframes fade-in {
   from { opacity: 0; }
@@ -462,14 +459,14 @@ body {
   background: rgba(255, 255, 255, 0.25);
 }
 
-/* Mobile */
+/* Mobile - fullscreen sheet */
 @media (max-width: 768px) {
   .grid-social {
     grid-template-columns: 1fr;
   }
   
   .apps-rail,
-  .feed {
+  .feed-pane {
     display: none;
   }
   
@@ -478,5 +475,10 @@ body {
     height: calc(100vh - var(--header-h) - var(--dock-h));
     top: calc(50% + var(--header-h) / 2 - var(--dock-h) / 2);
     border-radius: 0;
+    transform: translate(-50%, -50%);
+  }
+  
+  .wm-window[data-ready] {
+    transform: translate(-50%, -50%);
   }
 }

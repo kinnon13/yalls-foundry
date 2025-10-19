@@ -118,6 +118,15 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
     close: closeOverlay  // Alias
   };
 
+  // Lock body scroll when overlay is open
+  useEffect(() => {
+    if (isOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [isOpen]);
+
   return (
     <OverlayContext.Provider value={value}>
       {children}
@@ -126,7 +135,7 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
       {isOpen && activeKey && (
         <div className="wm-layer">
           <div className="wm-scrim" onClick={closeOverlay} />
-          <div className="wm-window" data-ready>
+          <div className="wm-window" data-ready role="dialog" aria-modal="true">
             <div className="wm-titlebar">
               <div className="wm-traffic">
                 <button className="dot red" onClick={closeOverlay} aria-label="Close" />
