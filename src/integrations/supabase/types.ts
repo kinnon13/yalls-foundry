@@ -7686,12 +7686,16 @@ export type Database = {
           folder_id: string | null
           id: string
           is_public: boolean
+          lock_reason: string | null
+          locked_until: string | null
           metadata: Json | null
+          origin: string
           pin_type: Database["public"]["Enums"]["pin_type"]
           ref_id: string
           section: string | null
           sort_index: number | null
           title: string | null
+          use_count: number
           user_id: string
         }
         Insert: {
@@ -7699,12 +7703,16 @@ export type Database = {
           folder_id?: string | null
           id?: string
           is_public?: boolean
+          lock_reason?: string | null
+          locked_until?: string | null
           metadata?: Json | null
+          origin?: string
           pin_type: Database["public"]["Enums"]["pin_type"]
           ref_id: string
           section?: string | null
           sort_index?: number | null
           title?: string | null
+          use_count?: number
           user_id: string
         }
         Update: {
@@ -7712,12 +7720,16 @@ export type Database = {
           folder_id?: string | null
           id?: string
           is_public?: boolean
+          lock_reason?: string | null
+          locked_until?: string | null
           metadata?: Json | null
+          origin?: string
           pin_type?: Database["public"]["Enums"]["pin_type"]
           ref_id?: string
           section?: string | null
           sort_index?: number | null
           title?: string | null
+          use_count?: number
           user_id?: string
         }
         Relationships: [
@@ -9189,6 +9201,10 @@ export type Database = {
         Args: { p_horse_id: string; p_incentive_id: string; p_metadata?: Json }
         Returns: string
       }
+      increment_pin_use: {
+        Args: { p_pin_id: string; p_unlock_threshold?: number }
+        Returns: Json
+      }
       install_app: {
         Args: { p_app_key: string; p_config?: Json; p_entity_id: string }
         Returns: undefined
@@ -9199,6 +9215,10 @@ export type Database = {
       }
       is_biz_member: {
         Args: { _business_id: string; _min_role?: string; _user_id: string }
+        Returns: boolean
+      }
+      is_pin_locked: {
+        Args: { p_pin_id: string }
         Returns: boolean
       }
       is_super_admin: {
@@ -10890,6 +10910,10 @@ export type Database = {
       uninstall_app: {
         Args: { p_app_key: string; p_entity_id: string }
         Returns: undefined
+      }
+      unlock_expired_pins: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       unlockrows: {
         Args: { "": string }

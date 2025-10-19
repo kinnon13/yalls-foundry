@@ -104,6 +104,35 @@ export function useConnection(entityId: string) {
       const result = data as any;
       if (edgeType === 'follow') {
         setIsFollowing(result.is_connected);
+        
+        // Auto-pin business on follow (if connected)
+        if (result.is_connected && edgeType === 'follow') {
+          const { data: user } = await supabase.auth.getUser();
+          if (user.user) {
+            // Call auto-pin edge function
+            supabase.functions.invoke('auto-pin-business', {
+              body: {
+                userId: user.user.id,
+                businessId: entityId,
+                apps: apps || [],
+              },
+            }).then(({ data: pinData, error: pinError }) => {
+              if (pinError) {
+                console.error('[auto-pin] Failed:', pinError);
+              } else {
+                console.log('[auto-pin] Success:', pinData);
+                rocker.emit('pin_autocreated', {
+                  metadata: { 
+                    userId: user.user.id, 
+                    businessId: entityId, 
+                    origin: 'auto_follow',
+                    pinId: pinData?.pinId,
+                  },
+                });
+              }
+            });
+          }
+        }
       } else {
         setIsFavorited(result.is_connected);
       }
