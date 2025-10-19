@@ -69,7 +69,7 @@ export function AccountDeletionFlow({ userId }: AccountDeletionFlowProps) {
       localStorage.clear();
       sessionStorage.clear();
       
-      navigate('/login');
+      navigate('/auth?mode=login');
     } catch (error: any) {
       console.error('Error closing account:', error);
       toast({

@@ -96,14 +96,53 @@ export default function SearchPage() {
     toast.success(`Opening ${appId}`);
   };
 
-  const handleInstallApp = (appId: string) => {
-    // In production: await supabase.from('user_apps').insert({ app_id: appId })
-    toast.success(`Installed ${appId}`);
+  const handleInstallApp = async (appId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Please log in to install apps');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('user_apps')
+        .upsert({ 
+          user_id: user.id, 
+          app_id: appId, 
+          installed_at: new Date().toISOString() 
+        });
+
+      if (error) throw error;
+      toast.success(`Installed ${appId}`);
+    } catch (error) {
+      console.error('Install error:', error);
+      toast.error('Failed to install app');
+    }
   };
 
-  const handlePinApp = (appId: string) => {
-    // In production: await supabase.from('user_app_layout').upsert({ app_id: appId, pinned: true })
-    toast.success(`Pinned ${appId} to Dock`);
+  const handlePinApp = async (appId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Please log in to pin apps');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('user_app_layout')
+        .upsert({ 
+          user_id: user.id, 
+          app_id: appId, 
+          pinned: true, 
+          order_index: 999 
+        });
+
+      if (error) throw error;
+      toast.success(`Pinned ${appId} to Dock`);
+    } catch (error) {
+      console.error('Pin error:', error);
+      toast.error('Failed to pin app');
+    }
   };
 
   const handleSearch = (e: React.FormEvent) => {

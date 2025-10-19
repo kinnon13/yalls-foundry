@@ -14,7 +14,7 @@ export function useRoleGuard(requiredRole?: AppRole) {
   useEffect(() => {
     async function checkAccess() {
       if (!session?.userId) {
-        navigate('/login');
+        navigate('/auth?mode=login');
         return;
       }
 

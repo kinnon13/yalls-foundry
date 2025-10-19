@@ -7690,6 +7690,60 @@ export type Database = {
         }
         Relationships: []
       }
+      user_app_layout: {
+        Row: {
+          app_id: string
+          created_at: string
+          id: string
+          order_index: number
+          pinned: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          pinned?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          pinned?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_apps: {
+        Row: {
+          app_id: string
+          id: string
+          installed_at: string
+          settings: Json | null
+          user_id: string
+        }
+        Insert: {
+          app_id: string
+          id?: string
+          installed_at?: string
+          settings?: Json | null
+          user_id: string
+        }
+        Update: {
+          app_id?: string
+          id?: string
+          installed_at?: string
+          settings?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_consents: {
         Row: {
           telemetry_basic: boolean | null
