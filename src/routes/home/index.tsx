@@ -26,8 +26,10 @@ export default function HomePage() {
             
             <ResizableHandle withHandle className="z-30" />
             
-            <ResizablePanel defaultSize={65} minSize={50} className="relative overflow-hidden">
-              <SocialFeedPane />
+            <ResizablePanel defaultSize={65} minSize={50} className="min-w-0">
+              <div className="h-full w-full relative overflow-hidden">
+                <SocialFeedPane />
+              </div>
             </ResizablePanel>
           </ResizablePanelGroup>
         </div>
