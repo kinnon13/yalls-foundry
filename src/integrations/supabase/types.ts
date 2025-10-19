@@ -4247,6 +4247,45 @@ export type Database = {
           },
         ]
       }
+      events_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          lease_expires_at: string | null
+          lease_token: string | null
+          payload: Json
+          status: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          payload?: Json
+          status?: string
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          payload?: Json
+          status?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       farm_horses: {
         Row: {
           created_at: string
@@ -9025,6 +9064,16 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_events_queue_health: {
+        Row: {
+          ct: number | null
+          last_activity: string | null
+          p95_age_sec: number | null
+          status: string | null
+          topic: string | null
+        }
+        Relationships: []
+      }
       vw_gap_severity: {
         Row: {
           avg_inventory: number | null
@@ -9845,6 +9894,10 @@ export type Database = {
       follow_and_pin: {
         Args: { p_apps?: string[]; p_business_id: string }
         Returns: Json
+      }
+      gc_intent_signals: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       gc_learning_events: {
         Args: Record<PropertyKey, never>
