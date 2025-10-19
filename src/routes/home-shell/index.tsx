@@ -107,14 +107,14 @@ export default function HomeShell() {
           <SocialFeedPane />
         </div>
 
-        {/* Desktop: three-column precision grid */}
-        <div className="hidden lg:grid grid-social gap-6 p-6 bg-gradient-to-br from-muted/40 via-muted/30 to-background/95">
-          <div className="w-[380px] flex-shrink-0 overflow-hidden rounded-[24px] border border-border/50 bg-gradient-to-b from-background via-background to-background/98 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_12px_24px_rgba(0,0,0,0.08),0_24px_48px_rgba(0,0,0,0.12)] backdrop-blur-xl hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_32px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.16)] transition-all duration-300">
+        {/* Desktop: Pixel-Perfect Three-Column Grid */}
+        <div className="hidden lg:grid grid-social gap-8 px-8 py-8 bg-gradient-to-br from-muted/40 via-muted/30 to-background/95">
+          <div className="w-[360px] flex-shrink-0 overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-b from-background via-background to-background/98 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_12px_24px_rgba(0,0,0,0.08),0_24px_48px_rgba(0,0,0,0.12)] backdrop-blur-xl hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_32px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.16)] transition-all duration-300">
             <AppLibrary onAppClick={handleAppClick} />
           </div>
           
           {/* Center area - becomes the active app */}
-          <div className="rounded-[24px] border border-border/40 bg-gradient-to-b from-muted/30 via-background/80 to-background/95 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_16px_rgba(0,0,0,0.08)] backdrop-blur-sm hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_12px_24px_rgba(0,0,0,0.12)] transition-all duration-300" style={{ 
+          <div className="rounded-3xl border border-border/40 bg-gradient-to-b from-muted/30 via-background/80 to-background/95 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_16px_rgba(0,0,0,0.08)] backdrop-blur-sm hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_12px_24px_rgba(0,0,0,0.12)] transition-all duration-300" style={{ 
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -139,7 +139,7 @@ export default function HomeShell() {
             )}
           </div>
           
-          <div className="rounded-[24px] border border-border/50 bg-gradient-to-b from-background via-background to-background/98 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_12px_24px_rgba(0,0,0,0.08),0_24px_48px_rgba(0,0,0,0.12)] backdrop-blur-xl hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_32px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.16)] transition-all duration-300 overflow-hidden">
+          <div className="rounded-3xl border border-border/50 bg-gradient-to-b from-background via-background to-background/98 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_12px_24px_rgba(0,0,0,0.08),0_24px_48px_rgba(0,0,0,0.12)] backdrop-blur-xl hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_32px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.16)] transition-all duration-300 overflow-hidden">
             <SocialFeedPane />
           </div>
         </div>

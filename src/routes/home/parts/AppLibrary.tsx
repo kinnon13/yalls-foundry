@@ -80,42 +80,42 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Header - Enhanced typography */}
-      <div className="px-6 pt-7 pb-5 border-b border-border/40">
-        <h2 className="text-xl font-semibold tracking-tight mb-1 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">Y'all Library</h2>
+      {/* Header - Mathematical Precision */}
+      <div className="px-7 pt-8 pb-6 border-b border-border/40">
+        <h2 className="text-2xl font-semibold tracking-tight mb-1.5 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">Y'all Library</h2>
         <p className="text-sm text-muted-foreground font-medium">Your apps & tools</p>
       </div>
 
-      {/* Ask Rocker - Premium styling */}
-      <div className="px-6 py-4">
+      {/* Ask Rocker - Premium Input */}
+      <div className="px-7 pt-6 pb-5">
         <div className="relative group">
-          <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+          <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
           <Input
             placeholder="Ask Rocker anything..."
-            className="pl-10 h-11 bg-primary/5 border-primary/20 hover:border-primary/30 focus:border-primary/50 focus:bg-primary/10 text-sm rounded-xl transition-all shadow-sm"
+            className="pl-11 h-12 bg-primary/5 border-primary/20 hover:border-primary/30 focus:border-primary/50 focus:bg-primary/10 text-sm rounded-2xl transition-all shadow-sm"
           />
         </div>
       </div>
 
-      {/* Search - Refined interaction */}
-      <div className="px-6 pb-4">
+      {/* Search - Refined Interaction */}
+      <div className="px-7 pb-5">
         <div className="relative group">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
           <Input
             placeholder="Search apps..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-11 text-sm rounded-xl hover:border-primary/20 focus:border-primary/40 transition-all shadow-sm bg-muted/30"
+            className="pl-11 h-12 text-sm rounded-2xl hover:border-primary/20 focus:border-primary/40 transition-all shadow-sm bg-muted/30"
           />
         </div>
       </div>
 
-      {/* Scope tabs - Mac-style segmented control */}
-      <div className="px-6 pb-4">
-        <div className="flex gap-0.5 p-1 bg-muted/60 rounded-xl shadow-inner">
+      {/* Scope Tabs - Mac Segmented Control */}
+      <div className="px-7 pb-5">
+        <div className="flex gap-0.5 p-1 bg-muted/60 rounded-2xl shadow-inner">
           <button
             onClick={() => setScope('installed')}
-            className={`flex-1 px-4 py-2.5 rounded-[10px] text-sm font-semibold transition-all duration-200 ${
+            className={`flex-1 px-5 py-3 rounded-[14px] text-sm font-semibold transition-all duration-200 ${
               scope === 'installed' 
                 ? 'bg-background text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.12)] scale-[1.02]' 
                 : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
@@ -125,7 +125,7 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
           </button>
           <button
             onClick={() => setScope('all')}
-            className={`flex-1 px-4 py-2.5 rounded-[10px] text-sm font-semibold transition-all duration-200 ${
+            className={`flex-1 px-5 py-3 rounded-[14px] text-sm font-semibold transition-all duration-200 ${
               scope === 'all' 
                 ? 'bg-background text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.12)] scale-[1.02]' 
                 : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
@@ -136,14 +136,14 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
         </div>
       </div>
 
-      {/* Categories - Enhanced pills */}
-      <div className="px-6 pb-5 overflow-x-auto scrollbar-hide">
-        <div className="flex gap-2">
+      {/* Categories - Enhanced Pills with Proper Gaps */}
+      <div className="px-7 pb-6 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-3">
           {categories.map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+              className={`px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
                 selectedCategory === cat
                   ? 'bg-primary text-primary-foreground shadow-[0_2px_8px_rgba(0,0,0,0.12)] scale-105'
                   : 'bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground hover:scale-105'
@@ -155,9 +155,9 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
         </div>
       </div>
 
-      {/* App Grid - Premium Mac-style icons */}
-      <div className="flex-1 overflow-y-auto px-6 pb-4">
-        <div className="grid grid-cols-3 gap-5">
+      {/* App Grid - Perfect Mac Spacing */}
+      <div className="flex-1 overflow-y-auto px-7 pb-6">
+        <div className="grid grid-cols-3 gap-6">
           {filteredApps.map((app) => (
             <button
               key={app.key}
@@ -170,21 +170,21 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
                   color: app.color 
                 });
               }}
-              className="group relative flex flex-col items-center p-3 rounded-2xl hover:bg-accent/50 active:scale-95 transition-all duration-200"
+              className="group relative flex flex-col items-center p-4 rounded-3xl hover:bg-accent/50 active:scale-95 transition-all duration-200"
             >
-              {/* Icon - True Mac depth */}
-              <div className={`w-[72px] h-[72px] rounded-[22px] bg-gradient-to-br from-primary/12 via-primary/8 to-primary/4 border border-border/40 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] group-active:scale-105 transition-all duration-300 ${app.color}`}>
-                <app.icon className="w-9 h-9" strokeWidth={1.75} />
+              {/* Icon - True Mac Depth */}
+              <div className={`w-20 h-20 rounded-[26px] bg-gradient-to-br from-primary/12 via-primary/8 to-primary/4 border border-border/40 flex items-center justify-center mb-3.5 group-hover:scale-110 group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] group-active:scale-105 transition-all duration-300 ${app.color}`}>
+                <app.icon className="w-10 h-10" strokeWidth={1.75} />
               </div>
 
-              {/* Label - Perfect typography */}
+              {/* Label - Perfect Typography */}
               <span className="text-[11px] font-semibold text-center leading-tight line-clamp-2 w-full tracking-tight">
                 {app.label}
               </span>
 
-              {/* Update indicator - Precise positioning */}
+              {/* Update Indicator */}
               {app.updateAvailable && (
-                <div className="absolute top-2 right-2 w-2.5 h-2.5 bg-primary rounded-full shadow-sm animate-pulse" />
+                <div className="absolute top-3 right-3 w-2.5 h-2.5 bg-primary rounded-full shadow-sm animate-pulse" />
               )}
             </button>
           ))}
@@ -197,8 +197,8 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
         )}
       </div>
 
-      {/* Footer - Premium finish */}
-      <div className="border-t border-border/40 px-6 py-4 bg-gradient-to-t from-muted/30 to-transparent">
+      {/* Footer - Premium Finish */}
+      <div className="border-t border-border/40 px-7 py-5 bg-gradient-to-t from-muted/30 to-transparent">
         <p className="text-xs text-muted-foreground text-center font-semibold tracking-wide">
           {installedCount} app{installedCount !== 1 ? 's' : ''} installed
         </p>
