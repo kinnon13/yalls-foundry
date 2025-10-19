@@ -19,6 +19,11 @@ interface ProfileContextValue {
   setActiveProfile: (profile: ActiveProfile | null) => void;
   userProfiles: ActiveProfile[]; // All profiles user owns
   setUserProfiles: (profiles: ActiveProfile[]) => void;
+  comparisonMode: boolean;
+  setComparisonMode: (enabled: boolean) => void;
+  comparisonProfiles: ActiveProfile[];
+  setComparisonProfiles: (profiles: ActiveProfile[]) => void;
+  toggleComparisonProfile: (profile: ActiveProfile) => void;
 }
 
 const ProfileContext = createContext<ProfileContextValue | undefined>(undefined);
@@ -26,6 +31,18 @@ const ProfileContext = createContext<ProfileContextValue | undefined>(undefined)
 export function ProfileProvider({ children }: { children: ReactNode }) {
   const [activeProfile, setActiveProfile] = useState<ActiveProfile | null>(null);
   const [userProfiles, setUserProfiles] = useState<ActiveProfile[]>([]);
+  const [comparisonMode, setComparisonMode] = useState(false);
+  const [comparisonProfiles, setComparisonProfiles] = useState<ActiveProfile[]>([]);
+
+  const toggleComparisonProfile = (profile: ActiveProfile) => {
+    setComparisonProfiles((prev) => {
+      const exists = prev.find((p) => p.id === profile.id);
+      if (exists) {
+        return prev.filter((p) => p.id !== profile.id);
+      }
+      return [...prev, profile];
+    });
+  };
 
   return (
     <ProfileContext.Provider
@@ -34,6 +51,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         setActiveProfile,
         userProfiles,
         setUserProfiles,
+        comparisonMode,
+        setComparisonMode,
+        comparisonProfiles,
+        setComparisonProfiles,
+        toggleComparisonProfile,
       }}
     >
       {children}

@@ -30,6 +30,7 @@ import { useDevHUD } from '@/hooks/useDevHUD';
 import { OverlayProvider } from '@/lib/overlay/OverlayProvider';
 import { rocker } from '@/lib/rocker/event-bus';
 import { ProfileProvider } from '@/contexts/ProfileContext';
+import { BusinessComparison } from '@/components/profile/BusinessComparison';
 import '@/kernel'; // Register app contracts
 
 // 10 Canonical Routes
@@ -87,6 +88,7 @@ function AppContent() {
       <CommandPalette />
       <ProfileCreationModal />
       <RedirectHandler />
+      <BusinessComparison />
       
       <Routes>
         {/* 1. Home - Shell with Apps + Feed */}

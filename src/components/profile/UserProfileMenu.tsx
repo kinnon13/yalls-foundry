@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   User,
   Building2,
@@ -30,6 +31,7 @@ import {
   Package,
   Plus,
   X,
+  GitCompare,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/contexts/ProfileContext';
@@ -60,7 +62,16 @@ interface BackendApp {
 export function UserProfileMenu() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { activeProfile, setActiveProfile, userProfiles, setUserProfiles } = useProfile();
+  const { 
+    activeProfile, 
+    setActiveProfile, 
+    userProfiles, 
+    setUserProfiles,
+    comparisonMode,
+    setComparisonMode,
+    comparisonProfiles,
+    toggleComparisonProfile,
+  } = useProfile();
   const [user, setUser] = useState<any>(null);
   const [showAppPicker, setShowAppPicker] = useState(false);
   const { data: pins, add, remove } = useProfilePins(user?.id || null);
@@ -193,11 +204,28 @@ export function UserProfileMenu() {
   };
 
   const handleProfileSwitch = (profile: typeof userProfiles[0]) => {
-    setActiveProfile(profile);
-    toast({
-      title: 'Profile switched',
-      description: `Now viewing ${profile.name}`,
-    });
+    if (comparisonMode) {
+      toggleComparisonProfile(profile);
+    } else {
+      setActiveProfile(profile);
+      toast({
+        title: 'Profile switched',
+        description: `Now viewing ${profile.name}`,
+      });
+    }
+  };
+
+  const handleStartComparison = () => {
+    const businesses = userProfiles.filter((p) => p.type === 'business');
+    if (businesses.length < 2) {
+      toast({
+        title: 'Not enough businesses',
+        description: 'You need at least 2 businesses to compare',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setComparisonMode(true);
   };
 
   const handleLogout = async () => {
@@ -282,15 +310,28 @@ export function UserProfileMenu() {
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
                 <Building2 className="mr-2 h-4 w-4" />
-                Switch Profile
+                {comparisonMode ? 'Select Profiles' : 'Switch Profile'}
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent className="w-64">
+                {comparisonMode && (
+                  <>
+                    <DropdownMenuLabel className="text-xs text-muted-foreground">
+                      Select profiles to compare
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 {userProfiles.map((profile) => (
                   <DropdownMenuItem
                     key={profile.id}
                     onClick={() => handleProfileSwitch(profile)}
                     className="flex items-center gap-3 p-3"
                   >
+                    {comparisonMode && (
+                      <Checkbox
+                        checked={comparisonProfiles.some((p) => p.id === profile.id)}
+                      />
+                    )}
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={profile.avatarUrl} />
                       <AvatarFallback>
@@ -303,7 +344,7 @@ export function UserProfileMenu() {
                         {profile.type}
                       </span>
                     </div>
-                    {activeProfile?.id === profile.id && (
+                    {!comparisonMode && activeProfile?.id === profile.id && (
                       <Badge variant="secondary" className="ml-auto">
                         Active
                       </Badge>
@@ -312,6 +353,17 @@ export function UserProfileMenu() {
                 ))}
               </DropdownMenuSubContent>
             </DropdownMenuSub>
+            <DropdownMenuSeparator />
+          </>
+        )}
+
+        {/* Comparison Mode Toggle */}
+        {userProfiles.filter((p) => p.type === 'business').length >= 2 && (
+          <>
+            <DropdownMenuItem onClick={handleStartComparison}>
+              <GitCompare className="mr-2 h-4 w-4" />
+              Compare Businesses
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
           </>
         )}
