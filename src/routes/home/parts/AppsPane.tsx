@@ -493,7 +493,7 @@ export default function AppsPane() {
           <div onMouseDown={startSouthResize} className="absolute bottom-0 left-1/2 -translate-x-1/2 h-2 w-12 bg-primary/50 hover:bg-primary/70 cursor-ns-resize rounded-t z-10" />
 
           {/* Pagination Controls */}
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-background/80 backdrop-blur px-3 py-1 rounded-full border border-border">
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-background/80 backdrop-blur px-3 py-1 rounded-full border border-border z-20">
             <button
               onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
               disabled={currentPage === 0}
@@ -510,6 +510,22 @@ export default function AppsPane() {
               className="text-xs px-2 py-1 rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
             >
               →
+            </button>
+            <div className="h-4 w-px bg-border" />
+            <button
+              onClick={() => setTile(Math.max(64, tile - 16))}
+              className="text-xs px-2 py-1 rounded hover:bg-muted"
+              title="Decrease size"
+            >
+              −
+            </button>
+            <span className="text-xs text-muted-foreground">{tile}px</span>
+            <button
+              onClick={() => setTile(Math.min(256, tile + 16))}
+              className="text-xs px-2 py-1 rounded hover:bg-muted"
+              title="Increase size"
+            >
+              +
             </button>
           </div>
         </div>
