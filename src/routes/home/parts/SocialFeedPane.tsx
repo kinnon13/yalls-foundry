@@ -7,9 +7,10 @@ import SocialProfileHeader from './SocialProfileHeader';
 import FavoritesSection from './FavoritesSection';
 import UserProfileView from './UserProfileView';
 import { ProfileFavorites } from '@/components/profile/ProfileFavorites';
-import { X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { useFeedPosts } from '@/hooks/useFeedPosts';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 const TABS = ['following', 'for-you', 'shop', 'profile'] as const;
 type Tab = typeof TABS[number];
 
@@ -250,15 +251,21 @@ export default function SocialFeedPane() {
     });
   }, [tab, realPosts]);
 
+  const { toast } = useToast();
+  
+  const handleMenuClick = () => {
+    toast({ title: 'Navigation', description: 'Menu coming soon!' });
+  };
+
   return (
     <section className="relative flex h-full w-full flex-col">
-      {/* Mobile close (no global header on mobile) */}
+      {/* Mobile menu button */}
       <button
-        onClick={() => navigate('/?mode=manage')}
+        onClick={handleMenuClick}
         className="sm:hidden absolute top-2 right-2 z-20 h-9 w-9 rounded-full border border-border/60 bg-background/70 backdrop-blur grid place-items-center"
-        aria-label="Close feed"
+        aria-label="Open menu"
       >
-        <X className="h-5 w-5" />
+        <Menu className="h-5 w-5" />
       </button>
       {/* Header stack (measured) */}
       <div ref={headerRef}>
