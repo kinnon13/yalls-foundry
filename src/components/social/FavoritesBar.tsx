@@ -24,6 +24,7 @@ function ringColor(kind: string) {
     case 'horse': return 'hsl(160 65% 50%)';
     case 'business': return 'hsl(200 90% 55%)';
     case 'event': return 'hsl(45 85% 55%)';
+    case 'ai': return 'hsl(210 100% 60%)'; // Blue for AI
     default: return 'hsl(200 90% 55%)';
   }
 }
@@ -345,6 +346,7 @@ export function FavoritesBar({
         {/* Real bubbles */}
         {bubbles.map((b) => {
           const isRocker = b.id === ROCKER_ID;
+          const isAI = isRocker || b.kind === 'ai';
           return (
             <button
               key={b.id}
@@ -362,21 +364,28 @@ export function FavoritesBar({
               }}
             >
               <div
-                className="rounded-full overflow-hidden grid place-items-center bg-gradient-to-br from-background to-muted"
+                className={cn(
+                  "rounded-full overflow-hidden grid place-items-center",
+                  isAI ? "bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-400" : "bg-gradient-to-br from-background to-muted"
+                )}
                 style={{
                   width: size,
                   height: size,
-                  border: `2px solid ${ringColor(b.kind)}`
+                  border: `2px solid ${ringColor(isAI ? 'ai' : b.kind)}`
                 }}
               >
-                {b.avatar_url ? (
+                {isAI ? (
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                ) : b.avatar_url ? (
                   <img src={b.avatar_url} alt={b.display_name} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-sm font-medium">{initials(b.display_name)}</span>
                 )}
               </div>
               {isRocker && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full border-2 border-background" title="Pinned" />
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-full border-2 border-background animate-pulse" title="AI Assistant" />
               )}
             </button>
           );
