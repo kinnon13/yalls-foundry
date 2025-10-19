@@ -10,15 +10,59 @@ import { NewConversationModal } from './NewConversationModal';
 import { Button } from '@/components/ui/button';
 import { MessageSquarePlus } from 'lucide-react';
 import { useRocker } from '@/lib/ai/rocker';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function MessagingApp() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>();
   const [showNewConversation, setShowNewConversation] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { log, section } = useRocker();
 
+  // Check auth
   useEffect(() => {
-    log('page_view', { section: 'messaging' });
-  }, [log]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      setIsLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      log('page_view', { section: 'messaging' });
+    }
+  }, [log, isAuthenticated]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="animate-pulse text-sm text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="text-center max-w-md p-8">
+          <MessageSquarePlus className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Sign in to view messages</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            You need to be signed in to access your messages
+          </p>
+          <Button onClick={() => window.location.href = '/login'}>
+            Sign In
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-background">

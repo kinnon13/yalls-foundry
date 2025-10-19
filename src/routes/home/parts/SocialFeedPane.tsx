@@ -20,6 +20,14 @@ export default function SocialFeedPane() {
   const [sp, setSp] = useSearchParams();
   const initialTab = (sp.get('feed') as Tab) || 'for-you';
   const [tab, setTab] = useState<Tab>(initialTab);
+  
+  // Listen to URL changes and update tab
+  useEffect(() => {
+    const feedParam = sp.get('feed') as Tab;
+    if (feedParam && TABS.includes(feedParam)) {
+      setTab(feedParam);
+    }
+  }, [sp]);
   const [entityId, setEntityId] = useState<string | null>(sp.get('entity') || null);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);

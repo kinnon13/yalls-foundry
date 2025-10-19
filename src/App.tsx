@@ -40,7 +40,7 @@ import SignupPage from './routes/auth/signup';
 import NotFound from './pages/NotFound';
 import Health from './pages/Health';
 
-const Discover = lazy(() => import('./routes/discover-v2'));
+const Discover = lazy(() => import('./routes/discover/search'));
 const Messages = lazy(() => import('./routes/messages/index'));
 const ProfilePageDynamic = lazy(() => import('./routes/profile/[id]'));
 const EntitiesList = lazy(() => import('./routes/entities/index'));
@@ -114,11 +114,9 @@ function AppContent() {
         <Route
           path="/messages"
           element={
-            <RequireAuth>
-              <Suspense fallback={<div>Loading...</div>}>
-                <Messages />
-              </Suspense>
-            </RequireAuth>
+            <Suspense fallback={<div>Loading...</div>}>
+              <Messages />
+            </Suspense>
           }
         />
         

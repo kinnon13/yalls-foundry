@@ -14,13 +14,13 @@ export function MobileTabBar() {
 
   // Determine active tab based on route and feed param
   const getActiveTab = () => {
+    if (location.pathname.startsWith('/discover')) return 'search';
+    if (location.pathname.startsWith('/messages')) return 'inbox';
     if (location.pathname === '/') {
       const feed = searchParams.get('feed');
       if (feed === 'profile') return 'profile';
       return 'home';
     }
-    if (location.pathname.startsWith('/discover')) return 'search';
-    if (location.pathname.startsWith('/messages')) return 'inbox';
     if (location.pathname.startsWith('/profile')) return 'profile';
     return '';
   };
@@ -38,7 +38,7 @@ export function MobileTabBar() {
       id: 'search',
       icon: Search,
       label: 'Search',
-      onClick: () => navigate('/discover'),
+      onClick: () => navigate('/discover?q='),
     },
     {
       id: 'create',
