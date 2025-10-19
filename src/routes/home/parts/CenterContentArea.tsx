@@ -55,17 +55,17 @@ export default function CenterContentArea({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto">
         {openApps.map((app) => (
           <div
             key={app.key}
-            className={activeApp === app.key ? 'block' : 'hidden'}
+            className={activeApp === app.key ? 'block h-full' : 'hidden'}
           >
-            <h2 className="text-2xl font-bold mb-4">{app.label}</h2>
-            <p className="text-muted-foreground">
-              Content for {app.label} would go here...
-            </p>
-            {/* TODO: Render actual app content based on app.route */}
+            <iframe
+              src={app.route}
+              className="w-full h-full border-0"
+              title={app.label}
+            />
           </div>
         ))}
       </div>
