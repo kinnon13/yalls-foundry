@@ -296,16 +296,32 @@ body {
 
 /* Dock */
 .dock {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
   height: var(--dock-h);
   border-top: 1px solid var(--stroke);
   background: rgba(30, 30, 36, 0.9);
   backdrop-filter: blur(32px) saturate(180%);
   box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.05);
-  position: relative; /* ensure absolute children (create button) can center */
+  padding: 0 12px;
+}
+
+.dock-left {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-start;
+}
+
+.dock-center {
+  display: flex;
+  justify-content: center;
+}
+
+.dock-right {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
 }
 
 @media (max-width: 1024px) {
@@ -369,19 +385,15 @@ body {
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-  position: absolute; /* center in dock */
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
 }
 
 .dock-create:hover {
-  transform: translate(-50%, -60%) scale(1.15);
+  transform: translateY(-10px) scale(1.15);
   box-shadow: 0 12px 28px rgba(239, 68, 68, 0.6);
 }
 
 .dock-create:active {
-  transform: translate(-50%, -58%) scale(1.1);
+  transform: translateY(-8px) scale(1.1);
 }
 
 .dock-create-inner {

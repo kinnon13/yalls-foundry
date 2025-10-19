@@ -84,43 +84,49 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
         aria-label="Bottom dock" 
         className="dock relative z-50"
       >
-        {/* Pinned apps with drag and drop */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-          onDragStart={handleDragStart}
-          onDragCancel={handleDragCancel}
-        >
-          <SortableContext
-            items={pinnedApps.map(app => app.id)}
-            strategy={horizontalListSortingStrategy}
+        {/* Left side: Pinned apps with drag and drop */}
+        <div className="dock-left">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+            onDragStart={handleDragStart}
+            onDragCancel={handleDragCancel}
           >
-            {pinnedApps.map(app => (
-              <DockApp
-                key={app.id}
-                app={app}
-                Icon={app.icon}
-                isEditMode={isEditMode}
-                onClick={() => !isEditMode && onAppClick(app.id)}
-                onRemove={() => unpinApp(app.id)}
-                onToggleEditMode={() => setIsEditMode(prev => !prev)}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
+            <SortableContext
+              items={pinnedApps.map(app => app.id)}
+              strategy={horizontalListSortingStrategy}
+            >
+              {pinnedApps.map(app => (
+                <DockApp
+                  key={app.id}
+                  app={app}
+                  Icon={app.icon}
+                  isEditMode={isEditMode}
+                  onClick={() => !isEditMode && onAppClick(app.id)}
+                  onRemove={() => unpinApp(app.id)}
+                  onToggleEditMode={() => setIsEditMode(prev => !prev)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+        </div>
 
-        {/* Center Create Button */}
-        <CreateButton />
+        {/* Center: Create Button */}
+        <div className="dock-center">
+          <CreateButton />
+        </div>
 
-        {/* Rocker Icon - Last item */}
-        <button
-          className="dock-icon"
-          onClick={handleRockerClick}
-          title="Rocker AI"
-        >
-          <Brain />
-        </button>
+        {/* Right side: Rocker Icon */}
+        <div className="dock-right">
+          <button
+            className="dock-icon"
+            onClick={handleRockerClick}
+            title="Rocker AI"
+          >
+            <Brain />
+          </button>
+        </div>
       </nav>
     </>
   );
