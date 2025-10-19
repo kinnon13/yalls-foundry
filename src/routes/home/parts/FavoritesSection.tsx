@@ -13,12 +13,12 @@ export default function FavoritesSection() {
   ];
 
   return (
-    <div className="bg-background py-3 px-4 border-b">
-      <div className="flex items-center gap-1 mb-2">
+    <div className="bg-background py-4 px-4 border-b overflow-visible">
+      <div className="flex items-center gap-1 mb-3">
         <h2 className="text-sm font-semibold text-foreground">Favorites</h2>
       </div>
       
-      <div className="flex gap-3 overflow-x-auto scrollbar-hide">
+      <div className="flex gap-3 overflow-x-auto overflow-y-visible scrollbar-hide pb-1">
         {favorites.map((fav) => (
           <button
             key={fav.id}
