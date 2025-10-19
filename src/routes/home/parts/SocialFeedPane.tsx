@@ -157,7 +157,7 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col text-[hsl(222.2_47.4%_11.2%)] overflow-hidden relative">
+    <section className="relative isolate flex h-full w-full flex-col text-[hsl(222.2_47.4%_11.2%)] overflow-hidden">
       {/* Sticky header - TikTok style */}
       <div className="sticky top-0 z-20">
         <SocialHeader />
