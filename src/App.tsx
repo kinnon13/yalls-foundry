@@ -74,7 +74,7 @@ function AppContent() {
     // Global keyboard shortcuts
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
-      if (e.key.toLowerCase() === 'h' && mod) {
+      if (e.key && e.key.toLowerCase() === 'h' && mod) {
         e.preventDefault();
         window.location.href = '/';
       }
