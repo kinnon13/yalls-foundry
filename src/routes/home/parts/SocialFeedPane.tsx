@@ -262,7 +262,7 @@ export default function SocialFeedPane() {
       {/* Mobile menu button */}
       <button
         onClick={handleMenuClick}
-        className="sm:hidden absolute top-2 right-2 z-20 h-9 w-9 rounded-full border border-border/60 bg-background/70 backdrop-blur grid place-items-center"
+        className="lg:hidden absolute top-2 right-2 z-30 h-9 w-9 rounded-full border border-border/60 bg-background/70 backdrop-blur grid place-items-center"
         aria-label="Open menu"
       >
         <Menu className="h-5 w-5" />

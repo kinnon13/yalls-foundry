@@ -149,7 +149,7 @@ export default function HomeShell() {
           {/* Spacer for dock */}
           <div className="h-[calc(64px+env(safe-area-inset-bottom,0px))]" />
         </div>
-        <div className="fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom,0px)] bg-background/95 backdrop-blur-lg border-t border-border/50">
+        <div className="fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom,0px)] bg-background/95 backdrop-blur-lg border-t border-border/50">
           <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
         </div>
       </div>
