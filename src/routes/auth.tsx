@@ -62,6 +62,16 @@ export default function AuthPage() {
     setSearchParams(params, { replace: true });
   };
 
+  // Listen for recovery link and switch to update-password mode
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setMode('update-password');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   // Check rate limit before auth attempt
   const checkRateLimit = async (identifier: string) => {
     try {
