@@ -14,7 +14,16 @@ export function usePinnedApps() {
   const [pinnedAppIds, setPinnedAppIds] = useState<OverlayKey[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : DEFAULT_PINNED_APP_IDS;
+      if (!stored) return DEFAULT_PINNED_APP_IDS;
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        // Migrate old formats (objects) to string IDs
+        const normalized = parsed
+          .map((item: any) => typeof item === 'string' ? item : item?.id)
+          .filter((v: any): v is OverlayKey => typeof v === 'string');
+        return normalized.length ? normalized : DEFAULT_PINNED_APP_IDS;
+      }
+      return DEFAULT_PINNED_APP_IDS;
     } catch {
       return DEFAULT_PINNED_APP_IDS;
     }
