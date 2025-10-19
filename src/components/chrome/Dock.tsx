@@ -50,20 +50,22 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
 
   return (
     <nav aria-label="Bottom dock" className="dock">
-      {/* Profile Picture - First item */}
-      {profile && (
-        <button
-          className="dock-icon dock-profile"
-          onClick={handleProfileClick}
-          title="Profile"
-        >
+      {/* Profile Picture - First item - Always visible */}
+      <button
+        className="dock-icon dock-profile"
+        onClick={handleProfileClick}
+        title="Profile"
+      >
+        {profile ? (
           <img 
             src={profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.user_id}`} 
             alt={profile.display_name || 'Profile'} 
             className="w-full h-full object-cover rounded-full"
           />
-        </button>
-      )}
+        ) : (
+          <Users className="w-7 h-7" />
+        )}
+      </button>
       
       {/* Left side apps */}
       {DOCK_APPS_LEFT.map(app => {
