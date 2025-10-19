@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MockIndicator } from '@/components/ui/MockIndicator';
 
 interface EntityPickerProps {
   value?: string;
@@ -22,7 +23,7 @@ export function EntityPicker({ value, onChange, kind }: EntityPickerProps) {
     queryFn: async () => {
       let query = supabase
         .from('entities')
-        .select('*')
+        .select('*, is_mock')
         .eq('owner_user_id', session?.userId);
       
       // Kind filter removed for simplicity
@@ -41,7 +42,10 @@ export function EntityPicker({ value, onChange, kind }: EntityPickerProps) {
       <SelectContent>
         {entities?.map((entity) => (
           <SelectItem key={entity.id} value={entity.id}>
-            {entity.display_name} ({entity.kind})
+            <span className="flex items-center gap-2">
+              {entity.display_name} ({entity.kind})
+              {entity.is_mock && <span className="text-[10px]">🚩</span>}
+            </span>
           </SelectItem>
         ))}
       </SelectContent>

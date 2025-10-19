@@ -10,6 +10,7 @@ import { Search as SearchIcon, Loader2, ExternalLink, Flag, Calendar } from 'luc
 import { supabase } from '@/integrations/supabase/client';
 import { useRocker } from '@/lib/ai/rocker';
 import { RockerHint } from '@/lib/ai/rocker';
+import { MockIndicator } from '@/components/ui/MockIndicator';
 
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -48,7 +49,7 @@ export default function Search() {
           .ilike('name', `%${searchQuery}%`)
           .limit(10);
         
-        data = [...data, ...(horses || []).map(h => ({ ...h, resultType: 'horse' }))];
+        data = [...data, ...(horses || []).map(h => ({ ...h, resultType: 'horse', is_mock: false }))];
       }
 
       if (searchCategory === 'all' || searchCategory === 'businesses') {
@@ -58,7 +59,7 @@ export default function Search() {
           .ilike('name', `%${searchQuery}%`)
           .limit(10);
         
-        data = [...data, ...(businesses || []).map(b => ({ ...b, resultType: 'business' }))];
+        data = [...data, ...(businesses || []).map(b => ({ ...b, resultType: 'business', is_mock: false }))];
       }
 
       if (searchCategory === 'all' || searchCategory === 'events') {
@@ -68,7 +69,7 @@ export default function Search() {
           .ilike('title', `%${searchQuery}%`)
           .limit(10);
         
-        data = [...data, ...(events || []).map(e => ({ ...e, resultType: 'event' }))];
+        data = [...data, ...(events || []).map(e => ({ ...e, resultType: 'event', is_mock: false }))];
       }
 
       if (searchCategory === 'all' || searchCategory === 'users') {
@@ -78,7 +79,22 @@ export default function Search() {
           .ilike('display_name', `%${searchQuery}%`)
           .limit(10);
         
-        data = [...data, ...(users || []).map(u => ({ ...u, name: u.display_name, resultType: 'user' }))];
+        data = [...data, ...(users || []).map(u => ({ ...u, name: u.display_name, resultType: 'user', is_mock: false }))];
+      }
+      
+      // Get entity IDs from results and fetch is_mock status
+      const entityIds = data.map((r: any) => r.entity_id).filter(Boolean);
+      if (entityIds.length > 0) {
+        const { data: entities } = await supabase
+          .from('entities')
+          .select('id, is_mock')
+          .in('id', entityIds);
+        
+        const mockMap = new Map((entities || []).map(e => [e.id, e.is_mock]));
+        data = data.map((r: any) => ({
+          ...r,
+          is_mock: r.entity_id ? mockMap.get(r.entity_id) : false
+        }));
       }
 
       setResults(data);
@@ -156,6 +172,9 @@ export default function Search() {
                             <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded">
                               {result.resultType}
                             </span>
+                            {result.is_mock && (
+                              <MockIndicator variant="badge" size="sm" />
+                            )}
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">

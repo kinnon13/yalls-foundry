@@ -13,6 +13,7 @@ import { AppBubble } from './AppBubble';
 import { Building2, Plus } from 'lucide-react';
 import { useRocker } from '@/lib/ai/rocker';
 import { Button } from '@/components/ui/button';
+import { MockIndicator } from '@/components/ui/MockIndicator';
 
 interface PinsWithFoldersProps {
   section: PinSection;
@@ -64,7 +65,7 @@ export function PinsWithFolders({ section, entityId }: PinsWithFoldersProps) {
       const entityIds = entityPins.map(p => p.ref_id);
       const { data } = await supabase
         .from('entities')
-        .select('id, display_name, kind, status, handle, owner_user_id')
+        .select('id, display_name, kind, status, handle, owner_user_id, is_mock')
         .in('id', entityIds);
 
       return (data || []).map(e => ({
@@ -138,15 +139,19 @@ export function PinsWithFolders({ section, entityId }: PinsWithFoldersProps) {
 
           {/* Root pins */}
           {resolvedPins?.map(entity => (
-            <AppBubble
-              key={entity.id}
-              to={getEntityRoute(entity)}
-              icon={<Building2 className="h-6 w-6" />}
-              title={entity.display_name}
-              meta={entity.status === 'unclaimed' ? 'Unclaimed' : entity.kind}
-              accent={entity.status === 'unclaimed' ? 'hsl(45 85% 60%)' : 'hsl(200 90% 55%)'}
-              onClick={() => log('tile_open', { section, entity_id: entity.id })}
-            />
+            <div key={entity.id} className="relative">
+              <AppBubble
+                to={getEntityRoute(entity)}
+                icon={<Building2 className="h-6 w-6" />}
+                title={entity.display_name}
+                meta={entity.status === 'unclaimed' ? 'Unclaimed' : entity.kind}
+                accent={entity.status === 'unclaimed' ? 'hsl(45 85% 60%)' : 'hsl(200 90% 55%)'}
+                onClick={() => log('tile_open', { section, entity_id: entity.id })}
+              />
+              {entity.is_mock && (
+                <MockIndicator variant="overlay" size="md" />
+              )}
+            </div>
           ))}
         </div>
       </div>

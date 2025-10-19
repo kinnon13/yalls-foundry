@@ -11,11 +11,13 @@ import { Input } from '@/design/components/Input';
 import { Badge } from '@/design/components/Badge';
 import { tokens } from '@/design/tokens';
 import { X } from 'lucide-react';
+import { MockIndicator } from '@/components/ui/MockIndicator';
 
 interface Entity {
   id: string;
   name: string;
   kind: string;
+  is_mock?: boolean;
 }
 
 interface CrossPostPickerProps {
@@ -32,7 +34,7 @@ export function CrossPostPicker({ selectedTargets, onTargetsChange }: CrossPostP
     queryFn: async () => {
       let query = (supabase as any)
         .from('entities')
-        .select('id, display_name, kind')
+        .select('id, display_name, kind, is_mock')
         .limit(20);
       
       if (searchQuery) {
@@ -46,6 +48,7 @@ export function CrossPostPicker({ selectedTargets, onTargetsChange }: CrossPostP
         id: e.id,
         name: e.display_name,
         kind: e.kind,
+        is_mock: e.is_mock,
       })) as Entity[];
     },
   });
@@ -83,6 +86,11 @@ export function CrossPostPicker({ selectedTargets, onTargetsChange }: CrossPostP
               fontSize: tokens.typography.size.s,
             }}>
               {entity?.name || 'Unknown'}
+              {entity?.is_mock && (
+                <span style={{ marginLeft: tokens.space.xxs }}>
+                  🚩
+                </span>
+              )}
               <X
                 size={12}
                 style={{ cursor: 'pointer' }}
@@ -113,6 +121,9 @@ export function CrossPostPicker({ selectedTargets, onTargetsChange }: CrossPostP
                 cursor: 'pointer',
                 borderRadius: tokens.radius.s,
                 transition: 'background 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = tokens.color.bg.light;
@@ -121,10 +132,13 @@ export function CrossPostPicker({ selectedTargets, onTargetsChange }: CrossPostP
                 e.currentTarget.style.background = 'transparent';
               }}
             >
-              <span style={{ fontWeight: tokens.typography.weight.medium }}>{entity.name}</span>
-              <span style={{ fontSize: tokens.typography.size.xs, color: tokens.color.text.secondary, marginLeft: tokens.space.xs }}>
-                ({entity.kind})
-              </span>
+              <div>
+                <span style={{ fontWeight: tokens.typography.weight.medium }}>{entity.name}</span>
+                <span style={{ fontSize: tokens.typography.size.xs, color: tokens.color.text.secondary, marginLeft: tokens.space.xs }}>
+                  ({entity.kind})
+                </span>
+              </div>
+              {entity.is_mock && <span>🚩</span>}
             </div>
           ))}
       </div>

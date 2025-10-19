@@ -3,6 +3,7 @@ import { Building2, ChevronDown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
+import { MockIndicator } from '@/components/ui/MockIndicator';
 
 export function DashboardEntitySwitcher() {
   const { session } = useSession();
@@ -15,7 +16,7 @@ export function DashboardEntitySwitcher() {
       
       const { data, error } = await supabase
         .from('entities')
-        .select('id, display_name, kind')
+        .select('id, display_name, kind, is_mock')
         .eq('owner_user_id', session.userId);
       
       if (error) throw error;
@@ -36,6 +37,9 @@ export function DashboardEntitySwitcher() {
       >
         <Building2 size={16} className="text-muted-foreground" />
         <span className="text-sm font-medium">{currentEntity?.display_name || 'Select Entity'}</span>
+        {currentEntity?.is_mock && (
+          <MockIndicator variant="inline" size="xs" />
+        )}
         <ChevronDown size={16} className="text-muted-foreground" />
       </button>
 
@@ -49,9 +53,12 @@ export function DashboardEntitySwitcher() {
                   setCurrentEntity(entity);
                   setIsOpen(false);
                 }}
-                className="w-full px-3 py-2 text-left rounded-md hover:bg-accent transition-colors text-sm"
+                className="w-full px-3 py-2 text-left rounded-md hover:bg-accent transition-colors text-sm flex items-center justify-between"
               >
-                {entity.display_name}
+                <span>{entity.display_name}</span>
+                {entity.is_mock && (
+                  <MockIndicator variant="inline" size="xs" />
+                )}
               </button>
             ))}
           </div>

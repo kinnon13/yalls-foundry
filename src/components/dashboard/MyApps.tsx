@@ -9,6 +9,7 @@ import {
 import { useState, useEffect } from 'react';
 import { AppStoreModal } from './AppStoreModal';
 import { useProfilePins } from '@/hooks/useProfilePins';
+import { MockIndicator } from '@/components/ui/MockIndicator';
 
 const iconMap: Record<string, any> = {
   'Building2': Building2,
@@ -81,7 +82,7 @@ export function MyApps({ entityId }: MyAppsProps) {
         chunk(entityIds, 100).map(ids =>
           supabase
             .from('entities')
-            .select('id, display_name, kind, status, handle, owner_user_id')
+            .select('id, display_name, kind, status, handle, owner_user_id, is_mock')
             .in('id', ids)
         )
       );
@@ -157,7 +158,8 @@ export function MyApps({ entityId }: MyAppsProps) {
               meta: app.app_catalog?.summary,
               accent: getCategoryAccent(app.app_catalog?.category || 'utility'),
               to: getAppRoute(app.app_key),
-              onClick: () => log('tile_open', { section: 'apps', key: app.app_key })
+              onClick: () => log('tile_open', { section: 'apps', key: app.app_key }),
+              isMock: false
             })),
             ...(pinnedEntities?.entities || []).map((entity: any) => ({
               key: `entity:${entity.id}`,
@@ -167,7 +169,8 @@ export function MyApps({ entityId }: MyAppsProps) {
               meta: entity.status === 'unclaimed' ? 'Unclaimed' : entity.kind,
               accent: entity.status === 'unclaimed' ? 'hsl(45 85% 60%)' : 'hsl(200 90% 55%)',
               to: getEntityRoute(entity),
-              onClick: () => log('tile_open', { section: 'pins', pin_type: 'entity', ref_id: entity.id })
+              onClick: () => log('tile_open', { section: 'pins', pin_type: 'entity', ref_id: entity.id }),
+              isMock: entity.is_mock
             })),
             ...(pinnedEntities?.ghostPins || []).map((pin: any) => ({
               key: `ghost:${pin.ref_id}`,
@@ -177,22 +180,27 @@ export function MyApps({ entityId }: MyAppsProps) {
               meta: 'No longer available',
               accent: 'hsl(0 0% 50%)',
               to: undefined,
-              onClick: () => pins.remove.mutate({ pin_type: pin.pin_type, ref_id: pin.ref_id })
+              onClick: () => pins.remove.mutate({ pin_type: pin.pin_type, ref_id: pin.ref_id }),
+              isMock: false
             }))
           ]
             .sort((a, b) => a.title.localeCompare(b.title))
             .map((tile) => {
               const IconComponent = tile.icon;
               return (
-                <AppBubble
-                  key={tile.key}
-                  to={tile.to}
-                  icon={<IconComponent className="h-6 w-6" />}
-                  title={tile.title}
-                  meta={tile.meta}
-                  accent={tile.accent}
-                  onClick={tile.onClick}
-                />
+                <div key={tile.key} className="relative">
+                  <AppBubble
+                    to={tile.to}
+                    icon={<IconComponent className="h-6 w-6" />}
+                    title={tile.title}
+                    meta={tile.meta}
+                    accent={tile.accent}
+                    onClick={tile.onClick}
+                  />
+                  {tile.isMock && (
+                    <MockIndicator variant="overlay" size="md" />
+                  )}
+                </div>
               );
             })}
           

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { useRocker } from '@/lib/ai/rocker';
 import { Building2 } from 'lucide-react';
+import { MockIndicator } from '@/components/ui/MockIndicator';
 
 export function PortalTiles() {
   const { log, section } = useRocker();
@@ -47,7 +48,7 @@ export function PortalTiles() {
       if (!entityIds.length) return [];
       const { data } = await supabase
         .from('entities')
-        .select('id, display_name, handle')
+        .select('id, display_name, handle, is_mock')
         .in('id', entityIds);
       return data || [];
     },
@@ -83,7 +84,7 @@ export function PortalTiles() {
           return (
             <Link
               key={n.entity_id}
-              className="inline-flex items-center gap-2.5 rounded-full bg-card/50 backdrop-blur-sm border border-border/50 px-4 py-2.5 hover:bg-card/80 hover:scale-105 transition-all hover:shadow-md"
+              className="relative inline-flex items-center gap-2.5 rounded-full bg-card/50 backdrop-blur-sm border border-border/50 px-4 py-2.5 hover:bg-card/80 hover:scale-105 transition-all hover:shadow-md"
               to={`/dashboard`}
               onClick={() => log('portal_open', { entity_id: n.entity_id, rel: n.rel })}
             >
@@ -91,6 +92,9 @@ export function PortalTiles() {
                 <Building2 className="h-4 w-4" />
               </span>
               <span className="text-sm font-medium">{label}</span>
+              {entity?.is_mock && (
+                <MockIndicator variant="inline" size="sm" />
+              )}
             </Link>
           );
         })}

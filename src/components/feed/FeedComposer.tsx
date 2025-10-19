@@ -12,11 +12,13 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { X, Tag, Target } from 'lucide-react';
 import { toast } from 'sonner';
+import { MockIndicator } from '@/components/ui/MockIndicator';
 
 type Entity = {
   id: string;
   display_name: string;
   handle: string;
+  is_mock?: boolean;
 };
 
 type FeedComposerProps = {
@@ -95,8 +97,12 @@ export function FeedComposer({ onPostCreated, authorEntities }: FeedComposerProp
                 variant={selectedAuthor === entity.id ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setSelectedAuthor(entity.id)}
+                className="relative"
               >
                 {entity.display_name}
+                {entity.is_mock && (
+                  <MockIndicator variant="inline" size="xs" className="ml-1" />
+                )}
               </Button>
             ))}
           </div>
@@ -117,10 +123,11 @@ export function FeedComposer({ onPostCreated, authorEntities }: FeedComposerProp
             {selectedTargets.map(id => {
               const entity = authorEntities.find(e => e.id === id);
               return (
-                <Badge key={id} variant="secondary">
+                <Badge key={id} variant="secondary" className="flex items-center gap-1">
                   {entity?.display_name}
+                  {entity?.is_mock && <span className="text-[10px]">🚩</span>}
                   <X
-                    className="h-3 w-3 ml-1 cursor-pointer"
+                    className="h-3 w-3 cursor-pointer"
                     onClick={() => toggleTarget(id)}
                   />
                 </Badge>
@@ -136,10 +143,11 @@ export function FeedComposer({ onPostCreated, authorEntities }: FeedComposerProp
             {selectedTags.map(id => {
               const entity = authorEntities.find(e => e.id === id);
               return (
-                <Badge key={id} variant="outline">
+                <Badge key={id} variant="outline" className="flex items-center gap-1">
                   {entity?.display_name}
+                  {entity?.is_mock && <span className="text-[10px]">🚩</span>}
                   <X
-                    className="h-3 w-3 ml-1 cursor-pointer"
+                    className="h-3 w-3 cursor-pointer"
                     onClick={() => toggleTag(id)}
                   />
                 </Badge>
@@ -189,6 +197,7 @@ export function FeedComposer({ onPostCreated, authorEntities }: FeedComposerProp
                     onClick={() => toggleTarget(entity.id)}
                   >
                     {entity.display_name}
+                    {entity.is_mock && <span className="ml-1 text-[10px]">🚩</span>}
                   </Button>
                 ))}
             </div>
@@ -208,6 +217,7 @@ export function FeedComposer({ onPostCreated, authorEntities }: FeedComposerProp
                   onClick={() => toggleTag(entity.id)}
                 >
                   {entity.display_name}
+                  {entity.is_mock && <span className="ml-1 text-[10px]">🚩</span>}
                 </Button>
               ))}
             </div>
