@@ -78,7 +78,7 @@ export default function HomePage() {
   return (
     <>
       <GlobalHeader />
-      <main className={cn("pt-14", "lg:pb-0", mobileView !== 'feed' ? "pb-16" : "pb-0")}>
+      <main className="pt-14 pb-16">
         {/* Desktop Layout: Sidebar + Center + Feed (large screens only) */}
         <div className="hidden lg:flex h-[calc(100dvh-112px)]">
           {/* Left: Apps Sidebar - Fixed */}
@@ -178,9 +178,7 @@ export default function HomePage() {
           </div>
         </div>
       </main>
-      <div className="lg:hidden">
-        {mobileView !== 'feed' && <BottomDock />}
-      </div>
+      <BottomDock />
     </>
   );
 }
