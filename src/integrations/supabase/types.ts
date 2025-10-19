@@ -9220,6 +9220,17 @@ export type Database = {
         Args: { p_horizon?: string; p_user_id: string }
         Returns: Json
       }
+      get_downline_leaderboard: {
+        Args: { p_limit?: number; p_metric?: string }
+        Returns: {
+          display_name: string
+          party_id: string
+          party_kind: string
+          rank: number
+          total_orders: number
+          total_sales: number
+        }[]
+      }
       get_entitlements: {
         Args: { p_user_id?: string }
         Returns: {
@@ -9245,6 +9256,29 @@ export type Database = {
       get_knowledge_scope_filter: {
         Args: { p_tenant_id?: string; p_user_id: string }
         Returns: string
+      }
+      get_my_commission_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          payable: number
+          pending: number
+          total_earned: number
+          total_orders: number
+          type_breakdown: Json
+        }[]
+      }
+      get_my_downline_tree: {
+        Args: { p_max_depth?: number }
+        Returns: {
+          commission_earned: number
+          depth: number
+          party_id: string
+          party_kind: string
+          path: string[]
+          total_orders: number
+          total_sales: number
+          user_id: string
+        }[]
       }
       get_price_suggestions: {
         Args: { p_listing_id: string }
