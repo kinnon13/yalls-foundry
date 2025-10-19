@@ -48,13 +48,13 @@ export default function AuthPage() {
     emitEvent('auth_view', { mode, next });
   }, [mode, next]);
 
-  // Guard: If already authenticated, redirect to next or home
+  // Guard: If already authenticated, redirect to next or home (but not during password update)
   useEffect(() => {
-    if (session) {
+    if (session && mode !== 'update-password') {
       const destination = next && next !== '/' ? next : '/home?tab=for-you';
       navigate(destination, { replace: true });
     }
-  }, [session, navigate, next]);
+  }, [session, navigate, next, mode]);
 
   const setMode = (newMode: AuthMode) => {
     const params = new URLSearchParams(searchParams);
