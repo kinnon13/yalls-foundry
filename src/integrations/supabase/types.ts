@@ -3170,6 +3170,39 @@ export type Database = {
           },
         ]
       }
+      daily_briefs: {
+        Row: {
+          blockers: Json | null
+          brief_date: string
+          created_at: string
+          goals_progress: Json | null
+          high_leverage_moves: Json | null
+          id: string
+          schedule: Json | null
+          user_id: string
+        }
+        Insert: {
+          blockers?: Json | null
+          brief_date: string
+          created_at?: string
+          goals_progress?: Json | null
+          high_leverage_moves?: Json | null
+          id?: string
+          schedule?: Json | null
+          user_id: string
+        }
+        Update: {
+          blockers?: Json | null
+          brief_date?: string
+          created_at?: string
+          goals_progress?: Json | null
+          high_leverage_moves?: Json | null
+          id?: string
+          schedule?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       discovery_items: {
         Row: {
           created_at: string
@@ -4549,6 +4582,59 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      focus_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_step: number | null
+          duration_minutes: number
+          id: string
+          micro_steps: Json | null
+          notes: string | null
+          paused_at: string | null
+          started_at: string | null
+          status: string
+          task_id: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_step?: number | null
+          duration_minutes: number
+          id?: string
+          micro_steps?: Json | null
+          notes?: string | null
+          paused_at?: string | null
+          started_at?: string | null
+          status?: string
+          task_id?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_step?: number | null
+          duration_minutes?: number
+          id?: string
+          micro_steps?: Json | null
+          notes?: string | null
+          paused_at?: string | null
+          started_at?: string | null
+          status?: string
+          task_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "focus_sessions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -7393,6 +7479,39 @@ export type Database = {
         }
         Relationships: []
       }
+      rocker_commands: {
+        Row: {
+          created_at: string
+          execution_result: Json | null
+          id: string
+          parameters: Json | null
+          parsed_intent: string | null
+          raw_command: string
+          success: boolean | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          execution_result?: Json | null
+          id?: string
+          parameters?: Json | null
+          parsed_intent?: string | null
+          raw_command: string
+          success?: boolean | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          execution_result?: Json | null
+          id?: string
+          parameters?: Json | null
+          parsed_intent?: string | null
+          raw_command?: string
+          success?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       rocker_context: {
         Row: {
           context_data: Json
@@ -8576,6 +8695,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_autonomy_settings: {
+        Row: {
+          allow_calendar_write: boolean | null
+          allow_domains: string[] | null
+          allow_email_send: boolean | null
+          allow_file_write: boolean | null
+          autonomy_level: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allow_calendar_write?: boolean | null
+          allow_domains?: string[] | null
+          allow_email_send?: boolean | null
+          allow_file_write?: boolean | null
+          autonomy_level?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allow_calendar_write?: boolean | null
+          allow_domains?: string[] | null
+          allow_email_send?: boolean | null
+          allow_file_write?: boolean | null
+          autonomy_level?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_consents: {
         Row: {
           telemetry_basic: boolean | null
@@ -8591,6 +8740,48 @@ export type Database = {
           telemetry_basic?: boolean | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_credentials: {
+        Row: {
+          created_at: string
+          encrypted_password: string | null
+          id: string
+          last_used_at: string | null
+          notes: string | null
+          service_name: string
+          tags: string[] | null
+          updated_at: string
+          url: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          encrypted_password?: string | null
+          id?: string
+          last_used_at?: string | null
+          notes?: string | null
+          service_name: string
+          tags?: string[] | null
+          updated_at?: string
+          url?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          encrypted_password?: string | null
+          id?: string
+          last_used_at?: string | null
+          notes?: string | null
+          service_name?: string
+          tags?: string[] | null
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -8637,6 +8828,48 @@ export type Database = {
           instagram_interactions?: number | null
           tenant_id?: string
           tiktok_interactions?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_integrations: {
+        Row: {
+          access_token: string | null
+          config: Json | null
+          created_at: string
+          enabled: boolean | null
+          id: string
+          refresh_token: string | null
+          scopes: string[] | null
+          service: string
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          config?: Json | null
+          created_at?: string
+          enabled?: boolean | null
+          id?: string
+          refresh_token?: string | null
+          scopes?: string[] | null
+          service: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          config?: Json | null
+          created_at?: string
+          enabled?: boolean | null
+          id?: string
+          refresh_token?: string | null
+          scopes?: string[] | null
+          service?: string
+          token_expires_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -9076,6 +9309,54 @@ export type Database = {
           post_count?: number
           user_id?: string
           window_start?: string
+        }
+        Relationships: []
+      }
+      web_automation_tasks: {
+        Row: {
+          completed_at: string | null
+          config: Json | null
+          created_at: string
+          error: string | null
+          id: string
+          result: Json | null
+          schedule_cron: string | null
+          screenshots: string[] | null
+          started_at: string | null
+          status: string
+          task_type: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          config?: Json | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          result?: Json | null
+          schedule_cron?: string | null
+          screenshots?: string[] | null
+          started_at?: string | null
+          status?: string
+          task_type: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          config?: Json | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          result?: Json | null
+          schedule_cron?: string | null
+          screenshots?: string[] | null
+          started_at?: string | null
+          status?: string
+          task_type?: string
+          url?: string
+          user_id?: string
         }
         Relationships: []
       }
