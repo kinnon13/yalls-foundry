@@ -115,6 +115,7 @@ export default function AppsPane() {
 
   // Observe box resize to update pagination + persist size
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const paneRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!boxRef.current) return;
     const obs = new ResizeObserver((entries) => {
@@ -131,6 +132,24 @@ export default function AppsPane() {
     obs.observe(boxRef.current);
     return () => obs.disconnect();
   }, []);
+
+  // Clamp position inside pane
+  useEffect(() => {
+    const clamp = () => {
+      const pane = paneRef.current;
+      if (!pane) return;
+      const pw = pane.clientWidth;
+      const ph = pane.clientHeight;
+      const maxX = Math.max(0, pw - containerWidth);
+      const maxY = Math.max(0, ph - containerHeight);
+      if (containerX < 0 || containerX > maxX) setContainerX(Math.min(Math.max(0, containerX), maxX));
+      if (containerY < 0 || containerY > maxY) setContainerY(Math.min(Math.max(0, containerY), maxY));
+    };
+    clamp();
+    const ro = new ResizeObserver(clamp);
+    if (paneRef.current) ro.observe(paneRef.current);
+    return () => ro.disconnect();
+  }, [containerWidth, containerHeight, containerX, containerY]);
   // Get entity capabilities
   const { data: capabilities = {} } = useEntityCapabilities(userId);
 
@@ -441,7 +460,7 @@ export default function AppsPane() {
       </section>
 
       {/* Apps Grid - Separate Box */}
-      <div className="flex-1 overflow-auto bg-background relative">
+      <div ref={paneRef} className="flex-1 overflow-auto bg-background relative">
         
 
         <div 
