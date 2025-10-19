@@ -4,7 +4,7 @@
  * No draggable feeds, clean navigation
  */
 
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { Dock } from '@/components/home/Dock';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import {
   DollarSign,
   MessageCircle,
   Settings,
+  Network,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +32,7 @@ type Module =
   | 'events'
   | 'orders'
   | 'earnings'
+  | 'mlm'
   | 'messages'
   | 'settings';
 
@@ -43,6 +45,7 @@ const MODULES = [
   { id: 'events', label: 'Events', icon: Calendar },
   { id: 'orders', label: 'Orders', icon: ShoppingCart },
   { id: 'earnings', label: 'Earnings', icon: DollarSign },
+  { id: 'mlm', label: 'Affiliate Network', icon: Network },
   { id: 'messages', label: 'Messages', icon: MessageCircle },
   { id: 'settings', label: 'Settings', icon: Settings },
 ] as const;
@@ -99,6 +102,7 @@ export default function DashboardNew() {
             {activeModule === 'events' && <EventsModule />}
             {activeModule === 'orders' && <OrdersModule />}
             {activeModule === 'earnings' && <EarningsModule />}
+            {activeModule === 'mlm' && <MLMModule />}
             {activeModule === 'messages' && <MessagesModule />}
             {activeModule === 'settings' && <SettingsModule />}
           </div>
@@ -187,6 +191,15 @@ function EarningsModule() {
       <h1 className="text-2xl font-bold mb-4">Earnings</h1>
       <p className="text-muted-foreground">Track your earnings and payouts.</p>
     </div>
+  );
+}
+
+function MLMModule() {
+  const MLM = lazy(() => import('../dashboard/modules/MLM'));
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <MLM />
+    </Suspense>
   );
 }
 

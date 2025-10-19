@@ -19,7 +19,7 @@ import {
   Building, Users, Sparkles, Tractor, CheckCircle,
   MessageSquare, LayoutDashboard, User, MapPin, 
   Flame, BookOpen, Home, Store, Activity, Zap,
-  Target, Award, LucideIcon, FolderIcon
+  Target, Award, LucideIcon, FolderIcon, Network
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppPins, type AppFolder } from '@/hooks/useAppPins';
@@ -45,6 +45,7 @@ const APPS: Record<string, AppTile> = {
   earnings: { id: 'earnings', label: 'Earnings', icon: DollarSign, module: 'earnings', color: 'from-green-500/20 to-teal-600/5' },
   orders: { id: 'orders', label: 'Orders', icon: ShoppingCart, module: 'orders', color: 'from-blue-500/20 to-indigo-600/5' },
   business: { id: 'business', label: 'Business', icon: Building, module: 'business', color: 'from-gray-500/20 to-slate-600/5' },
+  mlm: { id: 'mlm', label: 'Network', icon: Network, module: 'mlm', color: 'from-emerald-500/20 to-green-600/5' },
   producers: { id: 'producers', label: 'Producers', icon: Users, module: 'producers', color: 'from-purple-500/20 to-fuchsia-600/5' },
   stallions: { id: 'stallions', label: 'Stallions', icon: Sparkles, module: 'stallions', color: 'from-amber-500/20 to-yellow-600/5' },
   farm_ops: { id: 'farm_ops', label: 'Farm Ops', icon: Tractor, module: 'farm_ops', color: 'from-lime-500/20 to-green-600/5' },
@@ -70,7 +71,8 @@ const DEFAULT_POSITIONS: Record<string, [number, number]> = {
   earnings: [1, 1],
   orders: [2, 1],
   business: [3, 1],
-  producers: [4, 1],
+  mlm: [4, 1],
+  producers: [5, 1],
   stallions: [0, 2],
   farm_ops: [1, 2],
   incentives: [2, 2],
