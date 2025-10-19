@@ -21,24 +21,39 @@ export default function SocialFeedPane() {
   const [isDragging, setIsDragging] = useState(false);
   const [feedH, setFeedH] = useState<number | null>(null);
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
+  const [profileHistory, setProfileHistory] = useState<string[]>([]);
 
   // Listen for profile view events
   useEffect(() => {
     const handleViewProfile = (e: CustomEvent) => {
-      setViewingUserId(e.detail.userId);
+      const newUserId = e.detail.userId;
+      setProfileHistory(prev => [...prev, viewingUserId].filter(Boolean));
+      setViewingUserId(newUserId);
     };
     window.addEventListener('view-profile', handleViewProfile as EventListener);
     return () => window.removeEventListener('view-profile', handleViewProfile as EventListener);
-  }, []);
+  }, [viewingUserId]);
 
   // Listen for home navigation
   useEffect(() => {
     const handleNavigateHome = () => {
       setViewingUserId(null);
+      setProfileHistory([]);
     };
     window.addEventListener('navigate-home', handleNavigateHome);
     return () => window.removeEventListener('navigate-home', handleNavigateHome);
   }, []);
+
+  // Handle going back to previous profile
+  const handleBackNavigation = () => {
+    if (profileHistory.length > 0) {
+      const previousProfile = profileHistory[profileHistory.length - 1];
+      setProfileHistory(prev => prev.slice(0, -1));
+      setViewingUserId(previousProfile);
+    } else {
+      setViewingUserId(null);
+    }
+  };
 
   // measured header stack height (profile header + favorites + tabs)
   const headerRef = useRef<HTMLDivElement>(null);
@@ -242,8 +257,11 @@ export default function SocialFeedPane() {
           // Viewing another user's profile
           <UserProfileView 
             userId={viewingUserId} 
-            onBack={() => setViewingUserId(null)}
-            onViewProfile={(id) => setViewingUserId(id)}
+            onBack={handleBackNavigation}
+            onViewProfile={(id) => {
+              setProfileHistory(prev => [...prev, viewingUserId]);
+              setViewingUserId(id);
+            }}
           />
         ) : tab === 'profile' ? (
           // Profile tab: 3-column grid
@@ -279,6 +297,9 @@ export default function SocialFeedPane() {
                   {...item} 
                   onViewProfile={() => {
                     if (item.userId) {
+                      if (viewingUserId) {
+                        setProfileHistory(prev => [...prev, viewingUserId]);
+                      }
                       setViewingUserId(item.userId);
                     }
                   }}
