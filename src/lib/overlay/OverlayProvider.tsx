@@ -7,7 +7,6 @@ import React, { createContext, useContext, useCallback, useEffect, useState, Sus
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import type { OverlayKey, OverlayState } from './types';
 import { OVERLAY_REGISTRY } from './registry';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useSession } from '@/lib/auth/context';
 import { rocker } from '@/lib/rocker/event-bus';
 
@@ -15,6 +14,8 @@ interface OverlayContextValue {
   state: OverlayState;
   openOverlay: (key: OverlayKey, params?: Record<string, string>) => void;
   closeOverlay: () => void;
+  open: (key: OverlayKey, params?: Record<string, string>) => void;  // Alias for easier use
+  close: () => void;  // Alias for easier use
 }
 
 const OverlayContext = createContext<OverlayContextValue | null>(null);
@@ -109,26 +110,39 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener('click', onClick);
   }, [openOverlay]);
 
-  const value: OverlayContextValue = { state, openOverlay, closeOverlay };
+  const value: OverlayContextValue = { 
+    state, 
+    openOverlay, 
+    closeOverlay,
+    open: openOverlay,  // Alias
+    close: closeOverlay  // Alias
+  };
 
   return (
     <OverlayContext.Provider value={value}>
       {children}
       
-      {/* Render active overlay */}
+      {/* Render active overlay with Mac-style window */}
       {isOpen && activeKey && (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && closeOverlay()}>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-0">
-            <DialogHeader className="px-6 py-4 border-b">
-              <DialogTitle>{OVERLAY_REGISTRY[activeKey]?.title || activeKey}</DialogTitle>
-            </DialogHeader>
-            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+        <div className="wm-layer">
+          <div className="wm-scrim" onClick={closeOverlay} />
+          <div className="wm-window" data-ready>
+            <div className="wm-titlebar">
+              <div className="wm-traffic">
+                <button className="dot red" onClick={closeOverlay} aria-label="Close" />
+                <span className="dot yellow" />
+                <span className="dot green" />
+              </div>
+              <div className="wm-title">{OVERLAY_REGISTRY[activeKey]?.title || activeKey}</div>
+              <div className="wm-tools" />
+            </div>
+            <div className="wm-content">
               <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
                 {React.createElement(OVERLAY_REGISTRY[activeKey].component, { params })}
               </Suspense>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </div>
       )}
     </OverlayContext.Provider>
   );

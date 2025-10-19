@@ -1,5 +1,6 @@
 @import './styles/apps-grid.css';
 @import './styles/bubbles.css';
+@import './styles/mac-shell.css';
 
 @tailwind base;
 @tailwind components;
@@ -7,7 +8,7 @@
 
 html, body {
   overscroll-behavior-y: none;
-  overflow: hidden; /* No body scroll - panes scroll instead */
+  overflow: hidden;
   height: 100dvh;
 }
 

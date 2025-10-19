@@ -1,312 +1,74 @@
 /**
  * Home Shell (Universal)
- * One page, two modes: social (apps+feed) and manage (dashboard)
- * Controlled by ?mode=social|manage query param
+ * Single page with three-column Mac layout
+ * Left: Apps rail | Center: Window canvas (overlays) | Right: Feed
+ * Mode switching via ?mode=social|manage
  */
 
-import { useState, lazy, Suspense } from 'react';
+import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { GlobalHeader } from '@/components/layout/GlobalHeader';
-import { Dock } from '@/components/home/Dock';
-import { FavoritesRail } from '@/components/home/FavoritesRail';
+import { useOverlay } from '@/lib/overlay/OverlayProvider';
+import HeaderBar from '@/components/chrome/HeaderBar';
+import Dock from '@/components/chrome/Dock';
+import AppsRail from '@/components/home/AppsRail';
 import { FeedPane } from '@/components/home/FeedPane';
-import { LibrarySearch } from '@/components/library/LibrarySearch';
-import { Pinboard } from '@/components/library/Pinboard';
-import { DebugHUD } from '@/components/debug/DebugHUD';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import {
-  LayoutDashboard,
-  Briefcase,
-  Sparkles,
-  Award,
-  Tractor,
-  Calendar,
-  ShoppingCart,
-  DollarSign,
-  MessageCircle,
-  Settings,
-  Network,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-
-type Module =
-  | 'overview'
-  | 'business'
-  | 'stallions'
-  | 'incentives'
-  | 'farm-ops'
-  | 'events'
-  | 'orders'
-  | 'earnings'
-  | 'mlm'
-  | 'messages'
-  | 'settings';
-
-const MODULES = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { id: 'business', label: 'Business', icon: Briefcase },
-  { id: 'stallions', label: 'Stallions', icon: Sparkles },
-  { id: 'incentives', label: 'Incentives', icon: Award },
-  { id: 'farm-ops', label: 'Farm Ops', icon: Tractor },
-  { id: 'events', label: 'Events', icon: Calendar },
-  { id: 'orders', label: 'Orders', icon: ShoppingCart },
-  { id: 'earnings', label: 'Earnings', icon: DollarSign },
-  { id: 'mlm', label: 'Affiliate Network', icon: Network },
-  { id: 'messages', label: 'Messages', icon: MessageCircle },
-  { id: 'settings', label: 'Settings', icon: Settings },
-] as const;
+import LinkInterceptor from '@/components/chrome/LinkInterceptor';
 
 export default function HomeShell() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { open } = useOverlay();
   const mode = (searchParams.get('mode') ?? 'social') as 'social' | 'manage';
-  const [phoneScreen, setPhoneScreen] = useState<'apps' | 'feed' | 'shop' | 'profile'>('feed');
-  const [activeModule, setActiveModule] = useState<Module>('overview');
 
-  const setMode = (m: 'social' | 'manage') => {
-    const newParams = new URLSearchParams(searchParams);
-    if (m === 'social') {
-      newParams.delete('mode');
-    } else {
-      newParams.set('mode', m);
+  // Open overlay if ?app= is present
+  useEffect(() => {
+    const app = searchParams.get('app');
+    if (app) {
+      open(app as any);
+      // Don't remove the param - let the OverlayProvider handle it
     }
-    setSearchParams(newParams, { replace: true });
-  };
+  }, []);
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Header - Fixed */}
-      <div className="h-[var(--header-h)] shrink-0 z-40">
-        <GlobalHeader />
-      </div>
-
-      {/* Content - Scrollable panes */}
-      <div className="flex-1 overflow-hidden">
-        {mode === 'social' && (
-          <>
-            {/* Desktop/Tablet Layout */}
-            <div className="hidden md:flex h-full">
-              {/* Left: Apps Pane */}
-              <div className="w-80 border-r flex flex-col overflow-hidden">
-                <FavoritesRail />
-                <div className="flex-1 overflow-y-auto">
-                  <LibrarySearch />
-                  <Pinboard contextId="home" />
-                </div>
-              </div>
-
-              {/* Right: Feed Pane */}
-              <div className="flex-1 overflow-hidden">
-                <FeedPane />
+    <div className="shell">
+      <HeaderBar />
+      
+      <main className="content">
+        {mode === 'social' ? (
+          <div className="grid-social">
+            <AppsRail />
+            
+            {/* Center canvas - overlays float above via portal */}
+            <div className="window-canvas card" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              background: 'rgba(12, 12, 14, 0.4)'
+            }}>
+              <div style={{ 
+                textAlign: 'center', 
+                color: 'rgba(255,255,255,0.3)',
+                fontSize: '14px' 
+              }}>
+                Click an app to open
               </div>
             </div>
-
-            {/* Phone Layout - 4-screen pager */}
-            <div className="md:hidden h-full">
-              <Tabs value={phoneScreen} onValueChange={(v) => setPhoneScreen(v as any)} className="h-full flex flex-col">
-                <TabsList className="w-full shrink-0">
-                  <TabsTrigger value="apps" className="flex-1">Apps</TabsTrigger>
-                  <TabsTrigger value="feed" className="flex-1">Feed</TabsTrigger>
-                  <TabsTrigger value="shop" className="flex-1">Shop</TabsTrigger>
-                  <TabsTrigger value="profile" className="flex-1">Profile</TabsTrigger>
-                </TabsList>
-
-                <div className="flex-1 overflow-hidden">
-                  {phoneScreen === 'apps' && (
-                    <div className="h-full overflow-y-auto">
-                      <FavoritesRail />
-                      <LibrarySearch />
-                      <Pinboard contextId="home" />
-                    </div>
-                  )}
-                  {phoneScreen === 'feed' && <FeedPane />}
-                  {phoneScreen === 'shop' && (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                      Shop coming soon
-                    </div>
-                  )}
-                  {phoneScreen === 'profile' && (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                      Profile coming soon
-                    </div>
-                  )}
-                </div>
-              </Tabs>
+            
+            <FeedPane />
+          </div>
+        ) : (
+          <div className="grid-manage">
+            <AppsRail manage />
+            
+            <div className="card" style={{ padding: '24px', overflow: 'auto' }}>
+              <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+              <p className="text-muted-foreground">Management tools and analytics</p>
             </div>
-          </>
-        )}
-
-        {mode === 'manage' && (
-          <div className="flex h-full">
-            {/* Left Rail Navigation */}
-            <aside className="w-64 border-r flex flex-col overflow-hidden">
-              <div className="p-4 border-b">
-                <h2 className="font-semibold text-lg">Dashboard</h2>
-              </div>
-              
-              <nav className="flex-1 overflow-y-auto p-2">
-                {MODULES.map((mod) => {
-                  const Icon = mod.icon;
-                  const isActive = activeModule === mod.id;
-                  
-                  return (
-                    <Button
-                      key={mod.id}
-                      variant="ghost"
-                      className={cn(
-                        'w-full justify-start gap-3 mb-1',
-                        isActive && 'bg-accent'
-                      )}
-                      onClick={() => setActiveModule(mod.id as Module)}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {mod.label}
-                    </Button>
-                  );
-                })}
-              </nav>
-            </aside>
-
-            {/* Content Area */}
-            <main className="flex-1 overflow-y-auto">
-              <div className="p-6">
-                {activeModule === 'overview' && <OverviewModule />}
-                {activeModule === 'business' && <BusinessModule />}
-                {activeModule === 'stallions' && <StallionsModule />}
-                {activeModule === 'incentives' && <IncentivesModule />}
-                {activeModule === 'farm-ops' && <FarmOpsModule />}
-                {activeModule === 'events' && <EventsModule />}
-                {activeModule === 'orders' && <OrdersModule />}
-                {activeModule === 'earnings' && <EarningsModule />}
-                {activeModule === 'mlm' && <MLMModule />}
-                {activeModule === 'messages' && <MessagesModule />}
-                {activeModule === 'settings' && <SettingsModule />}
-              </div>
-            </main>
           </div>
         )}
-      </div>
-
-      {/* Dock - Fixed */}
-      <div className="h-[var(--dock-h)] shrink-0 z-40">
-        <Dock />
-      </div>
-
-      {/* Debug HUD (dev only) */}
-      <DebugHUD />
-    </div>
-  );
-}
-
-// Module Components
-function OverviewModule() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Overview</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <MetricCard title="Total Revenue" value="$42,350" />
-        <MetricCard title="Active Listings" value="23" />
-        <MetricCard title="Pending Orders" value="5" />
-      </div>
-    </div>
-  );
-}
-
-function BusinessModule() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Business Management</h1>
-      <p className="text-muted-foreground">Manage your business profiles and settings.</p>
-    </div>
-  );
-}
-
-function StallionsModule() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Stallions</h1>
-      <p className="text-muted-foreground">View and manage your stallion roster.</p>
-    </div>
-  );
-}
-
-function IncentivesModule() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Incentives</h1>
-      <p className="text-muted-foreground">Track breeder incentive programs and nominations.</p>
-    </div>
-  );
-}
-
-function FarmOpsModule() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Farm Operations</h1>
-      <p className="text-muted-foreground">Manage daily farm tasks and operations.</p>
-    </div>
-  );
-}
-
-function EventsModule() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Events</h1>
-      <p className="text-muted-foreground">Upcoming events and calendar.</p>
-    </div>
-  );
-}
-
-function OrdersModule() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Orders</h1>
-      <p className="text-muted-foreground">View and manage marketplace orders.</p>
-    </div>
-  );
-}
-
-function EarningsModule() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Earnings</h1>
-      <p className="text-muted-foreground">Track your earnings and payouts.</p>
-    </div>
-  );
-}
-
-function MLMModule() {
-  const MLM = lazy(() => import('../dashboard/modules/MLM'));
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <MLM />
-    </Suspense>
-  );
-}
-
-function MessagesModule() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Messages</h1>
-      <p className="text-muted-foreground">View and respond to messages.</p>
-    </div>
-  );
-}
-
-function SettingsModule() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Settings</h1>
-      <p className="text-muted-foreground">Configure your dashboard preferences.</p>
-    </div>
-  );
-}
-
-function MetricCard({ title, value }: { title: string; value: string }) {
-  return (
-    <div className="p-4 border rounded-lg bg-card">
-      <p className="text-sm text-muted-foreground mb-1">{title}</p>
-      <p className="text-2xl font-bold">{value}</p>
+      </main>
+      
+      <Dock />
+      <LinkInterceptor />
     </div>
   );
 }
