@@ -408,7 +408,8 @@ export default function AppsPane() {
 
         <div 
           ref={boxRef}
-          className="border-2 border-border rounded-lg bg-muted/20 relative resize overflow-hidden"
+          onMouseDown={startDrag}
+          className="border-2 border-border rounded-lg bg-muted/20 relative resize overflow-hidden cursor-move"
           style={{ 
             width: `${containerWidth}px`,
             height: `${containerHeight}px`,
@@ -432,6 +433,7 @@ export default function AppsPane() {
                   <button
                     key={app.id}
                     onClick={() => handleAppClick(app)}
+                    onMouseDown={(e) => e.stopPropagation()}
                     className={cn(
                       "flex flex-col items-center justify-between gap-1 p-1",
                       "rounded-2xl",
@@ -484,14 +486,11 @@ export default function AppsPane() {
           </div>
           
           
-          <div onMouseDown={startDrag} className="absolute top-0 left-0 right-0 h-8 bg-primary/30 hover:bg-primary/50 cursor-move rounded-t flex items-center justify-center">
-            <div className="w-12 h-1 bg-white/50 rounded-full" />
-          </div>
-          <div onMouseDown={startNorthResize} className="absolute top-0 left-1/2 -translate-x-1/2 h-2 w-12 bg-primary/50 hover:bg-primary/70 cursor-ns-resize rounded-b" />
-          <div onMouseDown={startWestResize} className="absolute left-0 top-1/2 -translate-y-1/2 h-12 w-2 bg-primary/50 hover:bg-primary/70 cursor-ew-resize rounded-r" />
-          <div onMouseDown={startCornerResize} className="absolute bottom-0 right-0 h-4 w-4 rounded-tl bg-primary/70 hover:bg-primary cursor-nwse-resize" />
-          <div onMouseDown={startEastResize} className="absolute right-0 top-1/2 -translate-y-1/2 h-12 w-2 bg-primary/50 hover:bg-primary/70 cursor-ew-resize rounded-l" />
-          <div onMouseDown={startSouthResize} className="absolute bottom-0 left-1/2 -translate-x-1/2 h-2 w-12 bg-primary/50 hover:bg-primary/70 cursor-ns-resize rounded-t" />
+          <div onMouseDown={startNorthResize} className="absolute top-0 left-1/2 -translate-x-1/2 h-2 w-12 bg-primary/50 hover:bg-primary/70 cursor-ns-resize rounded-b z-10" />
+          <div onMouseDown={startWestResize} className="absolute left-0 top-1/2 -translate-y-1/2 h-12 w-2 bg-primary/50 hover:bg-primary/70 cursor-ew-resize rounded-r z-10" />
+          <div onMouseDown={startCornerResize} className="absolute bottom-0 right-0 h-4 w-4 rounded-tl bg-primary/70 hover:bg-primary cursor-nwse-resize z-10" />
+          <div onMouseDown={startEastResize} className="absolute right-0 top-1/2 -translate-y-1/2 h-12 w-2 bg-primary/50 hover:bg-primary/70 cursor-ew-resize rounded-l z-10" />
+          <div onMouseDown={startSouthResize} className="absolute bottom-0 left-1/2 -translate-x-1/2 h-2 w-12 bg-primary/50 hover:bg-primary/70 cursor-ns-resize rounded-t z-10" />
 
           {/* Pagination Controls */}
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-background/80 backdrop-blur px-3 py-1 rounded-full border border-border">
