@@ -129,11 +129,22 @@ export function InterestsStepUniversal({ onComplete, onBack }: InterestsStepUniv
       }));
 
       // Temporary cast until types regenerate
-      const { error: upsertError } = await supabase.rpc('user_interests_upsert', {
+      const { error: upsertError } = await (supabase as any).rpc('user_interests_upsert', {
         p_items: JSON.stringify(items)
       });
 
       if (upsertError) throw upsertError;
+
+      // Ensure marketplace categories exist and enqueue discovery
+      for (const item of items) {
+        try {
+          await (supabase as any).rpc('ensure_category_for_interest', {
+            p_interest_id: item.interest_id
+          });
+        } catch (catError) {
+          console.warn(`Failed to ensure category for ${item.interest_id}:`, catError);
+        }
+      }
 
       // Enqueue discovery for marketplace
       const { error: discoveryError } = await (supabase as any).rpc('enqueue_discovery_for_user', {
