@@ -14,9 +14,10 @@ interface DockAppProps {
   isEditMode: boolean;
   onClick: () => void;
   onRemove: () => void;
+  onToggleEditMode: () => void;
 }
 
-export function DockApp({ app, Icon, isEditMode, onClick, onRemove }: DockAppProps) {
+export function DockApp({ app, Icon, isEditMode, onClick, onRemove, onToggleEditMode }: DockAppProps) {
   const {
     attributes,
     listeners,
@@ -31,6 +32,24 @@ export function DockApp({ app, Icon, isEditMode, onClick, onRemove }: DockAppPro
     transition,
   };
 
+  // Handle long-press to toggle edit mode when already in edit mode
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (isEditMode) {
+      const timer = setTimeout(() => {
+        onToggleEditMode();
+      }, 300);
+      
+      const cleanup = () => {
+        clearTimeout(timer);
+        window.removeEventListener('pointerup', cleanup);
+        window.removeEventListener('pointermove', cleanup);
+      };
+      
+      window.addEventListener('pointerup', cleanup);
+      window.addEventListener('pointermove', cleanup);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -42,6 +61,7 @@ export function DockApp({ app, Icon, isEditMode, onClick, onRemove }: DockAppPro
       )}
       {...attributes}
       {...listeners}
+      onPointerDown={handlePointerDown}
     >
       <button
         onClick={onClick}

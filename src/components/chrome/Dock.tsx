@@ -5,9 +5,7 @@
 
 import { useState } from 'react';
 import type { OverlayKey } from '@/lib/overlay/types';
-import { Users, Brain } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { Brain } from 'lucide-react';
 import { CreateButton } from '@/components/dock/CreateButton';
 import { useRockerGlobal } from '@/lib/ai/rocker';
 import { usePinnedApps } from '@/hooks/usePinnedApps';
@@ -44,23 +42,6 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-  
-  // Fetch current user profile
-  const { data: profile } = useQuery({
-    queryKey: ['currentProfile'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-      
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      
-      return data;
-    }
-  });
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -79,12 +60,6 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
 
   const handleDragCancel = () => {
     // Don't exit edit mode on cancel, let user click Done
-  };
-
-  const handleProfileClick = () => {
-    if (!isEditMode) {
-      window.dispatchEvent(new CustomEvent('navigate-profile'));
-    }
   };
 
   const handleRockerClick = () => {
@@ -109,23 +84,6 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
         aria-label="Bottom dock" 
         className="dock relative z-50"
       >
-        {/* Profile Picture - First item - Always visible */}
-        <button
-          className="dock-icon dock-profile"
-          onClick={handleProfileClick}
-          title="Profile"
-        >
-          {profile ? (
-            <img 
-              src={profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.user_id}`} 
-              alt={profile.display_name || 'Profile'} 
-              className="w-full h-full object-cover rounded-full"
-            />
-          ) : (
-            <Users className="w-7 h-7" />
-          )}
-        </button>
-        
         {/* Pinned apps with drag and drop */}
         <DndContext
           sensors={sensors}
@@ -146,6 +104,7 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
                 isEditMode={isEditMode}
                 onClick={() => !isEditMode && onAppClick(app.id)}
                 onRemove={() => unpinApp(app.id)}
+                onToggleEditMode={() => setIsEditMode(prev => !prev)}
               />
             ))}
           </SortableContext>
