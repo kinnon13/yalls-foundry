@@ -28,10 +28,20 @@ import {
   FileText,
   Calendar,
   Package,
+  Plus,
+  X,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useToast } from '@/hooks/use-toast';
+import { useProfilePins } from '@/hooks/useProfilePins';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 /**
  * User Profile Menu - Shows all backend apps + profile switcher
@@ -52,6 +62,8 @@ export function UserProfileMenu() {
   const { toast } = useToast();
   const { activeProfile, setActiveProfile, userProfiles, setUserProfiles } = useProfile();
   const [user, setUser] = useState<any>(null);
+  const [showAppPicker, setShowAppPicker] = useState(false);
+  const { data: pins, add, remove } = useProfilePins(user?.id || null);
 
   // Backend apps available to all profiles
   const backendApps: BackendApp[] = [
@@ -193,6 +205,35 @@ export function UserProfileMenu() {
     navigate('/login');
   };
 
+  // Filter to show only pinned apps for active profile
+  const profilePins = activeProfile
+    ? pins.filter((p) => p.pin_type === 'app' && p.ref_id === activeProfile.id)
+    : [];
+  
+  const pinnedAppIds = new Set(profilePins.map((p) => p.metadata?.appId));
+  const visibleApps = backendApps.filter((app) => pinnedAppIds.has(app.id));
+  const unpinnedApps = backendApps.filter((app) => !pinnedAppIds.has(app.id));
+
+  const handlePinApp = (appId: string) => {
+    if (!activeProfile) return;
+    add.mutate({
+      pin_type: 'app',
+      ref_id: activeProfile.id,
+      metadata: { appId },
+    });
+  };
+
+  const handleUnpinApp = (appId: string) => {
+    if (!activeProfile) return;
+    const pinToRemove = profilePins.find((p) => p.metadata?.appId === appId);
+    if (pinToRemove) {
+      remove.mutate({
+        pin_type: pinToRemove.pin_type,
+        ref_id: pinToRemove.ref_id,
+      });
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -276,31 +317,53 @@ export function UserProfileMenu() {
         )}
 
         {/* Backend Apps */}
-        <DropdownMenuLabel className="text-xs text-muted-foreground px-2 py-1.5">
-          Backend Apps
-        </DropdownMenuLabel>
+        <div className="flex items-center justify-between px-4 py-1.5">
+          <DropdownMenuLabel className="text-xs text-muted-foreground p-0">
+            Backend Apps
+          </DropdownMenuLabel>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+            onClick={() => setShowAppPicker(true)}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
         <div className="grid grid-cols-2 gap-1 p-2">
-          {backendApps.map((app) => {
+          {visibleApps.map((app) => {
             const Icon = app.icon;
             return (
-              <DropdownMenuItem
-                key={app.id}
-                onClick={() => handleAppClick(app)}
-                className="flex flex-col items-start gap-1 p-3 h-auto cursor-pointer"
-              >
-                <div className="flex items-center gap-2 w-full">
-                  <Icon className="h-4 w-4" />
-                  <span className="text-sm font-medium">{app.label}</span>
-                  {app.badge && (
-                    <Badge variant="destructive" className="ml-auto h-5 px-1.5 text-xs">
-                      {app.badge}
-                    </Badge>
-                  )}
-                </div>
-                <span className="text-xs text-muted-foreground line-clamp-1">
-                  {app.description}
-                </span>
-              </DropdownMenuItem>
+              <div key={app.id} className="relative group">
+                <DropdownMenuItem
+                  onClick={() => handleAppClick(app)}
+                  className="flex flex-col items-start gap-1 p-3 h-auto cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 w-full">
+                    <Icon className="h-4 w-4" />
+                    <span className="text-sm font-medium">{app.label}</span>
+                    {app.badge && (
+                      <Badge variant="destructive" className="ml-auto h-5 px-1.5 text-xs">
+                        {app.badge}
+                      </Badge>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground line-clamp-1">
+                    {app.description}
+                  </span>
+                </DropdownMenuItem>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-1 right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-destructive/10 hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUnpinApp(app.id);
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
             );
           })}
         </div>
@@ -317,6 +380,40 @@ export function UserProfileMenu() {
           Log out
         </DropdownMenuItem>
       </DropdownMenuContent>
+
+      {/* App Picker Dialog */}
+      <Dialog open={showAppPicker} onOpenChange={setShowAppPicker}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Backend App</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[400px] pr-4">
+            <div className="grid grid-cols-2 gap-2">
+              {unpinnedApps.map((app) => {
+                const Icon = app.icon;
+                return (
+                  <Button
+                    key={app.id}
+                    variant="outline"
+                    className="h-20 flex flex-col gap-2 items-center justify-center"
+                    onClick={() => {
+                      handlePinApp(app.id);
+                      setShowAppPicker(false);
+                      toast({
+                        title: 'App pinned',
+                        description: `${app.label} added to ${activeProfile?.name}`,
+                      });
+                    }}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="text-sm font-medium text-center">{app.label}</span>
+                  </Button>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </DropdownMenu>
   );
 }
