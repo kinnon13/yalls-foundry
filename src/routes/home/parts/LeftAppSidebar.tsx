@@ -7,7 +7,7 @@ import {
   Store, Activity, Zap, Target, Award, LucideIcon,
   Package, Truck, RotateCcw, CreditCard, Receipt,
   Tag, BarChart3, Megaphone, Link2, Video, FolderOpen,
-  Globe, FileText, HardDrive, ClipboardList
+  Globe, FileText, HardDrive, ClipboardList, Grid3x3
 } from 'lucide-react';
 
 interface AppConfig {
@@ -119,6 +119,27 @@ export default function LeftAppSidebar({ onAppClick }: LeftAppSidebarProps) {
       </div>
 
       <div className="flex-1 p-4 space-y-6">
+        {/* Y'all App Library - Featured at top */}
+        <section>
+          <button
+            onClick={() => onAppClick({ 
+              key: 'yall-library', 
+              label: 'Y\'all App Library', 
+              icon: Grid3x3,
+              route: '/apps',
+              color: 'text-primary'
+            })}
+            className="w-full group flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/40 hover:shadow-xl transition-all duration-200"
+          >
+            <div className="w-12 h-12 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center">
+              <Grid3x3 className="w-6 h-6 text-primary" />
+            </div>
+            <div className="text-left">
+              <div className="font-semibold">Y'all App Library</div>
+              <div className="text-xs text-muted-foreground">Discover & manage apps</div>
+            </div>
+          </button>
+        </section>
         {/* My Entities */}
         {entities.length > 0 && (
           <section>

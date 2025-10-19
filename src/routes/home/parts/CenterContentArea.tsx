@@ -2,6 +2,7 @@ import { X } from 'lucide-react';
 import { lazy, Suspense, ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
+import AppLibrary from './AppLibrary';
 
 // Lazy load all page components
 const MarketplacePage = lazy(() => import('@/routes/marketplace/index'));
@@ -29,15 +30,15 @@ const appRegistry: Record<string, ComponentType<any>> = {
   '/marketplace': MarketplacePage,
 };
 
-function AppRenderer({ app, onNavigate }: { app: AppTab; onNavigate: (url: string) => void }) {
+function AppRenderer({ app, onNavigate, onAppClick }: { app: AppTab; onNavigate: (url: string) => void; onAppClick: (app: AppTab) => void }) {
   // Intercept navigation for inline rendering
   const navigate = useNavigate();
   
-  // Override navigate to open inline instead
-  const interceptedNavigate = (to: string) => {
-    onNavigate(to);
-  };
-
+  // Y'all App Library
+  if (app.key === 'yall-library') {
+    return <AppLibrary onAppClick={onAppClick} />;
+  }
+  
   // Match component by route
   if (app.route === '/market' || app.route === '/marketplace') {
     return <MarketplacePage />;
@@ -200,7 +201,7 @@ export default function CenterContentArea({
                       }
                     }
                   }}>
-                    <AppRenderer app={app} onNavigate={handleInternalNavigate} />
+                    <AppRenderer app={app} onNavigate={handleInternalNavigate} onAppClick={onAppClick} />
                   </div>
                 </Suspense>
               </div>

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import LeftAppSidebar from './parts/LeftAppSidebar';
 import CenterContentArea from './parts/CenterContentArea';
 import SocialFeedPane from './parts/SocialFeedPane';
@@ -14,8 +15,32 @@ interface AppTab {
 }
 
 export default function HomePage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [openApps, setOpenApps] = useState<AppTab[]>([]);
   const [activeApp, setActiveApp] = useState<string | null>(null);
+
+  // Restore tabs from URL on mount
+  useEffect(() => {
+    const appParam = searchParams.get('app');
+    if (appParam && openApps.length === 0) {
+      // Restore from URL - for now just open the app library as default
+      handleAppClick({
+        key: 'yall-library',
+        label: 'Y\'all App Library',
+        icon: undefined,
+        color: 'text-primary'
+      });
+    }
+  }, []);
+
+  // Update URL when active app changes
+  useEffect(() => {
+    if (activeApp) {
+      setSearchParams({ app: activeApp }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
+  }, [activeApp]);
 
   const handleAppClick = (app: { key: string; label: string; route?: string; icon?: any; color?: string }) => {
     // Deduplicate: if already open, just focus it
