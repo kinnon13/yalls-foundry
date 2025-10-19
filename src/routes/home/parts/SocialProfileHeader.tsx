@@ -92,7 +92,18 @@ export default function SocialProfileHeader({ showProfile = true }: { showProfil
     <div className="bg-background px-4 pt-3 pb-2">
       {/* Top Navigation Bar - hide on mobile since global HeaderBar shows */}
       <div className="hidden lg:flex items-center gap-3 mb-4">
-        {/* Profile Picture Button (replaces Home icon) */}
+        {/* Hamburger Menu Button */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 flex-shrink-0"
+          onClick={handleMenuOpen}
+          title="Menu"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+
+        {/* Profile Picture Button */}
         <button 
           onClick={handleProfileClick}
           className="h-8 w-8 flex-shrink-0 rounded-full overflow-hidden border-2 border-primary/20 hover:border-primary transition-colors"
@@ -119,7 +130,7 @@ export default function SocialProfileHeader({ showProfile = true }: { showProfil
           </div>
         </form>
 
-        {/* Menu Icon */}
+        {/* Logout Icon */}
         <Button 
           variant="ghost" 
           size="icon" 
