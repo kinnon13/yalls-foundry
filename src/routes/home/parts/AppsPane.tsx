@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FavoritesBar } from '@/components/social/FavoritesBar';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useEntityCapabilities } from '@/hooks/useEntityCapabilities';
@@ -140,12 +139,6 @@ export default function AppsPane() {
 
   return (
     <div className="space-y-4 h-full">
-      {/* Always-visible favorites bar with distinct background */}
-      <section className="mb-2 bg-muted/30">
-        <h3 className="text-base font-semibold text-foreground mb-2 text-center">Favorites</h3>
-        <FavoritesBar size={72} gap={12} />
-      </section>
-
       {/* Scale control */}
       <div className="flex items-center gap-3 px-2">
         <span className="text-xs text-muted-foreground whitespace-nowrap">Tile size</span>
