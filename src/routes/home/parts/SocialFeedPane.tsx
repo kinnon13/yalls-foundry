@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSession } from '@/lib/auth/context';
 import { Reel } from '@/components/reels/Reel';
 import { cn } from '@/lib/utils';
-import ProfileSummaryBar from './ProfileSummaryBar';
+import SocialProfileHeader from './SocialProfileHeader';
 
 const TABS = ['following', 'for-you', 'shop', 'profile'] as const;
 type Tab = typeof TABS[number];
@@ -112,21 +112,18 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col bg-white">
-      {/* Home button and Connected Accounts heading in same row */}
-      <div className="mb-2 flex items-center justify-between px-2">
-        <button
-          onClick={() => navigate('/home')}
-          className="text-base font-semibold text-foreground hover:text-primary transition-colors"
-        >
-          Home
-        </button>
-        <h3 className="text-base font-semibold text-foreground">View Connected Accounts</h3>
-        <div className="w-[60px]" aria-hidden /> {/* Spacer for balance */}
-      </div>
-
-      {/* Profile bubble with stats */}
-      <ProfileSummaryBar />
+    <section className="flex h-full w-full flex-col bg-white relative">
+      {/* Grid overlay for layout visualization */}
+      <div className="absolute inset-0 pointer-events-none z-50" style={{
+        backgroundImage: `
+          linear-gradient(to right, rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(59, 130, 246, 0.1) 1px, transparent 1px)
+        `,
+        backgroundSize: '20px 20px'
+      }} />
+      
+      {/* Profile Header */}
+      <SocialProfileHeader />
 
       {/* Tab indicators (clickable or drag/swipe to change) */}
       <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-white/90 backdrop-blur px-2 py-1">
