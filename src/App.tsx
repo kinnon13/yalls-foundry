@@ -29,6 +29,7 @@ import { DevHUD } from '@/components/dev/DevHUD';
 import { useDevHUD } from '@/hooks/useDevHUD';
 import { OverlayProvider } from '@/lib/overlay/OverlayProvider';
 import { rocker } from '@/lib/rocker/event-bus';
+import { ProfileProvider } from '@/contexts/ProfileContext';
 import '@/kernel'; // Register app contracts
 
 // 10 Canonical Routes
@@ -48,6 +49,7 @@ const ListingDetail = lazy(() => import('./routes/listings/[id]'));
 const CartPage = lazy(() => import('./routes/cart/index'));
 const OrdersIndex = lazy(() => import('./routes/orders/index'));
 const OrderDetail = lazy(() => import('./routes/orders/[id]'));
+const MLMPage = lazy(() => import('./routes/mlm/index'));
 
 const queryClient = new QueryClient();
 
@@ -206,6 +208,18 @@ function AppContent() {
           } 
         />
         
+        {/* MLM Network */}
+        <Route 
+          path="/mlm" 
+          element={
+            <RequireAuth>
+              <Suspense fallback={<div>Loading...</div>}>
+                <MLMPage />
+              </Suspense>
+            </RequireAuth>
+          } 
+        />
+        
         {/* Auth */}
         <Route path="/login" element={<Login />} />
         
@@ -244,15 +258,17 @@ function App() {
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <BrowserRouter>
               <AuthProvider>
-                <RockerProvider>
-                  <RockerChatProvider>
-                    <OverlayProvider>
-                      <AppContent />
-                      <PreviewMessageListener />
-                      <PreviewRoutes />
-                    </OverlayProvider>
-                  </RockerChatProvider>
-                </RockerProvider>
+                <ProfileProvider>
+                  <RockerProvider>
+                    <RockerChatProvider>
+                      <OverlayProvider>
+                        <AppContent />
+                        <PreviewMessageListener />
+                        <PreviewRoutes />
+                      </OverlayProvider>
+                    </RockerChatProvider>
+                  </RockerProvider>
+                </ProfileProvider>
               </AuthProvider>
             </BrowserRouter>
           </ThemeProvider>

@@ -2,7 +2,8 @@
  * Global Header - Mac-style top bar
  */
 
-import { Bell, ShoppingCart, LogOut } from 'lucide-react';
+import { Bell, ShoppingCart } from 'lucide-react';
+import { UserProfileMenu } from '@/components/profile/UserProfileMenu';
 
 export default function HeaderBar() {
   return (
@@ -15,16 +16,14 @@ export default function HeaderBar() {
         type="search"
       />
 
-      <div style={{ display: 'flex', gap: '12px', marginLeft: 'auto' }}>
+      <div style={{ display: 'flex', gap: '12px', marginLeft: 'auto', alignItems: 'center' }}>
         <button className="dock-icon" title="Notifications">
           <Bell className="h-5 w-5" />
         </button>
         <button className="dock-icon" title="Cart">
           <ShoppingCart className="h-5 w-5" />
         </button>
-        <button className="dock-icon" title="Logout">
-          <LogOut className="h-5 w-5" />
-        </button>
+        <UserProfileMenu />
       </div>
     </header>
   );
