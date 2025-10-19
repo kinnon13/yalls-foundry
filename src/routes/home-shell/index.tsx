@@ -17,6 +17,7 @@ import LinkInterceptor from '@/components/chrome/LinkInterceptor';
 import { X } from 'lucide-react';
 import SocialFeedPane from '../home/parts/SocialFeedPane';
 import { MobileTabBar } from '@/components/mobile/MobileTabBar';
+import { CreateModalRouter } from '@/components/modals/CreateModalRouter';
 
 function ActiveAppContent({ appId, onClose }: { appId: OverlayKey; onClose: () => void }) {
   const config = OVERLAY_REGISTRY[appId];
@@ -153,6 +154,7 @@ export default function HomeShell() {
         </div>
         <MobileTabBar />
       </div>
+      <CreateModalRouter />
       <LinkInterceptor />
     </>
   );

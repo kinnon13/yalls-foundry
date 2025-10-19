@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 export function MobileTabBar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Determine active tab based on route and feed param
   const getActiveTab = () => {
@@ -45,8 +45,13 @@ export function MobileTabBar() {
       icon: PlusCircle,
       label: 'Create',
       onClick: () => {
-        // TODO: Open create modal
-        console.log('Create clicked');
+        const next = new URLSearchParams(searchParams);
+        next.set('modal', 'create_post');
+        const feed = searchParams.get('feed');
+        const userId = searchParams.get('user') || '';
+        const context = feed === 'profile' && userId ? `source:profile:${userId}` : 'source:feed';
+        next.set('context', context);
+        setSearchParams(next);
       },
     },
     {
