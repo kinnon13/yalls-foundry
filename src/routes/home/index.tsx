@@ -24,8 +24,7 @@ export default function HomePage() {
           </div>
 
           {/* Desktop: Resizable panels */}
-          <div className="hidden lg:block h-full">
-            <ResizablePanelGroup direction="horizontal" className="h-full">
+          <ResizablePanelGroup direction="horizontal" className="hidden lg:flex h-full">
               {/* Apps (left) - resizable */}
               <ResizablePanel defaultSize={35} minSize={10} maxSize={90}>
                 <AppsPane />
@@ -38,9 +37,8 @@ export default function HomePage() {
                 <div className="h-full w-full">
                   <SocialFeedPane />
                 </div>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </div>
       </main>
       <BottomDock />
