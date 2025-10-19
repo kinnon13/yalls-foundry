@@ -20,17 +20,12 @@ export default function SocialFeedPane() {
   const [feedHeight, setFeedHeight] = useState(() => 
     Number(localStorage.getItem('feed.itemHeight') || 600)
   );
-  const [feedWidth, setFeedWidth] = useState(() => 
-    Number(localStorage.getItem('feed.itemWidth') || 400)
-  );
   const [resizing, setResizing] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
-      setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -40,28 +35,16 @@ export default function SocialFeedPane() {
     localStorage.setItem('feed.itemHeight', String(feedHeight));
   }, [feedHeight]);
 
-  useEffect(() => {
-    localStorage.setItem('feed.itemWidth', String(feedWidth));
-  }, [feedWidth]);
-
-  const startResize = (e: React.MouseEvent, edge: 'width' | 'height' | 'both') => {
+  const startResize = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const startX = e.clientX;
     const startY = e.clientY;
-    const startW = feedWidth;
     const startH = feedHeight;
     setResizing(true);
     
     const onMove = (ev: MouseEvent) => {
-      if (edge === 'width' || edge === 'both') {
-        const w = Math.max(200, Math.min(800, startW + (ev.clientX - startX)));
-        setFeedWidth(w);
-      }
-      if (edge === 'height' || edge === 'both') {
-        const h = Math.max(300, Math.min(1200, startH + (ev.clientY - startY)));
-        setFeedHeight(h);
-      }
+      const h = Math.max(300, Math.min(1200, startH + (ev.clientY - startY)));
+      setFeedHeight(h);
     };
     
     const onUp = () => {
@@ -210,43 +193,24 @@ export default function SocialFeedPane() {
         <div 
           className="h-full w-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
-          <div className={cn(
-            "flex flex-col w-full",
-            isMobile || isTablet ? "items-stretch" : "items-center"
-          )}>
+          <div className="flex flex-col items-stretch w-full">
             {items.map((item) => (
               <div 
                 key={item.id} 
-                className={cn(
-                  "snap-start snap-always relative shrink-0",
-                  isMobile || isTablet ? "w-full" : "w-auto"
-                )}
+                className="snap-start snap-always relative shrink-0 w-full"
                 style={{ 
-                  height: isMobile ? '100vh' : `${feedHeight}px`,
-                  width: isMobile || isTablet ? undefined : `${feedWidth}px`
+                  height: isMobile ? '100vh' : `${feedHeight}px`
                 }}
               >
                 <Reel {...item} />
                 
-                {/* Resize Handles - only on desktop (not tablet) */}
-                {!isMobile && !isTablet && (
-                  <>
-                    <div 
-                      onMouseDown={(e) => startResize(e, 'width')}
-                      className="absolute right-0 top-0 bottom-0 w-2 border-r-2 border-dashed border-primary/50 hover:border-primary cursor-ew-resize z-10"
-                      title="Drag to resize width"
-                    />
-                    <div 
-                      onMouseDown={(e) => startResize(e, 'height')}
-                      className="absolute left-0 right-0 bottom-0 h-2 border-b-2 border-dashed border-primary/50 hover:border-primary cursor-ns-resize z-10"
-                      title="Drag to resize height"
-                    />
-                    <div 
-                      onMouseDown={(e) => startResize(e, 'both')}
-                      className="absolute right-0 bottom-0 w-4 h-4 border-r-2 border-b-2 border-dashed border-primary/70 hover:border-primary cursor-nwse-resize z-10 rounded-bl"
-                      title="Drag to resize both"
-                    />
-                  </>
+                {/* Resize Handle - height only on desktop */}
+                {!isMobile && (
+                  <div 
+                    onMouseDown={startResize}
+                    className="absolute left-0 right-0 bottom-0 h-2 border-b-2 border-dashed border-primary/50 hover:border-primary cursor-ns-resize z-10"
+                    title="Drag to resize height"
+                  />
                 )}
               </div>
             ))}
