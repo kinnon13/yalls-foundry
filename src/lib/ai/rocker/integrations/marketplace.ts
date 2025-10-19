@@ -66,4 +66,6 @@ export async function rockerPurchaseCompleted(params: {
   // - Suggest related products
   // - Track MLM referral chain (buyer → seller → affiliate uplines)
   // - Commission distribution triggers automatically via order status='paid'
+  // - Remind sellers to print labels within 7 days (or order reverses)
+  // - Commissions release 14 days after label printing
 }

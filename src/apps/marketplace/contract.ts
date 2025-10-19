@@ -19,8 +19,12 @@ export const marketplaceContract: AppContract = {
   // Commission structure (automatic):
   // - Platform 8%: 4% buyer upline (uncapped) + 4% seller upline (capped $100)
   // - Seller bonus (optional): 80% affiliate + 10% platform + 10% affiliate upline
-  // - Creator account required to receive payouts
-  // - 1-year expiration on unclaimed commissions
+  // - Businesses pay all transaction fees (buyer does NOT pay platform fee)
+  // - Label printing: REQUIRED within 7 days or order reverses (business loses all fees + price)
+  // - Commission hold: 14 days AFTER label printed (or auto-reverse if no label)
+  // - Platform keeps buyer's 4% commission on reversed orders
+  // - Creator account required to receive payouts (tax docs)
+  // - 1-year expiration on unclaimed commissions → redirected to platform
 
   actions: {
     create_listing: {

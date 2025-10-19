@@ -5437,6 +5437,8 @@ export type Database = {
           email: string
           id: string
           payment_intent_id: string | null
+          reversal_reason: string | null
+          reversed_at: string | null
           shipping_address: Json | null
           shipping_cents: number
           status: string
@@ -5453,6 +5455,8 @@ export type Database = {
           email: string
           id?: string
           payment_intent_id?: string | null
+          reversal_reason?: string | null
+          reversed_at?: string | null
           shipping_address?: Json | null
           shipping_cents?: number
           status?: string
@@ -5469,6 +5473,8 @@ export type Database = {
           email?: string
           id?: string
           payment_intent_id?: string | null
+          reversal_reason?: string | null
+          reversed_at?: string | null
           shipping_address?: Json | null
           shipping_cents?: number
           status?: string
@@ -8604,6 +8610,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      commission_check_release: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       commission_distribute_dual_tree: {
         Args: { p_hold_days?: number; p_order_id: string; p_rule_set?: string }
         Returns: Json
@@ -9493,6 +9503,10 @@ export type Database = {
               p_user_id: string
             }
         Returns: string
+      }
+      order_reverse_unlabeled: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       order_start_from_cart: {
         Args: { p_cart_id: string; p_idempotency_key: string }

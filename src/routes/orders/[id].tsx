@@ -23,6 +23,8 @@ type Order = {
   total_cents: number;
   mock_paid_at: string | null;
   label_printed_at: string | null;
+  reversed_at: string | null;
+  reversal_reason: string | null;
 };
 
 type OLI = { 
@@ -48,7 +50,7 @@ export default function OrderDetail() {
   const load = async () => {
     setLoading(true);
     const q = supabase.from("orders" as any)
-      .select("id, created_at, status, buyer_user_id, seller_entity_id, subtotal_cents, tax_cents, shipping_cents, total_cents, mock_paid_at, label_printed_at")
+      .select("id, created_at, status, buyer_user_id, seller_entity_id, subtotal_cents, tax_cents, shipping_cents, total_cents, mock_paid_at, label_printed_at, reversed_at, reversal_reason")
       .eq("id", id!).maybeSingle();
     
     const [user, ord] = await Promise.all([supabase.auth.getUser(), q]);
@@ -69,8 +71,16 @@ export default function OrderDetail() {
   const canPrintLabel = useMemo(() => {
     if (!order || !me) return false;
     const isSellerSide = order.buyer_user_id !== me;
-    return isSellerSide && order.status === "paid" && !order.label_printed_at;
+    return isSellerSide && order.status === "paid" && !order.label_printed_at && !order.reversed_at;
   }, [order, me]);
+
+  const daysUntilReversal = useMemo(() => {
+    if (!order || order.status !== 'paid' || order.label_printed_at || order.reversed_at) return null;
+    const paidAt = new Date(order.mock_paid_at || order.created_at).getTime();
+    const elapsed = Date.now() - paidAt;
+    const daysElapsed = Math.floor(elapsed / (1000 * 60 * 60 * 24));
+    return Math.max(0, 7 - daysElapsed);
+  }, [order]);
 
   const markLabelPrinted = async () => {
     setPrinting(true);
@@ -130,8 +140,20 @@ export default function OrderDetail() {
                 <p className="text-sm text-muted-foreground mt-1">
                   {format(new Date(order.created_at), 'PPp')}
                 </p>
+                {order.reversed_at && (
+                  <p className="text-sm text-destructive font-semibold mt-2">
+                    ⚠️ Reversed: {order.reversal_reason || 'No label printed within 7 days'}
+                  </p>
+                )}
+                {daysUntilReversal !== null && canPrintLabel && (
+                  <p className="text-sm text-orange-600 dark:text-orange-400 font-semibold mt-2">
+                    ⚠️ Print label within {daysUntilReversal} day{daysUntilReversal !== 1 ? 's' : ''} or order will be reversed
+                  </p>
+                )}
               </div>
-              <Badge>{order.status}</Badge>
+              <Badge variant={order.status === 'reversed' ? 'destructive' : order.status === 'paid' ? 'default' : 'secondary'}>
+                {order.status}
+              </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -192,9 +214,10 @@ export default function OrderDetail() {
                 onClick={markLabelPrinted}
                 disabled={printing}
                 className="w-full gap-2"
+                variant={daysUntilReversal !== null && daysUntilReversal <= 2 ? "destructive" : "default"}
               >
                 <Printer className="h-4 w-4" />
-                {printing ? "Marking…" : "Mark Label Printed (mock)"}
+                {printing ? "Marking…" : "Mark Label Printed (Required within 7 days)"}
               </Button>
             )}
           </CardContent>
