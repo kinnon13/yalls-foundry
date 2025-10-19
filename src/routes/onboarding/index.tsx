@@ -19,6 +19,7 @@ import { NotificationsStep } from '@/components/onboarding/NotificationsStep';
 import { BusinessStep } from '@/components/onboarding/BusinessStep';
 import { FollowsStep } from '@/components/onboarding/FollowsStep';
 import { Sparkles } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const STEPS = [
   { key: 'acquisition', label: 'How did you find us?' },
@@ -33,6 +34,7 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Load resume state
   useEffect(() => {
@@ -110,9 +112,37 @@ export default function OnboardingPage() {
     }
   };
 
+  // Ensure we have acquisition before completion (server requires it)
+  const ensureAcquisition = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: acq } = await supabase
+      .from('user_acquisition')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!acq) {
+      const sessionId = sessionStorage.getItem('session_id') ||
+        `session_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      const payload = {
+        invited_by_kind: 'unknown',
+        invited_by_id: null,
+        invite_code: null,
+        invite_medium: 'organic',
+        utm: {},
+        ref_session_id: sessionId,
+      } as any;
+      await supabase.rpc('set_user_acquisition', { p_payload: payload });
+    }
+  };
+
   const finishOnboarding = async () => {
     setLoading(true);
     try {
+      await ensureAcquisition();
+
       const { error } = await supabase.rpc('complete_onboarding');
       if (error) throw error;
 
@@ -120,7 +150,18 @@ export default function OnboardingPage() {
       navigate('/home?tab=for-you');
     } catch (err) {
       console.error('[Onboarding] Complete error:', err);
-      alert(err instanceof Error ? err.message : 'Failed to complete onboarding');
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes('acquisition_required')) {
+        toast({
+          title: 'One more step',
+          description: "Please complete 'How did you find us?' before finishing.",
+          variant: 'destructive'
+        });
+        setCurrentStep(0);
+        await saveProgress('acquisition');
+        return;
+      }
+      alert('Failed to complete onboarding');
     } finally {
       setLoading(false);
     }
