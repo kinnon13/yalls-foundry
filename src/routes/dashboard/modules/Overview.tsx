@@ -88,7 +88,7 @@ export function Overview() {
           </CardHeader>
           <CardContent>
             <Button variant="outline" size="sm" asChild>
-              <a href="/dashboard?module=events">View Moderation Queue</a>
+              <a href="/?mode=manage&module=events">View Moderation Queue</a>
             </Button>
           </CardContent>
         </Card>

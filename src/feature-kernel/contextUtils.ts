@@ -208,7 +208,7 @@ export function parseFeaturePropsFromURL(featureId: string): Record<string, any>
  * const link = buildDeepLink({
  *   feature: 'incentives',
  *   props: { horse: horseId, program: programId, mode: 'nominate' },
- *   returnTo: '/dashboard?m=horses'
+ *   returnTo: '/?mode=manage&m=horses'
  * })
  */
 export function buildDeepLink(options: {
@@ -216,7 +216,7 @@ export function buildDeepLink(options: {
   props?: Record<string, any>;
   returnTo?: string;
 }): string {
-  const url = new URL(window.location.origin + '/dashboard');
+  const url = new URL(window.location.origin + '/?mode=manage');
   url.searchParams.set('f', options.feature);
   
   if (options.props) {

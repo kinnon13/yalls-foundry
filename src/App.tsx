@@ -38,7 +38,6 @@ import NotFound from './pages/NotFound';
 import Health from './pages/Health';
 
 const Discover = lazy(() => import('./routes/discover-v2'));
-const DashboardLayout = lazy(() => import('./routes/dashboard-new/index'));
 const Messages = lazy(() => import('./routes/messages/index'));
 const ProfilePageDynamic = lazy(() => import('./routes/profile/[id]'));
 const EntitiesList = lazy(() => import('./routes/entities/index'));
@@ -72,7 +71,7 @@ function AppContent() {
     // Register canonical routes for scanner
     import('@/router/registry').then(({ registerRoutes }) => {
       registerRoutes([
-        '/', '/discover', '/dashboard', '/messages', '/profile/:id',
+        '/', '/discover', '/messages', '/profile/:id',
         '/entities', '/events', '/events/:id', '/listings', '/listings/:id',
         '/cart', '/orders', '/orders/:id'
       ]);
@@ -101,17 +100,9 @@ function AppContent() {
           } 
         />
         
-        {/* 3. Dashboard - Single management surface */}
-        <Route
-          path="/dashboard"
-          element={
-            <RequireAuth>
-              <Suspense fallback={<div>Loading...</div>}>
-                <DashboardLayout />
-              </Suspense>
-            </RequireAuth>
-          }
-        />
+        {/* 3. Dashboard - Redirect to unified shell */}
+        <Route path="/dashboard" element={<Navigate to="/?mode=manage" replace />} />
+        <Route path="/home" element={<Navigate to="/" replace />} />
         
         {/* 4. Messages - DM deep link */}
         <Route

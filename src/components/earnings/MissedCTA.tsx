@@ -34,7 +34,7 @@ export function MissedCTA({ tierPct, missedCents30d }: MissedCTAProps) {
             based on last 30 days.
           </div>
           <a
-            href="/dashboard?m=earnings&cta=upgrade"
+            href="/?mode=manage&m=earnings&cta=upgrade"
             className="mt-3 inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
           >
             Upgrade Membership

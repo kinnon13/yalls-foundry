@@ -24,7 +24,7 @@ export function DashboardBreadcrumbs() {
 
   return (
     <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-      <Link to="/dashboard" className="hover:text-foreground transition-colors">
+      <Link to="/?mode=manage" className="hover:text-foreground transition-colors">
         <Home size={16} />
       </Link>
       
