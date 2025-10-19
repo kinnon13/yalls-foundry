@@ -171,7 +171,7 @@ export default function HomePage() {
             )}
             
             {mobileView === 'feed' && (
-              <div className="h-full overflow-y-auto max-w-screen-sm mx-auto w-full">
+              <div className="h-full overflow-hidden max-w-screen-sm mx-auto w-full">
                 <SocialFeedPane />
               </div>
             )}

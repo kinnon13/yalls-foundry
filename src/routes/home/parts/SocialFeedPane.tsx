@@ -141,14 +141,14 @@ export default function SocialFeedPane() {
       {/* Swipeable feed container */}
       <div 
         ref={railRef}
-        className="relative flex-1 select-none touch-pan-y"
+        className="relative flex-1 overflow-hidden select-none touch-pan-y"
       >
         <div 
           className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
           <div className="space-y-0 px-0 pb-0">
             {items.map((item) => (
-              <div key={item.id} className="h-[calc(100vh-16rem)] snap-start">
+              <div key={item.id} className="snap-start" style={{ height: 'calc(100vh - 240px)' }}>
                 <Reel {...item} />
               </div>
             ))}
