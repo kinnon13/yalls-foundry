@@ -35,17 +35,15 @@ export function Reel({ src, alt, author, caption, stats, onLike, onComment, onSa
 
   return (
     <article
-      className="relative w-full h-full bg-black overflow-hidden"
-      style={{ borderRadius: 0 }}
+      className="relative w-full h-full snap-start bg-black rounded-none overflow-hidden"
       onDoubleClick={doubleTapLike}
     >
-      {/* MEDIA: full-bleed, no rounding */}
+      {/* MEDIA: full-bleed */}
       <img
         src={src}
         alt={alt || ''}
         draggable={false}
-        className="absolute inset-0 w-full h-full select-none"
-        style={{ objectFit: 'cover', borderRadius: 0 }}
+        className="absolute inset-0 h-full w-full object-cover select-none"
       />
 
       {/* HEART BURST on double-tap */}

@@ -57,11 +57,10 @@ export function BottomDock() {
       <nav
         role="navigation"
         aria-label="Bottom dock"
-        className="bg-background/90 backdrop-blur border-t border-border/60 px-2"
-        style={{ 
-          paddingBottom: 'calc(max(0px, env(safe-area-inset-bottom)) + 0px)',
-          height: 'var(--dock-h)'
-        }}
+        className={cn(
+          'fixed bottom-0 inset-x-0 z-40 bg-background/90 backdrop-blur border-t border-border/60',
+          'px-2 pb-[max(0px,env(safe-area-inset-bottom))]'
+        )}
       >
       <div className="mx-auto max-w-[800px] h-16 grid grid-cols-5 gap-2 items-end">
         {items.map((it) => {
