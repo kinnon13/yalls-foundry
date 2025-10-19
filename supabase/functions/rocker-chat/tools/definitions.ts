@@ -517,6 +517,31 @@ export const TOOL_DEFINITIONS = [
   {
     type: "function",
     function: {
+      name: "send_sms",
+      description: "Send an SMS text message to the super admin. Use for reminders, quick updates, task notifications, or questions. More casual and immediate than email. Keep messages under 160 characters when possible.",
+      parameters: {
+        type: "object",
+        required: ["message"],
+        properties: {
+          message: {
+            type: "string",
+            description: "The text message to send (keep under 160 chars for single SMS)"
+          },
+          phone_number: {
+            type: "string",
+            description: "Optional phone number in E.164 format (uses user's default if not provided)"
+          },
+          metadata: {
+            type: "object",
+            description: "Optional metadata about the message (task_id, goal_id, etc.)"
+          }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "send_voice_message",
       description: "Send a voice message to the super admin. Use for non-urgent updates or when voice communication is preferred. Converts text to natural-sounding speech.",
       parameters: {

@@ -6,6 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface TwilioMessage {
+  sid: string;
+  body: string;
+  from: string;
+  to: string;
+  status: string;
+  dateCreated: string;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -30,7 +39,7 @@ serve(async (req) => {
       throw new Error("Unauthorized");
     }
 
-    const { action, to, message, approval_id } = await req.json();
+    const { action, to, message, approval_id, metadata } = await req.json();
 
     const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
     const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
@@ -38,6 +47,69 @@ serve(async (req) => {
 
     if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
       throw new Error("Twilio credentials not configured");
+    }
+
+    // Send SMS message
+    if (action === "send_sms") {
+      const { data: prefs } = await supabaseClient
+        .from("voice_preferences")
+        .select("phone_number")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const targetPhone = to || prefs?.phone_number;
+      
+      if (!targetPhone) {
+        throw new Error("No phone number configured");
+      }
+
+      console.log("Sending SMS to:", targetPhone);
+
+      // Send SMS via Twilio
+      const smsResponse = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            From: TWILIO_PHONE_NUMBER,
+            To: targetPhone,
+            Body: message
+          }),
+        }
+      );
+
+      if (!smsResponse.ok) {
+        const errorText = await smsResponse.text();
+        console.error("Twilio SMS error:", errorText);
+        throw new Error(`Failed to send SMS: ${errorText}`);
+      }
+
+      const smsData: TwilioMessage = await smsResponse.json();
+      console.log("SMS sent successfully:", smsData.sid);
+
+      // Log to voice_interactions
+      await supabaseClient.from("voice_interactions").insert({
+        user_id: user.id,
+        interaction_type: "sms_outbound",
+        phone_number: targetPhone,
+        message_body: message,
+        status: smsData.status,
+        twilio_sid: smsData.sid,
+        metadata: metadata || {}
+      });
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message_sid: smsData.sid,
+          status: smsData.status
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     if (action === "initiate_call") {

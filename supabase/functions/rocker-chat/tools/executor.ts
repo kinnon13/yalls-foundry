@@ -492,6 +492,27 @@ export async function executeTool(
       }
 
       // ========== VOICE CAPABILITIES (Super Admin Only) ==========
+      case 'send_sms': {
+        const { message, phone_number, metadata } = args;
+        
+        const { data, error } = await supabaseClient.functions.invoke('rocker-voice-call', {
+          body: {
+            action: 'send_sms',
+            message,
+            to: phone_number,
+            metadata: metadata || {}
+          },
+        });
+        
+        if (error) throw error;
+        return { 
+          success: true, 
+          message_sid: data.message_sid, 
+          message: 'SMS sent successfully',
+          status: data.status 
+        };
+      }
+
       case 'send_voice_message': {
         const { message, phone_number } = args;
         

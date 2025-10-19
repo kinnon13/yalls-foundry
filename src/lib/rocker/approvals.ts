@@ -4,7 +4,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import { initiateVoiceCall, sendVoiceMessage } from './voice';
+import { initiateVoiceCall, sendVoiceMessage, sendSMS } from './voice';
 
 export interface ApprovalRequest {
   type: 'change_proposal' | 'promotion_queue';
@@ -50,17 +50,12 @@ ${approvalLink}`;
   // Send SMS if requested
   if (channels.sms) {
     try {
-      const { data, error } = await supabase.functions.invoke('rocker-sms', {
-        body: {
-          message: `Rocker: ${request.title}\n\nApprove here: ${approvalLink}`,
-          approval_id: request.id,
-        },
+      await sendSMS({
+        message: `Rocker: ${request.title}\n\nApprove here: ${approvalLink}`,
+        metadata: { approval_id: request.id, type: 'approval_request' },
       });
 
-      if (!error) {
-        results.channels_used.push('sms');
-        results.sms_sid = data?.sid;
-      }
+      results.channels_used.push('sms');
     } catch (err) {
       console.error('SMS send failed:', err);
     }

@@ -127,6 +127,17 @@ serve(async (req) => {
       payload: { twilio: true },
     });
 
+    // Also log to voice_interactions for unified tracking
+    await supabase.from("voice_interactions").insert({
+      user_id: userId,
+      interaction_type: "sms_inbound",
+      phone_number: from,
+      message_body: body,
+      status: "received",
+      twilio_sid: params.MessageSid || null,
+      metadata: { source: "sms_webhook" }
+    });
+
     const text = body.trim().toLowerCase();
 
     // Quick reply: Y/Yes (approve pending task)
