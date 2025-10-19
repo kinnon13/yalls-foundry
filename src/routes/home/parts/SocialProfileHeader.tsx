@@ -13,7 +13,6 @@ export default function SocialProfileHeader() {
   const [handle, setHandle] = useState('username');
   const [avatar, setAvatar] = useState<string | undefined>(undefined);
   const [totals, setTotals] = useState({ following: 0, followers: 0, likes: 0 });
-  const [profileViews] = useState(6);
 
   useEffect(() => {
     if (!userId) return;
@@ -51,46 +50,29 @@ export default function SocialProfileHeader() {
   };
 
   return (
-    <div className="bg-background py-4 px-4 border-b">
+    <div className="bg-background py-3 px-4 border-b">
       {/* Top bar - icons */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
+        <UserPlus className="w-5 h-5" />
         <div className="flex items-center gap-3">
-          <UserPlus className="w-6 h-6" />
-          <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-            <span className="text-lg">📱</span>
-          </div>
-        </div>
-        
-        {profileViews > 0 && (
-          <div className="flex items-center gap-2 bg-muted rounded-full px-4 py-2">
-            <span className="text-sm font-medium">{profileViews} profile views</span>
-            <div className="flex -space-x-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="w-6 h-6 rounded-full bg-primary/30 border-2 border-background" />
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="flex items-center gap-3">
-          <Share2 className="w-6 h-6" />
-          <Menu className="w-6 h-6" />
+          <Share2 className="w-5 h-5" />
+          <Menu className="w-5 h-5" />
         </div>
       </div>
 
       {/* Profile picture */}
-      <div className="flex justify-center mb-4">
+      <div className="flex justify-center mb-3">
         <div className="relative">
-          <div className="w-32 h-32 rounded-full overflow-hidden ring-2 ring-primary/20">
+          <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-primary/20">
             {avatar ? (
               <img src={avatar} alt={name} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full bg-muted flex items-center justify-center text-4xl">
+              <div className="w-full h-full bg-muted flex items-center justify-center text-3xl">
                 👤
               </div>
             )}
           </div>
-          <button className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl">
+          <button className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-lg">
             +
           </button>
         </div>
@@ -99,61 +81,61 @@ export default function SocialProfileHeader() {
       {/* Name and handle */}
       <div className="text-center mb-1">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <h1 className="text-2xl font-bold">{name}</h1>
-          <span className="text-sm">▼</span>
+          <h1 className="text-xl font-bold">{name}</h1>
+          <span className="text-xs">▼</span>
           <div className="w-2 h-2 rounded-full bg-red-500" />
         </div>
-        <p className="text-sm text-muted-foreground">@{handle}</p>
+        <p className="text-xs text-muted-foreground">@{handle}</p>
       </div>
 
       {/* Stats */}
-      <div className="flex justify-center gap-8 mb-6 py-4">
+      <div className="flex justify-center gap-6 mb-3 py-2">
         <div className="text-center">
-          <div className="text-xl font-bold">{formatNumber(totals.following)}</div>
-          <div className="text-sm text-muted-foreground">Following</div>
+          <div className="text-lg font-bold">{formatNumber(totals.following)}</div>
+          <div className="text-xs text-muted-foreground">Following</div>
         </div>
-        <div className="h-12 w-px bg-border" />
+        <div className="h-10 w-px bg-border" />
         <div className="text-center">
-          <div className="text-xl font-bold">{formatNumber(totals.followers)}</div>
-          <div className="text-sm text-muted-foreground">Followers</div>
+          <div className="text-lg font-bold">{formatNumber(totals.followers)}</div>
+          <div className="text-xs text-muted-foreground">Followers</div>
         </div>
-        <div className="h-12 w-px bg-border" />
+        <div className="h-10 w-px bg-border" />
         <div className="text-center">
-          <div className="text-xl font-bold">{formatNumber(totals.likes)}</div>
-          <div className="text-sm text-muted-foreground">Likes</div>
+          <div className="text-lg font-bold">{formatNumber(totals.likes)}</div>
+          <div className="text-xs text-muted-foreground">Likes</div>
         </div>
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-2 justify-center mb-4">
-        <Button variant="secondary" size="sm" className="rounded-lg">
-          <span className="text-lg mr-1">+</span> Add bio
+      <div className="flex gap-2 justify-center mb-2">
+        <Button variant="secondary" size="sm" className="rounded-lg text-xs h-8">
+          <span className="mr-1">+</span> Add bio
         </Button>
-        <Button variant="secondary" size="sm" className="rounded-lg">
-          <span className="text-lg mr-1">+</span> Add school
+        <Button variant="secondary" size="sm" className="rounded-lg text-xs h-8">
+          <span className="mr-1">+</span> Add school
         </Button>
-        <Button variant="default" size="sm" className="rounded-lg">
+        <Button variant="default" size="sm" className="rounded-lg text-xs h-8">
           Edit
         </Button>
       </div>
 
       {/* Link */}
-      <div className="text-center mb-4">
-        <a href="#" className="text-sm text-primary flex items-center justify-center gap-2">
+      <div className="text-center mb-2">
+        <a href="#" className="text-xs text-primary flex items-center justify-center gap-1">
           🔗 instagram.com/{handle}
         </a>
       </div>
 
       {/* Bottom actions */}
-      <div className="flex justify-center gap-8 text-sm">
-        <button className="flex items-center gap-2 text-primary">
-          <span className="text-lg">👤</span> TikTok Studio
+      <div className="flex justify-center gap-6 text-xs">
+        <button className="flex items-center gap-1 text-primary">
+          <span>👤</span> TikTok Studio
         </button>
-        <button className="flex items-center gap-2 text-primary">
-          <span className="text-lg">🛍️</span> Your orders
+        <button className="flex items-center gap-1 text-primary">
+          <span>🛍️</span> Your orders
         </button>
-        <button className="flex items-center gap-2 text-primary">
-          <span className="text-lg">💼</span> Showcase
+        <button className="flex items-center gap-1 text-primary">
+          <span>💼</span> Showcase
         </button>
       </div>
     </div>

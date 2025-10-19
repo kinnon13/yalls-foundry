@@ -4,6 +4,7 @@ import { useSession } from '@/lib/auth/context';
 import { Reel } from '@/components/reels/Reel';
 import { cn } from '@/lib/utils';
 import SocialProfileHeader from './SocialProfileHeader';
+import FavoritesSection from './FavoritesSection';
 
 const TABS = ['following', 'for-you', 'shop', 'profile'] as const;
 type Tab = typeof TABS[number];
@@ -115,6 +116,9 @@ export default function SocialFeedPane() {
     <section className="flex h-full w-full flex-col bg-white">
       {/* Profile Header */}
       <SocialProfileHeader />
+      
+      {/* Favorites Section */}
+      <FavoritesSection />
 
       {/* Tab indicators (clickable or drag/swipe to change) */}
       <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-white/90 backdrop-blur px-2 py-1">
