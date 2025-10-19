@@ -12,17 +12,17 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
 
-    // Fetch up to 20 queued items
-    const { data: items, error: fetchError } = await supabase
-      .from("marketplace_discovery_queue")
-      .select("*")
-      .eq("status", "queued")
-      .limit(20);
+  // Lease up to 20 items with 2-minute TTL
+  const { data: items, error: fetchError } = await supabase
+    .rpc("lease_discovery_items", {
+      p_limit: 20,
+      p_ttl_seconds: 120
+    });
 
     if (fetchError) {
       console.error("Failed to fetch queue:", fetchError);
@@ -37,19 +37,12 @@ Deno.serve(async (req) => {
 
     const results: any[] = [];
 
-    // Process each item
-    for (const item of items ?? []) {
-      try {
-        // Mark as processing
-        await supabase
-          .from("marketplace_discovery_queue")
-          .update({
-            status: "processing",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", item.id);
-
-        // Check inventory for this category
+  // Process each leased item
+  for (const item of items ?? []) {
+    try {
+      // Item is already marked as processing via lease
+      
+      // Check inventory for this category
         // Note: marketplace_listings.category is text, so we join via the category_id's corresponding text
         const { data: category } = await supabase
           .from("marketplace_categories")
@@ -77,26 +70,24 @@ Deno.serve(async (req) => {
           { onConflict: "interest_id" }
         );
 
-        // Mark as done
-        await supabase
-          .from("marketplace_discovery_queue")
-          .update({
-            status: "done",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", item.id);
+      // Acknowledge successful processing
+      await supabase.rpc("ack_discovery_item", {
+        p_id: item.id,
+        p_token: item.lease_token
+      });
 
-        results.push({ id: item.id, gap, count: count ?? 0 });
-      } catch (e: any) {
-        console.error(`Error processing item ${item.id}:`, e);
-        // Mark error via RPC
-        await supabase.rpc("discovery_mark_error", {
-          p_id: item.id,
-          p_msg: e?.message ?? "unknown",
-        });
-        results.push({ id: item.id, error: e?.message });
-      }
+      results.push({ id: item.id, gap, count: count ?? 0 });
+    } catch (e: any) {
+      console.error(`Error processing item ${item.id}:`, e);
+      // Mark failed (will retry or dead-letter after 4 attempts)
+      await supabase.rpc("fail_event", {
+        p_id: item.id,
+        p_token: item.lease_token,
+        p_error: e?.message ?? "unknown",
+      });
+      results.push({ id: item.id, error: e?.message });
     }
+  }
 
     return new Response(
       JSON.stringify({ processed: results.length, results }),
