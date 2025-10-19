@@ -166,7 +166,7 @@ export default function SocialFeedPane() {
       {/* Swipeable feed container - SCROLLABLE */}
       <div 
         ref={railRef}
-        className="relative flex-1 w-full overflow-y-auto overflow-x-hidden select-none touch-pan-y bg-black"
+        className="relative flex-1 w-full overflow-y-auto overflow-x-hidden select-none touch-pan-y bg-transparent"
       >
         <div 
           className="h-full w-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
