@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, ShoppingCart, LogOut, Home, Search } from 'lucide-react';
-import { useState } from 'react';
+import { Bell, ShoppingCart, LogOut, Home, Search, Shield } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -13,6 +13,25 @@ type Props = {
 export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props) {
   const navigate = useNavigate();
   const [q, setQ] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .in('role', ['admin', 'super_admin'])
+        .maybeSingle();
+
+      setIsAdmin(!!data);
+    };
+
+    checkAdmin();
+  }, []);
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +81,18 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
 
         {/* Right actions */}
         <nav aria-label="Top actions" className="ml-auto flex items-center gap-2">
+          {/* Admin Control Room */}
+          {isAdmin && (
+            <Link
+              to="/admin/control-room"
+              className="inline-grid place-items-center h-10 w-10 rounded-md border border-border/60 bg-gradient-to-br from-purple-600/20 to-blue-600/10 hover:from-purple-600/30 hover:to-blue-600/20 transition-colors"
+              aria-label="Admin Control Room"
+              title="Admin Control Room"
+            >
+              <Shield className="h-5 w-5 text-purple-600" />
+            </Link>
+          )}
+
           {/* Notifications */}
           <Link
             to="/notifications"
