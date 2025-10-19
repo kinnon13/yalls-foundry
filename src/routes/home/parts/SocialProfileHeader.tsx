@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useSession } from '@/lib/auth/context';
 import { supabase } from '@/integrations/supabase/client';
-import { Menu, Home, Search } from 'lucide-react';
+import { Menu, Home, Search, LogOut, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import profileAvatar from '@/assets/profile-avatar.jpg';
 
 export default function SocialProfileHeader({ showProfile = true }: { showProfile?: boolean }) {
@@ -12,12 +13,22 @@ export default function SocialProfileHeader({ showProfile = true }: { showProfil
   const userId = session?.userId;
   const userEmail = session?.email;
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [name, setName] = useState('User');
   const [handle, setHandle] = useState('username');
   const [avatar, setAvatar] = useState<string>(profileAvatar);
   const [totals, setTotals] = useState({ following: 0, followers: 0, likes: 0 });
   const [searchQuery, setSearchQuery] = useState('');
+
+  const handleAuthAction = async () => {
+    if (session) {
+      await supabase.auth.signOut();
+      toast({ title: 'Signed out successfully' });
+    } else {
+      navigate('/auth/login');
+    }
+  };
 
   useEffect(() => {
     if (!userId) return;
@@ -113,9 +124,10 @@ export default function SocialProfileHeader({ showProfile = true }: { showProfil
           variant="ghost" 
           size="icon" 
           className="h-8 w-8 flex-shrink-0"
-          onClick={handleMenuOpen}
+          onClick={handleAuthAction}
+          title={session ? 'Sign out' : 'Sign in'}
         >
-          <Menu className="h-5 w-5" />
+          {session ? <LogOut className="h-5 w-5" /> : <LogIn className="h-5 w-5" />}
         </Button>
       </div>
 

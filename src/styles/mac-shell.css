@@ -389,13 +389,12 @@ body {
 }
 
 .dock-rocker {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-  border-color: rgba(139, 92, 246, 0.3);
+  background: transparent;
+  padding: 0;
 }
 
 .dock-rocker:hover {
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
-  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.5);
+  transform: scale(1.1);
 }
 
 /* Window Manager */

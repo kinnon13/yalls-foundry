@@ -96,13 +96,16 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
         );
       })}
 
-      {/* Rocker Icon - Last item */}
+      {/* Rocker Icon - Last item - Circular avatar style */}
       <button
         className="dock-icon dock-rocker"
         onClick={handleRockerClick}
         title="Rocker AI"
+        style={{ padding: 0 }}
       >
-        <Zap className="w-7 h-7" />
+        <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-blue-600 via-purple-500 to-blue-400 flex items-center justify-center border-2 border-blue-400/60">
+          <Zap className="w-7 h-7 text-white" />
+        </div>
       </button>
     </nav>
   );
