@@ -95,61 +95,62 @@ export default function HomeShell() {
   };
 
   return (
-    <div className="shell">
-      {/* Desktop header only */}
-      <div className="hidden lg:block">
-        <HeaderBar />
+    <>
+      {/* Desktop: Mac-style shell */}
+      <div className="hidden lg:block shell">
+        <div className="hidden lg:block">
+          <HeaderBar />
+        </div>
+        
+        <main className="content">
+          {/* Desktop: Pixel-Perfect Three-Column Grid */}
+          <div className="hidden lg:grid grid-cols-[360px_1fr_360px] gap-12 px-0 py-8 pb-24 bg-gradient-to-br from-muted/40 via-muted/30 to-background/95">
+            <div className="w-[360px] flex-shrink-0 overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-b from-background via-background to-background/98 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_12px_24px_rgba(0,0,0,0.08),0_24px_48px_rgba(0,0,0,0.12)] backdrop-blur-xl hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_32px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.16)] transition-all duration-300">
+              <AppLibrary onAppClick={handleAppClick} />
+            </div>
+            
+            {/* Center area - becomes the active app */}
+            <div className="rounded-3xl border border-border/40 bg-gradient-to-b from-muted/30 via-background/80 to-background/95 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_16px_rgba(0,0,0,0.08)] backdrop-blur-sm hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_12px_24px_rgba(0,0,0,0.12)] transition-all duration-300" style={{ 
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative'
+            }}>
+              {activeApp ? (
+                <ActiveAppContent appId={activeApp} onClose={closeApp} />
+              ) : (
+                <div style={{ 
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center', 
+                  color: 'rgba(255,255,255,0.25)',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  letterSpacing: '0.5px'
+                }}>
+                  Select an app to begin
+                </div>
+              )}
+            </div>
+            
+            <div className="rounded-3xl border border-border/50 bg-gradient-to-b from-background via-background to-background/98 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_12px_24px_rgba(0,0,0,0.08),0_24px_48px_rgba(0,0,0,0.12)] backdrop-blur-xl hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_32px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.16)] transition-all duration-300 overflow-hidden">
+              <SocialFeedPane />
+            </div>
+          </div>
+        </main>
+        
+        <div className="hidden lg:block">
+          <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
+        </div>
       </div>
-      
-      <main className="content">
-        {/* Mobile: full-screen social feed */}
-        <div className="lg:hidden w-full h-screen overflow-hidden">
-          <SocialFeedPane />
-        </div>
 
-        {/* Desktop: Pixel-Perfect Three-Column Grid */}
-        <div className="hidden lg:grid grid-cols-[360px_1fr_360px] gap-12 px-0 py-8 pb-24 bg-gradient-to-br from-muted/40 via-muted/30 to-background/95">
-          <div className="w-[360px] flex-shrink-0 overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-b from-background via-background to-background/98 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_12px_24px_rgba(0,0,0,0.08),0_24px_48px_rgba(0,0,0,0.12)] backdrop-blur-xl hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_32px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.16)] transition-all duration-300">
-            <AppLibrary onAppClick={handleAppClick} />
-          </div>
-          
-          {/* Center area - becomes the active app */}
-          <div className="rounded-3xl border border-border/40 bg-gradient-to-b from-muted/30 via-background/80 to-background/95 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_16px_rgba(0,0,0,0.08)] backdrop-blur-sm hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_12px_24px_rgba(0,0,0,0.12)] transition-all duration-300" style={{ 
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-            position: 'relative'
-          }}>
-            {activeApp ? (
-              <ActiveAppContent appId={activeApp} onClose={closeApp} />
-            ) : (
-              <div style={{ 
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center', 
-                color: 'rgba(255,255,255,0.25)',
-                fontSize: '13px',
-                fontWeight: '500',
-                letterSpacing: '0.5px'
-              }}>
-                Select an app to begin
-              </div>
-            )}
-          </div>
-          
-          <div className="rounded-3xl border border-border/50 bg-gradient-to-b from-background via-background to-background/98 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_12px_24px_rgba(0,0,0,0.08),0_24px_48px_rgba(0,0,0,0.12)] backdrop-blur-xl hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_32px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.16)] transition-all duration-300 overflow-hidden">
-            <SocialFeedPane />
-          </div>
-        </div>
-      </main>
-      
-      {/* Desktop dock only */}
-      <div className="hidden lg:block">
-        <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
+      {/* Mobile: Full-screen feed */}
+      <div className="lg:hidden fixed inset-0 w-full h-full bg-background">
+        <SocialFeedPane />
       </div>
       <LinkInterceptor />
-    </div>
+    </>
   );
 }
