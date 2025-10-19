@@ -6,10 +6,10 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { LucideIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { PinnedApp } from '@/hooks/usePinnedApps';
+import type { AppConfig } from '@/config/apps';
 
 interface DockAppProps {
-  app: PinnedApp;
+  app: AppConfig;
   Icon: LucideIcon;
   isEditMode: boolean;
   onClick: () => void;

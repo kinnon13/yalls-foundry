@@ -1,79 +1,11 @@
 import { useState } from 'react';
-import { 
-  Store, Search, Sparkles, Download, Clock,
-  Building, Users, TrendingUp, Zap, 
-  Package, ShoppingCart, DollarSign, MessageSquare,
-  Calendar, BarChart3, Video, Settings, LucideIcon,
-  Bell, Heart, Mail, User, ShoppingBag, Pin, PinOff
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Search, Sparkles, Pin, PinOff, LucideIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useRockerGlobal } from '@/lib/ai/rocker';
 import { usePinnedApps } from '@/hooks/usePinnedApps';
 import { useToast } from '@/hooks/use-toast';
-
-interface AppTile {
-  key: string;
-  label: string;
-  icon: LucideIcon;
-  description: string;
-  category: string;
-  color: string;
-  gradient: string;
-  installed?: boolean;
-  lastOpened?: Date;
-  updateAvailable?: boolean;
-}
-
-const allApps: AppTile[] = [
-  // Commerce
-  { key: 'marketplace', label: 'Marketplace', icon: ShoppingBag, description: 'Browse & buy listings', category: 'Commerce', color: 'text-white', gradient: 'from-green-500 via-emerald-500 to-teal-400', installed: true },
-  { key: 'orders', label: 'Orders', icon: ShoppingCart, description: 'Manage order lifecycle', category: 'Commerce', color: 'text-white', gradient: 'from-blue-500 via-blue-600 to-cyan-500', installed: true },
-  { key: 'cart', label: 'Cart', icon: ShoppingCart, description: 'Shopping cart & checkout', category: 'Commerce', color: 'text-white', gradient: 'from-cyan-400 via-teal-400 to-emerald-300', installed: true },
-  { key: 'inventory', label: 'Inventory', icon: Package, description: 'Track stock & SKUs', category: 'Commerce', color: 'text-white', gradient: 'from-purple-500 via-purple-600 to-indigo-500', installed: true },
-  { key: 'listings', label: 'Listings', icon: Store, description: 'Create marketplace listings', category: 'Commerce', color: 'text-white', gradient: 'from-orange-400 via-orange-500 to-amber-400', installed: true },
-  
-  // Money
-  { key: 'earnings', label: 'Earnings', icon: DollarSign, description: 'View sales & revenue', category: 'Money', color: 'text-white', gradient: 'from-emerald-400 via-green-500 to-teal-400', installed: true },
-  
-  // Ops
-  { key: 'messages', label: 'Messages', icon: MessageSquare, description: 'Unified inbox & CRM', category: 'Ops', color: 'text-white', gradient: 'from-violet-600 via-purple-600 to-fuchsia-500', installed: true },
-  { key: 'notifications', label: 'Notifications', icon: Bell, description: 'Alerts & updates', category: 'Ops', color: 'text-white', gradient: 'from-amber-400 via-orange-400 to-red-400', installed: true },
-  { key: 'calendar', label: 'Calendar', icon: Calendar, description: 'Events & bookings', category: 'Ops', color: 'text-white', gradient: 'from-red-500 via-orange-500 to-amber-400', installed: true },
-  { key: 'favorites', label: 'Favorites', icon: Heart, description: 'Saved items & likes', category: 'Ops', color: 'text-white', gradient: 'from-pink-500 via-rose-500 to-red-400', installed: true },
-  { key: 'rocker', label: 'Rocker AI', icon: Sparkles, description: 'Your AI copilot', category: 'Ops', color: 'text-white', gradient: 'from-indigo-600 via-blue-700 to-cyan-400', installed: true },
-  
-  // Growth
-  { key: 'mlm', label: 'Affiliate', icon: Users, description: 'Grow your network', category: 'Growth', color: 'text-white', gradient: 'from-violet-500 via-purple-500 to-fuchsia-500', installed: true },
-  { key: 'analytics', label: 'Analytics', icon: BarChart3, description: 'Insights & metrics', category: 'Growth', color: 'text-white', gradient: 'from-slate-500 via-gray-600 to-zinc-500', installed: true },
-  
-  // Creator
-  { key: 'studio', label: 'Creator Studio', icon: Video, description: 'Video editing & publishing', category: 'Creator', color: 'text-white', gradient: 'from-rose-500 via-pink-500 to-fuchsia-400' },
-  
-  // System
-  { key: 'profile', label: 'My Profile', icon: User, description: 'View and edit your profile', category: 'System', color: 'text-white', gradient: 'from-blue-500 via-indigo-500 to-purple-500', installed: true },
-  { key: 'settings', label: 'Settings', icon: Settings, description: 'App preferences', category: 'System', color: 'text-white', gradient: 'from-gray-600 via-gray-700 to-slate-700', installed: true },
-];
-
-// Icon name mapping for dock
-const APP_ICON_NAMES: Record<string, string> = {
-  marketplace: 'ShoppingBag',
-  orders: 'ShoppingCart',
-  cart: 'ShoppingCart',
-  inventory: 'Package',
-  listings: 'Store',
-  earnings: 'DollarSign',
-  messages: 'MessageSquare',
-  notifications: 'Bell',
-  calendar: 'Calendar',
-  favorites: 'Heart',
-  rocker: 'Sparkles',
-  mlm: 'Users',
-  analytics: 'BarChart3',
-  studio: 'Video',
-  profile: 'User',
-  settings: 'Settings',
-};
+import { ALL_APPS } from '@/config/apps';
+import type { OverlayKey } from '@/lib/overlay/types';
 
 const categories = ['All', 'Commerce', 'Money', 'Ops', 'Growth', 'Creator', 'System'];
 
@@ -88,7 +20,8 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
   const { setIsOpen } = useRockerGlobal();
   const { pinApp, unpinApp, isPinned } = usePinnedApps();
   const { toast } = useToast();
-  const filteredApps = allApps.filter(app => {
+  
+  const filteredApps = ALL_APPS.filter(app => {
     // Filter by scope
     if (scope === 'installed' && !app.installed) return false;
     if (scope === 'updates' && !app.updateAvailable) return false;
@@ -102,7 +35,7 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
     return true;
   });
 
-  const installedCount = allApps.filter(a => a.installed).length;
+  const installedCount = ALL_APPS.filter(a => a.installed).length;
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -185,14 +118,15 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
       <div className="flex-1 overflow-y-auto px-7 pb-6">
         <div className="grid grid-cols-3 gap-6">
           {filteredApps.map((app) => {
-            const pinned = isPinned(app.key);
+            const pinned = isPinned(app.id);
+            const AppIcon = app.icon;
             return (
-              <div key={app.key} className="group relative">
+              <div key={app.id} className="group relative">
                 <button
                   onClick={() => {
-                    if (app.key === 'rocker') { setIsOpen(true); return; }
+                    if (app.id === 'yall-library') { setIsOpen(true); return; }
                     onAppClick({ 
-                      key: app.key, 
+                      key: app.id, 
                       label: app.label, 
                       icon: app.icon,
                       color: app.color 
@@ -202,7 +136,7 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
                 >
                   {/* Icon - Apple-Grade Premium with True Depth */}
                   <div className={`relative w-20 h-20 rounded-[24%] bg-gradient-to-br ${app.gradient} flex items-center justify-center mb-3.5 group-hover:scale-110 group-active:scale-105 transition-all duration-300 shadow-[0_10px_25px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.25)] border border-white/10`}>
-                    <app.icon className={`w-10 h-10 drop-shadow-lg ${app.color}`} strokeWidth={1.75} />
+                    <AppIcon className={`w-10 h-10 drop-shadow-lg ${app.color}`} strokeWidth={1.75} />
                     {/* Subsurface glow effect */}
                     <div className="absolute inset-0 rounded-[24%] bg-gradient-to-t from-white/5 to-transparent opacity-50" />
                   </div>
@@ -223,16 +157,10 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
                   onClick={(e) => {
                     e.stopPropagation();
                     if (!pinned) {
-                      pinApp({ 
-                        id: app.key, 
-                        label: app.label, 
-                        icon: APP_ICON_NAMES[app.key] || 'MessageSquare',
-                        gradient: app.gradient,
-                        color: app.color
-                      });
+                      pinApp(app.id);
                       toast({ title: 'Pinned', description: `${app.label} added to dock` });
                     } else {
-                      unpinApp(app.key);
+                      unpinApp(app.id);
                       toast({ title: 'Unpinned', description: `${app.label} removed from dock` });
                     }
                   }}

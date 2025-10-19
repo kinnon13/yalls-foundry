@@ -1,59 +1,49 @@
 /**
  * Pinned Apps Hook
- * Manages which apps are pinned to the dock
+ * Manages which app IDs are pinned to the dock
+ * Apps are pulled from central registry
  */
 
 import { useState, useEffect } from 'react';
-import type { LucideIcon } from 'lucide-react';
-
-export interface PinnedApp {
-  id: string;
-  label: string;
-  icon: string;
-  gradient: string;
-  color: string;
-}
-
-const DEFAULT_PINNED_APPS: PinnedApp[] = [
-  { id: 'messages', label: 'Messages', icon: 'MessageSquare', gradient: 'from-violet-600 via-purple-600 to-fuchsia-500', color: 'text-white' },
-  { id: 'marketplace', label: 'Marketplace', icon: 'ShoppingBag', gradient: 'from-green-500 via-emerald-500 to-teal-400', color: 'text-white' },
-  { id: 'events', label: 'Events', icon: 'Calendar', gradient: 'from-red-500 via-orange-500 to-amber-400', color: 'text-white' },
-  { id: 'orders', label: 'Orders', icon: 'ShoppingCart', gradient: 'from-blue-500 via-blue-600 to-cyan-500', color: 'text-white' },
-];
+import { DEFAULT_PINNED_APP_IDS, getAppsByIds, type AppConfig } from '@/config/apps';
+import type { OverlayKey } from '@/lib/overlay/types';
 
 const STORAGE_KEY = 'yalls-pinned-apps';
 
 export function usePinnedApps() {
-  const [pinnedApps, setPinnedApps] = useState<PinnedApp[]>(() => {
+  const [pinnedAppIds, setPinnedAppIds] = useState<OverlayKey[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : DEFAULT_PINNED_APPS;
+      return stored ? JSON.parse(stored) : DEFAULT_PINNED_APP_IDS;
     } catch {
-      return DEFAULT_PINNED_APPS;
+      return DEFAULT_PINNED_APP_IDS;
     }
   });
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(pinnedApps));
-  }, [pinnedApps]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(pinnedAppIds));
+  }, [pinnedAppIds]);
 
-  const pinApp = (app: PinnedApp) => {
-    setPinnedApps(prev => {
-      if (prev.some(p => p.id === app.id)) return prev;
-      return [...prev, app];
+  // Get full app configs for pinned IDs
+  const pinnedApps = getAppsByIds(pinnedAppIds);
+
+  const pinApp = (appId: OverlayKey) => {
+    setPinnedAppIds(prev => {
+      if (prev.includes(appId)) return prev;
+      return [...prev, appId];
     });
   };
 
   const unpinApp = (appId: string) => {
-    setPinnedApps(prev => prev.filter(p => p.id !== appId));
+    setPinnedAppIds(prev => prev.filter(id => id !== appId));
   };
 
   const isPinned = (appId: string) => {
-    return pinnedApps.some(p => p.id === appId);
+    return pinnedAppIds.includes(appId as OverlayKey);
   };
 
-  const reorderApps = (newOrder: PinnedApp[]) => {
-    setPinnedApps(newOrder);
+  const reorderApps = (newOrder: AppConfig[]) => {
+    setPinnedAppIds(newOrder.map(app => app.id));
   };
 
   return {

@@ -1,14 +1,11 @@
 /**
  * Dock - Mac-style bottom bar with pinned apps
+ * Pulls apps from central registry
  */
 
 import { useState } from 'react';
 import type { OverlayKey } from '@/lib/overlay/types';
-import { 
-  MessageSquare, ShoppingBag, Calendar, Users, Brain, Package, 
-  DollarSign, Bell, Heart, LucideIcon, ShoppingCart, Store, 
-  Sparkles, BarChart3, Video, User, Settings 
-} from 'lucide-react';
+import { Users, Brain } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CreateButton } from '@/components/dock/CreateButton';
@@ -30,25 +27,6 @@ import {
   sortableKeyboardCoordinates,
   horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
-
-// Icon mapping
-const ICON_MAP: Record<string, LucideIcon> = {
-  MessageSquare,
-  ShoppingBag,
-  Calendar,
-  Users,
-  Package,
-  DollarSign,
-  Bell,
-  Heart,
-  ShoppingCart,
-  Store,
-  Sparkles,
-  BarChart3,
-  Video,
-  User,
-  Settings,
-};
 
 export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => void }) {
   const { setIsOpen } = useRockerGlobal();
@@ -154,19 +132,16 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
             items={pinnedApps.map(app => app.id)}
             strategy={horizontalListSortingStrategy}
           >
-            {pinnedApps.map(app => {
-              const Icon = ICON_MAP[app.icon] || MessageSquare;
-              return (
-                <DockApp
-                  key={app.id}
-                  app={app}
-                  Icon={Icon}
-                  isEditMode={isEditMode}
-                  onClick={() => !isEditMode && onAppClick(app.id as OverlayKey)}
-                  onRemove={() => unpinApp(app.id)}
-                />
-              );
-            })}
+            {pinnedApps.map(app => (
+              <DockApp
+                key={app.id}
+                app={app}
+                Icon={app.icon}
+                isEditMode={isEditMode}
+                onClick={() => !isEditMode && onAppClick(app.id)}
+                onRemove={() => unpinApp(app.id)}
+              />
+            ))}
           </SortableContext>
         </DndContext>
 
