@@ -182,7 +182,7 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
               </div>
 
               {/* Label - Perfect Typography */}
-              <span className="text-[11px] font-semibold text-center leading-tight w-full tracking-tight whitespace-nowrap">
+              <span className="block w-full text-[11px] font-semibold text-center leading-tight tracking-tight whitespace-nowrap">
                 {app.label}
               </span>
 
