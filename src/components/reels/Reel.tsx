@@ -35,15 +35,16 @@ export function Reel({ src, alt, author, caption, stats, onLike, onComment, onSa
 
   return (
     <article
-      className="relative w-full h-full snap-start bg-black rounded-none overflow-hidden"
+      className="relative w-full h-full bg-black rounded-none overflow-hidden flex items-center justify-center"
       onDoubleClick={doubleTapLike}
     >
-      {/* MEDIA: full-bleed */}
+      {/* MEDIA: full-bleed, 9:16 aspect ratio */}
       <img
         src={src}
         alt={alt || ''}
         draggable={false}
         className="absolute inset-0 h-full w-full object-cover select-none"
+        style={{ aspectRatio: '9/16' }}
       />
 
       {/* HEART BURST on double-tap */}

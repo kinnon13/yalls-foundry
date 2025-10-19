@@ -146,19 +146,21 @@ export default function SocialFeedPane() {
 
   // Generate placeholder data based on tab
   const items = useMemo(() => {
+    const themes = ['nature', 'city', 'fashion', 'food', 'travel', 'art', 'fitness', 'tech'];
     return new Array(20).fill(0).map((_, i) => ({
       id: `${tab}-${i}`,
-      src: `https://picsum.photos/seed/${tab}-${i}/900/1600`,
+      src: `https://images.unsplash.com/photo-${1500000000000 + i * 1000000}?w=1080&h=1920&fit=crop&auto=format&q=80`,
       author: {
-        name: `User ${i + 1}`,
-        handle: `user${i + 1}`,
+        name: `${themes[i % themes.length]} Creator ${i + 1}`,
+        handle: `${themes[i % themes.length].toLowerCase()}${i + 1}`,
+        avatar: `https://i.pravatar.cc/150?img=${i + 1}`,
       },
-      caption: `This is a sample post for ${tab} • #${i + 1}`,
+      caption: `Amazing ${themes[i % themes.length]} content for ${tab} feed 🔥 #${themes[i % themes.length]} #${tab}`,
       stats: {
-        likes: Math.floor(Math.random() * 10000),
-        comments: Math.floor(Math.random() * 1000),
-        saves: Math.floor(Math.random() * 500),
-        reposts: Math.floor(Math.random() * 300),
+        likes: Math.floor(Math.random() * 50000) + 1000,
+        comments: Math.floor(Math.random() * 5000) + 100,
+        saves: Math.floor(Math.random() * 2000) + 50,
+        reposts: Math.floor(Math.random() * 1000) + 25,
       },
     }));
   }, [tab]);
@@ -196,19 +198,24 @@ export default function SocialFeedPane() {
       <div 
         ref={railRef}
         className="relative flex-1 overflow-hidden select-none touch-pan-y"
-        style={{ height: feedH ? `${feedH}px` : undefined }}
+        style={{ height: feedH ? `${feedH}px` : '100%' }}
       >
         <div 
           className="h-full overflow-y-auto overscroll-contain snap-y snap-mandatory scrollbar-hide"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          <div className="space-y-0 px-0 pb-0">
-            {items.map((item) => (
-              <div key={item.id} className="snap-start h-full">
-                <Reel {...item} />
-              </div>
-            ))}
-          </div>
+          {items.map((item) => (
+            <div 
+              key={item.id} 
+              className="snap-start snap-always w-full"
+              style={{ 
+                height: feedH ? `${feedH}px` : '100vh',
+                minHeight: feedH ? `${feedH}px` : '100vh'
+              }}
+            >
+              <Reel {...item} />
+            </div>
+          ))}
         </div>
       </div>
     </section>
