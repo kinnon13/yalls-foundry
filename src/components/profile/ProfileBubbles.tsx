@@ -7,8 +7,9 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Plus, GripVertical, X } from 'lucide-react';
+import { Plus, GripVertical, X, Lightbulb } from 'lucide-react';
 import { toast } from 'sonner';
+import { useRockerGlobal } from '@/lib/ai/rocker';
 
 type Pin = {
   id: string;
@@ -20,6 +21,7 @@ type Pin = {
 export function ProfileBubbles({ profileId }: { profileId: string }) {
   const queryClient = useQueryClient();
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const { setIsOpen } = useRockerGlobal();
 
   const { data: pins = [] } = useQuery({
     queryKey: ['profile-pins', profileId],
@@ -89,6 +91,16 @@ export function ProfileBubbles({ profileId }: { profileId: string }) {
     <div className="space-y-4">
       {/* Visible bubbles (max 8) */}
       <div className="flex flex-wrap gap-3">
+        {/* Rocker AI - Always first */}
+        <button
+          onClick={() => setIsOpen(true)}
+          className="relative group flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-400 text-white rounded-full hover:scale-105 transition-transform"
+        >
+          <Lightbulb className="h-4 w-4" />
+          <span className="text-sm font-medium">Rocker AI</span>
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse" />
+        </button>
+
         {visiblePins.map((pin) => (
           <div
             key={pin.id}
