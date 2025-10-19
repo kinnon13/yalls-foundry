@@ -1,4 +1,7 @@
 import { X } from 'lucide-react';
+import { lazy, Suspense } from 'react';
+
+const MarketplacePage = lazy(() => import('@/routes/marketplace/index'));
 
 interface AppTab {
   key: string;
@@ -61,11 +64,18 @@ export default function CenterContentArea({
             key={app.key}
             className={activeApp === app.key ? 'block h-full' : 'hidden'}
           >
-            <iframe
-              src={app.route}
-              className="w-full h-full border-0"
-              title={app.label}
-            />
+            <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+              {app.route === '/market' ? (
+                <MarketplacePage />
+              ) : (
+                <div className="p-6">
+                  <h2 className="text-2xl font-bold mb-4">{app.label}</h2>
+                  <p className="text-muted-foreground">
+                    {app.label} content coming soon...
+                  </p>
+                </div>
+              )}
+            </Suspense>
           </div>
         ))}
       </div>
