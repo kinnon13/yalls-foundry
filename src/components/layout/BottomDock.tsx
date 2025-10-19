@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { PlusCircle, MessageSquare, Store, Globe2, AppWindow } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChatDrawer } from '@/components/chat/ChatDrawer';
+import { trackFooterClick } from '@/lib/telemetry/events';
 
 type DockItem = {
   key: string;
@@ -97,6 +98,7 @@ export function BottomDock() {
             <Link
               key={it.key}
               to={it.to}
+              onClick={() => trackFooterClick(it.key)}
               className="relative flex flex-col items-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition-all"
               aria-label={it.label}
               title={it.label}
@@ -106,7 +108,10 @@ export function BottomDock() {
           ) : (
             <button
               key={it.key}
-              onClick={it.onClick}
+              onClick={() => {
+                trackFooterClick(it.key);
+                it.onClick?.();
+              }}
               className="relative flex flex-col items-center focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition-all"
               aria-label={it.label}
               title={it.label}

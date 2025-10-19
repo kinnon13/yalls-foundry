@@ -9,6 +9,7 @@ import { MessageCircle, Search } from 'lucide-react';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { trackRockerOpen } from '@/lib/telemetry/events';
 
 interface Conversation {
   id: string;
@@ -137,7 +138,10 @@ export function ConversationList({ onSelect, selectedId }: ConversationListProps
             return (
               <button
                 key={conversation.id}
-                onClick={() => onSelect(conversation.id)}
+                onClick={() => {
+                  if (isRocker) trackRockerOpen();
+                  onSelect(conversation.id);
+                }}
                 className={cn(
                   "w-full px-4 py-3 flex items-start gap-3 hover:bg-muted/40 transition-colors text-left border-b border-border/20",
                   selectedId === conversation.id && "bg-muted/60",

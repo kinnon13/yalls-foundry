@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { trackSearchResultClick } from '@/lib/telemetry/events';
 
 type SearchTab = 'all' | 'users' | 'videos' | 'products' | 'hashtags' | 'sounds' | 'apps';
 
@@ -92,12 +93,15 @@ export default function SearchPage() {
   ) : [];
 
   const handleOpenApp = (appId: string) => {
+    trackSearchResultClick('app', appId, 'open');
     navigate(`/?app=${appId}`);
     toast.success(`Opening ${appId}`);
   };
 
   const handleInstallApp = async (appId: string) => {
     try {
+      trackSearchResultClick('app', appId, 'install');
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error('Please log in to install apps');
@@ -122,6 +126,8 @@ export default function SearchPage() {
 
   const handlePinApp = async (appId: string) => {
     try {
+      trackSearchResultClick('app', appId, 'pin');
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error('Please log in to pin apps');
