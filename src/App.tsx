@@ -14,7 +14,6 @@ import { AuthProvider } from '@/lib/auth/context';
 import { RequireAuth } from '@/lib/auth/guards';
 import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
-import InactivityNudge from '@/components/rocker/InactivityNudge';
 import { RockerDock } from '@/components/rocker/RockerDock';
 import { RockerChatProvider } from '@/lib/ai/rocker';
 import { RockerProvider } from '@/lib/ai/rocker';
@@ -260,7 +259,6 @@ function AppContent() {
       
       <Toaster />
       <Sonner />
-      <InactivityNudge />
       <RockerDock />
       <RockerSuggestions />
       <RockerChat />
