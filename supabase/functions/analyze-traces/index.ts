@@ -128,9 +128,9 @@ serve(async (req) => {
       }
     }
 
-    // Upsert user interests
+    // Upsert user interest profile
     const { error: upsertError } = await supabase
-      .from("user_interests")
+      .from("user_interest_profiles")
       .upsert({
         user_id,
         interests,

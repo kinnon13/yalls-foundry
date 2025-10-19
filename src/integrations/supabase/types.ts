@@ -8932,6 +8932,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_interest_profiles: {
+        Row: {
+          created_at: string | null
+          embedding: string | null
+          interests: Json
+          last_computed_at: string | null
+          trace_count: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          embedding?: string | null
+          interests?: Json
+          last_computed_at?: string | null
+          trace_count?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          embedding?: string | null
+          interests?: Json
+          last_computed_at?: string | null
+          trace_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_interests: {
         Row: {
           affinity: number
