@@ -34,7 +34,7 @@ export default function HomePage() {
               
               {/* Reels (right) */}
               <ResizablePanel defaultSize={65} minSize={10}>
-                <div className="h-full w-full flex items-center justify-center bg-black overflow-hidden">
+                <div className="h-full w-full flex justify-end bg-black overflow-hidden">
                   <SocialFeedPane />
                 </div>
               </ResizablePanel>
