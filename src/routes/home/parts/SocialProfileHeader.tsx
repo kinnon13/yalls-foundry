@@ -90,8 +90,8 @@ export default function SocialProfileHeader({ showProfile = true }: { showProfil
 
   return (
     <div className="bg-background px-4 pt-3 pb-2">
-      {/* Top Navigation Bar */}
-      <div className="flex items-center gap-3 mb-4">
+      {/* Top Navigation Bar - hide on mobile since global HeaderBar shows */}
+      <div className="hidden lg:flex items-center gap-3 mb-4">
         {/* Profile Picture Button (replaces Home icon) */}
         <button 
           onClick={handleProfileClick}
