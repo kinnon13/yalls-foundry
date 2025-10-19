@@ -18,6 +18,7 @@ export default function SocialFeedPane() {
   const [entityId, setEntityId] = useState<string | null>(sp.get('entity') || null);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [feedH, setFeedH] = useState<number | null>(null);
 
   // measured header stack height (profile header + favorites + tabs)
   const headerRef = useRef<HTMLDivElement>(null);
@@ -102,6 +103,38 @@ export default function SocialFeedPane() {
     };
   }, [tab, isDragging]);
 
+  // Measure available height between this container's top and the BottomDock
+  useLayoutEffect(() => {
+    const recalc = () => {
+      const railEl = railRef.current;
+      if (!railEl) return;
+      const rect = railEl.getBoundingClientRect();
+      const viewportH = window.visualViewport?.height ?? window.innerHeight;
+      const bottomDock = document.querySelector('nav[aria-label="Bottom dock"]') as HTMLElement | null;
+      const bottomH = bottomDock ? bottomDock.getBoundingClientRect().height : 0;
+      const h = Math.max(0, Math.round(viewportH - bottomH - rect.top));
+      setFeedH(h);
+    };
+
+    recalc();
+
+    const ro = new ResizeObserver(recalc);
+    if (railRef.current) ro.observe(railRef.current);
+    const bottomDock = document.querySelector('nav[aria-label="Bottom dock"]') as HTMLElement | null;
+    if (bottomDock) ro.observe(bottomDock);
+
+    window.addEventListener('resize', recalc);
+    window.visualViewport?.addEventListener('resize', recalc);
+    window.visualViewport?.addEventListener('scroll', recalc);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', recalc);
+      window.visualViewport?.removeEventListener('resize', recalc);
+      window.visualViewport?.removeEventListener('scroll', recalc);
+    };
+  }, []);
+
   // persist state in URL (?feed=…&entity=…)
   useEffect(() => {
     const next = new URLSearchParams(sp);
@@ -163,10 +196,11 @@ export default function SocialFeedPane() {
       <div 
         ref={railRef}
         className="relative flex-1 overflow-hidden select-none touch-pan-y"
-        style={{ height: `calc(100dvh - 56px - 64px - ${headerH}px)` }}
+        style={{ height: feedH ? `${feedH}px` : undefined }}
       >
         <div 
-          className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
+          className="h-full overflow-y-auto overscroll-contain snap-y snap-mandatory scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           <div className="space-y-0 px-0 pb-0">
             {items.map((item) => (
