@@ -4,10 +4,11 @@
 
 import { useOpenApp } from '@/lib/nav/useOpenApp';
 import type { OverlayKey } from '@/lib/overlay/types';
-import { MessageSquare, ShoppingBag, Calendar, Users, Zap } from 'lucide-react';
+import { MessageSquare, ShoppingBag, Calendar, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CreateButton } from '@/components/dock/CreateButton';
+import { RockerIcon } from '@/components/ai/RockerIcon';
 
 const DOCK_APPS_LEFT: Array<{ id: OverlayKey; icon: any; label: string }> = [
   { id: 'messages', icon: MessageSquare, label: 'Messages' },
@@ -96,16 +97,13 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
         );
       })}
 
-      {/* Rocker Icon - Last item - Circular avatar style */}
+      {/* Rocker Icon - Last item */}
       <button
         className="dock-icon dock-rocker"
         onClick={handleRockerClick}
         title="Rocker AI"
-        style={{ padding: 0 }}
       >
-        <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-blue-600 via-purple-500 to-blue-400 flex items-center justify-center border-2 border-blue-400/60">
-          <Zap className="w-7 h-7 text-white" />
-        </div>
+        <RockerIcon className="w-12 h-12" />
       </button>
     </nav>
   );
