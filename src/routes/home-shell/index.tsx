@@ -143,11 +143,13 @@ export default function HomeShell() {
       </div>
 
       {/* Mobile: Full-screen feed with proper safe area */}
-      <div className="lg:hidden flex flex-col min-h-[100dvh] max-h-[100dvh] bg-background">
-        <div className="flex-1 overflow-y-auto -webkit-overflow-scrolling-touch pb-[calc(env(safe-area-inset-bottom,0px)+64px)]">
+      <div className="lg:hidden flex flex-col h-[100dvh] bg-background">
+        <div className="flex-1 overflow-y-auto -webkit-overflow-scrolling-touch">
           <SocialFeedPane />
+          {/* Spacer for dock */}
+          <div className="h-[calc(64px+env(safe-area-inset-bottom,0px))]" />
         </div>
-        <div className="fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom,0px)]">
+        <div className="fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom,0px)] bg-background/95 backdrop-blur-lg border-t border-border/50">
           <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
         </div>
       </div>
