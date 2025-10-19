@@ -95,6 +95,10 @@ export default {
         "pulse-subtle": {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.8" }
+        },
+        "jiggle": {
+          "0%, 100%": { transform: "rotate(-1deg)" },
+          "50%": { transform: "rotate(1deg)" },
         }
       },
       animation: {
@@ -106,7 +110,8 @@ export default {
         "scale-out": "scale-out 0.2s ease-out",
         "slide-up": "slide-up 0.4s ease-out",
         "pulse-subtle": "pulse-subtle 2s ease-in-out infinite",
-        "spin-slow": "spin 3s linear infinite"
+        "spin-slow": "spin 3s linear infinite",
+        "jiggle": "jiggle 0.15s ease-in-out infinite"
       },
     },
   },

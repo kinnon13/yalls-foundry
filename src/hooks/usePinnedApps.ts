@@ -52,10 +52,15 @@ export function usePinnedApps() {
     return pinnedApps.some(p => p.id === appId);
   };
 
+  const reorderApps = (newOrder: PinnedApp[]) => {
+    setPinnedApps(newOrder);
+  };
+
   return {
     pinnedApps,
     pinApp,
     unpinApp,
     isPinned,
+    reorderApps,
   };
 }
