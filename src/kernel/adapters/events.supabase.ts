@@ -43,14 +43,19 @@ export const eventsAdapter: AppAdapter = {
 async function createEvent(params: any, ctx: AdapterContext): Promise<AdapterResult> {
   const { title, description, starts_at, ends_at, location } = params;
   
-  const { data, error } = await (supabase as any)
+  // Generate slug from title
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
+  
+  const { data, error } = await supabase
     .from('events')
     .insert({
-      description: description || title,
+      slug,
+      title,
+      description: description || '',
       starts_at,
       ends_at,
-      location: location || {},
-      event_type: 'general'
+      event_type: 'general',
+      created_by: ctx.userId
     })
     .select()
     .single();
@@ -65,7 +70,7 @@ async function createEvent(params: any, ctx: AdapterContext): Promise<AdapterRes
 async function updateEvent(params: any, ctx: AdapterContext): Promise<AdapterResult> {
   const { id, ...updates } = params;
   
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('events')
     .update(updates)
     .eq('id', id)
