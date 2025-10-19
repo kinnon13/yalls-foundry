@@ -8,12 +8,12 @@ export default function FavoritesSection() {
   if (!userId) return null;
 
   return (
-    <div className="bg-background py-2 px-4 overflow-visible">
+    <div className="bg-background py-2 px-4 overflow-hidden">
       <div className="flex items-center gap-1 mb-2 px-1">
         <h2 className="text-xs font-semibold text-foreground">Favorites</h2>
       </div>
       
-      <div className="py-1 px-1 overflow-visible">
+      <div className="py-1 px-1 overflow-hidden">
         <FavoritesBar userId={userId} size={48} gap={8} />
       </div>
     </div>

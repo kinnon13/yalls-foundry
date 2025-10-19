@@ -268,7 +268,7 @@ function AddFavoritesSheet({
           </button>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {(['all','person','business','horse','event'] as const).map(k => (
             <button
               key={k}
@@ -379,7 +379,12 @@ export function FavoritesBar({
   };
 
   return (
-    <div className={cn("w-full overflow-x-auto no-scrollbar", className)}>
+    <div className={cn("w-full overflow-x-auto scrollbar-hide", className)} style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <style>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
       <div
         className="flex items-center"
         style={{ gap }}
