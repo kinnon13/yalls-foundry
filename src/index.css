@@ -24,6 +24,10 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    /* Shell dimensions */
+    --header-h: 56px;
+    --dock-h: 64px;
+    
     /* Light mode - clean white */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -111,6 +115,12 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+  }
+
+  html, body {
+    overflow: hidden;
+    height: 100dvh;
+    width: 100%;
   }
 
   body {
