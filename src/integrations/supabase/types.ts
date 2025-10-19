@@ -3216,6 +3216,7 @@ export type Database = {
           display_name: string
           handle: string | null
           id: string
+          is_mock: boolean | null
           kind: Database["public"]["Enums"]["entity_kind"]
           metadata: Json
           name_key: string | null
@@ -3232,6 +3233,7 @@ export type Database = {
           display_name: string
           handle?: string | null
           id?: string
+          is_mock?: boolean | null
           kind: Database["public"]["Enums"]["entity_kind"]
           metadata?: Json
           name_key?: string | null
@@ -3248,6 +3250,7 @@ export type Database = {
           display_name?: string
           handle?: string | null
           id?: string
+          is_mock?: boolean | null
           kind?: Database["public"]["Enums"]["entity_kind"]
           metadata?: Json
           name_key?: string | null

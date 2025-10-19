@@ -16,6 +16,7 @@ type Bubble = {
   kind: string;
   status?: string | null;
   avatar_url?: string | null;
+  is_mock?: boolean;
 };
 
 function ringColor(kind: string) {
@@ -57,6 +58,7 @@ function formatBubble(e: any): Bubble {
     kind: e.kind,
     status: e.status,
     avatar_url: avatarUrl,
+    is_mock: e.is_mock || false,
   };
 }
 
@@ -112,7 +114,7 @@ function useFavoriteBubbles(userId: string | null, { publicOnly = false }: { pub
       const ids = pins.map(p => p.ref_id);
       const { data: ents } = await supabase
         .from('entities')
-        .select('id, display_name, handle, kind, status, metadata')
+        .select('id, display_name, handle, kind, status, metadata, is_mock')
         .in('id', ids.map(id => id as any));
 
       const map = new Map(ents?.map(e => [e.id, e]) ?? []);
@@ -225,7 +227,7 @@ function AddFavoritesSheet({
     queryFn: async () => {
       let sel = supabase
         .from('entities')
-        .select('id, display_name, handle, kind, metadata, status')
+        .select('id, display_name, handle, kind, metadata, status, is_mock')
         .in('status', ['claimed', 'verified', 'unclaimed'])
         .order('created_at', { ascending: false })
         .limit(30);
@@ -297,6 +299,11 @@ function AddFavoritesSheet({
                   <img src={item.avatar_url} alt={item.display_name} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-sm font-medium">{initials(item.display_name)}</span>
+                )}
+                {item.is_mock && (
+                  <div className="absolute top-0 left-0 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <span className="text-[8px] font-bold text-black">M</span>
+                  </div>
                 )}
               </div>
               <div className="grow min-w-0">
@@ -426,6 +433,11 @@ export function FavoritesBar({
                   </svg>
                 ) : (
                   <span className="text-sm font-medium">{initials(b.display_name)}</span>
+                )}
+                {b.is_mock && (
+                  <div className="absolute top-0 left-0 w-5 h-5 bg-yellow-500 rounded-full border-2 border-background flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-black">M</span>
+                  </div>
                 )}
               </div>
               {isRocker && (
