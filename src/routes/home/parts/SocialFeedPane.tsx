@@ -164,10 +164,10 @@ export default function SocialFeedPane() {
           <h3 className="text-base font-semibold text-center md:hidden">View Connected Accounts</h3>
           <div className="w-[60px] md:hidden" aria-hidden />
         </div>
-        <div className="md:hidden">
+        <div>
           <ProfileSummaryBar />
         </div>
-        <div className="mb-1 flex items-center justify-center gap-2 pr-2 py-1 md:hidden">
+        <div className="mb-1 flex items-center justify-center gap-2 pr-2 py-1">
           {TABS.map((t) => (
             <button
               key={t}
