@@ -22,6 +22,15 @@ export default function SocialFeedPane() {
   const [feedH, setFeedH] = useState<number | null>(null);
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
 
+  // Listen for home navigation
+  useEffect(() => {
+    const handleNavigateHome = () => {
+      setViewingUserId(null);
+    };
+    window.addEventListener('navigate-home', handleNavigateHome);
+    return () => window.removeEventListener('navigate-home', handleNavigateHome);
+  }, []);
+
   // measured header stack height (profile header + favorites + tabs)
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerH, setHeaderH] = useState(0);

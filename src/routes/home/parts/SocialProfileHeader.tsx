@@ -68,7 +68,7 @@ export default function SocialProfileHeader() {
   };
 
   const handleHomeClick = () => {
-    window.location.href = '/?mode=manage&feed=for-you';
+    window.dispatchEvent(new CustomEvent('navigate-home'));
   };
 
   return (
