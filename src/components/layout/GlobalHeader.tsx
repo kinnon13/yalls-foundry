@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Bell, ShoppingCart, LogOut, Home, Search, Shield } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logout as canonicalLogout } from '@/lib/auth/logout';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -43,8 +44,7 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
-      navigate('/login');
+      await canonicalLogout('user');
     } catch {}
   };
 

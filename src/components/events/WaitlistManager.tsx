@@ -4,7 +4,7 @@
  * FIFO queue with manual approval
  */
 
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Clock, Check, X, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -19,14 +19,14 @@ interface WaitlistEntry {
   status: 'pending' | 'approved' | 'declined';
 }
 
-const mockWaitlist: WaitlistEntry[] = [
-  { id: '1', name: 'Sarah Johnson', email: 'sarah@example.com', joined: '2025-01-10', position: 1, status: 'pending' },
-  { id: '2', name: 'Mike Davis', email: 'mike@example.com', joined: '2025-01-11', position: 2, status: 'pending' },
-  { id: '3', name: 'Emily Chen', email: 'emily@example.com', joined: '2025-01-12', position: 3, status: 'pending' },
-];
-
 export function WaitlistManager() {
-  const [entries] = useState<WaitlistEntry[]>(mockWaitlist);
+  const [entries, setEntries] = useState<WaitlistEntry[]>([]);
+  
+  useEffect(() => {
+    // TODO: Load real waitlist from event_waitlist table
+    // Query: SELECT * FROM event_waitlist WHERE event_id = ? ORDER BY position
+    setEntries([]);
+  }, []);
 
   return (
     <div className="space-y-6">

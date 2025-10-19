@@ -174,7 +174,7 @@ function AppContent() {
           } 
         />
         
-        {/* 9. Cart - Mock checkout */}
+        {/* 9. Cart - Checkout & Purchase */}
         <Route 
           path="/cart" 
           element={

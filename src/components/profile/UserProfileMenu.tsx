@@ -34,6 +34,7 @@ import {
   GitCompare,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { logout as canonicalLogout } from '@/lib/auth/logout';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useToast } from '@/hooks/use-toast';
 import { useProfilePins } from '@/hooks/useProfilePins';
@@ -236,8 +237,7 @@ export function UserProfileMenu() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/login');
+    await canonicalLogout('user');
   };
 
   // Filter to show only pinned apps for active profile

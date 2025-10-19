@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from '@/lib/auth/context';
 import { supabase } from '@/integrations/supabase/client';
+import { logout as canonicalLogout } from '@/lib/auth/logout';
 import { Menu, Home, Search, LogOut, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,8 +31,7 @@ export default function SocialProfileHeader({ showProfile = true }: { showProfil
 
   const handleAuthAction = async () => {
     if (session) {
-      await supabase.auth.signOut();
-      toast({ title: 'Signed out successfully' });
+      await canonicalLogout('user');
     } else {
       navigate('/auth?mode=login');
     }
