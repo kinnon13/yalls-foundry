@@ -5372,6 +5372,8 @@ export type Database = {
           id: string
           interest_id: string
           last_error: string | null
+          lease_expires_at: string | null
+          lease_token: string | null
           reason: string
           status: string
           updated_at: string
@@ -5384,6 +5386,8 @@ export type Database = {
           id?: string
           interest_id: string
           last_error?: string | null
+          lease_expires_at?: string | null
+          lease_token?: string | null
           reason: string
           status?: string
           updated_at?: string
@@ -5396,6 +5400,8 @@ export type Database = {
           id?: string
           interest_id?: string
           last_error?: string | null
+          lease_expires_at?: string | null
+          lease_token?: string | null
           reason?: string
           status?: string
           updated_at?: string
@@ -9128,6 +9134,14 @@ export type Database = {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
       }
+      ack_discovery_item: {
+        Args: { p_id: string; p_token: string }
+        Returns: undefined
+      }
+      ack_event: {
+        Args: { p_id: string; p_token: string }
+        Returns: undefined
+      }
       addauth: {
         Args: { "": string }
         Returns: boolean
@@ -9594,6 +9608,14 @@ export type Database = {
       equals: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
+      }
+      fail_discovery_item: {
+        Args: { p_error: string; p_id: string; p_token: string }
+        Returns: undefined
+      }
+      fail_event: {
+        Args: { p_error: string; p_id: string; p_token: string }
+        Returns: undefined
       }
       favorite_toggle: {
         Args:
@@ -10287,6 +10309,40 @@ export type Database = {
       l2_normalize: {
         Args: { "": string } | { "": unknown } | { "": unknown }
         Returns: unknown
+      }
+      lease_discovery_items: {
+        Args: { p_limit: number; p_ttl_seconds: number }
+        Returns: {
+          attempts: number
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          interest_id: string
+          last_error: string | null
+          lease_expires_at: string | null
+          lease_token: string | null
+          reason: string
+          status: string
+          updated_at: string
+        }[]
+      }
+      lease_events: {
+        Args: { p_limit: number; p_topic: string; p_ttl_seconds: number }
+        Returns: {
+          attempts: number
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          interest_id: string
+          last_error: string | null
+          lease_expires_at: string | null
+          lease_token: string | null
+          reason: string
+          status: string
+          updated_at: string
+        }[]
       }
       linked_account_upsert: {
         Args: {
