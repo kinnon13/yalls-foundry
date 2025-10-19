@@ -20,10 +20,17 @@ export default function SocialFeedPane() {
   const [feedHeight, setFeedHeight] = useState(() => 
     Number(localStorage.getItem('feed.itemHeight') || 600)
   );
+  const [feedWidth, setFeedWidth] = useState(() => 
+    Number(localStorage.getItem('feed.itemWidth') || 400)
+  );
 
   useEffect(() => {
     localStorage.setItem('feed.itemHeight', String(feedHeight));
   }, [feedHeight]);
+
+  useEffect(() => {
+    localStorage.setItem('feed.itemWidth', String(feedWidth));
+  }, [feedWidth]);
 
   // seamless drag/swipe gesture for tab switching
   const railRef = useRef<HTMLDivElement>(null);
@@ -151,22 +158,47 @@ export default function SocialFeedPane() {
         </div>
         
         {/* Size Controls */}
-        <div className="flex items-center justify-center gap-2 py-1 bg-background/80 backdrop-blur border-t border-border/50">
-          <button
-            onClick={() => setFeedHeight(Math.max(300, feedHeight - 50))}
-            className="text-xs px-2 py-1 rounded hover:bg-muted"
-            title="Decrease size"
-          >
-            −
-          </button>
-          <span className="text-xs text-muted-foreground">{feedHeight}px</span>
-          <button
-            onClick={() => setFeedHeight(Math.min(1200, feedHeight + 50))}
-            className="text-xs px-2 py-1 rounded hover:bg-muted"
-            title="Increase size"
-          >
-            +
-          </button>
+        <div className="flex flex-col gap-2 py-2 px-4 bg-background/95 backdrop-blur border-t border-border/50">
+          <div className="flex items-center gap-3">
+            <label className="text-xs font-medium min-w-[40px]">Width:</label>
+            <input
+              type="range"
+              min="200"
+              max="800"
+              value={feedWidth}
+              onChange={(e) => setFeedWidth(Number(e.target.value))}
+              className="flex-1"
+            />
+            <input
+              type="number"
+              min="200"
+              max="800"
+              value={feedWidth}
+              onChange={(e) => setFeedWidth(Number(e.target.value))}
+              className="w-16 px-2 py-1 text-xs border rounded"
+            />
+            <span className="text-xs text-muted-foreground">px</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="text-xs font-medium min-w-[40px]">Height:</label>
+            <input
+              type="range"
+              min="300"
+              max="1200"
+              value={feedHeight}
+              onChange={(e) => setFeedHeight(Number(e.target.value))}
+              className="flex-1"
+            />
+            <input
+              type="number"
+              min="300"
+              max="1200"
+              value={feedHeight}
+              onChange={(e) => setFeedHeight(Number(e.target.value))}
+              className="w-16 px-2 py-1 text-xs border rounded"
+            />
+            <span className="text-xs text-muted-foreground">px</span>
+          </div>
         </div>
       </div>
 
@@ -178,9 +210,16 @@ export default function SocialFeedPane() {
         <div 
           className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
-          <div className="pr-2 pb-4">
+          <div className="pr-2 pb-4 flex flex-col items-center">
             {items.map((item) => (
-              <div key={item.id} className="snap-start" style={{ height: `${feedHeight}px` }}>
+              <div 
+                key={item.id} 
+                className="snap-start mb-4" 
+                style={{ 
+                  height: `${feedHeight}px`,
+                  width: `${feedWidth}px`
+                }}
+              >
                 <Reel {...item} />
               </div>
             ))}
