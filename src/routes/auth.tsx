@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { z } from 'zod';
-import { ArrowLeft, Sparkles, Mail, Apple, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Sparkles, Mail, Apple, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { emitEvent } from '@/lib/telemetry/events';
 import { CaptchaGuard } from '@/components/auth/CaptchaGuard';
 
@@ -32,6 +32,7 @@ export default function AuthPage() {
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [needsCaptcha, setNeedsCaptcha] = useState(false);
@@ -566,19 +567,33 @@ export default function AuthPage() {
               {mode !== 'reset' && (
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={loading}
-                    minLength={6}
-                    aria-invalid={!!errors.password}
-                    aria-describedby={errors.password ? 'password-error' : undefined}
-                    className="h-11 bg-muted/50 border-border/40 focus:border-primary/40 focus:ring-primary/20"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading}
+                      minLength={6}
+                      aria-invalid={!!errors.password}
+                      aria-describedby={errors.password ? 'password-error' : undefined}
+                      className="h-11 bg-muted/50 border-border/40 focus:border-primary/40 focus:ring-primary/20 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                   {errors.password ? (
                     <p id="password-error" className="text-sm text-destructive">
                       {errors.password}
