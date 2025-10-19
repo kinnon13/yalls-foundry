@@ -218,10 +218,10 @@ export default function AppsPane() {
     return items;
   }, [visibleApps, pinnedEntities, userId]);
 
-  // Grid dimensions derived from resizable box (subtract padding+border: p-3=12px each side, border-2=2px each side => 28px total)
+  // Grid dimensions derived from resizable box (subtract border only: border-2=2px each side => 4px total)
   const gridDims = useMemo(() => {
-    const innerW = Math.max(0, containerWidth - 28);
-    const innerH = Math.max(0, containerHeight - 28);
+    const innerW = Math.max(0, containerWidth - 4);
+    const innerH = Math.max(0, containerHeight - 4);
     const cols = Math.max(1, Math.floor(innerW / (tile + 12))); // 12px gap
     const rows = Math.max(1, Math.floor(innerH / (tile + 12)));
     return { cols, rows };
@@ -357,7 +357,7 @@ export default function AppsPane() {
 
         <div 
           ref={boxRef}
-          className="border-2 border-border rounded-lg bg-muted/20 p-3 relative resize overflow-hidden"
+          className="border-2 border-border rounded-lg bg-muted/20 relative resize overflow-hidden"
           style={{ 
             width: `${containerWidth}px`,
             height: `${containerHeight}px`,
