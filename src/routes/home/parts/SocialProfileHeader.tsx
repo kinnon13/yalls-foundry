@@ -53,23 +53,14 @@ export default function SocialProfileHeader() {
   };
 
   return (
-    <div className="bg-background py-3 px-4 border-b">
-      {/* Top bar - icons */}
-      <div className="flex items-center justify-between mb-3">
-        <UserPlus className="w-5 h-5" />
-        <div className="flex items-center gap-3">
-          <Share2 className="w-5 h-5" />
-          <Menu className="w-5 h-5" />
-        </div>
-      </div>
-
+    <div className="bg-background py-2 px-4 border-b">
       {/* Profile picture */}
-      <div className="flex justify-center mb-3">
+      <div className="flex justify-center mb-2">
         <div className="relative">
-          <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-primary/20">
+          <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-primary/20">
             <img src={avatar} alt={name} className="w-full h-full object-cover" />
           </div>
-          <button className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-lg">
+          <button className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm">
             +
           </button>
         </div>
@@ -77,62 +68,62 @@ export default function SocialProfileHeader() {
 
       {/* Name and handle */}
       <div className="text-center mb-1">
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <h1 className="text-xl font-bold">{name}</h1>
+        <div className="flex items-center justify-center gap-2 mb-0.5">
+          <h1 className="text-base font-bold">{name}</h1>
           <span className="text-xs">▼</span>
-          <div className="w-2 h-2 rounded-full bg-red-500" />
+          <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
         </div>
         <p className="text-xs text-muted-foreground">@{handle}</p>
       </div>
 
       {/* Stats */}
-      <div className="flex justify-center gap-6 mb-3 py-2">
+      <div className="flex justify-center gap-4 mb-2 py-1">
         <div className="text-center">
-          <div className="text-lg font-bold">{formatNumber(totals.following)}</div>
-          <div className="text-xs text-muted-foreground">Following</div>
+          <div className="text-sm font-bold">{formatNumber(totals.following)}</div>
+          <div className="text-[10px] text-muted-foreground">Following</div>
         </div>
-        <div className="h-10 w-px bg-border" />
+        <div className="h-8 w-px bg-border" />
         <div className="text-center">
-          <div className="text-lg font-bold">{formatNumber(totals.followers)}</div>
-          <div className="text-xs text-muted-foreground">Followers</div>
+          <div className="text-sm font-bold">{formatNumber(totals.followers)}</div>
+          <div className="text-[10px] text-muted-foreground">Followers</div>
         </div>
-        <div className="h-10 w-px bg-border" />
+        <div className="h-8 w-px bg-border" />
         <div className="text-center">
-          <div className="text-lg font-bold">{formatNumber(totals.likes)}</div>
-          <div className="text-xs text-muted-foreground">Likes</div>
+          <div className="text-sm font-bold">{formatNumber(totals.likes)}</div>
+          <div className="text-[10px] text-muted-foreground">Likes</div>
         </div>
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-2 justify-center mb-2">
-        <Button variant="secondary" size="sm" className="rounded-lg text-xs h-8">
-          <span className="mr-1">+</span> Add bio
+      <div className="flex gap-1.5 justify-center mb-1.5">
+        <Button variant="secondary" size="sm" className="rounded-lg text-[10px] h-6 px-2">
+          <span className="mr-0.5">+</span> Add bio
         </Button>
-        <Button variant="secondary" size="sm" className="rounded-lg text-xs h-8">
-          <span className="mr-1">+</span> Add school
+        <Button variant="secondary" size="sm" className="rounded-lg text-[10px] h-6 px-2">
+          <span className="mr-0.5">+</span> Add school
         </Button>
-        <Button variant="default" size="sm" className="rounded-lg text-xs h-8">
+        <Button variant="default" size="sm" className="rounded-lg text-[10px] h-6 px-2">
           Edit
         </Button>
       </div>
 
       {/* Link */}
-      <div className="text-center mb-2">
-        <a href="#" className="text-xs text-primary flex items-center justify-center gap-1">
+      <div className="text-center mb-1.5">
+        <a href="#" className="text-[10px] text-primary flex items-center justify-center gap-1">
           🔗 instagram.com/{handle}
         </a>
       </div>
 
       {/* Bottom actions */}
-      <div className="flex justify-center gap-6 text-xs">
-        <button className="flex items-center gap-1 text-primary">
-          <span>👤</span> TikTok Studio
+      <div className="flex justify-center gap-4 text-[10px]">
+        <button className="flex items-center gap-0.5 text-primary">
+          <span className="text-xs">👤</span> TikTok Studio
         </button>
-        <button className="flex items-center gap-1 text-primary">
-          <span>🛍️</span> Your orders
+        <button className="flex items-center gap-0.5 text-primary">
+          <span className="text-xs">🛍️</span> Your orders
         </button>
-        <button className="flex items-center gap-1 text-primary">
-          <span>💼</span> Showcase
+        <button className="flex items-center gap-0.5 text-primary">
+          <span className="text-xs">💼</span> Showcase
         </button>
       </div>
     </div>
