@@ -10264,12 +10264,14 @@ export type Database = {
         Returns: string
       }
       emit_signal: {
-        Args: {
-          p_metadata?: Json
-          p_name: string
-          p_target_id?: string
-          p_target_kind?: string
-        }
+        Args:
+          | { p_metadata?: Json; p_name: string }
+          | {
+              p_metadata?: Json
+              p_name: string
+              p_target_id?: string
+              p_target_kind?: string
+            }
         Returns: undefined
       }
       enable_mfa: {
@@ -10286,11 +10288,11 @@ export type Database = {
       }
       enqueue_discovery_for_user: {
         Args: { p_user_id: string }
-        Returns: number
+        Returns: undefined
       }
       ensure_category_for_interest: {
         Args: { p_interest_id: string }
-        Returns: string
+        Returns: undefined
       }
       entitlement_gate_metrics: {
         Args: { p_window_minutes?: number }
@@ -12861,8 +12863,8 @@ export type Database = {
         Returns: undefined
       }
       user_interests_upsert: {
-        Args: { p_items: Json }
-        Returns: number
+        Args: { p_items: string }
+        Returns: undefined
       }
       vector_avg: {
         Args: { "": number[] }
