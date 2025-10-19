@@ -192,16 +192,16 @@ export default function SocialFeedPane() {
       {/* Swipeable feed container - SCROLLABLE */}
       <div 
         ref={railRef}
-        className="relative flex-1 overflow-y-auto select-none touch-pan-y"
+        className="relative flex-1 overflow-y-auto select-none touch-pan-y bg-black"
       >
         <div 
           className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
-          <div className="pr-2 pb-4 flex flex-col items-center">
+          <div className="flex flex-col items-center">
             {items.map((item) => (
               <div 
                 key={item.id} 
-                className="snap-start mb-4 relative" 
+                className="snap-start snap-always relative shrink-0" 
                 style={{ 
                   height: `${feedHeight}px`,
                   width: `${feedWidth}px`
