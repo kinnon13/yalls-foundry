@@ -5,6 +5,7 @@ import { Reel } from '@/components/reels/Reel';
 import { cn } from '@/lib/utils';
 import SocialProfileHeader from './SocialProfileHeader';
 import FavoritesSection from './FavoritesSection';
+import UserProfileView from './UserProfileView';
 import { X } from 'lucide-react';
 const TABS = ['following', 'for-you', 'shop', 'profile'] as const;
 type Tab = typeof TABS[number];
@@ -19,6 +20,7 @@ export default function SocialFeedPane() {
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [feedH, setFeedH] = useState<number | null>(null);
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
 
   // measured header stack height (profile header + favorites + tabs)
   const headerRef = useRef<HTMLDivElement>(null);
@@ -147,22 +149,28 @@ export default function SocialFeedPane() {
   // Generate placeholder data based on tab
   const items = useMemo(() => {
     const themes = ['nature', 'city', 'fashion', 'food', 'travel', 'art', 'fitness', 'tech'];
-    return new Array(20).fill(0).map((_, i) => ({
-      id: `${tab}-${i}`,
-      src: `https://picsum.photos/seed/${tab}-${i}/1080/1920`,
-      author: {
-        name: `${themes[i % themes.length]} Creator ${i + 1}`,
-        handle: `${themes[i % themes.length].toLowerCase()}${i + 1}`,
-        avatar: `https://i.pravatar.cc/150?img=${i + 1}`,
-      },
-      caption: `Amazing ${themes[i % themes.length]} content for ${tab} feed 🔥 #${themes[i % themes.length]} #${tab}`,
-      stats: {
-        likes: Math.floor(Math.random() * 50000) + 1000,
-        comments: Math.floor(Math.random() * 5000) + 100,
-        saves: Math.floor(Math.random() * 2000) + 50,
-        reposts: Math.floor(Math.random() * 1000) + 25,
-      },
-    }));
+    return new Array(20).fill(0).map((_, i) => {
+      // Map certain indices to our mock users
+      const userId = i === 0 ? 'nature1' : i === 1 ? 'city1' : null;
+      
+      return {
+        id: `${tab}-${i}`,
+        userId,
+        src: `https://picsum.photos/seed/${tab}-${i}/1080/1920`,
+        author: {
+          name: `${themes[i % themes.length]} Creator ${i + 1}`,
+          handle: `${themes[i % themes.length].toLowerCase()}${i + 1}`,
+          avatar: `https://i.pravatar.cc/150?img=${i + 1}`,
+        },
+        caption: `Amazing ${themes[i % themes.length]} content for ${tab} feed 🔥 #${themes[i % themes.length]} #${tab}`,
+        stats: {
+          likes: Math.floor(Math.random() * 50000) + 1000,
+          comments: Math.floor(Math.random() * 5000) + 100,
+          saves: Math.floor(Math.random() * 2000) + 50,
+          reposts: Math.floor(Math.random() * 1000) + 25,
+        },
+      };
+    });
   }, [tab]);
 
   return (
@@ -209,7 +217,13 @@ export default function SocialFeedPane() {
         className="relative flex-1 overflow-hidden select-none touch-pan-y"
         style={{ height: feedH ? `${feedH - headerH}px` : '100%' }}
       >
-        {tab === 'profile' ? (
+        {viewingUserId ? (
+          // Viewing another user's profile
+          <UserProfileView 
+            userId={viewingUserId} 
+            onBack={() => setViewingUserId(null)} 
+          />
+        ) : tab === 'profile' ? (
           // Profile tab: 3-column grid
           <div className="h-full overflow-y-auto overscroll-contain p-px">
             <div className="grid grid-cols-3 gap-px bg-border">
@@ -239,7 +253,14 @@ export default function SocialFeedPane() {
                   minHeight: feedH ? `${feedH - headerH}px` : '100vh'
                 }}
               >
-                <Reel {...item} />
+                <Reel 
+                  {...item} 
+                  onViewProfile={() => {
+                    if (item.userId) {
+                      setViewingUserId(item.userId);
+                    }
+                  }}
+                />
               </div>
             ))}
           </div>

@@ -23,9 +23,10 @@ interface ReelProps {
   onComment?: () => void;
   onSave?: () => void;
   onRepost?: () => void;
+  onViewProfile?: () => void;
 }
 
-export function Reel({ src, alt, author, caption, stats, onLike, onComment, onSave, onRepost }: ReelProps) {
+export function Reel({ src, alt, author, caption, stats, onLike, onComment, onSave, onRepost, onViewProfile: onViewProfileProp }: ReelProps) {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [following, setFollowing] = useState(false);
@@ -102,7 +103,11 @@ export function Reel({ src, alt, author, caption, stats, onLike, onComment, onSa
   };
 
   const handleViewProfile = () => {
-    toast({ title: `${author.name}`, description: `@${author.handle || 'user'}` });
+    if (onViewProfileProp) {
+      onViewProfileProp();
+    } else {
+      toast({ title: `${author.name}`, description: `@${author.handle || 'user'}` });
+    }
   };
 
   const handleViewSound = () => {
