@@ -215,7 +215,7 @@ export default function SocialFeedPane() {
                 className="snap-start snap-always relative shrink-0 w-full md:w-auto" 
                 style={{ 
                   height: isMobile ? '100vh' : `${feedHeight}px`,
-                  width: isMobile ? '100vw' : `${feedWidth}px`
+                  width: isMobile || isTablet ? '100vw' : `${feedWidth}px`
                 }}
               >
                 <Reel {...item} />
