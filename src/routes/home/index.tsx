@@ -178,7 +178,9 @@ export default function HomePage() {
           </div>
         </div>
       </main>
-      <BottomDock />
+      <div className="lg:hidden">
+        {mobileView !== 'feed' && <BottomDock />}
+      </div>
     </>
   );
 }
