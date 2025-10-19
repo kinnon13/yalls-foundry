@@ -40,6 +40,14 @@ export async function rockerListingViewed(params: {
     category: params.category,
   }, params.sessionId);
 
+  // Emit signal for social matching
+  await supabase.rpc('emit_signal', {
+    p_name: 'pdp_view',
+    p_target_kind: 'listing',
+    p_target_id: params.listingId,
+    p_metadata: { category: params.category }
+  });
+
   // Rocker may suggest:
   // - Similar listings
   // - Price alerts

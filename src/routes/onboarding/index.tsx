@@ -14,7 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { emitEvent } from '@/lib/telemetry/events';
 import { InviteSourceStep } from '@/components/onboarding/InviteSourceStep';
 import { HandleStep } from '@/components/onboarding/HandleStep';
-import { InterestsStep } from '@/components/onboarding/InterestsStep';
+import { InterestsStepUniversal } from '@/components/onboarding/InterestsStepUniversal';
 import { NotificationsStep } from '@/components/onboarding/NotificationsStep';
 import { BusinessStep } from '@/components/onboarding/BusinessStep';
 import { FollowsStep } from '@/components/onboarding/FollowsStep';
@@ -172,7 +172,7 @@ export default function OnboardingPage() {
           <Card className="p-8 bg-background/80 backdrop-blur-xl border-border/50">
             {currentStep === 0 && <InviteSourceStep onComplete={handleNext} />}
             {currentStep === 1 && <HandleStep onComplete={handleNext} onBack={handleBack} />}
-            {currentStep === 2 && <InterestsStep onComplete={handleNext} onBack={handleBack} />}
+            {currentStep === 2 && <InterestsStepUniversal onComplete={handleNext} onBack={handleBack} />}
             {currentStep === 3 && <NotificationsStep onComplete={handleNext} onBack={handleBack} />}
             {currentStep === 4 && <BusinessStep onComplete={handleNext} onBack={handleBack} />}
             {currentStep === 5 && <FollowsStep onComplete={finishOnboarding} onBack={handleBack} />}
