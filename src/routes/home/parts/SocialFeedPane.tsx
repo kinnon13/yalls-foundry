@@ -203,12 +203,12 @@ export default function SocialFeedPane() {
       {/* Swipeable feed container - SCROLLABLE */}
       <div 
         ref={railRef}
-        className="relative flex-1 w-full overflow-y-auto overflow-x-hidden select-none touch-pan-y bg-black"
+        className="relative flex-1 w-screen overflow-y-auto overflow-x-hidden select-none touch-pan-y bg-black -mx-3 md:mx-0 md:w-full"
       >
         <div 
           className="h-full w-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
         >
-          <div className="flex flex-col items-center w-full lg:justify-center">
+          <div className="flex flex-col items-center w-full">
             {items.map((item) => (
               <div 
                 key={item.id} 
