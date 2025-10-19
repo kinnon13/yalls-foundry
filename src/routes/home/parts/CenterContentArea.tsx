@@ -109,21 +109,20 @@ export default function CenterContentArea({
   return (
     <div className="flex flex-col h-full">
       {/* Top bar with app icons */}
-      <div className="sticky top-0 z-20 bg-background border-b flex items-center gap-2 px-4 py-2 shadow-sm">
+      <div className="sticky top-0 z-20 bg-muted/20 border-b flex items-center gap-3 px-4 py-3">
         {openApps.map((app) => (
           <div key={app.key} className="relative group">
             <button
               onClick={() => scrollToApp(app.key)}
               className={`
-                flex items-center gap-2 px-3 py-2 rounded-lg transition-all
+                w-12 h-12 rounded-lg flex items-center justify-center transition-all
                 ${activeApp === app.key 
-                  ? 'bg-primary text-primary-foreground shadow-md' 
-                  : 'bg-muted/50 hover:bg-muted'
+                  ? 'bg-background border-2 border-primary shadow-md' 
+                  : 'bg-background border hover:border-primary'
                 }
               `}
             >
-              {app.icon && <app.icon className="w-4 h-4" />}
-              <span className="text-sm font-medium">{app.label}</span>
+              {app.icon && <app.icon className="w-5 h-5" />}
             </button>
             
             {/* Close button on hover */}
@@ -132,7 +131,7 @@ export default function CenterContentArea({
                 e.stopPropagation();
                 onCloseApp(app.key);
               }}
-              className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hidden group-hover:flex"
+              className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <X className="w-3 h-3" />
             </button>
