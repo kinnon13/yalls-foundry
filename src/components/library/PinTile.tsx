@@ -6,7 +6,7 @@
 import { Button } from '@/components/ui/button';
 import { X, Lock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import type { AppPin } from '@/hooks/useAppPins';
+import type { AppPin } from '@/hooks/useLockedPins';
 
 interface PinTileProps {
   pin: AppPin;
