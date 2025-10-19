@@ -7695,6 +7695,56 @@ export type Database = {
         }
         Relationships: []
       }
+      runtime_flag_overrides: {
+        Row: {
+          key: string
+          updated_at: string
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          user_id: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          user_id?: string
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_runtime_overrides_key"
+            columns: ["key"]
+            isOneToOne: false
+            referencedRelation: "runtime_flags"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      runtime_flags: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       saved_items: {
         Row: {
           listing_id: string

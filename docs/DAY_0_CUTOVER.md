@@ -157,21 +157,24 @@ SELECT COUNT(*) AS candidate_count FROM public.marketplace_candidates;
 ### E. Simulate User Journey
 
 ```sql
--- Get a test user (or create one)
+-- Example: use a real test user UUID from your database
+-- First, get a test user:
 SELECT id, email FROM auth.users LIMIT 1;
--- Copy the UUID for subsequent queries
+-- Copy the UUID and replace TEST_USER below
+
+\set TEST_USER '00000000-0000-0000-0000-000000000001'
 
 -- Set 3 interests for the user
 INSERT INTO public.user_interests(user_id, interest_id, affinity)
 VALUES
-  ('<USER_UUID>', '11111111-1111-1111-1111-111111111111', 0.9),
-  ('<USER_UUID>', '22222222-2222-2222-2222-222222222222', 0.8),
-  ('<USER_UUID>', '33333333-3333-3333-3333-333333333333', 0.7)
+  (:'TEST_USER'::uuid, '11111111-1111-1111-1111-111111111111', 0.9),
+  (:'TEST_USER'::uuid, '22222222-2222-2222-2222-222222222222', 0.8),
+  (:'TEST_USER'::uuid, '33333333-3333-3333-3333-333333333333', 0.7)
 ON CONFLICT (user_id, interest_id) DO UPDATE SET affinity = EXCLUDED.affinity;
 
 -- Ensure category and enqueue discovery
 SELECT public.ensure_category_for_interest('11111111-1111-1111-1111-111111111111'::uuid);
-SELECT public.enqueue_discovery_for_user('<USER_UUID>'::uuid);
+SELECT public.enqueue_discovery_for_user(:'TEST_USER'::uuid);
 
 -- Verify queue populated
 SELECT * FROM public.marketplace_discovery_queue
@@ -204,7 +207,7 @@ SELECT * FROM public.vw_discovery_queue_health;
 SELECT * FROM public.marketplace_gaps LIMIT 10;
 
 -- Suggestions smoke test
-SELECT * FROM public.marketplace_suggestions_for_user('<USER_UUID>', 12);
+SELECT * FROM public.marketplace_suggestions_for_user(:'TEST_USER'::uuid, 12);
 ```
 
 **Expected:** At least a few marketplace suggestions returned
@@ -217,7 +220,7 @@ INSERT INTO public.learning_events(
   user_id, surface, candidate_id, policy, p_exp, score, explored, reward, context
 )
 VALUES(
-  '<USER_UUID>',
+  :'TEST_USER'::uuid,
   'feed',
   'post_abc',
   'epsilon_greedy_v1',
@@ -387,8 +390,8 @@ SELECT * FROM pg_policies WHERE schemaname = 'public' AND tablename = 'learning_
 ### Suggestions Empty
 
 ```sql
--- Check if user has interests
-SELECT * FROM public.user_interests WHERE user_id = '<USER_UUID>';
+-- Check if user has interests (replace with actual UUID)
+SELECT * FROM public.user_interests WHERE user_id = :'TEST_USER'::uuid;
 
 -- Check if categories mapped
 SELECT ic.name, mc.name
