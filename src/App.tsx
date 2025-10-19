@@ -1,12 +1,15 @@
-import { StrictMode } from "react";
+/**
+ * App Router - 10 Canonical Routes + Overlay System
+ * Everything else opens via ?app= overlays
+ */
+
+import { StrictMode, Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from 'next-themes';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
-import { Suspense, lazy, useEffect } from 'react';
 import { AuthProvider } from '@/lib/auth/context';
 import { RequireAuth } from '@/lib/auth/guards';
 import { RockerChat } from '@/components/rocker/RockerChat';
@@ -19,94 +22,34 @@ import { RedirectHandler } from '@/components/navigation/RedirectHandler';
 import PreviewRoutes from '@/preview/PreviewRoutes';
 import { PreviewMessageListener } from '@/components/preview/PreviewMessageListener';
 import { registerRockerFeatureHandler } from '@/feature-kernel/rocker-handler';
-import Index from "./routes/index";
-import Search from "./routes/search";
-import Login from "./routes/login";
-import Profile from "./routes/profile";
-import ControlRoom from "./routes/admin/control-room";
-import NotFound from "./pages/NotFound";
-import Health from "./pages/Health";
-
-// Lazy load dashboard and AI routes
-import HomePage from './routes/home';
-const MeHub = lazy(() => import('./routes/me'));
-const DashboardLayout = lazy(() => import('./routes/dashboard/index'));
-const DashboardOverview = lazy(() => import('./routes/dashboard/overview'));
-const DashboardBusiness = lazy(() => import('./routes/dashboard/business'));
-const DashboardSettings = lazy(() => import('./routes/dashboard/settings'));
-const DiscoverV2 = lazy(() => import('./routes/discover-v2'));
-const Earnings = lazy(() => import('./routes/earnings'));
-const Approvals = lazy(() => import('./routes/dashboard/approvals'));
-const AISettings = lazy(() => import('./routes/settings/ai'));
-const AIActivity = lazy(() => import('./routes/ai/activity'));
-const EntitiesList = lazy(() => import('./routes/entities/index'));
-const EntityDetail = lazy(() => import('./routes/entities/[id]'));
-const Feed = lazy(() => import('./routes/feed/index'));
-const Social = lazy(() => import('./routes/social/index'));
-const Messages = lazy(() => import('./routes/messages/index'));
-const CRM = lazy(() => import('./routes/crm/index'));
-const ClaimEntity = lazy(() => import('./routes/claim/[entityId]'));
-const AdminClaims = lazy(() => import('./routes/admin/claims'));
-
-// App Store & Marketplace
-const AppStore = lazy(() => import('./routes/app-store/index'));
-const MarketplaceIndex = lazy(() => import('./routes/marketplace/index'));
-
-// Phase 3: Listings & Events
-const NewListing = lazy(() => import('./routes/listings/new'));
-const ListingDetail = lazy(() => import('./routes/listings/[id]'));
-const EditListing = lazy(() => import('./routes/listings/[id]/edit'));
-const EventsIndex = lazy(() => import('./routes/events/index'));
-const NewEvent = lazy(() => import('./routes/events/new'));
-const EventDetail = lazy(() => import('./routes/events/[id]'));
-const EventClasses = lazy(() => import('./routes/events/[id]/classes'));
-const EventEntries = lazy(() => import('./routes/events/[id]/entries'));
-const EventDraw = lazy(() => import('./routes/events/[id]/draw'));
-const EventResults = lazy(() => import('./routes/events/[id]/results'));
-const EventPayouts = lazy(() => import('./routes/events/[id]/payouts'));
-const EventEnter = lazy(() => import('./routes/events/[eventId]/enter'));
-const EventStalls = lazy(() => import('./routes/events/[id]/stalls-booking'));
-const EventQRCheckin = lazy(() => import('./routes/events/[eventId]/qr-checkin'));
-const PublicDraw = lazy(() => import('./routes/events/[id]/public-draw'));
-const PublicResults = lazy(() => import('./routes/events/[id]/public-results'));
-const EventDrawPublic = lazy(() => import('./routes/events/[eventId]/draw'));
-const EventResultsPublic = lazy(() => import('./routes/events/[eventId]/results'));
-const StallionsIndex = lazy(() => import('./routes/stallions/index'));
-const StallionDetail = lazy(() => import('./routes/stallions/[id]'));
-const ProfilePageDynamic = lazy(() => import('./routes/profile/[id]'));
-const CartPage = lazy(() => import('./routes/cart/index'));
-const OrdersIndex = lazy(() => import('./routes/orders/index'));
-const OrderDetail = lazy(() => import('./routes/orders/[id]'));
-const Discover = lazy(() => import('./routes/discover'));
-const FarmCalendar = lazy(() => import('./routes/farm/calendar'));
-const FarmDashboard = lazy(() => import('./routes/farm/dashboard'));
-const BoarderProfile = lazy(() => import('./routes/farm/boarder/[id]'));
-const IncentivesDashboard = lazy(() => import('./routes/incentives/dashboard'));
-const MyEntries = lazy(() => import('./routes/events/entrant/my-entries'));
-const MyDraws = lazy(() => import('./routes/events/entrant/my-draws'));
-const MyResults = lazy(() => import('./routes/events/entrant/my-results'));
-const FarmTasks = lazy(() => import('./routes/farm/Tasks'));
-const FarmHealthLog = lazy(() => import('./routes/farm/HealthLog'));
-
-// Admin routes
-const FeaturesAdmin = lazy(() => import('./routes/admin/features'));
-const RoutesAdmin = lazy(() => import('./routes/admin/routes'));
-const ComponentsAdmin = lazy(() => import('./routes/admin/components'));
-const A11yAdmin = lazy(() => import('./routes/admin/a11y'));
-const TestsAdmin = lazy(() => import('./routes/admin/tests'));
-const AuditAdmin = lazy(() => import('./routes/admin/audit'));
-const NotificationsSettings = lazy(() => import('./routes/settings/notifications'));
-const NotificationsPage = lazy(() => import('./routes/notifications'));
-const StubBacklog = lazy(() => import('./routes/admin/stub-backlog'));
-const Diag = lazy(() => import('./routes/_diag'));
-
-const queryClient = new QueryClient();
-
 import { CommandPalette } from '@/components/command/CommandPalette';
 import { ProfileCreationModal } from '@/components/entities/ProfileCreationModal';
 import { usePageTelemetry } from '@/hooks/usePageTelemetry';
 import { DevHUD } from '@/components/dev/DevHUD';
 import { useDevHUD } from '@/hooks/useDevHUD';
+import { OverlayProvider } from '@/lib/overlay/OverlayProvider';
+import { rocker } from '@/lib/rocker/event-bus';
+
+// 10 Canonical Routes
+import HomePage from './routes/home';
+import Login from './routes/login';
+import NotFound from './pages/NotFound';
+import Health from './pages/Health';
+
+const Discover = lazy(() => import('./routes/discover-v2'));
+const DashboardLayout = lazy(() => import('./routes/dashboard/index'));
+const Messages = lazy(() => import('./routes/messages/index'));
+const ProfilePageDynamic = lazy(() => import('./routes/profile/[id]'));
+const EntitiesList = lazy(() => import('./routes/entities/index'));
+const EventsIndex = lazy(() => import('./routes/events/index'));
+const EventDetail = lazy(() => import('./routes/events/[id]'));
+const MarketplaceIndex = lazy(() => import('./routes/marketplace/index'));
+const ListingDetail = lazy(() => import('./routes/listings/[id]'));
+const CartPage = lazy(() => import('./routes/cart/index'));
+const OrdersIndex = lazy(() => import('./routes/orders/index'));
+const OrderDetail = lazy(() => import('./routes/orders/[id]'));
+
+const queryClient = new QueryClient();
 
 function AppContent() {
   usePageTelemetry();
@@ -115,37 +58,22 @@ function AppContent() {
   useEffect(() => {
     registerRockerFeatureHandler();
     
-    // Keyboard shortcut: Cmd/Ctrl+H to navigate home
+    // Global keyboard shortcuts
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (e.key.toLowerCase() === 'h' && mod) {
         e.preventDefault();
-        window.location.href = '/home';
+        window.location.href = '/';
       }
     };
     window.addEventListener('keydown', onKey);
     
-    // Register all routes for the scanner
+    // Register canonical routes for scanner
     import('@/router/registry').then(({ registerRoutes }) => {
       registerRoutes([
-        '/', '/home', '/search', '/login', '/profile', '/profile/:id',
-        '/stallions', '/stallions/:id', '/dashboard', '/admin/control-room',
-        '/admin/features', '/admin/routes', '/admin/components', '/admin/a11y',
-        '/admin/audit', '/admin/tests', '/notifications', '/settings/notifications',
-        '/discover', '/health', '/app-store', '/marketplace', '/marketplace/:id',
-        '/listings', '/listings/new', '/listings/:id', '/listings/:id/edit', 
-        '/events', '/events/new', '/events/:id',
-        '/events/:id/classes', '/events/:id/entries', '/events/:id/draw',
-        '/events/:id/results', '/events/:id/payouts', '/events/:id/stalls',
-        '/events/:id/public-draw', '/events/:id/public-results',
-        '/events/:eventId/enter', '/events/:eventId/qr-checkin',
-        '/events/:eventId/draw', '/events/:eventId/results',
-        '/cart', '/orders', '/orders/:id', '/earnings', '/farm/calendar',
-        '/farm/dashboard', '/farm/boarder/:id', '/farm/tasks', '/farm/health',
-        '/incentives/dashboard', '/entrant/my-entries', '/entrant/my-draws',
-        '/entrant/my-results', '/feed',
-        '/social', '/messages', '/crm', '/settings/ai', '/ai/activity', '/entities',
-        '/entities/:id', '/claim/:entityId', '/admin/claims'
+        '/', '/discover', '/dashboard', '/messages', '/profile/:id',
+        '/entities', '/events', '/events/:id', '/listings', '/listings/:id',
+        '/cart', '/orders', '/orders/:id'
       ]);
     });
     
@@ -154,276 +82,192 @@ function AppContent() {
 
   return (
     <>
-      {/* Global Command Palette */}
       <CommandPalette />
-      
-      {/* Profile Creation Modal */}
       <ProfileCreationModal />
-      
       <RedirectHandler />
-        <Routes>
-          {/* Home - New unified layout */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/home" element={<HomePage />} />
-          
-          {/* My Profile - Private hub */}
-          <Route path="/me" element={<Suspense fallback={<div>Loading...</div>}><MeHub /></Suspense>} />
-          
-          {/* Redirect old dashboard to new home */}
-          <Route path="/dashboard" element={<Navigate to="/home" replace />} />
-          
-          {/* 7-Route Spine */}
-          <Route path="/search" element={<Search />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/profile" element={<Suspense fallback={<div>Loading...</div>}><ProfilePageDynamic /></Suspense>} />
-          <Route path="/profile/:id" element={<Suspense fallback={<div>Loading...</div>}><ProfilePageDynamic /></Suspense>} />
-          <Route path="/stallions" element={<Suspense fallback={<div>Loading...</div>}><StallionsIndex /></Suspense>} />
-          <Route path="/stallions/:id" element={<Suspense fallback={<div>Loading...</div>}><StallionDetail /></Suspense>} />
-          {/* Dashboard - single route with query param navigation */}
-          <Route
-            path="/dashboard"
-            element={
-              <RequireAuth>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <DashboardLayout />
-                </Suspense>
-              </RequireAuth>
-            }
-          />
-          {/* Workspace route (alias target) */}
-          <Route
-            path="/workspace"
-            element={
-              <RequireAuth>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <DashboardLayout />
-                </Suspense>
-              </RequireAuth>
-            }
-          />
-          <Route path="/admin/control-room" element={<RequireAuth><ControlRoom /></RequireAuth>} />
-          <Route path="/admin/features" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FeaturesAdmin /></Suspense></RequireAuth>} />
-          <Route path="/admin/routes" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><RoutesAdmin /></Suspense></RequireAuth>} />
-          <Route path="/admin/components" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><ComponentsAdmin /></Suspense></RequireAuth>} />
-          <Route path="/admin/a11y" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><A11yAdmin /></Suspense></RequireAuth>} />
-          <Route path="/admin/audit" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><AuditAdmin /></Suspense></RequireAuth>} />
-          <Route path="/admin/tests" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><TestsAdmin /></Suspense></RequireAuth>} />
-          <Route path="/admin/stubs" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><StubBacklog /></Suspense></RequireAuth>} />
-          <Route path="/notifications" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><NotificationsPage /></Suspense></RequireAuth>} />
-          <Route path="/settings/notifications" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><NotificationsSettings /></Suspense></RequireAuth>} />
-          <Route path="/discover" element={<Suspense fallback={<div>Loading...</div>}><Discover /></Suspense>} />
-          <Route path="/health" element={<Health />} />
-
-          {/* App Store & Marketplace */}
-          <Route path="/app-store" element={<Suspense fallback={<div>Loading...</div>}><AppStore /></Suspense>} />
-          <Route path="/marketplace" element={<Suspense fallback={<div>Loading...</div>}><MarketplaceIndex /></Suspense>} />
-          <Route path="/marketplace/:id" element={<Suspense fallback={<div>Loading...</div>}><ListingDetail /></Suspense>} />
-          
-          {/* Listings Management (seller-side) */}
-          <Route path="/listings" element={<Navigate to="/marketplace" replace />} />
-          <Route path="/listings/new" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><NewListing /></Suspense></RequireAuth>} />
-          <Route path="/listings/:id" element={<Suspense fallback={<div>Loading...</div>}><ListingDetail /></Suspense>} />
-          <Route path="/listings/:id/edit" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><EditListing /></Suspense></RequireAuth>} />
-          
-          {/* Redirects for legacy/convenience */}
-          <Route path="/store" element={<Navigate to="/app-store" replace />} />
-          <Route path="/shop" element={<Navigate to="/marketplace" replace />} />
-          {/* Events */}
-          <Route path="/events" element={<Suspense fallback={<div>Loading...</div>}><EventsIndex /></Suspense>} />
-          <Route path="/events/new" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><NewEvent /></Suspense></RequireAuth>} />
-          <Route path="/events/:id" element={<Suspense fallback={<div>Loading...</div>}><EventDetail /></Suspense>}>
-            <Route path="classes" element={<Suspense fallback={<div>Loading...</div>}><EventClasses /></Suspense>} />
-            <Route path="entries" element={<Suspense fallback={<div>Loading...</div>}><EventEntries /></Suspense>} />
-            <Route path="draw" element={<Suspense fallback={<div>Loading...</div>}><EventDraw /></Suspense>} />
-            <Route path="results" element={<Suspense fallback={<div>Loading...</div>}><EventResults /></Suspense>} />
-            <Route path="payouts" element={<Suspense fallback={<div>Loading...</div>}><EventPayouts /></Suspense>} />
-            <Route path="stalls" element={<Suspense fallback={<div>Loading...</div>}><EventStalls /></Suspense>} />
-            <Route path="public-draw" element={<Suspense fallback={<div>Loading...</div>}><PublicDraw /></Suspense>} />
-            <Route path="public-results" element={<Suspense fallback={<div>Loading...</div>}><PublicResults /></Suspense>} />
-          </Route>
-          <Route path="/events/:eventId/enter" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><EventEnter /></Suspense></RequireAuth>} />
-          <Route path="/events/:eventId/qr-checkin" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><EventQRCheckin /></Suspense></RequireAuth>} />
-          <Route path="/events/:eventId/draw" element={<Suspense fallback={<div>Loading...</div>}><EventDrawPublic /></Suspense>} />
-          <Route path="/events/:eventId/results" element={<Suspense fallback={<div>Loading...</div>}><EventResultsPublic /></Suspense>} />
-          <Route path="/cart" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><CartPage /></Suspense></RequireAuth>} />
-          <Route path="/orders" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrdersIndex /></Suspense></RequireAuth>} />
-          <Route path="/orders/:id" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><OrderDetail /></Suspense></RequireAuth>} />
-          
-          {/* Earnings (standalone for legacy links) */}
-          <Route path="/earnings" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><Earnings /></Suspense></RequireAuth>} />
-          
-          {/* Farm Ops */}
-          <Route path="/farm/calendar" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FarmCalendar /></Suspense></RequireAuth>} />
-          <Route path="/farm/dashboard" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FarmDashboard /></Suspense></RequireAuth>} />
-          <Route path="/farm/boarder/:id" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><BoarderProfile /></Suspense></RequireAuth>} />
-          <Route path="/farm/tasks" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FarmTasks /></Suspense></RequireAuth>} />
-          <Route path="/farm/health" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><FarmHealthLog /></Suspense></RequireAuth>} />
-          
-          {/* Incentives */}
-          <Route path="/incentives/dashboard" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><IncentivesDashboard /></Suspense></RequireAuth>} />
-          
-          {/* Entrant Routes */}
-          <Route path="/entrant/my-entries" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><MyEntries /></Suspense></RequireAuth>} />
-          <Route path="/entrant/my-draws" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><MyDraws /></Suspense></RequireAuth>} />
-          <Route path="/entrant/my-results" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><MyResults /></Suspense></RequireAuth>} />
-
-          {/* Phase 2: Social + CRM Routes */}
-          <Route
-            path="/feed"
-            element={
+      
+      <Routes>
+        {/* 1. Home - Shell with Apps + Feed */}
+        <Route path="/" element={<HomePage />} />
+        
+        {/* 2. Discover - For You / Trending / Latest */}
+        <Route 
+          path="/discover" 
+          element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <Discover />
+            </Suspense>
+          } 
+        />
+        
+        {/* 3. Dashboard - Single management surface */}
+        <Route
+          path="/dashboard"
+          element={
+            <RequireAuth>
               <Suspense fallback={<div>Loading...</div>}>
-                <Feed />
+                <DashboardLayout />
               </Suspense>
-            }
-          />
-          <Route
-            path="/social"
-            element={
+            </RequireAuth>
+          }
+        />
+        
+        {/* 4. Messages - DM deep link */}
+        <Route
+          path="/messages"
+          element={
+            <RequireAuth>
               <Suspense fallback={<div>Loading...</div>}>
-                <Social />
+                <Messages />
               </Suspense>
-            }
-          />
-          <Route
-            path="/messages"
-            element={
-              <RequireAuth>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <Messages />
-                </Suspense>
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/crm"
-            element={
-              <RequireAuth>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <CRM />
-                </Suspense>
-              </RequireAuth>
-            }
-          />
-
-          {/* AI/Rocker Routes */}
-          <Route
-            path="/settings/ai"
-            element={
-              <RequireAuth>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <AISettings />
-                </Suspense>
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/ai/activity"
-            element={
-              <RequireAuth>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <AIActivity />
-                </Suspense>
-              </RequireAuth>
-            }
-          />
-
-          {/* Entity Routes */}
-          <Route
-            path="/entities"
-            element={
+            </RequireAuth>
+          }
+        />
+        
+        {/* 5. Profile - Public profile deep link */}
+        <Route 
+          path="/profile/:id" 
+          element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <ProfilePageDynamic />
+            </Suspense>
+          } 
+        />
+        
+        {/* 6. Entities - Browse & claim */}
+        <Route 
+          path="/entities" 
+          element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <EntitiesList />
+            </Suspense>
+          } 
+        />
+        
+        {/* 7. Events - Index + Detail */}
+        <Route 
+          path="/events" 
+          element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <EventsIndex />
+            </Suspense>
+          } 
+        />
+        <Route 
+          path="/events/:id" 
+          element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <EventDetail />
+            </Suspense>
+          } 
+        />
+        
+        {/* 8. Listings - Marketplace index + detail */}
+        <Route 
+          path="/listings" 
+          element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <MarketplaceIndex />
+            </Suspense>
+          } 
+        />
+        <Route 
+          path="/listings/:id" 
+          element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <ListingDetail />
+            </Suspense>
+          } 
+        />
+        
+        {/* 9. Cart - Mock checkout */}
+        <Route 
+          path="/cart" 
+          element={
+            <RequireAuth>
               <Suspense fallback={<div>Loading...</div>}>
-                <EntitiesList />
+                <CartPage />
               </Suspense>
-            }
-          />
-          <Route
-            path="/entities/:id"
-            element={
+            </RequireAuth>
+          } 
+        />
+        
+        {/* 10. Orders - List + Detail */}
+        <Route 
+          path="/orders" 
+          element={
+            <RequireAuth>
               <Suspense fallback={<div>Loading...</div>}>
-                <EntityDetail />
+                <OrdersIndex />
               </Suspense>
-            }
-          />
-          <Route
-            path="/claim/:entityId"
-            element={
-              <RequireAuth>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <ClaimEntity />
-                </Suspense>
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/admin/claims"
-            element={
-              <RequireAuth>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <AdminClaims />
-                </Suspense>
-              </RequireAuth>
-            }
-          />
-
-          {/* Auth Route (handles both login & signup via tabs) */}
-          <Route path="/login" element={<Login />} />
-          
-          {/* Diagnostic Route - Context Health Check */}
-          <Route path="/_diag" element={<Suspense fallback={<div>Loading...</div>}><Diag /></Suspense>} />
-
-          {/* Preview Routes (dev/staging only) - nested inside main Routes */}
-          {import.meta.env.VITE_PREVIEW_ENABLED === 'true' && (
-            <>
-              <Route path="/preview" element={
-                <div className="p-6 space-y-6">
-                  <div className="fixed top-4 right-4 bg-yellow-500 text-black px-3 py-1 text-xs font-bold uppercase tracking-wider rotate-12 shadow-lg z-50">
-                    Preview Mode
-                  </div>
-                  <h1 className="text-xl font-semibold">Preview Index</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Safe UI previews for Pay/Admin/Data experiences. No writes, no money moves.
-                  </p>
-                </div>
-              } />
-            </>
-          )}
-
-          {/* Catch-all */}
-          <Route path="*" element={<NotFound />} />
+            </RequireAuth>
+          } 
+        />
+        <Route 
+          path="/orders/:id" 
+          element={
+            <RequireAuth>
+              <Suspense fallback={<div>Loading...</div>}>
+                <OrderDetail />
+              </Suspense>
+            </RequireAuth>
+          } 
+        />
+        
+        {/* Auth */}
+        <Route path="/login" element={<Login />} />
+        
+        {/* Health check */}
+        <Route path="/health" element={<Health />} />
+        
+        {/* Catch-all: redirect to Discover with toast */}
+        <Route 
+          path="*" 
+          element={
+            <Navigate 
+              to="/discover" 
+              replace 
+              state={{ toast: "Route moved. Use Library or Finder." }} 
+            />
+          } 
+        />
       </Routes>
-
-      {/* Preview message handler */}
-      {import.meta.env.VITE_PREVIEW_ENABLED === 'true' && <PreviewMessageListener />}
-
-      <InactivityNudge />
-      <RockerDock />
-      <RockerChat />
-      <RockerSuggestions />
-      <DevHUD isOpen={devHUDOpen} onClose={closeDevHUD} />
+      
       <Toaster />
       <Sonner />
+      <InactivityNudge />
+      <RockerDock />
+      <RockerSuggestions />
+      <RockerChat />
+      {devHUDOpen && <DevHUD isOpen={devHUDOpen} onClose={closeDevHUD} />}
     </>
   );
 }
 
-const App = () => (
-  <StrictMode>
-    <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-            <AuthProvider>
-              <RockerChatProvider>
-                <RockerProvider>
-                  <AppContent />
-                </RockerProvider>
-              </RockerChatProvider>
-            </AuthProvider>
+function App() {
+  return (
+    <StrictMode>
+      <HelmetProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <BrowserRouter>
+              <RockerProvider>
+                <RockerChatProvider>
+                  <AuthProvider>
+                    <OverlayProvider>
+                      <AppContent />
+                      <PreviewMessageListener />
+                      <PreviewRoutes />
+                    </OverlayProvider>
+                  </AuthProvider>
+                </RockerChatProvider>
+              </RockerProvider>
+            </BrowserRouter>
           </ThemeProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </HelmetProvider>
-  </StrictMode>
-);
+        </QueryClientProvider>
+      </HelmetProvider>
+    </StrictMode>
+  );
+}
 
 export default App;
