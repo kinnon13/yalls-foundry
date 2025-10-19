@@ -4,7 +4,7 @@ import { AppBubble } from './AppBubble';
 import { useRocker } from '@/lib/ai/rocker';
 import { 
   Building2, MessageSquare, Calendar, 
-  Award, BarChart3, Store, Search, Plus, Sparkles
+  Award, BarChart3, Store, Search, Plus, Sparkles, Shield
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { AppStoreModal } from './AppStoreModal';
@@ -33,14 +33,29 @@ export function MyApps({ entityId }: MyAppsProps) {
   const { log } = useRocker();
   const [showAppStore, setShowAppStore] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id ?? null);
-    });
+    const checkAdminStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserId(user?.id ?? null);
+      
+      if (user) {
+        const { data } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .in('role', ['admin', 'super_admin'])
+          .maybeSingle();
+        
+        setIsAdmin(!!data);
+      }
+    };
+
+    checkAdminStatus();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+      checkAdminStatus();
     });
 
     return () => subscription.unsubscribe();
@@ -149,6 +164,19 @@ export function MyApps({ entityId }: MyAppsProps) {
       <section className="space-y-4">
         <h2 className="text-lg font-semibold px-2">My Apps</h2>
         <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          {/* Admin Control Room - First Position */}
+          {isAdmin && (
+            <AppBubble
+              to="/admin/control-room"
+              icon={<Shield className="h-6 w-6" />}
+              title="Admin Control"
+              meta="System admin panel"
+              accent="hsl(270 70% 55%)"
+              onClick={() => log('tile_open', { section: 'admin', key: 'control-room' })}
+              className="ring-2 ring-purple-500/30 shadow-lg shadow-purple-500/20"
+            />
+          )}
+          
           {[
             ...(installedApps || []).map((app: any) => ({
               key: `app:${app.app_key}`,
