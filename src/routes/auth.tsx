@@ -4,7 +4,7 @@
  * Mac-style design with glass morphism
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { SEOHelmet } from '@/lib/seo/helmet';
 import { useSession } from '@/lib/auth/context';
@@ -16,8 +16,9 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { z } from 'zod';
-import { ArrowLeft, Sparkles, Mail, Apple } from 'lucide-react';
+import { ArrowLeft, Sparkles, Mail, Apple, AlertCircle } from 'lucide-react';
 import { emitEvent } from '@/lib/telemetry/events';
+import { CaptchaGuard } from '@/components/auth/CaptchaGuard';
 
 const emailSchema = z.string().email('Invalid email address').max(255);
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(128);
@@ -33,8 +34,13 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [needsCaptcha, setNeedsCaptcha] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [rateLimitInfo, setRateLimitInfo] = useState<any>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const { session } = useSession();
   const navigate = useNavigate();
+  const errorSummaryRef = useRef<HTMLDivElement>(null);
 
   // Log auth page view
   useEffect(() => {
@@ -55,21 +61,70 @@ export default function AuthPage() {
     setSearchParams(params, { replace: true });
   };
 
+  // Check rate limit before auth attempt
+  const checkRateLimit = async (identifier: string) => {
+    try {
+      const { data, error } = await supabase.rpc('check_auth_rate_limit', {
+        p_identifier: identifier
+      });
+      
+      if (error) throw error;
+      
+      const rateLimitData = data as any;
+      setRateLimitInfo(rateLimitData);
+      setNeedsCaptcha(rateLimitData?.needs_captcha || false);
+      
+      return rateLimitData || { allowed: true, needs_captcha: false };
+    } catch (err) {
+      console.error('[Auth] Rate limit check failed:', err);
+      return { allowed: true, needs_captcha: false }; // Fail open
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous errors
+    setErrors({});
     
     // Validate
     const emailResult = emailSchema.safeParse(email);
     const passwordResult = passwordSchema.safeParse(password);
     
+    const validationErrors: Record<string, string> = {};
+    
     if (!emailResult.success) {
+      validationErrors.email = emailResult.error.errors[0].message;
       emitEvent('auth_error', { mode: 'signup', field: 'email', error: emailResult.error.errors[0].message });
-      toast({ title: emailResult.error.errors[0].message, variant: 'destructive' });
-      return;
     }
     if (!passwordResult.success) {
+      validationErrors.password = passwordResult.error.errors[0].message;
       emitEvent('auth_error', { mode: 'signup', field: 'password', error: passwordResult.error.errors[0].message });
-      toast({ title: passwordResult.error.errors[0].message, variant: 'destructive' });
+    }
+    
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      errorSummaryRef.current?.focus();
+      toast({ title: 'Please fix the errors below', variant: 'destructive' });
+      return;
+    }
+
+    // Check rate limit
+    const rateLimit = await checkRateLimit(email);
+    if (!rateLimit.allowed) {
+      emitEvent('auth_rate_limited', { mode: 'signup', email });
+      toast({
+        title: 'Too many attempts',
+        description: `Please wait ${Math.ceil(rateLimit.retry_after / 60)} minutes before trying again`,
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    // Require CAPTCHA if needed
+    if (rateLimit.needs_captcha && !captchaToken) {
+      setNeedsCaptcha(true);
+      emitEvent('auth_captcha_shown', { mode: 'signup' });
       return;
     }
 
@@ -103,18 +158,47 @@ export default function AuthPage() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Clear previous errors
+    setErrors({});
+    
     // Validate
     const emailResult = emailSchema.safeParse(email);
     const passwordResult = passwordSchema.safeParse(password);
     
+    const validationErrors: Record<string, string> = {};
+    
     if (!emailResult.success) {
+      validationErrors.email = emailResult.error.errors[0].message;
       emitEvent('auth_error', { mode: 'login', field: 'email', error: emailResult.error.errors[0].message });
-      toast({ title: emailResult.error.errors[0].message, variant: 'destructive' });
-      return;
     }
     if (!passwordResult.success) {
+      validationErrors.password = passwordResult.error.errors[0].message;
       emitEvent('auth_error', { mode: 'login', field: 'password', error: passwordResult.error.errors[0].message });
-      toast({ title: passwordResult.error.errors[0].message, variant: 'destructive' });
+    }
+    
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      errorSummaryRef.current?.focus();
+      toast({ title: 'Please fix the errors below', variant: 'destructive' });
+      return;
+    }
+
+    // Check rate limit
+    const rateLimit = await checkRateLimit(email);
+    if (!rateLimit.allowed) {
+      emitEvent('auth_rate_limited', { mode: 'login', email });
+      toast({
+        title: 'Too many attempts',
+        description: `Please wait ${Math.ceil(rateLimit.retry_after / 60)} minutes before trying again`,
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    // Require CAPTCHA if needed
+    if (rateLimit.needs_captcha && !captchaToken) {
+      setNeedsCaptcha(true);
+      emitEvent('auth_captcha_shown', { mode: 'login' });
       return;
     }
 
@@ -129,6 +213,9 @@ export default function AuthPage() {
       if (newSession?.userId) {
         await bootstrapProfile(newSession.userId, email);
       }
+      
+      // Reset rate limit on successful login
+      await supabase.rpc('reset_auth_rate_limit', { p_identifier: email });
       
       emitEvent('auth_success', { mode: 'login' });
       toast({ title: '✓ Signed in' });
@@ -235,6 +322,30 @@ export default function AuthPage() {
       console.error('[Auth] Profile bootstrap error:', err);
     }
   };
+
+  // CAPTCHA screen
+  if (needsCaptcha && !captchaToken) {
+    return (
+      <>
+        <SEOHelmet title="Security Check" description="Verify you're human" />
+        
+        <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background flex items-center justify-center p-4">
+          <CaptchaGuard
+            onVerified={(token) => {
+              setCaptchaToken(token);
+              setNeedsCaptcha(false);
+              emitEvent('auth_captcha_pass', { mode });
+              toast({ title: '✓ Verified' });
+            }}
+            onSkip={() => {
+              setNeedsCaptcha(false);
+              setCaptchaToken(null);
+            }}
+          />
+        </div>
+      </>
+    );
+  }
 
   // Confirmation screen after signup/reset
   if (showConfirmation) {
@@ -397,6 +508,39 @@ export default function AuthPage() {
               </div>
             )}
             
+            {/* Error Summary */}
+            {Object.keys(errors).length > 0 && (
+              <div
+                ref={errorSummaryRef}
+                tabIndex={-1}
+                role="alert"
+                className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm text-destructive mb-1">
+                      Please fix the following errors:
+                    </p>
+                    <ul className="list-disc list-inside text-sm text-destructive/80 space-y-1">
+                      {Object.entries(errors).map(([field, error]) => (
+                        <li key={field}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Rate Limit Warning */}
+            {rateLimitInfo && rateLimitInfo.remaining <= 3 && rateLimitInfo.remaining > 0 && (
+              <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                <p className="text-sm text-warning">
+                  ⚠️ {rateLimitInfo.remaining} attempts remaining
+                </p>
+              </div>
+            )}
+            
             <form onSubmit={mode === 'reset' ? handleReset : mode === 'signup' ? handleSignUp : handleSignIn} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">Email</Label>
@@ -408,8 +552,15 @@ export default function AuthPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={loading}
+                  aria-invalid={!!errors.email}
+                  aria-describedby={errors.email ? 'email-error' : undefined}
                   className="h-11 bg-muted/50 border-border/40 focus:border-primary/40 focus:ring-primary/20"
                 />
+                {errors.email && (
+                  <p id="email-error" className="text-sm text-destructive">
+                    {errors.email}
+                  </p>
+                )}
               </div>
               
               {mode !== 'reset' && (
@@ -424,13 +575,19 @@ export default function AuthPage() {
                     required
                     disabled={loading}
                     minLength={6}
+                    aria-invalid={!!errors.password}
+                    aria-describedby={errors.password ? 'password-error' : undefined}
                     className="h-11 bg-muted/50 border-border/40 focus:border-primary/40 focus:ring-primary/20"
                   />
-                  {mode === 'signup' && (
+                  {errors.password ? (
+                    <p id="password-error" className="text-sm text-destructive">
+                      {errors.password}
+                    </p>
+                  ) : mode === 'signup' ? (
                     <p className="text-xs text-muted-foreground">
                       At least 6 characters
                     </p>
-                  )}
+                  ) : null}
                 </div>
               )}
 

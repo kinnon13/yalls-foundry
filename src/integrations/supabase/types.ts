@@ -8841,6 +8841,10 @@ export type Database = {
             }
         Returns: string
       }
+      check_auth_rate_limit: {
+        Args: { p_identifier: string; p_window_sec?: number }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: { p_limit: number; p_scope: string; p_window_sec?: number }
         Returns: Json
@@ -10144,6 +10148,10 @@ export type Database = {
       reservations_export_csv: {
         Args: { p_event_id: string }
         Returns: string
+      }
+      reset_auth_rate_limit: {
+        Args: { p_identifier: string }
+        Returns: undefined
       }
       resolve_tenant_id: {
         Args: Record<PropertyKey, never>

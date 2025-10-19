@@ -14,7 +14,11 @@ type EventType =
   | 'auth_view'
   | 'auth_submit'
   | 'auth_success'
-  | 'auth_error';
+  | 'auth_error'
+  | 'auth_rate_limited'
+  | 'auth_captcha_shown'
+  | 'auth_captcha_pass'
+  | 'auth_captcha_fail';
 
 interface EventPayload {
   [key: string]: any;

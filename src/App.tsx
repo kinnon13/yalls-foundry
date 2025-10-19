@@ -14,6 +14,7 @@ import { AuthProvider } from '@/lib/auth/context';
 import { RequireAuth } from '@/lib/auth/guards';
 import { RequireAuthGuard } from '@/lib/auth/guards/RequireAuthGuard';
 import { PublicOnlyGuard } from '@/lib/auth/guards/PublicOnlyGuard';
+import { setupAuthInterceptor } from '@/lib/auth/interceptors';
 import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
 import { RockerDock } from '@/components/rocker/RockerDock';
@@ -63,6 +64,9 @@ function AppContent() {
   const location = useLocation();
   
   useEffect(() => {
+    // Setup global 401 interceptor
+    setupAuthInterceptor();
+    
     registerRockerFeatureHandler();
     
     // Global keyboard shortcuts
