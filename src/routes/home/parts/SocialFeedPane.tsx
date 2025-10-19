@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import SocialProfileHeader from './SocialProfileHeader';
 import FavoritesSection from './FavoritesSection';
 import UserProfileView from './UserProfileView';
-import { ProfileFavorites } from '@/components/profile/ProfileFavorites';
+// import { ProfileFavorites } from '@/components/profile/ProfileFavorites';
 import { Menu } from 'lucide-react';
 import { useFeedPosts } from '@/hooks/useFeedPosts';
 import { supabase } from '@/integrations/supabase/client';
@@ -313,9 +313,8 @@ export default function SocialFeedPane() {
             }}
           />
         ) : tab === 'profile' ? (
-          // Profile tab: Favorites + 3-column grid
+          // Profile tab: grid only (Favorites already shown above)
           <div className="h-full overflow-y-auto overscroll-contain">
-            {currentUserId && <ProfileFavorites userId={currentUserId} />}
             <div className="grid grid-cols-3 gap-px bg-border p-px">
               {items.map((item) => (
                 <div key={item.id} className="relative aspect-square bg-background overflow-hidden">
