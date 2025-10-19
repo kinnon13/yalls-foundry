@@ -6754,6 +6754,39 @@ export type Database = {
         }
         Relationships: []
       }
+      rocker_context: {
+        Row: {
+          context_data: Json
+          context_type: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          profile_id: string | null
+          relevance_score: number | null
+          user_id: string
+        }
+        Insert: {
+          context_data: Json
+          context_type: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          profile_id?: string | null
+          relevance_score?: number | null
+          user_id: string
+        }
+        Update: {
+          context_data?: Json
+          context_type?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          profile_id?: string | null
+          relevance_score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       rocker_conversations: {
         Row: {
           actor_role: string | null
@@ -6837,6 +6870,54 @@ export type Database = {
           payload?: Json
           read_at?: string | null
           type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rocker_suggestions: {
+        Row: {
+          acted_on_at: string | null
+          action_data: Json | null
+          confidence: number | null
+          created_at: string | null
+          description: string
+          dismissed_at: string | null
+          id: string
+          priority: string | null
+          profile_id: string | null
+          status: string | null
+          suggestion_type: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          acted_on_at?: string | null
+          action_data?: Json | null
+          confidence?: number | null
+          created_at?: string | null
+          description: string
+          dismissed_at?: string | null
+          id?: string
+          priority?: string | null
+          profile_id?: string | null
+          status?: string | null
+          suggestion_type: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          acted_on_at?: string | null
+          action_data?: Json | null
+          confidence?: number | null
+          created_at?: string | null
+          description?: string
+          dismissed_at?: string | null
+          id?: string
+          priority?: string | null
+          profile_id?: string | null
+          status?: string | null
+          suggestion_type?: string
+          title?: string
           user_id?: string
         }
         Relationships: []

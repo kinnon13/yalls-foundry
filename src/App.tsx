@@ -51,6 +51,7 @@ const CartPage = lazy(() => import('./routes/cart/index'));
 const OrdersIndex = lazy(() => import('./routes/orders/index'));
 const OrderDetail = lazy(() => import('./routes/orders/[id]'));
 const MLMPage = lazy(() => import('./routes/mlm/index'));
+const AdminDashboard = lazy(() => import('./routes/admin'));
 
 const queryClient = new QueryClient();
 
@@ -217,6 +218,18 @@ function AppContent() {
             <RequireAuth>
               <Suspense fallback={<div>Loading...</div>}>
                 <MLMPage />
+              </Suspense>
+            </RequireAuth>
+          } 
+        />
+        
+        {/* Admin Dashboard */}
+        <Route 
+          path="/admin" 
+          element={
+            <RequireAuth>
+              <Suspense fallback={<div>Loading...</div>}>
+                <AdminDashboard />
               </Suspense>
             </RequireAuth>
           } 
