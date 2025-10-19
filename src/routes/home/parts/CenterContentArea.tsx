@@ -1,6 +1,7 @@
 import { X } from 'lucide-react';
 import { lazy, Suspense, ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
+import type { LucideIcon } from 'lucide-react';
 
 // Lazy load all page components
 const MarketplacePage = lazy(() => import('@/routes/marketplace/index'));
@@ -10,6 +11,7 @@ interface AppTab {
   key: string;
   label: string;
   route?: string;
+  icon?: LucideIcon;
 }
 
 interface CenterContentAreaProps {
@@ -89,6 +91,12 @@ export default function CenterContentArea({
     // Open as new app
     onAppClick({ key, label, route: url });
   };
+  
+  const scrollToApp = (key: string) => {
+    const element = document.querySelector(`[data-app-key="${key}"]`);
+    element?.scrollIntoView({ behavior: 'smooth' });
+    onSelectApp(key);
+  };
 
   if (openApps.length === 0) {
     return (
@@ -99,7 +107,41 @@ export default function CenterContentArea({
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col h-full">
+      {/* Top bar with app icons */}
+      <div className="sticky top-0 z-20 bg-background border-b flex items-center gap-2 px-4 py-2 shadow-sm">
+        {openApps.map((app) => (
+          <div key={app.key} className="relative group">
+            <button
+              onClick={() => scrollToApp(app.key)}
+              className={`
+                flex items-center gap-2 px-3 py-2 rounded-lg transition-all
+                ${activeApp === app.key 
+                  ? 'bg-primary text-primary-foreground shadow-md' 
+                  : 'bg-muted/50 hover:bg-muted'
+                }
+              `}
+            >
+              {app.icon && <app.icon className="w-4 h-4" />}
+              <span className="text-sm font-medium">{app.label}</span>
+            </button>
+            
+            {/* Close button on hover */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onCloseApp(app.key);
+              }}
+              className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hidden group-hover:flex"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Scrollable app content */}
+      <div className="flex-1 overflow-y-auto">
       {/* Render all open apps stacked vertically */}
       {openApps.map((app) => (
         <div
@@ -107,14 +149,6 @@ export default function CenterContentArea({
           data-app-key={app.key}
           className="min-h-screen relative border-b"
         >
-          {/* Close button for each app */}
-          <button
-            onClick={() => onCloseApp(app.key)}
-            className="absolute top-4 right-4 z-10 p-2 bg-background/80 backdrop-blur-sm rounded-full hover:bg-destructive/20 hover:text-destructive transition-colors shadow-lg"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
           {/* App content */}
           <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
             <div onClick={(e) => {
@@ -134,6 +168,7 @@ export default function CenterContentArea({
           </Suspense>
         </div>
       ))}
+      </div>
     </div>
   );
 }

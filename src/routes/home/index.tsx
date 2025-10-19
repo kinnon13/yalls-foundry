@@ -9,13 +9,14 @@ interface AppTab {
   key: string;
   label: string;
   route?: string;
+  icon?: any;
 }
 
 export default function HomePage() {
   const [openApps, setOpenApps] = useState<AppTab[]>([]);
   const [activeApp, setActiveApp] = useState<string | null>(null);
 
-  const handleAppClick = (app: { key: string; label: string; route?: string }) => {
+  const handleAppClick = (app: { key: string; label: string; route?: string; icon?: any }) => {
     // Deduplicate: if already open, just focus it
     const existing = openApps.find(a => a.key === app.key);
     if (existing) {
