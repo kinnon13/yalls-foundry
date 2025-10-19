@@ -80,7 +80,7 @@ export default function HomePage() {
       <GlobalHeader />
       <main className="pt-14 pb-16">
         {/* Desktop Layout: Sidebar + Center + Feed (large screens only) */}
-        <div className="hidden lg:flex h-[calc(100vh-112px)]">
+        <div className="hidden lg:flex h-[calc(100dvh-112px)]">
           {/* Left: Apps Sidebar - Fixed */}
           <div className="w-[280px] flex-shrink-0 overflow-hidden">
             <LeftAppSidebar onAppClick={handleAppClick} />
@@ -104,7 +104,7 @@ export default function HomePage() {
         </div>
 
         {/* Mobile/Tablet: Tabbed view with icons */}
-        <div className="lg:hidden h-[calc(100vh-112px)] flex flex-col">
+        <div className="lg:hidden h-[calc(100dvh-112px)] flex flex-col overflow-hidden">
           {/* Tab bar */}
           <div className="flex items-center justify-around border-b bg-background">
             <button
@@ -150,7 +150,7 @@ export default function HomePage() {
           {/* Content area */}
           <div className="flex-1 overflow-hidden">
             {mobileView === 'library' && (
-              <div className="h-full overflow-y-auto p-4">
+              <div className="h-full overflow-y-auto p-4 max-w-screen-md mx-auto w-full">
                 <LeftAppSidebar onAppClick={(app) => {
                   handleAppClick(app);
                   setMobileView('apps'); // Switch to apps view after selecting
@@ -159,7 +159,7 @@ export default function HomePage() {
             )}
             
             {mobileView === 'apps' && (
-              <div className="h-full overflow-y-auto">
+              <div className="h-full overflow-y-auto px-3 max-w-screen-md mx-auto w-full">
                 <CenterContentArea
                   openApps={openApps}
                   activeApp={activeApp}
@@ -171,7 +171,7 @@ export default function HomePage() {
             )}
             
             {mobileView === 'feed' && (
-              <div className="h-full overflow-hidden">
+              <div className="h-full overflow-y-auto max-w-screen-sm mx-auto w-full">
                 <SocialFeedPane />
               </div>
             )}
