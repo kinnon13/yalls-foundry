@@ -1,36 +1,129 @@
 /**
  * Route Redirects
  * 
- * Canonical route aliases for backward compatibility.
- * Now loaded from configs/area-discovery.json
+ * Standardized to exactly 10 top-level routes.
+ * Everything else redirects to overlays via ?app= or canonical paths.
+ * 
+ * THE 10 CANONICAL ROUTES:
+ * 1. / — Home shell (split panes, overlays live here)
+ * 2. /discover — Discover surface (For You / Trending / Latest)
+ * 3. /dashboard — Single management surface (left-rail modules)
+ * 4. /messages — Deep link to DMs (opens as overlay when coming from Home)
+ * 5. /profile/:id — Public profile deep link (also opens as overlay from Home)
+ * 6. /entities — Browse & claim entities
+ * 7. /events — Events index/create
+ * 8. /listings — Listings index/create
+ * 9. /cart — Cart deep link (mock checkout)
+ * 10. /orders — Orders list (detail at /orders/:id is allowed as a subroute)
  */
 
 import areaConfig from '../../../configs/area-discovery.json';
 
-// Load aliases from config
+// Comprehensive redirect map: everything → 10 canonical routes or overlays
 export const ROUTE_REDIRECTS: Record<string, string> = {
+  // Load area-specific aliases from config
   ...areaConfig.routeAliases,
-  // Keep existing non-aliased redirects
+  
+  // === HOME SHELL ===
   '/home': '/',
   '/post-feed': '/',
+  '/feed': '/',
+  '/social': '/',
+  
+  // === AUTH ===
   '/signup': '/login',
+  '/register': '/login',
+  
+  // === DISCOVER (already canonical) ===
+  '/discover-v2': '/discover',
+  '/search': '/discover',
+  
+  // === DASHBOARD (already canonical) ===
+  // Subroutes collapse to query params
   '/ai-management': '/dashboard?tab=ai',
+  '/settings/ai': '/dashboard?tab=ai',
+  '/ai/activity': '/dashboard?tab=ai&view=activity',
   '/calendar': '/dashboard?tab=calendar',
-  '/mlm/dashboard': '/dashboard?tab=mlm',
-  '/mlm/tree': '/dashboard?tab=mlm',
-  '/cart': '/marketplace?view=cart',
-  '/checkout': '/marketplace?view=checkout',
-  '/horses': '/search?category=horses',
-  '/horses/create': '/dashboard?tab=profiles&action=create&type=horse',
-  '/events': '/search?category=events',
-  '/events/create': '/dashboard?tab=events&action=create',
-  '/entities/unclaimed': '/search',
+  '/earnings': '/dashboard?tab=earnings',
+  '/dashboard/overview': '/dashboard?tab=overview',
+  '/dashboard/business': '/dashboard?tab=business',
+  '/dashboard/settings': '/dashboard?tab=settings',
+  '/dashboard/approvals': '/dashboard?tab=approvals',
+  '/settings/notifications': '/dashboard?tab=settings&view=notifications',
+  '/notifications': '/dashboard?tab=notifications',
+  
+  // === MESSAGES (already canonical) ===
+  // DMs open as overlay from Home via /?app=messages
+  
+  // === PROFILE (already canonical) ===
+  '/me': '/profile',
+  '/profile': '/entities', // No-ID profile → entities browser
+  
+  // === ENTITIES (already canonical) ===
+  '/entities/unclaimed': '/entities?filter=unclaimed',
+  '/claim/:entityId': '/entities?claim=:entityId',
+  '/admin/claims': '/dashboard?tab=admin&view=claims',
+  
+  // === STALLIONS → ENTITIES ===
+  '/stallions': '/entities?type=stallion',
+  '/stallions/:id': '/entities/:id',
+  
+  // === EVENTS (already canonical) ===
+  // Event subroutes stay as subroutes
+  '/events/new': '/events?action=new',
+  '/incentives/dashboard': '/dashboard?tab=incentives',
+  '/entrant/my-entries': '/events?tab=my-entries',
+  '/entrant/my-draws': '/events?tab=my-draws',
+  '/entrant/my-results': '/events?tab=my-results',
+  
+  // === LISTINGS (already canonical) ===
+  '/listings/new': '/listings?action=new',
+  
+  // === MARKETPLACE → LISTINGS ===
+  '/marketplace': '/listings',
+  '/marketplace/:id': '/listings/:id',
+  '/app-store': '/?app=app-store',
+  '/store': '/?app=app-store',
+  '/shop': '/listings',
+  
+  // === CART (already canonical) ===
+  '/checkout': '/cart?step=checkout',
+  
+  // === ORDERS (already canonical) ===
+  // Orders subroutes allowed
+  
+  // === FARM OPS → DASHBOARD ===
+  '/farm/calendar': '/dashboard?tab=farm&view=calendar',
+  '/farm/dashboard': '/dashboard?tab=farm',
+  '/farm/boarder/:id': '/dashboard?tab=farm&view=boarder&id=:id',
+  '/farm/tasks': '/dashboard?tab=farm&view=tasks',
+  '/farm/health': '/dashboard?tab=farm&view=health',
+  
+  // === CRM → DASHBOARD or OVERLAY ===
+  '/crm': '/?app=crm',
+  
+  // === ADMIN → DASHBOARD ===
+  '/admin/control-room': '/dashboard?tab=admin',
+  '/admin/features': '/dashboard?tab=admin&view=features',
+  '/admin/routes': '/dashboard?tab=admin&view=routes',
+  '/admin/components': '/dashboard?tab=admin&view=components',
+  '/admin/a11y': '/dashboard?tab=admin&view=a11y',
+  '/admin/audit': '/dashboard?tab=admin&view=audit',
+  '/admin/tests': '/dashboard?tab=admin&view=tests',
+  '/admin/stubs': '/dashboard?tab=admin&view=stubs',
+  
+  // === LEGACY / DEPRECATED ===
+  '/horses': '/entities?type=horse',
+  '/horses/create': '/dashboard?tab=entities&action=create&type=horse',
+  '/horses/:id': '/entities/:id',
   '/business/:bizId/hub': '/dashboard?tab=business&id=:bizId',
   '/business/:bizId/settings/profile': '/dashboard?tab=business&id=:bizId&section=profile',
   '/business/:bizId/settings/payments': '/dashboard?tab=business&id=:bizId&section=payments',
-  '/business/:bizId/crm/contacts': '/dashboard?tab=crm&id=:bizId&view=contacts',
-  '/business/:bizId/crm/leads': '/dashboard?tab=crm&id=:bizId&view=leads',
+  '/business/:bizId/crm/contacts': '/dashboard?tab=business&id=:bizId&view=contacts',
+  '/business/:bizId/crm/leads': '/dashboard?tab=business&id=:bizId&view=leads',
   '/posts/saved': '/dashboard?tab=saved',
+  '/mlm/dashboard': '/dashboard?tab=mlm',
+  '/mlm/tree': '/dashboard?tab=mlm',
 };
 
 /**
@@ -54,24 +147,32 @@ export function getRedirectDestination(path: string): string | null {
     }
   }
   
-  // Dynamic route matching for other patterns
+  // Dynamic route matching for patterns not in static map
+  
+  // Horses → Entities
   if (path.startsWith('/horses/') && path !== '/horses/create') {
     const id = path.split('/')[2];
-    return `/profile/${id}`;
+    return `/entities/${id}`;
   }
   
-  if (path.startsWith('/events/') && path !== '/events/create') {
+  // Stallions → Entities
+  if (path.startsWith('/stallions/') && !path.includes('/stallions')) {
     const id = path.split('/')[2];
-    return `/?eventId=${id}`;
+    return `/entities/${id}`;
   }
   
+  // Events with dynamic IDs are canonical (no redirect)
+  // /events/:id and subroutes are allowed
+  
+  // Business dynamic routes → Dashboard
   if (path.startsWith('/business/')) {
-    return '/dashboard';
+    return '/dashboard?tab=business';
   }
   
-  // Profile without ID → search
-  if (path === '/profile') {
-    return '/search';
+  // Marketplace dynamic → Listings
+  if (path.startsWith('/marketplace/') && path.split('/').length === 3) {
+    const id = path.split('/')[2];
+    return `/listings/${id}`;
   }
   
   return null;
