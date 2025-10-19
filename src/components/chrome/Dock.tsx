@@ -13,9 +13,7 @@ const DOCK_APPS: Array<{ id: OverlayKey; icon: any; label: string }> = [
   { id: 'orders', icon: Users, label: 'Orders' },
 ];
 
-export default function Dock() {
-  const openApp = useOpenApp();
-
+export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => void }) {
   return (
     <footer className="dock">
       {DOCK_APPS.map(app => {
@@ -24,10 +22,10 @@ export default function Dock() {
           <button
             key={app.id}
             className="dock-icon"
-            onClick={() => openApp(app.id)}
+            onClick={() => onAppClick(app.id)}
             title={app.label}
           >
-            <Icon className="h-5 w-5" />
+            <Icon />
           </button>
         );
       })}

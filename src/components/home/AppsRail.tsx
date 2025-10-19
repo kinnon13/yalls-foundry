@@ -33,8 +33,7 @@ const ALL_APPS: Array<{ id: OverlayKey; icon: any; label: string; gradient: stri
   { id: 'farm-ops', icon: Calendar, label: 'Farm Ops', gradient: 'from-green-600 to-lime-500' },
 ];
 
-export default function AppsRail({ manage = false }: { manage?: boolean }) {
-  const openApp = useOpenApp();
+export default function AppsRail({ onAppClick }: { onAppClick: (id: OverlayKey) => void }) {
 
   return (
     <aside className="apps-rail card" style={{ padding: '20px' }}>
@@ -59,7 +58,7 @@ export default function AppsRail({ manage = false }: { manage?: boolean }) {
           return (
             <button
               key={app.id}
-              onClick={() => openApp(app.id)}
+              onClick={() => onAppClick(app.id)}
               style={{
                 aspectRatio: '1',
                 borderRadius: '22px',
