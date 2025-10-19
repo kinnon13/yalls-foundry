@@ -18,7 +18,10 @@ type EventType =
   | 'auth_rate_limited'
   | 'auth_captcha_shown'
   | 'auth_captcha_pass'
-  | 'auth_captcha_fail';
+  | 'auth_captcha_fail'
+  | 'onboarding_step'
+  | 'onboarding_complete'
+  | 'acquisition_capture';
 
 interface EventPayload {
   [key: string]: any;
@@ -34,7 +37,10 @@ export async function emitEvent(
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
+    // Allow some events without auth (e.g., auth_view before login)
+    const allowAnonymous = ['auth_view', 'auth_submit', 'auth_error'].includes(eventType);
+    
+    if (!user && !allowAnonymous) {
       console.warn('[Telemetry] No user logged in, skipping event:', eventType);
       return;
     }
@@ -45,7 +51,7 @@ export async function emitEvent(
     const { error } = await supabase
       .from('rocker_events')
       .insert([{
-        user_id: user.id,
+        user_id: user?.id || null,
         event_type: eventType,
         payload: payload as any,
         session_id

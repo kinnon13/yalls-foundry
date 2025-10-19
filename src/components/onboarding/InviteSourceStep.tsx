@@ -1,10 +1,16 @@
-import { useState } from 'react';
+/**
+ * Step 0: Invite/Acquisition Source
+ * Required first step - captures attribution
+ */
+
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { emitEvent } from '@/lib/telemetry/events';
 
 interface InviteSourceStepProps {
   onComplete: () => void;
@@ -18,52 +24,91 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
   const [inviteMedium, setInviteMedium] = useState('');
   const [freeText, setFreeText] = useState('');
 
+  useEffect(() => {
+    loadExisting();
+  }, []);
+
+  const loadExisting = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: acq } = await supabase
+      .from('user_acquisition')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (acq) {
+      if (acq.invited_by_kind) setInviteKind(acq.invited_by_kind as any);
+      if (acq.invite_code) setInviteCode(acq.invite_code);
+      if (acq.invite_medium) setInviteMedium(acq.invite_medium);
+    }
+  };
+
   const handleSubmit = async () => {
+    // Validation
+    if (inviteKind === 'other' && !freeText) {
+      toast({ title: 'Please tell us how you found us', variant: 'destructive' });
+      return;
+    }
+
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Get session ID from storage
+      // Get session ID
       const sessionId = sessionStorage.getItem('session_id') || 
         `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      // Read UTM params from URL if present
+      // Read UTM params
       const params = new URLSearchParams(window.location.search);
       const utm = {
         source: params.get('utm_source') || undefined,
         medium: params.get('utm_medium') || undefined,
         campaign: params.get('utm_campaign') || undefined,
-        term: params.get('utm_term') || undefined,
-        content: params.get('utm_content') || undefined,
       };
 
-      const { error } = await supabase.from('user_acquisition').upsert({
-        user_id: user.id,
+      const payload = {
         invited_by_kind: inviteKind,
-        invited_by_id: null, // TODO: Add entity/user search picker
+        invited_by_id: null, // TODO: Add user/entity search in future
         invite_code: inviteCode || null,
         invite_medium: inviteMedium || freeText || 'organic',
         utm,
-        ref_session_id: sessionId,
-        last_touch_ts: new Date().toISOString()
-      });
+        ref_session_id: sessionId
+      };
+
+      const { error } = await supabase.rpc('set_user_acquisition', { p_payload: payload });
 
       if (error) throw error;
 
+      emitEvent('acquisition_capture', { kind: inviteKind, medium: payload.invite_medium });
+      
       toast({
-        title: 'Invite source recorded',
-        description: 'Thank you for sharing how you found us!'
+        title: '✓ Thanks for sharing!',
+        description: 'Let\'s complete your profile'
       });
 
       onComplete();
     } catch (error) {
       console.error('[InviteSourceStep] Error:', error);
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to save invite source',
-        variant: 'destructive'
-      });
+      
+      const message = error instanceof Error ? error.message : 'Failed to save';
+      
+      // Handle self-referral error
+      if (message.includes('self_referral_forbidden')) {
+        toast({
+          title: 'Cannot refer yourself',
+          description: 'Please select a different person or choose "Other"',
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: message,
+          variant: 'destructive'
+        });
+      }
     } finally {
       setLoading(false);
     }

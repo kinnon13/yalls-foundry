@@ -14,6 +14,7 @@ import { AuthProvider } from '@/lib/auth/context';
 import { RequireAuth } from '@/lib/auth/guards';
 import { RequireAuthGuard } from '@/lib/auth/guards/RequireAuthGuard';
 import { PublicOnlyGuard } from '@/lib/auth/guards/PublicOnlyGuard';
+import { RequireOnboardingGuard } from '@/lib/auth/guards/RequireOnboardingGuard';
 import { setupAuthInterceptor } from '@/lib/auth/interceptors';
 import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
@@ -55,6 +56,7 @@ const OrderDetail = lazy(() => import('./routes/orders/[id]'));
 const MLMPage = lazy(() => import('./routes/mlm/index'));
 const AdminDashboard = lazy(() => import('./routes/admin'));
 const AuthPage = lazy(() => import('./routes/auth'));
+const OnboardingPage = lazy(() => import('./routes/onboarding/index'));
 
 const queryClient = new QueryClient();
 
@@ -99,9 +101,6 @@ function AppContent() {
       <BusinessComparison />
       
       <Routes>
-        {/* 1. Home - Shell with Apps + Feed */}
-        <Route path="/" element={<HomeShell />} />
-        
         {/* Auth - Public only (redirects if already logged in) */}
         <Route element={<PublicOnlyGuard />}>
           <Route path="/auth" element={
@@ -110,16 +109,30 @@ function AppContent() {
             </Suspense>
           } />
         </Route>
-        
-        {/* 2. Discover - For You / Trending / Latest */}
-        <Route 
-          path="/discover" 
-          element={
+
+        {/* Onboarding - Authenticated users only, before main app */}
+        <Route element={<RequireAuthGuard />}>
+          <Route path="/onboarding" element={
             <Suspense fallback={<div>Loading...</div>}>
-              <Discover />
+              <OnboardingPage />
             </Suspense>
-          } 
-        />
+          } />
+        </Route>
+
+        {/* All main routes require onboarding completion */}
+        <Route element={<RequireOnboardingGuard />}>
+          {/* 1. Home - Shell with Apps + Feed */}
+          <Route path="/" element={<HomeShell />} />
+          
+          {/* 2. Discover - For You / Trending / Latest */}
+          <Route 
+            path="/discover" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <Discover />
+              </Suspense>
+            } 
+          />
         
         {/* 3. Dashboard - Redirect to unified shell */}
         <Route path="/dashboard" element={<Navigate to="/?mode=manage" replace />} />
@@ -245,17 +258,18 @@ function AppContent() {
         {/* Health check */}
         <Route path="/health" element={<Health />} />
         
-        {/* Catch-all: redirect to Discover with toast */}
-        <Route 
-          path="*" 
-          element={
-            <Navigate 
-              to="/discover" 
-              replace 
-              state={{ toast: "Route moved. Use Library or Finder." }} 
-            />
-          } 
-        />
+          {/* Catch-all: redirect to Discover with toast */}
+          <Route 
+            path="*" 
+            element={
+              <Navigate 
+                to="/discover" 
+                replace 
+                state={{ toast: "Route moved. Use Library or Finder." }} 
+              />
+            } 
+          />
+        </Route>
       </Routes>
       
       <Toaster />
