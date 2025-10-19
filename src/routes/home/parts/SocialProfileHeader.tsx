@@ -1,19 +1,23 @@
 import { useEffect, useState } from 'react';
 import { useSession } from '@/lib/auth/context';
 import { supabase } from '@/integrations/supabase/client';
-import { Menu } from 'lucide-react';
+import { Menu, Home, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 import profileAvatar from '@/assets/profile-avatar.jpg';
 
 export default function SocialProfileHeader() {
   const { session } = useSession();
   const userId = session?.userId;
   const userEmail = session?.email;
+  const { toast } = useToast();
 
   const [name, setName] = useState('User');
   const [handle, setHandle] = useState('username');
   const [avatar, setAvatar] = useState<string>(profileAvatar);
   const [totals, setTotals] = useState({ following: 0, followers: 0, likes: 0 });
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!userId) return;
@@ -52,14 +56,61 @@ export default function SocialProfileHeader() {
     return num.toString();
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      toast({ title: 'Searching...', description: `Looking for "${searchQuery}"` });
+    }
+  };
+
+  const handleMenuOpen = () => {
+    toast({ title: 'Menu', description: 'Navigation menu coming soon!' });
+  };
+
+  const handleHomeClick = () => {
+    window.location.href = '/?mode=manage&feed=for-you';
+  };
+
   return (
     <div className="bg-background px-4 pt-3 pb-2">
-      {/* YALL Branding */}
-      <div className="flex items-center justify-between mb-3">
-        <h1 className="text-2xl font-bold tracking-tight">
+      {/* Top Navigation Bar */}
+      <div className="flex items-center gap-3 mb-4">
+        {/* Home Icon */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 flex-shrink-0"
+          onClick={handleHomeClick}
+        >
+          <Home className="h-5 w-5" />
+        </Button>
+
+        {/* YALL Branding */}
+        <h1 className="text-2xl font-bold tracking-tight flex-shrink-0">
           Y<span className="text-primary">ALL</span>
         </h1>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
+
+        {/* Search Bar */}
+        <form onSubmit={handleSearch} className="flex-1 mx-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-8 bg-muted/50 border-none focus-visible:ring-1"
+            />
+          </div>
+        </form>
+
+        {/* Menu Icon */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 flex-shrink-0"
+          onClick={handleMenuOpen}
+        >
           <Menu className="h-5 w-5" />
         </Button>
       </div>
