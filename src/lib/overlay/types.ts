@@ -27,7 +27,8 @@ export type OverlayKey =
   | 'overview'
   | 'earnings'
   | 'discover'
-  | 'farm-ops';
+  | 'farm-ops'
+  | 'mlm';
 
 export interface OverlayConfig {
   key: OverlayKey;

@@ -20,6 +20,7 @@ import {
 
 const ALL_APPS: Array<{ id: OverlayKey; icon: any; label: string; gradient: string }> = [
   { id: 'overview', icon: Briefcase, label: 'Overview', gradient: 'from-blue-500 to-cyan-500' },
+  { id: 'mlm', icon: Users, label: 'Affiliate', gradient: 'from-purple-600 to-pink-600' },
   { id: 'earnings', icon: DollarSign, label: 'Earnings', gradient: 'from-green-500 to-emerald-500' },
   { id: 'marketplace', icon: Package, label: 'Shop', gradient: 'from-purple-500 to-pink-500' },
   { id: 'orders', icon: ShoppingCart, label: 'Orders', gradient: 'from-orange-500 to-red-500' },

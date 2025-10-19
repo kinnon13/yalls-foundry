@@ -144,4 +144,10 @@ export const OVERLAY_REGISTRY: Record<string, OverlayConfig> = {
     component: lazy(() => import('@/routes/farm/calendar')),
     requiresAuth: true,
   },
+  mlm: {
+    key: 'mlm',
+    title: 'Affiliate Network',
+    component: lazy(() => import('@/routes/dashboard/modules/MLM')),
+    requiresAuth: true,
+  },
 };
