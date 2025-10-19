@@ -207,7 +207,7 @@ export default function SocialFeedPane() {
       <div 
         ref={railRef}
         className="relative flex-1 overflow-hidden select-none touch-pan-y"
-        style={{ height: feedH ? `${feedH}px` : '100%' }}
+        style={{ height: feedH ? `${feedH - headerH}px` : '100%' }}
       >
         {tab === 'profile' ? (
           // Profile tab: 3-column grid
@@ -235,8 +235,8 @@ export default function SocialFeedPane() {
                 key={item.id} 
                 className="snap-start snap-always w-full"
                 style={{ 
-                  height: feedH ? `${feedH}px` : '100vh',
-                  minHeight: feedH ? `${feedH}px` : '100vh'
+                  height: feedH ? `${feedH - headerH}px` : '100vh',
+                  minHeight: feedH ? `${feedH - headerH}px` : '100vh'
                 }}
               >
                 <Reel {...item} />
