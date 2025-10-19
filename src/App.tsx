@@ -20,6 +20,7 @@ import { RockerChat } from '@/components/rocker/RockerChat';
 import { RockerSuggestions } from '@/components/rocker/RockerSuggestions';
 import { RockerDock } from '@/components/rocker/RockerDock';
 import { RockerChatWidget } from '@/components/rocker';
+import { VoiceNotification } from '@/components/rocker/VoiceNotification';
 import { RockerChatProvider } from '@/lib/ai/rocker';
 import { RockerProvider } from '@/lib/ai/rocker';
 import { RedirectHandler } from '@/components/navigation/RedirectHandler';
@@ -55,6 +56,7 @@ const CartPage = lazy(() => import('./routes/cart/index'));
 const OrdersIndex = lazy(() => import('./routes/orders/index'));
 const GuardrailsControl = lazy(() => import('./routes/admin/guardrails'));
 const ApprovalsPage = lazy(() => import('./routes/admin/approvals'));
+const VoiceSettingsPage = lazy(() => import('./routes/admin/voice-settings'));
 const OrderDetail = lazy(() => import('./routes/orders/[id]'));
 const MLMPage = lazy(() => import('./routes/mlm/index'));
 const AdminDashboard = lazy(() => import('./routes/admin'));
@@ -102,6 +104,7 @@ function AppContent() {
       <ProfileCreationModal />
       <RedirectHandler />
       <BusinessComparison />
+      <VoiceNotification />
       
       <Routes>
         {/* Auth - Public only (redirects if already logged in) */}
@@ -273,6 +276,16 @@ function AppContent() {
             element={
               <Suspense fallback={<div>Loading...</div>}>
                 <ApprovalsPage />
+              </Suspense>
+            } 
+          />
+          
+          {/* Voice Settings */}
+          <Route 
+            path="/admin/voice-settings" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <VoiceSettingsPage />
               </Suspense>
             } 
           />

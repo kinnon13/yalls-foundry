@@ -491,6 +491,38 @@ export async function executeTool(
         return { success: true, message: 'Event builder started', form: data };
       }
 
+      // ========== VOICE CAPABILITIES (Super Admin Only) ==========
+      case 'send_voice_message': {
+        const { message, phone_number } = args;
+        
+        const { data, error } = await supabaseClient.functions.invoke('rocker-voice-call', {
+          body: {
+            action: 'send_voice_message',
+            message,
+            to: phone_number,
+          },
+        });
+        
+        if (error) throw error;
+        return { success: true, audio_url: data.audio_url, message: 'Voice message generated' };
+      }
+
+      case 'initiate_voice_call': {
+        const { message, phone_number, approval_id } = args;
+        
+        const { data, error } = await supabaseClient.functions.invoke('rocker-voice-call', {
+          body: {
+            action: 'initiate_call',
+            message,
+            to: phone_number,
+            approval_id,
+          },
+        });
+        
+        if (error) throw error;
+        return { success: true, call_sid: data.call_sid, message: 'Call initiated successfully' };
+      }
+
       // ========== CRM ==========
       case 'create_crm_contact': {
         const { data, error } = await supabaseClient

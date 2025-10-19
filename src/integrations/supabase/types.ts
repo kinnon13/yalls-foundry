@@ -9294,6 +9294,51 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_interactions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          direction: string
+          duration_seconds: number | null
+          id: string
+          interaction_type: string
+          metadata: Json | null
+          recording_url: string | null
+          status: string
+          transcript: string | null
+          twilio_call_sid: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          direction: string
+          duration_seconds?: number | null
+          id?: string
+          interaction_type: string
+          metadata?: Json | null
+          recording_url?: string | null
+          status?: string
+          transcript?: string | null
+          twilio_call_sid?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          direction?: string
+          duration_seconds?: number | null
+          id?: string
+          interaction_type?: string
+          metadata?: Json | null
+          recording_url?: string | null
+          status?: string
+          transcript?: string | null
+          twilio_call_sid?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       voice_post_rate_limits: {
         Row: {
           post_count: number
@@ -9309,6 +9354,42 @@ export type Database = {
           post_count?: number
           user_id?: string
           window_start?: string
+        }
+        Relationships: []
+      }
+      voice_preferences: {
+        Row: {
+          allow_voice_calls: boolean | null
+          allow_voice_messages: boolean | null
+          max_call_duration_minutes: number | null
+          phone_number: string | null
+          preferred_voice: string | null
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allow_voice_calls?: boolean | null
+          allow_voice_messages?: boolean | null
+          max_call_duration_minutes?: number | null
+          phone_number?: string | null
+          preferred_voice?: string | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allow_voice_calls?: boolean | null
+          allow_voice_messages?: boolean | null
+          max_call_duration_minutes?: number | null
+          phone_number?: string | null
+          preferred_voice?: string | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -9929,6 +10010,10 @@ export type Database = {
       }
       can_claim_entity: {
         Args: { entity_id: string }
+        Returns: boolean
+      }
+      can_initiate_voice_call: {
+        Args: { p_user_id: string }
         Returns: boolean
       }
       can_view_calendar: {

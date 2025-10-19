@@ -513,5 +513,51 @@ export const TOOL_DEFINITIONS = [
         }
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_voice_message",
+      description: "Send a voice message to the super admin. Use for non-urgent updates or when voice communication is preferred. Converts text to natural-sounding speech.",
+      parameters: {
+        type: "object",
+        required: ["message"],
+        properties: {
+          message: {
+            type: "string",
+            description: "Text message to convert to voice (will be spoken naturally)"
+          },
+          phone_number: {
+            type: "string",
+            description: "Optional phone number (uses user's default if not provided)"
+          }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "initiate_voice_call",
+      description: "Call the super admin for URGENT matters requiring immediate attention (approvals, critical decisions). Respects quiet hours and user preferences. Only use when absolutely necessary.",
+      parameters: {
+        type: "object",
+        required: ["message"],
+        properties: {
+          message: {
+            type: "string",
+            description: "Brief summary of why you're calling (will be spoken)"
+          },
+          phone_number: {
+            type: "string",
+            description: "Optional phone number (uses user's default if not provided)"
+          },
+          approval_id: {
+            type: "string",
+            description: "If calling about an approval, include the approval ID"
+          }
+        }
+      }
+    }
   }
 ];
