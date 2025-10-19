@@ -108,13 +108,13 @@ export default function HomeShell() {
         </div>
 
         {/* Desktop: three-column shell */}
-        <div className="hidden lg:grid grid-social gap-4 p-4 bg-muted/30">
-          <div className="w-[340px] flex-shrink-0 overflow-hidden rounded-2xl border bg-background/95 backdrop-blur-xl shadow-2xl">
+        <div className="hidden lg:grid grid-social gap-6 p-6 bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20">
+          <div className="w-[340px] flex-shrink-0 overflow-hidden rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow">
             <AppLibrary onAppClick={handleAppClick} />
           </div>
           
           {/* Center area - becomes the active app */}
-          <div className="rounded-2xl border bg-background/95 backdrop-blur-xl shadow-2xl" style={{ 
+          <div className="rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow" style={{ 
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -139,7 +139,7 @@ export default function HomeShell() {
             )}
           </div>
           
-          <div className="rounded-2xl border bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+          <div className="rounded-[20px] border bg-background shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-shadow overflow-hidden">
             <SocialFeedPane />
           </div>
         </div>
