@@ -29,6 +29,7 @@ import { DevHUD } from '@/components/dev/DevHUD';
 import { useDevHUD } from '@/hooks/useDevHUD';
 import { OverlayProvider } from '@/lib/overlay/OverlayProvider';
 import { rocker } from '@/lib/rocker/event-bus';
+import '@/kernel'; // Register app contracts
 
 // 10 Canonical Routes
 import HomePage from './routes/home';
@@ -253,7 +254,7 @@ function App() {
             <BrowserRouter>
               <RockerProvider>
                 <RockerChatProvider>
-                  <AuthProvider>
+  <AuthProvider>
                     <OverlayProvider>
                       <AppContent />
                       <PreviewMessageListener />
