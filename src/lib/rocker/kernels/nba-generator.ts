@@ -23,37 +23,49 @@ export async function generateNextBestActions(
   contextType: string,
   contextId: string
 ): Promise<NextBestAction[]> {
-  // Mock implementation - in production, call Lovable AI
-  const mockActions: NextBestAction[] = [
-    {
-      id: 'nba-1',
-      title: 'Follow up with John Doe',
-      description: 'Last contact was 7 days ago',
-      priority: 'high',
-      category: 'crm',
-      actionId: 'schedule_followup',
-      params: { contactId: 'mock-contact-1' },
-    },
-    {
-      id: 'nba-2',
-      title: 'Update listing prices',
-      description: '3 listings have outdated pricing',
-      priority: 'medium',
-      category: 'listings',
-      actionId: 'update_listing',
-    },
-    {
-      id: 'nba-3',
-      title: 'Review event RSVPs',
-      description: 'Breeding Showcase in 2 days',
-      priority: 'high',
-      category: 'events',
-      actionId: 'view_event',
-      params: { eventId: 'mock-event-1' },
-    },
-  ];
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rocker-nba`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ userId, contextType, contextId }),
+      }
+    );
 
-  rocker.emit('nba_generated', { metadata: { userId, count: mockActions.length } });
-  
-  return mockActions;
+    const data = await response.json();
+    const actions = data.actions || [];
+
+    rocker.emit('nba_generated', { metadata: { userId, count: actions.length } });
+    
+    return actions;
+  } catch (error) {
+    console.error('[Rocker] Failed to generate NBA:', error);
+    
+    // Fallback to mock data on error
+    const mockActions: NextBestAction[] = [
+      {
+        id: 'nba-1',
+        title: 'Follow up with John Doe',
+        description: 'Last contact was 7 days ago',
+        priority: 'high',
+        category: 'crm',
+        actionId: 'schedule_followup',
+        params: { contactId: 'mock-contact-1' },
+      },
+      {
+        id: 'nba-2',
+        title: 'Update listing prices',
+        description: '3 listings have outdated pricing',
+        priority: 'medium',
+        category: 'listings',
+        actionId: 'update_listing',
+      },
+    ];
+
+    return mockActions;
+  }
 }
