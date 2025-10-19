@@ -98,14 +98,12 @@ export default function HomeShell() {
   return (
     <>
       {/* Desktop: Mac-style shell */}
-      <div className="hidden lg:block shell">
-        <div className="hidden lg:block">
-          <HeaderBar />
-        </div>
+      <div className="hidden lg:flex flex-col h-screen">
+        <HeaderBar />
         
-        <main className="content">
+        <main className="flex-1 overflow-hidden">
           {/* Desktop: Pixel-Perfect Three-Column Grid */}
-          <div className="hidden lg:grid grid-cols-[360px_1fr_360px] gap-12 px-0 py-8 pb-24 bg-gradient-to-br from-muted/40 via-muted/30 to-background/95">
+          <div className="h-full grid grid-cols-[360px_1fr_360px] gap-12 px-0 py-8 bg-gradient-to-br from-muted/40 via-muted/30 to-background/95">
             <div className="w-[360px] flex-shrink-0 overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-b from-background via-background to-background/98 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_12px_24px_rgba(0,0,0,0.08),0_24px_48px_rgba(0,0,0,0.12)] backdrop-blur-xl hover:shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_32px_rgba(0,0,0,0.12),0_32px_64px_rgba(0,0,0,0.16)] transition-all duration-300">
               <AppLibrary onAppClick={handleAppClick} />
             </div>
@@ -142,16 +140,17 @@ export default function HomeShell() {
           </div>
         </main>
         
-        <div className="hidden lg:block">
-          <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
-        </div>
+        <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
+        <Footer />
       </div>
 
-      {/* Mobile: Full-screen feed */}
-      <div className="lg:hidden fixed inset-0 w-full h-full bg-background">
-        <SocialFeedPane />
+      {/* Mobile: Full-screen feed with proper boundaries */}
+      <div className="lg:hidden flex flex-col h-screen">
+        <div className="flex-1 overflow-hidden bg-background">
+          <SocialFeedPane />
+        </div>
+        <Footer />
       </div>
-      <Footer />
       <LinkInterceptor />
     </>
   );
