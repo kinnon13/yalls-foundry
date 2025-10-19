@@ -5,6 +5,7 @@ import CenterContentArea from './parts/CenterContentArea';
 import SocialFeedPane from './parts/SocialFeedPane';
 import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { BottomDock } from '@/components/layout/BottomDock';
+import { RockerButton } from '@/components/rocker/RockerButton';
 
 interface AppTab {
   key: string;
@@ -106,6 +107,7 @@ export default function HomePage() {
         </div>
       </main>
       <BottomDock />
+      <RockerButton />
     </>
   );
 }
