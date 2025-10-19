@@ -42,7 +42,7 @@ export function useFeedPosts(tab: 'following' | 'for-you' | 'shop' | 'profile' =
         return [];
       }
       
-      // Transform to match expected format
+      // Transform to match expected format - no mock fallbacks
       return (data || []).map(post => ({
         id: post.id,
         author_id: post.author_id,
@@ -50,8 +50,8 @@ export function useFeedPosts(tab: 'following' | 'for-you' | 'shop' | 'profile' =
         media: post.media || [],
         created_at: post.created_at,
         author: {
-          display_name: (post.profiles as any)?.display_name || 'Unknown',
-          avatar_url: (post.profiles as any)?.avatar_url || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
+          display_name: (post.profiles as any)?.display_name || 'Unknown User',
+          avatar_url: (post.profiles as any)?.avatar_url || '',
           handle: (post.profiles as any)?.handle || 'user',
         },
       })) as FeedPost[];

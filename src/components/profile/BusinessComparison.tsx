@@ -17,31 +17,31 @@ interface KPI {
   icon: any;
 }
 
-// Mock KPI data - replace with real data from backend
+// TODO: Fetch real KPI data from backend
 const getProfileKPIs = (profileId: string): KPI[] => {
   return [
     {
       label: 'Revenue',
-      value: '$12,450',
-      change: 12.5,
+      value: '$0',
+      change: 0,
       icon: DollarSign,
     },
     {
       label: 'Customers',
-      value: '156',
-      change: 8.2,
+      value: '0',
+      change: 0,
       icon: Users,
     },
     {
       label: 'Orders',
-      value: '89',
-      change: -3.1,
+      value: '0',
+      change: 0,
       icon: Package,
     },
     {
       label: 'Conversion',
-      value: '3.2%',
-      change: 5.4,
+      value: '0%',
+      change: 0,
       icon: BarChart3,
     },
   ];

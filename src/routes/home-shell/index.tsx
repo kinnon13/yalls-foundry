@@ -16,6 +16,7 @@ import { FeedPane } from '@/components/home/FeedPane';
 import LinkInterceptor from '@/components/chrome/LinkInterceptor';
 import { X } from 'lucide-react';
 import SocialFeedPane from '../home/parts/SocialFeedPane';
+import { MobileTabBar } from '@/components/mobile/MobileTabBar';
 
 function ActiveAppContent({ appId, onClose }: { appId: OverlayKey; onClose: () => void }) {
   const config = OVERLAY_REGISTRY[appId];
@@ -142,17 +143,15 @@ export default function HomeShell() {
         <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
       </div>
 
-      {/* Mobile: Full-screen feed with proper safe area */}
+      {/* Mobile: Full-screen feed with fixed tab bar */}
       <div className="lg:hidden flex flex-col h-[100dvh] bg-background">
         <HeaderBar />
         <div className="flex-1 overflow-y-auto -webkit-overflow-scrolling-touch">
           <SocialFeedPane />
-          {/* Spacer for dock */}
+          {/* Spacer for fixed tab bar */}
           <div className="h-[calc(64px+env(safe-area-inset-bottom,0px))]" />
         </div>
-        <div className="fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom,0px)] bg-background/95 backdrop-blur-lg border-t border-border/50">
-          <Dock onAppClick={(appId: string) => handleAppClick({ key: appId, label: appId })} />
-        </div>
+        <MobileTabBar />
       </div>
       <LinkInterceptor />
     </>

@@ -18,7 +18,7 @@ export default function SocialFeedPane() {
   const { session } = useSession();
   const navigate = useNavigate();
   const [sp, setSp] = useSearchParams();
-  const initialTab = (sp.get('feed') as Tab) || 'following';
+  const initialTab = (sp.get('feed') as Tab) || 'for-you';
   const [tab, setTab] = useState<Tab>(initialTab);
   const [entityId, setEntityId] = useState<string | null>(sp.get('entity') || null);
   const [dragOffset, setDragOffset] = useState(0);
@@ -203,53 +203,30 @@ export default function SocialFeedPane() {
     setSp(next, { replace: true });
   }, [tab, entityId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Use real data if available, fallback to placeholder for demo
+  // Use real data only - no mock fallbacks
   const items = useMemo(() => {
-    // If we have real posts, use them
-    if (realPosts && realPosts.length > 0) {
-      return realPosts.map((post, i) => ({
-        id: post.id,
-        userId: post.author_id,
-        src: post.media?.[0]?.url || `https://picsum.photos/seed/${post.id}/1080/1920`,
-        author: {
-          name: post.author.display_name || 'User',
-          handle: post.author.handle || 'user',
-          avatar: post.author.avatar_url || `https://i.pravatar.cc/150?img=${i + 1}`,
-        },
-        caption: post.body || 'Check this out! 🔥',
-        stats: {
-          likes: Math.floor(Math.random() * 50000) + 1000,
-          comments: Math.floor(Math.random() * 5000) + 100,
-          saves: Math.floor(Math.random() * 2000) + 50,
-          reposts: Math.floor(Math.random() * 1000) + 25,
-        },
-      }));
+    if (!realPosts || realPosts.length === 0) {
+      return [];
     }
     
-    // Fallback to placeholder data if no real posts
-    const themes = ['nature', 'city', 'fashion', 'food', 'travel', 'art', 'fitness', 'tech'];
-    return new Array(20).fill(0).map((_, i) => {
-      const userId = i === 0 ? 'nature1' : i === 1 ? 'city1' : null;
-      
-      return {
-        id: `${tab}-${i}`,
-        userId,
-        src: `https://picsum.photos/seed/${tab}-${i}/1080/1920`,
-        author: {
-          name: `${themes[i % themes.length]} Creator ${i + 1}`,
-          handle: `${themes[i % themes.length].toLowerCase()}${i + 1}`,
-          avatar: `https://i.pravatar.cc/150?img=${i + 1}`,
-        },
-        caption: `Amazing ${themes[i % themes.length]} content for ${tab} feed 🔥 #${themes[i % themes.length]} #${tab}`,
-        stats: {
-          likes: Math.floor(Math.random() * 50000) + 1000,
-          comments: Math.floor(Math.random() * 5000) + 100,
-          saves: Math.floor(Math.random() * 2000) + 50,
-          reposts: Math.floor(Math.random() * 1000) + 25,
-        },
-      };
-    });
-  }, [tab, realPosts]);
+    return realPosts.map((post) => ({
+      id: post.id,
+      userId: post.author_id,
+      src: post.media?.[0]?.url || '',
+      author: {
+        name: post.author.display_name || 'User',
+        handle: post.author.handle || 'user',
+        avatar: post.author.avatar_url || '',
+      },
+      caption: post.body || '',
+      stats: {
+        likes: 0,
+        comments: 0,
+        saves: 0,
+        reposts: 0,
+      },
+    }));
+  }, [realPosts]);
 
   const { toast } = useToast();
   
@@ -302,7 +279,12 @@ export default function SocialFeedPane() {
         className="relative flex-1 overflow-hidden select-none touch-pan-y"
         style={{ height: feedH ? `${feedH - headerH}px` : '100%' }}
       >
-        {viewingUserId ? (
+        {items.length === 0 && !isLoading ? (
+          <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
+            <p className="text-lg font-medium text-muted-foreground">No posts yet</p>
+            <p className="text-sm text-muted-foreground">Follow creators or check back later</p>
+          </div>
+        ) : viewingUserId ? (
           // Viewing another user's profile
           <UserProfileView 
             userId={viewingUserId} 
