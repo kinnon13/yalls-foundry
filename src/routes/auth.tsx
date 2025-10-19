@@ -23,7 +23,7 @@ import { CaptchaGuard } from '@/components/auth/CaptchaGuard';
 const emailSchema = z.string().email('Invalid email address').max(255);
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(128);
 
-type AuthMode = 'login' | 'signup' | 'reset';
+type AuthMode = 'login' | 'signup' | 'reset' | 'update-password';
 
 export default function AuthPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -254,7 +254,7 @@ export default function AuthPage() {
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?mode=login`
+        redirectTo: `${window.location.origin}/auth?mode=update-password`
       });
       if (error) throw error;
       
@@ -270,6 +270,47 @@ export default function AuthPage() {
       toast({
         title: 'Reset failed',
         description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Clear previous errors
+    setErrors({});
+    
+    const passwordResult = passwordSchema.safeParse(password);
+    if (!passwordResult.success) {
+      setErrors({ password: passwordResult.error.errors[0].message });
+      emitEvent('auth_error', { mode: 'update-password', field: 'password', error: passwordResult.error.errors[0].message });
+      return;
+    }
+
+    setLoading(true);
+    emitEvent('auth_submit', { mode: 'update-password' });
+    
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      
+      emitEvent('auth_success', { mode: 'update-password' });
+      toast({ title: '✓ Password updated successfully' });
+      
+      // Redirect to home after successful password update
+      navigate('/home?tab=for-you', { replace: true });
+    } catch (err) {
+      emitEvent('auth_error', { 
+        mode: 'update-password',
+        error: err instanceof Error ? err.message : 'Unknown error'
+      });
+      
+      toast({
+        title: 'Update failed',
+        description: err instanceof Error ? err.message : 'Please try again',
         variant: 'destructive'
       });
     } finally {
@@ -424,16 +465,18 @@ export default function AuthPage() {
               {mode === 'login' && 'Welcome Back'}
               {mode === 'signup' && 'Create Account'}
               {mode === 'reset' && 'Reset Password'}
+              {mode === 'update-password' && 'Set New Password'}
             </h1>
             <p className="text-sm text-muted-foreground">
               {mode === 'login' && 'Sign in to continue to Y\'alls.ai'}
               {mode === 'signup' && 'Join the equestrian social network'}
               {mode === 'reset' && 'Enter your email to receive a reset link'}
+              {mode === 'update-password' && 'Choose a strong password for your account'}
             </p>
           </div>
 
           {/* Mode Tabs */}
-          {mode !== 'reset' && (
+          {mode !== 'reset' && mode !== 'update-password' && (
             <div className="flex border-b border-border/40">
               <button
                 onClick={() => setMode('login')}
@@ -467,7 +510,7 @@ export default function AuthPage() {
           {/* Form */}
           <div className="p-8">
             {/* SSO Buttons - Only for login/signup */}
-            {mode !== 'reset' && (
+            {mode !== 'reset' && mode !== 'update-password' && (
               <div className="space-y-3 mb-6">
                 <Button
                   type="button"
@@ -542,27 +585,29 @@ export default function AuthPage() {
               </div>
             )}
             
-            <form onSubmit={mode === 'reset' ? handleReset : mode === 'signup' ? handleSignUp : handleSignIn} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                  aria-invalid={!!errors.email}
-                  aria-describedby={errors.email ? 'email-error' : undefined}
-                  className="h-11 bg-muted/50 border-border/40 focus:border-primary/40 focus:ring-primary/20"
-                />
-                {errors.email && (
-                  <p id="email-error" className="text-sm text-destructive">
-                    {errors.email}
-                  </p>
-                )}
-              </div>
+            <form onSubmit={mode === 'update-password' ? handleUpdatePassword : mode === 'reset' ? handleReset : mode === 'signup' ? handleSignUp : handleSignIn} className="space-y-4">
+              {mode !== 'update-password' && (
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                    aria-invalid={!!errors.email}
+                    aria-describedby={errors.email ? 'email-error' : undefined}
+                    className="h-11 bg-muted/50 border-border/40 focus:border-primary/40 focus:ring-primary/20"
+                  />
+                  {errors.email && (
+                    <p id="email-error" className="text-sm text-destructive">
+                      {errors.email}
+                    </p>
+                  )}
+                </div>
+              )}
               
               {mode !== 'reset' && (
                 <div className="space-y-2">
@@ -614,11 +659,11 @@ export default function AuthPage() {
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    {mode === 'reset' ? 'Sending...' : mode === 'signup' ? 'Creating...' : 'Signing in...'}
+                    {mode === 'update-password' ? 'Updating...' : mode === 'reset' ? 'Sending...' : mode === 'signup' ? 'Creating...' : 'Signing in...'}
                   </span>
                 ) : (
                   <>
-                    {mode === 'reset' ? 'Send Reset Link' : mode === 'signup' ? 'Create Account' : 'Sign In'}
+                    {mode === 'update-password' ? 'Update Password' : mode === 'reset' ? 'Send Reset Link' : mode === 'signup' ? 'Create Account' : 'Sign In'}
                   </>
                 )}
               </Button>
@@ -663,6 +708,11 @@ export default function AuthPage() {
                 >
                   Back to sign in
                 </button>
+              )}
+              {mode === 'update-password' && (
+                <p className="text-muted-foreground text-xs">
+                  Enter your new password below
+                </p>
               )}
             </div>
           </div>
