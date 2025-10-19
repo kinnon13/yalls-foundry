@@ -64,6 +64,12 @@ export default function AppsPane() {
   const [containerWidth, setContainerWidth] = useState(() => 
     Number(localStorage.getItem('apps.containerWidth') || 600)
   );
+  const [containerX, setContainerX] = useState(() => 
+    Number(localStorage.getItem('apps.containerX') || 0)
+  );
+  const [containerY, setContainerY] = useState(() => 
+    Number(localStorage.getItem('apps.containerY') || 0)
+  );
   const [currentPage, setCurrentPage] = useState(0);
   
   // App overlay state
@@ -215,6 +221,7 @@ export default function AppsPane() {
       });
     });
     
+    console.log('Total apps:', items.length, 'Consumer:', CONSUMER_APPS.length, 'Pinned:', pinnedEntities?.entities?.length || 0);
     return items;
   }, [visibleApps, pinnedEntities, userId]);
 
@@ -307,6 +314,29 @@ export default function AppsPane() {
     window.addEventListener('mouseup', onUp);
   };
 
+  const startDrag = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startPosX = containerX;
+    const startPosY = containerY;
+    const onMove = (ev: MouseEvent) => {
+      const x = startPosX + (ev.clientX - startX);
+      const y = startPosY + (ev.clientY - startY);
+      setContainerX(x);
+      setContainerY(y);
+      localStorage.setItem('apps.containerX', String(x));
+      localStorage.setItem('apps.containerY', String(y));
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
   const startNorthResize = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -352,7 +382,7 @@ export default function AppsPane() {
       </section>
 
       {/* Apps Grid - Separate Box */}
-      <div className="flex-1 overflow-auto bg-background">
+      <div className="flex-1 overflow-auto bg-background relative">
         
 
         <div 
@@ -361,6 +391,9 @@ export default function AppsPane() {
           style={{ 
             width: `${containerWidth}px`,
             height: `${containerHeight}px`,
+            position: 'absolute',
+            left: `${containerX}px`,
+            top: `${containerY}px`,
           }}
         >
           <div className="w-full h-full">
@@ -430,6 +463,9 @@ export default function AppsPane() {
           </div>
           
           
+          <div onMouseDown={startDrag} className="absolute top-0 left-0 right-0 h-8 bg-primary/30 hover:bg-primary/50 cursor-move rounded-t flex items-center justify-center">
+            <div className="w-12 h-1 bg-white/50 rounded-full" />
+          </div>
           <div onMouseDown={startNorthResize} className="absolute top-0 left-1/2 -translate-x-1/2 h-2 w-12 bg-primary/50 hover:bg-primary/70 cursor-ns-resize rounded-b" />
           <div onMouseDown={startWestResize} className="absolute left-0 top-1/2 -translate-y-1/2 h-12 w-2 bg-primary/50 hover:bg-primary/70 cursor-ew-resize rounded-r" />
           <div onMouseDown={startCornerResize} className="absolute bottom-0 right-0 h-4 w-4 rounded-tl bg-primary/70 hover:bg-primary cursor-nwse-resize" />
