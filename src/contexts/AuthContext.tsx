@@ -96,11 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: { display_name: displayName }
       }
     });
-    
-    if (!error) {
-      navigate('/');
-    }
-    
+    // Do not auto-redirect on signup; user must confirm email and then sign in
     return { error };
   };
 

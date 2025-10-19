@@ -238,12 +238,6 @@ function AppContent() {
             <AuthPage />
           </Suspense>
         } />
-        <Route path="/login" element={<Navigate to="/auth?mode=login" replace />} />
-        <Route path="/signup" element={<Navigate to="/auth?mode=signup" replace />} />
-        <Route path="/auth/login" element={<Navigate to="/auth?mode=login" replace />} />
-        <Route path="/auth/signup" element={<Navigate to="/auth?mode=signup" replace />} />
-        <Route path="/reset" element={<Navigate to="/auth?mode=reset" replace />} />
-        <Route path="/auth/reset" element={<Navigate to="/auth?mode=reset" replace />} />
         
         {/* Health check */}
         <Route path="/health" element={<Health />} />
