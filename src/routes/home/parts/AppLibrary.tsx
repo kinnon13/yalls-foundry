@@ -17,6 +17,7 @@ interface AppTile {
   description: string;
   category: string;
   color: string;
+  gradient: string;
   installed?: boolean;
   lastOpened?: Date;
   updateAvailable?: boolean;
@@ -24,31 +25,31 @@ interface AppTile {
 
 const allApps: AppTile[] = [
   // Commerce
-  { key: 'orders', label: 'Orders', icon: ShoppingCart, description: 'Manage order lifecycle', category: 'Commerce', color: 'text-blue-500', installed: true },
-  { key: 'cart', label: 'Cart', icon: ShoppingCart, description: 'Shopping cart & checkout', category: 'Commerce', color: 'text-blue-600', installed: true },
-  { key: 'inventory', label: 'Inventory', icon: Package, description: 'Track stock & SKUs', category: 'Commerce', color: 'text-purple-500', installed: true },
-  { key: 'listings', label: 'Listings', icon: Store, description: 'Create marketplace listings', category: 'Commerce', color: 'text-orange-500', installed: true },
+  { key: 'orders', label: 'Orders', icon: ShoppingCart, description: 'Manage order lifecycle', category: 'Commerce', color: 'text-white', gradient: 'from-blue-500 via-blue-600 to-cyan-500', installed: true },
+  { key: 'cart', label: 'Cart', icon: ShoppingCart, description: 'Shopping cart & checkout', category: 'Commerce', color: 'text-white', gradient: 'from-cyan-400 via-teal-400 to-emerald-300', installed: true },
+  { key: 'inventory', label: 'Inventory', icon: Package, description: 'Track stock & SKUs', category: 'Commerce', color: 'text-white', gradient: 'from-purple-500 via-purple-600 to-indigo-500', installed: true },
+  { key: 'listings', label: 'Listings', icon: Store, description: 'Create marketplace listings', category: 'Commerce', color: 'text-white', gradient: 'from-orange-400 via-orange-500 to-amber-400', installed: true },
   
   // Money
-  { key: 'earnings', label: 'Earnings', icon: DollarSign, description: 'View sales & revenue', category: 'Money', color: 'text-emerald-500', installed: true },
+  { key: 'earnings', label: 'Earnings', icon: DollarSign, description: 'View sales & revenue', category: 'Money', color: 'text-white', gradient: 'from-emerald-400 via-green-500 to-teal-400', installed: true },
   
   // Ops
-  { key: 'messages', label: 'Messages', icon: MessageSquare, description: 'Unified inbox & CRM', category: 'Ops', color: 'text-blue-400', installed: true },
-  { key: 'notifications', label: 'Notifications', icon: Bell, description: 'Alerts & updates', category: 'Ops', color: 'text-amber-500', installed: true },
-  { key: 'calendar', label: 'Calendar', icon: Calendar, description: 'Events & bookings', category: 'Ops', color: 'text-red-400', installed: true },
-  { key: 'favorites', label: 'Favorites', icon: Heart, description: 'Saved items & likes', category: 'Ops', color: 'text-pink-500', installed: true },
-  { key: 'rocker', label: 'Rocker AI', icon: Sparkles, description: 'Your AI copilot', category: 'Ops', color: 'text-primary', installed: true },
+  { key: 'messages', label: 'Messages', icon: MessageSquare, description: 'Unified inbox & CRM', category: 'Ops', color: 'text-white', gradient: 'from-violet-600 via-purple-600 to-fuchsia-500', installed: true },
+  { key: 'notifications', label: 'Notifications', icon: Bell, description: 'Alerts & updates', category: 'Ops', color: 'text-white', gradient: 'from-amber-400 via-orange-400 to-red-400', installed: true },
+  { key: 'calendar', label: 'Calendar', icon: Calendar, description: 'Events & bookings', category: 'Ops', color: 'text-white', gradient: 'from-red-500 via-orange-500 to-amber-400', installed: true },
+  { key: 'favorites', label: 'Favorites', icon: Heart, description: 'Saved items & likes', category: 'Ops', color: 'text-white', gradient: 'from-pink-500 via-rose-500 to-red-400', installed: true },
+  { key: 'rocker', label: 'Rocker AI', icon: Sparkles, description: 'Your AI copilot', category: 'Ops', color: 'text-white', gradient: 'from-indigo-600 via-blue-700 to-cyan-400', installed: true },
   
   // Growth
-  { key: 'mlm', label: 'Affiliate', icon: Users, description: 'Grow your network', category: 'Growth', color: 'text-violet-600', installed: true },
-  { key: 'analytics', label: 'Analytics', icon: BarChart3, description: 'Insights & metrics', category: 'Growth', color: 'text-slate-500', installed: true },
+  { key: 'mlm', label: 'Affiliate', icon: Users, description: 'Grow your network', category: 'Growth', color: 'text-white', gradient: 'from-violet-500 via-purple-500 to-fuchsia-500', installed: true },
+  { key: 'analytics', label: 'Analytics', icon: BarChart3, description: 'Insights & metrics', category: 'Growth', color: 'text-white', gradient: 'from-slate-500 via-gray-600 to-zinc-500', installed: true },
   
   // Creator
-  { key: 'studio', label: 'Creator Studio', icon: Video, description: 'Video editing & publishing', category: 'Creator', color: 'text-rose-500' },
+  { key: 'studio', label: 'Creator Studio', icon: Video, description: 'Video editing & publishing', category: 'Creator', color: 'text-white', gradient: 'from-rose-500 via-pink-500 to-fuchsia-400' },
   
   // System
-  { key: 'profile', label: 'My Profile', icon: User, description: 'View and edit your profile', category: 'System', color: 'text-blue-600', installed: true },
-  { key: 'settings', label: 'Settings', icon: Settings, description: 'App preferences', category: 'System', color: 'text-gray-500', installed: true },
+  { key: 'profile', label: 'My Profile', icon: User, description: 'View and edit your profile', category: 'System', color: 'text-white', gradient: 'from-blue-500 via-indigo-500 to-purple-500', installed: true },
+  { key: 'settings', label: 'Settings', icon: Settings, description: 'App preferences', category: 'System', color: 'text-white', gradient: 'from-gray-600 via-gray-700 to-slate-700', installed: true },
 ];
 
 const categories = ['All', 'Commerce', 'Money', 'Ops', 'Growth', 'Creator', 'System'];
@@ -172,9 +173,11 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
               }}
               className="group relative flex flex-col items-center p-4 rounded-3xl hover:bg-accent/50 active:scale-95 transition-all duration-200"
             >
-              {/* Icon - True Mac Depth */}
-              <div className={`w-20 h-20 rounded-[26px] bg-gradient-to-br from-primary/12 via-primary/8 to-primary/4 border border-border/40 flex items-center justify-center mb-3.5 group-hover:scale-110 group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] group-active:scale-105 transition-all duration-300 ${app.color}`}>
-                <app.icon className="w-10 h-10" strokeWidth={1.75} />
+              {/* Icon - Apple-Grade Premium with True Depth */}
+              <div className={`relative w-20 h-20 rounded-[24%] bg-gradient-to-br ${app.gradient} flex items-center justify-center mb-3.5 group-hover:scale-110 group-active:scale-105 transition-all duration-300 shadow-[0_10px_25px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.25)] border border-white/10`}>
+                <app.icon className={`w-10 h-10 drop-shadow-lg ${app.color}`} strokeWidth={1.75} />
+                {/* Subsurface glow effect */}
+                <div className="absolute inset-0 rounded-[24%] bg-gradient-to-t from-white/5 to-transparent opacity-50" />
               </div>
 
               {/* Label - Perfect Typography */}
