@@ -352,7 +352,7 @@ export default function AppsPane() {
       </section>
 
       {/* Apps Grid - Separate Box */}
-      <div className="flex-1 overflow-auto bg-background p-4">
+      <div className="flex-1 overflow-auto bg-background">
         
 
         <div 
