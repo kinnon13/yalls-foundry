@@ -45,6 +45,14 @@ export const incentivesContract: AppContract = {
       },
       permissions: ['owner'],
     },
+    list_public: {
+      params: {
+        producerId: 'uuid',
+        limit: 'number?',
+        status: 'string?',
+      },
+      permissions: [], // Public action
+    },
   },
 
   events: {

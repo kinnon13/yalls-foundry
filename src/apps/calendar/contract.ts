@@ -45,6 +45,15 @@ export const calendarContract: AppContract = {
         status: 'string', // 'yes' | 'no' | 'maybe'
       },
     },
+    list_public: {
+      params: {
+        entityId: 'uuid',
+        since: 'datetime?',
+        until: 'datetime?',
+        limit: 'number?',
+      },
+      permissions: [], // Public action
+    },
   },
 
   events: {

@@ -48,6 +48,14 @@ export const eventsContract: AppContract = {
         ticketType: 'string?',
       },
     },
+    list_public: {
+      params: {
+        entityId: 'uuid',
+        limit: 'number?',
+        status: 'string?',
+      },
+      permissions: [], // Public action
+    },
   },
 
   events: {

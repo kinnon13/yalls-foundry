@@ -45,6 +45,14 @@ export const listingsContract: AppContract = {
       params: { listingId: 'uuid' },
       permissions: ['owner'],
     },
+    list_public: {
+      params: {
+        entityId: 'uuid',
+        limit: 'number?',
+        status: 'string?',
+      },
+      permissions: [], // Public action
+    },
   },
 
   events: {

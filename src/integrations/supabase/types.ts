@@ -2161,6 +2161,33 @@ export type Database = {
         }
         Relationships: []
       }
+      connection_edges: {
+        Row: {
+          created_at: string
+          edge_type: string
+          entity_id: string
+          id: string
+          scope: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          edge_type: string
+          entity_id: string
+          id?: string
+          scope?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          edge_type?: string
+          entity_id?: string
+          id?: string
+          scope?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       connections: {
         Row: {
           created_at: string
@@ -6418,6 +6445,60 @@ export type Database = {
         }
         Relationships: []
       }
+      public_app_visibility: {
+        Row: {
+          app_id: string
+          config: Json
+          created_at: string
+          entity_id: string
+          id: string
+          updated_at: string
+          visible: boolean
+        }
+        Insert: {
+          app_id: string
+          config?: Json
+          created_at?: string
+          entity_id: string
+          id?: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Update: {
+          app_id?: string
+          config?: Json
+          created_at?: string
+          entity_id?: string
+          id?: string
+          updated_at?: string
+          visible?: boolean
+        }
+        Relationships: []
+      }
+      public_counters: {
+        Row: {
+          entity_id: string
+          favorites_count: number
+          followers_count: number
+          likes_count: number
+          updated_at: string
+        }
+        Insert: {
+          entity_id: string
+          favorites_count?: number
+          followers_count?: number
+          likes_count?: number
+          updated_at?: string
+        }
+        Update: {
+          entity_id?: string
+          favorites_count?: number
+          followers_count?: number
+          likes_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rate_limit_counters: {
         Row: {
           count: number
@@ -7065,6 +7146,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscriptions: {
+        Row: {
+          app_id: string
+          created_at: string
+          entity_id: string
+          id: string
+          prefs: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          entity_id: string
+          id?: string
+          prefs?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          entity_id?: string
+          id?: string
+          prefs?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       tasks: {
         Row: {
@@ -8376,6 +8487,10 @@ export type Database = {
           object_type: string
           relation: string
         }[]
+      }
+      connection_toggle: {
+        Args: { p_apps?: string[]; p_edge_type: string; p_entity_id: string }
+        Returns: Json
       }
       contributor_window_status: {
         Args: { p_entity_id: string }

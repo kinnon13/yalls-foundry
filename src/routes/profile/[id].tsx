@@ -12,6 +12,8 @@ import { ProfileLinkBars } from '@/components/profile/ProfileLinkBars';
 import { ProfileCounts } from '@/components/profile/ProfileCounts';
 import { AppearanceSheet } from '@/components/profile/AppearanceSheet';
 import { ProfileFeedTab } from '@/components/profile/ProfileFeedTab';
+import { PublicAppPack } from '@/components/profile/PublicAppPack';
+import { ConnectionActions } from '@/components/profile/ConnectionActions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
@@ -125,6 +127,25 @@ export default function ProfilePage() {
         <div className="mb-8">
           <ProfileLinkBars userId={profile.user_id} />
         </div>
+
+        {/* Public App Pack */}
+        <div className="mb-8">
+          <PublicAppPack 
+            entityId={profile.id} 
+            entityName={profile.display_name || 'User'}
+            entityType="user"
+          />
+        </div>
+
+        {/* Connection Actions */}
+        {!profile.isOwner && (
+          <div className="mb-8">
+            <ConnectionActions 
+              entityId={profile.id}
+              entityName={profile.display_name || 'User'}
+            />
+          </div>
+        )}
 
         {/* Tabs */}
         <Tabs defaultValue="this-page">

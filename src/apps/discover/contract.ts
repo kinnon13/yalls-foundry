@@ -35,6 +35,14 @@ export const discoverContract: AppContract = {
         reason: 'string',
       },
     },
+    list_public: {
+      params: {
+        entityId: 'uuid',
+        limit: 'number?',
+        filter: 'string?',
+      },
+      permissions: [], // Public action
+    },
   },
 
   events: {
