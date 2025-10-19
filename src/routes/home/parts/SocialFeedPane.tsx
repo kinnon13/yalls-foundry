@@ -6,8 +6,10 @@ import { cn } from '@/lib/utils';
 import SocialProfileHeader from './SocialProfileHeader';
 import FavoritesSection from './FavoritesSection';
 import UserProfileView from './UserProfileView';
+import { ProfileFavorites } from '@/components/profile/ProfileFavorites';
 import { X } from 'lucide-react';
 import { useFeedPosts } from '@/hooks/useFeedPosts';
+import { supabase } from '@/integrations/supabase/client';
 const TABS = ['following', 'for-you', 'shop', 'profile'] as const;
 type Tab = typeof TABS[number];
 
@@ -23,6 +25,14 @@ export default function SocialFeedPane() {
   const [feedH, setFeedH] = useState<number | null>(null);
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
   const [profileHistory, setProfileHistory] = useState<string[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  
+  // Get current user ID
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setCurrentUserId(data.user?.id || null);
+    });
+  }, []);
   
   // Fetch real posts from database
   const { data: realPosts, isLoading } = useFeedPosts(tab as 'following' | 'for-you' | 'shop' | 'profile');
@@ -298,9 +308,10 @@ export default function SocialFeedPane() {
             }}
           />
         ) : tab === 'profile' ? (
-          // Profile tab: 3-column grid
-          <div className="h-full overflow-y-auto overscroll-contain p-px">
-            <div className="grid grid-cols-3 gap-px bg-border">
+          // Profile tab: Favorites + 3-column grid
+          <div className="h-full overflow-y-auto overscroll-contain">
+            {currentUserId && <ProfileFavorites userId={currentUserId} />}
+            <div className="grid grid-cols-3 gap-px bg-border p-px">
               {items.map((item) => (
                 <div key={item.id} className="relative aspect-square bg-background overflow-hidden">
                   <img 

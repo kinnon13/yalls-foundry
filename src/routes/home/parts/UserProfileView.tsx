@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
+import { ProfileFavorites } from '@/components/profile/ProfileFavorites';
 
 interface UserProfileViewProps {
   userId: string;
@@ -269,30 +270,7 @@ export default function UserProfileView({ userId, onBack, onViewProfile }: UserP
         </div>
 
         {/* Favorite Profiles */}
-        {user.favoriteProfiles.length > 0 && (
-          <div className="mb-4">
-            <h3 className="text-xs font-semibold text-muted-foreground mb-3 px-1">FAVORITE PROFILES</h3>
-            <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-              {user.favoriteProfiles.map((profile) => (
-                <button
-                  key={profile.id}
-                  onClick={() => onViewProfile(profile.id)}
-                  className="flex flex-col items-center gap-1 min-w-[70px] active:scale-95 transition-transform"
-                >
-                  <div 
-                    className="w-16 h-16 rounded-[18px] overflow-hidden flex-shrink-0 shadow-lg"
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(249, 206, 52, 0.1), rgba(238, 42, 123, 0.1), rgba(98, 40, 215, 0.1))',
-                    }}
-                  >
-                    <img src={profile.avatar} alt={profile.name} className="w-full h-full object-cover" />
-                  </div>
-                  <span className="text-xs text-center truncate w-full">{profile.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        <ProfileFavorites userId={userId} className="mb-4" />
       </div>
 
       {/* Tabs */}
