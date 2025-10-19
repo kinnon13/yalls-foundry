@@ -108,9 +108,11 @@ export default function LeftAppSidebar({ onAppClick }: LeftAppSidebarProps) {
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-muted/30 to-muted/10 backdrop-blur-xl border-r overflow-y-auto">
-      {/* Header */}
-      <div className="p-4 border-b border-border/50">
-        <h2 className="text-lg font-semibold mb-3">Y'all Store</h2>
+      {/* Header - Big Y'alls.Ai branding */}
+      <div className="p-6 border-b border-border/50">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent mb-4">
+          Y'alls.Ai
+        </h1>
         <input
           type="search"
           placeholder="Search apps..."
