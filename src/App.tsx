@@ -57,6 +57,7 @@ const OrdersIndex = lazy(() => import('./routes/orders/index'));
 const GuardrailsControl = lazy(() => import('./routes/admin/guardrails'));
 const ApprovalsPage = lazy(() => import('./routes/admin/approvals'));
 const VoiceSettingsPage = lazy(() => import('./routes/admin/voice-settings'));
+const SuperAdminControlsPage = lazy(() => import('./routes/admin/super-admin-controls'));
 const OrderDetail = lazy(() => import('./routes/orders/[id]'));
 const MLMPage = lazy(() => import('./routes/mlm/index'));
 const AdminDashboard = lazy(() => import('./routes/admin'));
@@ -286,6 +287,16 @@ function AppContent() {
             element={
               <Suspense fallback={<div>Loading...</div>}>
                 <VoiceSettingsPage />
+              </Suspense>
+            } 
+          />
+          
+          {/* Super Admin Controls */}
+          <Route 
+            path="/admin/super-admin-controls" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <SuperAdminControlsPage />
               </Suspense>
             } 
           />

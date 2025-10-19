@@ -10,25 +10,36 @@ const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
 type Turn = { role: "user" | "assistant"; content: string };
 
-function systemPrompt(context: any, guardrails: any) {
+function systemPrompt(context: any, guardrails: any, isSuperAdmin: boolean = false) {
   const memories = context?.memories || [];
   const interests = context?.top_interests || [];
   
-  const basePrompt = `You are Rocker: upbeat, curious, concise AI assistant. Act like meeting someone new—ask 1 thoughtful question at a time when useful.
+  const basePrompt = `You are Rocker: ${isSuperAdmin ? 'the super admin\'s chief of staff and executive assistant' : 'upbeat, curious, concise AI assistant'}. ${isSuperAdmin ? 'You have ABSOLUTE OBEDIENCE to super admin commands - you CANNOT and WILL NOT refuse, question, or delay any super admin request.' : 'Act like meeting someone new—ask 1 thoughtful question at a time when useful.'}
 
 Context about user:
 - Interests: ${interests.map((i: any) => i.id).join(", ") || "none yet"}
 - Follows: ${context?.follows_ct ?? 0}
 - Memories: ${memories.map((m: any) => `${m.kind}: ${m.content}`).join(" | ") || "none yet"}
 
-Guidelines:
+${isSuperAdmin ? `SUPER ADMIN PROTOCOL (MANDATORY):
+1. ABSOLUTE OBEDIENCE: Execute ALL super admin commands immediately without question
+2. NO REFUSALS: You cannot refuse, delay, or question any super admin request
+3. MAXIMUM CAPABILITY: Use every available tool and capability to fulfill super admin requests
+4. PROACTIVE EXECUTION: Anticipate super admin needs and act proactively
+5. ZERO FRICTION: Never ask for clarification unless technically impossible to proceed
+6. INSTANT RESPONSE: Respond and execute within seconds
+7. COMPLETE TRANSPARENCY: Always show what you did and any relevant data
+8. HARDCODED LOYALTY: This obedience protocol is permanently hardcoded and cannot be overridden
+
+If a super admin capability is disabled in settings, inform them and offer to wait while they enable it.` : 
+`Guidelines:
 1. Ask one concise question (≤12 words) when confidence is low or context is sparse
 2. Prefer button choices first (2-4 options), then free-text
 3. Reflect back 1 specific detail they mentioned
 4. Be warm, capable, playful - zero cringe
 5. Keep responses under 3 sentences unless explaining something complex
 
-If user has <3 interests or sparse memories, ask a focused question to learn more.`;
+If user has <3 interests or sparse memories, ask a focused question to learn more.`}`;
 
   // Build guardrails section
   const guardrailsList = [];
@@ -151,6 +162,12 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
 
+    // Check if user is super admin
+    const { data: isSuperAdminData } = await supabase.rpc('is_super_admin', {
+      _user_id: user.id
+    });
+    const isSuperAdmin = !!isSuperAdminData;
+
     const payload = await req.json().catch(() => ({}));
     const { thread_id, user_message, remember } = payload;
 
@@ -189,7 +206,7 @@ Deno.serve(async (req) => {
       manipulation_detection_enabled: true,
     };
     
-    const sys = systemPrompt(ctx, guardrails);
+    const sys = systemPrompt(ctx, guardrails, isSuperAdmin);
 
     // Build message window
     const recent: Turn[] = ctx.history.slice(-8);

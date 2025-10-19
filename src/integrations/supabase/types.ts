@@ -8212,6 +8212,63 @@ export type Database = {
         }
         Relationships: []
       }
+      super_admin_settings: {
+        Row: {
+          allow_autonomous_actions: boolean
+          allow_calendar_access: boolean
+          allow_crm_operations: boolean
+          allow_email_sending: boolean
+          allow_file_operations: boolean
+          allow_financial_operations: boolean
+          allow_secure_credentials: boolean
+          allow_voice_calls: boolean
+          allow_voice_messages: boolean
+          allow_web_automation: boolean
+          created_at: string
+          id: string
+          rocker_can_refuse_commands: boolean
+          rocker_obedience_level: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allow_autonomous_actions?: boolean
+          allow_calendar_access?: boolean
+          allow_crm_operations?: boolean
+          allow_email_sending?: boolean
+          allow_file_operations?: boolean
+          allow_financial_operations?: boolean
+          allow_secure_credentials?: boolean
+          allow_voice_calls?: boolean
+          allow_voice_messages?: boolean
+          allow_web_automation?: boolean
+          created_at?: string
+          id?: string
+          rocker_can_refuse_commands?: boolean
+          rocker_obedience_level?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allow_autonomous_actions?: boolean
+          allow_calendar_access?: boolean
+          allow_crm_operations?: boolean
+          allow_email_sending?: boolean
+          allow_file_operations?: boolean
+          allow_financial_operations?: boolean
+          allow_secure_credentials?: boolean
+          allow_voice_calls?: boolean
+          allow_voice_messages?: boolean
+          allow_web_automation?: boolean
+          created_at?: string
+          id?: string
+          rocker_can_refuse_commands?: boolean
+          rocker_obedience_level?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           created_at: string
@@ -12748,6 +12805,10 @@ export type Database = {
       start_rocker_thread: {
         Args: { p_title?: string }
         Returns: string
+      }
+      super_admin_has_capability: {
+        Args: { _capability: string; _user_id: string }
+        Returns: boolean
       }
       text: {
         Args: { "": unknown }

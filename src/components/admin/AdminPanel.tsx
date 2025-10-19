@@ -4,13 +4,17 @@
  */
 
 import { useRoles } from '@/hooks/useRoles';
+import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminIcon } from './AdminIcon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Users, Database, Settings } from 'lucide-react';
+import { Shield, Users, Database, Settings, Lock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 export function AdminPanel() {
   const { isAdmin, isLoading } = useRoles();
+  const { isSuperAdmin } = useSuperAdminCheck();
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -107,7 +111,26 @@ export function AdminPanel() {
               <CardHeader>
                 <CardTitle className="text-base">System Settings</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {isSuperAdmin && (
+                  <div className="p-4 border border-red-500/20 bg-red-500/5 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Lock className="h-5 w-5 text-red-500 mt-0.5" />
+                      <div className="flex-1 space-y-2">
+                        <h3 className="font-semibold text-foreground">Super Admin Controls</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Manage Rocker's capabilities and permissions. Only accessible to super admins.
+                        </p>
+                        <Link to="/admin/super-admin-controls">
+                          <Button variant="outline" size="sm" className="mt-2">
+                            <Lock className="h-4 w-4 mr-2" />
+                            Open Controls
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <p className="text-sm text-muted-foreground">
                   Settings panel coming soon...
                 </p>
