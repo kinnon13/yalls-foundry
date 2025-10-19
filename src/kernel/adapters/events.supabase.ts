@@ -43,11 +43,10 @@ export const eventsAdapter: AppAdapter = {
 async function createEvent(params: any, ctx: AdapterContext): Promise<AdapterResult> {
   const { title, description, starts_at, ends_at, location } = params;
   
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('events')
     .insert({
-      title,
-      description,
+      description: description || title,
       starts_at,
       ends_at,
       location: location || {},
@@ -66,7 +65,7 @@ async function createEvent(params: any, ctx: AdapterContext): Promise<AdapterRes
 async function updateEvent(params: any, ctx: AdapterContext): Promise<AdapterResult> {
   const { id, ...updates } = params;
   
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('events')
     .update(updates)
     .eq('id', id)
