@@ -23,7 +23,11 @@ export type OverlayKey =
   | 'cart'
   | 'orders'
   | 'notifications'
-  | 'settings';
+  | 'settings'
+  | 'overview'
+  | 'earnings'
+  | 'discover'
+  | 'farm-ops';
 
 export interface OverlayConfig {
   key: OverlayKey;

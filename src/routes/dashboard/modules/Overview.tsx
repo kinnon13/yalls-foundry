@@ -14,7 +14,7 @@ import { PinsWithFolders } from '@/components/dashboard/PinsWithFolders';
 import { AlertCircle, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-export function Overview() {
+export default function Overview() {
   const { session } = useSession();
 
   // Get first entity ID for KPI display

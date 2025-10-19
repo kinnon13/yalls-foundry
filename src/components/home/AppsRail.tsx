@@ -20,17 +20,30 @@ const APP_SECTIONS: Array<{
   apps: Array<{ id: OverlayKey; icon: any; label: string }>;
 }> = [
   {
-    title: 'COMMERCE',
+    title: 'MANAGE',
     apps: [
-      { id: 'orders', icon: ShoppingCart, label: 'Orders' },
-      { id: 'marketplace', icon: Receipt, label: 'Listings' },
+      { id: 'overview', icon: Briefcase, label: 'Overview' },
+      { id: 'earnings', icon: DollarSign, label: 'Earnings' },
+      { id: 'analytics', icon: TrendingUp, label: 'Analytics' },
+      { id: 'crm', icon: Users, label: 'CRM' },
     ]
   },
   {
-    title: 'NETWORK',
+    title: 'COMMERCE',
     apps: [
-      { id: 'events', icon: TrendingUp, label: 'Events' },
+      { id: 'marketplace', icon: Package, label: 'Marketplace' },
+      { id: 'orders', icon: ShoppingCart, label: 'Orders' },
+      { id: 'listings', icon: Receipt, label: 'Listings' },
+      { id: 'cart', icon: ShoppingCart, label: 'Cart' },
+    ]
+  },
+  {
+    title: 'SOCIAL',
+    apps: [
       { id: 'messages', icon: Users, label: 'Messages' },
+      { id: 'events', icon: TrendingUp, label: 'Events' },
+      { id: 'discover', icon: TrendingUp, label: 'Discover' },
+      { id: 'activity', icon: TrendingUp, label: 'Activity' },
     ]
   }
 ];

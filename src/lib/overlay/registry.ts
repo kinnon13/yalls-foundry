@@ -121,4 +121,27 @@ export const OVERLAY_REGISTRY: Record<string, OverlayConfig> = {
     component: lazy(() => import('@/routes/dashboard/settings')),
     requiresAuth: true,
   },
+  overview: {
+    key: 'overview',
+    title: 'Owner HQ',
+    component: lazy(() => import('@/routes/dashboard/modules/Overview')),
+    requiresAuth: true,
+  },
+  earnings: {
+    key: 'earnings',
+    title: 'Earnings',
+    component: lazy(() => import('@/routes/dashboard/modules/Earnings')),
+    requiresAuth: true,
+  },
+  discover: {
+    key: 'discover',
+    title: 'Discover',
+    component: lazy(() => import('@/routes/discover')),
+  },
+  'farm-ops': {
+    key: 'farm-ops',
+    title: 'Farm Ops',
+    component: lazy(() => import('@/routes/farm/calendar')),
+    requiresAuth: true,
+  },
 };

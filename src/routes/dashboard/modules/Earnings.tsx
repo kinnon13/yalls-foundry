@@ -9,7 +9,7 @@ import { PromotionsTab } from './earnings/PromotionsTab';
 import { PricingTab } from './earnings/PricingTab';
 import { CampaignsTab } from './earnings/CampaignsTab';
 
-export function Earnings() {
+export default function Earnings() {
   return (
     <div className="space-y-6">
       <div>
