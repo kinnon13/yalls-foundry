@@ -4,6 +4,7 @@ import { useSession } from '@/lib/auth/context';
 import { Reel } from '@/components/reels/Reel';
 import { cn } from '@/lib/utils';
 import ProfileSummaryBar from './ProfileSummaryBar';
+import SocialHeader from './SocialHeader';
 
 const TABS = ['following', 'for-you', 'shop', 'profile'] as const;
 type Tab = typeof TABS[number];
@@ -156,38 +157,10 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col text-[hsl(222.2_47.4%_11.2%)] overflow-hidden bg-black relative">
-      {/* Sticky header (Home + Profile + Tabs) */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur">
-        <div className="flex items-center justify-between px-3 py-1">
-          <button
-            onClick={() => navigate('/home')}
-            className="text-base font-semibold hover:text-primary transition-colors"
-          >
-            Home
-          </button>
-          <h3 className="text-base font-semibold text-center">View Connected Accounts</h3>
-          <div className="w-[60px]" aria-hidden />
-        </div>
-        <div>
-          <ProfileSummaryBar />
-        </div>
-        <div className="mb-1 flex items-center justify-center gap-2 pr-2 py-1">
-          {TABS.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={cn(
-                'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer',
-                t === tab
-                  ? 'bg-primary text-primary-foreground scale-105'
-                  : 'bg-muted/50 text-muted-foreground scale-95 hover:bg-muted hover:scale-100'
-              )}
-            >
-              {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
-            </button>
-          ))}
-        </div>
+    <section className="flex h-full w-full flex-col text-[hsl(222.2_47.4%_11.2%)] overflow-hidden relative">
+      {/* Sticky header - TikTok style */}
+      <div className="sticky top-0 z-20">
+        <SocialHeader />
       </div>
 
       {/* Swipeable feed container - SCROLLABLE */}
