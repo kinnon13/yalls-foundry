@@ -4,10 +4,10 @@
 
 import { useOpenApp } from '@/lib/nav/useOpenApp';
 import type { OverlayKey } from '@/lib/overlay/types';
-import { MessageCircle, ShoppingBag, Calendar, Users, Home, LayoutDashboard } from 'lucide-react';
+import { MessageSquare, ShoppingBag, Calendar, Users } from 'lucide-react';
 
 const DOCK_APPS: Array<{ id: OverlayKey; icon: any; label: string }> = [
-  { id: 'messages', icon: MessageCircle, label: 'Messages' },
+  { id: 'messages', icon: MessageSquare, label: 'Messages' },
   { id: 'marketplace', icon: ShoppingBag, label: 'Shop' },
   { id: 'events', icon: Calendar, label: 'Events' },
   { id: 'orders', icon: Users, label: 'Orders' },

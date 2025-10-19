@@ -306,11 +306,11 @@ body {
 }
 
 .dock-icon {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   display: grid;
   place-items: center;
-  border-radius: 14px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #fff;
@@ -326,6 +326,11 @@ body {
 
 .dock-icon:active {
   transform: translateY(-6px) scale(1.05);
+}
+
+.dock-icon svg {
+  width: 28px;
+  height: 28px;
 }
 
 /* Window Manager */
