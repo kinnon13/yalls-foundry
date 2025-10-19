@@ -9,18 +9,26 @@ export default function PhonePager() {
   const pages = ['apps', 'feed', 'shop', 'profile'] as const;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [startX, setStartX] = useState<number | null>(null);
-const [endX, setEndX] = useState<number | null>(null);
+  const [startY, setStartY] = useState<number | null>(null);
+  const [endX, setEndX] = useState<number | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setStartX(e.touches[0].clientX);
+    setStartY(e.touches[0].clientY);
     setEndX(null);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (startX === null) return;
-    setEndX(e.touches[0].clientX);
+    if (startX === null || startY === null) return;
+    const x = e.touches[0].clientX;
+    const y = e.touches[0].clientY;
+    const dx = x - startX;
+    const dy = y - startY;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      e.preventDefault(); // lock horizontal swipe to pager
+    }
+    setEndX(x);
   };
-
   const handleTouchEnd = () => {
     if (startX === null || endX === null) return;
     const delta = startX - endX;
@@ -43,7 +51,7 @@ const [endX, setEndX] = useState<number | null>(null);
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="w-screen h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory flex no-scrollbar touch-pan-x"
+      className="w-screen h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory flex no-scrollbar touch-pan-x overscroll-none"
       style={{ 
         scrollBehavior: 'smooth',
         WebkitOverflowScrolling: 'touch'

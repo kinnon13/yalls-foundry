@@ -94,8 +94,8 @@ export default function AppsPane() {
   const [currentPage, setCurrentPage] = useState(0);
   
   const [openApp, setOpenApp] = useState<AppTile | null>(null);
-  const [touchStart, setTouchStart] = useState(0);
-  const [touchEnd, setTouchEnd] = useState(0);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
 
   useEffect(() => {
     localStorage.setItem('apps.tileSize', String(tile));
@@ -396,17 +396,28 @@ export default function AppsPane() {
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientX);
+    const t = e.targetTouches[0];
+    setTouchStart({ x: t.clientX, y: t.clientY });
+    setTouchEndX(null);
+    e.stopPropagation();
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+    if (!touchStart) return;
+    const t = e.targetTouches[0];
+    const dx = t.clientX - touchStart.x;
+    const dy = t.clientY - touchStart.y;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      e.preventDefault(); // lock horizontal swipe to this box
+    }
+    setTouchEndX(t.clientX);
+    e.stopPropagation();
   };
 
   const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
+    if (!touchStart || touchEndX == null) return;
     
-    const distance = touchStart - touchEnd;
+    const distance = touchStart.x - touchEndX;
     const isLeftSwipe = distance > 50;
     const isRightSwipe = distance < -50;
 
@@ -417,8 +428,8 @@ export default function AppsPane() {
       setCurrentPage(p => p - 1);
     }
 
-    setTouchStart(0);
-    setTouchEnd(0);
+    setTouchStart(null);
+    setTouchEndX(null);
   };
 
   return (
@@ -439,7 +450,7 @@ export default function AppsPane() {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className="border-2 border-border rounded-lg bg-muted/20 relative resize overflow-hidden cursor-move"
+          className="border-2 border-border rounded-lg bg-muted/20 relative resize overflow-hidden cursor-move touch-pan-x overscroll-none select-none"
           style={{ 
             width: `${containerWidth}px`,
             height: `${containerHeight}px`,
