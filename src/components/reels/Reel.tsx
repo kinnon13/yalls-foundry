@@ -120,7 +120,7 @@ function RailBtn({
     >
       <div
         className={`
-        grid place-items-center h-12 w-12 rounded-full backdrop-blur-md transition-transform
+        grid place-items-center h-10 w-10 rounded-full backdrop-blur-md transition-transform
         ${active ? 'bg-white/70 text-black' : 'bg-black/20 text-white'}
         group-active:scale-95 hover:bg-black/30
       `}
@@ -151,7 +151,7 @@ function ActionRail({
   onRepost?: () => void;
 }) {
   return (
-    <aside className="absolute right-3 bottom-20 flex flex-col gap-4 items-center" aria-label="Post actions">
+    <aside className="absolute right-2 bottom-24 flex flex-col gap-3 items-center" aria-label="Post actions">
       {/* Creator Profile with Plus Button */}
       <div className="relative">
         <button 
@@ -162,18 +162,18 @@ function ActionRail({
             <img 
               src={author.avatar} 
               alt={author.name} 
-              className="h-12 w-12 rounded-full object-cover border-2 border-white/20"
+              className="h-10 w-10 rounded-full object-cover border-2 border-white/20"
             />
           ) : (
-            <div className="h-12 w-12 rounded-full bg-white/20 border-2 border-white/20" />
+            <div className="h-10 w-10 rounded-full bg-white/20 border-2 border-white/20" />
           )}
         </button>
         {/* Plus button overlay */}
         <button
-          className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-6 w-6 rounded-full bg-red-500 hover:bg-red-600 grid place-items-center transition-colors"
+          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-5 w-5 rounded-full bg-red-500 hover:bg-red-600 grid place-items-center transition-colors"
           aria-label="Follow"
         >
-          <Plus className="h-4 w-4 text-white" strokeWidth={3} />
+          <Plus className="h-3 w-3 text-white" strokeWidth={3} />
         </button>
       </div>
 
@@ -181,15 +181,15 @@ function ActionRail({
         label={format(stats.likes)}
         active={liked}
         onClick={onLike}
-        icon={<Heart className="h-6 w-6" fill={liked ? 'currentColor' : 'none'} />}
+        icon={<Heart className="h-5 w-5" fill={liked ? 'currentColor' : 'none'} />}
       />
       <RailBtn
         label={format(stats.comments)}
         onClick={onComment}
-        icon={<MessageCircle className="h-6 w-6" />}
+        icon={<MessageCircle className="h-5 w-5" />}
       />
-      <RailBtn label={format(stats.saves)} onClick={onSave} icon={<Bookmark className="h-6 w-6" />} />
-      <RailBtn label={format(stats.reposts)} onClick={onRepost} icon={<Repeat2 className="h-6 w-6" />} />
+      <RailBtn label={format(stats.saves)} onClick={onSave} icon={<Bookmark className="h-5 w-5" />} />
+      <RailBtn label={format(stats.reposts)} onClick={onRepost} icon={<Repeat2 className="h-5 w-5" />} />
       <RailBtn
         label="Share"
         onClick={() => {
@@ -199,15 +199,15 @@ function ActionRail({
             navigator.clipboard.writeText(url).catch(() => {});
           }
         }}
-        icon={<Share2 className="h-6 w-6" />}
+        icon={<Share2 className="h-5 w-5" />}
       />
       
       {/* Spinning Sound/Music Disc */}
       <button
-        className="relative h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 grid place-items-center animate-spin-slow hover:animate-none transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+        className="relative h-9 w-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 grid place-items-center animate-spin-slow hover:animate-none transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
         aria-label="View sound"
       >
-        <Music className="h-5 w-5 text-white" />
+        <Music className="h-4 w-4 text-white" />
       </button>
     </aside>
   );
