@@ -70,20 +70,24 @@ export default function SocialProfileHeader({ showProfile = true }: { showProfil
   const handleHomeClick = () => {
     window.dispatchEvent(new CustomEvent('navigate-home'));
   };
+  
+  const handleProfileClick = () => {
+    // Navigate to profile tab by updating search params
+    const event = new CustomEvent('navigate-profile');
+    window.dispatchEvent(event);
+  };
 
   return (
     <div className="bg-background px-4 pt-3 pb-2">
       {/* Top Navigation Bar */}
       <div className="flex items-center gap-3 mb-4">
-        {/* Home Icon */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 flex-shrink-0"
-          onClick={handleHomeClick}
+        {/* Profile Picture Button (replaces Home icon) */}
+        <button 
+          onClick={handleProfileClick}
+          className="h-8 w-8 flex-shrink-0 rounded-full overflow-hidden border-2 border-primary/20 hover:border-primary transition-colors"
         >
-          <Home className="h-5 w-5" />
-        </Button>
+          <img src={avatar} alt={name} className="w-full h-full object-cover" />
+        </button>
 
         {/* YALL Branding */}
         <h1 className="text-2xl font-bold tracking-tight flex-shrink-0">

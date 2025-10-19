@@ -27,6 +27,15 @@ export default function SocialFeedPane() {
   // Fetch real posts from database
   const { data: realPosts, isLoading } = useFeedPosts(tab as 'following' | 'for-you' | 'shop' | 'profile');
 
+  // Listen for profile navigation from header
+  useEffect(() => {
+    const handleNavigateProfile = () => {
+      setTab('profile');
+    };
+    window.addEventListener('navigate-profile', handleNavigateProfile);
+    return () => window.removeEventListener('navigate-profile', handleNavigateProfile);
+  }, []);
+
   // Listen for profile view events
   useEffect(() => {
     const handleViewProfile = (e: CustomEvent) => {
@@ -244,7 +253,7 @@ export default function SocialFeedPane() {
       {/* Header stack (measured) */}
       <div ref={headerRef}>
         {/* Navigation Bar - always visible */}
-        <SocialProfileHeader showProfile={!viewingUserId} />
+        <SocialProfileHeader showProfile={tab === 'profile' && !viewingUserId} />
         
         {/* Favorites Bar and Tabs - hide when viewing other profiles */}
         {!viewingUserId && (
