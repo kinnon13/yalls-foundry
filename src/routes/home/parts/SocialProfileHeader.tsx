@@ -7,6 +7,13 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import profileAvatar from '@/assets/profile-avatar.jpg';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function SocialProfileHeader({ showProfile = true }: { showProfile?: boolean }) {
   const { session } = useSession();
@@ -92,17 +99,6 @@ export default function SocialProfileHeader({ showProfile = true }: { showProfil
     <div className="bg-background px-4 pt-3 pb-2">
       {/* Top Navigation Bar - hide on mobile since global HeaderBar shows */}
       <div className="hidden lg:flex items-center gap-3 mb-4">
-        {/* Hamburger Menu Button */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 flex-shrink-0"
-          onClick={handleMenuOpen}
-          title="Menu"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-
         {/* Profile Picture Button */}
         <button 
           onClick={handleProfileClick}
@@ -130,16 +126,39 @@ export default function SocialProfileHeader({ showProfile = true }: { showProfil
           </div>
         </form>
 
-        {/* Logout Icon */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 flex-shrink-0"
-          onClick={handleAuthAction}
-          title={session ? 'Sign out' : 'Sign in'}
-        >
-          {session ? <LogOut className="h-5 w-5" /> : <LogIn className="h-5 w-5" />}
-        </Button>
+        {/* Hamburger Menu with Dropdown - replaces arrow button */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 flex-shrink-0"
+              title="Menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleHomeClick}>
+              <Home className="mr-2 h-4 w-4" />
+              Home
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleAuthAction}>
+              {session ? (
+                <>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </>
+              ) : (
+                <>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Sign In
+                </>
+              )}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Profile Section - conditionally shown */}
