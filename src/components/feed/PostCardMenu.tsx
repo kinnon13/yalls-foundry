@@ -94,34 +94,6 @@ export function PostCardMenu({
     }
   };
 
-  const handleApprove = async () => {
-    const { error } = await supabase.rpc('post_target_approve', {
-      p_post_id: postId,
-      p_entity_id: entityId,
-    });
-
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Post approved' });
-      window.location.reload();
-    }
-  };
-
-  const handleReject = async () => {
-    const { error } = await supabase.rpc('post_target_reject', {
-      p_post_id: postId,
-      p_entity_id: entityId,
-    });
-
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Post rejected' });
-      window.location.reload();
-    }
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -129,32 +101,18 @@ export function PostCardMenu({
           <MoreVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {isPending && (
-          <>
-            <DropdownMenuItem onClick={handleApprove}>
-              Approve
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleReject}>
-              Reject
-            </DropdownMenuItem>
-          </>
-        )}
-        {!isPending && (
-          <>
-            {isHidden ? (
-              <DropdownMenuItem onClick={handleUnhide}>
-                Unhide from this page
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem 
-                onClick={() => hideMutation.mutate()}
-                disabled={hideMutation.isPending}
-              >
-                Hide from this page
-              </DropdownMenuItem>
-            )}
-          </>
+      <DropdownMenuContent align="end" className="bg-background border z-50">
+        {isHidden ? (
+          <DropdownMenuItem onClick={handleUnhide}>
+            Unhide
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem 
+            onClick={() => hideMutation.mutate()}
+            disabled={hideMutation.isPending}
+          >
+            Hide
+          </DropdownMenuItem>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
