@@ -16,6 +16,7 @@ import { FeedPane } from '@/components/home/FeedPane';
 import LinkInterceptor from '@/components/chrome/LinkInterceptor';
 import { X } from 'lucide-react';
 import SocialFeedPane from '../home/parts/SocialFeedPane';
+import Footer from '@/components/layout/Footer';
 
 function ActiveAppContent({ appId, onClose }: { appId: OverlayKey; onClose: () => void }) {
   const config = OVERLAY_REGISTRY[appId];
@@ -150,6 +151,7 @@ export default function HomeShell() {
       <div className="lg:hidden fixed inset-0 w-full h-full bg-background">
         <SocialFeedPane />
       </div>
+      <Footer />
       <LinkInterceptor />
     </>
   );
