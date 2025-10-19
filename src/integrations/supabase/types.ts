@@ -8950,11 +8950,19 @@ export type Database = {
       }
       vw_discovery_queue_health: {
         Row: {
-          count: number | null
-          high_retry_count: number | null
-          last_activity: string | null
-          oldest_queued: string | null
+          ct: number | null
+          p95_age_sec: number | null
           status: string | null
+        }
+        Relationships: []
+      }
+      vw_gap_severity: {
+        Row: {
+          category: string | null
+          domain: string | null
+          gap_level: string | null
+          inventory_ct: number | null
+          last_checked: string | null
         }
         Relationships: []
       }
@@ -9456,6 +9464,10 @@ export type Database = {
       disablelongtransactions: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      discovery_mark_error: {
+        Args: { p_id: string; p_msg: string }
+        Returns: undefined
       }
       dm_send: {
         Args: { p_body: string; p_metadata?: Json; p_recipient: string }
