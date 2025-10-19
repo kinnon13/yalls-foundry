@@ -176,12 +176,13 @@ export default function SocialFeedPane() {
         <X className="h-5 w-5" />
       </button>
       {/* Header stack (measured) */}
-      <div ref={headerRef} className="hidden sm:block">
-        {/* Profile Header */}
-        <SocialProfileHeader />
+      <div ref={headerRef} className={cn("hidden sm:block", tab === 'profile' && 'block')}>
+
+        {/* Profile Header - only on profile tab */}
+        {tab === 'profile' && <SocialProfileHeader />}
         
-        {/* Favorites Bar */}
-        <FavoritesSection />
+        {/* Favorites Bar - only on profile tab */}
+        {tab === 'profile' && <FavoritesSection />}
 
         {/* Tab indicators (clickable or drag/swipe to change) */}
         <div className="sticky top-0 z-10 flex items-center justify-center gap-2 px-0 py-1">
@@ -202,29 +203,47 @@ export default function SocialFeedPane() {
         </div>
       </div>
 
-      {/* Swipeable feed container */}
+      {/* Feed container - vertical reels or grid based on tab */}
       <div 
         ref={railRef}
         className="relative flex-1 overflow-hidden select-none touch-pan-y"
         style={{ height: feedH ? `${feedH}px` : '100%' }}
       >
-        <div 
-          className="h-full overflow-y-auto overscroll-contain snap-y snap-mandatory scrollbar-hide"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {items.map((item) => (
-            <div 
-              key={item.id} 
-              className="snap-start snap-always w-full"
-              style={{ 
-                height: feedH ? `${feedH}px` : '100vh',
-                minHeight: feedH ? `${feedH}px` : '100vh'
-              }}
-            >
-              <Reel {...item} />
+        {tab === 'profile' ? (
+          // Profile tab: 3-column grid
+          <div className="h-full overflow-y-auto overscroll-contain p-px">
+            <div className="grid grid-cols-3 gap-px bg-border">
+              {items.map((item) => (
+                <div key={item.id} className="relative aspect-square bg-background overflow-hidden">
+                  <img 
+                    src={item.src}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+          // Other tabs: vertical reel feed
+          <div 
+            className="h-full overflow-y-auto overscroll-contain snap-y snap-mandatory scrollbar-hide"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {items.map((item) => (
+              <div 
+                key={item.id} 
+                className="snap-start snap-always w-full"
+                style={{ 
+                  height: feedH ? `${feedH}px` : '100vh',
+                  minHeight: feedH ? `${feedH}px` : '100vh'
+                }}
+              >
+                <Reel {...item} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

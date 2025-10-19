@@ -53,78 +53,50 @@ export default function SocialProfileHeader() {
   };
 
   return (
-    <div className="bg-background py-2 px-4 border-b">
-      {/* Profile picture */}
-      <div className="flex justify-center mb-2">
+    <div className="bg-background px-4 py-3 border-b">
+      {/* Profile picture with gradient ring */}
+      <div className="flex justify-center mb-3">
         <div className="relative">
-          <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-primary/20">
-            <img src={avatar} alt={name} className="w-full h-full object-cover" />
+          <div 
+            className="w-20 h-20 rounded-full p-[3px]"
+            style={{
+              background: 'linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7)',
+            }}
+          >
+            <div className="w-full h-full rounded-full overflow-hidden bg-background p-[2px]">
+              <img src={avatar} alt={name} className="w-full h-full object-cover rounded-full" />
+            </div>
           </div>
-          <button className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm">
-            +
-          </button>
         </div>
       </div>
 
-      {/* Name and handle */}
-      <div className="text-center mb-1">
-        <div className="flex items-center justify-center gap-2 mb-0.5">
-          <h1 className="text-base font-bold">{name}</h1>
-          <span className="text-xs">▼</span>
-          <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+      {/* Username with verified badge */}
+      <div className="text-center mb-2">
+        <div className="flex items-center justify-center gap-1.5">
+          <h1 className="text-sm font-semibold">{handle}</h1>
+          <svg className="w-4 h-4 text-blue-500" viewBox="0 0 40 40" fill="currentColor">
+            <path d="M19.998.002C8.952.002 0 8.954 0 19.998s8.952 19.996 19.998 19.996 19.998-8.952 19.998-19.996S31.044.002 19.998.002zm10.292 14.866l-11.764 11.764c-.292.292-.678.438-1.061.438-.383 0-.77-.146-1.061-.438l-5.884-5.882c-.586-.586-.586-1.535 0-2.121.586-.586 1.535-.586 2.121 0l4.823 4.823 10.703-10.703c.586-.586 1.535-.586 2.121 0 .588.585.588 1.534.002 2.119z"/>
+          </svg>
         </div>
-        <p className="text-xs text-muted-foreground">@{handle}</p>
+        <p className="text-sm text-foreground mt-0.5">{name}</p>
       </div>
 
       {/* Stats */}
-      <div className="flex justify-center gap-4 mb-2 py-1">
+      <div className="flex justify-center gap-6 mb-3">
         <div className="text-center">
-          <div className="text-sm font-bold">{formatNumber(totals.following)}</div>
-          <div className="text-[10px] text-muted-foreground">Following</div>
+          <div className="text-sm font-semibold">{formatNumber(totals.followers)}</div>
+          <div className="text-xs text-muted-foreground">followers</div>
         </div>
-        <div className="h-8 w-px bg-border" />
         <div className="text-center">
-          <div className="text-sm font-bold">{formatNumber(totals.followers)}</div>
-          <div className="text-[10px] text-muted-foreground">Followers</div>
-        </div>
-        <div className="h-8 w-px bg-border" />
-        <div className="text-center">
-          <div className="text-sm font-bold">{formatNumber(totals.likes)}</div>
-          <div className="text-[10px] text-muted-foreground">Likes</div>
+          <div className="text-sm font-semibold">{formatNumber(totals.following)}</div>
+          <div className="text-xs text-muted-foreground">following</div>
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div className="flex gap-1.5 justify-center mb-1.5">
-        <Button variant="secondary" size="sm" className="rounded-lg text-[10px] h-6 px-2">
-          <span className="mr-0.5">+</span> Add bio
-        </Button>
-        <Button variant="secondary" size="sm" className="rounded-lg text-[10px] h-6 px-2">
-          <span className="mr-0.5">+</span> Add school
-        </Button>
-        <Button variant="default" size="sm" className="rounded-lg text-[10px] h-6 px-2">
-          Edit
-        </Button>
-      </div>
-
-      {/* Link */}
-      <div className="text-center mb-1.5">
-        <a href="#" className="text-[10px] text-primary flex items-center justify-center gap-1">
-          🔗 instagram.com/{handle}
-        </a>
-      </div>
-
-      {/* Bottom actions */}
-      <div className="flex justify-center gap-4 text-[10px]">
-        <button className="flex items-center gap-0.5 text-primary">
-          <span className="text-xs">👤</span> TikTok Studio
-        </button>
-        <button className="flex items-center gap-0.5 text-primary">
-          <span className="text-xs">🛍️</span> Your orders
-        </button>
-        <button className="flex items-center gap-0.5 text-primary">
-          <span className="text-xs">💼</span> Showcase
-        </button>
+      {/* Bio */}
+      <div className="text-center text-xs space-y-0.5 mb-3">
+        <p className="text-foreground">utah | 📧 wecklesco@gmail.com</p>
+        <p className="text-foreground">@{handle}</p>
       </div>
     </div>
   );
