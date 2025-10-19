@@ -143,7 +143,7 @@ export default function HomeShell() {
       </div>
 
       {/* Mobile: Full-screen feed with footer */}
-      <div className="lg:hidden flex flex-col h-screen">
+      <div className="lg:hidden flex flex-col h-[100dvh]">
         <div className="flex-1 overflow-hidden bg-background">
           <SocialFeedPane />
         </div>

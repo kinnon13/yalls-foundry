@@ -15,7 +15,7 @@ const DOCK_APPS: Array<{ id: OverlayKey; icon: any; label: string }> = [
 
 export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => void }) {
   return (
-    <footer className="dock">
+    <nav aria-label="Bottom dock" className="dock">
       {DOCK_APPS.map(app => {
         const Icon = app.icon;
         return (
@@ -29,6 +29,6 @@ export default function Dock({ onAppClick }: { onAppClick: (id: OverlayKey) => v
           </button>
         );
       })}
-    </footer>
+    </nav>
   );
 }

@@ -307,6 +307,17 @@ body {
   box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.05);
 }
 
+@media (max-width: 1024px) {
+  .dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    width: 100%;
+  }
+}
+
 .dock-icon {
   width: 56px;
   height: 56px;
