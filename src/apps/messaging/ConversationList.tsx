@@ -33,6 +33,24 @@ interface ConversationListProps {
 export function ConversationList({ onSelect, selectedId }: ConversationListProps) {
   const [search, setSearch] = useState('');
 
+  // Rocker AI thread (always pinned first)
+  const rockerThread: Conversation = {
+    id: 'rocker',
+    type: 'ai',
+    last_message_at: new Date().toISOString(),
+    last_message: {
+      body: 'Hey! I can help you manage listings, orders, and more.',
+      sender_id: 'rocker'
+    },
+    participants: [
+      {
+        user_id: 'rocker',
+        full_name: 'Rocker AI'
+      }
+    ],
+    unread_count: 0,
+  };
+
   const { data: conversations, isLoading } = useQuery({
     queryKey: ['conversations'],
     queryFn: async () => {
@@ -71,11 +89,15 @@ export function ConversationList({ onSelect, selectedId }: ConversationListProps
     },
   });
 
-  const filteredConvos = conversations?.filter(c =>
-    search ? c.participants.some(p => 
-      p.full_name?.toLowerCase().includes(search.toLowerCase())
-    ) : true
-  ) || [];
+  // Always show Rocker first, then filtered conversations
+  const filteredConvos = [
+    rockerThread,
+    ...(conversations?.filter(c =>
+      search ? c.participants.some(p => 
+        p.full_name?.toLowerCase().includes(search.toLowerCase())
+      ) : true
+    ) || [])
+  ];
 
   if (isLoading) {
     return (
@@ -110,52 +132,64 @@ export function ConversationList({ onSelect, selectedId }: ConversationListProps
             <p className="text-xs text-muted-foreground/70 mt-1">Start a new conversation to get started</p>
           </div>
         ) : (
-          filteredConvos.map((conversation) => (
-            <button
-              key={conversation.id}
-              onClick={() => onSelect(conversation.id)}
-              className={cn(
-                "w-full px-4 py-3 flex items-start gap-3 hover:bg-muted/40 transition-colors text-left border-b border-border/20",
-                selectedId === conversation.id && "bg-muted/60"
-              )}
-            >
-              {/* Avatar */}
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-xs font-semibold text-primary">
-                  {conversation.participants[0]?.full_name?.[0] || '?'}
-                </span>
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline justify-between gap-2 mb-1">
-                  <span className="text-[13px] font-semibold text-foreground truncate">
-                    {conversation.participants
-                      .filter(p => p.user_id !== (supabase.auth.getUser as any)()?.id)
-                      .map(p => p.full_name || 'Unknown')
-                      .join(', ') || 'Conversation'}
+          filteredConvos.map((conversation) => {
+            const isRocker = conversation.id === 'rocker';
+            return (
+              <button
+                key={conversation.id}
+                onClick={() => onSelect(conversation.id)}
+                className={cn(
+                  "w-full px-4 py-3 flex items-start gap-3 hover:bg-muted/40 transition-colors text-left border-b border-border/20",
+                  selectedId === conversation.id && "bg-muted/60",
+                  isRocker && "bg-primary/5"
+                )}
+              >
+                {/* Avatar */}
+                <div className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
+                  isRocker ? "bg-gradient-to-br from-primary/20 to-accent/20" : "bg-primary/10"
+                )}>
+                  <span className="text-xs font-semibold text-primary">
+                    {isRocker ? '🤠' : (conversation.participants[0]?.full_name?.[0] || '?')}
                   </span>
-                  {conversation.last_message_at && (
-                    <span className="text-[11px] text-muted-foreground flex-shrink-0">
-                      {formatDistanceToNow(new Date(conversation.last_message_at), { addSuffix: false })}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline justify-between gap-2 mb-1">
+                    <span className={cn(
+                      "text-[13px] font-semibold truncate",
+                      isRocker ? "text-primary" : "text-foreground"
+                    )}>
+                      {isRocker ? 'Rocker AI' : (
+                        conversation.participants
+                          .filter(p => p.user_id !== (supabase.auth.getUser as any)()?.id)
+                          .map(p => p.full_name || 'Unknown')
+                          .join(', ') || 'Conversation'
+                      )}
                     </span>
-                  )}
+                    {conversation.last_message_at && (
+                      <span className="text-[11px] text-muted-foreground flex-shrink-0">
+                        {formatDistanceToNow(new Date(conversation.last_message_at), { addSuffix: false })}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[12px] text-muted-foreground truncate">
+                    {conversation.last_message?.body || 'No messages yet'}
+                  </p>
                 </div>
-                <p className="text-[12px] text-muted-foreground truncate">
-                  {conversation.last_message?.body || 'No messages yet'}
-                </p>
-              </div>
 
-              {/* Unread badge */}
-              {conversation.unread_count > 0 && (
-                <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                  <span className="text-[10px] font-bold text-primary-foreground">
-                    {conversation.unread_count}
-                  </span>
-                </div>
-              )}
-            </button>
-          ))
+                {/* Unread badge */}
+                {conversation.unread_count > 0 && (
+                  <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                    <span className="text-[10px] font-bold text-primary-foreground">
+                      {conversation.unread_count}
+                    </span>
+                  </div>
+                )}
+              </button>
+            );
+          })
         )}
       </div>
     </div>

@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from 'next-themes';
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from '@/lib/auth/context';
 import { RequireAuth } from '@/lib/auth/guards';
@@ -30,6 +30,7 @@ import { OverlayProvider } from '@/lib/overlay/OverlayProvider';
 import { rocker } from '@/lib/rocker/event-bus';
 import { ProfileProvider } from '@/contexts/ProfileContext';
 import { BusinessComparison } from '@/components/profile/BusinessComparison';
+import { BottomDock } from '@/components/layout/BottomDock';
 import '@/kernel'; // Register app contracts
 
 // 10 Canonical Routes
@@ -57,6 +58,7 @@ const queryClient = new QueryClient();
 function AppContent() {
   usePageTelemetry();
   const { isOpen: devHUDOpen, close: closeDevHUD } = useDevHUD();
+  const location = useLocation();
   
   useEffect(() => {
     registerRockerFeatureHandler();
@@ -261,6 +263,13 @@ function AppContent() {
       <RockerSuggestions />
       <RockerChat />
       {devHUDOpen && <DevHUD isOpen={devHUDOpen} onClose={closeDevHUD} />}
+      
+      {/* Bottom Dock - 5 icons everywhere except auth/create-recording/live */}
+      {!location.pathname.startsWith('/auth') && 
+       !location.pathname.match(/^\/create\/record/) &&
+       !location.pathname.startsWith('/live') && (
+        <BottomDock />
+      )}
     </>
   );
 }

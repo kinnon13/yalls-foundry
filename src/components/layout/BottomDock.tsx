@@ -19,10 +19,16 @@ export function BottomDock() {
 
   const items: DockItem[] = [
     {
-      key: 'messages',
-      label: 'Messages',
-      onClick: () => setChatOpen(true),
-      icon: MessageSquare,
+      key: 'home',
+      label: 'Home',
+      to: '/home?tab=for-you',
+      icon: Globe2,
+    },
+    {
+      key: 'search',
+      label: 'Search',
+      to: '/discover',
+      icon: Globe2,
     },
     {
       key: 'create',
@@ -31,21 +37,18 @@ export function BottomDock() {
       icon: PlusCircle,
     },
     {
-      key: 'market',
-      label: 'Marketplace',
-      to: '/marketplace',
-      icon: Store,
+      key: 'messages',
+      label: 'Inbox',
+      to: '/messages',
+      icon: MessageSquare,
     },
     {
-      key: 'unclaimed',
-      label: 'Unclaimed',
-      to: '/unclaimed',
-      icon: Globe2,
-    },
-    {
-      key: 'appstore',
-      label: 'App Store',
-      to: '/app-store',
+      key: 'profile',
+      label: 'Profile',
+      onClick: () => {
+        // Navigate to user's own profile
+        nav('/profile/me');
+      },
       icon: AppWindow,
     },
   ];

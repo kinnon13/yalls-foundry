@@ -7,21 +7,24 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, User, Video, Package, Hash, Music, X } from 'lucide-react';
+import { Search, User, Video, Package, Hash, Music, X, AppWindow, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
-type SearchTab = 'all' | 'users' | 'videos' | 'products' | 'hashtags' | 'sounds';
+type SearchTab = 'all' | 'users' | 'videos' | 'products' | 'hashtags' | 'sounds' | 'apps';
 
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const [searchInput, setSearchInput] = useState(query);
   const [activeTab, setActiveTab] = useState<SearchTab>('all');
+  const navigate = useNavigate();
 
   // Search users
   const { data: users = [] } = useQuery({
@@ -75,6 +78,33 @@ export default function SearchPage() {
     },
     enabled: !!query && (activeTab === 'all' || activeTab === 'products'),
   });
+
+  // Mock apps data - in production this would come from app_catalog
+  const apps = query ? [
+    { id: 'orders', name: 'Orders', description: 'Manage your orders', installed: true, icon: '📦' },
+    { id: 'calendar', name: 'Calendar', description: 'Events & scheduling', installed: false, icon: '📅' },
+    { id: 'marketplace', name: 'Marketplace', description: 'Buy & sell', installed: true, icon: '🛍️' },
+    { id: 'messages', name: 'Messages', description: 'Chat with others', installed: true, icon: '💬' },
+    { id: 'earnings', name: 'Earnings', description: 'Track your income', installed: false, icon: '💰' },
+  ].filter(app => 
+    app.name.toLowerCase().includes(query.toLowerCase()) ||
+    app.description.toLowerCase().includes(query.toLowerCase())
+  ) : [];
+
+  const handleOpenApp = (appId: string) => {
+    navigate(`/?app=${appId}`);
+    toast.success(`Opening ${appId}`);
+  };
+
+  const handleInstallApp = (appId: string) => {
+    // In production: await supabase.from('user_apps').insert({ app_id: appId })
+    toast.success(`Installed ${appId}`);
+  };
+
+  const handlePinApp = (appId: string) => {
+    // In production: await supabase.from('user_app_layout').upsert({ app_id: appId, pinned: true })
+    toast.success(`Pinned ${appId} to Dock`);
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,6 +172,10 @@ export default function SearchPage() {
                 <Package className="h-4 w-4" />
                 Products ({products.length})
               </TabsTrigger>
+              <TabsTrigger value="apps" className="flex items-center gap-2">
+                <AppWindow className="h-4 w-4" />
+                Apps ({apps.length})
+              </TabsTrigger>
             </TabsList>
 
             {/* All Results */}
@@ -188,7 +222,42 @@ export default function SearchPage() {
                 </div>
               )}
 
-              {users.length === 0 && posts.length === 0 && products.length === 0 && (
+              {apps.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <AppWindow className="h-4 w-4" />
+                    Apps
+                  </h3>
+                  <div className="space-y-2">
+                    {apps.slice(0, 3).map((app) => (
+                      <Card key={app.id} className="p-4">
+                        <div className="flex items-center gap-4">
+                          <div className="text-3xl">{app.icon}</div>
+                          <div className="flex-1">
+                            <p className="font-semibold">{app.name}</p>
+                            <p className="text-sm text-muted-foreground">{app.description}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            {app.installed ? (
+                              <Button size="sm" onClick={() => handleOpenApp(app.id)}>Open</Button>
+                            ) : (
+                              <Button size="sm" variant="outline" onClick={() => handleInstallApp(app.id)}>
+                                <Plus className="h-4 w-4 mr-1" />
+                                Install
+                              </Button>
+                            )}
+                            <Button size="sm" variant="ghost" onClick={() => handlePinApp(app.id)}>
+                              Pin
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {users.length === 0 && posts.length === 0 && products.length === 0 && apps.length === 0 && (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground">No results found for "{query}"</p>
                 </div>
@@ -235,6 +304,44 @@ export default function SearchPage() {
                   <Package className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
                   <p className="text-muted-foreground">No products found</p>
                 </div>
+              )}
+            </TabsContent>
+
+            {/* Apps Tab */}
+            <TabsContent value="apps" className="space-y-3">
+              {apps.length === 0 ? (
+                <div className="text-center py-12">
+                  <AppWindow className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                  <p className="text-muted-foreground">No apps found</p>
+                  <p className="text-sm text-muted-foreground/70 mt-1">
+                    Try: orders, calendar, marketplace, messages, earnings
+                  </p>
+                </div>
+              ) : (
+                apps.map((app) => (
+                  <Card key={app.id} className="p-4">
+                    <div className="flex items-center gap-4">
+                      <div className="text-4xl">{app.icon}</div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{app.name}</h3>
+                        <p className="text-sm text-muted-foreground">{app.description}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        {app.installed ? (
+                          <Button size="sm" onClick={() => handleOpenApp(app.id)}>Open</Button>
+                        ) : (
+                          <Button size="sm" variant="outline" onClick={() => handleInstallApp(app.id)}>
+                            <Plus className="h-4 w-4 mr-1" />
+                            Install
+                          </Button>
+                        )}
+                        <Button size="sm" variant="ghost" onClick={() => handlePinApp(app.id)}>
+                          Pin
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))
               )}
             </TabsContent>
           </Tabs>
