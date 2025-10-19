@@ -14,6 +14,7 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
   const navigate = useNavigate();
   const [q, setQ] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -36,6 +37,7 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!q.trim()) return;
+    setMobileSearchOpen(false);
     navigate(`/search?q=${encodeURIComponent(q.trim())}`);
   };
 
@@ -78,6 +80,15 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
             />
           </div>
         </form>
+
+        {/* Mobile search toggle */}
+        <button
+          onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+          className="md:hidden inline-grid place-items-center h-10 w-10 rounded-md border border-border/60 hover:bg-accent/40 transition-colors"
+          aria-label="Toggle search"
+        >
+          <Search className="h-5 w-5" />
+        </button>
 
         {/* Right actions */}
         <nav aria-label="Top actions" className="ml-auto flex items-center gap-2">
@@ -132,6 +143,31 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
           </button>
         </nav>
       </div>
+
+      {/* Mobile search dropdown */}
+      {mobileSearchOpen && (
+        <div className="md:hidden absolute top-full left-0 right-0 bg-background border-b border-border/60 p-3">
+          <form onSubmit={onSearch} className="flex items-center gap-2">
+            <div className="relative grow">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search people, businesses, apps…"
+                className="w-full h-10 pl-9 pr-3 rounded-md border border-border/60 bg-background"
+                aria-label="Search"
+                autoFocus
+              />
+            </div>
+            <button
+              type="submit"
+              className="h-10 px-4 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Go
+            </button>
+          </form>
+        </div>
+      )}
     </header>
   );
 }
