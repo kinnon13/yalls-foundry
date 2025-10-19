@@ -10,13 +10,14 @@ interface AppTab {
   label: string;
   route?: string;
   icon?: any;
+  color?: string;
 }
 
 export default function HomePage() {
   const [openApps, setOpenApps] = useState<AppTab[]>([]);
   const [activeApp, setActiveApp] = useState<string | null>(null);
 
-  const handleAppClick = (app: { key: string; label: string; route?: string; icon?: any }) => {
+  const handleAppClick = (app: { key: string; label: string; route?: string; icon?: any; color?: string }) => {
     // Deduplicate: if already open, just focus it
     const existing = openApps.find(a => a.key === app.key);
     if (existing) {
@@ -24,8 +25,8 @@ export default function HomePage() {
       // Scroll to that app in the center
       setTimeout(() => {
         const element = document.querySelector(`[data-app-key="${app.key}"]`);
-        element?.scrollIntoView({ behavior: 'smooth' });
-      }, 0);
+        element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
       return;
     }
     

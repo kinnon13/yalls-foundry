@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEntityCapabilities } from '@/hooks/useEntityCapabilities';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Calendar, Settings, DollarSign, Trophy, ShoppingCart,
-  Building, Users, Sparkles, Tractor, CheckCircle,
+  Building, Users, Sparkles, CheckCircle, TrendingUp,
   MessageSquare, User, MapPin, Flame, BookOpen, 
-  Store, Activity, Zap, Target, Award, LucideIcon
+  Store, Activity, Zap, Target, Award, LucideIcon,
+  Package, Truck, RotateCcw, CreditCard, Receipt,
+  Tag, BarChart3, Megaphone, Link2, Video, FolderOpen,
+  Globe, FileText, HardDrive, ClipboardList
 } from 'lucide-react';
 
 interface AppConfig {
@@ -13,27 +15,44 @@ interface AppConfig {
   label: string;
   icon: LucideIcon;
   route?: string;
-  module?: string;
+  color?: string;
 }
 
-const apps: AppConfig[] = [
-  { key: 'profile', label: 'My Profile', icon: User, route: '/profile' },
-  { key: 'feed', label: 'Feed', icon: Flame, module: 'posts' },
-  { key: 'market', label: 'Market', icon: Store, route: '/market' },
-  { key: 'messages', label: 'Messages', icon: MessageSquare, route: '/messages' },
-  { key: 'calendar', label: 'Calendar', icon: Calendar, route: '/calendar' },
-  { key: 'activity', label: 'Activity', icon: Activity, route: '/activity' },
-  { key: 'discover', label: 'Discover', icon: Zap, route: '/discover' },
-  { key: 'map', label: 'Map', icon: MapPin, route: '/map' },
-  { key: 'page', label: 'Page', icon: BookOpen, route: '/page' },
-  { key: 'goals', label: 'Goals', icon: Target, route: '/goals' },
-  { key: 'awards', label: 'Awards', icon: Trophy, route: '/awards' },
-  { key: 'settings', label: 'Settings', icon: Settings, route: '/settings' },
-  { key: 'business', label: 'Business', icon: Building, route: '/dashboard?m=business' },
-  { key: 'earnings', label: 'Earnings', icon: DollarSign, route: '/dashboard?m=earnings' },
-  { key: 'orders', label: 'Orders', icon: CheckCircle, route: '/dashboard?m=orders' },
-  { key: 'approvals', label: 'Approvals', icon: CheckCircle, route: '/approvals' },
-];
+// Organized app sections
+const appSections = {
+  commerce: [
+    { key: 'orders', label: 'Orders', icon: ShoppingCart, route: '/orders', color: 'text-blue-500' },
+    { key: 'inventory', label: 'Inventory', icon: Package, route: '/inventory', color: 'text-purple-500' },
+    { key: 'listings', label: 'Listings', icon: Store, route: '/listings', color: 'text-orange-500' },
+    { key: 'shipping', label: 'Shipping', icon: Truck, route: '/shipping', color: 'text-green-500' },
+    { key: 'returns', label: 'Returns', icon: RotateCcw, route: '/returns', color: 'text-red-500' },
+  ],
+  money: [
+    { key: 'earnings', label: 'Earnings', icon: DollarSign, route: '/earnings', color: 'text-emerald-500' },
+    { key: 'payouts', label: 'Payouts', icon: CreditCard, route: '/payouts', color: 'text-teal-500' },
+    { key: 'taxes', label: 'Taxes', icon: Receipt, route: '/taxes', color: 'text-amber-500' },
+    { key: 'coupons', label: 'Promos', icon: Tag, route: '/coupons', color: 'text-pink-500' },
+  ],
+  ops: [
+    { key: 'messages', label: 'Messages', icon: MessageSquare, route: '/messages', color: 'text-blue-400' },
+    { key: 'contacts', label: 'Contacts', icon: Users, route: '/contacts', color: 'text-violet-500' },
+    { key: 'calendar', label: 'Calendar', icon: Calendar, route: '/calendar', color: 'text-red-400' },
+    { key: 'tasks', label: 'Tasks', icon: ClipboardList, route: '/tasks', color: 'text-indigo-500' },
+  ],
+  growth: [
+    { key: 'ads', label: 'Ads', icon: Megaphone, route: '/ads', color: 'text-fuchsia-500' },
+    { key: 'affiliates', label: 'Affiliates', icon: Link2, route: '/affiliates', color: 'text-cyan-500' },
+    { key: 'analytics', label: 'Analytics', icon: BarChart3, route: '/analytics', color: 'text-slate-500' },
+  ],
+  creator: [
+    { key: 'studio', label: 'Studio', icon: Video, route: '/studio', color: 'text-rose-500' },
+    { key: 'media', label: 'Media', icon: FolderOpen, route: '/media', color: 'text-yellow-500' },
+  ],
+  system: [
+    { key: 'settings', label: 'Settings', icon: Settings, route: '/settings', color: 'text-gray-500' },
+    { key: 'profile', label: 'Profile', icon: User, route: '/profile', color: 'text-blue-600' },
+  ],
+};
 
 interface LeftAppSidebarProps {
   onAppClick: (app: AppConfig) => void;
@@ -61,63 +80,117 @@ export default function LeftAppSidebar({ onAppClick }: LeftAppSidebarProps) {
       key: `entity-${entity.id}`,
       label: entity.display_name,
       route: `/entity/${entity.id}`,
-      icon: Building
+      icon: Building,
+      color: 'text-primary'
     });
   };
 
+  const renderAppTile = (app: AppConfig) => (
+    <button
+      key={app.key}
+      onClick={() => handleClick(app)}
+      className="group flex flex-col items-center gap-2 p-2 rounded-2xl hover:bg-muted/50 transition-all duration-200"
+    >
+      <div className={`
+        w-14 h-14 rounded-2xl flex items-center justify-center 
+        bg-gradient-to-br from-background to-muted
+        border shadow-md group-hover:scale-110 group-hover:shadow-xl
+        transition-all duration-200
+        ${app.color || 'text-foreground'}
+      `}>
+        <app.icon className="w-7 h-7" />
+      </div>
+      <span className="text-[10px] text-center leading-tight text-muted-foreground group-hover:text-foreground transition-colors">
+        {app.label}
+      </span>
+    </button>
+  );
+
   return (
-    <div className="flex flex-col h-full bg-muted/20 border-r p-4">
-      {/* Store section */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-4">Y'all Store</h2>
+    <div className="flex flex-col h-full bg-gradient-to-b from-muted/30 to-muted/10 backdrop-blur-xl border-r overflow-y-auto">
+      {/* Header */}
+      <div className="p-4 border-b border-border/50">
+        <h2 className="text-lg font-semibold mb-3">Y'all Store</h2>
         <input
           type="search"
-          placeholder="Search..."
-          className="w-full px-3 py-2 text-sm bg-background border rounded-lg"
+          placeholder="Search apps..."
+          className="w-full px-3 py-2 text-sm bg-background/50 backdrop-blur-sm border rounded-xl focus:ring-2 focus:ring-primary/20 transition-all"
         />
       </div>
 
-      {/* Apps grid */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-3 gap-3">
-          {apps.map((app) => (
-            <button
-              key={app.key}
-              onClick={() => handleClick(app)}
-              className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-muted/50 transition-colors group"
-            >
-              <div className="w-12 h-12 rounded-lg bg-background border flex items-center justify-center group-hover:border-primary transition-colors">
-                <app.icon className="w-5 h-5" />
-              </div>
-              <span className="text-xs text-center leading-tight">{app.label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* My Entities section */}
+      <div className="flex-1 p-4 space-y-6">
+        {/* My Entities */}
         {entities.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-sm font-semibold mb-3">My Entities</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {entities.slice(0, 6).map((entity) => (
+          <section>
+            <h3 className="text-xs font-semibold text-muted-foreground mb-3 px-2">MY ENTITIES</h3>
+            <div className="grid grid-cols-3 gap-2">
+              {entities.slice(0, 9).map((entity) => (
                 <button
                   key={entity.id}
                   onClick={() => handleEntityClick(entity)}
-                  className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                  className="group flex flex-col items-center gap-2 p-2 rounded-2xl hover:bg-muted/50 transition-all duration-200"
                 >
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-xs font-medium">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border flex items-center justify-center group-hover:scale-110 group-hover:shadow-xl transition-all duration-200">
+                    <span className="text-sm font-bold text-primary">
                       {entity.display_name.slice(0, 2).toUpperCase()}
                     </span>
                   </div>
-                  <span className="text-xs text-center leading-tight line-clamp-2">
+                  <span className="text-[10px] text-center leading-tight line-clamp-2 text-muted-foreground group-hover:text-foreground transition-colors">
                     {entity.display_name}
                   </span>
                 </button>
               ))}
             </div>
-          </div>
+          </section>
         )}
+
+        {/* Commerce */}
+        <section>
+          <h3 className="text-xs font-semibold text-muted-foreground mb-3 px-2">COMMERCE</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {appSections.commerce.map(renderAppTile)}
+          </div>
+        </section>
+
+        {/* Money */}
+        <section>
+          <h3 className="text-xs font-semibold text-muted-foreground mb-3 px-2">MONEY</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {appSections.money.map(renderAppTile)}
+          </div>
+        </section>
+
+        {/* Ops & Comms */}
+        <section>
+          <h3 className="text-xs font-semibold text-muted-foreground mb-3 px-2">OPS & COMMS</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {appSections.ops.map(renderAppTile)}
+          </div>
+        </section>
+
+        {/* Growth */}
+        <section>
+          <h3 className="text-xs font-semibold text-muted-foreground mb-3 px-2">GROWTH</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {appSections.growth.map(renderAppTile)}
+          </div>
+        </section>
+
+        {/* Creator */}
+        <section>
+          <h3 className="text-xs font-semibold text-muted-foreground mb-3 px-2">CREATOR</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {appSections.creator.map(renderAppTile)}
+          </div>
+        </section>
+
+        {/* System */}
+        <section>
+          <h3 className="text-xs font-semibold text-muted-foreground mb-3 px-2">SYSTEM</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {appSections.system.map(renderAppTile)}
+          </div>
+        </section>
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ interface AppTab {
   label: string;
   route?: string;
   icon?: LucideIcon;
+  color?: string;
 }
 
 interface CenterContentAreaProps {
@@ -109,19 +110,21 @@ export default function CenterContentArea({
   return (
     <div className="flex flex-col h-full">
       {/* Top bar with app icons - macOS dock style */}
-      <div className="sticky top-0 z-20 bg-gradient-to-b from-muted/90 to-muted/70 backdrop-blur-xl border-b border-border/50 flex items-center gap-2 px-6 py-3 shadow-lg">
+      <div className="sticky top-0 z-20 bg-gradient-to-b from-background/95 to-background/80 backdrop-blur-xl border-b border-border/40 flex items-center gap-2 px-6 py-3 shadow-lg">
         {openApps.map((app) => (
           <div key={app.key} className="relative group">
             <button
               onClick={() => scrollToApp(app.key)}
+              title={app.label}
               className={`
                 w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200
-                bg-gradient-to-br from-background to-muted
-                border shadow-md hover:scale-110 hover:shadow-xl
+                bg-gradient-to-br from-background via-muted/50 to-muted
+                shadow-md hover:scale-110 hover:shadow-xl
                 ${activeApp === app.key 
-                  ? 'border-primary/60 ring-2 ring-primary/30 scale-105' 
-                  : 'border-border/50 hover:border-primary/40'
+                  ? 'ring-2 ring-primary/50 scale-105 border-2 border-primary/30' 
+                  : 'border border-border/50 hover:border-primary/40'
                 }
+                ${app.color || 'text-foreground'}
               `}
             >
               {app.icon && <app.icon className="w-6 h-6" />}
@@ -133,7 +136,8 @@ export default function CenterContentArea({
                 e.stopPropagation();
                 onCloseApp(app.key);
               }}
-              className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+              title="Close"
+              className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:scale-110"
             >
               <X className="w-3 h-3" />
             </button>
@@ -142,31 +146,66 @@ export default function CenterContentArea({
       </div>
 
       {/* Scrollable app content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-muted/5 to-background">
       {/* Render all open apps stacked vertically */}
       {openApps.map((app) => (
         <div
           key={app.key}
           data-app-key={app.key}
-          className="min-h-screen relative border-b"
+          className="min-h-screen p-6"
         >
-          {/* App content */}
-          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
-            <div onClick={(e) => {
-              // Intercept all link clicks
-              const target = e.target as HTMLElement;
-              const link = target.closest('a');
-              if (link && link.href) {
-                const url = new URL(link.href);
-                if (url.origin === window.location.origin) {
-                  e.preventDefault();
-                  handleInternalNavigate(url.pathname);
-                }
-              }
-            }}>
-              <AppRenderer app={app} onNavigate={handleInternalNavigate} />
+          {/* Mac-style app card */}
+          <div className="max-w-6xl mx-auto">
+            <div className="rounded-2xl bg-background shadow-2xl border border-border/50 overflow-hidden">
+              {/* App Header - Glass effect */}
+              <div className="bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 backdrop-blur-sm border-b border-border/40 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {app.icon && (
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br from-background to-muted border flex items-center justify-center ${app.color || 'text-foreground'}`}>
+                        <app.icon className="w-5 h-5" />
+                      </div>
+                    )}
+                    <div>
+                      <h2 className="text-lg font-semibold">{app.label}</h2>
+                      <p className="text-xs text-muted-foreground">Y'all Dashboard</p>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => onCloseApp(app.key)}
+                    className="w-8 h-8 rounded-lg hover:bg-destructive/10 hover:text-destructive flex items-center justify-center transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* App Body */}
+              <div className="p-6">
+                <Suspense fallback={
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-pulse text-muted-foreground">Loading...</div>
+                  </div>
+                }>
+                  <div onClick={(e) => {
+                    // Intercept all link clicks
+                    const target = e.target as HTMLElement;
+                    const link = target.closest('a');
+                    if (link && link.href) {
+                      const url = new URL(link.href);
+                      if (url.origin === window.location.origin) {
+                        e.preventDefault();
+                        handleInternalNavigate(url.pathname);
+                      }
+                    }
+                  }}>
+                    <AppRenderer app={app} onNavigate={handleInternalNavigate} />
+                  </div>
+                </Suspense>
+              </div>
             </div>
-          </Suspense>
+          </div>
         </div>
       ))}
       </div>
