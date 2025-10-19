@@ -138,7 +138,7 @@ export default function HomeShell() {
             )}
           </div>
           
-          <FeedPane />
+          <SocialFeedPane />
         </div>
       </main>
       
