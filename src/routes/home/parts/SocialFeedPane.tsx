@@ -181,8 +181,8 @@ export default function SocialFeedPane() {
         {/* Profile Header - always visible */}
         <SocialProfileHeader />
         
-        {/* Favorites Bar - only on profile tab */}
-        {tab === 'profile' && <FavoritesSection />}
+        {/* Favorites Bar - always visible */}
+        <FavoritesSection />
 
         {/* Tab indicators (clickable or drag/swipe to change) */}
         <div className="sticky top-0 z-10 flex items-center justify-center gap-2 px-0 py-1">
