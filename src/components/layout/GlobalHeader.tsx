@@ -137,11 +137,11 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
           {/* Logout */}
           <button
             onClick={logout}
-            className="inline-flex items-center gap-2 h-10 px-3 rounded-md border border-border/60 hover:bg-accent/40 transition-colors"
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-destructive/10 hover:bg-destructive hover:text-destructive-foreground border border-destructive/30 transition-colors font-medium"
             aria-label="Logout"
           >
             <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">Logout</span>
+            <span>Logout</span>
           </button>
         </nav>
       </div>
