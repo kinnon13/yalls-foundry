@@ -17,6 +17,8 @@ import { Card } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { z } from 'zod';
 import { ArrowLeft, Sparkles } from 'lucide-react';
+import { emitRockerEvent } from '@/lib/ai/rocker/bus';
+import { useRockerEvent } from '@/hooks/useRockerEvent';
 
 const emailSchema = z.string().email('Invalid email address').max(255);
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(128);
@@ -33,6 +35,12 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const { session } = useSession();
   const navigate = useNavigate();
+  const { emit: emitRockerTelemetry } = useRockerEvent();
+
+  // Log auth page view
+  useEffect(() => {
+    emitRockerTelemetry('auth.page_view', { metadata: { mode, source: next } });
+  }, [mode, next]);
 
   // Guard: If already authenticated, redirect to home or next
   useEffect(() => {
@@ -55,22 +63,43 @@ export default function AuthPage() {
     const passwordResult = passwordSchema.safeParse(password);
     
     if (!emailResult.success) {
+      emitRockerTelemetry('auth.validation_error', { metadata: { mode: 'signup', field: 'email', error: emailResult.error.errors[0].message } });
       toast({ title: emailResult.error.errors[0].message, variant: 'destructive' });
       return;
     }
     if (!passwordResult.success) {
+      emitRockerTelemetry('auth.validation_error', { metadata: { mode: 'signup', field: 'password', error: passwordResult.error.errors[0].message } });
       toast({ title: passwordResult.error.errors[0].message, variant: 'destructive' });
       return;
     }
 
     setLoading(true);
+    const startTime = Date.now();
     try {
-      const { error } = await signUpWithPassword(email, password);
+      const { error, session: newSession } = await signUpWithPassword(email, password);
       if (error) throw error;
+      
+      // Log successful signup to Rocker
+      await emitRockerEvent('user.create.profile', newSession?.userId || 'unknown', {
+        email,
+        source: next,
+        duration_ms: Date.now() - startTime,
+      });
+      emitRockerTelemetry('auth.signup_success', { metadata: { email, duration_ms: Date.now() - startTime } });
+      
       toast({ title: '✓ Account created', description: 'You can now sign in' });
       setMode('login');
       setPassword('');
     } catch (err) {
+      // Log failure to Rocker
+      emitRockerTelemetry('auth.signup_error', { 
+        metadata: { 
+          email, 
+          error: err instanceof Error ? err.message : 'Unknown error',
+          duration_ms: Date.now() - startTime 
+        }
+      });
+      
       toast({
         title: 'Sign up failed',
         description: err instanceof Error ? err.message : 'Unknown error',
@@ -89,21 +118,43 @@ export default function AuthPage() {
     const passwordResult = passwordSchema.safeParse(password);
     
     if (!emailResult.success) {
+      emitRockerTelemetry('auth.validation_error', { metadata: { mode: 'login', field: 'email', error: emailResult.error.errors[0].message } });
       toast({ title: emailResult.error.errors[0].message, variant: 'destructive' });
       return;
     }
     if (!passwordResult.success) {
+      emitRockerTelemetry('auth.validation_error', { metadata: { mode: 'login', field: 'password', error: passwordResult.error.errors[0].message } });
       toast({ title: passwordResult.error.errors[0].message, variant: 'destructive' });
       return;
     }
 
     setLoading(true);
+    const startTime = Date.now();
     try {
-      const { error } = await signInWithPassword(email, password);
+      const { error, session: newSession } = await signInWithPassword(email, password);
       if (error) throw error;
+      
+      // Log successful login to Rocker
+      await emitRockerEvent('user.view.profile', newSession?.userId || 'unknown', {
+        email,
+        source: next,
+        duration_ms: Date.now() - startTime,
+        returning_user: true,
+      });
+      emitRockerTelemetry('auth.login_success', { metadata: { email, duration_ms: Date.now() - startTime } });
+      
       toast({ title: '✓ Signed in' });
       navigate(next, { replace: true });
     } catch (err) {
+      // Log failure to Rocker
+      emitRockerTelemetry('auth.login_error', { 
+        metadata: { 
+          email, 
+          error: err instanceof Error ? err.message : 'Invalid credentials',
+          duration_ms: Date.now() - startTime 
+        }
+      });
+      
       toast({
         title: 'Sign in failed',
         description: err instanceof Error ? err.message : 'Invalid credentials',
@@ -119,22 +170,37 @@ export default function AuthPage() {
     
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
+      emitRockerTelemetry('auth.validation_error', { metadata: { mode: 'reset', field: 'email', error: emailResult.error.errors[0].message } });
       toast({ title: emailResult.error.errors[0].message, variant: 'destructive' });
       return;
     }
 
     setLoading(true);
+    const startTime = Date.now();
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth?mode=login`
       });
       if (error) throw error;
+      
+      // Log password reset to Rocker
+      emitRockerTelemetry('auth.reset_success', { metadata: { email, duration_ms: Date.now() - startTime } });
+      
       toast({ 
         title: '✓ Check your email', 
         description: 'Password reset link sent' 
       });
       setMode('login');
     } catch (err) {
+      // Log failure to Rocker
+      emitRockerTelemetry('auth.reset_error', { 
+        metadata: { 
+          email, 
+          error: err instanceof Error ? err.message : 'Unknown error',
+          duration_ms: Date.now() - startTime 
+        }
+      });
+      
       toast({
         title: 'Reset failed',
         description: err instanceof Error ? err.message : 'Unknown error',
