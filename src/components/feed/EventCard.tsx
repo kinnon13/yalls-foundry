@@ -25,8 +25,8 @@ export function EventCard({ event }: EventCardProps) {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto bg-card aspect-square flex flex-col rounded-2xl overflow-hidden">
-      <CardContent className="p-6 space-y-4 flex flex-col h-full justify-between">
+    <Card className="w-full max-w-2xl mx-auto bg-card">
+      <CardContent className="p-6 space-y-4">
         {/* Date/Time Chip */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Calendar className="h-4 w-4" />

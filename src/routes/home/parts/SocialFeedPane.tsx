@@ -4,7 +4,6 @@ import { useSession } from '@/lib/auth/context';
 import { Reel } from '@/components/reels/Reel';
 import { cn } from '@/lib/utils';
 import ProfileSummaryBar from './ProfileSummaryBar';
-import SocialHeader from './SocialHeader';
 
 const TABS = ['following', 'for-you', 'shop', 'profile'] as const;
 type Tab = typeof TABS[number];
@@ -18,50 +17,6 @@ export default function SocialFeedPane() {
   const [entityId, setEntityId] = useState<string | null>(sp.get('entity') || null);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  
-  // Calculate 9:16 aspect ratio dimensions (TikTok style)
-  // Default: 1080x1920 scaled down to fit typical desktop panels
-  const [feedHeight, setFeedHeight] = useState(() => {
-    const saved = Number(localStorage.getItem('feed.itemHeight'));
-    return saved || 800; // ~9:16 ratio when panel width is ~450px
-  });
-  
-  const [resizing, setResizing] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('feed.itemHeight', String(feedHeight));
-  }, [feedHeight]);
-
-  const startResize = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const startY = e.clientY;
-    const startH = feedHeight;
-    setResizing(true);
-    
-    const onMove = (ev: MouseEvent) => {
-      const h = Math.max(300, Math.min(1200, startH + (ev.clientY - startY)));
-      setFeedHeight(h);
-    };
-    
-    const onUp = () => {
-      setResizing(false);
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  };
 
   // seamless drag/swipe gesture for tab switching
   const railRef = useRef<HTMLDivElement>(null);
@@ -157,32 +112,52 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="relative isolate flex h-full w-full flex-col text-[hsl(222.2_47.4%_11.2%)] overflow-hidden">
-      {/* Sticky header - TikTok style */}
-      <div className="sticky top-0 z-10 md:static md:z-auto">
-        <SocialHeader />
+    <section className="flex h-full w-full flex-col bg-white">
+      {/* Home button and Connected Accounts heading in same row */}
+      <div className="mb-2 flex items-center justify-between px-2">
+        <button
+          onClick={() => navigate('/home')}
+          className="text-base font-semibold text-foreground hover:text-primary transition-colors"
+        >
+          Home
+        </button>
+        <h3 className="text-base font-semibold text-foreground">View Connected Accounts</h3>
+        <div className="w-[60px]" aria-hidden /> {/* Spacer for balance */}
       </div>
 
-      {/* Swipeable feed container - SCROLLABLE */}
+      {/* Profile bubble with stats */}
+      <ProfileSummaryBar />
+
+      {/* Tab indicators (clickable or drag/swipe to change) */}
+      <div className="sticky top-0 z-10 mb-2 flex items-center justify-center gap-2 bg-white/90 backdrop-blur px-2 py-1">
+        {TABS.map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={cn(
+              'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer',
+              t === tab
+                ? 'bg-primary text-primary-foreground scale-105'
+                : 'bg-muted/50 text-muted-foreground scale-95 hover:bg-muted hover:scale-100'
+            )}
+          >
+            {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Swipeable feed container */}
       <div 
         ref={railRef}
-        className="relative flex-1 w-full overflow-y-auto overflow-x-hidden select-none touch-pan-y bg-transparent"
+        className="relative flex-1 select-none touch-pan-y bg-white"
       >
         <div 
-          className="h-full w-full overflow-y-auto snap-y snap-mandatory scrollbar-hide"
+          className="h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide bg-white"
         >
-          <div className="flex flex-col items-stretch w-full">
+          <div className="space-y-4 px-2 pb-4">
             {items.map((item) => (
-              <div 
-                key={item.id} 
-                className="snap-start snap-always relative shrink-0 w-full"
-                style={{
-                  height: isMobile ? '100vh' : `${feedHeight}px`
-                }}
-              >
+              <div key={item.id} className="h-[calc(100vh-16rem)] snap-start">
                 <Reel {...item} />
-                
-                {/* Resize disabled to avoid stretching */}
               </div>
             ))}
           </div>

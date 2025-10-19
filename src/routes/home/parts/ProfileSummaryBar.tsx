@@ -11,7 +11,6 @@ export default function ProfileSummaryBar() {
   const userEmail = session?.email;
 
   const [name, setName] = useState('You');
-  const [handle, setHandle] = useState<string | null>(null);
   const [avatar, setAvatar] = useState<string | undefined>(undefined);
   const [totals, setTotals] = useState<Totals>({ following: 0, followers: 0, likes: 0 });
 
@@ -22,7 +21,7 @@ export default function ProfileSummaryBar() {
       // 1) Basic profile
       const { data: prof } = await supabase
         .from('profiles')
-        .select('display_name, handle, avatar_url')
+        .select('display_name, avatar_url')
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -31,7 +30,6 @@ export default function ProfileSummaryBar() {
           userEmail?.split('@')[0] ??
           'You'
       );
-      setHandle(prof?.handle ?? null);
       setAvatar(prof?.avatar_url ?? undefined);
 
       // 2) Totals (safe fallback if RPC not present)
@@ -57,11 +55,11 @@ export default function ProfileSummaryBar() {
   return (
     <Link
       to="/profile"
-      className="flex items-center hover:bg-muted/30 rounded-lg transition-colors"
+      className="flex items-center px-2 py-2 hover:bg-muted/30 rounded-lg transition-colors"
       aria-label="Open your profile"
     >
       {/* Avatar on left */}
-      <div className="relative h-[72px] w-[72px] rounded-full overflow-hidden border-2 border-primary/60 shrink-0">
+      <div className="relative h-[72px] w-[72px] rounded-full overflow-hidden ring-2 ring-primary/60 shrink-0">
         {avatar ? (
           <img src={avatar} alt="" className="h-full w-full object-cover" />
         ) : (
@@ -71,7 +69,7 @@ export default function ProfileSummaryBar() {
 
       {/* Stats centered with username above */}
       <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="text-base font-semibold mb-2">@{handle || name}</div>
+        <div className="text-base font-semibold mb-2">{name}</div>
         <div className="flex gap-6 text-sm">
           <div className="flex flex-col items-center">
             <span className="text-lg font-bold text-foreground">{totals.following}</span>
@@ -87,7 +85,7 @@ export default function ProfileSummaryBar() {
           </div>
         </div>
       </div>
-      
+      <div className="w-[72px] shrink-0" aria-hidden />
     </Link>
   );
 }

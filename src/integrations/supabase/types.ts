@@ -6247,7 +6247,6 @@ export type Database = {
           deleted_at: string | null
           display_name: string | null
           email: string | null
-          handle: string | null
           id: string
           updated_at: string
           user_id: string
@@ -6261,7 +6260,6 @@ export type Database = {
           deleted_at?: string | null
           display_name?: string | null
           email?: string | null
-          handle?: string | null
           id?: string
           updated_at?: string
           user_id: string
@@ -6275,7 +6273,6 @@ export type Database = {
           deleted_at?: string | null
           display_name?: string | null
           email?: string | null
-          handle?: string | null
           id?: string
           updated_at?: string
           user_id?: string
