@@ -7866,6 +7866,106 @@ export type Database = {
         }
         Relationships: []
       }
+      vault_access: {
+        Row: {
+          mfa_required: boolean
+          role: string
+          user_id: string
+          vault_id: string
+        }
+        Insert: {
+          mfa_required?: boolean
+          role: string
+          user_id: string
+          vault_id: string
+        }
+        Update: {
+          mfa_required?: boolean
+          role?: string
+          user_id?: string
+          vault_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_access_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_items: {
+        Row: {
+          created_at: string
+          enc_blob: string
+          id: string
+          kind: string
+          meta: Json
+          vault_id: string
+        }
+        Insert: {
+          created_at?: string
+          enc_blob: string
+          id?: string
+          kind: string
+          meta?: Json
+          vault_id: string
+        }
+        Update: {
+          created_at?: string
+          enc_blob?: string
+          id?: string
+          kind?: string
+          meta?: Json
+          vault_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_items_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vaults: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          id: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vaults_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vaults_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
+        ]
+      }
       views_coldstart: {
         Row: {
           listing_id: string

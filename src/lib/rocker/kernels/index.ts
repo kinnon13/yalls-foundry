@@ -1,33 +1,39 @@
 /**
  * Rocker AI Kernels
- * Small AI-powered "skills" that react to events
+ * Self-learning systems that observe, decide, and act
  */
+
+import { runAdPredictor } from './ad-predictor';
+import { runAffiliateRouter } from './affiliate-router';
+import { runClaimHunter } from './claim-hunter';
+import { runCartNudge } from './cart-nudge';
+import { runEventConflictDetector } from './event-conflict-detector';
 
 export { generateNextBestActions } from './nba-generator';
 export type { NextBestAction } from './nba-generator';
 
-// Placeholder exports for other kernels mentioned in brief
-export const postDisclosureCheck = async (content: string): Promise<{ safe: boolean; reason?: string }> => {
-  // TODO: Check for required disclosures, sensitive info
-  return { safe: true };
-};
+export const kernels = [
+  runAdPredictor,
+  runAffiliateRouter,
+  runClaimHunter,
+  runCartNudge,
+  runEventConflictDetector
+];
 
-export const cartFollowupNudge = async (userId: string): Promise<boolean> => {
-  // TODO: Check abandoned carts, send nudge if appropriate
-  return false;
-};
+export async function runKernels(ctx: any) {
+  for (const kernel of kernels) {
+    try {
+      await kernel(ctx);
+    } catch (e) {
+      console.error('[Kernel Error]', kernel.name, e);
+    }
+  }
+}
 
-export const incentiveEligibilityHint = async (stallionId: string): Promise<string[]> => {
-  // TODO: Check which programs the stallion qualifies for
-  return [];
-};
-
-export const farmOverdueFlags = async (farmId: string): Promise<any[]> => {
-  // TODO: Check overdue tasks, health checks, breeding schedules
-  return [];
-};
-
-export const eventConflictDetector = async (eventId: string): Promise<string[]> => {
-  // TODO: Check for scheduling conflicts
-  return [];
+export {
+  runAdPredictor,
+  runAffiliateRouter,
+  runClaimHunter,
+  runCartNudge,
+  runEventConflictDetector
 };
