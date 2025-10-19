@@ -2156,6 +2156,8 @@ export type Database = {
           idempotency_key: string | null
           metadata: Json
           redirected_to_platform: boolean | null
+          reversal_of_id: string | null
+          reversed_at: string | null
           settlement_batch_id: string | null
           source_entity_id: string | null
           source_entity_type: string | null
@@ -2172,6 +2174,8 @@ export type Database = {
           idempotency_key?: string | null
           metadata?: Json
           redirected_to_platform?: boolean | null
+          reversal_of_id?: string | null
+          reversed_at?: string | null
           settlement_batch_id?: string | null
           source_entity_id?: string | null
           source_entity_type?: string | null
@@ -2188,12 +2192,43 @@ export type Database = {
           idempotency_key?: string | null
           metadata?: Json
           redirected_to_platform?: boolean | null
+          reversal_of_id?: string | null
+          reversed_at?: string | null
           settlement_batch_id?: string | null
           source_entity_id?: string | null
           source_entity_type?: string | null
           status?: string
           transaction_type?: string
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_ledger_reversal_of_id_fkey"
+            columns: ["reversal_of_id"]
+            isOneToOne: false
+            referencedRelation: "commission_ledger"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_policy: {
+        Row: {
+          id: boolean
+          min_payout_cents: number | null
+          self_referral_allowed: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: boolean
+          min_payout_cents?: number | null
+          self_referral_allowed?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: boolean
+          min_payout_cents?: number | null
+          self_referral_allowed?: boolean | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -5504,6 +5539,7 @@ export type Database = {
           created_at: string
           currency: string
           email: string
+          fx_rate: number | null
           id: string
           payment_intent_id: string | null
           reversal_reason: string | null
@@ -5514,6 +5550,7 @@ export type Database = {
           subtotal_cents: number
           tax_cents: number
           total_cents: number
+          total_usd_cents: number | null
           updated_at: string
           user_id: string | null
         }
@@ -5522,6 +5559,7 @@ export type Database = {
           created_at?: string
           currency?: string
           email: string
+          fx_rate?: number | null
           id?: string
           payment_intent_id?: string | null
           reversal_reason?: string | null
@@ -5532,6 +5570,7 @@ export type Database = {
           subtotal_cents?: number
           tax_cents?: number
           total_cents?: number
+          total_usd_cents?: number | null
           updated_at?: string
           user_id?: string | null
         }
@@ -5540,6 +5579,7 @@ export type Database = {
           created_at?: string
           currency?: string
           email?: string
+          fx_rate?: number | null
           id?: string
           payment_intent_id?: string | null
           reversal_reason?: string | null
@@ -5550,6 +5590,7 @@ export type Database = {
           subtotal_cents?: number
           tax_cents?: number
           total_cents?: number
+          total_usd_cents?: number | null
           updated_at?: string
           user_id?: string | null
         }
@@ -7741,6 +7782,42 @@ export type Database = {
           surface?: string | null
           tenant_id?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_acquisition: {
+        Row: {
+          first_touch_ts: string | null
+          invite_code: string | null
+          invite_medium: string | null
+          invited_by_id: string | null
+          invited_by_kind: string | null
+          last_touch_ts: string | null
+          ref_session_id: string | null
+          user_id: string
+          utm: Json | null
+        }
+        Insert: {
+          first_touch_ts?: string | null
+          invite_code?: string | null
+          invite_medium?: string | null
+          invited_by_id?: string | null
+          invited_by_kind?: string | null
+          last_touch_ts?: string | null
+          ref_session_id?: string | null
+          user_id: string
+          utm?: Json | null
+        }
+        Update: {
+          first_touch_ts?: string | null
+          invite_code?: string | null
+          invite_medium?: string | null
+          invited_by_id?: string | null
+          invited_by_kind?: string | null
+          last_touch_ts?: string | null
+          ref_session_id?: string | null
+          user_id?: string
+          utm?: Json | null
         }
         Relationships: []
       }
