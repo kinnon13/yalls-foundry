@@ -1,36 +1,39 @@
-import { Heart } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 export default function FavoritesSection() {
-  // Mock favorites data
+  // Mock favorites data with initials and ring colors
   const favorites = [
-    { id: 1, image: 'https://picsum.photos/seed/fav1/200/200', title: 'Favorite 1' },
-    { id: 2, image: 'https://picsum.photos/seed/fav2/200/200', title: 'Favorite 2' },
-    { id: 3, image: 'https://picsum.photos/seed/fav3/200/200', title: 'Favorite 3' },
-    { id: 4, image: 'https://picsum.photos/seed/fav4/200/200', title: 'Favorite 4' },
-    { id: 5, image: 'https://picsum.photos/seed/fav5/200/200', title: 'Favorite 5' },
-    { id: 6, image: 'https://picsum.photos/seed/fav6/200/200', title: 'Favorite 6' },
+    { id: 1, initials: 'CM', ringColor: 'ring-purple-500' },
+    { id: 2, initials: 'WR', ringColor: 'ring-cyan-500' },
+    { id: 3, initials: 'SC', ringColor: 'ring-yellow-500' },
+    { id: 4, initials: 'S', ringColor: 'ring-emerald-500' },
+    { id: 5, initials: 'MV', ringColor: 'ring-blue-500' },
+    { id: 6, initials: 'T', ringColor: 'ring-green-500' },
+    { id: 7, initials: 'SJ', ringColor: 'ring-violet-500' },
   ];
 
   return (
-    <div className="h-full">
+    <div className="bg-background py-3 px-4 border-b">
       <div className="flex items-center gap-1 mb-2">
-        <Heart className="w-3 h-3 fill-red-500 text-red-500" />
-        <h2 className="text-xs font-semibold">Favorites</h2>
+        <h2 className="text-sm font-semibold text-foreground">Favorites</h2>
       </div>
       
-      <div className="flex flex-col gap-2 overflow-y-auto max-h-[calc(100vh-20rem)]">
+      <div className="flex gap-3 overflow-x-auto scrollbar-hide">
         {favorites.map((fav) => (
           <button
             key={fav.id}
-            className="w-full aspect-square rounded-lg overflow-hidden hover:opacity-80 transition-opacity"
+            className="flex-shrink-0"
           >
-            <img
-              src={fav.image}
-              alt={fav.title}
-              className="w-full h-full object-cover"
-            />
+            <div className={`w-16 h-16 rounded-full bg-muted flex items-center justify-center ring-2 ${fav.ringColor} hover:opacity-80 transition-opacity`}>
+              <span className="text-sm font-semibold">{fav.initials}</span>
+            </div>
           </button>
         ))}
+        <button className="flex-shrink-0">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center hover:opacity-80 transition-opacity">
+            <Plus className="w-6 h-6" />
+          </div>
+        </button>
       </div>
     </div>
   );
