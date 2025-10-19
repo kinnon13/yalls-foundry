@@ -8,7 +8,7 @@ import { MessageSquare, ShoppingBag, Calendar, Users } from 'lucide-react';
 
 const DOCK_APPS: Array<{ id: OverlayKey; icon: any; label: string }> = [
   { id: 'messages', icon: MessageSquare, label: 'Messages' },
-  { id: 'marketplace', icon: ShoppingBag, label: 'Shop' },
+  { id: 'marketplace', icon: ShoppingBag, label: 'Marketplace' },
   { id: 'events', icon: Calendar, label: 'Events' },
   { id: 'orders', icon: Users, label: 'Orders' },
 ];

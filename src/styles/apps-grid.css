@@ -44,11 +44,8 @@
   margin-top: 8px;
   text-align: center;
   font-size: clamp(11px, 0.11 * var(--tile), 14px);
-  line-height: 1.1;
+  line-height: 1.2;
   color: rgba(255, 255, 255, 0.85);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* Safety: borders/padding never change the math */
