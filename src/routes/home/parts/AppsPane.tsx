@@ -93,8 +93,9 @@ export default function AppsPane() {
   );
   const [currentPage, setCurrentPage] = useState(0);
   
-  // App overlay state
   const [openApp, setOpenApp] = useState<AppTile | null>(null);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
 
   useEffect(() => {
     localStorage.setItem('apps.tileSize', String(tile));
@@ -394,6 +395,32 @@ export default function AppsPane() {
     window.addEventListener('mouseup', onUp);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && currentPage < totalPages - 1) {
+      setCurrentPage(p => p + 1);
+    }
+    if (isRightSwipe && currentPage > 0) {
+      setCurrentPage(p => p - 1);
+    }
+
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Favorites Section */}
@@ -409,6 +436,9 @@ export default function AppsPane() {
         <div 
           ref={boxRef}
           onMouseDown={startDrag}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           className="border-2 border-border rounded-lg bg-muted/20 relative resize overflow-hidden cursor-move"
           style={{ 
             width: `${containerWidth}px`,
