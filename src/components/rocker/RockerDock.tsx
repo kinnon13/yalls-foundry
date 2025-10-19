@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSession } from '@/lib/auth/context';
 import { supabase } from '@/integrations/supabase/client';
+import { Lightbulb } from 'lucide-react';
 
 export function RockerDock() {
   const [open, setOpen] = useState(false);
@@ -21,11 +22,12 @@ export function RockerDock() {
   return (
     <>
       <button
-        className="fixed bottom-4 right-4 rounded-full shadow-lg px-4 py-3 bg-black text-white"
+        className="fixed bottom-4 right-4 w-16 h-16 rounded-full shadow-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-400 hover:scale-110 transition-all duration-200 flex items-center justify-center group"
         onClick={() => { setOpen(!open); }}
         aria-label="Open Rocker"
       >
-        🤖 Rocker
+        <Lightbulb className="w-8 h-8 text-white" />
+        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse" />
       </button>
 
       {open && (
