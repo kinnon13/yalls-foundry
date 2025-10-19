@@ -4,7 +4,7 @@
  * Allows users to view and edit their basic profile information
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
 import { toast } from 'sonner';
 import { User, Save } from 'lucide-react';
+import { AvatarUploader } from '@/components/profile/AvatarUploader';
 
 export function ProfileSettingsTab() {
   const { session } = useSession();
@@ -38,9 +39,18 @@ export function ProfileSettingsTab() {
   });
 
   // Form state
-  const [displayName, setDisplayName] = useState(profile?.display_name || '');
-  const [bio, setBio] = useState(profile?.bio || '');
-  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');
+  const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+
+  // Sync form state with profile data when it loads
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.display_name || '');
+      setBio(profile.bio || '');
+      setAvatarUrl(profile.avatar_url || '');
+    }
+  }, [profile]);
 
   // Update profile mutation
   const updateMutation = useMutation({
@@ -70,6 +80,9 @@ export function ProfileSettingsTab() {
   });
 
   const handleSave = () => {
+    // Also invalidate the currentProfile query used by the header
+    queryClient.invalidateQueries({ queryKey: ['currentProfile'] });
+    
     updateMutation.mutate({
       display_name: displayName || undefined,
       bio: bio || undefined,
@@ -130,16 +143,34 @@ export function ProfileSettingsTab() {
             />
           </div>
 
-          {/* Avatar URL */}
+          {/* Avatar Photo Upload */}
           <div className="space-y-2">
-            <Label htmlFor="avatarUrl">Avatar URL</Label>
-            <Input
-              id="avatarUrl"
-              value={isEditing ? avatarUrl : (profile?.avatar_url || 'No avatar')}
-              onChange={(e) => setAvatarUrl(e.target.value)}
-              disabled={!isEditing}
-              placeholder="https://example.com/avatar.jpg"
-            />
+            <Label>Profile Photo</Label>
+            {isEditing ? (
+              <AvatarUploader
+                currentUrl={avatarUrl}
+                onUploadComplete={(url) => setAvatarUrl(url)}
+              />
+            ) : (
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-muted">
+                  {profile?.avatar_url ? (
+                    <img 
+                      src={profile.avatar_url} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <User className="w-8 h-8 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {profile?.avatar_url ? 'Photo set' : 'No photo uploaded'}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* User Info (Read-only) */}
