@@ -8948,6 +8948,40 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_discovery_queue_health: {
+        Row: {
+          count: number | null
+          high_retry_count: number | null
+          last_activity: string | null
+          oldest_queued: string | null
+          status: string | null
+        }
+        Relationships: []
+      }
+      vw_marketplace_gaps_critical: {
+        Row: {
+          category: string | null
+          category_name: string | null
+          category_slug: string | null
+          domain: string | null
+          gap_level: string | null
+          inventory_ct: number | null
+          last_checked: string | null
+          tag: string | null
+          user_demand: number | null
+        }
+        Relationships: []
+      }
+      vw_suggestions_coverage: {
+        Row: {
+          coverage_pct: number | null
+          domain: string | null
+          total_inventory: number | null
+          users_with_interest: number | null
+          users_with_inventory: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _log_rpc: {
