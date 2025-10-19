@@ -2121,9 +2121,11 @@ export type Database = {
           amount_cents: number
           created_at: string
           currency: string
+          expires_at: string | null
           id: string
           idempotency_key: string | null
           metadata: Json
+          redirected_to_platform: boolean | null
           settlement_batch_id: string | null
           source_entity_id: string | null
           source_entity_type: string | null
@@ -2135,9 +2137,11 @@ export type Database = {
           amount_cents: number
           created_at?: string
           currency?: string
+          expires_at?: string | null
           id?: string
           idempotency_key?: string | null
           metadata?: Json
+          redirected_to_platform?: boolean | null
           settlement_batch_id?: string | null
           source_entity_id?: string | null
           source_entity_type?: string | null
@@ -2149,9 +2153,11 @@ export type Database = {
           amount_cents?: number
           created_at?: string
           currency?: string
+          expires_at?: string | null
           id?: string
           idempotency_key?: string | null
           metadata?: Json
+          redirected_to_platform?: boolean | null
           settlement_batch_id?: string | null
           source_entity_id?: string | null
           source_entity_type?: string | null
@@ -6280,6 +6286,8 @@ export type Database = {
           calendar_public: boolean | null
           calendar_settings: Json | null
           created_at: string
+          creator_account_enabled: boolean | null
+          creator_account_verified_at: string | null
           deleted_at: string | null
           display_name: string | null
           email: string | null
@@ -6294,6 +6302,8 @@ export type Database = {
           calendar_public?: boolean | null
           calendar_settings?: Json | null
           created_at?: string
+          creator_account_enabled?: boolean | null
+          creator_account_verified_at?: string | null
           deleted_at?: string | null
           display_name?: string | null
           email?: string | null
@@ -6308,6 +6318,8 @@ export type Database = {
           calendar_public?: boolean | null
           calendar_settings?: Json | null
           created_at?: string
+          creator_account_enabled?: boolean | null
+          creator_account_verified_at?: string | null
           deleted_at?: string | null
           display_name?: string | null
           email?: string | null
@@ -8591,6 +8603,14 @@ export type Database = {
       cleanup_expired_memories: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      commission_distribute_dual_tree: {
+        Args: { p_hold_days?: number; p_order_id: string; p_rule_set?: string }
+        Returns: Json
+      }
+      commission_expire_old: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       connection_metrics: {
         Args: { p_window_hours?: number }

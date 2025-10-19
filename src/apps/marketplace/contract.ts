@@ -8,13 +8,19 @@ export const marketplaceContract: AppContract = {
   id: 'marketplace',
   version: '1.0.0',
   name: 'Marketplace',
-  description: 'Buy & sell listings',
+  description: 'Buy & sell listings with dual-tree MLM commission structure',
 
   intents: [
     'browse_listings',
     'create_listing',
     'purchase',
   ],
+
+  // Commission structure (automatic):
+  // - Platform 8%: 4% buyer upline (uncapped) + 4% seller upline (capped $100)
+  // - Seller bonus (optional): 80% affiliate + 10% platform + 10% affiliate upline
+  // - Creator account required to receive payouts
+  // - 1-year expiration on unclaimed commissions
 
   actions: {
     create_listing: {

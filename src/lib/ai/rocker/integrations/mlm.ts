@@ -19,7 +19,12 @@ export async function rockerReferralCreated(params: {
 
   // Rocker should:
   // - Show referral chain
-  // - Explain commission structure
+  // - Explain commission structure:
+  //   * Platform 8% fee: 4% buyer upline (UNCAPPED) + 4% seller upline (CAP $100)
+  //   * Seller bonus: 80% affiliate direct + 10% platform + 10% affiliate upline
+  //   * Creator account required: Users without creator_account_enabled → commissions go to platform
+  //   * 1-year expiration: Unclaimed commissions after 1 year → platform
+  //   * $100 cap on business upline prevents excessive payouts on expensive items
 }
 
 export async function rockerPayoutTriggered(params: {
