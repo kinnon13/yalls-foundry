@@ -25,9 +25,13 @@ export default function SocialFeedPane() {
   );
   const [resizing, setResizing] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024);
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -219,21 +223,25 @@ export default function SocialFeedPane() {
                 {/* Resize Handles - only on desktop */}
                 {!isMobile && (
                   <>
-                    <div 
-                      onMouseDown={(e) => startResize(e, 'width')}
-                      className="absolute right-0 top-0 bottom-0 w-2 border-r-2 border-dashed border-primary/50 hover:border-primary cursor-ew-resize z-10"
-                      title="Drag to resize width"
-                    />
+                    {!isTablet && (
+                      <div 
+                        onMouseDown={(e) => startResize(e, 'width')}
+                        className="absolute right-0 top-0 bottom-0 w-2 border-r-2 border-dashed border-primary/50 hover:border-primary cursor-ew-resize z-10"
+                        title="Drag to resize width"
+                      />
+                    )}
                     <div 
                       onMouseDown={(e) => startResize(e, 'height')}
                       className="absolute left-0 right-0 bottom-0 h-2 border-b-2 border-dashed border-primary/50 hover:border-primary cursor-ns-resize z-10"
                       title="Drag to resize height"
                     />
-                    <div 
-                      onMouseDown={(e) => startResize(e, 'both')}
-                      className="absolute right-0 bottom-0 w-4 h-4 border-r-2 border-b-2 border-dashed border-primary/70 hover:border-primary cursor-nwse-resize z-10 rounded-bl"
-                      title="Drag to resize both"
-                    />
+                    {!isTablet && (
+                      <div 
+                        onMouseDown={(e) => startResize(e, 'both')}
+                        className="absolute right-0 bottom-0 w-4 h-4 border-r-2 border-b-2 border-dashed border-primary/70 hover:border-primary cursor-nwse-resize z-10 rounded-bl"
+                        title="Drag to resize both"
+                      />
+                    )}
                   </>
                 )}
               </div>
