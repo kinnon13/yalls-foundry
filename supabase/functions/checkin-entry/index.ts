@@ -28,7 +28,9 @@ serve(async (req) => {
     .insert({ entry_id: entryId, method: 'qr' });
 
   if (error) {
-    return withCors(JSON.stringify({ error: error.message }), { status: 400 });
+    return withCors(JSON.stringify({ 
+      error: error instanceof Error ? error.message : String(error) 
+    }), { status: 400 });
   }
 
   return withCors(JSON.stringify({ success: true }));

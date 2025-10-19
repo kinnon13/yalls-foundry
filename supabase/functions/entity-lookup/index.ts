@@ -65,7 +65,9 @@ serve(async (req) => {
 
     if (searchError) {
       log.error('Search failed', searchError);
-      return new Response(JSON.stringify({ error: searchError.message }), {
+      return new Response(JSON.stringify({ 
+        error: searchError instanceof Error ? searchError.message : String(searchError) 
+      }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
