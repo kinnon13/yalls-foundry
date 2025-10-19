@@ -9,6 +9,19 @@ export const env = {
   SUPABASE_ANON_KEY: import.meta.env?.VITE_SUPABASE_ANON_KEY ?? '',
   SENTRY_DSN: import.meta.env?.VITE_SENTRY_DSN,
   FEATURE_SCANNER: import.meta.env?.VITE_FEATURE_SCANNER === '1',
+  DEMO_MODE: import.meta.env?.VITE_DEMO === '1',
   isDev: import.meta.env?.DEV === true,
   isProd: import.meta.env?.PROD === true,
 };
+
+/**
+ * Check if demo mode is active (env + URL override)
+ */
+export function isDemo(): boolean {
+  if (typeof window === 'undefined') return env.DEMO_MODE;
+  const params = new URLSearchParams(window.location.search);
+  const override = params.get('demo');
+  if (override === '1') return true;
+  if (override === '0') return false;
+  return env.DEMO_MODE;
+}
