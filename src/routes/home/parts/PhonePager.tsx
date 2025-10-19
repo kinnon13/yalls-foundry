@@ -9,11 +9,17 @@ export default function PhonePager() {
   const pages = ['apps', 'feed', 'shop', 'profile'] as const;
   
   return (
-    <div className="w-screen overflow-x-auto snap-x snap-mandatory flex no-scrollbar">
+    <div 
+      className="w-screen h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory flex no-scrollbar touch-pan-x"
+      style={{ 
+        scrollBehavior: 'smooth',
+        WebkitOverflowScrolling: 'touch'
+      }}
+    >
       {pages.map(key => (
         <section 
           key={key} 
-          className="snap-start shrink-0 w-screen min-h-[calc(100vh-14rem)] px-3" 
+          className="snap-center snap-always shrink-0 w-screen h-full overflow-y-auto px-3" 
           aria-label={key}
         >
           {key === 'apps' && <AppsPageMini />}
