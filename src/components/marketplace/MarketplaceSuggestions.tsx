@@ -41,13 +41,14 @@ export function MarketplaceSuggestions({ limit = 12 }: MarketplaceSuggestionsPro
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase.rpc('marketplace_suggestions_for_user', {
+      // Temporary cast until types regenerate (see docs/TYPE-SAFETY.md)
+      const { data, error } = await (supabase as any).rpc('marketplace_suggestions_for_user', {
         p_user_id: user.id,
         p_limit: limit
       });
 
       if (error) throw error;
-      setSuggestions(data || []);
+      setSuggestions((data as any) || []);
     } catch (err) {
       console.error('[MarketplaceSuggestions] Load error:', err);
     } finally {
@@ -72,7 +73,8 @@ export function MarketplaceSuggestions({ limit = 12 }: MarketplaceSuggestionsPro
         description: listing.title
       });
 
-      await supabase.rpc('emit_signal', {
+      // Temporary cast until types regenerate
+      await (supabase as any).rpc('emit_signal', {
         p_name: 'add_to_cart',
         p_metadata: { listing_id: listing.category_id }
       });

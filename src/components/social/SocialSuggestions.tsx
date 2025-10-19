@@ -48,7 +48,8 @@ export function SocialSuggestions({ variant = 'feed', kind, limit = 6 }: SocialS
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      let query = supabase
+      // Temporary cast until types regenerate (see docs/TYPE-SAFETY.md)
+      let query = (supabase as any)
         .from('social_suggestions')
         .select('*')
         .eq('user_id', user.id)
@@ -63,7 +64,7 @@ export function SocialSuggestions({ variant = 'feed', kind, limit = 6 }: SocialS
       const { data, error } = await query;
 
       if (error) throw error;
-      setSuggestions(data || []);
+      setSuggestions((data as any) || []);
     } catch (err) {
       console.error('[SocialSuggestions] Load error:', err);
     } finally {
@@ -74,7 +75,8 @@ export function SocialSuggestions({ variant = 'feed', kind, limit = 6 }: SocialS
   const handleAction = async (suggestionId: string, action: 'follow' | 'dismiss') => {
     try {
       if (action === 'dismiss') {
-        const { error } = await supabase
+        // Temporary cast until types regenerate (see docs/TYPE-SAFETY.md)
+        const { error } = await (supabase as any)
           .from('social_suggestions')
           .update({ status: 'dismissed' })
           .eq('id', suggestionId);
@@ -84,7 +86,8 @@ export function SocialSuggestions({ variant = 'feed', kind, limit = 6 }: SocialS
         setSuggestions(prev => prev.filter(s => s.id !== suggestionId));
       } else {
         // TODO: Implement follow action
-        const { error } = await supabase
+        // Temporary cast until types regenerate (see docs/TYPE-SAFETY.md)
+        const { error } = await (supabase as any)
           .from('social_suggestions')
           .update({ status: 'acted', acted_at: new Date().toISOString() })
           .eq('id', suggestionId);
@@ -100,7 +103,8 @@ export function SocialSuggestions({ variant = 'feed', kind, limit = 6 }: SocialS
       }
 
       // Emit telemetry
-      await supabase.rpc('emit_signal', {
+      // Temporary cast until types regenerate
+      await (supabase as any).rpc('emit_signal', {
         p_name: action === 'follow' ? 'suggestion_acted' : 'suggestion_dismissed',
         p_metadata: { suggestion_id: suggestionId }
       });

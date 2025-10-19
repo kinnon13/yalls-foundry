@@ -46,7 +46,8 @@ export function InterestsStepUniversal({ onComplete, onBack }: InterestsStepUniv
   }, []);
 
   const loadInterests = async () => {
-    const { data, error } = await supabase
+    // Temporary cast until types regenerate (see docs/TYPE-SAFETY.md)
+    const { data, error } = await (supabase as any)
       .from('interest_catalog')
       .select('id, domain, category, tag')
       .eq('is_active', true)
@@ -65,14 +66,15 @@ export function InterestsStepUniversal({ onComplete, onBack }: InterestsStepUniv
       return;
     }
 
-    if (data) setInterests(data);
+    if (data) setInterests((data as any) || []);
   };
 
   const loadExisting = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data: existing } = await supabase
+    // Temporary cast until types regenerate (see docs/TYPE-SAFETY.md)
+    const { data: existing } = await (supabase as any)
       .from('user_interests')
       .select('interest_id, affinity, interest_catalog(id, domain, category, tag)')
       .eq('user_id', user.id);
@@ -126,21 +128,24 @@ export function InterestsStepUniversal({ onComplete, onBack }: InterestsStepUniv
         source: 'onboarding'
       }));
 
-      const { error: upsertError } = await supabase.rpc('user_interests_upsert', {
+      // Temporary cast until types regenerate
+      const { error: upsertError } = await (supabase as any).rpc('user_interests_upsert', {
         p_items: items
       });
 
       if (upsertError) throw upsertError;
 
       // Enqueue discovery for marketplace
-      const { error: discoveryError } = await supabase.rpc('enqueue_discovery_for_user', {
+      // Temporary cast until types regenerate
+      const { error: discoveryError } = await (supabase as any).rpc('enqueue_discovery_for_user', {
         p_user_id: user.id
       });
 
       if (discoveryError) console.warn('[InterestsStep] Discovery queue error:', discoveryError);
 
       // Emit telemetry
-      await supabase.rpc('emit_signal', {
+      // Temporary cast until types regenerate
+      await (supabase as any).rpc('emit_signal', {
         p_name: 'interests_selected',
         p_metadata: { count: selected.size, domains: Array.from(new Set(Array.from(selected.values()).map(v => v.interest.domain))) }
       });

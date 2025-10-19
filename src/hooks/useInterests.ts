@@ -33,7 +33,8 @@ export function useInterests() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      // Temporary cast until types regenerate (see docs/TYPE-SAFETY.md)
+      const { data, error } = await (supabase as any)
         .from('user_interests')
         .select('*, interest_catalog(*)')
         .eq('user_id', user.id)
@@ -51,7 +52,8 @@ export function useInterests() {
 
   const addInterest = async (interestId: string, affinity: number = 0.8) => {
     try {
-      const { error } = await supabase.rpc('user_interests_upsert', {
+      // Temporary cast until types regenerate
+      const { error } = await (supabase as any).rpc('user_interests_upsert', {
         p_items: [{
           interest_id: interestId,
           affinity,
@@ -63,7 +65,8 @@ export function useInterests() {
       if (error) throw error;
 
       // Emit signal
-      await supabase.rpc('emit_signal', {
+      // Temporary cast until types regenerate
+      await (supabase as any).rpc('emit_signal', {
         p_name: 'interest_selected',
         p_metadata: { interest_id: interestId }
       });
@@ -86,7 +89,8 @@ export function useInterests() {
 
   const removeInterest = async (interestId: string) => {
     try {
-      const { error } = await supabase.rpc('user_interests_remove', {
+      // Temporary cast until types regenerate
+      const { error } = await (supabase as any).rpc('user_interests_remove', {
         p_interest_id: interestId
       });
 
@@ -110,7 +114,8 @@ export function useInterests() {
 
   const searchCatalog = async (query: string, limit: number = 25) => {
     try {
-      const { data, error } = await supabase.rpc('interest_catalog_search', {
+      // Temporary cast until types regenerate
+      const { data, error } = await (supabase as any).rpc('interest_catalog_search', {
         p_q: query,
         p_locale: 'en-US',
         p_limit: limit

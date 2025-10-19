@@ -41,7 +41,8 @@ export async function rockerListingViewed(params: {
   }, params.sessionId);
 
   // Emit signal for social matching
-  await supabase.rpc('emit_signal', {
+  // Temporary cast until types regenerate (see docs/TYPE-SAFETY.md)
+  await (supabase as any).rpc('emit_signal', {
     p_name: 'pdp_view',
     p_target_kind: 'listing',
     p_target_id: params.listingId,
