@@ -201,32 +201,35 @@ export default function SocialFeedPane() {
       >
         <X className="h-5 w-5" />
       </button>
-      {/* Header stack (measured) */}
+      {/* Header stack (measured) - hide when viewing other profiles */}
       <div ref={headerRef}>
+        {!viewingUserId && (
+          <>
+            {/* Profile Header - only visible on your feed */}
+            <SocialProfileHeader />
+            
+            {/* Favorites Bar - only visible on your feed */}
+            <FavoritesSection />
 
-        {/* Profile Header - always visible */}
-        <SocialProfileHeader />
-        
-        {/* Favorites Bar - always visible */}
-        <FavoritesSection />
-
-        {/* Tab indicators integrated with header */}
-        <div className="sticky top-0 z-10 flex items-center justify-center gap-2 px-0 py-2 bg-background">
-          {TABS.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={cn(
-                'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer',
-                t === tab
-                  ? 'bg-primary text-primary-foreground scale-105'
-                  : 'bg-muted/50 text-muted-foreground scale-95 hover:bg-muted hover:scale-100'
-              )}
-            >
-              {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
-            </button>
-          ))}
-        </div>
+            {/* Tab indicators integrated with header */}
+            <div className="sticky top-0 z-10 flex items-center justify-center gap-2 px-0 py-2 bg-background">
+              {TABS.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer',
+                    t === tab
+                      ? 'bg-primary text-primary-foreground scale-105'
+                      : 'bg-muted/50 text-muted-foreground scale-95 hover:bg-muted hover:scale-100'
+                  )}
+                >
+                  {t === 'for-you' ? 'For You' : t[0].toUpperCase() + t.slice(1)}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Feed container - vertical reels or grid based on tab */}
