@@ -81,6 +81,7 @@ function ActiveAppContent({ appId, onClose }: { appId: OverlayKey; onClose: () =
 export default function HomeShell() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeApp = searchParams.get('app') as OverlayKey | null;
+  const mode = searchParams.get('mode') || 'social'; // 'social' or 'manage'
 
   const handleAppClick = (app: { key: string; label: string; icon?: any; color?: string }) => {
     const next = new URLSearchParams(searchParams);
@@ -94,6 +95,13 @@ export default function HomeShell() {
     setSearchParams(next, { replace: true });
   };
 
+  const toggleMode = () => {
+    const next = new URLSearchParams(searchParams);
+    const newMode = mode === 'social' ? 'manage' : 'social';
+    next.set('mode', newMode);
+    setSearchParams(next, { replace: true });
+  };
+
   return (
     <div className="shell">
       {/* Desktop header only */}
@@ -102,9 +110,24 @@ export default function HomeShell() {
       </div>
       
       <main className="content">
-        {/* Mobile: full-screen social feed only */}
+        {/* Mobile: Conditional view based on mode */}
         <div className="lg:hidden h-[100dvh] overflow-hidden">
-          <SocialFeedPane />
+          {mode === 'social' ? (
+            <SocialFeedPane />
+          ) : (
+            <div className="h-full overflow-y-auto bg-background p-4">
+              <AppLibrary onAppClick={handleAppClick} />
+            </div>
+          )}
+          
+          {/* Mobile mode toggle button */}
+          <button
+            onClick={toggleMode}
+            className="fixed bottom-20 right-4 z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform flex items-center justify-center"
+            aria-label={mode === 'social' ? 'Switch to Apps' : 'Switch to Feed'}
+          >
+            {mode === 'social' ? '📱' : '🏠'}
+          </button>
         </div>
 
         {/* Desktop: Pixel-Perfect Three-Column Grid */}
