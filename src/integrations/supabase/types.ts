@@ -3644,6 +3644,49 @@ export type Database = {
         }
         Relationships: []
       }
+      entity_interests: {
+        Row: {
+          entity_id: string
+          interest_id: string
+          relevance: number
+          updated_at: string
+        }
+        Insert: {
+          entity_id: string
+          interest_id: string
+          relevance?: number
+          updated_at?: string
+        }
+        Update: {
+          entity_id?: string
+          interest_id?: string
+          relevance?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_interests_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_interests_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "v_incentive_eligibility"
+            referencedColumns: ["horse_id"]
+          },
+          {
+            foreignKeyName: "entity_interests_interest_id_fkey"
+            columns: ["interest_id"]
+            isOneToOne: false
+            referencedRelation: "interest_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entity_members: {
         Row: {
           created_at: string | null
@@ -4756,6 +4799,39 @@ export type Database = {
             referencedColumns: ["horse_id"]
           },
         ]
+      }
+      interest_catalog: {
+        Row: {
+          category: string
+          created_at: string
+          domain: string
+          id: string
+          is_active: boolean
+          locale: string
+          sort_order: number | null
+          tag: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          domain: string
+          id?: string
+          is_active?: boolean
+          locale?: string
+          sort_order?: number | null
+          tag: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          domain?: string
+          id?: string
+          is_active?: boolean
+          locale?: string
+          sort_order?: number | null
+          tag?: string
+        }
+        Relationships: []
       }
       interests_catalog: {
         Row: {
@@ -8022,6 +8098,41 @@ export type Database = {
         }
         Relationships: []
       }
+      user_interests: {
+        Row: {
+          affinity: number
+          confidence: string
+          interest_id: string
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affinity?: number
+          confidence?: string
+          interest_id: string
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affinity?: number
+          confidence?: string
+          interest_id?: string
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_interests_interest_id_fkey"
+            columns: ["interest_id"]
+            isOneToOne: false
+            referencedRelation: "interest_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_pin_folders: {
         Row: {
           color: string | null
@@ -9768,6 +9879,32 @@ export type Database = {
       install_app: {
         Args: { p_app_key: string; p_config?: Json; p_entity_id: string }
         Returns: undefined
+      }
+      interest_catalog_browse: {
+        Args: { p_domain?: string; p_limit?: number; p_locale?: string }
+        Returns: {
+          category: string
+          created_at: string
+          domain: string
+          id: string
+          is_active: boolean
+          locale: string
+          sort_order: number | null
+          tag: string
+        }[]
+      }
+      interest_catalog_search: {
+        Args: { p_limit?: number; p_locale?: string; p_q: string }
+        Returns: {
+          category: string
+          created_at: string
+          domain: string
+          id: string
+          is_active: boolean
+          locale: string
+          sort_order: number | null
+          tag: string
+        }[]
       }
       is_admin: {
         Args: Record<PropertyKey, never> | { _user_id: string }
@@ -11520,6 +11657,14 @@ export type Database = {
           total_following: number
           total_likes: number
         }[]
+      }
+      user_interests_remove: {
+        Args: { p_interest_id: string }
+        Returns: undefined
+      }
+      user_interests_upsert: {
+        Args: { p_items: Json }
+        Returns: number
       }
       vector_avg: {
         Args: { "": number[] }

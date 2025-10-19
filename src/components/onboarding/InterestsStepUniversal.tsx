@@ -129,14 +129,13 @@ export function InterestsStepUniversal({ onComplete, onBack }: InterestsStepUniv
       }));
 
       // Temporary cast until types regenerate
-      const { error: upsertError } = await (supabase as any).rpc('user_interests_upsert', {
-        p_items: items
+      const { error: upsertError } = await supabase.rpc('user_interests_upsert', {
+        p_items: JSON.stringify(items)
       });
 
       if (upsertError) throw upsertError;
 
       // Enqueue discovery for marketplace
-      // Temporary cast until types regenerate
       const { error: discoveryError } = await (supabase as any).rpc('enqueue_discovery_for_user', {
         p_user_id: user.id
       });
@@ -144,7 +143,6 @@ export function InterestsStepUniversal({ onComplete, onBack }: InterestsStepUniv
       if (discoveryError) console.warn('[InterestsStep] Discovery queue error:', discoveryError);
 
       // Emit telemetry
-      // Temporary cast until types regenerate
       await (supabase as any).rpc('emit_signal', {
         p_name: 'interests_selected',
         p_metadata: { count: selected.size, domains: Array.from(new Set(Array.from(selected.values()).map(v => v.interest.domain))) }

@@ -7,19 +7,22 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-interface Interest {
+export interface InterestCatalogItem {
   id: string;
   domain: string;
   category: string;
   tag: string;
+  locale: string;
+  is_active: boolean;
+  sort_order: number;
 }
 
-interface UserInterest {
+export interface UserInterest {
   interest_id: string;
   affinity: number;
   confidence: 'explicit' | 'inferred';
   source: string;
-  interest: Interest;
+  interest_catalog?: InterestCatalogItem;
 }
 
 export function useInterests() {
@@ -33,8 +36,7 @@ export function useInterests() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Temporary cast until types regenerate (see docs/TYPE-SAFETY.md)
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('user_interests')
         .select('*, interest_catalog(*)')
         .eq('user_id', user.id)
@@ -42,7 +44,7 @@ export function useInterests() {
 
       if (error) throw error;
       
-      setUserInterests(data as any || []);
+      setUserInterests((data as any) || []);
     } catch (err) {
       console.error('[useInterests] Load error:', err);
     } finally {
@@ -50,22 +52,20 @@ export function useInterests() {
     }
   };
 
-  const addInterest = async (interestId: string, affinity: number = 0.8) => {
+  const addInterest = async (interestId: string, affinity: number = 0.8, source: string = 'manual') => {
     try {
-      // Temporary cast until types regenerate
-      const { error } = await (supabase as any).rpc('user_interests_upsert', {
-        p_items: [{
+      const { error } = await supabase.rpc('user_interests_upsert', {
+        p_items: JSON.stringify([{
           interest_id: interestId,
           affinity,
           confidence: 'explicit',
-          source: 'manual'
-        }]
+          source
+        }])
       });
 
       if (error) throw error;
 
       // Emit signal
-      // Temporary cast until types regenerate
       await (supabase as any).rpc('emit_signal', {
         p_name: 'interest_selected',
         p_metadata: { interest_id: interestId }
@@ -89,8 +89,7 @@ export function useInterests() {
 
   const removeInterest = async (interestId: string) => {
     try {
-      // Temporary cast until types regenerate
-      const { error } = await (supabase as any).rpc('user_interests_remove', {
+      const { error } = await supabase.rpc('user_interests_remove', {
         p_interest_id: interestId
       });
 
@@ -112,10 +111,9 @@ export function useInterests() {
     }
   };
 
-  const searchCatalog = async (query: string, limit: number = 25) => {
+  const searchCatalog = async (query: string, limit: number = 25): Promise<InterestCatalogItem[]> => {
     try {
-      // Temporary cast until types regenerate
-      const { data, error } = await (supabase as any).rpc('interest_catalog_search', {
+      const { data, error } = await supabase.rpc('interest_catalog_search', {
         p_q: query,
         p_locale: 'en-US',
         p_limit: limit
@@ -125,6 +123,22 @@ export function useInterests() {
       return data || [];
     } catch (err) {
       console.error('[useInterests] Search error:', err);
+      return [];
+    }
+  };
+
+  const browseCatalog = async (domain?: string): Promise<InterestCatalogItem[]> => {
+    try {
+      const { data, error } = await supabase.rpc('interest_catalog_browse', {
+        p_domain: domain || null,
+        p_locale: 'en-US',
+        p_limit: 100
+      });
+
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error('[useInterests] Browse error:', err);
       return [];
     }
   };
@@ -139,6 +153,7 @@ export function useInterests() {
     addInterest,
     removeInterest,
     searchCatalog,
+    browseCatalog,
     reload: loadUserInterests
   };
 }
