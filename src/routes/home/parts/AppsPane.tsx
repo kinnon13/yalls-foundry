@@ -246,10 +246,10 @@ export default function AppsPane() {
     return items;
   }, [visibleApps, pinnedEntities, userId]);
 
-  // Grid dimensions derived from resizable box (subtract border only: border-2=2px each side => 4px total)
+  // Grid dimensions derived from resizable box (subtract border + padding: border-2=4px, p-2=16px => 20px total)
   const gridDims = useMemo(() => {
-    const innerW = Math.max(0, containerWidth - 4);
-    const innerH = Math.max(0, containerHeight - 4);
+    const innerW = Math.max(0, containerWidth - 20);
+    const innerH = Math.max(0, containerHeight - 20);
     const cols = Math.max(1, Math.floor(innerW / (tile + 4))); // 4px gap
     const rows = Math.max(1, Math.floor(innerH / (tile + 4)));
     return { cols, rows };
@@ -418,7 +418,7 @@ export default function AppsPane() {
             top: `${containerY}px`,
           }}
         >
-          <div className="w-full h-full">
+          <div className="w-full h-full p-2">
             {/* App Icons Grid - Background Layer */}
             <div 
               className={cn("grid gap-1 place-content-center w-full h-full transition-opacity duration-200", openApp && "opacity-20")}
