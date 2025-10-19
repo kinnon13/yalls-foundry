@@ -144,6 +144,7 @@ export default function HomeShell() {
 
       {/* Mobile: Full-screen feed with proper safe area */}
       <div className="lg:hidden flex flex-col h-[100dvh] bg-background">
+        <HeaderBar />
         <div className="flex-1 overflow-y-auto -webkit-overflow-scrolling-touch">
           <SocialFeedPane />
           {/* Spacer for dock */}
