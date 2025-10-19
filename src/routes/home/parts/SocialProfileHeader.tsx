@@ -53,7 +53,7 @@ export default function SocialProfileHeader() {
   };
 
   return (
-    <div className="bg-background px-4 py-4 border-b">
+    <div className="bg-background px-4 py-4">
       {/* Top row: Avatar + Stats */}
       <div className="flex items-start gap-4 mb-3">
         {/* Profile picture with gradient ring */}

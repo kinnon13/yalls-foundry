@@ -176,7 +176,7 @@ export default function SocialFeedPane() {
         <X className="h-5 w-5" />
       </button>
       {/* Header stack (measured) */}
-      <div ref={headerRef} className="bg-background border-b">
+      <div ref={headerRef}>
 
         {/* Profile Header - always visible */}
         <SocialProfileHeader />
@@ -184,8 +184,8 @@ export default function SocialFeedPane() {
         {/* Favorites Bar - always visible */}
         <FavoritesSection />
 
-        {/* Tab indicators (clickable or drag/swipe to change) */}
-        <div className="sticky top-0 z-10 flex items-center justify-center gap-2 px-0 py-1">
+        {/* Tab indicators integrated with header */}
+        <div className="sticky top-0 z-10 flex items-center justify-center gap-2 px-0 py-2 bg-background">
           {TABS.map((t) => (
             <button
               key={t}
