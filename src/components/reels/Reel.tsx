@@ -54,24 +54,10 @@ export function Reel({ src, alt, author, caption, stats, onLike, onComment, onSa
         </div>
       )}
 
-      {/* TOP GRADIENT + AUTHOR */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/60 to-transparent" />
-      <header className="absolute top-3 left-3 right-[88px] flex items-center gap-3">
-        {author.avatar ? (
-          <img src={author.avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
-        ) : (
-          <div className="h-8 w-8 rounded-full bg-white/20" />
-        )}
-        <div className="min-w-0">
-          <div className="truncate text-white font-medium leading-tight text-sm">{author.name}</div>
-          {author.handle && <div className="truncate text-white/70 text-xs">@{author.handle}</div>}
-        </div>
-      </header>
-
       {/* BOTTOM GRADIENT + CAPTION */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 to-transparent" />
       {caption && (
-        <p className="absolute bottom-3 left-3 right-[88px] text-white/90 text-sm leading-snug line-clamp-3">
+        <p className="absolute bottom-20 left-3 right-16 text-white/90 text-sm leading-snug line-clamp-2">
           {caption}
         </p>
       )}
@@ -151,7 +137,7 @@ function ActionRail({
   onRepost?: () => void;
 }) {
   return (
-    <aside className="absolute right-2 bottom-24 flex flex-col gap-3 items-center" aria-label="Post actions">
+    <aside className="absolute right-2 bottom-2 flex flex-col gap-2.5 items-center" aria-label="Post actions">
       {/* Creator Profile with Plus Button */}
       <div className="relative">
         <button 
@@ -204,7 +190,7 @@ function ActionRail({
       
       {/* Spinning Sound/Music Disc */}
       <button
-        className="relative h-9 w-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 grid place-items-center animate-spin-slow hover:animate-none transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+        className="relative h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 grid place-items-center animate-spin-slow hover:animate-none transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
         aria-label="View sound"
       >
         <Music className="h-4 w-4 text-white" />

@@ -176,7 +176,7 @@ export default function SocialFeedPane() {
         <X className="h-5 w-5" />
       </button>
       {/* Header stack (measured) */}
-      <div ref={headerRef}>
+      <div ref={headerRef} className="bg-background border-b">
 
         {/* Profile Header - always visible */}
         <SocialProfileHeader />
