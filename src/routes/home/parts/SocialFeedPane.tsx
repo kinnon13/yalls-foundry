@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useLayoutEffect } from 'react';
+import { useEffect, useMemo, useRef, useState, useLayoutEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSession } from '@/lib/auth/context';
 import { Reel } from '@/components/reels/Reel';
@@ -18,25 +18,54 @@ export default function SocialFeedPane() {
   const [entityId, setEntityId] = useState<string | null>(sp.get('entity') || null);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [feedH, setFeedH] = useState<number | null>(null);
-
-  // measured header stack height (profile header + favorites + tabs)
+  
+  // Reel sizing state (strict 9:16)
+  const containerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
-  const [headerH, setHeaderH] = useState(0);
-
+  const [reelDims, setReelDims] = useState<{ width: number; height: number } | null>(null);
+  
+  // Measure pane and header to compute exact reel size
+  const measureReel = useCallback(() => {
+    const pane = containerRef.current;
+    const header = headerRef.current;
+    if (!pane || !header) return;
+    
+    const paneRect = pane.getBoundingClientRect();
+    const headerRect = header.getBoundingClientRect();
+    
+    const paneW = paneRect.width;
+    const paneH = paneRect.height;
+    const headerH = headerRect.height;
+    const availH = paneH - headerH;
+    
+    // Strict 9:16 aspect ratio
+    const reelH = Math.min(availH, paneW * (16 / 9));
+    const reelW = reelH * (9 / 16);
+    
+    setReelDims({ width: reelW, height: reelH });
+  }, []);
+  
   useLayoutEffect(() => {
-    const el = headerRef.current;
-    if (!el) return;
-    const measure = () => setHeaderH(el.getBoundingClientRect().height);
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    window.addEventListener('resize', measure);
+    measureReel();
+    
+    const ro = new ResizeObserver(measureReel);
+    if (containerRef.current) ro.observe(containerRef.current);
+    if (headerRef.current) ro.observe(headerRef.current);
+    
+    window.addEventListener('resize', measureReel);
+    window.visualViewport?.addEventListener('resize', measureReel);
+    
     return () => {
       ro.disconnect();
-      window.removeEventListener('resize', measure);
+      window.removeEventListener('resize', measureReel);
+      window.visualViewport?.removeEventListener('resize', measureReel);
     };
-  }, []);
+  }, [measureReel]);
+  
+  // Re-measure when tab changes (header might resize)
+  useEffect(() => {
+    measureReel();
+  }, [tab, measureReel]);
 
   // seamless drag/swipe gesture for tab switching
   const railRef = useRef<HTMLDivElement>(null);
@@ -103,38 +132,6 @@ export default function SocialFeedPane() {
     };
   }, [tab, isDragging]);
 
-  // Measure available height between this container's top and the BottomDock
-  useLayoutEffect(() => {
-    const recalc = () => {
-      const railEl = railRef.current;
-      if (!railEl) return;
-      const rect = railEl.getBoundingClientRect();
-      const viewportH = window.visualViewport?.height ?? window.innerHeight;
-      const bottomDock = document.querySelector('nav[aria-label="Bottom dock"]') as HTMLElement | null;
-      const bottomH = bottomDock ? bottomDock.getBoundingClientRect().height : 0;
-      const h = Math.max(0, Math.round(viewportH - bottomH - rect.top));
-      setFeedH(h);
-    };
-
-    recalc();
-
-    const ro = new ResizeObserver(recalc);
-    if (railRef.current) ro.observe(railRef.current);
-    const bottomDock = document.querySelector('nav[aria-label="Bottom dock"]') as HTMLElement | null;
-    if (bottomDock) ro.observe(bottomDock);
-
-    window.addEventListener('resize', recalc);
-    window.visualViewport?.addEventListener('resize', recalc);
-    window.visualViewport?.addEventListener('scroll', recalc);
-
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', recalc);
-      window.visualViewport?.removeEventListener('resize', recalc);
-      window.visualViewport?.removeEventListener('scroll', recalc);
-    };
-  }, []);
-
   // persist state in URL (?feed=…&entity=…)
   useEffect(() => {
     const next = new URLSearchParams(sp);
@@ -164,17 +161,12 @@ export default function SocialFeedPane() {
   }, [tab]);
 
   return (
-    <section className="flex h-full w-full flex-col">
-      {/* Header stack (measured) */}
-      <div ref={headerRef}>
-        {/* Profile Header */}
+    <section ref={containerRef} className="h-full w-full flex flex-col overflow-hidden min-h-0">
+      {/* Header stack (measured for reel sizing) */}
+      <div ref={headerRef} className="flex-shrink-0">
         <SocialProfileHeader />
-        
-        {/* Favorites Bar */}
         <FavoritesSection />
-
-        {/* Tab indicators (clickable or drag/swipe to change) */}
-        <div className="sticky top-0 z-10 flex items-center justify-center gap-2 px-0 py-1">
+        <div className="flex items-center justify-center gap-2 px-0 py-1">
           {TABS.map((t) => (
             <button
               key={t}
@@ -192,23 +184,27 @@ export default function SocialFeedPane() {
         </div>
       </div>
 
-      {/* Swipeable feed container */}
+      {/* Reel scroller - strict 9:16 sizing */}
       <div 
         ref={railRef}
-        className="relative flex-1 overflow-hidden select-none touch-pan-y"
-        style={{ height: feedH ? `${feedH}px` : undefined }}
+        className="flex-1 overflow-y-auto overscroll-contain snap-y snap-mandatory scrollbar-hide min-h-0"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        <div 
-          className="h-full overflow-y-auto overscroll-contain snap-y snap-mandatory scrollbar-hide"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          <div className="space-y-0 px-0 pb-0">
-            {items.map((item) => (
-              <div key={item.id} className="snap-start h-full">
+        <div className="flex flex-col" style={{ paddingBottom: '16px' }}>
+          {reelDims && items.map((item) => (
+            <div 
+              key={item.id} 
+              className="snap-start flex-shrink-0 flex items-center justify-center"
+              style={{ 
+                height: `${reelDims.height}px`,
+                width: '100%'
+              }}
+            >
+              <div style={{ width: `${reelDims.width}px`, height: `${reelDims.height}px` }}>
                 <Reel {...item} />
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

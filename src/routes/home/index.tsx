@@ -76,18 +76,23 @@ export default function HomePage() {
   };
 
   return (
-    <>
+    <div className="grid h-dvh" style={{ 
+      gridTemplateRows: 'var(--header-h) calc(100dvh - var(--header-h) - var(--dock-h) - env(safe-area-inset-bottom)) var(--dock-h)' 
+    }}>
+      {/* Header */}
       <GlobalHeader />
-      <main className="pt-14 pb-16">
+      
+      {/* Content - no scrolling here, each pane scrolls independently */}
+      <main className="overflow-hidden min-h-0">
         {/* Desktop Layout: Sidebar + Center + Feed (large screens only) */}
-        <div className="hidden lg:flex h-[calc(100dvh-112px)]">
-          {/* Left: Apps Sidebar - Fixed */}
-          <div className="w-[280px] flex-shrink-0 overflow-hidden">
+        <div className="hidden lg:flex h-full">
+          {/* Left: Apps Sidebar - Scrollable */}
+          <div className="w-[280px] flex-shrink-0 min-h-0 overflow-y-auto overscroll-contain">
             <LeftAppSidebar onAppClick={handleAppClick} />
           </div>
 
           {/* Center: Content Area - Scrollable */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
             <CenterContentArea
               openApps={openApps}
               activeApp={activeApp}
@@ -97,14 +102,14 @@ export default function HomePage() {
             />
           </div>
 
-          {/* Right: Social Feed - Fixed */}
-          <div className="w-[420px] flex-shrink-0 border-l overflow-hidden">
+          {/* Right: Social Feed - No internal scroll, reel pane handles it */}
+          <div className="w-[420px] flex-shrink-0 border-l min-h-0 overflow-hidden">
             <SocialFeedPane />
           </div>
         </div>
 
         {/* Mobile/Tablet: Tabbed view with icons */}
-        <div className="lg:hidden h-[calc(100dvh-112px)] flex flex-col overflow-hidden">
+        <div className="lg:hidden h-full flex flex-col overflow-hidden min-h-0">
           {/* Tab bar */}
           <div className="flex items-center justify-around border-b bg-background">
             <button
@@ -148,18 +153,18 @@ export default function HomePage() {
           </div>
 
           {/* Content area */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden min-h-0">
             {mobileView === 'library' && (
-              <div className="h-full overflow-y-auto p-4 max-w-screen-md mx-auto w-full">
+              <div className="h-full overflow-y-auto overscroll-contain p-4 max-w-screen-md mx-auto w-full">
                 <LeftAppSidebar onAppClick={(app) => {
                   handleAppClick(app);
-                  setMobileView('apps'); // Switch to apps view after selecting
+                  setMobileView('apps');
                 }} />
               </div>
             )}
             
             {mobileView === 'apps' && (
-              <div className="h-full overflow-y-auto px-3 max-w-screen-md mx-auto w-full">
+              <div className="h-full overflow-y-auto overscroll-contain px-3 max-w-screen-md mx-auto w-full">
                 <CenterContentArea
                   openApps={openApps}
                   activeApp={activeApp}
@@ -171,15 +176,17 @@ export default function HomePage() {
             )}
             
             {mobileView === 'feed' && (
-              <div className="h-full overflow-hidden max-w-screen-sm mx-auto w-full">
+              <div className="h-full overflow-hidden min-h-0 max-w-screen-sm mx-auto w-full">
                 <SocialFeedPane />
               </div>
             )}
           </div>
         </div>
       </main>
+      
+      {/* Dock */}
       <BottomDock />
-    </>
+    </div>
   );
 }
 
