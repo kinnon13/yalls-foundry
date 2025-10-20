@@ -239,12 +239,22 @@ serve(async (req) => {
 
     // Trigger deep analysis for god-level filing (async, fire-and-forget)
     if (fileRecord?.id && fullText.length > 200) {
+      // 1) Deep analysis
       supabase.functions.invoke('rocker-deep-analyze', {
         body: { content: fullText, thread_id: threadId, file_id: fileRecord.id }
       }).then(() => {
         console.log('[Ingest] Deep analysis triggered for file:', fileRecord.id);
       }).catch(err => {
         console.log('[Ingest] Deep analysis queued (async):', err.message);
+      });
+
+      // 2) Auto-audit detected features and verify/connectivity
+      supabase.functions.invoke('rocker-auto-audit', {
+        body: { file_id: fileRecord.id, content: fullText, auto_verify: true }
+      }).then(() => {
+        console.log('[Ingest] Auto-audit triggered for file:', fileRecord.id);
+      }).catch(err => {
+        console.log('[Ingest] Auto-audit queued (async):', err.message);
       });
     }
 
