@@ -1,7 +1,18 @@
-// Super Rocker Chat - Simple mode (543 lines)
+// Super Rocker Chat - Simple mode (fixed duplicates, build: 001)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+
+// Boot banner for deployment verification
+console.log('[rocker-chat-simple] boot ok', { 
+  ts: new Date().toISOString(), 
+  build: 'bump-001',
+  env: {
+    OPENAI: !!Deno.env.get('OPENAI_API_KEY'),
+    SERVICE_ROLE: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
+    LOVABLE: !!Deno.env.get('LOVABLE_API_KEY')
+  }
+});
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -195,6 +206,7 @@ serve(async (req) => {
     }
 
     // Build knowledge context with citations (RELAXED - answers with even 1 good hit)
+    // Define scoring vars ONCE here for use throughout function
     const topScore = (hits[0]?.combinedScore ?? hits[0]?.score ?? hits[0]?.similarity ?? 0);
     const lowConfidence = hits.length === 0 || topScore < (cfg.sim_threshold ?? 0.62);
     
@@ -477,15 +489,14 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
       result: 'success'
     });
     
-    // Log metrics for learning (Phase 2 telemetry)
+    // === METRICS BLOCK (single place, reuses topScore/lowConfidence from line 199) ===
     const latencyMs = Date.now() - t0;
     const retrievedIds = hits?.map((h: any) => h.id) || [];
     const scores = hits?.map((h: any) => h.combinedScore ?? h.score ?? h.similarity) || [];
-    // topScore already declared above at line 197 - reuse it
     
-    // Simple MRR calculation (1 / rank of first relevant doc, assuming top hit is relevant if score > threshold)
+    // Reusing topScore and lowConfidence from line 199-200 (no redeclaration)
     const mrr = topScore >= cfg.sim_threshold ? 1.0 : 0.0;
-    const hit5 = scores.length > 0 && scores.some((s: number) => s >= cfg.sim_threshold);
+    const hit5 = scores.some((s: number) => s >= cfg.sim_threshold);
     
     try {
       await supabaseService.rpc('log_metric', {
@@ -501,7 +512,7 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
         p_hit5: hit5
       });
     } catch (e) {
-      console.error('Metrics logging failed (non-fatal):', e);
+      console.error('[metrics] log_metric failed:', String(e));
     }
 
     // Auto-task detection
