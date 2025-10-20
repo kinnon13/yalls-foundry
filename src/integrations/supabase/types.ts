@@ -7919,6 +7919,7 @@ export type Database = {
         Row: {
           chunk_index: number
           content: string
+          content_tsv: unknown | null
           created_at: string
           embedding: string | null
           id: string
@@ -7930,6 +7931,7 @@ export type Database = {
         Insert: {
           chunk_index?: number
           content: string
+          content_tsv?: unknown | null
           created_at?: string
           embedding?: string | null
           id?: string
@@ -7941,6 +7943,7 @@ export type Database = {
         Update: {
           chunk_index?: number
           content?: string
+          content_tsv?: unknown | null
           created_at?: string
           embedding?: string | null
           id?: string

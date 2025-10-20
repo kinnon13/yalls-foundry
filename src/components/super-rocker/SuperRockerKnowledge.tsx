@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Brain, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { Search, Brain, CheckCircle2, Clock, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface KnowledgeChunk {
@@ -24,60 +24,92 @@ interface EmbeddingStats {
   pending: number;
 }
 
+const PAGE_SIZE = 50;
+
 export function SuperRockerKnowledge() {
   const { toast } = useToast();
   const [chunks, setChunks] = useState<KnowledgeChunk[]>([]);
   const [stats, setStats] = useState<EmbeddingStats>({ total: 0, embedded: 0, pending: 0 });
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [threadId, setThreadId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [expandedChunks, setExpandedChunks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    loadKnowledge();
+    loadKnowledge(true);
     loadStats();
-  }, [filterCategory]);
+  }, [filterCategory, threadId]);
+
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      if (searchQuery) {
+        loadKnowledge(true);
+      }
+    }, 500);
+    return () => clearTimeout(debounce);
+  }, [searchQuery]);
 
   const loadStats = async () => {
     try {
-      const { data, error } = await supabase
+      const { count: total } = await supabase
         .from('rocker_knowledge')
-        .select('embedding', { count: 'exact', head: false });
-      
-      if (error) throw error;
-      
-      const total = data?.length || 0;
-      const embedded = data?.filter(r => r.embedding !== null).length || 0;
-      
+        .select('*', { count: 'exact', head: true });
+
+      const { count: embedded } = await supabase
+        .from('rocker_knowledge')
+        .select('*', { count: 'exact', head: true })
+        .not('embedding', 'is', null);
+
       setStats({
-        total,
-        embedded,
-        pending: total - embedded
+        total: total ?? 0,
+        embedded: embedded ?? 0,
+        pending: (total ?? 0) - (embedded ?? 0)
       });
     } catch (error: any) {
       console.error('Failed to load stats:', error);
     }
   };
 
-  const loadKnowledge = async () => {
+  const loadKnowledge = async (reset = false) => {
     setIsLoading(true);
+    const currentPage = reset ? 0 : page;
+    
     try {
       let query = supabase
         .from('rocker_knowledge')
         .select('id, content, chunk_index, embedding, meta, created_at, user_id')
         .order('created_at', { ascending: false })
-        .limit(100);
+        .range(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE - 1);
 
       if (filterCategory !== 'all') {
         query = query.eq('meta->>category', filterCategory);
       }
 
+      if (threadId) {
+        query = query.eq('meta->>thread_id', threadId);
+      }
+
+      if (searchQuery) {
+        query = query.textSearch('content_tsv', searchQuery, { type: 'websearch' });
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       
-      setChunks((data || []) as any);
+      if (reset) {
+        setChunks((data || []) as any);
+        setPage(0);
+      } else {
+        setChunks(prev => [...prev, ...((data || []) as any)]);
+      }
       
-      // Extract unique categories from meta
+      setHasMore((data || []).length === PAGE_SIZE);
+      
+      // Extract unique categories
       const uniqueCategories = Array.from(
         new Set(
           data
@@ -85,7 +117,9 @@ export function SuperRockerKnowledge() {
             .filter(Boolean) as string[]
         )
       );
-      setCategories(uniqueCategories);
+      if (reset) {
+        setCategories(uniqueCategories);
+      }
     } catch (error: any) {
       console.error('Failed to load knowledge:', error);
       toast({
@@ -98,11 +132,19 @@ export function SuperRockerKnowledge() {
     }
   };
 
-  const filteredChunks = chunks.filter(chunk => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return chunk.content.toLowerCase().includes(query);
-  });
+  const loadMore = () => {
+    setPage(p => p + 1);
+    setTimeout(() => loadKnowledge(false), 0);
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpandedChunks(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const getStatusIcon = (chunk: KnowledgeChunk) => {
     if (chunk.embedding) {
@@ -176,6 +218,12 @@ export function SuperRockerKnowledge() {
         />
       </div>
 
+      <Input
+        placeholder="Filter by thread ID (optional)"
+        value={threadId}
+        onChange={(e) => setThreadId(e.target.value)}
+      />
+
       <div className="flex gap-2 flex-wrap">
         <Button
           variant={filterCategory === 'all' ? 'default' : 'outline'}
@@ -198,47 +246,96 @@ export function SuperRockerKnowledge() {
 
       <ScrollArea className="h-[500px]">
         <div className="space-y-3 pr-4">
-          {filteredChunks.map(chunk => (
-            <Card key={chunk.id} className="p-4">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(chunk)}
-                  <Badge variant="outline" className="text-xs">
-                    {getStatusText(chunk)}
-                  </Badge>
-                  {chunk.meta?.category && (
-                    <Badge variant="secondary" className="text-xs">
-                      {chunk.meta.category}
+          {chunks.map(chunk => {
+            const isExpanded = expandedChunks.has(chunk.id);
+            const preview = chunk.content.substring(0, 300);
+            const needsExpand = chunk.content.length > 300;
+            
+            return (
+              <Card key={chunk.id} className="p-4">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {getStatusIcon(chunk)}
+                    <Badge variant="outline" className="text-xs">
+                      {getStatusText(chunk)}
                     </Badge>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    Chunk #{chunk.chunk_index}
+                    {chunk.meta?.category && (
+                      <Badge variant="secondary" className="text-xs">
+                        {chunk.meta.category}
+                      </Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      Chunk #{chunk.chunk_index}
+                    </span>
+                    {chunk.meta?.thread_id && (
+                      <span className="text-xs text-muted-foreground font-mono">
+                        {chunk.meta.thread_id.substring(0, 8)}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {new Date(chunk.created_at).toLocaleDateString()}
                   </span>
                 </div>
-                <span className="text-xs text-muted-foreground shrink-0">
-                  {new Date(chunk.created_at).toLocaleDateString()}
-                </span>
-              </div>
-              
-              <p className="text-sm line-clamp-3 text-muted-foreground">
-                {chunk.content}
-              </p>
-              
-              {chunk.meta?.subject && (
-                <div className="mt-2">
-                  <Badge variant="outline" className="text-xs">
-                    {chunk.meta.subject}
-                  </Badge>
-                </div>
-              )}
-            </Card>
-          ))}
+                
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {isExpanded ? chunk.content : preview}
+                  {needsExpand && !isExpanded && '...'}
+                </p>
+                
+                {needsExpand && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleExpand(chunk.id)}
+                    className="mt-2 h-7 text-xs"
+                  >
+                    {isExpanded ? (
+                      <>
+                        <ChevronUp className="h-3 w-3 mr-1" />
+                        Show less
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-3 w-3 mr-1" />
+                        Show more
+                      </>
+                    )}
+                  </Button>
+                )}
+                
+                {chunk.meta?.subject && (
+                  <div className="mt-2">
+                    <Badge variant="outline" className="text-xs">
+                      {chunk.meta.subject}
+                    </Badge>
+                  </div>
+                )}
+              </Card>
+            );
+          })}
 
-          {filteredChunks.length === 0 && !isLoading && (
+          {chunks.length === 0 && !isLoading && (
             <div className="text-center py-12 text-muted-foreground">
               <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No knowledge chunks found</p>
               <p className="text-sm mt-1">Add content to Rocker's memory from the Vault</p>
+            </div>
+          )}
+
+          {hasMore && !isLoading && chunks.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={loadMore}
+              className="w-full"
+            >
+              Load More
+            </Button>
+          )}
+
+          {isLoading && (
+            <div className="text-center py-4 text-muted-foreground">
+              <p className="text-sm">Loading...</p>
             </div>
           )}
         </div>
