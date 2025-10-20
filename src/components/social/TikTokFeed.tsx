@@ -20,6 +20,7 @@ interface Post {
   profiles?: {
     display_name: string;
     avatar_url?: string;
+    handle?: string;
   };
   entities?: {
     display_name: string;
@@ -56,7 +57,7 @@ export function TikTokFeed() {
             media,
             created_at,
             author_user_id,
-            profiles (display_name, avatar_url),
+            profiles (display_name, avatar_url, handle),
             entities (display_name, handle)
           `)
           .order('created_at', { ascending: false })
@@ -193,8 +194,8 @@ export function TikTokFeed() {
                 <div className="font-semibold text-white">
                   {post.profiles?.display_name || 'Anonymous'}
                 </div>
-                {post.entities?.handle && (
-                  <div className="text-sm text-white/70">@{post.entities.handle}</div>
+                {post.profiles?.handle && (
+                  <div className="text-sm text-white/70">@{post.profiles.handle}</div>
                 )}
               </div>
             </div>
