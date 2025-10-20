@@ -126,11 +126,13 @@ serve(async (req) => {
       category = subject.slice(0, 50);
     }
 
-    // Stream → insert per chunk (constant memory)
+    // Stream → collect full text + insert per chunk
     let stored = 0;
     let index = 0;
+    let fullText = '';
 
     for await (const chunk of streamChunks(req)) {
+      fullText += chunk;
       if (index >= MAX_CHUNKS) break;
 
       const { data: inserted, error } = await supabase
@@ -169,13 +171,44 @@ serve(async (req) => {
       if (index % 50 === 0) await new Promise(r => setTimeout(r, 5));
     }
 
+    // Create rocker_files record with full text for viewing/analysis
+    const summary = fullText.substring(0, 500) + (fullText.length > 500 ? '...' : '');
+    const tags: string[] = [];
+    const lowerText = fullText.toLowerCase();
+    
+    // Extract simple tags
+    if (lowerText.includes('q4') || lowerText.includes('q 4')) tags.push('Q4');
+    if (lowerText.includes('investor')) tags.push('investor');
+    if (lowerText.includes('urgent') || lowerText.includes('asap')) tags.push('urgent');
+
+    const { data: fileRecord, error: fileError } = await supabase
+      .from('rocker_files')
+      .insert({
+        user_id: user.id,
+        name: subject || 'Bulk Paste',
+        summary,
+        category,
+        tags,
+        text_content: fullText,
+        thread_id: threadId,
+        source: 'paste',
+        status: 'filed',
+        starred: false,
+      })
+      .select()
+      .single();
+
+    if (fileError) {
+      console.error('[Ingest] Failed to create file record:', fileError);
+    }
+
     // Ledger
     await supabase.from("ai_action_ledger").insert({
       user_id: user.id,
       agent: "rocker",
       action: "memory_ingest_stream",
       input: { streaming: true, chunk_size: CHUNK, overlap: OVERLAP },
-      output: { thread_id: threadId, memories: stored, category, priority },
+      output: { thread_id: threadId, memories: stored, category, priority, file_id: fileRecord?.id },
       result: "success",
     });
 
@@ -188,10 +221,27 @@ serve(async (req) => {
       console.log('[Ingest] Auto-organize queued (async)');
     }
 
+    // Trigger deep analysis for god-level filing (async, non-blocking)
+    if (fileRecord?.id && fullText.length > 200) {
+      try {
+        supabase.functions.invoke('rocker-deep-analyze', {
+          body: { content: fullText, thread_id: threadId, file_id: fileRecord.id }
+        }).then(() => {
+          console.log('[Ingest] Deep analysis triggered for file:', fileRecord.id);
+        }).catch(err => {
+          console.log('[Ingest] Deep analysis queued (async):', err.message);
+        });
+      } catch (deepErr) {
+        console.log('[Ingest] Deep analysis will run async');
+      }
+    }
+
     return new Response(JSON.stringify({
       thread_id: threadId,
       stored,
       category,
+      tags,
+      file_id: fileRecord?.id,
       summary: stored > 0 ? "Streamed ingest complete" : "No chunks stored",
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 

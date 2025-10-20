@@ -33,7 +33,7 @@ serve(async (req) => {
     );
     if (authError || !user) throw new Error('Unauthorized');
 
-    const { content, thread_id } = await req.json();
+    const { content, thread_id, file_id } = await req.json();
     if (!content) throw new Error('Content required');
 
     console.log(`[DeepAnalyze] Starting deep analysis for user ${user.id}`);
@@ -70,6 +70,7 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         thread_id,
+        file_id: file_id || null,
         content_preview: content.substring(0, 500),
         sections: analyzedSections,
         filing_options: filingOptions,
