@@ -14,6 +14,7 @@ import { SuperRockerInbox } from '@/components/super-rocker/SuperRockerInbox';
 import { SuperRockerLibrary } from '@/components/super-rocker/SuperRockerLibrary';
 import { SuperRockerVault } from '@/components/super-rocker/SuperRockerVault';
 import { SuperRockerKnowledge } from '@/components/super-rocker/SuperRockerKnowledge';
+import { SuperRockerNotifications } from '@/components/super-rocker/SuperRockerNotifications';
 
 export default function SuperRocker() {
   const { session } = useSession();
@@ -155,10 +156,15 @@ export default function SuperRocker() {
 
         {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Inbox */}
-          <Card className="p-6">
-            <SuperRockerInbox />
-          </Card>
+          {/* Left: Notifications & Inbox */}
+          <div className="space-y-6">
+            <Card className="p-6">
+              <SuperRockerNotifications />
+            </Card>
+            <Card className="p-6">
+              <SuperRockerInbox />
+            </Card>
+          </div>
 
           {/* Center: Vault & Quick Add */}
           <Card className="p-6 space-y-6">
