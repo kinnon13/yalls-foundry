@@ -3,7 +3,7 @@
  * Bulk ingestion interface with paste, upload, Drive connection
  */
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Loader2, Upload, Link2, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useSession } from "@/lib/auth/context";
 
 interface SuperRockerVaultProps {
   threadId: string | null;
@@ -18,9 +19,12 @@ interface SuperRockerVaultProps {
 }
 
 export function SuperRockerVault({ threadId, onThreadCreated }: SuperRockerVaultProps) {
+  const { session } = useSession();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [pasteText, setPasteText] = useState("");
   const [pasteSubject, setPasteSubject] = useState("");
   const [isIngesting, setIsIngesting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleBulkPaste = async () => {
     if (!pasteText.trim()) {
@@ -64,6 +68,42 @@ export function SuperRockerVault({ threadId, onThreadCreated }: SuperRockerVault
       toast.success("Pasted from clipboard");
     } catch (error) {
       toast.error("Failed to read clipboard");
+    }
+  };
+
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    if (!session?.userId) {
+      toast.error("Please log in to upload files");
+      return;
+    }
+
+    setIsUploading(true);
+    const file = files[0];
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', session.userId);
+
+      const { data, error } = await supabase.functions.invoke('rocker-process-file', {
+        body: formData,
+      });
+
+      if (error) throw error;
+
+      toast.success(`${file.name} uploaded successfully! ${data?.knowledge_chunks || 0} chunks indexed.`);
+      
+      // Refresh inbox/library
+      window.dispatchEvent(new CustomEvent('rocker-file-uploaded'));
+    } catch (error: any) {
+      console.error("File upload error:", error);
+      toast.error(error.message || "Failed to upload file");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -126,12 +166,32 @@ export function SuperRockerVault({ threadId, onThreadCreated }: SuperRockerVault
           <Upload className="h-5 w-5" />
           Upload Files
         </h3>
-        <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+        <div 
+          className="border-2 border-dashed border-border rounded-lg p-8 text-center"
+          onDrop={(e) => {
+            e.preventDefault();
+            handleFileUpload(e.dataTransfer.files);
+          }}
+          onDragOver={(e) => e.preventDefault()}
+        >
           <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <p className="text-sm text-muted-foreground mb-2">
-            Drag & drop .docx, .pdf, .txt, .md, or images
+            Drag & drop .docx, .pdf, .txt, .md, or images (max 25MB)
           </p>
-          <Button variant="outline" size="sm">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={(e) => handleFileUpload(e.target.files)}
+            accept=".pdf,.docx,.txt,.md,.csv,image/*"
+          />
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
+            {isUploading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Choose Files
           </Button>
         </div>
