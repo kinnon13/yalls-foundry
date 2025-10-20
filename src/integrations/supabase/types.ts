@@ -7955,6 +7955,7 @@ export type Database = {
           mime: string | null
           name: string | null
           ocr_text: string | null
+          project: string | null
           size: number | null
           source: string | null
           starred: boolean | null
@@ -7974,6 +7975,7 @@ export type Database = {
           mime?: string | null
           name?: string | null
           ocr_text?: string | null
+          project?: string | null
           size?: number | null
           source?: string | null
           starred?: boolean | null
@@ -7993,6 +7995,7 @@ export type Database = {
           mime?: string | null
           name?: string | null
           ocr_text?: string | null
+          project?: string | null
           size?: number | null
           source?: string | null
           starred?: boolean | null

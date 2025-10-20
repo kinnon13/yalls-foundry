@@ -63,13 +63,13 @@ serve(async (req) => {
     const subject = chunks[0].meta?.subject || 'Knowledge';
 
     // Use AI to analyze and suggest filing
-    const suggestion = await analyzeFiling(fullContent, subject);
+    const filingSuggestion = await analyzeFiling(fullContent, subject);
 
-    console.log(`[Organize] Confidence: ${suggestion.confidence}, Category: ${suggestion.category}`);
+    console.log(`[Organize] Confidence: ${filingSuggestion.confidence}, Category: ${filingSuggestion.category}`);
 
     // If confidence is high, auto-file
-    if (suggestion.confidence >= CONFIDENCE_THRESHOLD) {
-      const file = await createFile(supabase, user.id, thread_id, fullContent, subject, suggestion);
+    if (filingSuggestion.confidence >= CONFIDENCE_THRESHOLD) {
+      const file = await createFile(supabase, user.id, thread_id, fullContent, subject, filingSuggestion);
       
       await supabase
         .from('rocker_knowledge')
@@ -94,7 +94,7 @@ serve(async (req) => {
         meta: { 
           ...chunks[0].meta, 
           pending_filing: pendingId,
-          suggested: suggestion 
+          suggested: filingSuggestion 
         } 
       })
       .in('id', chunks.map(c => c.id));
@@ -104,25 +104,25 @@ serve(async (req) => {
       thread_id,
       user_id: user.id,
       role: 'assistant',
-      content: `📁 **Filing Question** (${Math.round(suggestion.confidence * 100)}% confidence)
+      content: `📁 **Filing Question** (${Math.round(filingSuggestion.confidence * 100)}% confidence)
 
 I analyzed: **${subject}**
 
 My suggestion:
-• Category: **${suggestion.category}**
-• Folder: **${suggestion.folder_path || '(root)'}**
-• Tags: ${suggestion.tags.join(', ')}
+• Project/Category: **${filingSuggestion.category}**
+• Folder Path: **${filingSuggestion.folder_path || '(root)'}**
+• Tags: ${filingSuggestion.tags.join(', ')}
 
-${suggestion.reasoning}
+${filingSuggestion.reasoning}
 
 Is this correct? Reply:
 • "yes" to file there
-• "Projects/Phase 1" to file in a specific folder
-• Or tell me where it belongs`,
+• "ProjectName/Category/Subfolder" to file in a specific path
+• Or tell me exactly where it belongs`,
       meta: { 
         type: 'filing_request',
         pending_id: pendingId,
-        suggestion 
+        suggestion: filingSuggestion 
       }
     });
 
@@ -130,7 +130,7 @@ Is this correct? Reply:
       JSON.stringify({ 
         success: true,
         asked_user: true,
-        suggestion 
+        suggestion: filingSuggestion 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -151,19 +151,34 @@ async function analyzeFiling(content: string, subject: string) {
   const LOVABLE_KEY = Deno.env.get('LOVABLE_API_KEY');
   const OPENAI_KEY = Deno.env.get('OPENAI_API_KEY');
   
-  const prompt = `Analyze this content and suggest how to file it:
+  const prompt = `Analyze this content and suggest MICRO-LEVEL project-based filing:
 
 Title: ${subject}
-Content: ${content.substring(0, 1000)}
+Content: ${content.substring(0, 2000)}
 
-Suggest:
-1. Best category (Projects, People, Finance, Legal, Marketing, Product, Personal, Notes, Reference)
-2. Folder path (e.g., "Projects/Q1 2025" or "People/Team/Engineering")
-3. 3-5 relevant tags
-4. Brief reasoning
-5. Confidence (0.0-1.0)
+CRITICAL RULES:
+1. Identify the SPECIFIC PROJECT NAME first (not just "Projects")
+2. Create detailed folder path: "ProjectName/Phase/Category/Subcategory"
+3. If content covers multiple topics, suggest splitting into separate files
+4. Be VERY SPECIFIC - avoid generic categories
+5. Include micro-level tags for precise retrieval
 
-Return JSON: { "category": "...", "folder_path": "...", "tags": [...], "reasoning": "...", "confidence": 0.8 }`;
+Example good paths:
+- "AgTech Platform/MVP Launch/Backend/API Design"
+- "Q1 Marketing/Social Campaign/Instagram/Content Calendar"
+- "Personal/Health/Workout Plans/2025 Q1"
+
+Return JSON: 
+{
+  "project": "Specific project name",
+  "category": "Main category",
+  "folder_path": "Full/Micro/Level/Path", 
+  "tags": ["specific", "detailed", "tags"],
+  "reasoning": "Why this exact filing location",
+  "confidence": 0.8,
+  "should_split": false,
+  "split_suggestions": []
+}`;
 
   try {
     const apiKey = LOVABLE_KEY || OPENAI_KEY;

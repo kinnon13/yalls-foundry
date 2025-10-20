@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 interface FileItem {
   id: string;
   name: string;
+  project: string | null;
   category: string | null;
   folder_path: string | null;
   summary: string | null;
@@ -31,7 +32,8 @@ export function FileBrowser() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const [editMode, setEditMode] = useState(false);
-  const [editData, setEditData] = useState({ name: '', category: '', folder_path: '', summary: '' });
+  const [editData, setEditData] = useState({ name: '', project: '', category: '', folder_path: '', summary: '' });
+  const [selectedProject, setSelectedProject] = useState<string>('all');
 
   useEffect(() => {
     loadFiles();
@@ -52,26 +54,30 @@ export function FileBrowser() {
   };
 
   const categories = Array.from(new Set(files.map(f => f.category))).filter(Boolean);
+  const projects = Array.from(new Set(files.map(f => f.project))).filter(Boolean);
   
   const filteredFiles = files.filter(f => {
     const matchesSearch = !searchQuery || 
       f.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       f.summary?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      f.project?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      f.folder_path?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       f.tags?.some(k => k.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesCategory = selectedCategory === 'all' || f.category === selectedCategory;
+    const matchesProject = selectedProject === 'all' || f.project === selectedProject;
     
-    return matchesSearch && matchesCategory;
+    return matchesSearch && matchesCategory && matchesProject;
   });
 
-  // Group files by category and folder_path
+  // Group files by PROJECT first, then full folder path
   const groupedFiles = filteredFiles.reduce((acc, file) => {
-    const cat = file.category || 'Uncategorized';
-    if (!acc[cat]) acc[cat] = {};
+    const proj = file.project || 'Uncategorized';
+    if (!acc[proj]) acc[proj] = {};
     
-    const folder = file.folder_path || 'Root';
-    if (!acc[cat][folder]) acc[cat][folder] = [];
-    acc[cat][folder].push(file);
+    const path = file.folder_path || `${file.category || 'Root'}`;
+    if (!acc[proj][path]) acc[proj][path] = [];
+    acc[proj][path].push(file);
     
     return acc;
   }, {} as Record<string, Record<string, FileItem[]>>);
@@ -80,6 +86,7 @@ export function FileBrowser() {
     setSelectedFile(file);
     setEditData({
       name: file.name || '',
+      project: file.project || '',
       category: file.category || '',
       folder_path: file.folder_path || '',
       summary: file.summary || ''
@@ -95,6 +102,7 @@ export function FileBrowser() {
         .from('rocker_files')
         .update({
           name: editData.name,
+          project: editData.project || null,
           category: editData.category,
           folder_path: editData.folder_path || null,
           summary: editData.summary
@@ -144,12 +152,23 @@ export function FileBrowser() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search files, keywords, content..."
+            placeholder="Search files, projects, keywords, content..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
           />
         </div>
+        <Select value={selectedProject} onValueChange={setSelectedProject}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Project" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Projects</SelectItem>
+            {projects.map(proj => (
+              <SelectItem key={proj} value={proj}>{proj}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Category" />
@@ -165,57 +184,59 @@ export function FileBrowser() {
 
       <ScrollArea className="h-[500px]">
         <div className="space-y-6 pr-4">
-          {Object.entries(groupedFiles).map(([category, subfolders]) => (
-            <div key={category} className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <Folder className="h-4 w-4" />
-                {category}
+          {Object.entries(groupedFiles).map(([project, paths]) => (
+            <div key={project} className="space-y-3">
+              <div className="flex items-center gap-2 text-base font-bold text-primary">
+                <Folder className="h-5 w-5" />
+                {project}
               </div>
               
-              {Object.entries(subfolders).map(([subfolder, items]) => (
-                <div key={subfolder} className="ml-6 space-y-2">
-                  {subfolder !== 'Root' && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {Object.entries(paths).map(([fullPath, items]) => {
+                const pathSegments = fullPath.split('/').filter(Boolean);
+                const indent = pathSegments.length * 4;
+                
+                return (
+                  <div key={fullPath} className="space-y-2" style={{ marginLeft: `${indent}px` }}>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                       <FolderPlus className="h-3 w-3" />
-                      {subfolder}
+                      {fullPath}
                     </div>
-                  )}
-                  
-                  {items.map((file) => (
-                    <div
-                      key={file.id}
-                      className="flex items-start gap-2 p-3 border rounded-lg hover:bg-accent/50 transition-colors ml-4"
-                    >
-                      <File className="h-4 w-4 mt-1 text-primary shrink-0" />
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">{file.name}</p>
-                            {file.summary && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                {file.summary}
-                              </p>
-                            )}
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {file.tags?.slice(0, 3).map((tag, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">
-                                  {tag}
-                                </Badge>
-                              ))}
-                              <Badge variant="outline" className="text-xs">
-                                {file.status}
-                              </Badge>
-                              {file.starred && (
-                                <Badge variant="default" className="text-xs">★</Badge>
+                    
+                    {items.map((file) => (
+                      <div
+                        key={file.id}
+                        className="flex items-start gap-2 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                      >
+                        <File className="h-4 w-4 mt-1 text-primary shrink-0" />
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <p className="font-medium text-sm">{file.name}</p>
+                              {file.summary && (
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                  {file.summary}
+                                </p>
                               )}
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {file.tags?.slice(0, 3).map((tag, i) => (
+                                  <Badge key={i} variant="secondary" className="text-xs">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                                <Badge variant="outline" className="text-xs">
+                                  {file.status}
+                                </Badge>
+                                {file.starred && (
+                                  <Badge variant="default" className="text-xs">★</Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {format(new Date(file.created_at), 'MMM d, yyyy')}
+                              </p>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {format(new Date(file.created_at), 'MMM d, yyyy')}
-                            </p>
-                          </div>
-                          
-                          <div className="flex gap-1 shrink-0">
+                            
+                            <div className="flex gap-1 shrink-0">
                             <Dialog open={editMode && selectedFile?.id === file.id} onOpenChange={(open) => {
                               if (!open) {
                                 setEditMode(false);
@@ -245,20 +266,31 @@ export function FileBrowser() {
                                     />
                                   </div>
                                   <div>
+                                    <label className="text-sm font-medium">Project</label>
+                                    <Input
+                                      value={editData.project}
+                                      onChange={(e) => setEditData({ ...editData, project: e.target.value })}
+                                      placeholder="e.g., AgTech Platform, Q1 Marketing"
+                                    />
+                                  </div>
+                                  <div>
                                     <label className="text-sm font-medium">Category</label>
                                     <Input
                                       value={editData.category}
                                       onChange={(e) => setEditData({ ...editData, category: e.target.value })}
-                                      placeholder="e.g., Project, Notes, Reference"
+                                      placeholder="e.g., Development, Marketing, Finance"
                                     />
                                   </div>
                                   <div>
-                                    <label className="text-sm font-medium">Folder Path (optional)</label>
+                                    <label className="text-sm font-medium">Full Folder Path</label>
                                     <Input
                                       value={editData.folder_path}
                                       onChange={(e) => setEditData({ ...editData, folder_path: e.target.value })}
-                                      placeholder="e.g., Project/Phase 1, Notes/Marketing"
+                                      placeholder="e.g., ProjectName/Phase 1/Backend/API Design"
                                     />
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Use slashes (/) for deep nesting: Project/Phase/Category/Sub
+                                    </p>
                                   </div>
                                   <div>
                                     <label className="text-sm font-medium">Summary</label>
@@ -296,8 +328,9 @@ export function FileBrowser() {
                       </div>
                     </div>
                   ))}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           ))}
 
