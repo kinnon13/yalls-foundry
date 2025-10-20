@@ -147,6 +147,9 @@ verify_jwt = true
 [functions.rocker-telemetry]
 verify_jwt = true
 
+[functions.summarize-thread]
+verify_jwt = true
+
 [functions.ai-rank-search]
 verify_jwt = true
 
