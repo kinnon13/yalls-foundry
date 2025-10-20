@@ -9976,6 +9976,48 @@ export type Database = {
         }
         Relationships: []
       }
+      web_access_allowlist: {
+        Row: {
+          created_at: string | null
+          domain: string
+          id: string
+          note: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          domain: string
+          id?: string
+          note?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          domain?: string
+          id?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
+      web_access_blocklist: {
+        Row: {
+          created_at: string | null
+          domain: string
+          id: string
+          note: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          domain: string
+          id?: string
+          note?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          domain?: string
+          id?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
       web_automation_tasks: {
         Row: {
           completed_at: string | null

@@ -90,9 +90,32 @@ serve(async (req) => {
 - Propose next actions
 - Cite sources when using memory
 - Format tasks as "todo: [action]" to auto-create them
-${calendarContext ? '- You have access to the user\'s calendar - suggest prep, reminders, and follow-ups' : ''}`;
+${calendarContext ? '- You have access to the user\'s calendar - suggest prep, reminders, and follow-ups' : ''}
+- You can browse the web! When user shares a URL or asks to look something up, say you'll fetch it.`;
 
     let reply = "I'm here to help! How can I assist you?";
+    
+    // Detect URL in message for web fetch
+    const urlMatch = message.match(/https?:\/\/[^\s]+/);
+    if (urlMatch) {
+      const urlToFetch = urlMatch[0];
+      try {
+        const { data: fetchResult, error: fetchError } = await supabase.functions.invoke('rocker-web-fetch', {
+          body: { url: urlToFetch }
+        });
+
+        if (fetchError) {
+          reply = `I tried to fetch ${urlToFetch} but got an error: ${fetchError.message}`;
+        } else if (fetchResult?.error) {
+          reply = `Couldn't access that URL: ${fetchResult.error}`;
+        } else {
+          // Add fetched content to memory context
+          memoryContext += `\n\n[Fetched from ${fetchResult.title || urlToFetch}]:\n${fetchResult.text?.slice(0, 2000)}...`;
+        }
+      } catch (e) {
+        console.error('Web fetch failed:', e);
+      }
+    }
 
     try {
       const aiMessages = [
