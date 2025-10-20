@@ -7793,6 +7793,75 @@ export type Database = {
         }
         Relationships: []
       }
+      rocker_edges: {
+        Row: {
+          created_at: string | null
+          dst: string
+          id: string
+          meta: Json | null
+          rel: string
+          src: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          dst: string
+          id?: string
+          meta?: Json | null
+          rel: string
+          src: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          dst?: string
+          id?: string
+          meta?: Json | null
+          rel?: string
+          src?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_edges_dst_fkey"
+            columns: ["dst"]
+            isOneToOne: false
+            referencedRelation: "rocker_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rocker_edges_src_fkey"
+            columns: ["src"]
+            isOneToOne: false
+            referencedRelation: "rocker_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rocker_entities: {
+        Row: {
+          created_at: string | null
+          id: string
+          kind: string
+          meta: Json | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          kind: string
+          meta?: Json | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          kind?: string
+          meta?: Json | null
+          name?: string
+        }
+        Relationships: []
+      }
       rocker_events: {
         Row: {
           id: string
@@ -8110,6 +8179,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rocker_metrics: {
+        Row: {
+          action: string | null
+          created_at: string | null
+          hit5: boolean | null
+          id: number
+          latency_ms: number | null
+          low_conf: boolean | null
+          mrr: number | null
+          retrieved_ids: string[] | null
+          scores: number[] | null
+          tokens_in: number | null
+          tokens_out: number | null
+          user_id: string | null
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string | null
+          hit5?: boolean | null
+          id?: number
+          latency_ms?: number | null
+          low_conf?: boolean | null
+          mrr?: number | null
+          retrieved_ids?: string[] | null
+          scores?: number[] | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string | null
+          created_at?: string | null
+          hit5?: boolean | null
+          id?: number
+          latency_ms?: number | null
+          low_conf?: boolean | null
+          mrr?: number | null
+          retrieved_ids?: string[] | null
+          scores?: number[] | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       rocker_notifications: {
         Row: {
@@ -10336,6 +10450,22 @@ export type Database = {
         }
         Relationships: []
       }
+      v_knowledge_health: {
+        Row: {
+          embedded_chunks: number | null
+          pending_chunks: number | null
+          total_chunks: number | null
+        }
+        Relationships: []
+      }
+      v_top_entities: {
+        Row: {
+          degree: number | null
+          kind: string | null
+          name: string | null
+        }
+        Relationships: []
+      }
       vw_discovery_queue_health: {
         Row: {
           ct: number | null
@@ -11104,6 +11234,16 @@ export type Database = {
       complete_onboarding: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      connect_entities: {
+        Args: {
+          p_dst: string
+          p_meta?: Json
+          p_rel: string
+          p_src: string
+          p_weight?: number
+        }
+        Returns: string
       }
       connection_metrics: {
         Args: { p_window_hours?: number }
@@ -12049,6 +12189,21 @@ export type Database = {
       list_apps: {
         Args: { p_entity_id?: string; p_q?: string }
         Returns: Json
+      }
+      log_metric: {
+        Args: {
+          p_action: string
+          p_hit5: boolean
+          p_latency_ms: number
+          p_low_conf: boolean
+          p_mrr: number
+          p_retrieved_ids: string[]
+          p_scores: number[]
+          p_tokens_in: number
+          p_tokens_out: number
+          p_user_id: string
+        }
+        Returns: number
       }
       log_usage_event_v2: {
         Args: {
@@ -13780,6 +13935,10 @@ export type Database = {
         Returns: string
       }
       upsert_business_profile: {
+        Args: { p_kind: string; p_meta?: Json; p_name: string }
+        Returns: string
+      }
+      upsert_entity: {
         Args: { p_kind: string; p_meta?: Json; p_name: string }
         Returns: string
       }
