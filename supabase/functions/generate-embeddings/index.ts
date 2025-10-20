@@ -143,16 +143,17 @@ serve(async (req) => {
         .in("id", jobIds);
     }
 
-    // Audit
-    await supabase.from("ai_action_ledger")
+    // Audit (fail silently)
+    const { error: auditErr } = await supabase.from("ai_action_ledger")
       .insert({ 
         agent: "rocker", 
         action: "generate_embeddings_parallel", 
         input: {}, 
         output: { embedded: totalDone }, 
         result: "success" 
-      })
-      .catch(() => {});
+      });
+    
+    if (auditErr) console.error("Audit log failed:", auditErr);
 
     return new Response(JSON.stringify({ ok: true, embedded: totalDone }), { 
       headers: { ...CORS, "Content-Type": "application/json" } 
