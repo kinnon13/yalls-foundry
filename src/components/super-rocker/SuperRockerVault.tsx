@@ -12,7 +12,12 @@ import { Loader2, Upload, Link2, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export function SuperRockerVault() {
+interface SuperRockerVaultProps {
+  threadId: string | null;
+  onThreadCreated: (threadId: string) => void;
+}
+
+export function SuperRockerVault({ threadId, onThreadCreated }: SuperRockerVaultProps) {
   const [pasteText, setPasteText] = useState("");
   const [pasteSubject, setPasteSubject] = useState("");
   const [isIngesting, setIsIngesting] = useState(false);
@@ -25,29 +30,22 @@ export function SuperRockerVault() {
 
     setIsIngesting(true);
     try {
-      const { data: session } = await supabase.auth.getSession();
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ingest-paste`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.session?.access_token}`,
-          },
-          body: JSON.stringify({
-            subject: pasteSubject || "Untitled paste",
-            text: pasteText,
-          }),
+      const { data, error } = await supabase.functions.invoke('rocker-ingest', {
+        body: {
+          text: pasteText.trim(),
+          subject: pasteSubject || 'Bulk Paste',
+          thread_id: threadId
         }
-      );
+      });
 
-      if (!response.ok) {
-        throw new Error("Failed to ingest paste");
+      if (error) throw error;
+
+      if (data?.thread_id && !threadId) {
+        onThreadCreated(data.thread_id);
       }
 
-      const result = await response.json();
       toast.success(
-        `Filed! ${result.chunks} chunk(s), category: ${result.category || "None"}`
+        `Filed to ${data.category}! ${data.stored} chunks • Tags: ${data.tags?.slice(0, 3).join(', ') || 'none'}`
       );
       setPasteText("");
       setPasteSubject("");

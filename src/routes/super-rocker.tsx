@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,6 +23,33 @@ export default function SuperRocker() {
   const [isIngesting, setIsIngesting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
+
+  // Auto-create thread on mount so chat works immediately
+  useEffect(() => {
+    const initThread = async () => {
+      const { data } = await supabase
+        .from('rocker_threads')
+        .select('id')
+        .eq('user_id', session?.userId)
+        .maybeSingle();
+      
+      if (data) {
+        setThreadId(data.id);
+      } else {
+        // Create default thread
+        const { data: newThread } = await supabase
+          .from('rocker_threads')
+          .insert({ 
+            user_id: session?.userId,
+            title: 'Super Rocker Chat'
+          })
+          .select('id')
+          .single();
+        if (newThread) setThreadId(newThread.id);
+      }
+    };
+    if (session?.userId) initThread();
+  }, [session?.userId]);
 
   const handleIngest = async () => {
     if (!text.trim()) {
@@ -134,7 +161,7 @@ export default function SuperRocker() {
 
           {/* Center: Vault & Quick Add */}
           <Card className="p-6 space-y-6">
-            <SuperRockerVault />
+            <SuperRockerVault threadId={threadId} onThreadCreated={setThreadId} />
           </Card>
 
           {/* Right: Library */}
