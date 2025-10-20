@@ -48,11 +48,8 @@ serve(async (req) => {
         await supabase
           .from('rocker_knowledge')
           .update({
-            meta: supabase.rpc('jsonb_set', {
-              target: 'meta',
-              path: '{archived}',
-              new_value: 'true',
-            }) as any,
+            // Soft archive by flagging in meta
+            meta: { archived: true },
           })
           .eq('file_id', file.id);
         
