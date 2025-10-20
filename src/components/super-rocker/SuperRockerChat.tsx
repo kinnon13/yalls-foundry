@@ -79,7 +79,7 @@ export function SuperRockerChat({ threadId }: { threadId: string | null }) {
     setMessages(prev => [...prev, tempUserMsg]);
 
     try {
-      const { data, error } = await supabase.functions.invoke('rocker-chat', {
+      const { data, error } = await supabase.functions.invoke('rocker-chat-simple', {
         body: {
           thread_id: threadId,
           message: userMessage
