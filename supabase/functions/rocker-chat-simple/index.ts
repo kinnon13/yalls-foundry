@@ -38,19 +38,75 @@ serve(async (req) => {
       });
     }
 
-    // Recall relevant memories with full content
+    // Load runtime config with sane defaults
+    const defaultCfg = { alpha: 0.7, retrieve_k: 20, keep_k: 5, sim_threshold: 0.65 };
+    const { data: cfgRow } = await supabase.from('rocker_config').select('*').eq('id', 1).maybeSingle();
+    const cfg = { ...defaultCfg, ...(cfgRow || {}) };
+
+    // Embed the user message for semantic search
+    let qvec: number[] = [];
+    try {
+      const embedResp = await fetch('https://api.openai.com/v1/embeddings', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ model: 'text-embedding-3-small', input: message })
+      });
+      if (embedResp.ok) {
+        const embedData = await embedResp.json();
+        qvec = embedData.data[0].embedding;
+      }
+    } catch (e) {
+      console.error('Embedding failed:', e);
+    }
+
+    // Hybrid retrieval (vector + lexical + boosts)
+    let hits: any[] = [];
     let memoryContext = '';
-    const { data: memories } = await supabase.rpc('recall_long_memory', {
-      p_query: message,
-      p_limit: 8
-    });
-    
-    if (memories && memories.length > 0) {
-      memoryContext = '\n\n📚 Retrieved from your memory:\n' + memories.map((m: any, i: number) => {
-        const title = m.key || m.kind;
-        const snippet = m.content?.substring(0, 200) || m.value?.content?.substring(0, 200) || '';
-        return `[Source #${i+1}] ${title}\n${snippet}${snippet.length >= 200 ? '...' : ''}`;
-      }).join('\n\n');
+    try {
+      const { data, error } = await supabase.rpc('search_hybrid', {
+        q_vec: qvec,
+        q_text: message,
+        k: cfg.retrieve_k,
+        alpha: cfg.alpha,
+        thread: thread_id || null
+      });
+      if (error) throw error;
+      hits = (data || []).slice(0, cfg.keep_k);
+    } catch (e) {
+      console.error('Hybrid search failed, trying vector-only:', e);
+      // Fallback to vector-only if hybrid fails
+      const { data } = await supabase.rpc('match_rocker_memory_vec', {
+        q: qvec,
+        match_count: cfg.retrieve_k,
+        thread: thread_id || null
+      });
+      if (data?.length) hits = data.slice(0, cfg.keep_k);
+    }
+
+    // Build knowledge context with citations
+    if (hits && hits.length > 0) {
+      memoryContext = '\n\n🧠 From embedded knowledge:\n' + hits.map((h: any) => 
+        `[#${h.chunk_index}] ${String(h.content || '').slice(0, 500)}`
+      ).join('\n\n');
+    }
+
+    // Confidence gating: if weak signal, ask for clarity instead of bluffing
+    const confident = hits.length >= 2 && (hits[0]?.score ?? hits[0]?.similarity ?? 1) >= cfg.sim_threshold;
+    if (!confident && qvec.length > 0) {
+      const clarifyReply = "I might need a bit more detail. Should I focus on a time range, a person, or a specific doc/thread? You can also say 'summarize thread 26' or paste a link.";
+      
+      await supabase.from('rocker_messages').insert([
+        { thread_id, user_id: user.id, role: 'user', content: message, meta: {} },
+        { thread_id, user_id: user.id, role: 'assistant', content: clarifyReply, meta: { confidence: 'low', sources: [] } }
+      ]);
+
+      return new Response(
+        JSON.stringify({ reply: clarifyReply, sources: [], tool_results: [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Check if super admin has calendar access enabled
@@ -88,8 +144,10 @@ serve(async (req) => {
 
     const systemPrompt = `You are Super Rocker, a helpful AI assistant.
 
-- Be direct and actionable
+- TL;DR first, then details
+- Cite sources with [#chunk_index] when referencing embedded knowledge
 - Format tasks as "todo: [action]" to auto-create them
+- End responses with a "Next actions:" list when appropriate
 ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow-ups' : ''}
 - When given URLs, you can fetch and summarize them`;
 
@@ -166,8 +224,12 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
       console.error("AI error:", aiError);
     }
 
-    // Save messages
-    const messageSources = memories?.map((m: any) => ({ id: m.id, kind: m.kind })) || [];
+    // Save messages with source tracking
+    const messageSources = hits?.map((h: any) => ({ 
+      id: h.id, 
+      chunk_index: h.chunk_index, 
+      score: h.score ?? h.similarity 
+    })) || [];
     
     const { error: insertError } = await supabase.from("rocker_messages").insert([
       {
@@ -189,6 +251,20 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
     if (insertError) {
       console.error('Failed to save messages:', insertError);
     }
+
+    // Log to action ledger for learning
+    await supabase.from('ai_action_ledger').insert({
+      user_id: user.id,
+      agent: 'rocker',
+      action: 'chat_turn',
+      input: { message, thread_id },
+      output: {
+        reply,
+        retrieved_ids: hits?.map((h: any) => h.id) || [],
+        scores: hits?.map((h: any) => h.score ?? h.similarity) || []
+      },
+      result: 'success'
+    });
 
     // Auto-task detection
     const todoMatch = reply.match(/todo:\s*(.+?)(?:\n|$)/i);
