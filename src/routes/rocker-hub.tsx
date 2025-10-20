@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { RockerVaultUpload } from '@/components/rocker/RockerVaultUpload';
 import { RockerSessionStart } from '@/components/rocker/RockerSessionStart';
 import { DailyKickoff } from '@/components/rocker/DailyKickoff';
@@ -13,9 +14,23 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Brain, Shield, Zap, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
 
 export default function RockerHub() {
   const [docsExpanded, setDocsExpanded] = useState(false);
+  const { isSuperAdmin, isLoading } = useSuperAdminCheck();
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  if (!isSuperAdmin) {
+    return <Navigate to="/" replace />;
+  }
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-6 overflow-y-auto">

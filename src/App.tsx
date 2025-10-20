@@ -302,7 +302,7 @@ function AppContent() {
             } 
           />
           
-          {/* Rocker Hub */}
+          {/* Rocker Hub - Super Admin Only */}
           <Route 
             path="/rocker" 
             element={
