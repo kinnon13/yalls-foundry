@@ -1,15 +1,18 @@
 /**
- * Rocker Auto-Organize Knowledge
- * Automatically files and organizes knowledge chunks into structured files
+ * Rocker Interactive File Organization
+ * Analyzes content and asks user where to file it when uncertain
  */
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const CONFIDENCE_THRESHOLD = 0.85;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -30,16 +33,22 @@ serve(async (req) => {
     );
     if (authError || !user) throw new Error('Unauthorized');
 
-    const { thread_id } = await req.json();
+    const { thread_id, content_id, approve, suggestion } = await req.json();
 
-    console.log(`[Organize] Processing knowledge for thread: ${thread_id}`);
+    // If this is an approval response
+    if (approve !== undefined && suggestion) {
+      return await handleApproval(supabase, user.id, content_id, approve, suggestion);
+    }
 
-    // Get all unorganized knowledge chunks for this thread
+    console.log(`[Organize] Analyzing content for thread: ${thread_id}`);
+
+    // Get unorganized knowledge chunks
     const { data: chunks, error: chunksError } = await supabase
       .from('rocker_knowledge')
       .select('id, content, chunk_index, meta, created_at')
       .eq('user_id', user.id)
       .eq('meta->>thread_id', thread_id)
+      .is('meta->>organized', null)
       .order('chunk_index', { ascending: true });
 
     if (chunksError) throw chunksError;
@@ -50,75 +59,78 @@ serve(async (req) => {
       );
     }
 
-    // Group chunks and analyze content
     const fullContent = chunks.map(c => c.content).join('\n\n');
     const subject = chunks[0].meta?.subject || 'Knowledge';
-    const category = chunks[0].meta?.category || 'Notes';
 
-    // Extract key topics for tags (simple keyword extraction)
-    const tags = extractKeywords(fullContent);
+    // Use AI to analyze and suggest filing
+    const suggestion = await analyzeFiling(fullContent, subject);
 
-    // Generate summary (first 200 chars or key sentences)
-    const summary = generateSummary(fullContent);
+    console.log(`[Organize] Confidence: ${suggestion.confidence}, Category: ${suggestion.category}`);
 
-    // Determine best category based on content
-    const finalCategory = smartCategorize(fullContent, category);
+    // If confidence is high, auto-file
+    if (suggestion.confidence >= CONFIDENCE_THRESHOLD) {
+      const file = await createFile(supabase, user.id, thread_id, fullContent, subject, suggestion);
+      
+      await supabase
+        .from('rocker_knowledge')
+        .update({ meta: { ...chunks[0].meta, organized: true, file_id: file.id } })
+        .in('id', chunks.map(c => c.id));
 
-    // Create organized file entry
-    const { data: file, error: fileError } = await supabase
-      .from('rocker_files')
-      .insert({
-        user_id: user.id,
-        thread_id,
-        name: subject,
-        status: 'inbox',
-        category: finalCategory,
-        tags,
-        summary,
-        text_content: fullContent,
-        source: 'rocker_organize',
-        mime: 'text/plain',
-        size: fullContent.length,
-      })
-      .select()
-      .single();
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          auto_filed: true,
+          file: { id: file.id, name: file.name, category: file.category }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    if (fileError) throw fileError;
-
-    // Update knowledge chunks to mark them as organized
+    // Low confidence - ask user
+    const pendingId = `pending_${Date.now()}`;
     await supabase
       .from('rocker_knowledge')
       .update({ 
         meta: { 
           ...chunks[0].meta, 
-          organized: true, 
-          file_id: file.id 
+          pending_filing: pendingId,
+          suggested: suggestion 
         } 
       })
       .in('id', chunks.map(c => c.id));
 
-    // Log action
-    await supabase.from('ai_action_ledger').insert({
+    // Post to chat asking where to file
+    await supabase.from('rocker_messages').insert({
+      thread_id,
       user_id: user.id,
-      agent: 'rocker',
-      action: 'organize_knowledge',
-      input: { thread_id, chunks: chunks.length },
-      output: { file_id: file.id, category: finalCategory, tags },
-      result: 'success',
-    });
+      role: 'assistant',
+      content: `📁 **Filing Question** (${Math.round(suggestion.confidence * 100)}% confidence)
 
-    console.log(`[Organize] Created file: ${file.name} (${finalCategory})`);
+I analyzed: **${subject}**
+
+My suggestion:
+• Category: **${suggestion.category}**
+• Folder: **${suggestion.folder_path || '(root)'}**
+• Tags: ${suggestion.tags.join(', ')}
+
+${suggestion.reasoning}
+
+Is this correct? Reply:
+• "yes" to file there
+• "Projects/Phase 1" to file in a specific folder
+• Or tell me where it belongs`,
+      meta: { 
+        type: 'filing_request',
+        pending_id: pendingId,
+        suggestion 
+      }
+    });
 
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        file: {
-          id: file.id,
-          name: file.name,
-          category: finalCategory,
-          tags,
-          summary
-        }
+        success: true,
+        asked_user: true,
+        suggestion 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -135,69 +147,176 @@ serve(async (req) => {
   }
 });
 
-// Smart categorization based on content analysis
-function smartCategorize(content: string, defaultCategory: string): string {
-  const lower = content.toLowerCase();
+async function analyzeFiling(content: string, subject: string) {
+  const LOVABLE_KEY = Deno.env.get('LOVABLE_API_KEY');
+  const OPENAI_KEY = Deno.env.get('OPENAI_API_KEY');
   
-  // Keywords for each category
+  const prompt = `Analyze this content and suggest how to file it:
+
+Title: ${subject}
+Content: ${content.substring(0, 1000)}
+
+Suggest:
+1. Best category (Projects, People, Finance, Legal, Marketing, Product, Personal, Notes, Reference)
+2. Folder path (e.g., "Projects/Q1 2025" or "People/Team/Engineering")
+3. 3-5 relevant tags
+4. Brief reasoning
+5. Confidence (0.0-1.0)
+
+Return JSON: { "category": "...", "folder_path": "...", "tags": [...], "reasoning": "...", "confidence": 0.8 }`;
+
+  try {
+    const apiKey = LOVABLE_KEY || OPENAI_KEY;
+    const url = LOVABLE_KEY ? 'https://ai.gateway.lovable.dev/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+    const model = LOVABLE_KEY ? 'google/gemini-2.5-flash' : 'gpt-4o-mini';
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+      }),
+    });
+
+    if (!response.ok) throw new Error('AI request failed');
+
+    const data = await response.json();
+    const aiResponse = data.choices?.[0]?.message?.content || '{}';
+    
+    // Extract JSON from response
+    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+  } catch (e) {
+    console.error('[Organize] AI analysis failed:', e);
+  }
+
+  // Fallback to rule-based
+  return {
+    category: smartCategorize(content),
+    folder_path: null,
+    tags: extractKeywords(content).slice(0, 5),
+    reasoning: 'Based on keyword analysis (AI unavailable)',
+    confidence: 0.6,
+  };
+}
+
+async function handleApproval(supabase: any, userId: string, pendingId: string, approve: boolean, suggestion: any) {
+  const { data: chunks } = await supabase
+    .from('rocker_knowledge')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('meta->>pending_filing', pendingId);
+
+  if (!chunks || chunks.length === 0) {
+    return new Response(
+      JSON.stringify({ error: 'Pending filing not found' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  if (!approve) {
+    // User rejected - clear pending
+    await supabase
+      .from('rocker_knowledge')
+      .update({ meta: { ...chunks[0].meta, pending_filing: null, suggested: null } })
+      .in('id', chunks.map((c: any) => c.id));
+
+    return new Response(
+      JSON.stringify({ success: true, cancelled: true }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // User approved - create file
+  const fullContent = chunks.map((c: any) => c.content).join('\n\n');
+  const subject = chunks[0].meta?.subject || 'Knowledge';
+  const threadId = chunks[0].meta?.thread_id;
+
+  const file = await createFile(supabase, userId, threadId, fullContent, subject, suggestion);
+
+  await supabase
+    .from('rocker_knowledge')
+    .update({ meta: { ...chunks[0].meta, organized: true, file_id: file.id, pending_filing: null } })
+    .in('id', chunks.map((c: any) => c.id));
+
+  return new Response(
+    JSON.stringify({ success: true, filed: true, file: { id: file.id, name: file.name } }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+async function createFile(supabase: any, userId: string, threadId: string, content: string, name: string, suggestion: any) {
+  const { data: file, error } = await supabase
+    .from('rocker_files')
+    .insert({
+      user_id: userId,
+      thread_id: threadId,
+      name,
+      status: 'filed',
+      category: suggestion.category,
+      folder_path: suggestion.folder_path,
+      tags: suggestion.tags,
+      summary: generateSummary(content),
+      text_content: content,
+      source: 'rocker_organize',
+      mime: 'text/plain',
+      size: content.length,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return file;
+}
+
+function smartCategorize(content: string): string {
+  const lower = content.toLowerCase();
   const patterns: Record<string, string[]> = {
-    'Projects': ['project', 'roadmap', 'milestone', 'sprint', 'development', 'feature', 'release'],
-    'People': ['meeting', 'conversation', 'contact', 'team', 'colleague', 'client', 'customer'],
-    'Finance': ['budget', 'cost', 'revenue', 'payment', 'invoice', 'expense', 'profit', '$', 'price'],
-    'Legal': ['contract', 'agreement', 'legal', 'compliance', 'regulation', 'terms', 'policy'],
-    'Marketing': ['campaign', 'marketing', 'branding', 'social media', 'content', 'seo', 'ads'],
-    'Product': ['feature', 'product', 'user', 'design', 'ux', 'interface', 'specification'],
-    'Personal': ['personal', 'note', 'idea', 'thought', 'reminder', 'todo'],
-    'Notes': ['note', 'information', 'knowledge', 'learning', 'reference'],
+    'Projects': ['project', 'roadmap', 'milestone', 'sprint', 'development'],
+    'People': ['meeting', 'conversation', 'contact', 'team', 'colleague'],
+    'Finance': ['budget', 'cost', 'revenue', 'payment', 'invoice', '$'],
+    'Legal': ['contract', 'agreement', 'legal', 'compliance', 'terms'],
+    'Marketing': ['campaign', 'marketing', 'branding', 'social', 'seo'],
+    'Product': ['feature', 'product', 'user', 'design', 'ux'],
+    'Personal': ['personal', 'idea', 'thought', 'reminder'],
+    'Notes': ['note', 'information', 'knowledge'],
   };
 
-  // Count matches for each category
   const scores: Record<string, number> = {};
   for (const [category, keywords] of Object.entries(patterns)) {
     scores[category] = keywords.filter(kw => lower.includes(kw)).length;
   }
 
-  // Find category with highest score
   const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-  if (sorted[0][1] > 0) {
-    return sorted[0][0];
-  }
-
-  return defaultCategory;
+  return sorted[0][1] > 0 ? sorted[0][0] : 'Notes';
 }
 
-// Extract key topics/keywords
 function extractKeywords(content: string): string[] {
-  // Remove common words
-  const stopWords = new Set([
-    'the', 'is', 'at', 'which', 'on', 'a', 'an', 'and', 'or', 'but', 
-    'in', 'with', 'to', 'for', 'of', 'as', 'by', 'this', 'that'
-  ]);
-
-  const words = content
-    .toLowerCase()
-    .match(/\b[a-z]{4,}\b/g) || [];
-
-  // Count word frequency
+  const stopWords = new Set(['the', 'is', 'at', 'which', 'on', 'and', 'or', 'but', 'in', 'with', 'to', 'for', 'of']);
+  const words = content.toLowerCase().match(/\b[a-z]{4,}\b/g) || [];
   const freq: Record<string, number> = {};
+  
   for (const word of words) {
     if (!stopWords.has(word)) {
       freq[word] = (freq[word] || 0) + 1;
     }
   }
 
-  // Get top 5 keywords
   return Object.entries(freq)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
     .map(([word]) => word);
 }
 
-// Generate summary from content
 function generateSummary(content: string): string {
-  // Get first 200 chars or first complete sentence
   const sentences = content.match(/[^.!?]+[.!?]+/g) || [];
-  
   if (sentences.length > 0) {
     let summary = '';
     for (const sentence of sentences) {
@@ -206,6 +325,5 @@ function generateSummary(content: string): string {
     }
     return summary.trim() || content.substring(0, 200) + '...';
   }
-
   return content.substring(0, 200) + (content.length > 200 ? '...' : '');
 }

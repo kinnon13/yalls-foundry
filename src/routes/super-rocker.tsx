@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
-import { Loader2, Upload, Brain, CheckSquare, FileText } from 'lucide-react';
+import { Loader2, Upload, Brain, CheckSquare, FileText, FolderOpen } from 'lucide-react';
 import { SuperRockerMemory } from '@/components/super-rocker/SuperRockerMemory';
 import { SuperRockerTasks } from '@/components/super-rocker/SuperRockerTasks';
 import { SuperRockerChat } from '@/components/super-rocker/SuperRockerChat';
@@ -15,6 +15,7 @@ import { SuperRockerLibrary } from '@/components/super-rocker/SuperRockerLibrary
 import { SuperRockerVault } from '@/components/super-rocker/SuperRockerVault';
 import { SuperRockerKnowledge } from '@/components/super-rocker/SuperRockerKnowledge';
 import { SuperRockerNotifications } from '@/components/super-rocker/SuperRockerNotifications';
+import { FileBrowser } from '@/components/super-rocker/FileBrowser';
 
 export default function SuperRocker() {
   const { session } = useSession();
@@ -195,6 +196,18 @@ export default function SuperRocker() {
             <SuperRockerTasks threadId={threadId} />
           </Card>
         </div>
+
+        {/* File Browser */}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <FolderOpen className="h-5 w-5" />
+            <h2 className="text-xl font-semibold">Files</h2>
+            <p className="text-xs text-muted-foreground ml-auto">
+              Browse, search, and reorganize everything you've filed
+            </p>
+          </div>
+          <FileBrowser />
+        </Card>
       </div>
     </div>
   );
