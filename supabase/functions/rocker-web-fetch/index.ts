@@ -37,20 +37,31 @@ serve(async (req) => {
       });
     }
 
-    // Check flags
+    // Check flags and verify super_admin access
     const { data: webAccessFlag } = await supabase
       .from('runtime_flags')
       .select('value')
       .eq('key', 'capabilities.web_access')
       .single();
 
-    const { enabled, mode } = webAccessFlag?.value as any || { enabled: false, mode: 'disabled' };
+    const { enabled, mode, admin_only } = webAccessFlag?.value as any || { enabled: false, mode: 'disabled', admin_only: true };
 
     if (!enabled) {
       return new Response(JSON.stringify({ error: 'Web access is disabled' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Verify super_admin if admin_only is true
+    if (admin_only) {
+      const { data: isSuperAdmin } = await supabase.rpc('is_super_admin', { _user_id: user.id });
+      if (!isSuperAdmin) {
+        return new Response(JSON.stringify({ error: 'Web access restricted to super admin' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     // Parse URL and validate

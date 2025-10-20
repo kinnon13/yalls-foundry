@@ -74,10 +74,10 @@ serve(async (req) => {
     let summary = text.slice(0, 200) + '...';
     let tags: string[] = [];
 
-    // Skip AI for very large texts to avoid timeouts
-    if (LOVABLE_API_KEY && text.length < 50000) {
+    // Skip AI for texts over 10KB to prevent memory issues
+    if (LOVABLE_API_KEY && text.length < 10000) {
       try {
-        // Single combined AI call for better performance
+        // Ultra-fast AI call with minimal prompt
         const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -88,19 +88,9 @@ serve(async (req) => {
             model: 'google/gemini-2.5-flash-lite',
             messages: [{
               role: 'user',
-              content: `Analyze this content and return JSON with category, summary, and tags.
-
-Subject: ${subject || 'Untitled'}
-Content: ${text.slice(0, 3000)}
-
-Return JSON in this exact format:
-{
-  "category": "One of: Projects, People, Finance, Legal, Marketing, Product, Personal, Notes",
-  "summary": "1-2 sentence summary",
-  "tags": ["tag1", "tag2", "tag3"]
-}`
+              content: `Category, summary, 3 tags for:\n\n${text.slice(0, 800)}\n\nJSON: {"category":"","summary":"","tags":[]}`
             }],
-            max_completion_tokens: 200,
+            max_completion_tokens: 100,
           }),
         });
         
@@ -109,15 +99,15 @@ Return JSON in this exact format:
           const content = data.choices?.[0]?.message?.content || '{}';
           const parsed = JSON.parse(content.replace(/```json\n?|\n?```/g, ''));
           category = parsed.category || 'Notes';
-          summary = parsed.summary || summary;
-          tags = Array.isArray(parsed.tags) ? parsed.tags : [];
+          summary = parsed.summary || text.slice(0, 150);
+          tags = Array.isArray(parsed.tags) ? parsed.tags.slice(0, 3) : [];
         }
       } catch (aiError) {
-        console.error('AI processing error:', aiError);
+        console.error('AI skip:', aiError.message);
       }
-    } else if (text.length >= 50000) {
-      summary = `Large document (${Math.round(text.length / 1000)}KB)`;
-      category = 'Documents';
+    } else {
+      summary = text.length > 10000 ? `Doc (${Math.round(text.length / 1000)}KB)` : text.slice(0, 150);
+      category = 'Notes';
     }
 
     // Insert chunks into memory
