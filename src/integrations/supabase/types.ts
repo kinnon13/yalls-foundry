@@ -8014,6 +8014,84 @@ export type Database = {
           },
         ]
       }
+      rocker_gap_opportunities: {
+        Row: {
+          created_at: string | null
+          effort: number
+          entities: Json | null
+          evidence: Json | null
+          id: string
+          kind: string
+          priority: number
+          size: number
+          status: string | null
+          title: string
+          updated_at: string | null
+          value: number
+        }
+        Insert: {
+          created_at?: string | null
+          effort: number
+          entities?: Json | null
+          evidence?: Json | null
+          id?: string
+          kind: string
+          priority: number
+          size: number
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          value: number
+        }
+        Update: {
+          created_at?: string | null
+          effort?: number
+          entities?: Json | null
+          evidence?: Json | null
+          id?: string
+          kind?: string
+          priority?: number
+          size?: number
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          value?: number
+        }
+        Relationships: []
+      }
+      rocker_gap_signals: {
+        Row: {
+          created_at: string | null
+          entities: Json | null
+          id: number
+          kind: string
+          meta: Json | null
+          query: string | null
+          score: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entities?: Json | null
+          id?: number
+          kind: string
+          meta?: Json | null
+          query?: string | null
+          score?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entities?: Json | null
+          id?: number
+          kind?: string
+          meta?: Json | null
+          query?: string | null
+          score?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       rocker_knowledge: {
         Row: {
           chunk_index: number
@@ -10436,6 +10514,23 @@ export type Database = {
           seen_at: string | null
           title: string | null
           user_id: string | null
+        }
+        Relationships: []
+      }
+      v_gap_clusters: {
+        Row: {
+          cluster_id: string | null
+          crop: string | null
+          equipment: string | null
+          evidence_ids: Json | null
+          first_seen: string | null
+          kind: string | null
+          last_seen: string | null
+          pain: number | null
+          pest: string | null
+          season: string | null
+          size: number | null
+          topic: string | null
         }
         Relationships: []
       }

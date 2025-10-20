@@ -197,6 +197,8 @@ serve(async (req) => {
     const topScore = (hits[0]?.combinedScore ?? hits[0]?.score ?? hits[0]?.similarity ?? 0);
     const lowConfidence = hits.length === 0 || topScore < (cfg.sim_threshold - 0.05); // slightly more lenient
     
+    const lowConfidence = topScore < (cfg.sim_threshold ?? 0.62);
+    
     if (hits && hits.length > 0) {
       memoryContext = '\n\n🧠 From embedded knowledge:\n' + hits.map((h: any) => {
         const source = h.meta?.source || h.meta?.title || 'learned knowledge';
@@ -204,6 +206,67 @@ serve(async (req) => {
         const confidence = Math.round((topScore || 0) * 100);
         return `[${idx >= 0 ? `#${idx}` : '#note'}] (${confidence}% match from ${source})\n${String(h.content || '').slice(0, 600)}`;
       }).join('\n\n');
+    }
+    
+    // === LOG GAP SIGNALS (learn from failure) ===
+    if (lowConfidence || hits.length === 0) {
+      try {
+        // Extract entities from query (simple keyword match)
+        const inferredEntities: any = {};
+        const lower = message.toLowerCase();
+        if (/(corn|maize)/i.test(lower)) inferredEntities.crop = 'corn';
+        if (/(soy|soybean)/i.test(lower)) inferredEntities.crop = 'soy';
+        if (/(wheat)/i.test(lower)) inferredEntities.crop = 'wheat';
+        if (/(armyworm|aphid|corn borer|rootworm)/i.test(lower)) {
+          const match = lower.match(/(armyworm|aphid|corn borer|rootworm)/i);
+          if (match) inferredEntities.pest = match[0];
+        }
+        if (/(sprayer|planter|combine|tractor)/i.test(lower)) {
+          const match = lower.match(/(sprayer|planter|combine|tractor)/i);
+          if (match) inferredEntities.equipment = match[0];
+        }
+        const yearMatch = lower.match(/20\d{2}/);
+        if (yearMatch) inferredEntities.season = yearMatch[0];
+
+        await supabase.from('rocker_gap_signals').insert({
+          user_id: user.id,
+          kind: hits.length === 0 ? 'no_results' : 'low_conf',
+          query: message,
+          entities: inferredEntities,
+          score: Math.max(0, 0.8 - topScore),
+          meta: {
+            top_score: topScore,
+            retrieved_ids: hits?.map((h: any) => h.id) || [],
+            latency_ms: Date.now() - t0,
+          }
+        });
+      } catch (e) {
+        console.warn('[Gap] Failed to log signal:', e);
+      }
+    }
+
+    // Check for stale content
+    if (hits.length > 0) {
+      try {
+        const oldest = hits.reduce((d: number, h: any) => {
+          const docDate = h.meta?.doc_date || h.created_at;
+          const ts = docDate ? Date.parse(docDate) : Date.now();
+          return Math.min(d, ts);
+        }, Date.now());
+        const staleDays = (Date.now() - oldest) / (24 * 3600 * 1000);
+        if (staleDays > 45) {
+          await supabase.from('rocker_gap_signals').insert({
+            user_id: user.id,
+            kind: 'stale',
+            query: message,
+            entities: {},
+            score: 0.5,
+            meta: { oldest_doc_date: new Date(oldest).toISOString(), stale_days: Math.round(staleDays) }
+          });
+        }
+      } catch (e) {
+        console.warn('[Gap] Failed to log stale signal:', e);
+      }
     }
     
     // Only refuse to answer if truly nothing found AND no other context
