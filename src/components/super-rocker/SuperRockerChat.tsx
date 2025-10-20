@@ -3,17 +3,24 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Loader2, MessageSquare, Mic, MicOff, Copy, CornerUpLeft, Check } from 'lucide-react';
+import { Send, Loader2, MessageSquare, Mic, MicOff, Copy, CornerUpLeft, Check, History } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { useSpeech } from '@/hooks/useSpeech';
 import { OrganizeButton } from './OrganizeButton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   sources?: Array<{ id: string; kind: string; key: string }>;
+  created_at: string;
+}
+
+interface Thread {
+  id: string;
+  title: string;
   created_at: string;
 }
 
@@ -24,6 +31,7 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [threads, setThreads] = useState<Thread[]>([]);
 
   const { start, stop, listening, supported } = useSpeech({
     onTranscript: (text, isFinal) => {
@@ -50,11 +58,22 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
     if (threadId) {
       loadMessages();
     }
+    loadThreads();
   }, [threadId]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const loadThreads = async () => {
+    const { data } = await supabase
+      .from('rocker_threads')
+      .select('id, title, created_at')
+      .order('created_at', { ascending: false })
+      .limit(20);
+    
+    if (data) setThreads(data);
+  };
 
   const loadMessages = async () => {
     if (!threadId) return;
@@ -168,8 +187,23 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
           <MessageSquare className="h-5 w-5" />
           <h2 className="text-xl font-semibold">Chat with Memory</h2>
         </div>
-        <OrganizeButton threadId={threadId} />
+        <div className="flex items-center gap-2">
+          <Select value={threadId || ''} onValueChange={(val) => onThreadCreated?.(val)}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select thread..." />
+            </SelectTrigger>
+            <SelectContent>
+              {threads.map(t => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.title || 'Untitled'} ({new Date(t.created_at).toLocaleDateString()})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <OrganizeButton threadId={threadId} />
+        </div>
       </div>
+
 
       <ScrollArea className="flex-1 pr-4 mb-4" style={{ height: 'calc(100% - 120px)' }}>
         <div className="space-y-4">

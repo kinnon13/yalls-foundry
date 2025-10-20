@@ -221,19 +221,15 @@ serve(async (req) => {
       console.log('[Ingest] Auto-organize queued (async)');
     }
 
-    // Trigger deep analysis for god-level filing (async, non-blocking)
+    // Trigger deep analysis for god-level filing (async, fire-and-forget)
     if (fileRecord?.id && fullText.length > 200) {
-      try {
-        supabase.functions.invoke('rocker-deep-analyze', {
-          body: { content: fullText, thread_id: threadId, file_id: fileRecord.id }
-        }).then(() => {
-          console.log('[Ingest] Deep analysis triggered for file:', fileRecord.id);
-        }).catch(err => {
-          console.log('[Ingest] Deep analysis queued (async):', err.message);
-        });
-      } catch (deepErr) {
-        console.log('[Ingest] Deep analysis will run async');
-      }
+      supabase.functions.invoke('rocker-deep-analyze', {
+        body: { content: fullText, thread_id: threadId, file_id: fileRecord.id }
+      }).then(() => {
+        console.log('[Ingest] Deep analysis triggered for file:', fileRecord.id);
+      }).catch(err => {
+        console.log('[Ingest] Deep analysis queued (async):', err.message);
+      });
     }
 
     return new Response(JSON.stringify({

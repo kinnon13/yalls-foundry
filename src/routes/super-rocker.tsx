@@ -27,13 +27,15 @@ export default function SuperRocker() {
   const [isUploading, setIsUploading] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
 
-  // Auto-create thread on mount so chat works immediately
+  // Auto-load most recent thread on mount
   useEffect(() => {
     const initThread = async () => {
       const { data } = await supabase
         .from('rocker_threads')
         .select('id')
         .eq('user_id', session?.userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
       
       if (data) {
