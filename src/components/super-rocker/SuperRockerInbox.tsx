@@ -12,7 +12,10 @@ import {
   Edit2, 
   CheckSquare, 
   MoreVertical,
-  FolderPlus
+  FolderPlus,
+  FileText,
+  Copy,
+  Check
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -20,6 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface InboxFile {
   id: string;

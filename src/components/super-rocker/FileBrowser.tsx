@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Folder, File, Search, Edit, Trash2, FolderPlus, MoveHorizontal, RefreshCw, FileSearch } from 'lucide-react';
+import { Folder, File, Search, Edit, Trash2, FolderPlus, MoveHorizontal, RefreshCw, FileSearch, FileText, Copy, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { FilingAnalysisViewer } from './FilingAnalysisViewer';
@@ -24,6 +24,8 @@ interface FileItem {
   starred: boolean;
   source: string | null;
   created_at: string;
+  text_content?: string | null;
+  ocr_text?: string | null;
 }
 
 export function FileBrowser() {
@@ -38,6 +40,9 @@ export function FileBrowser() {
   const [isReprocessing, setIsReprocessing] = useState(false);
   const [analysisFileId, setAnalysisFileId] = useState<string | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
+  const [viewFile, setViewFile] = useState<FileItem | null>(null);
+  const [viewOpen, setViewOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     loadFiles();
@@ -283,105 +288,117 @@ export function FileBrowser() {
                             </div>
                             
                             <div className="flex gap-1 shrink-0">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8"
-                              onClick={() => {
-                                setAnalysisFileId(file.id);
-                                setShowAnalysis(true);
-                              }}
-                              title="View sentence-level analysis"
-                            >
-                              <FileSearch className="h-3 w-3" />
-                            </Button>
-                            <Dialog open={editMode && selectedFile?.id === file.id} onOpenChange={(open) => {
-                              if (!open) {
-                                setEditMode(false);
-                                setSelectedFile(null);
-                              }
-                            }}>
-                              <DialogTrigger asChild>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8"
-                                  onClick={() => handleEdit(file)}
-                                >
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Edit File</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div>
-                                    <label className="text-sm font-medium">Name</label>
-                                    <Input
-                                      value={editData.name}
-                                      onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                                    />
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => {
+                                  setViewFile(file);
+                                  setViewOpen(true);
+                                }}
+                                title="View full text"
+                              >
+                                <FileText className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => {
+                                  setAnalysisFileId(file.id);
+                                  setShowAnalysis(true);
+                                }}
+                                title="View sentence-level analysis"
+                              >
+                                <FileSearch className="h-3 w-3" />
+                              </Button>
+                              <Dialog open={editMode && selectedFile?.id === file.id} onOpenChange={(open) => {
+                                if (!open) {
+                                  setEditMode(false);
+                                  setSelectedFile(null);
+                                }
+                              }}>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8"
+                                    onClick={() => handleEdit(file)}
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Edit File</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <label className="text-sm font-medium">Name</label>
+                                      <Input
+                                        value={editData.name}
+                                        onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium">Project</label>
+                                      <Input
+                                        value={editData.project}
+                                        onChange={(e) => setEditData({ ...editData, project: e.target.value })}
+                                        placeholder="e.g., AgTech Platform, Q1 Marketing"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium">Category</label>
+                                      <Input
+                                        value={editData.category}
+                                        onChange={(e) => setEditData({ ...editData, category: e.target.value })}
+                                        placeholder="e.g., Development, Marketing, Finance"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium">Full Folder Path</label>
+                                      <Input
+                                        value={editData.folder_path}
+                                        onChange={(e) => setEditData({ ...editData, folder_path: e.target.value })}
+                                        placeholder="e.g., ProjectName/Phase 1/Backend/API Design"
+                                      />
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        Use slashes (/) for deep nesting: Project/Phase/Category/Sub
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium">Summary</label>
+                                      <Textarea
+                                        value={editData.summary}
+                                        onChange={(e) => setEditData({ ...editData, summary: e.target.value })}
+                                        rows={3}
+                                      />
+                                    </div>
+                                    <div className="flex gap-2 justify-end">
+                                      <Button variant="outline" onClick={() => {
+                                        setEditMode(false);
+                                        setSelectedFile(null);
+                                      }}>
+                                        Cancel
+                                      </Button>
+                                      <Button onClick={saveEdit}>
+                                        Save Changes
+                                      </Button>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <label className="text-sm font-medium">Project</label>
-                                    <Input
-                                      value={editData.project}
-                                      onChange={(e) => setEditData({ ...editData, project: e.target.value })}
-                                      placeholder="e.g., AgTech Platform, Q1 Marketing"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium">Category</label>
-                                    <Input
-                                      value={editData.category}
-                                      onChange={(e) => setEditData({ ...editData, category: e.target.value })}
-                                      placeholder="e.g., Development, Marketing, Finance"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium">Full Folder Path</label>
-                                    <Input
-                                      value={editData.folder_path}
-                                      onChange={(e) => setEditData({ ...editData, folder_path: e.target.value })}
-                                      placeholder="e.g., ProjectName/Phase 1/Backend/API Design"
-                                    />
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                      Use slashes (/) for deep nesting: Project/Phase/Category/Sub
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium">Summary</label>
-                                    <Textarea
-                                      value={editData.summary}
-                                      onChange={(e) => setEditData({ ...editData, summary: e.target.value })}
-                                      rows={3}
-                                    />
-                                  </div>
-                                  <div className="flex gap-2 justify-end">
-                                    <Button variant="outline" onClick={() => {
-                                      setEditMode(false);
-                                      setSelectedFile(null);
-                                    }}>
-                                      Cancel
-                                    </Button>
-                                    <Button onClick={saveEdit}>
-                                      Save Changes
-                                    </Button>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                            
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8"
-                              onClick={() => deleteFile(file.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
+                                </DialogContent>
+                              </Dialog>
+                              
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => deleteFile(file.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
                         </div>
                       </div>
                     </div>
@@ -409,6 +426,39 @@ export function FileBrowser() {
           setAnalysisFileId(null);
         }}
       />
+
+      <Dialog open={viewOpen} onOpenChange={(open) => setViewOpen(open)}>
+        <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Full Text: {viewFile?.name || 'Untitled'}</span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  const full = viewFile?.text_content || viewFile?.ocr_text || '';
+                  if (!full) return;
+                  await navigator.clipboard.writeText(full);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1200);
+                }}
+              >
+                {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                {copied ? 'Copied' : 'Copy All'}
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh] pr-4">
+            <pre className="whitespace-pre-wrap text-sm font-mono leading-6">
+              {viewFile?.text_content || viewFile?.ocr_text || 'No text content available'}
+            </pre>
+          </ScrollArea>
+          <div className="flex justify-end pt-4 border-t">
+            <Button onClick={() => setViewOpen(false)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
