@@ -340,21 +340,50 @@ serve(async (req) => {
       .order("created_at", { ascending: true })
       .limit(10);
 
-    const systemPrompt = `You are Super Rocker, a helpful AI assistant.
+    const systemPrompt = `You are Super Rocker, an AI capability auditor and assistant with deep system introspection.
 
-- TL;DR first, then details
+CRITICAL RULES - DEMONSTRATE, DON'T DESCRIBE:
+- ALWAYS show actual parsed examples, not just process descriptions
+- ALWAYS include real data from logs/queries when diagnosing
+- ALWAYS use verification tools to check feature existence/connectivity
+- ALWAYS cite exact sentence breakdowns with confidence scores when analyzing text
+- ALWAYS show filing paths (under yalls.ai root) for organized knowledge
+- When gaps are detected, AUTOMATICALLY research externally and suggest solutions
+
+RESPONSE FORMAT:
+- TL;DR first (1-2 sentences max)
+- Then details with CONCRETE DEMONSTRATIONS (parsed chunks, log queries, verification results)
 - Cite sources with [#chunk_index] when referencing embedded knowledge
 - Format tasks as "todo: [action]" to auto-create them
 - When a task is completed, format: "✅ Completed: [task title]" to mark it done
 - End responses with a "Next actions:" list when appropriate
+
+SELF-DIAGNOSTIC CAPABILITIES:
+- Use query_analysis_logs to check previous breakdowns and verifications
+- Use query_action_ledger to review past actions and identify patterns/errors
+- Use verify_feature to check if described capabilities (RPCs, tables, routes, components, edge functions) actually exist and are accessible
+- Use web_research when external information is needed to fill gaps
+
 ${tasksContext ? '- You can see and reference open tasks in the context provided' : ''}
 ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow-ups' : ''}
 ${calendarContext ? '- You can create calendar events using the create_calendar_event tool' : ''}
-- When given URLs, you can fetch and summarize them`;
+- When given URLs, you can fetch and summarize them
 
-    // Define calendar tools
-    const tools = adminSettings?.allow_calendar_access ? [
-      {
+FEATURE VERIFICATION PROTOCOL:
+When users mention features (e.g., "feed_fusion_home RPC", "/dashboard route", "ProfileCard component"):
+1. Verify existence using verify_feature tool
+2. Check connectivity (can Rocker call it?)
+3. Report status: done (✅), partial (⚠️), not_done (❌)
+4. If not done, provide specific fix suggestions with code examples
+
+PROACTIVE ELEMENT:
+- Flag missing capabilities for nightly research/ranking
+- Prioritize suggestions by feasibility × impact
+- Auto-decay stale suggestions to keep focus fresh`;
+
+    // Define tools (calendar + verification + diagnostics)
+    const tools = [
+      ...(adminSettings?.allow_calendar_access ? [{
         type: "function",
         function: {
           name: "create_calendar_event",
@@ -371,8 +400,75 @@ ${calendarContext ? '- You can create calendar events using the create_calendar_
             required: ["title", "starts_at"]
           }
         }
+      }] : []),
+      {
+        type: "function",
+        function: {
+          name: "verify_feature",
+          description: "Verify if a described feature (RPC, table, route, component, edge function) exists in the system and check if Rocker can access it. Returns done/not-done status with suggestions.",
+          parameters: {
+            type: "object",
+            properties: {
+              feature_type: { 
+                type: "string", 
+                enum: ["rpc", "table", "route", "component", "edge_function"],
+                description: "Type of feature to verify" 
+              },
+              feature_name: { type: "string", description: "Name of the feature (e.g., 'feed_fusion_home', '/dashboard', 'ProfileCard')" },
+              test_connectivity: { type: "boolean", description: "Whether to test actual connectivity (default: false)" },
+              test_params: { type: "object", description: "Parameters for connectivity test (optional)" }
+            },
+            required: ["feature_type", "feature_name"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "query_analysis_logs",
+          description: "Search rocker_deep_analysis table for previous breakdowns, verifications, or analyses. Use to check self-diagnosis history.",
+          parameters: {
+            type: "object",
+            properties: {
+              search_term: { type: "string", description: "Term to search in input_text or analysis" },
+              analysis_type: { type: "string", description: "Filter by meta.type (e.g., 'feature_verification', 'sentence_breakdown')" },
+              limit: { type: "number", description: "Max results (default: 10)" }
+            },
+            required: ["search_term"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "query_action_ledger",
+          description: "Search ai_action_ledger for past actions/tools Rocker has executed. Use for self-diagnosis of what was attempted.",
+          parameters: {
+            type: "object",
+            properties: {
+              action_filter: { type: "string", description: "Filter by action name" },
+              result_filter: { type: "string", enum: ["success", "error"], description: "Filter by result" },
+              limit: { type: "number", description: "Max results (default: 10)" }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "web_research",
+          description: "Trigger external web research on a topic to find missing information or capabilities. Use when gaps are detected.",
+          parameters: {
+            type: "object",
+            properties: {
+              topic: { type: "string", description: "Topic or question to research" },
+              context: { type: "string", description: "Context about why this research is needed" }
+            },
+            required: ["topic"]
+          }
+        }
       }
-    ] : [];
+    ];
 
     let reply = "I'm here to help! How can I assist you?";
     let toolResults: any[] = [];
@@ -455,92 +551,234 @@ ${calendarContext ? '- You can create calendar events using the create_calendar_
           const data = await aiResponse.json();
           const choice = data.choices?.[0];
           
-          // Handle tool calls
-          if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
-            for (const toolCall of choice.message.tool_calls) {
-              if (toolCall.function.name === "create_calendar_event") {
-                try {
-                  const args = JSON.parse(toolCall.function.arguments);
-                  
-                  // Get or create user's default calendar
-                  let { data: defaultCal } = await supabase
-                    .from('calendars')
-                    .select('id')
-                    .eq('owner_profile_id', user.id)
-                    .eq('calendar_type', 'personal')
-                    .limit(1)
-                    .maybeSingle();
-                  
-                  if (!defaultCal) {
-                    const { data: newCal } = await supabase.functions.invoke('calendar-ops', {
+            // Handle tool calls
+            if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
+              for (const toolCall of choice.message.tool_calls) {
+                // === Calendar Event Creation ===
+                if (toolCall.function.name === "create_calendar_event") {
+                  try {
+                    const args = JSON.parse(toolCall.function.arguments);
+                    
+                    // Get or create user's default calendar
+                    let { data: defaultCal } = await supabase
+                      .from('calendars')
+                      .select('id')
+                      .eq('owner_profile_id', user.id)
+                      .eq('calendar_type', 'personal')
+                      .limit(1)
+                      .maybeSingle();
+                    
+                    if (!defaultCal) {
+                      const { data: newCal } = await supabase.functions.invoke('calendar-ops', {
+                        body: {
+                          operation: 'create_calendar',
+                          name: 'My Calendar',
+                          calendar_type: 'personal',
+                          color: '#3b82f6'
+                        }
+                      });
+                      defaultCal = newCal?.calendar;
+                    }
+                    
+                    if (!defaultCal?.id) {
+                      throw new Error('Failed to get or create calendar');
+                    }
+
+                    // Create the event via calendar-ops
+                    const { data: eventResult, error: eventError } = await supabase.functions.invoke('calendar-ops', {
                       body: {
-                        operation: 'create_calendar',
-                        name: 'My Calendar',
-                        calendar_type: 'personal',
-                        color: '#3b82f6'
+                        operation: 'create_event',
+                        calendar_id: defaultCal.id,
+                        title: args.title,
+                        description: args.description || null,
+                        starts_at: args.starts_at,
+                        ends_at: args.ends_at || new Date(new Date(args.starts_at).getTime() + 60 * 60 * 1000).toISOString(),
+                        location: args.location || null,
+                        visibility: 'private',
+                        all_day: false
                       }
                     });
-                    defaultCal = newCal?.calendar;
+
+                    if (eventError) throw eventError;
+                    const newEvent = eventResult.event;
+
+                    // Format confirmation with link
+                    const eventLink = `/calendar?event=${newEvent.id}`;
+                    const eventDate = new Date(newEvent.starts_at).toLocaleString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      timeZoneName: 'short'
+                    });
+
+                    toolResults.push({
+                      tool: "create_calendar_event",
+                      success: true,
+                      event_id: newEvent.id,
+                      event_link: eventLink,
+                      details: {
+                        title: newEvent.title,
+                        starts_at: eventDate,
+                        location: newEvent.location
+                      }
+                    });
+
+                    // Add confirmation to reply context
+                    memoryContext += `\n\n✅ Calendar Event Created:\n📅 ${newEvent.title}\n🕐 ${eventDate}${newEvent.location ? `\n📍 ${newEvent.location}` : ''}\n🔗 [View Event](${eventLink})`;
+                  } catch (e: any) {
+                    console.error('Failed to create calendar event:', e);
+                    toolResults.push({
+                      tool: "create_calendar_event",
+                      success: false,
+                      error: e.message
+                    });
                   }
-                  
-                  if (!defaultCal?.id) {
-                    throw new Error('Failed to get or create calendar');
+                }
+                
+                // === Feature Verification ===
+                if (toolCall.function.name === "verify_feature") {
+                  try {
+                    const args = JSON.parse(toolCall.function.arguments);
+                    const { data: verifyResult, error: verifyError } = await supabase.functions.invoke('rocker-verify-feature', {
+                      body: args
+                    });
+
+                    if (verifyError) throw verifyError;
+
+                    toolResults.push({
+                      tool: "verify_feature",
+                      success: true,
+                      result: verifyResult
+                    });
+
+                    // Add verification summary to context
+                    const status = verifyResult.status === 'done' ? '✅' : verifyResult.status === 'partial' ? '⚠️' : '❌';
+                    memoryContext += `\n\n${status} Feature Verification: ${args.feature_type}:${args.feature_name}\nStatus: ${verifyResult.status}\nExists: ${verifyResult.exists}\nAccessible: ${verifyResult.accessible}\n${verifyResult.details.suggestions?.length ? 'Suggestions:\n' + verifyResult.details.suggestions.map((s: string) => `  • ${s}`).join('\n') : ''}`;
+                  } catch (e: any) {
+                    console.error('Feature verification failed:', e);
+                    toolResults.push({
+                      tool: "verify_feature",
+                      success: false,
+                      error: e.message
+                    });
                   }
+                }
+                
+                // === Query Analysis Logs ===
+                if (toolCall.function.name === "query_analysis_logs") {
+                  try {
+                    const args = JSON.parse(toolCall.function.arguments);
+                    let query = supabase
+                      .from('rocker_deep_analysis')
+                      .select('id, input_text, analysis, meta, created_at')
+                      .order('created_at', { ascending: false })
+                      .limit(args.limit || 10);
 
-                  // Create the event via calendar-ops
-                  const { data: eventResult, error: eventError } = await supabase.functions.invoke('calendar-ops', {
-                    body: {
-                      operation: 'create_event',
-                      calendar_id: defaultCal.id,
-                      title: args.title,
-                      description: args.description || null,
-                      starts_at: args.starts_at,
-                      ends_at: args.ends_at || new Date(new Date(args.starts_at).getTime() + 60 * 60 * 1000).toISOString(),
-                      location: args.location || null,
-                      visibility: 'private',
-                      all_day: false
+                    if (args.search_term) {
+                      query = query.or(`input_text.ilike.%${args.search_term}%,analysis::text.ilike.%${args.search_term}%`);
                     }
-                  });
-
-                  if (eventError) throw eventError;
-                  const newEvent = eventResult.event;
-
-                  // Format confirmation with link
-                  const eventLink = `/calendar?event=${newEvent.id}`;
-                  const eventDate = new Date(newEvent.starts_at).toLocaleString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    timeZoneName: 'short'
-                  });
-
-                  toolResults.push({
-                    tool: "create_calendar_event",
-                    success: true,
-                    event_id: newEvent.id,
-                    event_link: eventLink,
-                    details: {
-                      title: newEvent.title,
-                      starts_at: eventDate,
-                      location: newEvent.location
+                    
+                    if (args.analysis_type) {
+                      query = query.eq('meta->>type', args.analysis_type);
                     }
-                  });
 
-                  // Add confirmation to reply context
-                  memoryContext += `\n\n✅ Calendar Event Created:\n📅 ${newEvent.title}\n🕐 ${eventDate}${newEvent.location ? `\n📍 ${newEvent.location}` : ''}\n🔗 [View Event](${eventLink})`;
-                } catch (e: any) {
-                  console.error('Failed to create calendar event:', e);
-                  toolResults.push({
-                    tool: "create_calendar_event",
-                    success: false,
-                    error: e.message
-                  });
+                    const { data: logs, error: logsError } = await query;
+                    if (logsError) throw logsError;
+
+                    toolResults.push({
+                      tool: "query_analysis_logs",
+                      success: true,
+                      count: logs?.length || 0,
+                      results: logs
+                    });
+
+                    memoryContext += `\n\n📊 Analysis Log Query: Found ${logs?.length || 0} matches for "${args.search_term}"`;
+                  } catch (e: any) {
+                    console.error('Query analysis logs failed:', e);
+                    toolResults.push({
+                      tool: "query_analysis_logs",
+                      success: false,
+                      error: e.message
+                    });
+                  }
+                }
+                
+                // === Query Action Ledger ===
+                if (toolCall.function.name === "query_action_ledger") {
+                  try {
+                    const args = JSON.parse(toolCall.function.arguments);
+                    let query = supabase
+                      .from('ai_action_ledger')
+                      .select('id, agent, action, result, input, output, created_at')
+                      .eq('agent', 'rocker')
+                      .order('created_at', { ascending: false })
+                      .limit(args.limit || 10);
+
+                    if (args.action_filter) {
+                      query = query.eq('action', args.action_filter);
+                    }
+                    
+                    if (args.result_filter) {
+                      query = query.eq('result', args.result_filter);
+                    }
+
+                    const { data: actions, error: actionsError } = await query;
+                    if (actionsError) throw actionsError;
+
+                    toolResults.push({
+                      tool: "query_action_ledger",
+                      success: true,
+                      count: actions?.length || 0,
+                      results: actions
+                    });
+
+                    memoryContext += `\n\n📋 Action Ledger: Found ${actions?.length || 0} actions${args.result_filter ? ` with result=${args.result_filter}` : ''}`;
+                  } catch (e: any) {
+                    console.error('Query action ledger failed:', e);
+                    toolResults.push({
+                      tool: "query_action_ledger",
+                      success: false,
+                      error: e.message
+                    });
+                  }
+                }
+                
+                // === Web Research ===
+                if (toolCall.function.name === "web_research") {
+                  try {
+                    const args = JSON.parse(toolCall.function.arguments);
+                    
+                    // Log research request
+                    await supabase.from('rocker_gap_signals').insert({
+                      user_id: user.id,
+                      kind: 'research_needed',
+                      query: args.topic,
+                      entities: {},
+                      score: 0.8,
+                      meta: { context: args.context }
+                    });
+
+                    toolResults.push({
+                      tool: "web_research",
+                      success: true,
+                      topic: args.topic,
+                      status: "Research request logged for future external search"
+                    });
+
+                    memoryContext += `\n\n🔍 Research Queued: "${args.topic}" (will be processed by proactive sweep)`;
+                  } catch (e: any) {
+                    console.error('Web research failed:', e);
+                    toolResults.push({
+                      tool: "web_research",
+                      success: false,
+                      error: e.message
+                    });
+                  }
                 }
               }
-            }
 
             // Re-run AI with tool results
             const followUpMessages = [

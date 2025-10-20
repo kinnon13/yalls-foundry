@@ -81,6 +81,12 @@ verify_jwt = true
 [functions.rocker-chat]
 verify_jwt = true
 
+[functions.rocker-chat-simple]
+verify_jwt = true
+
+[functions.rocker-verify-feature]
+verify_jwt = true
+
 [functions.rocker-health]
 verify_jwt = false
 
