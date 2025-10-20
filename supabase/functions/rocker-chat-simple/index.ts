@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -93,14 +94,34 @@ ${calendarContext ? '- You have access to the user\'s calendar - suggest prep, r
 
     let reply = "I'm here to help! How can I assist you?";
 
-    if (LOVABLE_API_KEY) {
-      try {
-        const aiMessages = [
-          { role: "system", content: systemPrompt + memoryContext + calendarContext },
-          ...(history || []).map((m: any) => ({ role: m.role, content: m.content })),
-          { role: "user", content: message }
-        ];
+    try {
+      const aiMessages = [
+        { role: "system", content: systemPrompt + memoryContext + calendarContext },
+        ...(history || []).map((m: any) => ({ role: m.role, content: m.content })),
+        { role: "user", content: message }
+      ];
 
+      const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+
+      if (OPENAI_API_KEY) {
+        const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: aiMessages,
+            max_tokens: 400,
+          }),
+        });
+
+        if (aiResponse.ok) {
+          const data = await aiResponse.json();
+          reply = data.choices?.[0]?.message?.content || reply;
+        }
+      } else if (LOVABLE_API_KEY) {
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -115,11 +136,11 @@ ${calendarContext ? '- You have access to the user\'s calendar - suggest prep, r
 
         if (aiResponse.ok) {
           const data = await aiResponse.json();
-          reply = data.choices[0]?.message?.content || reply;
+          reply = data.choices?.[0]?.message?.content || reply;
         }
-      } catch (aiError) {
-        console.error("AI error:", aiError);
       }
+    } catch (aiError) {
+      console.error("AI error:", aiError);
     }
 
     // Save messages

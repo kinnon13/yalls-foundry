@@ -136,13 +136,13 @@ export function SuperRockerChat({ threadId }: { threadId: string | null }) {
   }
 
   return (
-    <div className="flex flex-col h-[500px]">
+    <div className="flex flex-col min-h-[60vh] max-h-[80vh]">
       <div className="flex items-center gap-2 mb-4">
         <MessageSquare className="h-5 w-5" />
         <h2 className="text-xl font-semibold">Chat with Memory</h2>
       </div>
 
-      <ScrollArea className="flex-1 pr-4 mb-4">
+      <ScrollArea className="flex-1 min-h-0 pr-4 mb-4">
         <div className="space-y-4">
           {messages.map((msg) => (
             <div
