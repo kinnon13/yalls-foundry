@@ -12771,6 +12771,10 @@ export type Database = {
         Args: { p_action_type: string; p_user_id: string }
         Returns: Json
       }
+      rocker_dm: {
+        Args: { p_channel?: string; p_text: string; p_user_id: string }
+        Returns: undefined
+      }
       rocker_generate_followup_list: {
         Args: { p_days_idle?: number }
         Returns: {

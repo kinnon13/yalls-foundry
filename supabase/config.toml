@@ -190,4 +190,28 @@ verify_jwt = false
 [functions.process-inbound-email]
 verify_jwt = false
 
+# --- Rocker Proactive AI Crons ---
+[functions.rocker-daily-tick]
+verify_jwt = false
+
+[functions.rocker-daily-tick.cron]
+schedule = "0 * * * *"  # Every hour (checks time internally for 9AM/8PM)
+
+[functions.nightly-gap-scan]
+verify_jwt = false
+
+[functions.nightly-gap-scan.cron]
+schedule = "0 2 * * *"  # Daily at 2 AM
+
+[functions.rocker-proactive-sweep]
+verify_jwt = false
+
+[functions.rocker-proactive-sweep.cron]
+schedule = "0 */6 * * *"  # Every 6 hours
+
+[functions.nightly-consolidate-notes]
+verify_jwt = false
+
+[functions.nightly-consolidate-notes.cron]
+schedule = "0 3 * * *"  # Daily at 3 AM
 
