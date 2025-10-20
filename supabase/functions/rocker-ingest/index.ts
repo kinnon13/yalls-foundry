@@ -49,9 +49,9 @@ serve(async (req) => {
       });
     }
 
-    const MAX_CHARS = 300_000; // ~300KB
+    const MAX_CHARS = 500_000; // 500KB max
     if (text.length > MAX_CHARS) {
-      return new Response(JSON.stringify({ error: 'Text too large. Limit 300k characters.' }), {
+      return new Response(JSON.stringify({ error: `Text too large (${Math.round(text.length/1000)}KB). Max 500KB.` }), {
         status: 413,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -70,47 +70,50 @@ serve(async (req) => {
       threadId = thread.id;
     }
 
-    // Chunk the text
-    let chunks = chunkText(text);
-    const MAX_CHUNKS = 200;
-    if (chunks.length > MAX_CHUNKS) {
-      chunks = chunks.slice(0, MAX_CHUNKS);
-    }
     // Check if super admin for priority
     const { data: isSuperAdmin } = await supabase.rpc('is_super_admin', { _user_id: user.id });
-    const priority = isSuperAdmin ? 10 : 100;
+    const priority = isSuperAdmin === true ? 10 : 100;
 
-    // Simple categorization without AI to avoid memory issues
+    // Simple categorization
     let category = 'Notes';
     let summary = text.slice(0, 150);
-    let tags: string[] = [];
+    const tags: string[] = [];
 
-    // Skip AI entirely for bulk paste - categorize based on simple heuristics
     if (text.length > 5000) {
       summary = `Document (${Math.round(text.length / 1000)}KB)`;
     } else if (subject && subject.toLowerCase() !== 'super rocker memory') {
       category = subject.slice(0, 50);
     }
 
-    // Insert chunks into memory in small batches
-    const memoryInserts = chunks.map((chunk, idx) => ({
-      user_id: user.id,
-      kind: 'paste',
-      key: `${category.toLowerCase()}_${Date.now()}_${idx}`,
-      value: { text: chunk, subject: subject || category, category, tags },
-      priority,
-      pinned: isSuperAdmin === true,
-      source: 'ingest'
-    }));
-
-    const BATCH_SIZE = 20;
+    // Process chunks ONE AT A TIME to avoid memory spikes
+    const chunks = chunkText(text);
+    const MAX_CHUNKS = 250;
+    const totalChunks = Math.min(chunks.length, MAX_CHUNKS);
+    
     let storedCount = 0;
-    for (let i = 0; i < memoryInserts.length; i += BATCH_SIZE) {
-      const batch = memoryInserts.slice(i, i + BATCH_SIZE);
+    const BATCH_SIZE = 10;
+    
+    for (let i = 0; i < totalChunks; i += BATCH_SIZE) {
+      const batchEnd = Math.min(i + BATCH_SIZE, totalChunks);
+      const batch = [];
+      
+      for (let j = i; j < batchEnd; j++) {
+        batch.push({
+          user_id: user.id,
+          kind: 'paste',
+          key: `${category.toLowerCase()}_${Date.now()}_${j}`,
+          value: { text: chunks[j], subject: subject || category, category, tags },
+          priority,
+          pinned: isSuperAdmin === true,
+          source: 'ingest'
+        });
+      }
+      
       const { data, error } = await supabase
         .from('rocker_long_memory')
         .insert(batch)
-        .select('id'); // minimize payload to save memory
+        .select('id');
+      
       if (error) throw error;
       storedCount += data?.length || 0;
     }
