@@ -45,10 +45,19 @@ serve(async (req) => {
       });
     }
 
-    // Load runtime config with sane defaults
+    // Load runtime config with sane defaults (tolerate missing table/row)
     const defaultCfg = { alpha: 0.7, retrieve_k: 20, keep_k: 5, sim_threshold: 0.65 };
-    const { data: cfgRow } = await supabaseService.from('rocker_config').select('*').eq('id', 1).maybeSingle();
-    const cfg = { ...defaultCfg, ...(cfgRow || {}) };
+    let cfg = { ...defaultCfg } as any;
+    try {
+      const { data: cfgRow, error: cfgErr } = await supabaseService
+        .from('rocker_config')
+        .select('*')
+        .eq('id', 1)
+        .maybeSingle();
+      if (!cfgErr && cfgRow) cfg = { ...cfg, ...cfgRow };
+    } catch (e) {
+      console.warn('rocker_config unavailable, using defaults');
+    }
 
     // Embed the user message for semantic search (only if OpenAI key available)
     let qvec: number[] = [];
