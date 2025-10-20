@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { PhoneSetup } from '@/components/rocker/PhoneSetup';
 
 export default function RockerChat() {
   const navigate = useNavigate();
@@ -94,7 +95,12 @@ export default function RockerChat() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4">
-      <div className="max-w-4xl mx-auto h-screen flex flex-col">
+      <div className="max-w-4xl mx-auto space-y-4">
+        {/* Phone Setup Banner */}
+        <PhoneSetup />
+
+        {/* Chat Interface */}
+        <div className="h-[calc(100vh-12rem)] flex flex-col">
         {/* Header */}
         <div className="flex items-center gap-4 mb-4 bg-card p-4 rounded-lg shadow-lg border">
           <Button
@@ -233,6 +239,7 @@ export default function RockerChat() {
             )}
           </div>
         </Card>
+        </div>
       </div>
     </div>
   );
