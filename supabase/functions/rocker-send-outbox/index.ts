@@ -15,9 +15,9 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 
-const TWILIO_SID = Deno.env.get("TWILIO_SID");
-const TWILIO_TOKEN = Deno.env.get("TWILIO_TOKEN");
-const TWILIO_FROM = Deno.env.get("TWILIO_FROM");
+const TWILIO_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
+const TWILIO_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
+const TWILIO_FROM = Deno.env.get("TWILIO_PHONE_NUMBER");
 
 const SMTP_ENDPOINT = Deno.env.get("SMTP_ENDPOINT");
 const SMTP_TOKEN = Deno.env.get("SMTP_TOKEN");
