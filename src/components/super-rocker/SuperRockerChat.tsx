@@ -51,8 +51,8 @@ export function SuperRockerChat({ threadId }: { threadId: string | null }) {
       role: m.role as 'user' | 'assistant',
       content: m.content,
       created_at: m.created_at,
-      sources: (typeof m.meta === 'object' && m.meta && 'sources' in m.meta) 
-        ? m.meta.sources as Array<{ id: string; kind: string; key: string }> 
+      sources: (m.meta && typeof m.meta === 'object' && 'sources' in m.meta) 
+        ? (m.meta as any).sources as Array<{ id: string; kind: string; key: string }> 
         : undefined
     })));
   };

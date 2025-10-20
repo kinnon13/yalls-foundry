@@ -13,7 +13,6 @@ import { SuperRockerChat } from '@/components/super-rocker/SuperRockerChat';
 import { SuperRockerInbox } from '@/components/super-rocker/SuperRockerInbox';
 import { SuperRockerLibrary } from '@/components/super-rocker/SuperRockerLibrary';
 import { SuperRockerVault } from '@/components/super-rocker/SuperRockerVault';
-import { SuperRockerMessenger } from '@/components/super-rocker/SuperRockerMessenger';
 
 export default function SuperRocker() {
   const { session } = useSession();
@@ -144,14 +143,10 @@ export default function SuperRocker() {
           </Card>
         </div>
 
-        {/* Bottom Row: Chat, Messenger & Tasks */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Bottom Row: Chat & Tasks */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-6">
             <SuperRockerChat threadId={threadId} />
-          </Card>
-
-          <Card className="p-6">
-            <SuperRockerMessenger />
           </Card>
           
           <Card className="p-6">

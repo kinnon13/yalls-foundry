@@ -12250,8 +12250,6 @@ export type Database = {
           id: string
           key: string
           kind: string
-          score: number
-          value: Json
         }[]
       }
       recall_memories: {
