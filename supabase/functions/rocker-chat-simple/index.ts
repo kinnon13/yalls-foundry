@@ -349,9 +349,33 @@ serve(async (req) => {
 - End responses with a "Next actions:" list when appropriate
 ${tasksContext ? '- You can see and reference open tasks in the context provided' : ''}
 ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow-ups' : ''}
+${calendarContext ? '- You can create calendar events using the create_calendar_event tool' : ''}
 - When given URLs, you can fetch and summarize them`;
 
+    // Define calendar tools
+    const tools = adminSettings?.allow_calendar_access ? [
+      {
+        type: "function",
+        function: {
+          name: "create_calendar_event",
+          description: "Create a new calendar event for the user. Returns event details with confirmation link.",
+          parameters: {
+            type: "object",
+            properties: {
+              title: { type: "string", description: "Event title/name" },
+              description: { type: "string", description: "Event description (optional)" },
+              starts_at: { type: "string", description: "Start date/time in ISO 8601 format" },
+              ends_at: { type: "string", description: "End date/time in ISO 8601 format (optional, defaults to 1 hour after start)" },
+              location: { type: "string", description: "Event location (optional)" }
+            },
+            required: ["title", "starts_at"]
+          }
+        }
+      }
+    ] : [];
+
     let reply = "I'm here to help! How can I assist you?";
+    let toolResults: any[] = [];
     
     // Detect URL in message for web fetch
     const urlMatch = message.match(/https?:\/\/[^\s]+/);
@@ -409,22 +433,120 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
           tokensOut = data.usage?.completion_tokens ?? (reply.length / 4);
         }
       } else if (LOVABLE_API_KEY) {
+        const requestBody: any = {
+          model: "google/gemini-2.5-flash",
+          messages: aiMessages,
+        };
+        
+        if (tools.length > 0) {
+          requestBody.tools = tools;
+        }
+
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${LOVABLE_API_KEY}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: aiMessages,
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         if (aiResponse.ok) {
           const data = await aiResponse.json();
-          reply = data.choices?.[0]?.message?.content || reply;
-          tokensOut = reply.length / 4;
+          const choice = data.choices?.[0];
+          
+          // Handle tool calls
+          if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
+            for (const toolCall of choice.message.tool_calls) {
+              if (toolCall.function.name === "create_calendar_event") {
+                try {
+                  const args = JSON.parse(toolCall.function.arguments);
+                  
+                  // Create the event
+                  const { data: newEvent, error: eventError } = await supabase
+                    .from('events')
+                    .insert({
+                      title: args.title,
+                      description: args.description || null,
+                      starts_at: args.starts_at,
+                      ends_at: args.ends_at || new Date(new Date(args.starts_at).getTime() + 60 * 60 * 1000).toISOString(),
+                      location: args.location || null,
+                      created_by: user.id,
+                    })
+                    .select()
+                    .single();
+
+                  if (eventError) throw eventError;
+
+                  // Format confirmation with link
+                  const eventLink = `${Deno.env.get('SUPABASE_URL')?.replace('/rest/v1', '')}/events/${newEvent.id}`;
+                  const eventDate = new Date(newEvent.starts_at).toLocaleString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    timeZoneName: 'short'
+                  });
+
+                  toolResults.push({
+                    tool: "create_calendar_event",
+                    success: true,
+                    event_id: newEvent.id,
+                    event_link: eventLink,
+                    details: {
+                      title: newEvent.title,
+                      starts_at: eventDate,
+                      location: newEvent.location
+                    }
+                  });
+
+                  // Add confirmation to reply context
+                  memoryContext += `\n\n✅ Calendar Event Created:\n📅 ${newEvent.title}\n🕐 ${eventDate}${newEvent.location ? `\n📍 ${newEvent.location}` : ''}\n🔗 View Event: ${eventLink}`;
+                } catch (e: any) {
+                  console.error('Failed to create calendar event:', e);
+                  toolResults.push({
+                    tool: "create_calendar_event",
+                    success: false,
+                    error: e.message
+                  });
+                }
+              }
+            }
+
+            // Re-run AI with tool results
+            const followUpMessages = [
+              ...aiMessages,
+              { role: "assistant", content: choice.message.content || "", tool_calls: choice.message.tool_calls },
+              {
+                role: "tool",
+                content: JSON.stringify(toolResults),
+                tool_call_id: choice.message.tool_calls[0].id
+              }
+            ];
+
+            const followUpResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "google/gemini-2.5-flash",
+                messages: followUpMessages,
+              }),
+            });
+
+            if (followUpResponse.ok) {
+              const followUpData = await followUpResponse.json();
+              reply = followUpData.choices?.[0]?.message?.content || reply;
+              tokensOut += reply.length / 4;
+            }
+          } else {
+            reply = choice?.message?.content || reply;
+            tokensOut = reply.length / 4;
+          }
         }
       }
       
@@ -564,9 +686,8 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
       }
     }
 
-    // Collect tool results for UI feedback
-    const toolResults = [];
-    if (urlMatch) {
+    // Collect tool results for UI feedback (use existing toolResults array)
+    if (urlMatch && !toolResults.some(t => t.tool === 'web_fetch')) {
       toolResults.push({ tool: 'web_fetch', result: 'Fetched URL' });
     }
     if (todoMatch) {
