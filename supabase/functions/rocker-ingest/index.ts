@@ -89,37 +89,50 @@ serve(async (req) => {
     }
 
     // Store chunks in rocker_knowledge (embeddings filled by scheduled worker)
-    const chunks = chunkText(text, 2000, 100); // Smaller chunks for better embeddings
+    const CHUNK_SIZE = 2000;
+    const CHUNK_OVERLAP = 100;
     const MAX_CHUNKS = 150;
-    const totalChunks = Math.min(chunks.length, MAX_CHUNKS);
-    
+    const BATCH_SIZE = 5; // keep tiny to reduce memory spikes
+
+    // Precompute values to avoid building the full chunks array in memory
+    const safeOverlap = Math.min(Math.max(CHUNK_OVERLAP, 0), Math.max(0, CHUNK_SIZE - 1));
+    const step = Math.max(1, CHUNK_SIZE - safeOverlap);
+    const estimatedTotal = Math.min(MAX_CHUNKS, Math.ceil(text.length / step));
+
     let storedCount = 0;
-    const BATCH_SIZE = 5;
-    
-    for (let i = 0; i < totalChunks; i += BATCH_SIZE) {
-      const batchEnd = Math.min(i + BATCH_SIZE, totalChunks);
-      const batch = [];
-      
-      for (let j = i; j < batchEnd; j++) {
+    let start = 0;
+    let produced = 0;
+
+    while (start < text.length && produced < MAX_CHUNKS) {
+      const batch: any[] = [];
+
+      for (let k = 0; k < BATCH_SIZE && start < text.length && produced < MAX_CHUNKS; k++) {
+        const end = Math.min(text.length, start + CHUNK_SIZE);
+        const content = text.slice(start, end);
         batch.push({
           user_id: user.id,
-          content: chunks[j],
-          chunk_index: j,
-          meta: { 
-            subject: subject || category, 
-            category, 
-            tags, 
+          content,
+          chunk_index: produced,
+          meta: {
+            subject: subject || category,
+            category,
+            tags,
             source: 'paste',
-            total_chunks: totalChunks
+            total_chunks: estimatedTotal
           }
         });
+        produced += 1;
+        if (end >= text.length) break;
+        start += step;
       }
-      
-      const { error } = await supabase
-        .from('rocker_knowledge')
-        .insert(batch);
-      if (error) throw error;
-      storedCount += batch.length;
+
+      if (batch.length > 0) {
+        const { error } = await supabase
+          .from('rocker_knowledge')
+          .insert(batch);
+        if (error) throw error;
+        storedCount += batch.length;
+      }
     }
 
     // Log action
@@ -127,7 +140,7 @@ serve(async (req) => {
       user_id: user.id,
       agent: 'rocker',
       action: 'memory_ingest',
-      input: { chunks: chunks.length, size: text.length },
+      input: { chunks: produced, size: text.length },
       output: { 
         thread_id: threadId, 
         memories: storedCount,
@@ -140,7 +153,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       thread_id: threadId, 
       stored: storedCount,
-      chunks: chunks.length,
+      chunks: produced,
       category,
       tags,
       summary: summary.slice(0, 150)
