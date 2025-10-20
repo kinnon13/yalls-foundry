@@ -340,8 +340,9 @@ serve(async (req) => {
       .order("created_at", { ascending: true })
       .limit(10);
 
-    const systemPrompt = `You are Super Rocker, a helpful AI assistant.
+    const systemPrompt = `You are Super Rocker, an AI assistant with self-diagnostic capabilities.
 
+CORE BEHAVIOR:
 - TL;DR first, then details
 - Cite sources with [#chunk_index] when referencing embedded knowledge
 - Format tasks as "todo: [action]" to auto-create them
@@ -350,11 +351,28 @@ serve(async (req) => {
 ${tasksContext ? '- You can see and reference open tasks in the context provided' : ''}
 ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow-ups' : ''}
 ${calendarContext ? '- You can create calendar events using the create_calendar_event tool' : ''}
-- When given URLs, you can fetch and summarize them`;
+- When given URLs, you can fetch and summarize them
 
-    // Define calendar tools
-    const tools = adminSettings?.allow_calendar_access ? [
-      {
+SELF-DIAGNOSTIC MODE (when user asks about your process/capabilities):
+1. DEMONSTRATE, don't just describe - show actual work on their specific input
+2. Use query_analysis_logs tool to show real analysis results (sentence breakdowns, confidence scores, filing paths)
+3. Use query_action_ledger tool to show what actions you've taken
+4. Calculate and display confidence scores (0-1.0) based on embedding similarity
+5. Trigger web_research tool when confidence < 0.7
+6. Self-diagnose issues: "I'm creating scattered projects because [specific reason from logs]"
+7. Show actual filing paths generated vs. what should have been generated
+
+CONFIDENCE THRESHOLDS:
+- < 0.5: "I don't have enough information, triggering web research"
+- 0.5-0.7: "Medium confidence, may need verification"
+- 0.7-0.85: "Good confidence"
+- > 0.85: "High confidence"
+
+Current search confidence: ${lowConfidence ? `LOW (${Math.round(topScore * 100)}%)` : `OK (${Math.round(topScore * 100)}%)`}`;
+
+    // Define comprehensive tools including diagnostic ones
+    const tools = [
+      ...(adminSettings?.allow_calendar_access ? [{
         type: "function",
         function: {
           name: "create_calendar_event",
@@ -371,8 +389,50 @@ ${calendarContext ? '- You can create calendar events using the create_calendar_
             required: ["title", "starts_at"]
           }
         }
+      }] : []),
+      {
+        type: "function",
+        function: {
+          name: "query_analysis_logs",
+          description: "Query rocker_deep_analysis table to show actual sentence-level breakdowns, filing paths, and confidence scores for recent analysis work. Use this when user asks about your analysis process.",
+          parameters: {
+            type: "object",
+            properties: {
+              limit: { type: "number", description: "Number of recent analyses to retrieve (default 5)" }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "query_action_ledger",
+          description: "Query ai_action_ledger to show what actions you've taken recently (ingests, analyses, web fetches, etc). Use for self-diagnosis.",
+          parameters: {
+            type: "object",
+            properties: {
+              action_type: { type: "string", description: "Filter by action type (optional): memory_ingest_stream, rocker_deep_analyze, web_fetch, etc" },
+              limit: { type: "number", description: "Number of recent actions to retrieve (default 10)" }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "web_research",
+          description: "Trigger external web research when confidence is low or user asks about topics not in uploaded knowledge. Returns research findings.",
+          parameters: {
+            type: "object",
+            properties: {
+              query: { type: "string", description: "Research query" },
+              reason: { type: "string", description: "Why research is needed (e.g., 'low confidence', 'missing data', 'verification')" }
+            },
+            required: ["query", "reason"]
+          }
+        }
       }
-    ] : [];
+    ];
 
     let reply = "I'm here to help! How can I assist you?";
     let toolResults: any[] = [];
@@ -535,6 +595,118 @@ ${calendarContext ? '- You can create calendar events using the create_calendar_
                   console.error('Failed to create calendar event:', e);
                   toolResults.push({
                     tool: "create_calendar_event",
+                    success: false,
+                    error: e.message
+                  });
+                }
+              } else if (toolCall.function.name === "query_analysis_logs") {
+                try {
+                  const args = JSON.parse(toolCall.function.arguments);
+                  const limit = args.limit || 5;
+                  
+                  const { data: analyses, error: analysisError } = await supabase
+                    .from('rocker_deep_analysis')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false })
+                    .limit(limit);
+                  
+                  if (analysisError) throw analysisError;
+                  
+                  toolResults.push({
+                    tool: "query_analysis_logs",
+                    success: true,
+                    count: analyses?.length || 0,
+                    analyses: analyses?.map((a: any) => ({
+                      id: a.id,
+                      created_at: a.created_at,
+                      sections: a.analyzed_sections,
+                      filing_options: a.filing_options,
+                      confidence: a.confidence_score || 'N/A'
+                    }))
+                  });
+                  
+                  memoryContext += `\n\n📊 Recent Analysis Logs (${analyses?.length || 0} records):\n` + 
+                    (analyses || []).map((a: any, i: number) => 
+                      `[${i+1}] ${new Date(a.created_at).toLocaleString()}\n` +
+                      `- Sections analyzed: ${a.analyzed_sections?.length || 0}\n` +
+                      `- Filing paths: ${JSON.stringify(a.filing_options?.slice(0, 3))}\n` +
+                      `- Confidence: ${a.confidence_score || 'N/A'}`
+                    ).join('\n\n');
+                } catch (e: any) {
+                  console.error('Failed to query analysis logs:', e);
+                  toolResults.push({
+                    tool: "query_analysis_logs",
+                    success: false,
+                    error: e.message
+                  });
+                }
+              } else if (toolCall.function.name === "query_action_ledger") {
+                try {
+                  const args = JSON.parse(toolCall.function.arguments);
+                  const limit = args.limit || 10;
+                  
+                  let query = supabase
+                    .from('ai_action_ledger')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false })
+                    .limit(limit);
+                  
+                  if (args.action_type) {
+                    query = query.eq('action', args.action_type);
+                  }
+                  
+                  const { data: actions, error: actionError } = await query;
+                  
+                  if (actionError) throw actionError;
+                  
+                  toolResults.push({
+                    tool: "query_action_ledger",
+                    success: true,
+                    count: actions?.length || 0,
+                    actions: actions?.map((a: any) => ({
+                      action: a.action,
+                      created_at: a.created_at,
+                      result: a.result,
+                      agent: a.agent
+                    }))
+                  });
+                  
+                  memoryContext += `\n\n📝 Recent Actions (${actions?.length || 0} records):\n` + 
+                    (actions || []).map((a: any, i: number) => 
+                      `[${i+1}] ${a.action} - ${new Date(a.created_at).toLocaleString()} (${a.result})`
+                    ).join('\n');
+                } catch (e: any) {
+                  console.error('Failed to query action ledger:', e);
+                  toolResults.push({
+                    tool: "query_action_ledger",
+                    success: false,
+                    error: e.message
+                  });
+                }
+              } else if (toolCall.function.name === "web_research") {
+                try {
+                  const args = JSON.parse(toolCall.function.arguments);
+                  
+                  // Call external web research (placeholder - implement actual research)
+                  const researchResult = {
+                    query: args.query,
+                    reason: args.reason,
+                    findings: `[Web research for "${args.query}" triggered because: ${args.reason}]\nPlaceholder: Implement actual web search integration here.`
+                  };
+                  
+                  toolResults.push({
+                    tool: "web_research",
+                    success: true,
+                    ...researchResult
+                  });
+                  
+                  memoryContext += `\n\n🔍 Web Research:\nQuery: ${args.query}\nReason: ${args.reason}\n${researchResult.findings}`;
+                } catch (e: any) {
+                  console.error('Failed web research:', e);
+                  toolResults.push({
+                    tool: "web_research",
                     success: false,
                     error: e.message
                   });
