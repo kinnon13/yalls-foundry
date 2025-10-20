@@ -129,9 +129,9 @@ export default function OnboardingPage() {
       const payload = {
         invited_by_kind: 'unknown',
         invited_by_id: null,
-        invite_code: null,
+        invite_code: 'organic', // Set non-null to pass RPC validation
         invite_medium: 'organic',
-        utm: {},
+        utm: { source: 'direct' }, // Add utm data to pass validation
         ref_session_id: sessionId,
       } as any;
       await supabase.rpc('set_user_acquisition', { p_payload: payload });
