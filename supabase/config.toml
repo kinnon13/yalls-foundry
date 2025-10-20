@@ -176,4 +176,11 @@ verify_jwt = true
 [functions.auto-pin-business]
 verify_jwt = false
 
+# --- Email Inbound Processing ---
+[functions.email-inbound]
+verify_jwt = false
+
+[functions.process-inbound-email]
+verify_jwt = false
+
 
