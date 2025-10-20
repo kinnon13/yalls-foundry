@@ -29,8 +29,11 @@ export function generateCSP(isPreview = false): string {
     'img-src': ["'self'", 'data:', 'https:'],
     'font-src': ["'self'", 'data:'],
     'connect-src': [
-      "'self'", 
-      config.VITE_SUPABASE_URL,
+      "'self'",
+      ...(config.VITE_SUPABASE_URL ? [
+        config.VITE_SUPABASE_URL,
+        `${config.VITE_SUPABASE_URL}/functions/v1/*`
+      ] : []),
       // Preview routes: restrict external calls
       ...(isPreview ? [] : [])
     ],
