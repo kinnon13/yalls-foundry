@@ -146,21 +146,26 @@ ${calendarContext ? '- You have access to the user\'s calendar - suggest prep, r
     // Save messages
     const messageSources = memories?.map((m: any) => ({ id: m.id, kind: m.kind })) || [];
     
-    await supabase.from("rocker_messages").insert([
+    const { error: insertError } = await supabase.from("rocker_messages").insert([
       {
         thread_id,
         user_id: user.id,
         role: "user",
         content: message,
+        meta: {}
       },
       {
         thread_id,
         user_id: user.id,
         role: "assistant",
         content: reply,
-        metadata: { sources: messageSources }
+        meta: { sources: messageSources }
       },
     ]);
+
+    if (insertError) {
+      console.error('Failed to save messages:', insertError);
+    }
 
     // Auto-task detection
     const todoMatch = reply.match(/todo:\s*(.+?)(?:\n|$)/i);
