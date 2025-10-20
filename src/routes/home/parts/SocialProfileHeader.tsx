@@ -43,12 +43,12 @@ export default function SocialProfileHeader({ showProfile = true }: { showProfil
     (async () => {
       const { data: prof } = await supabase
         .from('profiles')
-        .select('display_name, avatar_url')
+        .select('display_name, avatar_url, handle')
         .eq('user_id', userId)
         .maybeSingle();
 
       setName(prof?.display_name ?? userEmail?.split('@')[0] ?? 'User');
-      setHandle(prof?.display_name?.toLowerCase().replace(/\s+/g, '') ?? 'username');
+      setHandle(prof?.handle ?? 'username');
       if (prof?.avatar_url) {
         setAvatar(prof.avatar_url);
       }
