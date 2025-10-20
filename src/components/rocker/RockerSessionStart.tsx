@@ -85,8 +85,8 @@ export function RockerSessionStart() {
           correlation_id: session.id
         });
 
-      // Navigate to messaging with session
-      navigate(`/app/messaging?conversation=rocker&session=${session.id}`);
+      // Navigate to chat interface
+      navigate(`/rocker/chat?session=${session.id}`);
       setOpen(false);
 
     } catch (error: any) {

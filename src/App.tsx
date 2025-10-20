@@ -64,6 +64,7 @@ const AdminDashboard = lazy(() => import('./routes/admin'));
 const AuthPage = lazy(() => import('./routes/auth'));
 const OnboardingPage = lazy(() => import('./routes/onboarding/index'));
 const RockerHub = lazy(() => import('./routes/rocker-hub'));
+const RockerChatRoute = lazy(() => import('./routes/rocker-chat'));
 
 const queryClient = new QueryClient();
 
@@ -308,6 +309,16 @@ function AppContent() {
             element={
               <Suspense fallback={<div>Loading...</div>}>
                 <RockerHub />
+              </Suspense>
+            } 
+          />
+          
+          {/* Rocker Chat */}
+          <Route 
+            path="/rocker/chat" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <RockerChatRoute />
               </Suspense>
             } 
           />
