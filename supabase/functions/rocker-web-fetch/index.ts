@@ -100,7 +100,7 @@ serve(async (req) => {
       });
     }
 
-    // Check allowlist if in allowlist mode
+    // Check allowlist if in allowlist mode (blocklist mode allows all except blocked)
     if (mode === 'allowlist') {
       const { data: allowed } = await supabase
         .from('web_access_allowlist')
@@ -109,12 +109,13 @@ serve(async (req) => {
         .maybeSingle();
 
       if (!allowed) {
-        return new Response(JSON.stringify({ error: 'Domain not in allowlist. Ask admin to add it.' }), {
+        return new Response(JSON.stringify({ error: 'Domain not in allowlist. Web access is in restricted mode.' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
     }
+    // In blocklist mode, all domains are allowed except those explicitly blocked above
 
     // Fetch with timeout and size limit
     const controller = new AbortController();

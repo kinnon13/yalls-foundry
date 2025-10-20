@@ -69,82 +69,55 @@ serve(async (req) => {
     const { data: isSuperAdmin } = await supabase.rpc('is_super_admin', { p_uid: user.id });
     const priority = isSuperAdmin ? 10 : 100;
 
-    // Auto-categorize and summarize using AI
+    // Auto-categorize using AI (single fast call)
     let category = 'Notes';
     let summary = text.slice(0, 200) + '...';
     let tags: string[] = [];
 
-    if (LOVABLE_API_KEY) {
+    // Skip AI for very large texts to avoid timeouts
+    if (LOVABLE_API_KEY && text.length < 50000) {
       try {
-        // Get category
-        const catResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        // Single combined AI call for better performance
+        const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${LOVABLE_API_KEY}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
+            model: 'google/gemini-2.5-flash-lite',
             messages: [{
               role: 'user',
-              content: `Categorize this content. Choose ONE category: Projects, People, Finance, Legal, Marketing, Product, Personal, or Notes.\n\nSubject: ${subject}\n\nContent: ${text.slice(0, 1000)}\n\nReturn ONLY the category name, nothing else.`
-            }],
-            max_completion_tokens: 20,
-          }),
-        });
-        
-        if (catResponse.ok) {
-          const catData = await catResponse.json();
-          category = catData.choices?.[0]?.message?.content?.trim() || 'Notes';
-        }
+              content: `Analyze this content and return JSON with category, summary, and tags.
 
-        // Get summary
-        const summaryResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [{
-              role: 'user',
-              content: `Summarize this in 1-3 clear sentences:\n\n${text.slice(0, 2000)}`
-            }],
-            max_completion_tokens: 150,
-          }),
-        });
-        
-        if (summaryResponse.ok) {
-          const summaryData = await summaryResponse.json();
-          summary = summaryData.choices?.[0]?.message?.content || summary;
-        }
+Subject: ${subject || 'Untitled'}
+Content: ${text.slice(0, 3000)}
 
-        // Get tags
-        const tagsResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [{
-              role: 'user',
-              content: `Extract 3-7 relevant tags. Return ONLY a JSON array like ["tag1","tag2"]. No other text.\n\n${text.slice(0, 1500)}`
+Return JSON in this exact format:
+{
+  "category": "One of: Projects, People, Finance, Legal, Marketing, Product, Personal, Notes",
+  "summary": "1-2 sentence summary",
+  "tags": ["tag1", "tag2", "tag3"]
+}`
             }],
-            max_completion_tokens: 100,
+            max_completion_tokens: 200,
           }),
         });
         
-        if (tagsResponse.ok) {
-          const tagsData = await tagsResponse.json();
-          const tagsContent = tagsData.choices?.[0]?.message?.content || '[]';
-          tags = JSON.parse(tagsContent.replace(/```json\n?|\n?```/g, ''));
+        if (aiResponse.ok) {
+          const data = await aiResponse.json();
+          const content = data.choices?.[0]?.message?.content || '{}';
+          const parsed = JSON.parse(content.replace(/```json\n?|\n?```/g, ''));
+          category = parsed.category || 'Notes';
+          summary = parsed.summary || summary;
+          tags = Array.isArray(parsed.tags) ? parsed.tags : [];
         }
       } catch (aiError) {
         console.error('AI processing error:', aiError);
       }
+    } else if (text.length >= 50000) {
+      summary = `Large document (${Math.round(text.length / 1000)}KB)`;
+      category = 'Documents';
     }
 
     // Insert chunks into memory
