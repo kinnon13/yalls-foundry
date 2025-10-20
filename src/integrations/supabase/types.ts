@@ -7667,6 +7667,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rocker_config: {
+        Row: {
+          alpha: number | null
+          id: number
+          keep_k: number | null
+          mmr_lambda: number | null
+          retrieve_k: number | null
+          sim_threshold: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          alpha?: number | null
+          id?: number
+          keep_k?: number | null
+          mmr_lambda?: number | null
+          retrieve_k?: number | null
+          sim_threshold?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          alpha?: number | null
+          id?: number
+          keep_k?: number | null
+          mmr_lambda?: number | null
+          retrieve_k?: number | null
+          sim_threshold?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       rocker_context: {
         Row: {
           context_data: Json

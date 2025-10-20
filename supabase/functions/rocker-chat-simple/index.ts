@@ -20,6 +20,13 @@ serve(async (req) => {
     { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
   );
 
+  // Service role client for RPC calls
+  const supabaseService = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    { auth: { persistSession: false } }
+  );
+
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -40,50 +47,55 @@ serve(async (req) => {
 
     // Load runtime config with sane defaults
     const defaultCfg = { alpha: 0.7, retrieve_k: 20, keep_k: 5, sim_threshold: 0.65 };
-    const { data: cfgRow } = await supabase.from('rocker_config').select('*').eq('id', 1).maybeSingle();
+    const { data: cfgRow } = await supabaseService.from('rocker_config').select('*').eq('id', 1).maybeSingle();
     const cfg = { ...defaultCfg, ...(cfgRow || {}) };
 
-    // Embed the user message for semantic search
+    // Embed the user message for semantic search (only if OpenAI key available)
     let qvec: number[] = [];
-    try {
-      const embedResp = await fetch('https://api.openai.com/v1/embeddings', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ model: 'text-embedding-3-small', input: message })
-      });
-      if (embedResp.ok) {
-        const embedData = await embedResp.json();
-        qvec = embedData.data[0].embedding;
+    const OPENAI_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (OPENAI_KEY) {
+      try {
+        const embedResp = await fetch('https://api.openai.com/v1/embeddings', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ model: 'text-embedding-3-small', input: message })
+        });
+        if (embedResp.ok) {
+          const embedData = await embedResp.json();
+          qvec = embedData.data[0].embedding;
+        }
+      } catch (e) {
+        console.error('Embedding failed:', e);
       }
-    } catch (e) {
-      console.error('Embedding failed:', e);
     }
 
-    // Hybrid retrieval (vector + lexical + boosts)
+    // Hybrid retrieval (vector + lexical + boosts) - only if we have embeddings
     let hits: any[] = [];
     let memoryContext = '';
-    try {
-      const { data, error } = await supabase.rpc('search_hybrid', {
-        q_vec: qvec,
-        q_text: message,
-        k: cfg.retrieve_k,
-        alpha: cfg.alpha,
-        thread: thread_id || null
-      });
-      if (error) throw error;
-      hits = (data || []).slice(0, cfg.keep_k);
-    } catch (e) {
-      console.error('Hybrid search failed, trying vector-only:', e);
-      // Fallback to vector-only if hybrid fails
-      const { data } = await supabase.rpc('match_rocker_memory_vec', {
-        q: qvec,
-        match_count: cfg.retrieve_k,
-        thread: thread_id || null
-      });
-      if (data?.length) hits = data.slice(0, cfg.keep_k);
+    if (qvec.length > 0) {
+      try {
+        const { data, error } = await supabaseService.rpc('search_hybrid', {
+          q_vec: qvec,
+          q_text: message,
+          k: cfg.retrieve_k,
+          alpha: cfg.alpha,
+          thread: thread_id || null
+        });
+        if (error) throw error;
+        hits = (data || []).slice(0, cfg.keep_k);
+      } catch (e) {
+        console.error('Hybrid search failed, trying vector-only:', e);
+        // Fallback to vector-only if hybrid fails
+        const { data } = await supabaseService.rpc('match_rocker_memory_vec', {
+          q: qvec,
+          match_count: cfg.retrieve_k,
+          thread: thread_id || null
+        });
+        if (data?.length) hits = data.slice(0, cfg.keep_k);
+      }
     }
 
     // Build knowledge context with citations
