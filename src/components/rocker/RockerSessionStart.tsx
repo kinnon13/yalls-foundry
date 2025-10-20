@@ -85,8 +85,10 @@ export function RockerSessionStart() {
           correlation_id: session.id
         });
 
-      // Navigate to chat interface
-      navigate(`/rocker/chat?session=${session.id}`);
+      // Open Rocker chat with the new session
+      window.dispatchEvent(new CustomEvent('rocker-open-session', { 
+        detail: { sessionId: session.id } 
+      }));
       setOpen(false);
 
     } catch (error: any) {

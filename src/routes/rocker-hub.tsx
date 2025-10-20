@@ -6,6 +6,8 @@
 import { RockerVaultUpload } from '@/components/rocker/RockerVaultUpload';
 import { RockerSessionStart } from '@/components/rocker/RockerSessionStart';
 import { DailyKickoff } from '@/components/rocker/DailyKickoff';
+import { PhoneSetup } from '@/components/rocker/PhoneSetup';
+import { OutboxTrigger } from '@/components/rocker/OutboxTrigger';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Brain, Shield, Zap } from 'lucide-react';
@@ -47,6 +49,12 @@ export default function RockerHub() {
         <div className="grid gap-8 lg:grid-cols-2">
           <div className="space-y-8">
             <RockerVaultUpload />
+            
+            {/* Phone & Outbox */}
+            <div className="grid gap-4">
+              <PhoneSetup />
+              <OutboxTrigger />
+            </div>
           </div>
           <div className="space-y-8">
             <DailyKickoff />
