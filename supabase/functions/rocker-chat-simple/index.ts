@@ -3,16 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
-// Boot banner for deployment verification
-console.log('[rocker-chat-simple] boot ok', { 
-  ts: new Date().toISOString(), 
-  build: 'bump-001',
-  env: {
-    OPENAI: !!Deno.env.get('OPENAI_API_KEY'),
-    SERVICE_ROLE: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
-    LOVABLE: !!Deno.env.get('LOVABLE_API_KEY')
-  }
-});
+console.log('[rocker-chat-simple] boot', { build: 'bump-002', ts: new Date().toISOString() });
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
