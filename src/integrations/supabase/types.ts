@@ -3375,6 +3375,60 @@ export type Database = {
           },
         ]
       }
+      emails_inbound: {
+        Row: {
+          attachments: Json | null
+          created_at: string | null
+          from_addr: string
+          headers: Json | null
+          html_body: string | null
+          id: string
+          msg_id: string | null
+          processed: boolean | null
+          processed_at: string | null
+          raw_payload: Json | null
+          rocker_thread_id: string | null
+          subject: string | null
+          tenant_id: string | null
+          text_body: string | null
+          to_addr: string
+        }
+        Insert: {
+          attachments?: Json | null
+          created_at?: string | null
+          from_addr: string
+          headers?: Json | null
+          html_body?: string | null
+          id?: string
+          msg_id?: string | null
+          processed?: boolean | null
+          processed_at?: string | null
+          raw_payload?: Json | null
+          rocker_thread_id?: string | null
+          subject?: string | null
+          tenant_id?: string | null
+          text_body?: string | null
+          to_addr: string
+        }
+        Update: {
+          attachments?: Json | null
+          created_at?: string | null
+          from_addr?: string
+          headers?: Json | null
+          html_body?: string | null
+          id?: string
+          msg_id?: string | null
+          processed?: boolean | null
+          processed_at?: string | null
+          raw_payload?: Json | null
+          rocker_thread_id?: string | null
+          subject?: string | null
+          tenant_id?: string | null
+          text_body?: string | null
+          to_addr?: string
+        }
+        Relationships: []
+      }
       entities: {
         Row: {
           contributor_window_days: number
