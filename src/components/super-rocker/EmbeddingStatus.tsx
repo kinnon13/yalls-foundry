@@ -42,7 +42,6 @@ export function EmbeddingStatus() {
   const triggerEmbedding = async () => {
     setIsTriggering(true);
     try {
-      // Call the generate-embeddings function directly (no auth needed, runs on cron)
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-embeddings`,
         {
@@ -54,15 +53,29 @@ export function EmbeddingStatus() {
       );
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Failed to trigger embeddings');
+        let errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.error || errorMsg;
+        } catch {
+          // If not JSON, try text
+          const errorText = await response.text();
+          if (errorText) errorMsg = errorText;
+        }
+        throw new Error(errorMsg);
       }
 
       const result = await response.json();
       
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
       toast({
         title: 'Embedding worker triggered',
-        description: `Processed ${result.embedded || 0} embeddings. Check back in a moment.`,
+        description: result.embedded > 0 
+          ? `Processed ${result.embedded} embeddings successfully.`
+          : 'No pending embeddings to process.',
       });
 
       setTimeout(checkStatus, 3000);
@@ -70,7 +83,7 @@ export function EmbeddingStatus() {
       console.error('Trigger error:', error);
       toast({
         title: 'Failed to trigger embeddings',
-        description: error.message,
+        description: error.message || 'Unknown error occurred',
         variant: 'destructive',
       });
     } finally {
