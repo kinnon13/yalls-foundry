@@ -82,6 +82,7 @@ serve(async (req) => {
 
       // Keep order aligned with claims
       const idToContent = new Map(rows.map((r: any) => [r.id, r.content]));
+      const knowledgeIdToJobId = new Map(claims.map((c: any) => [c.knowledge_id, c.job_id]));
       const inputs: string[] = [];
       const orderedIds: string[] = [];
       
@@ -113,47 +114,58 @@ serve(async (req) => {
         throw new Error(`Embedding dim mismatch. Got ${vectors[0]?.length}, expected ${VECTOR_DIM}.`);
       }
 
-      // 4) Update embeddings
+      // 4) Update embeddings and track success
+      const successJobIds: string[] = [];
+      const failedJobIds: string[] = [];
+      
       for (let i = 0; i < orderedIds.length; i++) {
-        const id = orderedIds[i];
+        const knowledgeId = orderedIds[i];
+        const jobId = knowledgeIdToJobId.get(knowledgeId);
         const vec = vectors[i];
         
         const { error: updErr } = await supabase
           .from("rocker_knowledge")
           .update({ embedding: vec as any })
-          .eq("id", id);
+          .eq("id", knowledgeId);
         
         if (updErr) {
-          await supabase.from("embedding_jobs")
-            .update({ 
-              status: "error", 
-              last_error: updErr.message, 
-              updated_at: new Date().toISOString() 
-            })
-            .eq("knowledge_id", id);
+          console.error(`Failed to update ${knowledgeId}:`, updErr);
+          if (jobId) {
+            failedJobIds.push(jobId);
+            await supabase.from("embedding_jobs")
+              .update({ 
+                status: "error", 
+                last_error: updErr.message, 
+                updated_at: new Date().toISOString() 
+              })
+              .eq("id", jobId);
+          }
         } else {
           totalDone++;
+          if (jobId) successJobIds.push(jobId);
         }
       }
 
-      // 5) Mark claimed jobs as done
-      const jobIds = claims.map((c: any) => c.job_id);
-      await supabase.from("embedding_jobs")
-        .update({ status: "done", updated_at: new Date().toISOString() })
-        .in("id", jobIds);
+      // 5) Mark successful jobs as done
+      if (successJobIds.length > 0) {
+        await supabase.from("embedding_jobs")
+          .update({ status: "done", updated_at: new Date().toISOString() })
+          .in("id", successJobIds);
+      }
     }
 
     // Audit (fail silently)
-    const { error: auditErr } = await supabase.from("ai_action_ledger")
-      .insert({ 
+    try {
+      await supabase.from("ai_action_ledger").insert({ 
         agent: "rocker", 
         action: "generate_embeddings_parallel", 
         input: {}, 
         output: { embedded: totalDone }, 
         result: "success" 
       });
-    
-    if (auditErr) console.error("Audit log failed:", auditErr);
+    } catch (auditErr) {
+      console.error("Audit log skipped:", auditErr);
+    }
 
     return new Response(JSON.stringify({ ok: true, embedded: totalDone }), { 
       headers: { ...CORS, "Content-Type": "application/json" } 
