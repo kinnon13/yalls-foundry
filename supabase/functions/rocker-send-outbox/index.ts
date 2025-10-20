@@ -104,6 +104,14 @@ serve(async (req) => {
   }
 
   try {
+    let testMode = false;
+    try {
+      const body = await req.json();
+      testMode = body.testMode || false;
+    } catch {
+      // No body or invalid JSON, use default
+    }
+    
     // Fetch due messages (queued and scheduled_at <= now)
     const { data: rows, error } = await supabase
       .from("rocker_outbox")
@@ -136,19 +144,23 @@ serve(async (req) => {
           .eq("id", row.id);
 
         // Send via appropriate channel
-        if (row.channel === "sms") {
-          await sendSms(row.to_addr, row.body);
-        } else if (row.channel === "email") {
-          await sendEmail(
-            row.to_addr,
-            row.subject,
-            row.body,
-            row.payload?.attachments
-          );
-        } else if (row.channel === "chat") {
-          await sendChat(row.user_id, row.body);
+        if (testMode) {
+          console.log(`[Outbox] TEST MODE: Skipping actual send for ${row.channel} to ${row.to_addr}`);
         } else {
-          throw new Error(`Unsupported channel: ${row.channel}`);
+          if (row.channel === "sms") {
+            await sendSms(row.to_addr, row.body);
+          } else if (row.channel === "email") {
+            await sendEmail(
+              row.to_addr,
+              row.subject,
+              row.body,
+              row.payload?.attachments
+            );
+          } else if (row.channel === "chat") {
+            await sendChat(row.user_id, row.body);
+          } else {
+            throw new Error(`Unsupported channel: ${row.channel}`);
+          }
         }
 
         // Mark as sent

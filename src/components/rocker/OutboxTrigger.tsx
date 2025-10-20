@@ -12,11 +12,14 @@ import { toast } from 'sonner';
 
 export function OutboxTrigger() {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [testMode, setTestMode] = useState(false);
 
   const handleTrigger = async () => {
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('rocker-send-outbox');
+      const { data, error } = await supabase.functions.invoke('rocker-send-outbox', {
+        body: { testMode }
+      });
       
       if (error) throw error;
       
@@ -39,19 +42,20 @@ export function OutboxTrigger() {
 
   return (
     <Card className="border-primary/20">
-      <CardContent className="pt-6 flex items-center justify-between">
-        <div>
-          <p className="font-medium">SMS Queue</p>
-          <p className="text-xs text-muted-foreground">
-            Manually trigger SMS delivery
-          </p>
-        </div>
-        <Button
-          onClick={handleTrigger}
-          disabled={isProcessing}
-          size="sm"
-          className="gap-2"
-        >
+      <CardContent className="pt-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="font-medium">SMS Queue</p>
+            <p className="text-xs text-muted-foreground">
+              Manually trigger SMS delivery
+            </p>
+          </div>
+          <Button
+            onClick={handleTrigger}
+            disabled={isProcessing}
+            size="sm"
+            className="gap-2"
+          >
           {isProcessing ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -64,6 +68,19 @@ export function OutboxTrigger() {
             </>
           )}
         </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="testMode"
+            checked={testMode}
+            onChange={(e) => setTestMode(e.target.checked)}
+            className="rounded border-border"
+          />
+          <label htmlFor="testMode" className="text-xs text-muted-foreground cursor-pointer">
+            Test mode (skip actual SMS sending)
+          </label>
+        </div>
       </CardContent>
     </Card>
   );
