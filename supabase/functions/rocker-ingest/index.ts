@@ -10,12 +10,15 @@ const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
 function chunkText(text: string, maxSize = 3000, overlap = 150): string[] {
   const parts: string[] = [];
-  let i = 0;
-  while (i < text.length) {
+  if (maxSize <= 0) return [text];
+  // Ensure overlap is smaller than maxSize to avoid infinite loops
+  const safeOverlap = Math.min(Math.max(overlap, 0), Math.max(0, maxSize - 1));
+  const step = Math.max(1, maxSize - safeOverlap);
+
+  for (let i = 0; i < text.length; i += step) {
     const end = Math.min(text.length, i + maxSize);
     parts.push(text.slice(i, end));
-    i = end - overlap;
-    if (i >= end) break;
+    if (end >= text.length) break;
   }
   return parts;
 }
