@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
-function chunkText(text: string, maxSize = 8000, overlap = 600): string[] {
+function chunkText(text: string, maxSize = 4000, overlap = 200): string[] {
   const parts: string[] = [];
   let i = 0;
   while (i < text.length) {
@@ -42,9 +42,17 @@ serve(async (req) => {
 
     const { text, subject, thread_id } = await req.json();
     
-    if (!text) {
+    if (!text || typeof text !== 'string') {
       return new Response(JSON.stringify({ error: 'Missing text' }), {
         status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const MAX_CHARS = 300_000; // ~300KB
+    if (text.length > MAX_CHARS) {
+      return new Response(JSON.stringify({ error: 'Text too large. Limit 300k characters.' }), {
+        status: 413,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -63,10 +71,13 @@ serve(async (req) => {
     }
 
     // Chunk the text
-    const chunks = chunkText(text);
-    
+    let chunks = chunkText(text);
+    const MAX_CHUNKS = 200;
+    if (chunks.length > MAX_CHUNKS) {
+      chunks = chunks.slice(0, MAX_CHUNKS);
+    }
     // Check if super admin for priority
-    const { data: isSuperAdmin } = await supabase.rpc('is_super_admin', { p_uid: user.id });
+    const { data: isSuperAdmin } = await supabase.rpc('is_super_admin', { _user_id: user.id });
     const priority = isSuperAdmin ? 10 : 100;
 
     // Simple categorization without AI to avoid memory issues
@@ -81,23 +92,28 @@ serve(async (req) => {
       category = subject.slice(0, 50);
     }
 
-    // Insert chunks into memory
+    // Insert chunks into memory in small batches
     const memoryInserts = chunks.map((chunk, idx) => ({
       user_id: user.id,
       kind: 'paste',
       key: `${category.toLowerCase()}_${Date.now()}_${idx}`,
       value: { text: chunk, subject: subject || category, category, tags },
       priority,
-      pinned: isSuperAdmin,
+      pinned: isSuperAdmin === true,
       source: 'ingest'
     }));
 
-    const { data: memories, error: memError } = await supabase
-      .from('rocker_long_memory')
-      .insert(memoryInserts)
-      .select();
-
-    if (memError) throw memError;
+    const BATCH_SIZE = 20;
+    let storedCount = 0;
+    for (let i = 0; i < memoryInserts.length; i += BATCH_SIZE) {
+      const batch = memoryInserts.slice(i, i + BATCH_SIZE);
+      const { data, error } = await supabase
+        .from('rocker_long_memory')
+        .insert(batch)
+        .select('id'); // minimize payload to save memory
+      if (error) throw error;
+      storedCount += data?.length || 0;
+    }
 
     // Log action
     await supabase.from('ai_action_ledger').insert({
@@ -107,7 +123,7 @@ serve(async (req) => {
       input: { chunks: chunks.length, size: text.length },
       output: { 
         thread_id: threadId, 
-        memories: memories.length,
+        memories: storedCount,
         category,
         tags: tags.slice(0, 5)
       },
@@ -116,7 +132,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       thread_id: threadId, 
-      stored: memories.length,
+      stored: storedCount,
       chunks: chunks.length,
       category,
       tags,
