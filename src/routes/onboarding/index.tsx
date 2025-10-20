@@ -117,21 +117,26 @@ export default function OnboardingPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    // Fetch existing acquisition with required fields
     const { data: acq } = await supabase
       .from('user_acquisition')
-      .select('user_id')
+      .select('user_id, invite_code, utm')
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (!acq) {
+    // Decide if we need to set/repair acquisition (row missing or required fields empty)
+    const utmEmpty = !acq?.utm || (typeof acq.utm === 'object' && Object.keys(acq.utm as any).length === 0);
+    const needsSet = !acq || !acq.invite_code || utmEmpty;
+
+    if (needsSet) {
       const sessionId = sessionStorage.getItem('session_id') ||
         `session_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
       const payload = {
         invited_by_kind: 'unknown',
         invited_by_id: null,
-        invite_code: 'organic', // Set non-null to pass RPC validation
+        invite_code: 'organic', // Non-null to satisfy RPC validation
         invite_medium: 'organic',
-        utm: { source: 'direct' }, // Add utm data to pass validation
+        utm: { source: 'direct' }, // Minimal UTM to satisfy validation
         ref_session_id: sessionId,
       } as any;
       await supabase.rpc('set_user_acquisition', { p_payload: payload });
