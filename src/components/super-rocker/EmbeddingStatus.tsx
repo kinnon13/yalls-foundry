@@ -42,17 +42,32 @@ export function EmbeddingStatus() {
   const triggerEmbedding = async () => {
     setIsTriggering(true);
     try {
-      const { error } = await supabase.functions.invoke('generate-embeddings');
-      
-      if (error) throw error;
+      // Call the generate-embeddings function directly (no auth needed, runs on cron)
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-embeddings`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to trigger embeddings');
+      }
+
+      const result = await response.json();
+      
       toast({
         title: 'Embedding worker triggered',
-        description: 'Processing embeddings... Check back in 2 minutes.',
+        description: `Processed ${result.embedded || 0} embeddings. Check back in a moment.`,
       });
 
-      setTimeout(checkStatus, 2000);
+      setTimeout(checkStatus, 3000);
     } catch (error: any) {
+      console.error('Trigger error:', error);
       toast({
         title: 'Failed to trigger embeddings',
         description: error.message,
