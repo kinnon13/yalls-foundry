@@ -150,6 +150,9 @@ verify_jwt = true
 [functions.summarize-thread]
 verify_jwt = true
 
+[functions.summarize-knowledge]
+verify_jwt = true
+
 [functions.ai-rank-search]
 verify_jwt = true
 
