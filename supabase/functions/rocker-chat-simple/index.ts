@@ -102,7 +102,7 @@ ${calendarContext ? '- You have access to the user\'s calendar - suggest prep, r
     if (urlMatch) {
       const urlToFetch = urlMatch[0];
       try {
-        const { data: fetchResult, error: fetchError } = await supabase.functions.invoke('rocker-web-fetch', {
+        const { data: fetchResult, error: fetchError } = await supabase.functions.invoke('rocker-fetch-url', {
           body: { url: urlToFetch }
         });
 
