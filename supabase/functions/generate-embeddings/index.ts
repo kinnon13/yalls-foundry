@@ -1,143 +1,92 @@
-/**
- * Generate AI Embeddings
- * 
- * Creates vector embeddings for semantic search using OpenAI's text-embedding-3-small.
- * Batch processing with idempotency and retry logic.
- */
+// supabase/functions/generate-embeddings/index.ts
+// POST { limit_per_run?: number, by_user_id?: string }  // optional filters
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { createLogger } from "../_shared/logger.ts";
-import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
+const MODEL = "text-embedding-3-small";     // 1536-dim
+const BATCH_SIZE = 96;                      // safe API batch
+const MAX_ROWS = 1000;                      // ceiling per run to protect memory
+const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface EmbeddingRequest {
-  chunk_type: string;
-  source_id: string;
-  source_table: string;
-  content: string;
-  metadata?: Record<string, any>;
+async function embedBatch(texts: string[]): Promise<number[][]> {
+  const resp = await fetch("https://api.openai.com/v1/embeddings", {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: MODEL, input: texts }),
+  });
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`OpenAI error ${resp.status}: ${err}`);
+  }
+  const data = await resp.json();
+  return data.data.map((d: any) => d.embedding as number[]);
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  const log = createLogger('generate-embeddings');
-  log.startTimer();
-
-  // Apply rate limiting
-  const limited = await withRateLimit(req, 'generate-embeddings', RateLimits.expensive);
-  if (limited) return limited;
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  );
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
-    const { chunks } = await req.json() as { chunks: EmbeddingRequest[] };
+    // Service role (bypasses RLS by design)
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
 
-    if (!chunks || chunks.length === 0) {
-      throw new Error("No chunks provided");
-    }
+    const { limit_per_run, by_user_id } = (await req.json().catch(() => ({}))) ?? {};
+    const hardLimit = Math.min(Number(limit_per_run) || 400, MAX_ROWS);
 
-    log.info('Generating embeddings', { chunks_count: chunks.length });
+    // Pull a window of rows with NULL embeddings (optionally scoped to a user)
+    let query = supabase
+      .from("rocker_knowledge")
+      .select("id, user_id, content")
+      .is("embedding", null)
+      .order("created_at", { ascending: true })
+      .limit(hardLimit);
 
-    const openAIKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openAIKey) {
-      throw new Error("OPENAI_API_KEY not configured");
-    }
+    if (by_user_id) query = query.eq("user_id", by_user_id);
 
-    // Generate embeddings in batch (OpenAI supports up to 2048 inputs)
-    const batchSize = 100;
-    const results = [];
-
-    for (let i = 0; i < chunks.length; i += batchSize) {
-      const batch = chunks.slice(i, i + batchSize);
-      
-      const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openAIKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "text-embedding-3-small",
-          input: batch.map(c => c.content),
-          dimensions: 1536,
-        }),
+    const { data: rows, error } = await query;
+    if (error) throw error;
+    if (!rows || rows.length === 0) {
+      return new Response(JSON.stringify({ ok: true, updated: 0, note: "Nothing to embed" }), {
+        headers: { ...cors, "Content-Type": "application/json" },
       });
-
-      if (!embeddingResponse.ok) {
-        const error = await embeddingResponse.text();
-        log.error('OpenAI API error', { error });
-        throw new Error(`OpenAI API error: ${error}`);
-      }
-
-      const embeddingData = await embeddingResponse.json();
-
-      // Insert chunks with embeddings
-      for (let j = 0; j < batch.length; j++) {
-        const chunk = batch[j];
-        const embedding = embeddingData.data[j].embedding;
-
-        const { data, error } = await supabase
-          .from("ai_chunks")
-          .upsert({
-            chunk_type: chunk.chunk_type,
-            source_id: chunk.source_id,
-            source_table: chunk.source_table,
-            content: chunk.content,
-            tokens: chunk.content.split(/\s+/).length, // Rough token count
-            embedding,
-            metadata: chunk.metadata || {},
-          }, {
-            onConflict: "source_table,source_id",
-          });
-
-        if (error) {
-          log.error('Error inserting chunk', error);
-          results.push({ success: false, error: error.message, chunk_id: chunk.source_id });
-        } else {
-          results.push({ success: true, chunk_id: chunk.source_id });
-        }
-      }
-
-      log.info('Processed batch', { batch: i / batchSize + 1, total_batches: Math.ceil(chunks.length / batchSize) });
     }
 
-    const successCount = results.filter(r => r.success).length;
-    const failCount = results.filter(r => !r.success).length;
+    let updated = 0;
+    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+      const batch = rows.slice(i, i + BATCH_SIZE);
+      const inputs = batch.map((r) => r.content);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        processed: chunks.length,
-        succeeded: successCount,
-        failed: failCount,
-        results,
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+      const vectors = await embedBatch(inputs);
+
+      // Update each row (use small grouped updates to reduce payload size)
+      for (let j = 0; j < batch.length; j++) {
+        const r = batch[j];
+        const v = vectors[j];
+
+        const { error: upErr } = await supabase
+          .from("rocker_knowledge")
+          .update({ embedding: v as unknown as any }) // Supabase accepts number[] for vector
+          .eq("id", r.id);
+        if (upErr) throw upErr;
+        updated++;
       }
-    );
-  } catch (error) {
-    log.error('Error in generate-embeddings', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    }
+
+    return new Response(JSON.stringify({ ok: true, updated }), {
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    console.error("[generate-embeddings] error", e);
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+      status: 500,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
   }
 });
