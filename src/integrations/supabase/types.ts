@@ -7578,6 +7578,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rocker_daily_kickoffs: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          last_run_at: string | null
+          scheduled_time: string
+          timezone: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          last_run_at?: string | null
+          scheduled_time?: string
+          timezone?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          last_run_at?: string | null
+          scheduled_time?: string
+          timezone?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       rocker_events: {
         Row: {
           id: string
@@ -7604,6 +7634,63 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      rocker_evidence_cards: {
+        Row: {
+          action_id: string | null
+          created_at: string | null
+          id: string
+          inputs: Json | null
+          outputs: Json | null
+          steps: Json | null
+          title: string
+          uncertainties: string[] | null
+          undo_available: boolean | null
+          user_id: string
+          vault_changes: Json | null
+        }
+        Insert: {
+          action_id?: string | null
+          created_at?: string | null
+          id?: string
+          inputs?: Json | null
+          outputs?: Json | null
+          steps?: Json | null
+          title: string
+          uncertainties?: string[] | null
+          undo_available?: boolean | null
+          user_id: string
+          vault_changes?: Json | null
+        }
+        Update: {
+          action_id?: string | null
+          created_at?: string | null
+          id?: string
+          inputs?: Json | null
+          outputs?: Json | null
+          steps?: Json | null
+          title?: string
+          uncertainties?: string[] | null
+          undo_available?: boolean | null
+          user_id?: string
+          vault_changes?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_evidence_cards_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "ai_action_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rocker_evidence_cards_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "ai_action_my_timeline"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rocker_memories: {
         Row: {
@@ -7774,6 +7861,57 @@ export type Database = {
           created_at?: string
           id?: string
           title?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rocker_vault_documents: {
+        Row: {
+          chunks_count: number | null
+          content_type: string | null
+          created_at: string | null
+          filename: string
+          id: string
+          metadata: Json | null
+          processed: boolean | null
+          project: string | null
+          size_bytes: number | null
+          status: string | null
+          storage_path: string
+          tags: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          chunks_count?: number | null
+          content_type?: string | null
+          created_at?: string | null
+          filename: string
+          id?: string
+          metadata?: Json | null
+          processed?: boolean | null
+          project?: string | null
+          size_bytes?: number | null
+          status?: string | null
+          storage_path: string
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          chunks_count?: number | null
+          content_type?: string | null
+          created_at?: string | null
+          filename?: string
+          id?: string
+          metadata?: Json | null
+          processed?: boolean | null
+          project?: string | null
+          size_bytes?: number | null
+          status?: string | null
+          storage_path?: string
+          tags?: string[] | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { PlusCircle, MessageSquare, Store, Globe2, AppWindow } from 'lucide-react';
+import { PlusCircle, MessageSquare, Store, Globe2, AppWindow, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChatDrawer } from '@/components/chat/ChatDrawer';
 import { trackFooterClick } from '@/lib/telemetry/events';
@@ -57,10 +57,10 @@ export function BottomDock() {
       icon: Globe2,
     },
     {
-      key: 'create',
-      label: 'Create',
-      onClick: () => nav('/create'),
-      icon: PlusCircle,
+      key: 'rocker',
+      label: 'Rocker',
+      to: '/rocker',
+      icon: Brain,
     },
   ];
 
