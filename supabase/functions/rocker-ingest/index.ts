@@ -49,9 +49,9 @@ serve(async (req) => {
       });
     }
 
-    const MAX_CHARS = 200_000; // 200KB max to prevent memory issues
+    const MAX_CHARS = 120_000; // Limit to 120KB to be extra safe in edge memory
     if (text.length > MAX_CHARS) {
-      return new Response(JSON.stringify({ error: `Text too large (${Math.round(text.length/1000)}KB). Max 200KB.` }), {
+      return new Response(JSON.stringify({ error: `Text too large (${Math.round(text.length/1000)}KB). Max 120KB.` }), {
         status: 413,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -91,7 +91,7 @@ serve(async (req) => {
     const totalChunks = Math.min(chunks.length, MAX_CHUNKS);
     
     let storedCount = 0;
-    const BATCH_SIZE = 10;
+    const BATCH_SIZE = 5;
     
     for (let i = 0; i < totalChunks; i += BATCH_SIZE) {
       const batchEnd = Math.min(i + BATCH_SIZE, totalChunks);
@@ -112,13 +112,11 @@ serve(async (req) => {
         });
       }
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('rocker_knowledge')
-        .insert(batch)
-        .select('id');
-      
+        .insert(batch);
       if (error) throw error;
-      storedCount += data?.length || 0;
+      storedCount += batch.length;
     }
 
     // Log action

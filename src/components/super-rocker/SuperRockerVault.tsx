@@ -42,7 +42,10 @@ export function SuperRockerVault({ threadId, onThreadCreated }: SuperRockerVault
         }
       });
 
-      if (error) throw error;
+      if (error || (data && (data as any).error)) {
+        const msg = (data as any)?.error || (error as any)?.message || 'Failed to ingest paste';
+        throw new Error(msg);
+      }
 
       if (data?.thread_id && !threadId) {
         onThreadCreated(data.thread_id);
