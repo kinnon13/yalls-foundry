@@ -45,6 +45,7 @@ export function FileBrowser() {
   const [viewOpen, setViewOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [autoBackfillDone, setAutoBackfillDone] = useState(false);
 
   useEffect(() => {
     loadFiles();
@@ -63,6 +64,41 @@ export function FileBrowser() {
       console.error('Failed to load files:', error);
     }
   };
+
+  const ensureBackfill = async () => {
+    if (autoBackfillDone) return;
+    try {
+      const now = new Date();
+      const yStart = new Date(now);
+      yStart.setDate(now.getDate() - 1);
+      yStart.setHours(0, 0, 0, 0);
+      const yEnd = new Date(now);
+      yEnd.setDate(now.getDate() - 1);
+      yEnd.setHours(23, 59, 59, 999);
+
+      const anyYesterday = files.some((f) => {
+        const d = new Date(f.created_at);
+        return d >= yStart && d <= yEnd;
+      });
+
+      if (!anyYesterday) {
+        const { data, error } = await supabase.functions.invoke('rocker-reprocess-all');
+        if (error) throw error;
+        toast({ title: 'Backfilled missing files', description: `Reprocessed ${data?.processed ?? 'recent'} items.` });
+        await loadFiles();
+      }
+    } catch (e: any) {
+      console.warn('Auto backfill failed:', e.message || e);
+    } finally {
+      setAutoBackfillDone(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!autoBackfillDone) {
+      ensureBackfill();
+    }
+  }, [files]);
 
   const categories = Array.from(new Set(files.map(f => f.category))).filter(Boolean);
   const projects = Array.from(new Set(files.map(f => f.project))).filter(Boolean);
