@@ -127,6 +127,12 @@ export default function ControlRoom() {
                   <Upload className="h-4 w-4" />
                   Upload Media
                 </Button>
+                <Link to="/settings/keys">
+                  <Button variant="outline" size="default" className="gap-2">
+                    <Settings className="h-4 w-4" />
+                    API Keys
+                  </Button>
+                </Link>
                 <Link to="/">
                   <Button variant="ghost" size="default" className="gap-2">
                     <Home className="h-4 w-4" />

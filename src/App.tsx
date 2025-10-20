@@ -65,6 +65,7 @@ const AuthPage = lazy(() => import('./routes/auth'));
 const OnboardingPage = lazy(() => import('./routes/onboarding/index'));
 const RockerHub = lazy(() => import('./routes/rocker-hub'));
 const SuperRocker = lazy(() => import('./routes/super-rocker'));
+const SettingsKeys = lazy(() => import('./pages/SettingsKeys'));
 
 const queryClient = new QueryClient();
 
@@ -325,6 +326,16 @@ function AppContent() {
             element={
               <Suspense fallback={<div>Loading...</div>}>
                 <SuperRocker />
+              </Suspense>
+            } 
+          />
+          
+          {/* Settings - API Keys */}
+          <Route 
+            path="/settings/keys" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <SettingsKeys />
               </Suspense>
             } 
           />
