@@ -7796,6 +7796,57 @@ export type Database = {
         }
         Relationships: []
       }
+      rocker_outbox: {
+        Row: {
+          attempt_count: number
+          body: string
+          channel: string
+          created_at: string
+          error: string | null
+          id: string
+          payload: Json | null
+          scheduled_at: string
+          sent_at: string | null
+          status: string
+          subject: string | null
+          to_addr: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempt_count?: number
+          body: string
+          channel: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          to_addr: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempt_count?: number
+          body?: string
+          channel?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          to_addr?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       rocker_suggestions: {
         Row: {
           acted_on_at: string | null

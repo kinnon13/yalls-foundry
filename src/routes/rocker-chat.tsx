@@ -23,6 +23,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PhoneSetup } from '@/components/rocker/PhoneSetup';
+import { OutboxTrigger } from '@/components/rocker/OutboxTrigger';
 
 export default function RockerChat() {
   const navigate = useNavigate();
@@ -96,8 +97,11 @@ export default function RockerChat() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4">
       <div className="max-w-4xl mx-auto space-y-4">
-        {/* Phone Setup Banner */}
-        <PhoneSetup />
+        {/* Phone Setup & Outbox Control */}
+        <div className="grid md:grid-cols-2 gap-4">
+          <PhoneSetup />
+          <OutboxTrigger />
+        </div>
 
         {/* Chat Interface */}
         <div className="h-[calc(100vh-12rem)] flex flex-col">
