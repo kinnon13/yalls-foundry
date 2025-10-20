@@ -7793,6 +7793,45 @@ export type Database = {
         }
         Relationships: []
       }
+      rocker_deep_analysis: {
+        Row: {
+          content_preview: string | null
+          created_at: string
+          filing_options: Json
+          id: string
+          sections: Json
+          selected_option: number | null
+          status: string
+          thread_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content_preview?: string | null
+          created_at?: string
+          filing_options?: Json
+          id?: string
+          sections?: Json
+          selected_option?: number | null
+          status?: string
+          thread_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content_preview?: string | null
+          created_at?: string
+          filing_options?: Json
+          id?: string
+          sections?: Json
+          selected_option?: number | null
+          status?: string
+          thread_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       rocker_edges: {
         Row: {
           created_at: string | null

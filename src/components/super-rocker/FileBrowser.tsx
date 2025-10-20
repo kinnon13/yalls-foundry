@@ -7,9 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Folder, File, Search, Edit, Trash2, FolderPlus, MoveHorizontal, RefreshCw } from 'lucide-react';
+import { Folder, File, Search, Edit, Trash2, FolderPlus, MoveHorizontal, RefreshCw, FileSearch } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { FilingAnalysisViewer } from './FilingAnalysisViewer';
 
 interface FileItem {
   id: string;
@@ -35,6 +36,8 @@ export function FileBrowser() {
   const [editData, setEditData] = useState({ name: '', project: '', category: '', folder_path: '', summary: '' });
   const [selectedProject, setSelectedProject] = useState<string>('all');
   const [isReprocessing, setIsReprocessing] = useState(false);
+  const [analysisFileId, setAnalysisFileId] = useState<string | null>(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   useEffect(() => {
     loadFiles();
@@ -280,6 +283,18 @@ export function FileBrowser() {
                             </div>
                             
                             <div className="flex gap-1 shrink-0">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                setAnalysisFileId(file.id);
+                                setShowAnalysis(true);
+                              }}
+                              title="View sentence-level analysis"
+                            >
+                              <FileSearch className="h-3 w-3" />
+                            </Button>
                             <Dialog open={editMode && selectedFile?.id === file.id} onOpenChange={(open) => {
                               if (!open) {
                                 setEditMode(false);
@@ -385,6 +400,15 @@ export function FileBrowser() {
           )}
         </div>
       </ScrollArea>
+
+      <FilingAnalysisViewer
+        fileId={analysisFileId || ''}
+        open={showAnalysis}
+        onClose={() => {
+          setShowAnalysis(false);
+          setAnalysisFileId(null);
+        }}
+      />
     </div>
   );
 }
