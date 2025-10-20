@@ -271,6 +271,31 @@ serve(async (req) => {
       }
     }
     
+    // Keyword fallback when vector search found nothing or embeddings unavailable
+    if (hits.length === 0) {
+      try {
+        const terms = (message || '')
+          .toLowerCase()
+          .split(/\W+/)
+          .filter(w => w.length >= 4)
+          .slice(0, 3);
+        if (terms.length) {
+          const orFilters = terms.map(t => `content.ilike.%${t}%`).join(',');
+          const { data: kw } = await supabaseService
+            .from('rocker_knowledge')
+            .select('id, content, chunk_index, meta, created_at')
+            .or(orFilters)
+            .order('created_at', { ascending: false })
+            .limit(cfg.keep_k);
+          if (kw?.length) {
+            hits = kw.map((r: any) => ({ ...r, score: 0.55 }));
+          }
+        }
+      } catch (e) {
+        console.warn('Keyword fallback search failed:', e);
+      }
+    }
+
     // Only refuse to answer if truly nothing found AND no other context
     if (hits.length === 0 && qvec.length > 0 && !message.match(/https?:\/\//)) {
       const clarifyReply = "I don't have any uploaded content matching that yet. Try pasting text/files in the Vault first, or share a URL to fetch.";
