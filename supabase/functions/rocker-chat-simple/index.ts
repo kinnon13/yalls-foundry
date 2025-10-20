@@ -195,9 +195,7 @@ serve(async (req) => {
 
     // Build knowledge context with citations (RELAXED - answers with even 1 good hit)
     const topScore = (hits[0]?.combinedScore ?? hits[0]?.score ?? hits[0]?.similarity ?? 0);
-    const lowConfidence = hits.length === 0 || topScore < (cfg.sim_threshold - 0.05); // slightly more lenient
-    
-    const lowConfidence = topScore < (cfg.sim_threshold ?? 0.62);
+    const lowConfidence = hits.length === 0 || topScore < (cfg.sim_threshold ?? 0.62);
     
     if (hits && hits.length > 0) {
       memoryContext = '\n\n🧠 From embedded knowledge:\n' + hits.map((h: any) => {
@@ -482,7 +480,7 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
     const latencyMs = Date.now() - t0;
     const retrievedIds = hits?.map((h: any) => h.id) || [];
     const scores = hits?.map((h: any) => h.combinedScore ?? h.score ?? h.similarity) || [];
-    const topScore = scores[0] ?? 0;
+    // topScore already declared above at line 197 - reuse it
     
     // Simple MRR calculation (1 / rank of first relevant doc, assuming top hit is relevant if score > threshold)
     const mrr = topScore >= cfg.sim_threshold ? 1.0 : 0.0;
