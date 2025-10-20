@@ -240,6 +240,15 @@ schedule = "0 3 * * *"  # Daily at 3 AM
 [functions.rocker-capability-ranker]
 verify_jwt = false
 
+[functions.rocker-web-research]
+verify_jwt = false
+
+[functions.rocker-auto-audit]
+verify_jwt = false
+
+[functions.rocker-lifecycle-manager]
+verify_jwt = false
+
 [functions.rocker-capability-ranker.cron]
 schedule = "0 4 * * *"  # Daily at 4 AM (after gap scan)
 

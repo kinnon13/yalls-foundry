@@ -751,24 +751,29 @@ PROACTIVE ELEMENT:
                   try {
                     const args = JSON.parse(toolCall.function.arguments);
                     
-                    // Log research request
-                    await supabase.from('rocker_gap_signals').insert({
-                      user_id: user.id,
-                      kind: 'research_needed',
-                      query: args.topic,
-                      entities: {},
-                      score: 0.8,
-                      meta: { context: args.context }
+                    // Invoke actual research function
+                    const { data: researchResult, error: researchError } = await supabase.functions.invoke('rocker-web-research', {
+                      body: {
+                        query: args.topic,
+                        context: args.context,
+                        research_type: 'feature_gap',
+                        user_id: user.id,
+                      }
                     });
+
+                    if (researchError) throw researchError;
 
                     toolResults.push({
                       tool: "web_research",
                       success: true,
                       topic: args.topic,
-                      status: "Research request logged for future external search"
+                      findings: researchResult?.findings || [],
+                      summary: researchResult?.summary || '',
+                      confidence: researchResult?.confidence || 0.5,
+                      gap_signal_id: researchResult?.gap_signal_id
                     });
 
-                    memoryContext += `\n\n🔍 Research Queued: "${args.topic}" (will be processed by proactive sweep)`;
+                    memoryContext += `\n\n🔍 Research Complete: "${args.topic}"\nFindings: ${researchResult?.summary?.slice(0, 200)}...`;
                   } catch (e: any) {
                     console.error('Web research failed:', e);
                     toolResults.push({

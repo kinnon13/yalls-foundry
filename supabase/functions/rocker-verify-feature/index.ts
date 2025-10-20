@@ -218,19 +218,23 @@ serve(async (req) => {
       result.status = 'not_done';
     }
 
-    // === 5. Log Verification to rocker_deep_analysis ===
-    await supabase.from('rocker_deep_analysis').insert({
-      input_text: `Verification: ${feature_type}:${feature_name}`,
-      analysis: {
-        verification_result: result,
-        type: 'feature_verification',
-      },
-      meta: {
-        feature_type,
-        feature_name,
-        status: result.status,
-      },
-    });
+    // === 5. Log Verification to ai_action_ledger ===
+    try {
+      await supabase.from('ai_action_ledger').insert({
+        user_id: null, // System action
+        agent: 'rocker_verify',
+        action: 'feature_verification',
+        input: {
+          feature_type,
+          feature_name,
+          test_connectivity,
+        },
+        output: result,
+        result: result.status === 'done' ? 'success' : (result.status === 'partial' ? 'partial' : 'error'),
+      });
+    } catch (logErr) {
+      console.error('[rocker-verify-feature] Failed to log:', logErr);
+    }
 
     return new Response(
       JSON.stringify(result),
