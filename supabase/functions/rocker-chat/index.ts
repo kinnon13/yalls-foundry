@@ -44,8 +44,21 @@ serve(async (req) => {
 
     const userPhone = voicePrefs?.phone_number;
 
-    // Build context
+    // Build context with memory recall
     const userContext = await buildUserContext(supabase, user_id);
+    
+    // Recall relevant memories
+    let memoryContext = '';
+    const { data: memories } = await supabase.rpc('recall_long_memory', {
+      p_query: message,
+      p_limit: 8
+    });
+    
+    if (memories && memories.length > 0) {
+      memoryContext = '\n\n**Retrieved from your memory:**\n' + memories.map((m: any, i: number) => 
+        `[#${i+1}] ${m.kind} - ${m.key || 'untitled'}\n${JSON.stringify(m.value).slice(0, 500)}`
+      ).join('\n\n');
+    }
     
     // Get conversation history
     const { data: history } = await supabase
@@ -69,7 +82,7 @@ serve(async (req) => {
     if (LOVABLE_API_KEY) {
       try {
         const aiMessages = [
-          { role: "system", content: systemPrompt + "\n\n" + userContext },
+          { role: "system", content: systemPrompt + "\n\n" + userContext + memoryContext },
           ...conversationHistory.map((m: any) => ({ role: m.role, content: m.content })),
           { role: "user", content: message }
         ];
@@ -148,6 +161,8 @@ serve(async (req) => {
     }
 
     // Save messages to database
+    const messageSources = memories?.map((m: any) => ({ id: m.id, kind: m.kind, key: m.key })) || [];
+    
     await supabase.from("rocker_messages").insert([
       {
         thread_id: session_id,
@@ -160,8 +175,21 @@ serve(async (req) => {
         user_id,
         role: "assistant",
         content: reply,
+        meta: { sources: messageSources }
       },
     ]);
+
+    // Auto-task detection: look for "todo:" pattern
+    const todoMatch = reply.match(/todo:\s*(.+?)(?:\n|$)/i);
+    if (todoMatch) {
+      const taskTitle = todoMatch[1].trim().slice(0, 240);
+      await supabase.from("rocker_tasks").insert({
+        user_id,
+        thread_id: session_id,
+        title: taskTitle,
+        status: 'open'
+      });
+    }
 
     // Queue SMS if phone configured
     if (userPhone && reply) {

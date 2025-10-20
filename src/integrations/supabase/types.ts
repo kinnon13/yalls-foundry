@@ -3328,6 +3328,39 @@ export type Database = {
           },
         ]
       }
+      drive_sync_state: {
+        Row: {
+          created_at: string | null
+          drive_folder_id: string
+          enabled: boolean | null
+          folder_name: string
+          id: string
+          last_sync_at: string | null
+          next_page_token: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          drive_folder_id: string
+          enabled?: boolean | null
+          folder_name: string
+          id?: string
+          last_sync_at?: string | null
+          next_page_token?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          drive_folder_id?: string
+          enabled?: boolean | null
+          folder_name?: string
+          id?: string
+          last_sync_at?: string | null
+          next_page_token?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       dynamic_categories: {
         Row: {
           created_at: string
@@ -7775,35 +7808,56 @@ export type Database = {
       }
       rocker_files: {
         Row: {
+          category: string | null
           created_at: string | null
+          folder_path: string | null
           id: string
           mime: string | null
           name: string | null
+          ocr_text: string | null
           size: number | null
+          starred: boolean | null
           status: string | null
           storage_path: string | null
+          summary: string | null
+          tags: string[] | null
+          text_content: string | null
           thread_id: string | null
           user_id: string
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
+          folder_path?: string | null
           id?: string
           mime?: string | null
           name?: string | null
+          ocr_text?: string | null
           size?: number | null
+          starred?: boolean | null
           status?: string | null
           storage_path?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          text_content?: string | null
           thread_id?: string | null
           user_id: string
         }
         Update: {
+          category?: string | null
           created_at?: string | null
+          folder_path?: string | null
           id?: string
           mime?: string | null
           name?: string | null
+          ocr_text?: string | null
           size?: number | null
+          starred?: boolean | null
           status?: string | null
           storage_path?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          text_content?: string | null
           thread_id?: string | null
           user_id?: string
         }
@@ -9400,6 +9454,42 @@ export type Database = {
           },
         ]
       }
+      user_oauth_tokens: {
+        Row: {
+          access_token: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          provider: string
+          refresh_token: string | null
+          scope: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          provider: string
+          refresh_token?: string | null
+          scope?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          provider?: string
+          refresh_token?: string | null
+          scope?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_pin_folders: {
         Row: {
           color: string | null
@@ -10112,6 +10202,136 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_files_inbox: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          folder_path: string | null
+          id: string | null
+          mime: string | null
+          name: string | null
+          ocr_text: string | null
+          size: number | null
+          starred: boolean | null
+          status: string | null
+          storage_path: string | null
+          summary: string | null
+          tags: string[] | null
+          text_content: string | null
+          thread_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          folder_path?: string | null
+          id?: string | null
+          mime?: string | null
+          name?: string | null
+          ocr_text?: string | null
+          size?: number | null
+          starred?: boolean | null
+          status?: string | null
+          storage_path?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          text_content?: string | null
+          thread_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          folder_path?: string | null
+          id?: string | null
+          mime?: string | null
+          name?: string | null
+          ocr_text?: string | null
+          size?: number | null
+          starred?: boolean | null
+          status?: string | null
+          storage_path?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          text_content?: string | null
+          thread_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_files_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vw_files_library: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          folder_path: string | null
+          id: string | null
+          mime: string | null
+          name: string | null
+          ocr_text: string | null
+          size: number | null
+          starred: boolean | null
+          status: string | null
+          storage_path: string | null
+          summary: string | null
+          tags: string[] | null
+          text_content: string | null
+          thread_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          folder_path?: string | null
+          id?: string | null
+          mime?: string | null
+          name?: string | null
+          ocr_text?: string | null
+          size?: number | null
+          starred?: boolean | null
+          status?: string | null
+          storage_path?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          text_content?: string | null
+          thread_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          folder_path?: string | null
+          id?: string | null
+          mime?: string | null
+          name?: string | null
+          ocr_text?: string | null
+          size?: number | null
+          starred?: boolean | null
+          status?: string | null
+          storage_path?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          text_content?: string | null
+          thread_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_files_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vw_gap_severity: {
         Row: {
           avg_inventory: number | null
@@ -10180,6 +10400,71 @@ export type Database = {
           surface: string | null
         }
         Relationships: []
+      }
+      vw_starred: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          folder_path: string | null
+          id: string | null
+          mime: string | null
+          name: string | null
+          ocr_text: string | null
+          size: number | null
+          starred: boolean | null
+          status: string | null
+          storage_path: string | null
+          summary: string | null
+          tags: string[] | null
+          text_content: string | null
+          thread_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          folder_path?: string | null
+          id?: string | null
+          mime?: string | null
+          name?: string | null
+          ocr_text?: string | null
+          size?: number | null
+          starred?: boolean | null
+          status?: string | null
+          storage_path?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          text_content?: string | null
+          thread_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          folder_path?: string | null
+          id?: string | null
+          mime?: string | null
+          name?: string | null
+          ocr_text?: string | null
+          size?: number | null
+          starred?: boolean | null
+          status?: string | null
+          storage_path?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          text_content?: string | null
+          thread_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_files_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_threads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vw_suggestions_coverage: {
         Row: {
