@@ -66,6 +66,9 @@ verify_jwt = true
 [functions.rocker-organize-knowledge]
 verify_jwt = true
 
+[functions.rocker-organize-all]
+verify_jwt = true
+
 [functions.rocker-ingest]
 verify_jwt = true
 

@@ -48,6 +48,8 @@ export function FileBrowser() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [autoBackfillDone, setAutoBackfillDone] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [draggedFile, setDraggedFile] = useState<FileItem | null>(null);
+  const [isOrganizing, setIsOrganizing] = useState(false);
 
   const toggleFolder = (path: string) => {
     setExpandedFolders(prev => {
@@ -175,6 +177,58 @@ export function FileBrowser() {
       summary: file.summary || ''
     });
     setEditMode(true);
+  };
+
+  const organizeAllFiles = async () => {
+    setIsOrganizing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('rocker-organize-all');
+      if (error) throw error;
+      toast({ 
+        title: 'Organization started', 
+        description: `Processing ${data?.queued || 'all'} files...` 
+      });
+      setTimeout(() => loadFiles(), 3000);
+    } catch (error: any) {
+      toast({ 
+        title: 'Organization failed', 
+        description: error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsOrganizing(false);
+    }
+  };
+
+  const handleDragStart = (file: FileItem) => {
+    setDraggedFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = async (targetProject: string, targetPath: string) => {
+    if (!draggedFile) return;
+    
+    try {
+      const { error } = await supabase
+        .from('rocker_files')
+        .update({
+          project: targetProject,
+          folder_path: targetPath
+        })
+        .eq('id', draggedFile.id);
+
+      if (error) throw error;
+
+      toast({ title: `Moved to ${targetProject}/${targetPath}` });
+      await loadFiles();
+    } catch (error: any) {
+      toast({ title: 'Move failed', description: error.message, variant: 'destructive' });
+    } finally {
+      setDraggedFile(null);
+    }
   };
 
   const saveEdit = async () => {
@@ -367,6 +421,24 @@ export function FileBrowser() {
             </>
           )}
         </Button>
+        <Button
+          onClick={organizeAllFiles}
+          disabled={isOrganizing}
+          variant="outline"
+          size="sm"
+        >
+          {isOrganizing ? (
+            <>
+              <FolderPlus className="h-4 w-4 mr-2 animate-spin" />
+              Organizing...
+            </>
+          ) : (
+            <>
+              <FolderPlus className="h-4 w-4 mr-2" />
+              Organize All Files
+            </>
+          )}
+        </Button>
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
@@ -438,6 +510,11 @@ export function FileBrowser() {
                         <div key={fullPath} className="space-y-1">
                           <button
                             onClick={() => toggleFolder(folderKey)}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              handleDrop(project, fullPath);
+                            }}
                             className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent/50 transition-colors text-left"
                           >
                             {isFolderExpanded ? (
@@ -457,7 +534,9 @@ export function FileBrowser() {
                                {items.map((file) => (
                                  <div
                                    key={file.id}
-                                   className="flex items-start gap-2 p-2 border rounded-lg hover:bg-accent/50 transition-colors"
+                                   draggable
+                                   onDragStart={() => handleDragStart(file)}
+                                   className="flex items-start gap-2 p-2 border rounded-lg hover:bg-accent/50 transition-colors cursor-move"
                                  >
                                    <File className="h-4 w-4 mt-1 text-gray-600 shrink-0" />
                                    
