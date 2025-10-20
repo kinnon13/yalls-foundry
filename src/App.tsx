@@ -64,6 +64,7 @@ const AdminDashboard = lazy(() => import('./routes/admin'));
 const AuthPage = lazy(() => import('./routes/auth'));
 const OnboardingPage = lazy(() => import('./routes/onboarding/index'));
 const RockerHub = lazy(() => import('./routes/rocker-hub'));
+const SuperRocker = lazy(() => import('./routes/super-rocker'));
 
 const queryClient = new QueryClient();
 
@@ -316,6 +317,16 @@ function AppContent() {
           <Route 
             path="/rocker/chat" 
             element={<Navigate to="/rocker" replace />}
+          />
+          
+          {/* Super Rocker - Memory & Task Management */}
+          <Route 
+            path="/super-rocker" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <SuperRocker />
+              </Suspense>
+            } 
           />
         </Route>
         

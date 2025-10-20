@@ -7773,6 +7773,92 @@ export type Database = {
           },
         ]
       }
+      rocker_files: {
+        Row: {
+          created_at: string | null
+          id: string
+          mime: string | null
+          name: string | null
+          size: number | null
+          status: string | null
+          storage_path: string | null
+          thread_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mime?: string | null
+          name?: string | null
+          size?: number | null
+          status?: string | null
+          storage_path?: string | null
+          thread_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mime?: string | null
+          name?: string | null
+          size?: number | null
+          status?: string | null
+          storage_path?: string | null
+          thread_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_files_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rocker_long_memory: {
+        Row: {
+          created_at: string | null
+          embedding: string | null
+          id: string
+          key: string | null
+          kind: string
+          pinned: boolean | null
+          priority: number
+          source: string | null
+          updated_at: string | null
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          key?: string | null
+          kind: string
+          pinned?: boolean | null
+          priority?: number
+          source?: string | null
+          updated_at?: string | null
+          user_id: string
+          value: Json
+        }
+        Update: {
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          key?: string | null
+          kind?: string
+          pinned?: boolean | null
+          priority?: number
+          source?: string | null
+          updated_at?: string | null
+          user_id?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       rocker_memories: {
         Row: {
           content: string
@@ -7975,6 +8061,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      rocker_tasks: {
+        Row: {
+          context: Json | null
+          created_at: string | null
+          due_at: string | null
+          id: string
+          recur: string | null
+          status: string
+          thread_id: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string | null
+          due_at?: string | null
+          id?: string
+          recur?: string | null
+          status?: string
+          thread_id?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string | null
+          due_at?: string | null
+          id?: string
+          recur?: string | null
+          status?: string
+          thread_id?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_tasks_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_threads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rocker_threads: {
         Row: {
@@ -10068,6 +10201,10 @@ export type Database = {
         Args: { p_profile_id: string }
         Returns: string
       }
+      _owns_or_admin: {
+        Args: { row_uid: string; uid: string }
+        Returns: boolean
+      }
       _pin_next_index: {
         Args: { p_user: string }
         Returns: number
@@ -11821,6 +11958,16 @@ export type Database = {
       queue_campaign_messages: {
         Args: { p_campaign_id: string }
         Returns: Json
+      }
+      recall_long_memory: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          id: string
+          key: string
+          kind: string
+          score: number
+          value: Json
+        }[]
       }
       recall_memories: {
         Args: { p_k?: number; p_query: string }
