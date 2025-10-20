@@ -84,7 +84,7 @@ serve(async (req) => {
     // Performance tracking
     const t0 = Date.now();
 
-    // Hybrid retrieval (vector + lexical + boosts) - only if we have embeddings
+    // Hybrid retrieval (GLOBAL - searches all uploaded content)
     let hits: any[] = [];
     let memoryContext = '';
     if (qvec.length > 0) {
@@ -94,7 +94,7 @@ serve(async (req) => {
           q_text: message,
           k: cfg.retrieve_k,
           alpha: cfg.alpha,
-          thread: thread_id || null
+          thread: null  // 🔑 GLOBAL SEARCH - no thread filter
         });
         if (error) throw error;
         
@@ -147,37 +147,39 @@ serve(async (req) => {
         }
         
         // MMR diversity selection (simple version)
-        hits = [candidates[0]]; // always take top result
-        const mmrLambda = 0.7;
-        while (hits.length < Math.min(cfg.keep_k, candidates.length)) {
-          let bestIdx = -1;
-          let bestScore = -Infinity;
-          
-          for (let i = 1; i < candidates.length; i++) {
-            if (hits.some((h: any) => h.id === candidates[i].id)) continue;
+        if (candidates.length > 0) {
+          hits = [candidates[0]]; // always take top result
+          const mmrLambda = cfg.mmr_lambda ?? 0.7;
+          while (hits.length < Math.min(cfg.keep_k, candidates.length)) {
+            let bestIdx = -1;
+            let bestScore = -Infinity;
             
-            const rel = candidates[i].combinedScore ?? candidates[i].score ?? 0;
-            
-            // Penalty for similarity to already-selected (simple text overlap)
-            let maxSim = 0;
-            for (const h of hits) {
-              const aWords = new Set((candidates[i].content || '').toLowerCase().split(/\s+/));
-              const bWords = new Set((h.content || '').toLowerCase().split(/\s+/));
-              const inter = [...aWords].filter(w => bWords.has(w)).length;
-              const union = aWords.size + bWords.size - inter;
-              const sim = union > 0 ? inter / union : 0;
-              maxSim = Math.max(maxSim, sim);
+            for (let i = 1; i < candidates.length; i++) {
+              if (hits.some((h: any) => h.id === candidates[i].id)) continue;
+              
+              const rel = candidates[i].combinedScore ?? candidates[i].score ?? 0;
+              
+              // Penalty for similarity to already-selected (simple text overlap)
+              let maxSim = 0;
+              for (const h of hits) {
+                const aWords = new Set((candidates[i].content || '').toLowerCase().split(/\s+/));
+                const bWords = new Set((h.content || '').toLowerCase().split(/\s+/));
+                const inter = [...aWords].filter(w => bWords.has(w)).length;
+                const union = aWords.size + bWords.size - inter;
+                const sim = union > 0 ? inter / union : 0;
+                maxSim = Math.max(maxSim, sim);
+              }
+              
+              const score = mmrLambda * rel - (1 - mmrLambda) * maxSim;
+              if (score > bestScore) {
+                bestScore = score;
+                bestIdx = i;
+              }
             }
             
-            const score = mmrLambda * rel - (1 - mmrLambda) * maxSim;
-            if (score > bestScore) {
-              bestScore = score;
-              bestIdx = i;
-            }
+            if (bestIdx >= 0) hits.push(candidates[bestIdx]);
+            else break;
           }
-          
-          if (bestIdx >= 0) hits.push(candidates[bestIdx]);
-          else break;
         }
       } catch (e) {
         console.error('Hybrid search failed, trying vector-only:', e);
@@ -185,27 +187,32 @@ serve(async (req) => {
         const { data } = await supabaseService.rpc('match_rocker_memory_vec', {
           q: qvec,
           match_count: cfg.retrieve_k,
-          thread: thread_id || null
+          thread: null  // 🔑 GLOBAL SEARCH
         });
         if (data?.length) hits = data.slice(0, cfg.keep_k);
       }
     }
 
-    // Build knowledge context with citations
+    // Build knowledge context with citations (RELAXED - answers with even 1 good hit)
+    const topScore = (hits[0]?.combinedScore ?? hits[0]?.score ?? hits[0]?.similarity ?? 0);
+    const lowConfidence = hits.length === 0 || topScore < (cfg.sim_threshold - 0.05); // slightly more lenient
+    
     if (hits && hits.length > 0) {
-      memoryContext = '\n\n🧠 From embedded knowledge:\n' + hits.map((h: any) => 
-        `[#${h.chunk_index}] ${String(h.content || '').slice(0, 500)}`
-      ).join('\n\n');
+      memoryContext = '\n\n🧠 From embedded knowledge:\n' + hits.map((h: any) => {
+        const source = h.meta?.source || h.meta?.title || 'learned knowledge';
+        const idx = h.chunk_index ?? -1;
+        const confidence = Math.round((topScore || 0) * 100);
+        return `[${idx >= 0 ? `#${idx}` : '#note'}] (${confidence}% match from ${source})\n${String(h.content || '').slice(0, 600)}`;
+      }).join('\n\n');
     }
-
-    // Confidence gating: if weak signal, ask for clarity instead of bluffing
-    const confident = hits.length >= 2 && (hits[0]?.score ?? hits[0]?.similarity ?? 1) >= cfg.sim_threshold;
-    if (!confident && qvec.length > 0) {
-      const clarifyReply = "I might need a bit more detail. Should I focus on a time range, a person, or a specific doc/thread? You can also say 'summarize thread 26' or paste a link.";
+    
+    // Only refuse to answer if truly nothing found AND no other context
+    if (hits.length === 0 && qvec.length > 0 && !message.match(/https?:\/\//)) {
+      const clarifyReply = "I don't have any uploaded content matching that yet. Try pasting text/files in the Vault first, or share a URL to fetch.";
       
       await supabase.from('rocker_messages').insert([
         { thread_id, user_id: user.id, role: 'user', content: message, meta: {} },
-        { thread_id, user_id: user.id, role: 'assistant', content: clarifyReply, meta: { confidence: 'low', sources: [] } }
+        { thread_id, user_id: user.id, role: 'assistant', content: clarifyReply, meta: { confidence: 'none', sources: [] } }
       ]);
 
       return new Response(
