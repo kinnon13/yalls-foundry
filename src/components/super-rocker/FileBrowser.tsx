@@ -27,6 +27,7 @@ interface FileItem {
   text_content?: string | null;
   ocr_text?: string | null;
   thread_id?: string | null;
+  chunk_count?: number; // Add chunk count to display
 }
 
 export function FileBrowser() {
@@ -53,13 +54,24 @@ export function FileBrowser() {
 
   const loadFiles = async () => {
     try {
+      // Load files with chunk count via left join
       const { data, error } = await supabase
         .from('rocker_files')
-        .select('*')
+        .select(`
+          *,
+          chunk_count:rocker_knowledge(count)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setFiles(data || []);
+      
+      // Transform to flatten chunk_count
+      const transformed = (data || []).map((f: any) => ({
+        ...f,
+        chunk_count: f.chunk_count?.[0]?.count || 0
+      }));
+      
+      setFiles(transformed);
     } catch (error: any) {
       console.error('Failed to load files:', error);
     }
@@ -409,12 +421,18 @@ export function FileBrowser() {
                                 <Badge variant="outline" className="text-xs">
                                   {file.status}
                                 </Badge>
+                                {file.chunk_count && file.chunk_count > 0 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {file.chunk_count} chunks
+                                  </Badge>
+                                )}
                                 {file.starred && (
                                   <Badge variant="default" className="text-xs">★</Badge>
                                 )}
                               </div>
                               <p className="text-xs text-muted-foreground mt-1">
-                                {format(new Date(file.created_at), 'MMM d, yyyy')}
+                                {format(new Date(file.created_at), 'MMM d, yyyy h:mm:ss a')}
+                                {file.source && ` • from ${file.source}`}
                               </p>
                             </div>
                             

@@ -130,6 +130,7 @@ serve(async (req) => {
     let stored = 0;
     let index = 0;
     let fullText = '';
+    const insertedIds: string[] = []; // Track inserted chunk IDs to link to file later
 
     for await (const chunk of streamChunks(req)) {
       fullText += chunk;
@@ -158,6 +159,7 @@ serve(async (req) => {
 
       // Enqueue embedding job
       if (inserted?.id) {
+        insertedIds.push(inserted.id); // Track for later linking
         await supabase.from("embedding_jobs").insert({
           knowledge_id: inserted.id,
           priority: index < 20 ? 1 : 5, // Prioritize first 20 chunks
@@ -201,6 +203,19 @@ serve(async (req) => {
 
     if (fileError) {
       console.error('[Ingest] Failed to create file record:', fileError);
+    }
+
+    // Link all chunks to this file so they show up together
+    if (fileRecord?.id && insertedIds.length > 0) {
+      try {
+        await supabase
+          .from('rocker_knowledge')
+          .update({ memory_id: fileRecord.id })
+          .in('id', insertedIds);
+        console.log(`[Ingest] Linked ${insertedIds.length} chunks to file ${fileRecord.id}`);
+      } catch (linkErr) {
+        console.error('[Ingest] Failed to link chunks to file:', linkErr);
+      }
     }
 
     // Ledger
