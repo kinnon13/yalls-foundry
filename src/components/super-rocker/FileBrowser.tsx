@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Folder, File, Search, Edit, Trash2, FolderPlus, MoveHorizontal } from 'lucide-react';
+import { Folder, File, Search, Edit, Trash2, FolderPlus, MoveHorizontal, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -34,6 +34,7 @@ export function FileBrowser() {
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState({ name: '', project: '', category: '', folder_path: '', summary: '' });
   const [selectedProject, setSelectedProject] = useState<string>('all');
+  const [isReprocessing, setIsReprocessing] = useState(false);
 
   useEffect(() => {
     loadFiles();
@@ -146,9 +147,51 @@ export function FileBrowser() {
     }
   };
 
+  const reprocessAll = async () => {
+    setIsReprocessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('rocker-reprocess-all');
+
+      if (error) throw error;
+
+      toast({
+        title: 'Re-organization complete',
+        description: `Processed ${data.processed} of ${data.total} files with updated project-based filing.`,
+      });
+
+      await loadFiles();
+    } catch (error: any) {
+      toast({
+        title: 'Re-processing failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsReprocessing(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
+        <Button
+          onClick={reprocessAll}
+          disabled={isReprocessing}
+          variant="outline"
+          size="sm"
+        >
+          {isReprocessing ? (
+            <>
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              Re-organizing...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Re-organize All
+            </>
+          )}
+        </Button>
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
