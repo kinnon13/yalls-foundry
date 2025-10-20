@@ -18,22 +18,28 @@ export function setupAuthInterceptor() {
     
     // Check for 401 Unauthorized
     if (response.status === 401) {
-      const url = args[0] as string;
-      
-      // Only intercept Supabase API calls
-      if (url.includes('supabase') || url.includes('/functions/v1/')) {
-        console.warn('[Auth] 401 detected, clearing session and redirecting');
-        
-        // Clear session
+      const raw = args[0] as any;
+      const url = typeof raw === 'string' ? raw : (raw?.url ?? '');
+
+      const isSupabaseAuth = url.includes('/auth/v1/');
+      const isSupabaseRest = url.includes('/rest/v1/');
+      const isEdgeFunction = url.includes('/functions/v1/');
+
+      // Only force sign-out for Auth/REST endpoints (token truly invalid)
+      if (isSupabaseAuth || isSupabaseRest) {
+        console.warn('[Auth] 401 on auth/rest, clearing session and redirecting', { url });
         await supabase.auth.signOut();
-        
+
         // Preserve current location as next param
         const currentPath = encodeURIComponent(
           window.location.pathname + window.location.search
         );
-        
-        // Redirect to login
         window.location.href = `/auth?mode=login&next=${currentPath}`;
+      } else if (isEdgeFunction) {
+        // Do NOT nuke session on function 401s; surface to UI instead
+        console.warn('[Auth] 401 from edge function; keeping session', { url });
+        window.dispatchEvent(new CustomEvent('edge:function-401', { detail: { url } }));
+        // Let caller handle the 401 normally
       }
     }
     
