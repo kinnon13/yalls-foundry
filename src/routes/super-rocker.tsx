@@ -13,6 +13,7 @@ import { SuperRockerChat } from '@/components/super-rocker/SuperRockerChat';
 import { SuperRockerInbox } from '@/components/super-rocker/SuperRockerInbox';
 import { SuperRockerLibrary } from '@/components/super-rocker/SuperRockerLibrary';
 import { SuperRockerVault } from '@/components/super-rocker/SuperRockerVault';
+import { SuperRockerKnowledge } from '@/components/super-rocker/SuperRockerKnowledge';
 
 export default function SuperRocker() {
   const { session } = useSession();
@@ -164,9 +165,13 @@ export default function SuperRocker() {
             <SuperRockerVault threadId={threadId} onThreadCreated={setThreadId} />
           </Card>
 
-          {/* Right: Library */}
+          {/* Right: Knowledge */}
           <Card className="p-6">
-            <SuperRockerLibrary />
+            <div className="flex items-center gap-2 mb-4">
+              <Brain className="h-5 w-5" />
+              <h2 className="text-xl font-semibold">Knowledge</h2>
+            </div>
+            <SuperRockerKnowledge />
           </Card>
         </div>
 
