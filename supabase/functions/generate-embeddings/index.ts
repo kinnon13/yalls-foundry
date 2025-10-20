@@ -16,6 +16,11 @@ const CORS = {
   "Access-Control-Allow-Headers": "authorization, content-type",
 };
 
+function normalize(t: string, max = 8000): string {
+  const s = (t ?? "").replace(/\s+/g, " ").trim();
+  return s.length > max ? s.slice(0, max) : s;
+}
+
 async function fetchEmbeddings(texts: string[]): Promise<number[][]> {
   const r = await fetch("https://api.openai.com/v1/embeddings", {
     method: "POST",
@@ -56,7 +61,13 @@ serve(async (req) => {
       const orderedIds: string[] = [];
       for (const c of claims) {
         const t = map.get(c.knowledge_id);
-        if (t) { inputs.push(t); orderedIds.push(c.knowledge_id); }
+        if (t) {
+          const normalized = normalize(t);
+          if (normalized) {
+            inputs.push(normalized);
+            orderedIds.push(c.knowledge_id);
+          }
+        }
       }
       if (inputs.length === 0) continue;
 
