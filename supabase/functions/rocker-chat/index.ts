@@ -9,7 +9,7 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 import { buildUserContext } from "./buildContext.ts";
 import { executeToolLoop } from "./toolLoop.ts";
 import { USER_MODE_NOTICE, ADMIN_MODE_NOTICE, KNOWER_MODE_NOTICE } from "./prompts.ts";
-import { toolDefinitions } from "./tools/definitions.ts";
+import { TOOL_DEFINITIONS } from "./tools/definitions.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -83,7 +83,7 @@ serve(async (req) => {
           body: JSON.stringify({
             model: "google/gemini-2.5-flash",
             messages: aiMessages,
-            tools: toolDefinitions,
+            tools: TOOL_DEFINITIONS,
           }),
         });
 
@@ -128,7 +128,7 @@ serve(async (req) => {
               body: JSON.stringify({
                 model: "google/gemini-2.5-flash",
                 messages: aiMessages,
-                tools: toolDefinitions,
+                tools: TOOL_DEFINITIONS,
               }),
             });
 
