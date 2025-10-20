@@ -7816,6 +7816,7 @@ export type Database = {
           name: string | null
           ocr_text: string | null
           size: number | null
+          source: string | null
           starred: boolean | null
           status: string | null
           storage_path: string | null
@@ -7834,6 +7835,7 @@ export type Database = {
           name?: string | null
           ocr_text?: string | null
           size?: number | null
+          source?: string | null
           starred?: boolean | null
           status?: string | null
           storage_path?: string | null
@@ -7852,6 +7854,7 @@ export type Database = {
           name?: string | null
           ocr_text?: string | null
           size?: number | null
+          source?: string | null
           starred?: boolean | null
           status?: string | null
           storage_path?: string | null
