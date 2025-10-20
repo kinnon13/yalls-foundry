@@ -28,18 +28,20 @@ serve(async (req) => {
 
     const { action, task_id, title, status, due_at, thread_id } = await req.json();
 
-    let result;
     switch (action) {
       case 'list': {
-        const { data, error } = await supabase
+        const { data: tasks, error } = await supabase
           .from('rocker_tasks')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
-        
+
         if (error) throw error;
-        result = { tasks: data };
-        break;
+
+        return new Response(
+          JSON.stringify({ tasks: tasks || [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       case 'create': {
@@ -50,21 +52,24 @@ serve(async (req) => {
           });
         }
 
-        const { data, error } = await supabase
+        const { data: task, error } = await supabase
           .from('rocker_tasks')
           .insert({
             user_id: user.id,
-            thread_id,
             title,
             status: status || 'open',
-            due_at: due_at || null
+            due_at,
+            thread_id
           })
           .select()
           .single();
-        
+
         if (error) throw error;
-        result = { task: data };
-        break;
+
+        return new Response(
+          JSON.stringify({ task }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       case 'update': {
@@ -75,21 +80,47 @@ serve(async (req) => {
           });
         }
 
-        const updates: any = { updated_at: new Date().toISOString() };
-        if (status) updates.status = status;
+        const updates: any = {};
+        if (status !== undefined) updates.status = status;
         if (due_at !== undefined) updates.due_at = due_at;
+        if (title !== undefined) updates.title = title;
 
-        const { data, error } = await supabase
+        const { data: task, error } = await supabase
           .from('rocker_tasks')
           .update(updates)
           .eq('id', task_id)
           .eq('user_id', user.id)
           .select()
           .single();
-        
+
         if (error) throw error;
-        result = { task: data };
-        break;
+
+        return new Response(
+          JSON.stringify({ task }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'delete': {
+        if (!task_id) {
+          return new Response(JSON.stringify({ error: 'Missing task_id' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const { error } = await supabase
+          .from('rocker_tasks')
+          .delete()
+          .eq('id', task_id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       default:
@@ -99,14 +130,11 @@ serve(async (req) => {
         });
     }
 
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  } catch (error) {
-    console.error('Tasks error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+  } catch (error: any) {
+    console.error('[rocker-tasks]', error);
+    return new Response(
+      JSON.stringify({ error: error.message || 'Internal error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 });

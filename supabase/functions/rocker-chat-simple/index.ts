@@ -293,6 +293,27 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .maybeSingle();
 
+    // Load open tasks for context
+    let tasksContext = '';
+    try {
+      const { data: tasks } = await supabase
+        .from('rocker_tasks')
+        .select('id, title, status, due_at')
+        .eq('user_id', user.id)
+        .in('status', ['open', 'doing'])
+        .order('created_at', { ascending: true })
+        .limit(10);
+
+      if (tasks && tasks.length > 0) {
+        tasksContext = '\n\n📋 Current open tasks:\n' + tasks.map((t: any, i: number) => 
+          `[Task ${i+1}] ${t.title} (${t.status})${t.due_at ? ' - Due: ' + new Date(t.due_at).toLocaleDateString() : ''}`
+        ).join('\n');
+        tasksContext += '\n\nYou can reference these tasks by number (e.g., "Task 1") and help work on them. If a task is completed, format your response with "✅ Completed: [task title]" and I will mark it done.';
+      }
+    } catch (e) {
+      console.warn('Failed to load tasks:', e);
+    }
+
     // Load upcoming calendar events if enabled
     let calendarContext = '';
     if (adminSettings?.allow_calendar_access) {
@@ -324,7 +345,9 @@ serve(async (req) => {
 - TL;DR first, then details
 - Cite sources with [#chunk_index] when referencing embedded knowledge
 - Format tasks as "todo: [action]" to auto-create them
+- When a task is completed, format: "✅ Completed: [task title]" to mark it done
 - End responses with a "Next actions:" list when appropriate
+${tasksContext ? '- You can see and reference open tasks in the context provided' : ''}
 ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow-ups' : ''}
 - When given URLs, you can fetch and summarize them`;
 
@@ -357,7 +380,7 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
     
     try {
       const aiMessages = [
-        { role: "system", content: systemPrompt + memoryContext + calendarContext },
+        { role: "system", content: systemPrompt + memoryContext + tasksContext + calendarContext },
         ...(history || []).map((m: any) => ({ role: m.role, content: m.content })),
         { role: "user", content: message }
       ];

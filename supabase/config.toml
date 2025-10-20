@@ -66,6 +66,9 @@ verify_jwt = true
 [functions.rocker-organize-knowledge]
 verify_jwt = true
 
+[functions.rocker-tasks]
+verify_jwt = true
+
 [functions.rocker-chat]
 verify_jwt = true
 
