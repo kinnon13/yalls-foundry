@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Loader2, MessageSquare, Mic, MicOff } from 'lucide-react';
+import { Send, Loader2, MessageSquare, Mic, MicOff, Copy, CornerUpLeft, Check } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { useSpeech } from '@/hooks/useSpeech';
@@ -22,6 +22,7 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { start, stop, listening, supported } = useSpeech({
@@ -144,6 +145,22 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
       setIsLoading(false);
     }
   };
+
+  const copyToClipboard = async (text: string, messageId: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(messageId);
+      setTimeout(() => setCopiedId(null), 2000);
+      toast({ title: 'Copied to clipboard' });
+    } catch (error) {
+      toast({ title: 'Failed to copy', variant: 'destructive' });
+    }
+  };
+
+  const referenceMessage = (message: Message) => {
+    setInput(`Regarding your previous message: "${message.content.slice(0, 100)}${message.content.length > 100 ? '...' : ''}" - `);
+  };
+
   return (
     <div className="flex flex-col h-[70vh]">
       <div className="flex items-center justify-between mb-4">
@@ -159,26 +176,54 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}
             >
-              <div
-                className={`max-w-[80%] rounded-lg p-3 ${
-                  msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
-                }`}
-              >
-                <p className="whitespace-pre-wrap">{msg.content}</p>
-                {msg.sources && msg.sources.length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-border/50">
-                    <p className="text-xs opacity-70 mb-1">Sources:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {msg.sources.map((src) => (
-                        <Badge key={src.id} variant="outline" className="text-xs">
-                          {src.kind}
-                        </Badge>
-                      ))}
+              <div className="flex flex-col gap-1 max-w-[80%]">
+                <div
+                  className={`rounded-lg p-3 ${
+                    msg.role === 'user'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted'
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                  {msg.sources && msg.sources.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-border/50">
+                      <p className="text-xs opacity-70 mb-1">Sources:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {msg.sources.map((src) => (
+                          <Badge key={src.id} variant="outline" className="text-xs">
+                            {src.kind}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
+                  )}
+                </div>
+                {msg.role === 'assistant' && (
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyToClipboard(msg.content, msg.id)}
+                      className="h-7"
+                    >
+                      {copiedId === msg.id ? (
+                        <Check className="h-3 w-3" />
+                      ) : (
+                        <Copy className="h-3 w-3" />
+                      )}
+                      <span className="ml-1 text-xs">Copy</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => referenceMessage(msg)}
+                      className="h-7"
+                    >
+                      <CornerUpLeft className="h-3 w-3" />
+                      <span className="ml-1 text-xs">Reference</span>
+                    </Button>
                   </div>
                 )}
               </div>
