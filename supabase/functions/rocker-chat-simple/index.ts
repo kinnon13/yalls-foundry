@@ -518,6 +518,23 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
       });
     }
 
+    // Auto-organize knowledge after every few chat turns
+    const { count: msgCount } = await supabase
+      .from('rocker_messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('thread_id', thread_id);
+    
+    if (msgCount && msgCount % 5 === 0) {
+      // Every 5 messages, organize the knowledge
+      try {
+        await supabase.functions.invoke('rocker-organize-knowledge', {
+          body: { thread_id }
+        });
+      } catch (orgErr) {
+        console.log('[Chat] Auto-organize queued (async)');
+      }
+    }
+
     // Collect tool results for UI feedback
     const toolResults = [];
     if (urlMatch) {

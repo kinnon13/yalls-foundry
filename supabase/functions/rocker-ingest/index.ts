@@ -179,6 +179,15 @@ serve(async (req) => {
       result: "success",
     });
 
+    // Auto-organize the ingested knowledge
+    try {
+      await supabase.functions.invoke('rocker-organize-knowledge', {
+        body: { thread_id: threadId }
+      });
+    } catch (orgErr) {
+      console.log('[Ingest] Auto-organize queued (async)');
+    }
+
     return new Response(JSON.stringify({
       thread_id: threadId,
       stored,

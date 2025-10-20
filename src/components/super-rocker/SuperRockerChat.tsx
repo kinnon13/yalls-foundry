@@ -7,6 +7,7 @@ import { Send, Loader2, MessageSquare, Mic, MicOff } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { useSpeech } from '@/hooks/useSpeech';
+import { OrganizeButton } from './OrganizeButton';
 
 interface Message {
   id: string;
@@ -145,9 +146,12 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
   };
   return (
     <div className="flex flex-col h-[70vh]">
-      <div className="flex items-center gap-2 mb-4">
-        <MessageSquare className="h-5 w-5" />
-        <h2 className="text-xl font-semibold">Chat with Memory</h2>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-5 w-5" />
+          <h2 className="text-xl font-semibold">Chat with Memory</h2>
+        </div>
+        <OrganizeButton threadId={threadId} />
       </div>
 
       <ScrollArea className="flex-1 pr-4 mb-4" style={{ height: 'calc(100% - 120px)' }}>
