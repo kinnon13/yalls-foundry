@@ -10,7 +10,6 @@ import { useRockerVoice } from '@/lib/ai/rocker/voice/useRockerVoice';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { 
   Send, 
@@ -161,7 +160,7 @@ export default function RockerChat() {
 
         {/* Messages */}
         <Card className="flex-1 flex flex-col overflow-hidden shadow-lg">
-          <ScrollArea className="flex-1 p-4">
+          <div className="flex-1 overflow-y-auto p-4">
             <div className="space-y-4">
               {messages.length === 0 && (
                 <div className="text-center py-12 text-muted-foreground">
@@ -213,7 +212,7 @@ export default function RockerChat() {
 
               <div ref={messagesEndRef} />
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Input */}
           <div className="p-4 border-t bg-background">
