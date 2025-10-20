@@ -16,7 +16,7 @@ interface Message {
   created_at: string;
 }
 
-export function SuperRockerChat({ threadId }: { threadId: string | null }) {
+export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: string | null; onThreadCreated?: (id: string) => void }) {
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -80,12 +80,7 @@ export function SuperRockerChat({ threadId }: { threadId: string | null }) {
   };
 
   const handleSend = async () => {
-    if (!input.trim() || !threadId) {
-      if (!threadId) {
-        toast({ title: 'Please add some memory first', variant: 'destructive' });
-      }
-      return;
-    }
+    if (!input.trim()) return;
 
     const userMessage = input.trim();
     setInput('');
@@ -101,9 +96,23 @@ export function SuperRockerChat({ threadId }: { threadId: string | null }) {
     setMessages(prev => [...prev, tempUserMsg]);
 
     try {
-      const { data, error } = await supabase.functions.invoke('rocker-chat-simple', {
+      // Ensure a thread exists
+      let activeThreadId = threadId;
+      if (!activeThreadId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: newThread, error: tErr } = await supabase
+          .from('rocker_threads')
+          .insert({ user_id: user?.id, title: 'Super Rocker Chat' })
+          .select('id')
+          .single();
+        if (tErr) throw tErr;
+        activeThreadId = newThread.id as string;
+        onThreadCreated?.(activeThreadId);
+      }
+
+      const { error } = await supabase.functions.invoke('rocker-chat-simple', {
         body: {
-          thread_id: threadId,
+          thread_id: activeThreadId,
           message: userMessage
         }
       });
@@ -123,18 +132,6 @@ export function SuperRockerChat({ threadId }: { threadId: string | null }) {
       setIsLoading(false);
     }
   };
-
-  if (!threadId) {
-    return (
-      <div className="flex items-center justify-center h-[400px] text-muted-foreground">
-        <div className="text-center">
-          <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>Add some memory to start chatting</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col min-h-[60vh] max-h-[80vh]">
       <div className="flex items-center gap-2 mb-4">

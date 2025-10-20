@@ -173,7 +173,7 @@ export default function SuperRocker() {
         {/* Bottom Row: Chat & Tasks */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-6">
-            <SuperRockerChat threadId={threadId} />
+            <SuperRockerChat threadId={threadId} onThreadCreated={setThreadId} />
           </Card>
           
           <Card className="p-6">
