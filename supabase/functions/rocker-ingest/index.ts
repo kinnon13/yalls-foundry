@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
-function chunkText(text: string, maxSize = 4000, overlap = 200): string[] {
+function chunkText(text: string, maxSize = 3000, overlap = 150): string[] {
   const parts: string[] = [];
   let i = 0;
   while (i < text.length) {
@@ -49,9 +49,9 @@ serve(async (req) => {
       });
     }
 
-    const MAX_CHARS = 500_000; // 500KB max
+    const MAX_CHARS = 200_000; // 200KB max to prevent memory issues
     if (text.length > MAX_CHARS) {
-      return new Response(JSON.stringify({ error: `Text too large (${Math.round(text.length/1000)}KB). Max 500KB.` }), {
+      return new Response(JSON.stringify({ error: `Text too large (${Math.round(text.length/1000)}KB). Max 200KB.` }), {
         status: 413,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -85,13 +85,13 @@ serve(async (req) => {
       category = subject.slice(0, 50);
     }
 
-    // Process chunks ONE AT A TIME to avoid memory spikes
+    // Process chunks in very small batches to avoid memory spikes
     const chunks = chunkText(text);
-    const MAX_CHUNKS = 250;
+    const MAX_CHUNKS = 100; // Reduced from 250
     const totalChunks = Math.min(chunks.length, MAX_CHUNKS);
     
     let storedCount = 0;
-    const BATCH_SIZE = 10;
+    const BATCH_SIZE = 5; // Reduced from 10
     
     for (let i = 0; i < totalChunks; i += BATCH_SIZE) {
       const batchEnd = Math.min(i + BATCH_SIZE, totalChunks);
