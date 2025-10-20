@@ -85,13 +85,13 @@ serve(async (req) => {
       category = subject.slice(0, 50);
     }
 
-    // Process chunks in very small batches to avoid memory spikes
-    const chunks = chunkText(text);
-    const MAX_CHUNKS = 100; // Reduced from 250
+    // Store chunks in rocker_knowledge (embeddings filled by scheduled worker)
+    const chunks = chunkText(text, 2000, 100); // Smaller chunks for better embeddings
+    const MAX_CHUNKS = 150;
     const totalChunks = Math.min(chunks.length, MAX_CHUNKS);
     
     let storedCount = 0;
-    const BATCH_SIZE = 5; // Reduced from 10
+    const BATCH_SIZE = 10;
     
     for (let i = 0; i < totalChunks; i += BATCH_SIZE) {
       const batchEnd = Math.min(i + BATCH_SIZE, totalChunks);
@@ -100,17 +100,20 @@ serve(async (req) => {
       for (let j = i; j < batchEnd; j++) {
         batch.push({
           user_id: user.id,
-          kind: 'paste',
-          key: `${category.toLowerCase()}_${Date.now()}_${j}`,
-          value: { text: chunks[j], subject: subject || category, category, tags },
-          priority,
-          pinned: isSuperAdmin === true,
-          source: 'ingest'
+          content: chunks[j],
+          chunk_index: j,
+          meta: { 
+            subject: subject || category, 
+            category, 
+            tags, 
+            source: 'paste',
+            total_chunks: totalChunks
+          }
         });
       }
       
       const { data, error } = await supabase
-        .from('rocker_long_memory')
+        .from('rocker_knowledge')
         .insert(batch)
         .select('id');
       
