@@ -18,7 +18,7 @@ export default function RockerHub() {
   const [docsExpanded, setDocsExpanded] = useState(false);
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-6 overflow-y-auto">
       <div className="max-w-6xl mx-auto space-y-8 pb-24">
         {/* Header */}
         <div className="text-center space-y-4">
@@ -119,7 +119,7 @@ export default function RockerHub() {
           
           {docsExpanded && (
             <div className="mt-6 space-y-4">
-              <div className="max-h-[70vh] overflow-y-scroll overscroll-contain bg-background rounded-lg border p-6 space-y-6 text-sm">
+              <div className="max-h-[600px] overflow-y-auto bg-background rounded-lg border p-6 space-y-6 text-sm">
                 <section>
                   <h4 className="font-bold text-lg mb-3">Rocker Setup Guide</h4>
                   <p className="text-muted-foreground mb-4">
