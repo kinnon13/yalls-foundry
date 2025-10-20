@@ -1,27 +1,16 @@
 /**
  * Approvals Feature
  * 
- * Standalone feature for reviewing and approving pending content
- * Uses hardened PR2.5 RPCs with observability
+ * Review and approve pending content
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/design/components/Button';
-import { Badge } from '@/design/components/Badge';
-import { X, Check, XCircle } from 'lucide-react';
-import { rpcWithObs } from '@/lib/supaRpc';
-import { toast } from 'sonner';
+import { X, Check, XCircle, Eye, Download } from 'lucide-react';
 import type { FeatureProps } from '@/feature-kernel/types';
-
-interface PendingPost {
-  post_id: string;
-  target_entity_id: string;
-  source_post_id?: string;
-  reason: string;
-  approved: boolean;
-  created_at: string;
-}
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ApprovalsFeatureProps extends FeatureProps {
   entity?: string;
@@ -31,6 +20,14 @@ interface ApprovalsFeatureProps extends FeatureProps {
   close: () => void;
 }
 
+// Mock data
+const mockItems = [
+  { id: '1', title: 'New Post: Spring Training Update', type: 'post', status: 'pending', author: 'John Smith', date: '2024-01-15' },
+  { id: '2', title: 'Event: Annual Gala', type: 'event', status: 'pending', author: 'Sarah Johnson', date: '2024-01-14' },
+  { id: '3', title: 'Media Upload: Training Photos', type: 'media', status: 'approved', author: 'Mike Wilson', date: '2024-01-13' },
+  { id: '4', title: 'Comment: Great event!', type: 'comment', status: 'rejected', author: 'Jane Doe', date: '2024-01-12' },
+];
+
 export default function ApprovalsFeature({
   entity,
   filter = 'pending',
@@ -38,101 +35,40 @@ export default function ApprovalsFeature({
   updateProps,
   close,
 }: ApprovalsFeatureProps) {
-  const queryClient = useQueryClient();
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
-  const { data: approvals = [], isLoading } = useQuery({
-    queryKey: ['approvals-feature', entity, filter],
-    queryFn: async () => {
-      if (!entity) return [];
+  const filteredItems = filter === 'all' 
+    ? mockItems 
+    : mockItems.filter(item => item.status === filter);
 
-      const { data, error } = await rpcWithObs(
-        'feed_pending_targets',
-        { p_entity_id: entity },
-        { surface: 'feature_approvals', feature: 'approvals' }
-      );
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedItems);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedItems(newSet);
+  };
 
-      if (error) throw error;
-      
-      const rows = (data || []) as PendingPost[];
-      
-      // Client-side filter for approved/rejected (these would need separate RPC or flag)
-      if (filter === 'pending') return rows.filter(r => !r.approved);
-      if (filter === 'approved') return rows.filter(r => r.approved);
-      return rows;
-    },
-    refetchInterval: 30000,
-    enabled: !!entity,
-  });
-
-  const approveMutation = useMutation({
-    mutationFn: async (postId: string) => {
-      if (!entity) throw new Error('No entity selected');
-
-      const { error } = await rpcWithObs(
-        'post_approve_target',
-        { p_post_id: postId, p_entity_id: entity },
-        { surface: 'feature_approvals' }
-      );
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['approvals-feature'] });
-      toast.success('Approved');
-    },
-    onError: (error) => {
-      toast.error('Failed to approve', {
-        description: error instanceof Error ? error.message : 'Unknown error',
-      });
-    },
-  });
-
-  const rejectMutation = useMutation({
-    mutationFn: async ({ postId, reason }: { postId: string; reason?: string }) => {
-      if (!entity) throw new Error('No entity selected');
-
-      const { error } = await rpcWithObs(
-        'post_reject_target',
-        { p_post_id: postId, p_entity_id: entity, p_reason: reason ?? null },
-        { surface: 'feature_approvals' }
-      );
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['approvals-feature'] });
-      toast.success('Rejected');
-    },
-    onError: (error) => {
-      toast.error('Failed to reject', {
-        description: error instanceof Error ? error.message : 'Unknown error',
-      });
-    },
-  });
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-500/10 text-yellow-500';
+      case 'approved': return 'bg-green-500/10 text-green-500';
+      case 'rejected': return 'bg-red-500/10 text-red-500';
+      default: return 'bg-muted';
+    }
+  };
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <CardTitle>Approvals</CardTitle>
-            {approvals.length > 0 && (
-              <Badge variant="default">{approvals.length}</Badge>
-            )}
+            <CardTitle>Feed Approvals</CardTitle>
+            <Badge variant="secondary">{filteredItems.length} items</Badge>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex gap-1">
-              {(['all', 'pending', 'approved', 'rejected'] as const).map((f) => (
-                <Button
-                  key={f}
-                  variant={filter === f ? 'secondary' : 'ghost'}
-                  size="s"
-                  onClick={() => updateProps({ filter: f })}
-                >
-                  {f}
-                </Button>
-              ))}
-            </div>
             <Button variant="ghost" size="s" onClick={close}>
               <X size={16} />
             </Button>
@@ -140,62 +76,92 @@ export default function ApprovalsFeature({
         </div>
       </CardHeader>
       <CardContent>
-        {!entity ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <p className="text-sm">Select an entity to view approvals</p>
-          </div>
-        ) : isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">Loading...</div>
-        ) : approvals.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <p>No {filter !== 'all' && `${filter} `}approvals</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {approvals.map((approval) => (
-              <div
-                key={approval.post_id}
-                className="p-3 border border-border rounded-lg space-y-2"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm">{approval.reason}</div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      Post: {approval.post_id}
+        <Tabs value={filter} onValueChange={(v) => updateProps({ filter: v as any })}>
+          <TabsList className="grid w-full grid-cols-4 mb-4">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="approved">Approved</TabsTrigger>
+            <TabsTrigger value="rejected">Rejected</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={filter} className="space-y-3">
+            {selectedItems.size > 0 && (
+              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                <span className="text-sm">{selectedItems.size} selected</span>
+                <div className="flex gap-2 ml-auto">
+                  <Button variant="primary" size="s">
+                    <Check size={16} className="mr-1" />
+                    Approve
+                  </Button>
+                  <Button variant="ghost" size="s">
+                    <XCircle size={16} className="mr-1" />
+                    Reject
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {filteredItems.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>No {filter !== 'all' ? filter : ''} items found</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => toggleSelect(item.id)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.has(item.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleSelect(item.id);
+                      }}
+                      className="h-4 w-4"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium">{item.title}</h4>
+                        <Badge variant="secondary" className="text-xs">{item.type}</Badge>
+                        <Badge className={`text-xs ${getStatusColor(item.status)}`}>
+                          {item.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        By {item.author} • {item.date}
+                      </p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="s">
+                        <Eye size={16} />
+                      </Button>
+                      {filter === 'pending' && (
+                        <>
+                          <Button variant="ghost" size="s">
+                            <Check size={16} className="text-green-500" />
+                          </Button>
+                          <Button variant="ghost" size="s">
+                            <XCircle size={16} className="text-red-500" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <Badge variant={approval.approved ? 'success' : 'default'}>
-                    {approval.approved ? 'approved' : 'pending'}
-                  </Badge>
-                </div>
-                {!approval.approved && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="primary"
-                      size="s"
-                      onClick={() => approveMutation.mutate(approval.post_id)}
-                      disabled={approveMutation.isPending}
-                      className="flex-1"
-                    >
-                      <Check size={14} />
-                      Approve
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="s"
-                      onClick={() => rejectMutation.mutate({ postId: approval.post_id })}
-                      disabled={rejectMutation.isPending}
-                      className="flex-1"
-                    >
-                      <XCircle size={14} />
-                      Reject
-                    </Button>
-                  </div>
-                )}
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )}
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="ghost" size="s">
+                <Download size={16} className="mr-1" />
+                Export
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
