@@ -91,11 +91,16 @@ export function FileBrowser() {
       );
       
       setFiles(filesWithCounts);
+      // Auto-expand main project for convenience
+      setExpandedFolders((prev) => {
+        const next = new Set(prev);
+        next.add('project:yalls.ai');
+        return next;
+      });
     } catch (error: any) {
       console.error('Failed to load files:', error);
     }
   };
-
   const ensureBackfill = async () => {
     if (autoBackfillDone) return;
     try {
