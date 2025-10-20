@@ -318,16 +318,16 @@ serve(async (req) => {
     let calendarContext = '';
     if (adminSettings?.allow_calendar_access) {
       const { data: events } = await supabase
-        .from('events')
-        .select('id, title, starts_at, ends_at, description')
+        .from('calendar_events')
+        .select('id, title, starts_at, ends_at, description, location')
         .gte('starts_at', new Date().toISOString())
         .lte('starts_at', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())
         .order('starts_at', { ascending: true })
         .limit(5);
 
       if (events && events.length > 0) {
-        calendarContext = '\n\nUpcoming calendar events (next 7 days):\n' + events.map((e: any, i: number) => 
-          `[Event ${i+1}] ${e.title} - ${new Date(e.starts_at).toLocaleString()}${e.description ? ': ' + e.description : ''}`
+        calendarContext = '\n\n📅 Upcoming calendar events (next 7 days):\n' + events.map((e: any, i: number) => 
+          `[Event ${i+1}] ${e.title} - ${new Date(e.starts_at).toLocaleString()}${e.description ? ': ' + e.description : ''}${e.location ? ' at ' + e.location : ''}`
         ).join('\n');
       }
     }
@@ -462,24 +462,51 @@ ${calendarContext ? '- You can create calendar events using the create_calendar_
                 try {
                   const args = JSON.parse(toolCall.function.arguments);
                   
-                  // Create the event
-                  const { data: newEvent, error: eventError } = await supabase
-                    .from('events')
-                    .insert({
+                  // Get or create user's default calendar
+                  let { data: defaultCal } = await supabase
+                    .from('calendars')
+                    .select('id')
+                    .eq('owner_profile_id', user.id)
+                    .eq('calendar_type', 'personal')
+                    .limit(1)
+                    .maybeSingle();
+                  
+                  if (!defaultCal) {
+                    const { data: newCal } = await supabase.functions.invoke('calendar-ops', {
+                      body: {
+                        operation: 'create_calendar',
+                        name: 'My Calendar',
+                        calendar_type: 'personal',
+                        color: '#3b82f6'
+                      }
+                    });
+                    defaultCal = newCal?.calendar;
+                  }
+                  
+                  if (!defaultCal?.id) {
+                    throw new Error('Failed to get or create calendar');
+                  }
+
+                  // Create the event via calendar-ops
+                  const { data: eventResult, error: eventError } = await supabase.functions.invoke('calendar-ops', {
+                    body: {
+                      operation: 'create_event',
+                      calendar_id: defaultCal.id,
                       title: args.title,
                       description: args.description || null,
                       starts_at: args.starts_at,
                       ends_at: args.ends_at || new Date(new Date(args.starts_at).getTime() + 60 * 60 * 1000).toISOString(),
                       location: args.location || null,
-                      created_by: user.id,
-                    })
-                    .select()
-                    .single();
+                      visibility: 'private',
+                      all_day: false
+                    }
+                  });
 
                   if (eventError) throw eventError;
+                  const newEvent = eventResult.event;
 
                   // Format confirmation with link
-                  const eventLink = `${Deno.env.get('SUPABASE_URL')?.replace('/rest/v1', '')}/events/${newEvent.id}`;
+                  const eventLink = `/calendar?event=${newEvent.id}`;
                   const eventDate = new Date(newEvent.starts_at).toLocaleString('en-US', {
                     weekday: 'long',
                     year: 'numeric',
@@ -503,7 +530,7 @@ ${calendarContext ? '- You can create calendar events using the create_calendar_
                   });
 
                   // Add confirmation to reply context
-                  memoryContext += `\n\n✅ Calendar Event Created:\n📅 ${newEvent.title}\n🕐 ${eventDate}${newEvent.location ? `\n📍 ${newEvent.location}` : ''}\n🔗 View Event: ${eventLink}`;
+                  memoryContext += `\n\n✅ Calendar Event Created:\n📅 ${newEvent.title}\n🕐 ${eventDate}${newEvent.location ? `\n📍 ${newEvent.location}` : ''}\n🔗 [View Event](${eventLink})`;
                 } catch (e: any) {
                   console.error('Failed to create calendar event:', e);
                   toolResults.push({
