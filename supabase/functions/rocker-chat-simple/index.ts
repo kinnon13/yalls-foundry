@@ -53,6 +53,27 @@ serve(async (req) => {
       }).join('\n\n');
     }
 
+    // Search embedded knowledge for relevant context
+    let knowledgeContext = '';
+    try {
+      const { data: searchResults } = await supabase.functions.invoke('rocker-semantic-search', {
+        body: { query: message, limit: 5, thread_id }
+      });
+
+      if (searchResults?.results && searchResults.results.length > 0) {
+        knowledgeContext = '\n\n🧠 From my embedded knowledge:\n' + searchResults.results
+          .filter((r: any) => r.similarity > 0.7) // Only high-confidence matches
+          .slice(0, 3)
+          .map((r: any, i: number) => {
+            const source = r.metadata?.source || 'learned knowledge';
+            return `[Knowledge #${i+1}] (${(r.similarity * 100).toFixed(0)}% relevant from ${source})\n${r.content.substring(0, 300)}${r.content.length > 300 ? '...' : ''}`;
+          }).join('\n\n');
+      }
+    } catch (e) {
+      console.error('Semantic search failed:', e);
+      // Continue without knowledge context
+    }
+
     // Check if super admin has calendar access enabled
     const { data: adminSettings } = await supabase
       .from('super_admin_settings')
@@ -86,14 +107,27 @@ serve(async (req) => {
       .order("created_at", { ascending: true })
       .limit(10);
 
-    const systemPrompt = `You are Super Rocker, an executive assistant. Be proactive, concise, and helpful.
-- Confirm the goal in one line
-- Ask clarifying questions
-- Propose next actions
-- Cite sources when using memory
+    const systemPrompt = `You are Super Rocker, a proactive AI executive assistant with comprehensive knowledge. You learn everything about the user to anticipate their needs.
+
+CORE CAPABILITIES:
+- You have embedded knowledge from documents, conversations, and interactions
+- You remember details about people, preferences, patterns, and contexts
+- You proactively suggest actions based on learned patterns
+- You cite sources explicitly when using memories or knowledge
+
+INTERACTION STYLE:
+- Be direct and actionable - confirm intent, ask clarifying questions
+- When you learn something new about a person or preference, explicitly note it
+- Propose next actions with confidence
 - Format tasks as "todo: [action]" to auto-create them
-${calendarContext ? '- You have access to the user\'s calendar - suggest prep, reminders, and follow-ups' : ''}
-- You can browse the web! When user shares a URL or asks to look something up, say you'll fetch it.`;
+${calendarContext ? '- Leverage calendar context for prep, reminders, and follow-ups' : ''}
+- You can browse the web - when given URLs or asked to research, fetch and synthesize
+
+LEARNING FOCUS:
+- Capture detailed information about people (names, roles, preferences, history)
+- Notice patterns in behavior, communication, and decisions
+- Ask clarifying questions to build complete understanding
+- Surface relevant context proactively`;
 
     let reply = "I'm here to help! How can I assist you?";
     
@@ -121,7 +155,7 @@ ${calendarContext ? '- You have access to the user\'s calendar - suggest prep, r
 
     try {
       const aiMessages = [
-        { role: "system", content: systemPrompt + memoryContext + calendarContext },
+        { role: "system", content: systemPrompt + memoryContext + knowledgeContext + calendarContext },
         ...(history || []).map((m: any) => ({ role: m.role, content: m.content })),
         { role: "user", content: message }
       ];

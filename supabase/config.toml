@@ -153,6 +153,9 @@ verify_jwt = true
 [functions.summarize-knowledge]
 verify_jwt = true
 
+[functions.rocker-semantic-search]
+verify_jwt = true
+
 [functions.ai-rank-search]
 verify_jwt = true
 
