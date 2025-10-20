@@ -204,8 +204,17 @@ ${calendarContext ? '- You have access to the user\'s calendar - suggest prep, r
       });
     }
 
+    // Collect tool results for UI feedback
+    const toolResults = [];
+    if (urlMatch) {
+      toolResults.push({ tool: 'web_fetch', result: 'Fetched URL' });
+    }
+    if (todoMatch) {
+      toolResults.push({ tool: 'create_task', result: `Created: ${todoMatch[1].slice(0, 40)}...` });
+    }
+
     return new Response(
-      JSON.stringify({ reply, sources: messageSources }),
+      JSON.stringify({ reply, sources: messageSources, tool_results: toolResults }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }

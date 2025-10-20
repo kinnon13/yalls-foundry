@@ -110,7 +110,7 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
         onThreadCreated?.(activeThreadId);
       }
 
-      const { error } = await supabase.functions.invoke('rocker-chat-simple', {
+      const { data, error } = await supabase.functions.invoke('rocker-chat-simple', {
         body: {
           thread_id: activeThreadId,
           message: userMessage
@@ -118,6 +118,17 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
       });
 
       if (error) throw error;
+
+      // Show tool results if any
+      if (data?.tool_results && data.tool_results.length > 0) {
+        const toolSummary = data.tool_results
+          .map((t: any) => `✅ ${t.tool}: ${t.result}`)
+          .join(' · ');
+        toast({
+          title: 'Actions completed',
+          description: toolSummary,
+        });
+      }
 
       // Refresh messages to get actual stored ones
       await loadMessages();

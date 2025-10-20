@@ -23,6 +23,9 @@ verify_jwt = false
 [functions.generate-embeddings]
 verify_jwt = false
 
+[functions.generate-embeddings.cron]
+schedule = "*/2 * * * *"  # Every 2 minutes - processes embedding queue
+
 [functions.process-jobs]
 verify_jwt = false
 
