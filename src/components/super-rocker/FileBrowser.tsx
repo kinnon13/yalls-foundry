@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Folder, File, Search, Edit, Trash2, FolderPlus, MoveHorizontal, RefreshCw, FileSearch, FileText, Copy, Check } from 'lucide-react';
+import { Folder, File, Search, Edit, Trash2, FolderPlus, MoveHorizontal, RefreshCw, FileSearch, FileText, Copy, Check, Brain } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { FilingAnalysisViewer } from './FilingAnalysisViewer';
@@ -26,6 +26,7 @@ interface FileItem {
   created_at: string;
   text_content?: string | null;
   ocr_text?: string | null;
+  thread_id?: string | null;
 }
 
 export function FileBrowser() {
@@ -43,6 +44,7 @@ export function FileBrowser() {
   const [viewFile, setViewFile] = useState<FileItem | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     loadFiles();
@@ -179,9 +181,80 @@ export function FileBrowser() {
     }
   };
 
+  const runDeepAnalysisAll = async () => {
+    setIsAnalyzing(true);
+    try {
+      // Get all files with text content that don't have deep analysis yet
+      const filesToAnalyze = files.filter(f => 
+        (f.text_content || f.ocr_text) && 
+        (f.text_content || f.ocr_text)!.length > 200
+      );
+
+      if (filesToAnalyze.length === 0) {
+        toast({ title: 'No files to analyze', description: 'All files either lack text content or are already analyzed.' });
+        return;
+      }
+
+      toast({ 
+        title: 'Starting deep analysis', 
+        description: `Analyzing ${filesToAnalyze.length} files with sentence-level precision...` 
+      });
+
+      // Trigger analysis for each file (async, non-blocking)
+      let queued = 0;
+      for (const file of filesToAnalyze) {
+        const content = file.text_content || file.ocr_text || '';
+        supabase.functions.invoke('rocker-deep-analyze', {
+          body: { 
+            content, 
+            thread_id: file.thread_id, 
+            file_id: file.id 
+          }
+        }).then(() => {
+          console.log('[DeepAnalysis] Queued for:', file.name);
+        }).catch(err => {
+          console.error('[DeepAnalysis] Failed to queue:', file.name, err);
+        });
+        queued++;
+      }
+
+      toast({ 
+        title: 'Analysis running', 
+        description: `${queued} files queued for deep analysis. Results will appear in 30-60 seconds.`,
+      });
+
+    } catch (error: any) {
+      toast({
+        title: 'Failed to start analysis',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
+        <Button
+          onClick={runDeepAnalysisAll}
+          disabled={isAnalyzing}
+          variant="default"
+          size="sm"
+        >
+          {isAnalyzing ? (
+            <>
+              <Brain className="h-4 w-4 mr-2 animate-spin" />
+              Analyzing...
+            </>
+          ) : (
+            <>
+              <Brain className="h-4 w-4 mr-2" />
+              Deep Analysis All
+            </>
+          )}
+        </Button>
         <Button
           onClick={reprocessAll}
           disabled={isReprocessing}
