@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -225,7 +226,7 @@ export function SuperAdminControls() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="min-h-screen p-6 pb-24 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold mb-2">Super Admin Dashboard</h1>
@@ -233,10 +234,10 @@ export function SuperAdminControls() {
             Complete system control and oversight
           </p>
         </div>
-        <a href="/settings/keys" className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-border bg-background hover:bg-accent transition-colors">
+        <Link to="/settings/keys" className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-border bg-background hover:bg-accent transition-colors">
           <Key className="h-4 w-4" />
           API Keys
-        </a>
+        </Link>
       </div>
 
       <Alert>
