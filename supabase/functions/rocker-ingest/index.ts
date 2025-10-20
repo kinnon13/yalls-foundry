@@ -133,21 +133,34 @@ serve(async (req) => {
     for await (const chunk of streamChunks(req)) {
       if (index >= MAX_CHUNKS) break;
 
-      const { error } = await supabase.from("rocker_knowledge").insert([{
-        user_id: user.id,
-        content: chunk,
-        chunk_index: index,
-        meta: {
-          subject: subject || category,
-          category,
-          tags: [],
-          source: "paste",
-          total_chunks_hint: "streamed",
-          priority,
-          thread_id: threadId,
-        },
-      }]);
+      const { data: inserted, error } = await supabase
+        .from("rocker_knowledge")
+        .insert([{
+          user_id: user.id,
+          content: chunk,
+          chunk_index: index,
+          meta: {
+            subject: subject || category,
+            category,
+            tags: [],
+            source: "paste",
+            total_chunks_hint: "streamed",
+            priority,
+            thread_id: threadId,
+          },
+        }])
+        .select("id")
+        .single();
+      
       if (error) throw error;
+
+      // Enqueue embedding job
+      if (inserted?.id) {
+        await supabase.from("embedding_jobs").insert({
+          knowledge_id: inserted.id,
+          priority: index < 20 ? 1 : 5, // Prioritize first 20 chunks
+        });
+      }
 
       index += 1;
       stored += 1;

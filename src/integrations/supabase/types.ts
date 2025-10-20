@@ -3462,6 +3462,47 @@ export type Database = {
         }
         Relationships: []
       }
+      embedding_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          knowledge_id: string
+          last_error: string | null
+          priority: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          knowledge_id: string
+          last_error?: string | null
+          priority?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          knowledge_id?: string
+          last_error?: string | null
+          priority?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "embedding_jobs_knowledge_id_fkey"
+            columns: ["knowledge_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_knowledge"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entities: {
         Row: {
           contributor_window_days: number
@@ -10984,6 +11025,13 @@ export type Database = {
         Args: { "": string }
         Returns: string
       }
+      claim_embedding_jobs: {
+        Args: { p_limit: number }
+        Returns: {
+          job_id: string
+          knowledge_id: string
+        }[]
+      }
       claim_entity: {
         Args: { entity_id: string }
         Returns: Json
@@ -11126,6 +11174,10 @@ export type Database = {
       enqueue_discovery_for_user: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      enqueue_missing_embeddings: {
+        Args: { p_limit?: number }
+        Returns: number
       }
       ensure_category_for_interest: {
         Args: { p_interest_id: string }

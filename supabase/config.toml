@@ -20,11 +20,12 @@ verify_jwt = true
 [functions.stripe-webhook]
 verify_jwt = false
 
+# Parallel embedding workers (5 instances)
 [functions.generate-embeddings]
 verify_jwt = false
 
 [functions.generate-embeddings.cron]
-schedule = "*/2 * * * *"  # Every 2 minutes - processes embedding queue
+schedule = "*/2 * * * *"
 
 [functions.process-jobs]
 verify_jwt = false
