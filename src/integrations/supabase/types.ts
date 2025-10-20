@@ -7874,6 +7874,50 @@ export type Database = {
           },
         ]
       }
+      rocker_knowledge: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string
+          embedding: string | null
+          id: string
+          memory_id: string | null
+          meta: Json | null
+          source_id: string | null
+          user_id: string
+        }
+        Insert: {
+          chunk_index?: number
+          content: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          memory_id?: string | null
+          meta?: Json | null
+          source_id?: string | null
+          user_id: string
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          memory_id?: string | null
+          meta?: Json | null
+          source_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_knowledge_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_memories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rocker_long_memory: {
         Row: {
           created_at: string | null
@@ -12292,9 +12336,12 @@ export type Database = {
       recall_long_memory: {
         Args: { p_limit?: number; p_query: string }
         Returns: {
+          content: string
           id: string
           key: string
           kind: string
+          score: number
+          value: Json
         }[]
       }
       recall_memories: {

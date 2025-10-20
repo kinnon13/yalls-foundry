@@ -38,7 +38,7 @@ serve(async (req) => {
       });
     }
 
-    // Recall relevant memories
+    // Recall relevant memories with full content
     let memoryContext = '';
     const { data: memories } = await supabase.rpc('recall_long_memory', {
       p_query: message,
@@ -46,9 +46,11 @@ serve(async (req) => {
     });
     
     if (memories && memories.length > 0) {
-      memoryContext = '\n\nRetrieved from your memory:\n' + memories.map((m: any, i: number) => 
-        `[#${i+1}] ${m.kind} - ${m.key || 'untitled'}`
-      ).join('\n');
+      memoryContext = '\n\n📚 Retrieved from your memory:\n' + memories.map((m: any, i: number) => {
+        const title = m.key || m.kind;
+        const snippet = m.content?.substring(0, 200) || m.value?.content?.substring(0, 200) || '';
+        return `[Source #${i+1}] ${title}\n${snippet}${snippet.length >= 200 ? '...' : ''}`;
+      }).join('\n\n');
     }
 
     // Check if super admin has calendar access enabled
