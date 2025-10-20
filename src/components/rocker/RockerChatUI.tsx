@@ -7,7 +7,6 @@
 
 import { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { RockerQuickActions } from './RockerQuickActions';
 import { ConversationSidebar } from './ConversationSidebar';
 import { ChatHeader } from './ChatHeader';
@@ -46,7 +45,7 @@ export function RockerChatUI() {
   const [showSidebar, setShowSidebar] = useState(false); // Hidden by default for mobile
   const [currentSessionId, setCurrentSessionId] = useState<string>();
   const [showRockerLabels, setShowRockerLabels] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load label preference
   useEffect(() => {
@@ -123,9 +122,7 @@ export function RockerChatUI() {
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleQuickAction = (prompt: string) => {
@@ -185,7 +182,7 @@ export function RockerChatUI() {
             actorRole={actorRole}
           />
 
-        <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+        <div className="flex-1 overflow-y-auto p-4">
           {messages.length === 0 && !isVoiceMode ? (
             <div className="flex flex-col h-full">
               <div className="flex flex-col items-center justify-center flex-1 text-center text-muted-foreground">
@@ -200,17 +197,20 @@ export function RockerChatUI() {
               <RockerQuickActions onSelectPrompt={handleQuickAction} />
             </div>
           ) : (
-            <MessageList
-              messages={messages}
-              isLoading={isLoading}
-              isVoiceMode={isVoiceMode}
-              voiceStatus={voiceStatus}
-              voiceTranscript={voiceTranscript}
-              isAlwaysListening={isAlwaysListening}
-              actorRole={actorRole}
-            />
+            <>
+              <MessageList
+                messages={messages}
+                isLoading={isLoading}
+                isVoiceMode={isVoiceMode}
+                voiceStatus={voiceStatus}
+                voiceTranscript={voiceTranscript}
+                isAlwaysListening={isAlwaysListening}
+                actorRole={actorRole}
+              />
+              <div ref={messagesEndRef} />
+            </>
           )}
-        </ScrollArea>
+        </div>
 
         {error && (
           <div className="px-4 py-2 bg-destructive/10 text-destructive text-sm border-t border-destructive/20">
