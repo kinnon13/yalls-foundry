@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Loader2, MessageSquare } from 'lucide-react';
+import { Send, Loader2, MessageSquare, Mic, MicOff } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { useSpeech } from '@/hooks/useSpeech';
 
 interface Message {
   id: string;
@@ -21,6 +22,27 @@ export function SuperRockerChat({ threadId }: { threadId: string | null }) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const { start, stop, listening, supported } = useSpeech({
+    onTranscript: (text, isFinal) => {
+      if (isFinal) setInput((prev) => (prev ? `${prev} ${text}` : text));
+    },
+    onError: (err) => toast({ title: 'Voice error', description: err, variant: 'destructive' }),
+  });
+
+  const toggleVoice = () => {
+    if (!supported) {
+      toast({ title: 'Voice not supported in this browser', variant: 'destructive' });
+      return;
+    }
+    if (listening) {
+      stop();
+      if (input.trim()) handleSend();
+    } else {
+      setInput('');
+      start();
+    }
+  };
 
   useEffect(() => {
     if (threadId) {
@@ -167,6 +189,16 @@ export function SuperRockerChat({ threadId }: { threadId: string | null }) {
           }}
           className="min-h-[60px]"
         />
+        <Button
+          onClick={toggleVoice}
+          variant={listening ? 'default' : 'outline'}
+          size="icon"
+          className="h-[60px] w-[60px]"
+          aria-label={listening ? 'Stop voice' : 'Start voice'}
+          title={listening ? 'Stop voice' : 'Start voice'}
+        >
+          {listening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+        </Button>
         <Button
           onClick={handleSend}
           disabled={isLoading || !input.trim()}
