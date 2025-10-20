@@ -12364,6 +12364,18 @@ export type Database = {
           uri: string
         }[]
       }
+      match_rocker_memory_vec: {
+        Args: { match_count?: number; q: string; thread?: string }
+        Returns: {
+          chunk_index: number
+          content: string
+          created_at: string
+          id: string
+          meta: Json
+          similarity: number
+          user_id: string
+        }[]
+      }
       needs_kyc: {
         Args: { _business_id: string }
         Returns: boolean
@@ -12862,6 +12874,25 @@ export type Database = {
           metadata: Json
           name: string
           similarity_score: number
+        }[]
+      }
+      search_hybrid: {
+        Args: {
+          alpha?: number
+          k?: number
+          q_text: string
+          q_vec: string
+          thread?: string
+        }
+        Returns: {
+          chunk_index: number
+          content: string
+          created_at: string
+          id: string
+          meta: Json
+          score: number
+          similarity: number
+          user_id: string
         }[]
       }
       search_unclaimed_profiles: {
