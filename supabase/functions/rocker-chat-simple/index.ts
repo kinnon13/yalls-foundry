@@ -81,6 +81,9 @@ serve(async (req) => {
       }
     }
 
+    // Performance tracking
+    const t0 = Date.now();
+
     // Hybrid retrieval (vector + lexical + boosts) - only if we have embeddings
     let hits: any[] = [];
     let memoryContext = '';
@@ -94,7 +97,88 @@ serve(async (req) => {
           thread: thread_id || null
         });
         if (error) throw error;
-        hits = (data || []).slice(0, cfg.keep_k);
+        
+        const candidates = (data || []).slice(0, Math.min(30, cfg.retrieve_k));
+        
+        // Rerank top candidates using Lovable AI if available
+        if (LOVABLE_API_KEY && candidates.length > 5) {
+          try {
+            const rerankPrompt = `Query: ${message}\n\nPassages:\n` + 
+              candidates.slice(0, 20).map((c: any, i: number) => 
+                `(${i+1}) id=${c.id}\n${String(c.content || '').slice(0, 800)}`
+              ).join('\n\n') +
+              '\n\nFor each passage, output JSON: {"id":"<id>","score":<0.0-1.0>}. One line per passage. Be strict.';
+            
+            const rerankResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                model: 'google/gemini-2.5-flash',
+                messages: [{ role: 'user', content: rerankPrompt }],
+                temperature: 0
+              })
+            });
+            
+            if (rerankResp.ok) {
+              const rerankData = await rerankResp.json();
+              const rerankText = rerankData.choices?.[0]?.message?.content || '';
+              const rerankScores = new Map<string, number>();
+              
+              for (const line of rerankText.split('\n')) {
+                try {
+                  const parsed = JSON.parse(line.trim());
+                  if (parsed.id && parsed.score !== undefined) {
+                    rerankScores.set(parsed.id, Number(parsed.score));
+                  }
+                } catch { /* skip bad lines */ }
+              }
+              
+              // Combine hybrid + rerank scores
+              for (const c of candidates) {
+                const rerank = rerankScores.get(c.id) ?? 0;
+                c.combinedScore = ((c.score ?? 0) + rerank) / 2;
+              }
+              
+              candidates.sort((a: any, b: any) => (b.combinedScore ?? 0) - (a.combinedScore ?? 0));
+            }
+          } catch (e) {
+            console.warn('Rerank failed, using hybrid scores only:', e);
+          }
+        }
+        
+        // MMR diversity selection (simple version)
+        hits = [candidates[0]]; // always take top result
+        const mmrLambda = 0.7;
+        while (hits.length < Math.min(cfg.keep_k, candidates.length)) {
+          let bestIdx = -1;
+          let bestScore = -Infinity;
+          
+          for (let i = 1; i < candidates.length; i++) {
+            if (hits.some((h: any) => h.id === candidates[i].id)) continue;
+            
+            const rel = candidates[i].combinedScore ?? candidates[i].score ?? 0;
+            
+            // Penalty for similarity to already-selected (simple text overlap)
+            let maxSim = 0;
+            for (const h of hits) {
+              const aWords = new Set((candidates[i].content || '').toLowerCase().split(/\s+/));
+              const bWords = new Set((h.content || '').toLowerCase().split(/\s+/));
+              const inter = [...aWords].filter(w => bWords.has(w)).length;
+              const union = aWords.size + bWords.size - inter;
+              const sim = union > 0 ? inter / union : 0;
+              maxSim = Math.max(maxSim, sim);
+            }
+            
+            const score = mmrLambda * rel - (1 - mmrLambda) * maxSim;
+            if (score > bestScore) {
+              bestScore = score;
+              bestIdx = i;
+            }
+          }
+          
+          if (bestIdx >= 0) hits.push(candidates[bestIdx]);
+          else break;
+        }
       } catch (e) {
         console.error('Hybrid search failed, trying vector-only:', e);
         // Fallback to vector-only if hybrid fails
@@ -196,12 +280,17 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
       }
     }
 
+    let tokensIn = 0;
+    let tokensOut = 0;
+    
     try {
       const aiMessages = [
         { role: "system", content: systemPrompt + memoryContext + calendarContext },
         ...(history || []).map((m: any) => ({ role: m.role, content: m.content })),
         { role: "user", content: message }
       ];
+
+      tokensIn = JSON.stringify(aiMessages).length / 4; // rough estimate
 
       const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
@@ -222,6 +311,7 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
         if (aiResponse.ok) {
           const data = await aiResponse.json();
           reply = data.choices?.[0]?.message?.content || reply;
+          tokensOut = data.usage?.completion_tokens ?? (reply.length / 4);
         }
       } else if (LOVABLE_API_KEY) {
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -239,6 +329,37 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
         if (aiResponse.ok) {
           const data = await aiResponse.json();
           reply = data.choices?.[0]?.message?.content || reply;
+          tokensOut = reply.length / 4;
+        }
+      }
+      
+      // Verifier pass: ensure TL;DR, citations, next actions
+      if (reply && hits.length > 0) {
+        const hasTldr = /^(TL;DR|Summary|In short)/im.test(reply);
+        const hasCitations = /\[#\d+\]/.test(reply);
+        const hasActions = /Next actions?:/i.test(reply);
+        
+        if (!hasTldr || !hasCitations) {
+          // Quick fixup prompt
+          const fixPrompt = `The following answer needs improvement. ${!hasTldr ? 'Add a TL;DR first line.' : ''} ${!hasCitations ? 'Add [#n] citations from sources.' : ''} ${!hasActions ? 'End with "Next actions:" list.' : ''}\n\nOriginal:\n${reply}`;
+          
+          try {
+            const fixResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                model: 'google/gemini-2.5-flash',
+                messages: [{ role: 'user', content: fixPrompt }],
+                temperature: 0
+              })
+            });
+            
+            if (fixResp.ok) {
+              const fixData = await fixResp.json();
+              reply = fixData.choices?.[0]?.message?.content || reply;
+              tokensOut += (reply.length / 4);
+            }
+          } catch { /* keep original if fix fails */ }
         }
       }
     } catch (aiError) {
@@ -282,10 +403,37 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
       output: {
         reply,
         retrieved_ids: hits?.map((h: any) => h.id) || [],
-        scores: hits?.map((h: any) => h.score ?? h.similarity) || []
+        scores: hits?.map((h: any) => h.combinedScore ?? h.score ?? h.similarity) || []
       },
       result: 'success'
     });
+    
+    // Log metrics for learning (Phase 2 telemetry)
+    const latencyMs = Date.now() - t0;
+    const retrievedIds = hits?.map((h: any) => h.id) || [];
+    const scores = hits?.map((h: any) => h.combinedScore ?? h.score ?? h.similarity) || [];
+    const topScore = scores[0] ?? 0;
+    
+    // Simple MRR calculation (1 / rank of first relevant doc, assuming top hit is relevant if score > threshold)
+    const mrr = topScore >= cfg.sim_threshold ? 1.0 : 0.0;
+    const hit5 = scores.length > 0 && scores.some((s: number) => s >= cfg.sim_threshold);
+    
+    try {
+      await supabaseService.rpc('log_metric', {
+        p_user_id: user.id,
+        p_action: 'chat_turn',
+        p_latency_ms: latencyMs,
+        p_tokens_in: Math.round(tokensIn),
+        p_tokens_out: Math.round(tokensOut),
+        p_retrieved_ids: retrievedIds,
+        p_scores: scores,
+        p_low_conf: !confident,
+        p_mrr: mrr,
+        p_hit5: hit5
+      });
+    } catch (e) {
+      console.error('Metrics logging failed (non-fatal):', e);
+    }
 
     // Auto-task detection
     const todoMatch = reply.match(/todo:\s*(.+?)(?:\n|$)/i);
