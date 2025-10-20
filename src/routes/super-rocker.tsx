@@ -12,6 +12,8 @@ import { SuperRockerTasks } from '@/components/super-rocker/SuperRockerTasks';
 import { SuperRockerChat } from '@/components/super-rocker/SuperRockerChat';
 import { SuperRockerInbox } from '@/components/super-rocker/SuperRockerInbox';
 import { SuperRockerLibrary } from '@/components/super-rocker/SuperRockerLibrary';
+import { SuperRockerVault } from '@/components/super-rocker/SuperRockerVault';
+import { SuperRockerMessenger } from '@/components/super-rocker/SuperRockerMessenger';
 
 export default function SuperRocker() {
   const { session } = useSession();
@@ -131,94 +133,25 @@ export default function SuperRocker() {
             <SuperRockerInbox />
           </Card>
 
-          {/* Center-Left: Quick Add */}
-          <Card className="p-6 space-y-4">
-            <div className="flex items-center gap-2">
-              <Upload className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Quick Add</h2>
-            </div>
-            
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              onChange={handleFileUpload}
-              className="hidden"
-              accept=".txt,.md,.doc,.docx,.pdf,image/*"
-            />
-            
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-              variant="outline"
-              className="w-full"
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Upload Files
-                </>
-              )}
-            </Button>
-            
-            <Input
-              placeholder="Subject (optional)"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-            />
-
-            <div className="relative">
-              <Textarea
-                placeholder="Paste your notes, docs, ideas here... (up to 200k+ characters)"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                className="min-h-[300px] font-mono text-sm"
-              />
-              <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
-                {text.length.toLocaleString()} chars
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={handlePaste}
-                variant="outline"
-                className="flex-1"
-              >
-                Paste
-              </Button>
-              <Button
-                onClick={handleIngest}
-                disabled={isIngesting || !text.trim()}
-                className="flex-1"
-              >
-                {isIngesting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  'Add to Memory'
-                )}
-              </Button>
-            </div>
+          {/* Center: Vault & Quick Add */}
+          <Card className="p-6 space-y-6">
+            <SuperRockerVault />
           </Card>
 
-          {/* Center-Right: Library */}
+          {/* Right: Library */}
           <Card className="p-6">
             <SuperRockerLibrary />
           </Card>
         </div>
 
-        {/* Bottom Row: Chat & Tasks */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Bottom Row: Chat, Messenger & Tasks */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="p-6">
             <SuperRockerChat threadId={threadId} />
+          </Card>
+
+          <Card className="p-6">
+            <SuperRockerMessenger />
           </Card>
           
           <Card className="p-6">
