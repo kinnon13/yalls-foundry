@@ -7298,6 +7298,39 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_secrets: {
+        Row: {
+          created_at: string
+          encrypted_key: string
+          id: string
+          last_used_at: string | null
+          name: string
+          provider: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          encrypted_key: string
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          provider: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          encrypted_key?: string
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          provider?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       public_app_visibility: {
         Row: {
           app_id: string
