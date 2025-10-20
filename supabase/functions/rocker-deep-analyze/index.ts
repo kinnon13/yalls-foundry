@@ -138,31 +138,46 @@ async function analyzeSection(section: any) {
   const LOVABLE_KEY = Deno.env.get('LOVABLE_API_KEY');
   if (!LOVABLE_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
-  const prompt = `Analyze this content section with EXTREME PRECISION:
+  const prompt = `**CRITICAL CONSTRAINT: ALL content MUST be filed under the root project "yalls.ai"**
+
+Analyze this content section with EXTREME PRECISION:
 
 Content: ${section.content}
 
+**Filing Structure Rules:**
+- Root project: ALWAYS "yalls.ai" (never create separate projects)
+- Primary categories under yalls.ai:
+  * Capabilities/Built - Features that exist and are functional
+  * Capabilities/Missing - Features needed but not yet built
+  * Capabilities/Research - External research on platform improvements
+  * User Feedback - User wants/needs ranked by priority
+  * Platform Definition - Core platform architecture and specs
+  * Implementation - Development work and technical details
+
 For EACH sentence, determine:
-1. Specific project/topic it belongs to
-2. Exact category and subcategory (3-5 levels deep)
-3. Whether it needs web research to understand
+1. Which yalls.ai subcategory it belongs to (e.g., "yalls.ai/Capabilities/Built/Chat System")
+2. If it describes something functional, assess if you can access/use that feature
+3. If it describes a missing capability, note what's needed to build it
 4. Confidence score (0-1)
 
 Return JSON:
 {
   "section_summary": "Brief summary",
-  "primary_topic": "Specific topic/project name",
-  "category_path": "Project/Phase/Category/Subcategory/Detail",
+  "primary_topic": "Specific feature/capability name",
+  "category_path": "yalls.ai/[Primary Category]/[Subcategory]/[Detail]",
+  "capability_status": "built|missing|planned|research",
+  "can_access": true/false,
   "sentence_breakdown": [
     {
       "sentence": "exact sentence text",
-      "belongs_to": "specific category path",
+      "belongs_to": "yalls.ai/[category path]",
+      "capability_status": "built|missing|planned",
       "confidence": 0.9,
       "reasoning": "why this categorization"
     }
   ],
   "needs_research": false,
-  "research_query": "search query if research needed",
+  "research_query": "search query if research needed for improvement suggestions",
   "confidence": 0.85,
   "tags": ["micro", "level", "tags"]
 }`;
@@ -294,33 +309,44 @@ async function generateFilingOptions(sections: any[]) {
   const allTopics = sections.map(s => ({
     topic: s.primary_topic,
     path: s.category_path,
-    confidence: s.confidence
+    confidence: s.confidence,
+    capability_status: s.capability_status
   }));
 
-  const prompt = `Given these analyzed sections:
+  const prompt = `**CRITICAL: ALL files MUST be under root project "yalls.ai"**
+
+Given these analyzed sections:
 ${JSON.stringify(allTopics, null, 2)}
 
-Generate 2-3 DIFFERENT filing strategies. For example:
-1. Split by project (if content covers multiple projects)
-2. File as single document with deep category path
-3. File chronologically if it's time-based content
+Generate 2-3 DIFFERENT filing strategies under "yalls.ai" root. Options:
+1. File by capability status (Built vs Missing vs Research)
+2. File by feature area (Chat, Calendar, Files, etc.)
+3. File by priority (Critical features vs Nice-to-have vs Future)
+
+**IMPORTANT**: All paths MUST start with "yalls.ai/". Never create separate top-level projects.
 
 Return JSON:
 {
   "options": [
     {
-      "label": "Option 1: Split by Project",
-      "description": "Create separate files for each project mentioned",
+      "label": "Option 1: By Capability Status",
+      "description": "Organize by what's built vs missing vs needs research",
       "files": [
         {
-          "name": "AgTech Platform - API Design",
-          "path": "AgTech Platform/MVP/Backend/API",
+          "name": "Chat System Implementation",
+          "path": "yalls.ai/Capabilities/Built/Chat System",
           "content_indices": [0, 2, 5],
-          "reasoning": "Groups all API-related sections"
+          "reasoning": "Groups all functional chat features"
+        },
+        {
+          "name": "Missing Analytics Dashboard",
+          "path": "yalls.ai/Capabilities/Missing/Analytics",
+          "content_indices": [1, 3],
+          "reasoning": "Groups features that need to be built"
         }
       ],
-      "pros": ["Precise organization", "Easy retrieval"],
-      "cons": ["Multiple files"]
+      "pros": ["Clear status visibility", "Easy to track progress"],
+      "cons": ["May split related features"]
     }
   ]
 }`;

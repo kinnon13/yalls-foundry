@@ -256,6 +256,28 @@ export function FileBrowser() {
           )}
         </Button>
         <Button
+          onClick={async () => {
+            if (!confirm('Consolidate all files under "yalls.ai" root? This will update project names.')) return;
+            try {
+              const { data, error } = await supabase
+                .from('rocker_files')
+                .update({ project: 'yalls.ai' })
+                .neq('project', 'yalls.ai')
+                .select();
+              if (error) throw error;
+              toast({ title: 'Consolidated!', description: `Updated ${data?.length || 0} files under yalls.ai root.` });
+              await loadFiles();
+            } catch (e: any) {
+              toast({ title: 'Failed', description: e.message, variant: 'destructive' });
+            }
+          }}
+          variant="outline"
+          size="sm"
+        >
+          <Folder className="h-4 w-4 mr-2" />
+          Consolidate → yalls.ai
+        </Button>
+        <Button
           onClick={reprocessAll}
           disabled={isReprocessing}
           variant="outline"

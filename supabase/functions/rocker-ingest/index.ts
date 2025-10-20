@@ -120,10 +120,10 @@ serve(async (req) => {
     const { data: isSuperAdmin } = await supabase.rpc("is_super_admin", { _user_id: user.id });
     const priority = isSuperAdmin === true ? 10 : 100;
 
-    // Light auto-categorization
-    let category = "Notes";
+    // Light auto-categorization - FORCE yalls.ai root
+    let category = "yalls.ai/General";
     if (subject && subject.toLowerCase() !== "super rocker memory") {
-      category = subject.slice(0, 50);
+      category = `yalls.ai/${subject.slice(0, 50)}`;
     }
 
     // Stream → collect full text + insert per chunk
@@ -187,6 +187,7 @@ serve(async (req) => {
         user_id: user.id,
         name: subject || 'Bulk Paste',
         summary,
+        project: 'yalls.ai', // Force root project
         category,
         tags,
         text_content: fullText,
