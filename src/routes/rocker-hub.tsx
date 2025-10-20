@@ -3,7 +3,7 @@
  * Central command for interacting with Rocker
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { RockerVaultUpload } from '@/components/rocker/RockerVaultUpload';
 import { RockerSessionStart } from '@/components/rocker/RockerSessionStart';
@@ -13,12 +13,33 @@ import { OutboxTrigger } from '@/components/rocker/OutboxTrigger';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Brain, Shield, Zap, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { Brain, Shield, Zap, ChevronDown, ChevronUp, FileText, Lock } from 'lucide-react';
 import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
+import { useRuntimeFlags } from '@/hooks/useRuntimeFlags';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function RockerHub() {
   const [docsExpanded, setDocsExpanded] = useState(false);
   const { isSuperAdmin, isLoading } = useSuperAdminCheck();
+  const { isEnabled } = useRuntimeFlags();
+  
+  // Log super admin access
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    
+    const logAccess = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('rocker_admin_audit').insert({
+          user_id: user.id,
+          action: 'rocker_hub_access',
+          target: { path: '/rocker' }
+        }); // Silent fail - errors don't block UX
+      }
+    };
+    
+    logAccess();
+  }, [isSuperAdmin]);
   
   if (isLoading) {
     return (
@@ -28,8 +49,39 @@ export default function RockerHub() {
     );
   }
   
-  if (!isSuperAdmin) {
+  // Optional: Public read-only mode (redacted)
+  const publicReadonly = isEnabled('rocker.hub.public_readonly');
+  
+  if (!isSuperAdmin && !publicReadonly) {
     return <Navigate to="/" replace />;
+  }
+  
+  // Redacted public view
+  if (!isSuperAdmin && publicReadonly) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-6 overflow-y-auto">
+        <div className="max-w-6xl mx-auto space-y-8 pb-24">
+          <div className="text-center space-y-4">
+            <div className="inline-flex items-center gap-3 bg-muted px-4 py-2 rounded-full">
+              <Lock className="h-6 w-6 text-muted-foreground" />
+              <h1 className="text-3xl font-bold">Rocker Command Center</h1>
+            </div>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Full access requires super admin privileges.
+            </p>
+            <Badge variant="secondary">Read-Only View</Badge>
+          </div>
+          
+          <Card className="p-6 bg-muted/50">
+            <h2 className="text-xl font-bold mb-4">About Rocker</h2>
+            <p className="text-muted-foreground">
+              Rocker is your AI chief of staff with permanent memory, daily workflows, and secretary-grade organization. 
+              Contact your administrator for access.
+            </p>
+          </Card>
+        </div>
+      </div>
+    );
   }
   
   return (
