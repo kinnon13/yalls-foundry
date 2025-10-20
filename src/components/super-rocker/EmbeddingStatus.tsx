@@ -25,14 +25,15 @@ export function EmbeddingStatus() {
 
       setPendingCount(count || 0);
 
-      // Try to ping the embedding function
-      const { error } = await supabase.functions.invoke('rocker-health');
-      
-      if (error) {
-        setStatus('error');
-      } else {
-        setStatus(count && count > 0 ? 'missing-key' : 'ready');
+      // If no pending embeddings, we're ready
+      if (!count || count === 0) {
+        setStatus('ready');
+        return;
       }
+
+      // If there are pending embeddings, assume key might be missing
+      // (The worker will process them if the key is configured)
+      setStatus('missing-key');
     } catch (error) {
       setStatus('error');
     }

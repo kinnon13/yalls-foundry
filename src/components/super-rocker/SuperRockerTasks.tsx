@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, CheckCircle2, Circle, Clock } from 'lucide-react';
+import { Plus, CheckCircle2, Circle, Clock, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
@@ -21,6 +21,7 @@ export function SuperRockerTasks({ threadId }: { threadId: string | null }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadTasks();
@@ -90,6 +91,57 @@ export function SuperRockerTasks({ threadId }: { threadId: string | null }) {
     }
   };
 
+  const deleteTask = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('rocker_tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) throw error;
+      await loadTasks();
+      toast({ title: 'Task deleted' });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to delete task',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const bulkDelete = async () => {
+    if (selectedTasks.size === 0) return;
+
+    try {
+      const { error } = await supabase
+        .from('rocker_tasks')
+        .delete()
+        .in('id', Array.from(selectedTasks));
+
+      if (error) throw error;
+      setSelectedTasks(new Set());
+      await loadTasks();
+      toast({ title: `Deleted ${selectedTasks.size} tasks` });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to delete tasks',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const toggleSelect = (taskId: string) => {
+    const newSelected = new Set(selectedTasks);
+    if (newSelected.has(taskId)) {
+      newSelected.delete(taskId);
+    } else {
+      newSelected.add(taskId);
+    }
+    setSelectedTasks(newSelected);
+  };
+
   const openTasks = tasks.filter(t => t.status === 'open' || t.status === 'doing');
   const doneTasks = tasks.filter(t => t.status === 'done');
 
@@ -113,6 +165,20 @@ export function SuperRockerTasks({ threadId }: { threadId: string | null }) {
         </Button>
       </div>
 
+      {selectedTasks.size > 0 && (
+        <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
+          <span className="text-sm">{selectedTasks.size} selected</span>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={bulkDelete}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Selected
+          </Button>
+        </div>
+      )}
+
       <ScrollArea className="h-[350px]">
         <div className="space-y-4 pr-4">
           {openTasks.length > 0 && (
@@ -125,8 +191,16 @@ export function SuperRockerTasks({ threadId }: { threadId: string | null }) {
                 {openTasks.map((task) => (
                   <div
                     key={task.id}
-                    className="flex items-start gap-2 p-2 border rounded-lg hover:bg-accent/50 transition-colors"
+                    className={`flex items-start gap-2 p-2 border rounded-lg hover:bg-accent/50 transition-colors ${
+                      selectedTasks.has(task.id) ? 'bg-accent border-primary' : ''
+                    }`}
                   >
+                    <input
+                      type="checkbox"
+                      checked={selectedTasks.has(task.id)}
+                      onChange={() => toggleSelect(task.id)}
+                      className="mt-2 cursor-pointer"
+                    />
                     <Button
                       size="icon"
                       variant="ghost"
@@ -143,6 +217,14 @@ export function SuperRockerTasks({ threadId }: { threadId: string | null }) {
                         </p>
                       )}
                     </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 shrink-0"
+                      onClick={() => deleteTask(task.id)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
                   </div>
                 ))}
               </div>

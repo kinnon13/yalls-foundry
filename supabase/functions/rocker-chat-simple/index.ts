@@ -506,16 +506,22 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
       console.error('[metrics] log_metric failed:', String(e));
     }
 
-    // Auto-task detection
-    const todoMatch = reply.match(/todo:\s*(.+?)(?:\n|$)/i);
+    // Auto-task detection - only create real actionable tasks
+    const todoMatch = reply.match(/(?:^|\n)(?:TODO|Action item|Next step):\s*(.+?)(?:\n|$)/mi);
     if (todoMatch) {
       const taskTitle = todoMatch[1].trim().slice(0, 240);
-      await supabase.from("rocker_tasks").insert({
-        user_id: user.id,
-        thread_id,
-        title: taskTitle,
-        status: 'open'
-      });
+      // Don't create vague clarification tasks
+      if (!taskTitle.toLowerCase().includes('specify') && 
+          !taskTitle.toLowerCase().includes('clarify') &&
+          !taskTitle.toLowerCase().includes('provide') &&
+          taskTitle.length > 10) {
+        await supabase.from("rocker_tasks").insert({
+          user_id: user.id,
+          thread_id,
+          title: taskTitle,
+          status: 'open'
+        });
+      }
     }
 
     // Auto-organize knowledge after every few chat turns
