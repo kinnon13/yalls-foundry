@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, Lock, Phone, Globe, Zap, Mail, Calendar, FileText, Users, DollarSign } from 'lucide-react';
+import { Shield, Lock, Phone, Globe, Zap, Mail, Calendar, FileText, Users, DollarSign, Key } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
 import { SystemStatsPanel } from './super-admin/SystemStatsPanel';
@@ -226,11 +226,17 @@ export function SuperAdminControls() {
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Super Admin Dashboard</h1>
-        <p className="text-muted-foreground">
-          Complete system control and oversight
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Super Admin Dashboard</h1>
+          <p className="text-muted-foreground">
+            Complete system control and oversight
+          </p>
+        </div>
+        <a href="/settings/keys" className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-border bg-background hover:bg-accent transition-colors">
+          <Key className="h-4 w-4" />
+          API Keys
+        </a>
       </div>
 
       <Alert>
