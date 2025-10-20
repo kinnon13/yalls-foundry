@@ -249,6 +249,9 @@ verify_jwt = false
 [functions.rocker-lifecycle-manager]
 verify_jwt = false
 
+[functions.rocker-proactive-notifier]
+verify_jwt = false
+
 [functions.rocker-capability-ranker.cron]
 schedule = "0 4 * * *"  # Daily at 4 AM (after gap scan)
 

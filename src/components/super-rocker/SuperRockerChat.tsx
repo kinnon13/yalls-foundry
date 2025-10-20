@@ -57,6 +57,29 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
   useEffect(() => {
     if (threadId) {
       loadMessages();
+      // Subscribe to realtime proactive messages
+      const channel = supabase
+        .channel(`thread:${threadId}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'rocker_messages',
+          filter: `thread_id=eq.${threadId}`
+        }, (payload) => {
+          const newMsg = payload.new as any;
+          setMessages(prev => [...prev, {
+            id: newMsg.id.toString(),
+            role: newMsg.role,
+            content: newMsg.content,
+            created_at: newMsg.created_at,
+            sources: newMsg.meta?.sources
+          }]);
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
     loadThreads();
   }, [threadId]);

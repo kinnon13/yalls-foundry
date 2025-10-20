@@ -87,12 +87,13 @@ serve(async (req) => {
       }
     }
 
-    // === 3. Clean Up Old Analysis Logs (keep only last 90 days) ===
+    // === 3. Clean Up Old Action Logs (keep only last 90 days) ===
     const cleanupDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
     const { data: deleted } = await supabase
-      .from('rocker_deep_analysis')
+      .from('ai_action_ledger')
       .delete()
       .lt('created_at', cleanupDate)
+      .eq('agent', 'rocker')
       .select('id');
 
     results.knowledge_cleaned = deleted?.length || 0;
