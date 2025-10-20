@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, Brain, CheckCircle2, Clock, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { EmbeddingStatus } from './EmbeddingStatus';
 
 interface KnowledgeChunk {
   id: string;
@@ -193,20 +194,7 @@ export function SuperRockerKnowledge() {
         </Card>
       </div>
 
-      {stats.pending > 0 && (
-        <Card className="p-4 bg-yellow-500/10 border-yellow-500/20">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium">Indexing in Progress</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                {progress}% complete ({stats.embedded}/{stats.total} chunks embedded). 
-                Workers are processing the queue every 2 minutes.
-              </p>
-            </div>
-          </div>
-        </Card>
-      )}
+      {stats.pending > 0 && <EmbeddingStatus />}
 
       <div className="flex items-center gap-2">
         <Search className="h-5 w-5 text-muted-foreground" />
