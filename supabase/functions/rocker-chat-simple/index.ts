@@ -434,7 +434,7 @@ ${calendarContext ? '- Leverage calendar context for prep, reminders, and follow
         p_tokens_out: Math.round(tokensOut),
         p_retrieved_ids: retrievedIds,
         p_scores: scores,
-        p_low_conf: !confident,
+        p_low_conf: lowConfidence,
         p_mrr: mrr,
         p_hit5: hit5
       });
