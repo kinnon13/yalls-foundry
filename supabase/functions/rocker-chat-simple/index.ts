@@ -50,6 +50,31 @@ serve(async (req) => {
       ).join('\n');
     }
 
+    // Check if super admin has calendar access enabled
+    const { data: adminSettings } = await supabase
+      .from('super_admin_settings')
+      .select('allow_calendar_access')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    // Load upcoming calendar events if enabled
+    let calendarContext = '';
+    if (adminSettings?.allow_calendar_access) {
+      const { data: events } = await supabase
+        .from('events')
+        .select('id, title, starts_at, ends_at, description')
+        .gte('starts_at', new Date().toISOString())
+        .lte('starts_at', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())
+        .order('starts_at', { ascending: true })
+        .limit(5);
+
+      if (events && events.length > 0) {
+        calendarContext = '\n\nUpcoming calendar events (next 7 days):\n' + events.map((e: any, i: number) => 
+          `[Event ${i+1}] ${e.title} - ${new Date(e.starts_at).toLocaleString()}${e.description ? ': ' + e.description : ''}`
+        ).join('\n');
+      }
+    }
+
     // Get conversation history
     const { data: history } = await supabase
       .from("rocker_messages")
@@ -63,14 +88,15 @@ serve(async (req) => {
 - Ask clarifying questions
 - Propose next actions
 - Cite sources when using memory
-- Format tasks as "todo: [action]" to auto-create them`;
+- Format tasks as "todo: [action]" to auto-create them
+${calendarContext ? '- You have access to the user\'s calendar - suggest prep, reminders, and follow-ups' : ''}`;
 
     let reply = "I'm here to help! How can I assist you?";
 
     if (LOVABLE_API_KEY) {
       try {
         const aiMessages = [
-          { role: "system", content: systemPrompt + memoryContext },
+          { role: "system", content: systemPrompt + memoryContext + calendarContext },
           ...(history || []).map((m: any) => ({ role: m.role, content: m.content })),
           { role: "user", content: message }
         ];

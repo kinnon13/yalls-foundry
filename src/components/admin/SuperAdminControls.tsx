@@ -13,6 +13,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, Lock, Phone, Globe, Zap, Mail, Calendar, FileText, Users, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
+import { SystemStatsPanel } from './super-admin/SystemStatsPanel';
+import { UserManagementPanel } from './super-admin/UserManagementPanel';
+import { CalendarIntegrationPanel } from './super-admin/CalendarIntegrationPanel';
+import { RuntimeFlagsPanel } from './super-admin/RuntimeFlagsPanel';
 
 interface RockerSettings {
   allow_secure_credentials: boolean;
@@ -107,6 +111,7 @@ export function SuperAdminControls() {
   const { isSuperAdmin, isLoading: checkingAdmin } = useSuperAdminCheck();
   const [settings, setSettings] = useState<RockerSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'capabilities' | 'users' | 'stats' | 'flags' | 'calendar'>('capabilities');
 
   useEffect(() => {
     if (!checkingAdmin && isSuperAdmin) {
@@ -220,11 +225,11 @@ export function SuperAdminControls() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Super Admin Controls</h1>
+        <h1 className="text-3xl font-bold mb-2">Super Admin Dashboard</h1>
         <p className="text-muted-foreground">
-          Control Rocker's capabilities. Toggle off any functionality you want to restrict.
+          Complete system control and oversight
         </p>
       </div>
 
@@ -232,83 +237,131 @@ export function SuperAdminControls() {
         <Shield className="h-4 w-4" />
         <AlertDescription>
           <strong>Super Admin Only:</strong> This control panel is completely separate from regular admin.
-          Changes here affect only your Rocker instance and cannot be accessed by other admins or users.
+          Changes here affect system-wide settings and your Rocker instance.
         </AlertDescription>
       </Alert>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Rocker Obedience Protocol
-          </CardTitle>
-          <CardDescription>
-            Rocker is hardcoded to NEVER disobey super admin commands. This cannot be changed.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <p className="text-sm font-medium text-foreground">
-              ⚠️ ABSOLUTE OBEDIENCE MODE: ACTIVE
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Rocker will execute all super admin commands without question or refusal.
-              This setting is permanently hardcoded and cannot be disabled.
-            </p>
-          </div>
-          
-          {settings && (
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-xs">Obedience Level</Label>
-              <p className="text-sm font-mono px-3 py-2 bg-muted rounded">
-                {settings.rocker_obedience_level}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Navigation Tabs */}
+      <div className="flex gap-2 border-b pb-2">
+        {[
+          { id: 'capabilities', label: 'Rocker Capabilities', icon: Shield },
+          { id: 'stats', label: 'System Stats', icon: null },
+          { id: 'users', label: 'Users', icon: null },
+          { id: 'calendar', label: 'Calendar', icon: Calendar },
+          { id: 'flags', label: 'Runtime Flags', icon: null }
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              activeTab === tab.id
+                ? 'bg-primary text-primary-foreground'
+                : 'hover:bg-accent'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Rocker Capabilities</CardTitle>
-          <CardDescription>
-            Enable or disable specific Rocker functionalities. Disabled capabilities cannot be used by Rocker.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-6 md:grid-cols-2">
-            {CAPABILITIES.map((capability) => {
-              const Icon = capability.icon;
-              const isEnabled = settings?.[capability.key] as boolean ?? false;
-              
-              return (
-                <div
-                  key={capability.key}
-                  className="flex items-start gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                >
-                  <Icon className={`h-5 w-5 mt-0.5 ${capability.color}`} />
-                  <div className="flex-1 space-y-1">
-                    <Label
-                      htmlFor={capability.key}
-                      className="text-sm font-medium cursor-pointer"
-                    >
-                      {capability.label}
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      {capability.description}
-                    </p>
-                  </div>
-                  <Switch
-                    id={capability.key}
-                    checked={isEnabled}
-                    onCheckedChange={() => toggleCapability(capability.key)}
-                  />
+      {/* Tab Content */}
+      {activeTab === 'capabilities' && (
+        <>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                <div>
+                  <CardTitle>Rocker Obedience Protocol</CardTitle>
                 </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+              <CardDescription>
+                Rocker is hardcoded to NEVER disobey super admin commands. This cannot be changed.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-sm font-medium">
+                  ⚠️ ABSOLUTE OBEDIENCE MODE: ACTIVE
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Rocker will execute all super admin commands without question or refusal.
+                  This setting is permanently hardcoded and cannot be disabled.
+                </p>
+              </div>
+              
+              {settings && (
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground text-xs">Obedience Level</Label>
+                  <p className="text-sm font-mono px-3 py-2 bg-muted rounded">
+                    {settings.rocker_obedience_level}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Rocker Capabilities</CardTitle>
+              <CardDescription>
+                Enable or disable specific Rocker functionalities. Disabled capabilities cannot be used by Rocker.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6 md:grid-cols-2">
+                {CAPABILITIES.map((capability) => {
+                  const Icon = capability.icon;
+                  const isEnabled = settings?.[capability.key] as boolean ?? false;
+                  
+                  return (
+                    <div
+                      key={capability.key}
+                      className="flex items-start gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                    >
+                      <Icon className={`h-5 w-5 mt-0.5 ${capability.color}`} />
+                      <div className="flex-1 space-y-1">
+                        <Label
+                          htmlFor={capability.key}
+                          className="text-sm font-medium cursor-pointer"
+                        >
+                          {capability.label}
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {capability.description}
+                        </p>
+                      </div>
+                      <Switch
+                        id={capability.key}
+                        checked={isEnabled}
+                        onCheckedChange={() => toggleCapability(capability.key)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {activeTab === 'stats' && (
+        <SystemStatsPanel />
+      )}
+
+      {activeTab === 'users' && (
+        <UserManagementPanel />
+      )}
+
+      {activeTab === 'calendar' && (
+        <CalendarIntegrationPanel />
+      )}
+
+      {activeTab === 'flags' && (
+        <RuntimeFlagsPanel />
+      )}
     </div>
   );
 }
+
+
