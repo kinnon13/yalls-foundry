@@ -69,45 +69,16 @@ serve(async (req) => {
     const { data: isSuperAdmin } = await supabase.rpc('is_super_admin', { p_uid: user.id });
     const priority = isSuperAdmin ? 10 : 100;
 
-    // Auto-categorize using AI (single fast call)
+    // Simple categorization without AI to avoid memory issues
     let category = 'Notes';
-    let summary = text.slice(0, 200) + '...';
+    let summary = text.slice(0, 150);
     let tags: string[] = [];
 
-    // Skip AI for texts over 10KB to prevent memory issues
-    if (LOVABLE_API_KEY && text.length < 10000) {
-      try {
-        // Ultra-fast AI call with minimal prompt
-        const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash-lite',
-            messages: [{
-              role: 'user',
-              content: `Category, summary, 3 tags for:\n\n${text.slice(0, 800)}\n\nJSON: {"category":"","summary":"","tags":[]}`
-            }],
-            max_completion_tokens: 100,
-          }),
-        });
-        
-        if (aiResponse.ok) {
-          const data = await aiResponse.json();
-          const content = data.choices?.[0]?.message?.content || '{}';
-          const parsed = JSON.parse(content.replace(/```json\n?|\n?```/g, ''));
-          category = parsed.category || 'Notes';
-          summary = parsed.summary || text.slice(0, 150);
-          tags = Array.isArray(parsed.tags) ? parsed.tags.slice(0, 3) : [];
-        }
-      } catch (aiError) {
-        console.error('AI skip:', aiError.message);
-      }
-    } else {
-      summary = text.length > 10000 ? `Doc (${Math.round(text.length / 1000)}KB)` : text.slice(0, 150);
-      category = 'Notes';
+    // Skip AI entirely for bulk paste - categorize based on simple heuristics
+    if (text.length > 5000) {
+      summary = `Document (${Math.round(text.length / 1000)}KB)`;
+    } else if (subject && subject.toLowerCase() !== 'super rocker memory') {
+      category = subject.slice(0, 50);
     }
 
     // Insert chunks into memory
