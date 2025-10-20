@@ -8141,6 +8141,7 @@ export type Database = {
           content_tsv: unknown | null
           created_at: string
           embedding: string | null
+          file_id: string | null
           id: string
           memory_id: string | null
           meta: Json | null
@@ -8153,6 +8154,7 @@ export type Database = {
           content_tsv?: unknown | null
           created_at?: string
           embedding?: string | null
+          file_id?: string | null
           id?: string
           memory_id?: string | null
           meta?: Json | null
@@ -8165,6 +8167,7 @@ export type Database = {
           content_tsv?: unknown | null
           created_at?: string
           embedding?: string | null
+          file_id?: string | null
           id?: string
           memory_id?: string | null
           meta?: Json | null
@@ -8172,6 +8175,34 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "rocker_knowledge_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rocker_knowledge_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "vw_files_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rocker_knowledge_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "vw_files_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rocker_knowledge_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "vw_starred"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "rocker_knowledge_memory_id_fkey"
             columns: ["memory_id"]
@@ -12302,6 +12333,12 @@ export type Database = {
           reason: string
           status: string
           updated_at: string
+        }[]
+      }
+      link_chunks_to_files: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          linked_count: number
         }[]
       }
       linked_account_upsert: {

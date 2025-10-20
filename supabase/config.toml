@@ -236,3 +236,10 @@ verify_jwt = false
 [functions.nightly-consolidate-notes.cron]
 schedule = "0 3 * * *"  # Daily at 3 AM
 
+# Capability ranking & decay - runs nightly
+[functions.rocker-capability-ranker]
+verify_jwt = false
+
+[functions.rocker-capability-ranker.cron]
+schedule = "0 4 * * *"  # Daily at 4 AM (after gap scan)
+

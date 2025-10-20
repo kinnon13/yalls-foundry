@@ -54,24 +54,30 @@ export function FileBrowser() {
 
   const loadFiles = async () => {
     try {
-      // Load files with chunk count via left join
-      const { data, error } = await supabase
+      // Load files with chunk count using file_id FK
+      const { data: filesData, error } = await supabase
         .from('rocker_files')
-        .select(`
-          *,
-          chunk_count:rocker_knowledge(count)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // Transform to flatten chunk_count
-      const transformed = (data || []).map((f: any) => ({
-        ...f,
-        chunk_count: f.chunk_count?.[0]?.count || 0
-      }));
+      // For each file, count its chunks via file_id
+      const filesWithCounts = await Promise.all(
+        (filesData || []).map(async (file: any) => {
+          const { count } = await supabase
+            .from('rocker_knowledge')
+            .select('*', { count: 'exact', head: true })
+            .eq('file_id', file.id);
+          
+          return {
+            ...file,
+            chunk_count: count || 0
+          };
+        })
+      );
       
-      setFiles(transformed);
+      setFiles(filesWithCounts);
     } catch (error: any) {
       console.error('Failed to load files:', error);
     }

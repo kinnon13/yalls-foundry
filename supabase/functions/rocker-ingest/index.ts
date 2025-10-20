@@ -205,14 +205,14 @@ serve(async (req) => {
       console.error('[Ingest] Failed to create file record:', fileError);
     }
 
-    // Link all chunks to this file so they show up together
+    // Link all chunks to this file via file_id FK
     if (fileRecord?.id && insertedIds.length > 0) {
       try {
         await supabase
           .from('rocker_knowledge')
-          .update({ memory_id: fileRecord.id })
+          .update({ file_id: fileRecord.id }) // Use file_id instead of memory_id
           .in('id', insertedIds);
-        console.log(`[Ingest] Linked ${insertedIds.length} chunks to file ${fileRecord.id}`);
+        console.log(`[Ingest] Linked ${insertedIds.length} chunks to file ${fileRecord.id} via file_id`);
       } catch (linkErr) {
         console.error('[Ingest] Failed to link chunks to file:', linkErr);
       }
