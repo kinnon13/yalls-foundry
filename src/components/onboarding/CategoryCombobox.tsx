@@ -40,10 +40,10 @@ export function CategoryCombobox({ value, onChange, placeholder = 'Search catego
 
     searchTimeoutRef.current = setTimeout(async () => {
       try {
-        const { data, error } = await supabase.rpc('search_categories', {
+        const { data, error } = await supabase.rpc('search_categories' as any, {
           p_query: query.trim(),
           p_limit: 10
-        });
+        }) as { data: Category[] | null; error: any };
 
         if (error) throw error;
         setItems(data || []);
@@ -79,7 +79,7 @@ export function CategoryCombobox({ value, onChange, placeholder = 'Search catego
     const key = query.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     try {
       const { error } = await supabase
-        .from('biz_categories')
+        .from('biz_categories' as any)
         .insert({ key, label: query.trim() });
       
       if (error) throw error;
@@ -120,11 +120,12 @@ export function CategoryCombobox({ value, onChange, placeholder = 'Search catego
   useEffect(() => {
     if (value.length === 0) return;
     
-    supabase
-      .from('biz_categories')
+    (supabase
+      .from('biz_categories' as any)
       .select('key, label')
-      .in('key', value)
-      .then(({ data }) => {
+      .in('key', value) as any)
+      .then((response: any) => {
+        const data = response?.data as Category[] | null;
         if (data) {
           const map = new Map(data.map(d => [d.key, d.label]));
           setSelectedLabels(map);

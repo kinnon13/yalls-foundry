@@ -77,7 +77,7 @@ export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
 
       if (claimEntityId) {
         // Claim existing ghost entity
-        const { error } = await supabase.rpc('claim_ghost_entity', {
+        const { error } = await supabase.rpc('claim_ghost_entity' as any, {
           p_entity: claimEntityId,
           p_user: user.id
         });
@@ -90,7 +90,7 @@ export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
         });
       } else {
         // Create new business
-        const { data: entityId, error } = await supabase.rpc('create_business_quick', {
+        const { data: entityId, error } = await supabase.rpc('create_business_quick' as any, {
           p_owner_user: user.id,
           p_name: name.trim(),
           p_categories: categories,

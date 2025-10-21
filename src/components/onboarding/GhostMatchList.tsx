@@ -39,12 +39,12 @@ export function GhostMatchList({ name, phone, website, onClaim, claimedId }: Gho
 
     searchTimeoutRef.current = setTimeout(async () => {
       try {
-        const { data, error } = await supabase.rpc('ghost_match', {
+        const { data, error } = await supabase.rpc('ghost_match' as any, {
           p_name: name.trim(),
           p_phone: phone || null,
           p_site: website || null,
           p_limit: 5
-        });
+        }) as { data: GhostMatch[] | null; error: any };
 
         if (error) throw error;
         setMatches(data || []);
