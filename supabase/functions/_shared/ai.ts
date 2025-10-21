@@ -172,8 +172,8 @@ export const ai = {
       const j = await r.json();
       return j.data.map((d: any) => d.embedding as number[]);
     }
-    // lovable uses OpenAI-compatible API
-    const r = await fetch('https://api.openai.com/v1/embeddings', {
+    // lovable gateway (OpenAI-compatible)
+    const r = await fetch('https://ai.gateway.lovable.dev/v1/embeddings', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${env('LOVABLE_API_KEY')}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: m[role].embed, input: inputs })

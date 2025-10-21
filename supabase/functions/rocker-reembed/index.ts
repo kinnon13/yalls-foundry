@@ -47,7 +47,7 @@ serve(async (req) => {
       if (reset) {
         try {
           if (table === 'rocker_knowledge') {
-            await service.from('rocker_knowledge').update({ embedding: null as any }).is('embedding', null).select('id').limit(0);
+            await service.from('rocker_knowledge').update({ embedding: null as any }).not('embedding', 'is', null);
           }
           // For knowledge_items, embeddings live in chunks table typically; we don't reset here
         } catch (e) {
