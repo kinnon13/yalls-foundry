@@ -85,19 +85,19 @@ export default function SuperRocker() {
       </div>
 
       {/* 3-Panel Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_400px] gap-4 p-4 md:p-6 h-[calc(100vh-3.5rem)]">
+      <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_400px] gap-4 p-4 md:p-6 h-[calc(100vh-3.5rem-var(--dock-h,0px))] pb-[calc(var(--dock-h,0px)+1rem)] lg:pb-6">
         {/* Left: App Dock */}
-        <aside className="hidden lg:block rounded-2xl bg-card/50 backdrop-blur-xl border border-border/40 shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
+        <aside className="hidden lg:flex rounded-2xl bg-card/50 backdrop-blur-xl border border-border/40 shadow-[0_8px_30px_rgba(0,0,0,0.06)] overflow-hidden">
           <AppDock activeApp={activeApp} onAppChange={setActiveApp} />
         </aside>
 
         {/* Center: Stage */}
-        <main className="rounded-2xl bg-card/50 backdrop-blur-xl border border-border/40 shadow-[0_8px_30px_rgba(0,0,0,0.06)] overflow-hidden">
+        <main className="rounded-2xl bg-card/50 backdrop-blur-xl border border-border/40 shadow-[0_8px_30px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col">
           <CenterStage activeApp={activeApp} threadId={threadId} />
         </main>
 
         {/* Right: Messenger Rail */}
-        <aside className="hidden lg:block rounded-2xl bg-card/50 backdrop-blur-xl border border-border/40 shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
+        <aside className="hidden lg:flex rounded-2xl bg-card/50 backdrop-blur-xl border border-border/40 shadow-[0_8px_30px_rgba(0,0,0,0.06)] overflow-hidden">
           <MessengerRail />
         </aside>
       </div>

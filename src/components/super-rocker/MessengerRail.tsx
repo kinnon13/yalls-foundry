@@ -141,8 +141,8 @@ export function MessengerRail() {
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 px-4">
-        <div ref={scrollRef} className="py-4 space-y-4">
+      <div className="flex-1 overflow-hidden px-4">
+        <div ref={scrollRef} className="h-full overflow-y-auto py-4 space-y-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-4">
@@ -167,7 +167,7 @@ export function MessengerRail() {
                 className={cn(
                   'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm',
                   msg.role === 'user'
-                    ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground shadow-md shadow-primary/20'
+                    ? 'bg-[#007AFF] text-white shadow-md shadow-blue-500/20'
                     : 'bg-muted text-foreground'
                 )}
               >
@@ -188,7 +188,7 @@ export function MessengerRail() {
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Composer */}
       <div className="flex-none p-4 border-t border-border/40">

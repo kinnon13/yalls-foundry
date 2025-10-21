@@ -29,7 +29,7 @@ export function CenterStage({ activeApp, threadId }: CenterStageProps) {
   );
 
   return (
-    <div className="h-full overflow-auto animate-fade-in">
+    <div className="h-full w-full overflow-auto animate-fade-in">
       {activeApp === 'knowledge' && <SuperRockerKnowledge />}
       
       {activeApp === 'memory' && <SuperRockerMemory />}
