@@ -28,6 +28,7 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
   const [validatingUsername, setValidatingUsername] = useState(false);
   const [referrerId, setReferrerId] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [showErrorOnBlur, setShowErrorOnBlur] = useState(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -88,7 +89,7 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
     return trimmed.replace(/^@/, '').trim() || null;
   };
 
-  const validateUsername = useCallback(async (username: string) => {
+  const validateUsername = useCallback(async (username: string, showErrors = false) => {
     const handle = parseHandle(username);
     
     if (!handle) {
@@ -100,7 +101,9 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
     // Client-side validation with zod
     const validation = handleSchema.safeParse(handle);
     if (!validation.success) {
-      setUsernameError(validation.error.errors[0].message);
+      if (showErrors) {
+        setUsernameError(validation.error.errors[0].message);
+      }
       setReferrerId(null);
       setValidatingUsername(false);
       return;
@@ -120,40 +123,48 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
         .maybeSingle();
 
       if (!profile) {
-        setUsernameError(`No user with handle @${handle} exists`);
+        if (showErrors) {
+          setUsernameError(`No user with handle @${handle} exists`);
+        }
         setReferrerId(null);
         return;
       }
 
       if (profile.user_id === user.id) {
-        setUsernameError('Cannot refer yourself');
+        if (showErrors) {
+          setUsernameError('Cannot refer yourself');
+        }
         setReferrerId(null);
         return;
       }
 
       setReferrerId(profile.user_id);
       setUsernameError(null);
-      toast({
-        title: '✓ Valid username',
-        description: `Referrer: @${profile.handle}`
-      });
+      if (showErrors) {
+        toast({
+          title: '✓ Valid username',
+          description: `Referrer: @${profile.handle}`
+        });
+      }
     } catch (err) {
       console.error('Username validation error:', err);
-      setUsernameError('Error validating username');
+      if (showErrors) {
+        setUsernameError('Error validating username');
+      }
       setReferrerId(null);
     } finally {
       setValidatingUsername(false);
     }
   }, [toast]);
 
-  // Debounced validation
+  // Debounced validation - silent during typing
   const debouncedValidate = useCallback((username: string) => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
     
     debounceTimerRef.current = setTimeout(() => {
-      validateUsername(username);
+      validateUsername(username, false); // Don't show errors while typing
     }, 500); // 500ms debounce
   }, [validateUsername]);
 
@@ -306,8 +317,9 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
                 const value = e.target.value;
                 setReferralUsername(value);
                 setUsernameError(null);
+                setShowErrorOnBlur(false);
                 
-                // Trigger debounced validation
+                // Trigger debounced validation (silent)
                 if (value.trim()) {
                   debouncedValidate(value);
                 } else {
@@ -318,18 +330,22 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
                   }
                 }
               }}
+              onBlur={() => {
+                setShowErrorOnBlur(true);
+                validateUsername(referralUsername, true); // Show errors on blur
+              }}
               disabled={validatingUsername}
-              className={usernameError ? 'border-destructive' : ''}
+              className={showErrorOnBlur && usernameError ? 'border-destructive' : ''}
             />
             {validatingUsername && (
               <p className="text-sm text-muted-foreground mt-1">
-                <span className="inline-block animate-pulse">●</span> Validating username...
+                <span className="inline-block animate-pulse">●</span> Checking username...
               </p>
             )}
             {!validatingUsername && referrerId && (
               <p className="text-sm text-green-600 mt-1">✓ Valid referrer found</p>
             )}
-            {!validatingUsername && usernameError && (
+            {!validatingUsername && showErrorOnBlur && usernameError && (
               <p className="text-sm text-destructive mt-1">{usernameError}</p>
             )}
           </div>
