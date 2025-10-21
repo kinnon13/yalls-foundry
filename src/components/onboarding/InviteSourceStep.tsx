@@ -3,7 +3,7 @@
  * Required first step - captures attribution
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { emitEvent } from '@/lib/telemetry/events';
+import { z } from 'zod';
 
 interface InviteSourceStepProps {
   onComplete: () => void;
@@ -26,6 +27,8 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
   const [referralUsername, setReferralUsername] = useState('');
   const [validatingUsername, setValidatingUsername] = useState(false);
   const [referrerId, setReferrerId] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     loadExisting();
@@ -68,6 +71,13 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
     }
   };
 
+  // Input validation schema
+  const handleSchema = z.string()
+    .trim()
+    .min(1, 'Username cannot be empty')
+    .max(50, 'Username must be less than 50 characters')
+    .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores');
+
   const parseHandle = (value: string): string | null => {
     if (!value) return null;
     const trimmed = value.trim();
@@ -78,14 +88,27 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
     return trimmed.replace(/^@/, '').trim() || null;
   };
 
-  const validateUsername = async (username: string) => {
+  const validateUsername = useCallback(async (username: string) => {
     const handle = parseHandle(username);
+    
     if (!handle) {
       setReferrerId(null);
+      setUsernameError(null);
+      return;
+    }
+
+    // Client-side validation with zod
+    const validation = handleSchema.safeParse(handle);
+    if (!validation.success) {
+      setUsernameError(validation.error.errors[0].message);
+      setReferrerId(null);
+      setValidatingUsername(false);
       return;
     }
 
     setValidatingUsername(true);
+    setUsernameError(null);
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -97,37 +120,51 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
         .maybeSingle();
 
       if (!profile) {
-        toast({
-          title: 'Username not found',
-          description: `No user with handle @${handle} exists`,
-          variant: 'destructive'
-        });
+        setUsernameError(`No user with handle @${handle} exists`);
         setReferrerId(null);
         return;
       }
 
       if (profile.user_id === user.id) {
-        toast({
-          title: 'Cannot refer yourself',
-          description: 'Please enter a different username',
-          variant: 'destructive'
-        });
+        setUsernameError('Cannot refer yourself');
         setReferrerId(null);
         return;
       }
 
       setReferrerId(profile.user_id);
+      setUsernameError(null);
       toast({
         title: '✓ Valid username',
         description: `Referrer: @${profile.handle}`
       });
     } catch (err) {
       console.error('Username validation error:', err);
+      setUsernameError('Error validating username');
       setReferrerId(null);
     } finally {
       setValidatingUsername(false);
     }
-  };
+  }, [toast]);
+
+  // Debounced validation
+  const debouncedValidate = useCallback((username: string) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      validateUsername(username);
+    }, 500); // 500ms debounce
+  }, [validateUsername]);
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async () => {
     // Validation
@@ -265,15 +302,35 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
               id="referral-username"
               placeholder="Enter their @username or paste referral link"
               value={referralUsername}
-              onChange={(e) => setReferralUsername(e.target.value)}
-              onBlur={() => validateUsername(referralUsername)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setReferralUsername(value);
+                setUsernameError(null);
+                
+                // Trigger debounced validation
+                if (value.trim()) {
+                  debouncedValidate(value);
+                } else {
+                  setReferrerId(null);
+                  setUsernameError(null);
+                  if (debounceTimerRef.current) {
+                    clearTimeout(debounceTimerRef.current);
+                  }
+                }
+              }}
               disabled={validatingUsername}
+              className={usernameError ? 'border-destructive' : ''}
             />
             {validatingUsername && (
-              <p className="text-sm text-muted-foreground mt-1">Validating username...</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                <span className="inline-block animate-pulse">●</span> Validating username...
+              </p>
             )}
-            {referrerId && (
+            {!validatingUsername && referrerId && (
               <p className="text-sm text-green-600 mt-1">✓ Valid referrer found</p>
+            )}
+            {!validatingUsername && usernameError && (
+              <p className="text-sm text-destructive mt-1">{usernameError}</p>
             )}
           </div>
           <div>
@@ -325,7 +382,7 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
 
       <Button 
         onClick={handleSubmit} 
-        disabled={loading || (inviteKind === 'user' && referralUsername && !referrerId)}
+        disabled={loading || validatingUsername || (inviteKind === 'user' && referralUsername && (!referrerId || !!usernameError))}
         className="w-full"
         data-testid="invite-submit"
       >
