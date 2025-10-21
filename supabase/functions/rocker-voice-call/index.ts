@@ -192,11 +192,8 @@ serve(async (req) => {
         }
       );
     } else if (action === "send_voice_message") {
-      // Generate TTS audio
-      const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-      if (!OPENAI_API_KEY) {
-        throw new Error("OpenAI API key not configured");
-      }
+      // Generate TTS audio via unified gateway
+      const { ai } = await import("../_shared/ai.ts");
 
       const { data: prefs } = await supabaseClient
         .from("voice_preferences")
@@ -204,25 +201,7 @@ serve(async (req) => {
         .eq("user_id", user.id)
         .single();
 
-      const ttsResponse = await fetch("https://api.openai.com/v1/audio/speech", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "tts-1",
-          input: message,
-          voice: prefs?.preferred_voice || "alloy",
-          response_format: "mp3",
-        }),
-      });
-
-      if (!ttsResponse.ok) {
-        throw new Error("Failed to generate voice message");
-      }
-
-      const audioBuffer = await ttsResponse.arrayBuffer();
+      const audioBuffer = await ai.tts('user', message, prefs?.preferred_voice || "alloy");
       const audioBase64 = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
 
       // Upload to storage

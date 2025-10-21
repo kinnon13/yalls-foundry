@@ -41,30 +41,16 @@ serve(async (req) => {
 
     const corpus = data.map(r => `[#${r.chunk_index}] ${r.content}`).join("\n\n");
 
-    const prompt = [
-      { role: "system", content: "You are Rocker. Summarize clearly. Output: TL;DR, 5–10 Key Points, Entities, Action Items. Cite chunk indices like [#12] inline." },
-      { role: "user", content: `Summarize this:\n\n${corpus}` }
-    ];
+    const { ai } = await import("../_shared/ai.ts");
 
-    const { data: aiData, error: aiError } = await supabase.functions.invoke('proxy-openai', {
-      headers: { Authorization: req.headers.get("Authorization") || '' },
-      body: {
-        path: '/v1/chat/completions',
-        keyName: 'openai',
-        body: {
-          model: 'gpt-5-mini-2025-08-07',
-          messages: prompt,
-          max_completion_tokens: 900
-        }
-      }
+    const { text: summary } = await ai.chat({
+      role: 'knower',
+      messages: [
+        { role: "system", content: "You are Rocker. Summarize clearly. Output: TL;DR, 5–10 Key Points, Entities, Action Items. Cite chunk indices like [#12] inline." },
+        { role: "user", content: `Summarize this:\n\n${corpus}` }
+      ],
+      maxTokens: 900
     });
-
-    if (aiError) {
-      console.error("proxy-openai error:", aiError);
-      return new Response(JSON.stringify({ error: `OpenAI error: ${aiError.message}` }), { status: 500, headers: CORS });
-    }
-
-    const summary = (aiData as any)?.choices?.[0]?.message?.content ?? "";
 
     // Log for audit
     await supabase.from("ai_action_ledger").insert({

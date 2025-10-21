@@ -124,42 +124,28 @@ serve(async (req) => {
       try {
         log.info('Starting AI analysis');
         
-        // Use user's OpenAI key via proxy-openai for vision analysis
-        const { data: aiData, error: aiError } = await supabase.functions.invoke(proxyFn, {
-          headers: { Authorization: authHeader },
-          body: {
-            path: '/v1/chat/completions',
-            keyName: 'openai',
-            body: {
-              model: 'gpt-5-mini-2025-08-07',
-              messages: [
-                {
-                  role: 'system',
-                  content: `You are Rocker. Analyze uploaded media and extract: entities (horse/person/location/event), scene, emotion, context. Return pure JSON.`
-                },
-                {
-                  role: 'user',
-                  content: [
-                    { type: 'text', text: context ? `User context: ${context}. Analyze this ${fileType}.` : `Analyze this ${fileType}.` },
-                    { type: 'image_url', image_url: { url: publicUrl } }
-                  ]
-                }
-              ],
-              max_completion_tokens: 1000
+        // Use unified AI gateway for vision analysis
+        const { ai } = await import("../_shared/ai.ts");
+        
+        const { text: content } = await ai.chat({
+          role: 'knower',
+          messages: [
+            {
+              role: 'system',
+              content: `You are Rocker. Analyze uploaded media and extract: entities (horse/person/location/event), scene, emotion, context. Return pure JSON.`
+            },
+            {
+              role: 'user',
+              content: context ? `User context: ${context}. Analyze this ${fileType}.` : `Analyze this ${fileType}.`
             }
-          }
+          ],
+          maxTokens: 1000
         });
 
-        if (aiError) {
-          log.warn('AI analysis failed', { error: aiError.message });
-        } else {
-          const aiResult = aiData as any;
-          const content = aiResult.choices?.[0]?.message?.content;
-          
-          if (content) {
-            try {
-              aiAnalysis = JSON.parse(content);
-              log.info('AI analysis completed', { entities: aiAnalysis.entities?.length || 0 });
+        if (content) {
+          try {
+            aiAnalysis = JSON.parse(content);
+            log.info('AI analysis completed', { entities: aiAnalysis.entities?.length || 0 });
 
               // Update media record with AI analysis
               await supabase
@@ -195,9 +181,8 @@ serve(async (req) => {
                   }
                 }
               }
-            } catch (e) {
-              log.error('Failed to parse AI analysis', e);
-            }
+          } catch (e) {
+            log.error('Failed to parse AI analysis', e);
           }
         }
       } catch (aiError) {

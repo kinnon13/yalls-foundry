@@ -20,11 +20,6 @@ serve(async (req) => {
   log.startTimer();
 
   try {
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not set');
-    }
-
     // Get user session
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -341,6 +336,12 @@ EXPORTS: export_data, request_category, submit_feedback
         }
       }
     ];
+
+    // Note: Realtime API requires OpenAI - no gateway abstraction yet
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) {
+      throw new Error('Voice sessions require OPENAI_API_KEY (Realtime API not abstracted)');
+    }
 
     // Create ephemeral token for Realtime API
     const response = await fetch("https://api.openai.com/v1/realtime/sessions", {

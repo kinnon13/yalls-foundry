@@ -47,9 +47,13 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
     }
     if (listening) {
       stop();
-      if (input.trim()) handleSend();
+      // Auto-send after a short delay to allow final transcript to arrive
+      setTimeout(() => {
+        if (input.trim()) {
+          handleSend();
+        }
+      }, 300);
     } else {
-      setInput('');
       start();
     }
   };
