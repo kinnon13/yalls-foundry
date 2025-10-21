@@ -1,6 +1,6 @@
 /**
  * Step 4: Business Quick Setup (AI-Assisted)
- * Dynamic categories, ghost matching, Rocker integration
+ * Conversational flow with optional voice + legacy form fallback
  */
 
 import { useState } from 'react';
@@ -12,6 +12,7 @@ import { ArrowLeft, Sparkles } from 'lucide-react';
 import { GhostMatchList } from './GhostMatchList';
 import { MarketplaceCategoryCombobox } from './MarketplaceCategoryCombobox';
 import { RockerBusinessChat } from './RockerBusinessChat';
+import { BusinessChatOnboarding } from './BusinessChatOnboarding';
 import { useToast } from '@/hooks/use-toast';
 
 interface BusinessStepProps {
@@ -32,6 +33,19 @@ interface CategorySuggestion {
 }
 
 export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
+  // Feature flag for conversational onboarding (default: enabled)
+  const useConversational = true; // Can be env var later
+  
+  if (useConversational) {
+    return <BusinessChatOnboarding onComplete={onComplete} onSkip={onComplete} />;
+  }
+  
+  // Legacy form UI (fallback)
+  return <LegacyBusinessForm onComplete={onComplete} onBack={onBack} />;
+}
+
+// Legacy form component (kept for fallback/accessibility)
+function LegacyBusinessForm({ onComplete, onBack }: BusinessStepProps) {
   const [wantBusiness, setWantBusiness] = useState(false);
   const [name, setName] = useState('');
   const [categories, setCategories] = useState<MarketplaceCategory[]>([]);

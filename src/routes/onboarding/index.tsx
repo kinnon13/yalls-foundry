@@ -214,15 +214,19 @@ export default function OnboardingPage() {
         </div>
 
         {/* Step content */}
-        <div className={currentStep === 4 ? "mx-auto w-full max-w-[1200px]" : "max-w-2xl mx-auto"}>
-          <Card className="p-8 bg-background/80 backdrop-blur-xl border-border/50">
-            {currentStep === 0 && <InviteSourceStep onComplete={handleNext} />}
-            {currentStep === 1 && <HandleStep onComplete={handleNext} onBack={handleBack} />}
-            {currentStep === 2 && <InterestsStepUniversal onComplete={handleNext} onBack={handleBack} />}
-            {currentStep === 3 && <NotificationsStep onComplete={handleNext} onBack={handleBack} />}
-            {currentStep === 4 && <BusinessStep onComplete={handleNext} onBack={handleBack} />}
-            {currentStep === 5 && <FollowsStep onComplete={finishOnboarding} onBack={handleBack} />}
-          </Card>
+        <div className="max-w-2xl mx-auto">
+          {currentStep === 4 ? (
+            // Business step renders its own full-width layout (no card wrapper)
+            <BusinessStep onComplete={handleNext} onBack={handleBack} />
+          ) : (
+            <Card className="p-8 bg-background/80 backdrop-blur-xl border-border/50">
+              {currentStep === 0 && <InviteSourceStep onComplete={handleNext} />}
+              {currentStep === 1 && <HandleStep onComplete={handleNext} onBack={handleBack} />}
+              {currentStep === 2 && <InterestsStepUniversal onComplete={handleNext} onBack={handleBack} />}
+              {currentStep === 3 && <NotificationsStep onComplete={handleNext} onBack={handleBack} />}
+              {currentStep === 5 && <FollowsStep onComplete={finishOnboarding} onBack={handleBack} />}
+            </Card>
+          )}
         </div>
 
         {/* Footer hint */}
