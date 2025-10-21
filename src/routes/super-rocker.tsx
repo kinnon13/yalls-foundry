@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '@/lib/auth/context';
 import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
@@ -9,7 +10,7 @@ import { SuperRockerMemory } from '@/components/super-rocker/SuperRockerMemory';
 import { SuperRockerInbox } from '@/components/super-rocker/SuperRockerInbox';
 import { FileBrowser } from '@/components/super-rocker/FileBrowser';
 import { SuperRockerAdmin } from '@/components/super-rocker/SuperRockerAdmin';
-import { Button } from '@/components/ui/button';
+import { GlobalHeader } from '@/components/layout/GlobalHeader';
 import { 
   Brain, 
   Database, 
@@ -26,6 +27,7 @@ import { cn } from '@/lib/utils';
 const SuperAdminCapabilities = lazy(() => 
   import('@/components/admin/SuperAdminControls').then(m => ({ default: m.SuperAdminControls }))
 );
+const SettingsKeysPage = lazy(() => import('@/pages/SettingsKeys'));
 
 type Tab = 'chat' | 'knowledge' | 'tasks' | 'memory' | 'files' | 'inbox' | 'admin' | 'capabilities' | 'secrets' | 'users';
 
@@ -85,12 +87,14 @@ export default function SuperRocker() {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Top Bar */}
-      <div className="h-12 border-b bg-card/50 backdrop-blur-sm flex items-center px-6 shrink-0">
-        <div className="flex items-center gap-2">
-          <Brain className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-foreground">Super Rocker</span>
-        </div>
+      <Helmet>
+        <title>Super Rocker — AI Workspace</title>
+        <meta name="description" content="Super admin AI workspace with chat, knowledge, tasks, memory, files, inbox, capabilities, and API keys." />
+        <link rel="canonical" href={`${window.location.origin}/super-rocker`} />
+      </Helmet>
+      {/* Global Header */}
+      <div className="h-[var(--header-h)] shrink-0 z-40">
+        <GlobalHeader />
       </div>
 
       {/* Main Layout */}
@@ -135,7 +139,7 @@ export default function SuperRocker() {
           <div className="h-full overflow-y-auto">
             <div className="max-w-7xl mx-auto p-8">
               {activeTab === 'chat' && (
-                <div className="h-[calc(100vh-10rem)]">
+                <div className="h-[calc(100vh-12rem)] rounded-2xl border bg-card shadow-sm p-4">
                   <SuperRockerChat threadId={threadId} onThreadCreated={setThreadId} />
                 </div>
               )}
@@ -154,19 +158,9 @@ export default function SuperRocker() {
               )}
 
               {activeTab === 'secrets' && (
-                <div className="space-y-4">
-                  <div>
-                    <h1 className="text-3xl font-bold text-foreground mb-2">API Keys & Secrets</h1>
-                    <p className="text-muted-foreground">
-                      Manage your API keys and integration secrets
-                    </p>
-                  </div>
-                  <div className="p-6 border rounded-lg bg-card">
-                    <p className="text-sm text-muted-foreground">
-                      Navigate to Settings → API Keys to manage secrets
-                    </p>
-                  </div>
-                </div>
+                <Suspense fallback={<div className="py-8 text-muted-foreground">Loading API keys...</div>}>
+                  <SettingsKeysPage />
+                </Suspense>
               )}
             </div>
           </div>
