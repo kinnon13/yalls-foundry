@@ -23,6 +23,9 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
   const [inviteCode, setInviteCode] = useState('');
   const [inviteMedium, setInviteMedium] = useState('');
   const [freeText, setFreeText] = useState('');
+  const [referralUsername, setReferralUsername] = useState('');
+  const [validatingUsername, setValidatingUsername] = useState(false);
+  const [referrerId, setReferrerId] = useState<string | null>(null);
 
   useEffect(() => {
     loadExisting();
@@ -43,12 +46,91 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
       if (acq.invite_code) setInviteCode(acq.invite_code);
       if (acq.invite_medium) setInviteMedium(acq.invite_medium);
     }
+
+    // Load existing referrer if set
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('invited_by, handle')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profile?.invited_by) {
+      setReferrerId(profile.invited_by);
+      // Fetch referrer's username
+      const { data: referrer } = await supabase
+        .from('profiles')
+        .select('handle')
+        .eq('user_id', profile.invited_by)
+        .single();
+      if (referrer?.handle) {
+        setReferralUsername(referrer.handle);
+      }
+    }
+  };
+
+  const validateUsername = async (username: string) => {
+    if (!username.trim()) {
+      setReferrerId(null);
+      return;
+    }
+
+    setValidatingUsername(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_id, handle')
+        .eq('handle', username.trim())
+        .single();
+
+      if (!profile) {
+        toast({
+          title: 'Username not found',
+          description: `No user with handle @${username} exists`,
+          variant: 'destructive'
+        });
+        setReferrerId(null);
+        return;
+      }
+
+      if (profile.user_id === user.id) {
+        toast({
+          title: 'Cannot refer yourself',
+          description: 'Please enter a different username',
+          variant: 'destructive'
+        });
+        setReferrerId(null);
+        return;
+      }
+
+      setReferrerId(profile.user_id);
+      toast({
+        title: '✓ Valid username',
+        description: `Referrer: @${username}`
+      });
+    } catch (err) {
+      console.error('Username validation error:', err);
+      setReferrerId(null);
+    } finally {
+      setValidatingUsername(false);
+    }
   };
 
   const handleSubmit = async () => {
     // Validation
     if (inviteKind === 'other' && !freeText) {
       toast({ title: 'Please tell us how you found us', variant: 'destructive' });
+      return;
+    }
+
+    if (inviteKind === 'user' && referralUsername && !referrerId) {
+      toast({ 
+        title: 'Invalid username', 
+        description: 'Please enter a valid username or clear the field',
+        variant: 'destructive' 
+      });
       return;
     }
 
@@ -71,7 +153,7 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
 
       const payload = {
         invited_by_kind: inviteKind,
-        invited_by_id: null, // TODO: Add user/entity search in future
+        invited_by_id: referrerId || null,
         invite_code: inviteCode || null,
         invite_medium: inviteMedium || freeText || 'organic',
         utm,
@@ -82,11 +164,32 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
 
       if (error) throw error;
 
-      emitEvent('acquisition_capture', { kind: inviteKind, medium: payload.invite_medium });
+      // Update profile with referrer to create tier hierarchy
+      if (referrerId) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ 
+            invited_by: referrerId,
+            invite_source: `@${referralUsername}` 
+          })
+          .eq('user_id', user.id);
+
+        if (profileError) {
+          console.error('Failed to update profile with referrer:', profileError);
+        }
+      }
+
+      emitEvent('acquisition_capture', { 
+        kind: inviteKind, 
+        medium: payload.invite_medium,
+        has_referrer: !!referrerId 
+      });
       
       toast({
         title: '✓ Thanks for sharing!',
-        description: 'Let\'s complete your profile'
+        description: referrerId 
+          ? `You've been connected to @${referralUsername}'s network`
+          : 'Let\'s complete your profile'
       });
 
       onComplete();
@@ -142,7 +245,43 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
         </div>
       </RadioGroup>
 
-      {(inviteKind === 'user' || inviteKind === 'entity') && (
+      {inviteKind === 'user' && (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="referral-username">Referrer Username *</Label>
+            <Input
+              id="referral-username"
+              placeholder="Enter their @username or paste referral link"
+              value={referralUsername}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Extract username from referral link or @ prefix
+                const username = value.replace(/^@/, '').replace(/.*[?&]ref=([^&]+).*/, '$1').trim();
+                setReferralUsername(username);
+              }}
+              onBlur={() => validateUsername(referralUsername)}
+              disabled={validatingUsername}
+            />
+            {validatingUsername && (
+              <p className="text-sm text-muted-foreground mt-1">Validating username...</p>
+            )}
+            {referrerId && (
+              <p className="text-sm text-green-600 mt-1">✓ Valid referrer found</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="invite-code">Invitation Code (optional)</Label>
+            <Input
+              id="invite-code"
+              placeholder="e.g., FRIEND2025"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
+
+      {inviteKind === 'entity' && (
         <div className="space-y-4">
           <div>
             <Label htmlFor="invite-code">Invitation Code (optional)</Label>
@@ -179,11 +318,11 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
 
       <Button 
         onClick={handleSubmit} 
-        disabled={loading}
+        disabled={loading || (inviteKind === 'user' && referralUsername && !referrerId)}
         className="w-full"
         data-testid="invite-submit"
       >
-        {loading ? 'Saving...' : 'Continue'}
+        {loading ? 'Saving...' : validatingUsername ? 'Validating...' : 'Continue'}
       </Button>
     </div>
   );
