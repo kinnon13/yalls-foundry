@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Brain, CheckCircle2, Clock, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Brain, CheckCircle2, Clock, AlertCircle, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmbeddingStatus } from './EmbeddingStatus';
 
@@ -40,6 +40,7 @@ export function SuperRockerKnowledge() {
   const [hasMore, setHasMore] = useState(true);
   const [expandedChunks, setExpandedChunks] = useState<Set<string>>(new Set());
   const [isReembedding, setIsReembedding] = useState(false);
+  const [reembedProgress, setReembedProgress] = useState<string>('');
 
   useEffect(() => {
     loadKnowledge(true);
@@ -148,6 +149,45 @@ export function SuperRockerKnowledge() {
     });
   };
 
+  const handleReembed = async () => {
+    setIsReembedding(true);
+    setReembedProgress('Resetting and re-embedding all knowledge...');
+    try {
+      const { data, error } = await supabase.functions.invoke('rocker-reembed', {
+        body: {
+          reset: true,
+          sources: ['rocker_knowledge'],
+          limit: 500
+        }
+      });
+
+      if (error) throw error;
+
+      setReembedProgress(`✅ Processed ${data.processed?.rocker_knowledge?.embedded || 0} items`);
+      toast({
+        title: 'Re-embedding complete',
+        description: `Successfully embedded ${data.processed?.rocker_knowledge?.embedded || 0} knowledge items`,
+      });
+      
+      // Refresh knowledge list and stats
+      await loadKnowledge(true);
+      await loadStats();
+    } catch (error: any) {
+      console.error('Re-embed error:', error);
+      toast({
+        title: 'Failed to re-embed',
+        description: error.message,
+        variant: 'destructive',
+      });
+      setReembedProgress('❌ Failed');
+    } finally {
+      setTimeout(() => {
+        setIsReembedding(false);
+        setReembedProgress('');
+      }, 3000);
+    }
+  };
+
   const getStatusIcon = (chunk: KnowledgeChunk) => {
     if (chunk.embedding) {
       return <CheckCircle2 className="h-4 w-4 text-green-500" />;
@@ -163,6 +203,36 @@ export function SuperRockerKnowledge() {
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Brain className="h-5 w-5" />
+          <h2 className="text-xl font-semibold">Knowledge Base</h2>
+          {reembedProgress && (
+            <Badge variant="secondary" className="ml-2">
+              {reembedProgress}
+            </Badge>
+          )}
+        </div>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={handleReembed}
+          disabled={isReembedding}
+        >
+          {isReembedding ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Re-embedding...
+            </>
+          ) : (
+            <>
+              <Brain className="h-4 w-4 mr-2" />
+              Re-embed Now
+            </>
+          )}
+        </Button>
+      </div>
+      
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-4">
           <div className="flex items-center gap-2">

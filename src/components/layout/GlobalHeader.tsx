@@ -26,7 +26,7 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .in('role', ['admin', 'super_admin'])
+        .eq('role', 'super_admin')
         .maybeSingle();
 
       setIsAdmin(!!data);

@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { RockerModeBanner } from './RockerModeBanner';
 import { RockerModeSwitcher } from './RockerModeSwitcher';
 import { AIRole, AI_PROFILES } from '@/lib/ai/rocker/config';
+import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
 
 interface ChatHeaderProps {
   showSidebar: boolean;
@@ -50,6 +51,7 @@ export function ChatHeader({
   actorRole = 'user'
 }: ChatHeaderProps) {
   const aiProfile = AI_PROFILES[actorRole];
+  const { isSuperAdmin } = useSuperAdminCheck();
   return (
     <div className="border-b border-border">
       <div className="flex items-center justify-between p-4">
@@ -142,11 +144,13 @@ export function ChatHeader({
         </div>
       </div>
       
-      {/* Mode indicator and switcher row */}
-      <div className="flex items-center justify-between px-4 py-2 bg-muted/30">
-        <RockerModeBanner />
-        <RockerModeSwitcher />
-      </div>
+      {/* Mode indicator and switcher row - only show for super admins */}
+      {isSuperAdmin && (
+        <div className="flex items-center justify-between px-4 py-2 bg-muted/30">
+          <RockerModeBanner />
+          <RockerModeSwitcher />
+        </div>
+      )}
     </div>
   );
 }

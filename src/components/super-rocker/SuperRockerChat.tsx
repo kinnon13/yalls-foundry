@@ -158,10 +158,13 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
         onThreadCreated?.(activeThreadId);
       }
 
-      const { data, error } = await supabase.functions.invoke('rocker-chat-simple', {
+      // Use upgraded rocker-chat with OCR and KB support
+      const { data, error } = await supabase.functions.invoke('rocker-chat', {
         body: {
           thread_id: activeThreadId,
-          message: userMessage
+          message: userMessage,
+          actor_role: 'knower', // Super Rocker uses knower mode with full KB access
+          topK: 5 // Get top 5 knowledge chunks for context
         }
       });
 

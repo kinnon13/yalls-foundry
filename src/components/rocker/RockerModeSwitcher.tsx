@@ -19,17 +19,17 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useState } from 'react';
 import { useRockerGlobal } from '@/lib/ai/rocker';
-import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
 import { AI_PROFILES, type AIRole } from '@/lib/ai/rocker/config';
 
 export function RockerModeSwitcher() {
   const { actorRole, setActorRole, clearMessages, createNewConversation } = useRockerGlobal();
-  const { isAdmin } = useAdminCheck();
+  const { isSuperAdmin } = useSuperAdminCheck();
   const [showConfirm, setShowConfirm] = useState(false);
   const [targetRole, setTargetRole] = useState<AIRole>('user');
 
-  // Only admins can switch modes
-  if (!isAdmin) return null;
+  // Only super admins can switch modes
+  if (!isSuperAdmin) return null;
 
   const handleSwitchRequest = (newRole: AIRole) => {
     if (newRole === actorRole) return;

@@ -4,14 +4,14 @@
  */
 
 import { Shield, Crown } from 'lucide-react';
-import { useRoles } from '@/hooks/useRoles';
+import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 export function AdminIcon({ className = "" }: { className?: string }) {
-  const { isAdmin } = useRoles();
+  const { isSuperAdmin } = useSuperAdminCheck();
 
-  if (!isAdmin) return null;
+  if (!isSuperAdmin) return null;
 
   return (
     <Link to="/admin">
