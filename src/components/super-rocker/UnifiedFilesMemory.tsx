@@ -457,9 +457,7 @@ export function UnifiedFilesMemory() {
                 <FileText className="h-4 w-4" />
                 Files by Project ({filteredFiles.length})
               </h3>
-              <div className="space-y-1">{
-          <ScrollArea className="h-[500px]">
-            <div className="space-y-2 pr-4">
+              <div className="space-y-1">
               {Object.entries(groupedFiles).map(([project, paths]) => {
                 const projectKey = `project:${project}`;
                 const isProjectExpanded = expandedFolders.has(projectKey);
@@ -531,13 +529,13 @@ export function UnifiedFilesMemory() {
                   </div>
                 );
               })}
+              </div>
             </div>
-          </ScrollArea>
-        </TabsContent>
+          )}
 
-        <TabsContent value="memories" className="mt-4">
-          <ScrollArea className="h-[500px]">
-            <div className="space-y-2 pr-4">
+          {/* Knowledge Chunks */}
+          {filteredKnowledge.length > 0 && (
+            <div>
               {Object.entries(groupedByMemoryLayer).map(([layer, layerMemories]) => {
                 const layerKey = `layer:${layer}`;
                 const isExpanded = expandedFolders.has(layerKey);
@@ -642,10 +640,12 @@ export function UnifiedFilesMemory() {
                 </p>
               )}
             </div>
-          </div>
-          )}
-        </div>
-      </ScrollArea>
+          </ScrollArea>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
 
       {/* File Viewer Dialog */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>

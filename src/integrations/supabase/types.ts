@@ -8821,6 +8821,86 @@ export type Database = {
         }
         Relationships: []
       }
+      rocker_okr_key_results: {
+        Row: {
+          created_at: string | null
+          current: number | null
+          id: string
+          name: string
+          okr_id: string
+          target: number
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current?: number | null
+          id?: string
+          name: string
+          okr_id: string
+          target: number
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current?: number | null
+          id?: string
+          name?: string
+          okr_id?: string
+          target?: number
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_okr_key_results_okr_id_fkey"
+            columns: ["okr_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_okrs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rocker_okrs: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          entity_id: string | null
+          id: string
+          metadata: Json | null
+          objective: string
+          owner_id: string
+          period: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          entity_id?: string | null
+          id?: string
+          metadata?: Json | null
+          objective: string
+          owner_id: string
+          period: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          entity_id?: string | null
+          id?: string
+          metadata?: Json | null
+          objective?: string
+          owner_id?: string
+          period?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       rocker_outbox: {
         Row: {
           attempt_count: number
@@ -8872,6 +8952,48 @@ export type Database = {
         }
         Relationships: []
       }
+      rocker_projects: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          end_at: string | null
+          entity_id: string | null
+          id: string
+          metadata: Json | null
+          owner_id: string
+          start_at: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          end_at?: string | null
+          entity_id?: string | null
+          id?: string
+          metadata?: Json | null
+          owner_id: string
+          start_at?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          end_at?: string | null
+          entity_id?: string | null
+          id?: string
+          metadata?: Json | null
+          owner_id?: string
+          start_at?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       rocker_suggestions: {
         Row: {
           acted_on_at: string | null
@@ -8920,6 +9042,198 @@ export type Database = {
         }
         Relationships: []
       }
+      rocker_task_comments: {
+        Row: {
+          author_id: string | null
+          author_type: string | null
+          body: string
+          created_at: string | null
+          id: string
+          task_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_type?: string | null
+          body: string
+          created_at?: string | null
+          id?: string
+          task_id: string
+        }
+        Update: {
+          author_id?: string | null
+          author_type?: string | null
+          body?: string
+          created_at?: string | null
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_tasks_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rocker_task_dependencies: {
+        Row: {
+          depends_on: string
+          task_id: string
+        }
+        Insert: {
+          depends_on: string
+          task_id: string
+        }
+        Update: {
+          depends_on?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_task_dependencies_depends_on_fkey"
+            columns: ["depends_on"]
+            isOneToOne: false
+            referencedRelation: "rocker_tasks_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rocker_task_dependencies_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_tasks_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rocker_task_label_links: {
+        Row: {
+          label_id: string
+          task_id: string
+        }
+        Insert: {
+          label_id: string
+          task_id: string
+        }
+        Update: {
+          label_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_task_label_links_label_id_fkey"
+            columns: ["label_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_task_labels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rocker_task_label_links_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_tasks_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rocker_task_labels: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          id: string
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          owner_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
+      rocker_task_progress: {
+        Row: {
+          confidence: number | null
+          id: string
+          metadata: Json | null
+          notes: string | null
+          recorded_at: string | null
+          status: string
+          task_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          recorded_at?: string | null
+          status: string
+          task_id: string
+        }
+        Update: {
+          confidence?: number | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          recorded_at?: string | null
+          status?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_task_progress_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_tasks_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rocker_task_subtasks: {
+        Row: {
+          created_at: string | null
+          done: boolean | null
+          id: string
+          order_index: number | null
+          task_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          done?: boolean | null
+          id?: string
+          order_index?: number | null
+          task_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          done?: boolean | null
+          id?: string
+          order_index?: number | null
+          task_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_task_subtasks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_tasks_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rocker_tasks: {
         Row: {
           context: Json | null
@@ -8966,6 +9280,96 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rocker_tasks_v2: {
+        Row: {
+          assignee_id: string | null
+          assignee_type: string | null
+          blocker_reason: string | null
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          due_at: string | null
+          embedding: string | null
+          entity_id: string | null
+          id: string
+          kind: string
+          metadata: Json | null
+          owner_id: string
+          priority: string
+          project_id: string | null
+          reopen_reason: string | null
+          rice_confidence: number | null
+          rice_effort: number | null
+          rice_impact: number | null
+          rice_reach: number | null
+          sla_severity: number | null
+          source: string | null
+          source_ref: string | null
+          started_at: string | null
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assignee_id?: string | null
+          assignee_type?: string | null
+          blocker_reason?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_at?: string | null
+          embedding?: string | null
+          entity_id?: string | null
+          id?: string
+          kind?: string
+          metadata?: Json | null
+          owner_id: string
+          priority?: string
+          project_id?: string | null
+          reopen_reason?: string | null
+          rice_confidence?: number | null
+          rice_effort?: number | null
+          rice_impact?: number | null
+          rice_reach?: number | null
+          sla_severity?: number | null
+          source?: string | null
+          source_ref?: string | null
+          started_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assignee_id?: string | null
+          assignee_type?: string | null
+          blocker_reason?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_at?: string | null
+          embedding?: string | null
+          entity_id?: string | null
+          id?: string
+          kind?: string
+          metadata?: Json | null
+          owner_id?: string
+          priority?: string
+          project_id?: string | null
+          reopen_reason?: string | null
+          rice_confidence?: number | null
+          rice_effort?: number | null
+          rice_impact?: number | null
+          rice_reach?: number | null
+          sla_severity?: number | null
+          source?: string | null
+          source_ref?: string | null
+          started_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       rocker_threads: {
         Row: {
@@ -11602,6 +12006,21 @@ export type Database = {
         }
         Returns: string
       }
+      ai_search_tasks: {
+        Args: {
+          p_match_count?: number
+          p_match_threshold?: number
+          p_query_embedding: string
+          p_user_id: string
+        }
+        Returns: {
+          description: string
+          id: string
+          similarity: number
+          status: string
+          title: string
+        }[]
+      }
       append_rocker_message: {
         Args: {
           p_content: string
@@ -11696,6 +12115,15 @@ export type Database = {
       bytea: {
         Args: { "": unknown } | { "": unknown }
         Returns: string
+      }
+      calculate_rice_score: {
+        Args: {
+          confidence: number
+          effort: number
+          impact: number
+          reach: number
+        }
+        Returns: number
       }
       calculate_user_percentiles: {
         Args: { target_user_id: string }

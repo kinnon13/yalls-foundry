@@ -56,17 +56,20 @@ serve(async (req) => {
       console.log('[andy-chat] Loaded', memories.length, 'memories');
     }
 
-    // 2. Load rocker_memories (facts, preferences, goals)
+    // 2. Load rocker_long_memory (facts, preferences, goals, personal info)
     const { data: rockerMems } = await supabase
-      .from('rocker_memories')
+      .from('rocker_long_memory')
       .select('kind, key, value, tags')
       .eq('user_id', user.id)
-      .order('updated_at', { ascending: false })
-      .limit(15);
+      .order('priority', { ascending: true })
+      .limit(50);
     
     if (rockerMems?.length) {
-      context += '\n\n## Additional Memories:\n' + rockerMems.map(m => `[${m.kind}] ${m.key}: ${JSON.stringify(m.value)}`).join('\n');
-      console.log('[andy-chat] Loaded', rockerMems.length, 'rocker_memories');
+      context += '\n\n## Personal Information & Memories:\n' + rockerMems.map(m => {
+        const val = typeof m.value === 'string' ? m.value : JSON.stringify(m.value);
+        return `[${m.kind}] ${m.key}: ${val}`;
+      }).join('\n');
+      console.log('[andy-chat] Loaded', rockerMems.length, 'rocker_long_memory entries');
     }
 
     // 3. Search files via rocker_knowledge (with embeddings if available)

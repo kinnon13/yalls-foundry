@@ -7,6 +7,7 @@ import { SuperRockerInbox } from './SuperRockerInbox';
 import { SuperRockerAdmin } from './SuperRockerAdmin';
 import { Calendar } from './Calendar';
 import { ProactivePanel } from '@/components/rocker/ProactivePanel';
+import { TasksView } from './TasksView';
 import { Database, Brain, CheckSquare, FolderOpen, Inbox, Shield, Key, Calendar as CalendarIcon, Sparkles } from 'lucide-react';
 
 const SuperAdminCapabilities = lazy(() => 
@@ -36,6 +37,8 @@ export function CenterStage({ activeApp, threadId }: CenterStageProps) {
       {activeApp === 'files' && <UnifiedFilesMemory />}
       
       {activeApp === 'tasks' && <SuperRockerTasks threadId={threadId} />}
+      
+      {activeApp === 'task-os' && <TasksView />}
       
       {activeApp === 'calendar' && <Calendar />}
       
