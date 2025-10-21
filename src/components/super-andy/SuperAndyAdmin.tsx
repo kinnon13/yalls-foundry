@@ -8,11 +8,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, User, MessageSquare, Brain, Lock, Shield, ShieldOff } from 'lucide-react';
+import { Search, User, MessageSquare, Brain, Lock, Shield, ShieldOff, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { MessengerRail } from './MessengerRail';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { PersonaSettings } from './PersonaSettings';
 
 interface SuperAndyAdminProps {
   threadId: string | null;
@@ -93,7 +94,7 @@ export function SuperAndyAdmin({ threadId }: SuperAndyAdminProps) {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="chat" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="chat">
               <MessageSquare className="h-4 w-4 mr-2" />
               Private Chat
@@ -101,6 +102,10 @@ export function SuperAndyAdmin({ threadId }: SuperAndyAdminProps) {
             <TabsTrigger value="users">
               <User className="h-4 w-4 mr-2" />
               User Data
+            </TabsTrigger>
+            <TabsTrigger value="settings">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Settings
             </TabsTrigger>
           </TabsList>
 
@@ -242,9 +247,13 @@ export function SuperAndyAdmin({ threadId }: SuperAndyAdminProps) {
                   </Card>
                 ))}
               </div>
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-4">
+              <PersonaSettings />
+            </TabsContent>
+          </Tabs>
       </CardContent>
     </Card>
   );

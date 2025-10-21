@@ -13673,6 +13673,10 @@ export type Database = {
           title: string
         }[]
       }
+      get_feature_flag: {
+        Args: { flag_key: string }
+        Returns: boolean
+      }
       get_guardrail_settings: {
         Args: { p_user_id: string }
         Returns: Json
@@ -14709,6 +14713,10 @@ export type Database = {
           p_wallpaper: string
         }
         Returns: undefined
+      }
+      set_feature_flag: {
+        Args: { flag_enabled: boolean; flag_key: string }
+        Returns: boolean
       }
       set_limit: {
         Args: { "": number }

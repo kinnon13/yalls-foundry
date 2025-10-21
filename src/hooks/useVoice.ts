@@ -2,10 +2,13 @@
  * Voice Hook for Business Onboarding
  * Provides TTS (speak) and STT (listen) with role-based voices
  * No Web Speech fallback - errors surface to UI
+ * 
+ * Feature flag: When dynamic_personas_enabled = true, profiles can be customized
+ * Default: Uses locked STATIC_VOICE_PROFILES (flag is OFF)
  */
 
-import { useCallback, useRef } from 'react';
-import { VoiceRole, getVoiceProfile } from '@/config/voiceProfiles';
+import { useCallback, useRef, useState, useEffect } from 'react';
+import { VoiceRole, getVoiceProfile, getEffectiveVoiceProfile } from '@/config/voiceProfiles';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface UseVoiceOptions {
@@ -15,9 +18,37 @@ export interface UseVoiceOptions {
 }
 
 export function useVoice({ role, enabled, onTranscript }: UseVoiceOptions) {
-  const profile = getVoiceProfile(role);
+  const [profile, setProfile] = useState(() => getVoiceProfile(role));
   const recognitionRef = useRef<any>(null);
   const speakingRef = useRef(false);
+  
+  // Load effective profile (checks feature flag)
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const { data: isDynamicEnabled } = await supabase
+          .rpc('get_feature_flag', { flag_key: 'dynamic_personas_enabled' });
+        
+        const effectiveProfile = await getEffectiveVoiceProfile(
+          role,
+          isDynamicEnabled ?? false
+        );
+        setProfile(effectiveProfile);
+        
+        console.log('[Voice] Profile loaded:', { 
+          role, 
+          voice: effectiveProfile.voice, 
+          rate: effectiveProfile.rate,
+          dynamic: isDynamicEnabled ?? false
+        });
+      } catch (error) {
+        console.error('[Voice] Failed to load profile, using static:', error);
+        setProfile(getVoiceProfile(role));
+      }
+    };
+    
+    loadProfile();
+  }, [role]);
 
   // Text-to-Speech with callback - using role-specific voice (no fallback)
   const speakAndThen = useCallback(async (
