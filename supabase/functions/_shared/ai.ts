@@ -162,23 +162,22 @@ export const ai = {
   // ---------- EMBEDDINGS ----------
   async embed(role: Role, inputs: string[]) {
     if (PROVIDER === 'stub') return inputs.map(() => Array(8).fill(0.01));
-    if (PROVIDER === 'openai') {
-      const r = await fetch('https://api.openai.com/v1/embeddings', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${env('OPENAI_API_KEY')}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: m[role].embed, input: inputs })
-      });
-      if (!r.ok) throw new Error(`OpenAI ${r.status}: ${await r.text()}`);
-      const j = await r.json();
-      return j.data.map((d: any) => d.embedding as number[]);
+
+    // Always use OpenAI for embeddings (Lovable AI gateway does not expose embeddings reliably)
+    const openaiKey = env('OPENAI_API_KEY');
+    if (!openaiKey) {
+      throw new Error('Embeddings unavailable: missing OPENAI_API_KEY.');
     }
-    // lovable gateway (OpenAI-compatible)
-    const r = await fetch('https://ai.gateway.lovable.dev/v1/embeddings', {
+
+    // Use small for user/knower, large for admin
+    const model = role === 'admin' ? 'text-embedding-3-large' : 'text-embedding-3-small';
+
+    const r = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${env('LOVABLE_API_KEY')}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: m[role].embed, input: inputs })
+      headers: { 'Authorization': `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, input: inputs })
     });
-    if (!r.ok) throw new Error(`Lovable ${r.status}: ${await r.text()}`);
+    if (!r.ok) throw new Error(`OpenAI ${r.status}: ${await r.text()}`);
     const j = await r.json();
     return j.data.map((d: any) => d.embedding as number[]);
   },
