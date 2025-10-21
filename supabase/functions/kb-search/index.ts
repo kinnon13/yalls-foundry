@@ -3,31 +3,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { ai } from "../_shared/ai.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function generateEmbedding(text: string, openaiKey: string): Promise<number[]> {
-  const response = await fetch('https://api.openai.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openaiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'text-embedding-3-small',
-      input: text,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Embedding API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.data[0].embedding;
+async function generateEmbedding(text: string): Promise<number[]> {
+  const vectors = await ai.embed('knower', [text]);
+  return vectors[0];
 }
 
 serve(async (req) => {
@@ -109,13 +94,12 @@ serve(async (req) => {
 
     log.info('Keyword search results', { count: keywordResults?.length || 0 });
 
-    // Semantic search if enabled and OpenAI key available
+    // Semantic search if enabled
     let semanticResults: any[] = [];
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     
-    if (semantic && OPENAI_API_KEY) {
+    if (semantic) {
       try {
-        const queryEmbedding = await generateEmbedding(q, OPENAI_API_KEY);
+        const queryEmbedding = await generateEmbedding(q);
         
         // Search chunks by vector similarity
         let chunksQuery = supabaseClient.rpc('match_knowledge_chunks', {

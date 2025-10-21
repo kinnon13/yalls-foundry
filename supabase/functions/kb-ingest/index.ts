@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { ai } from "../_shared/ai.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -67,25 +68,9 @@ function chunkText(text: string, chunkSize = 1500, overlap = 200): string[] {
   return chunks;
 }
 
-async function generateEmbedding(text: string, openaiKey: string): Promise<number[]> {
-  const response = await fetch('https://api.openai.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openaiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'text-embedding-3-small',
-      input: text,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Embedding API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.data[0].embedding;
+async function generateEmbedding(text: string): Promise<number[]> {
+  const vectors = await ai.embed('knower', [text]);
+  return vectors[0];
 }
 
 serve(async (req) => {
@@ -131,12 +116,13 @@ serve(async (req) => {
     const { meta, body } = parseYAMLFrontMatter(content);
     
     // Generate embedding for title + summary
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     let itemEmbedding: number[] | null = null;
     
-    if (OPENAI_API_KEY) {
+    try {
       const embeddingText = `${meta.title}\n${body.slice(0, 500)}`;
-      itemEmbedding = await generateEmbedding(embeddingText, OPENAI_API_KEY);
+      itemEmbedding = await generateEmbedding(embeddingText);
+    } catch (err) {
+      log.error('Item embedding failed', err);
     }
 
     // Upsert knowledge item
@@ -181,8 +167,10 @@ serve(async (req) => {
     for (let i = 0; i < chunks.length; i++) {
       let chunkEmbedding: number[] | null = null;
       
-      if (OPENAI_API_KEY) {
-        chunkEmbedding = await generateEmbedding(chunks[i], OPENAI_API_KEY);
+      try {
+        chunkEmbedding = await generateEmbedding(chunks[i]);
+      } catch (err) {
+        log.error(`Chunk ${i} embedding failed`, err);
       }
 
       chunkData.push({
@@ -190,7 +178,7 @@ serve(async (req) => {
         idx: i,
         text: chunks[i],
         embedding: chunkEmbedding,
-        token_count: Math.ceil(chunks[i].length / 4), // Rough estimate
+        token_count: Math.ceil(chunks[i].length / 4),
       });
     }
 
@@ -223,8 +211,10 @@ serve(async (req) => {
 
       if (steps.length > 0) {
         let playbookEmbedding: number[] | null = null;
-        if (OPENAI_API_KEY) {
-          playbookEmbedding = await generateEmbedding(intent, OPENAI_API_KEY);
+        try {
+          playbookEmbedding = await generateEmbedding(intent);
+        } catch (err) {
+          log.error('Playbook embedding failed', err);
         }
 
         await supabaseClient

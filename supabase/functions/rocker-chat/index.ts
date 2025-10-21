@@ -1,5 +1,6 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { ai } from "../_shared/ai.ts";
+import { sseFromGenerator } from "../_shared/sse.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,19 +8,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    { global: { headers: { Authorization: req.headers.get("Authorization") || "" } } }
-  );
-
-  const supabaseService = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -32,123 +21,18 @@ serve(async (req) => {
       });
     }
 
-    const systemPrompt = "You are Rocker, a proactive AI copilot. Be concise and actionable.";
-    const authHeader = req.headers.get("Authorization") || "";
-
-    // 1) Try streaming via proxy-openai using the user's saved key (try multiple key names)
-    const proxyUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/proxy-openai`;
-    let lastErrText = "";
-    let lastStatus = 0;
-
-    for (const keyName of ["openai", "default"]) {
-      const upstream = await fetch(proxyUrl, {
-        method: "POST",
-        headers: {
-          "Authorization": authHeader,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          path: "/chat/completions",
-          body: {
-            model: "gpt-4o-mini",
-            stream: true,
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: message },
-            ]
-          },
-          keyName
-        })
-      });
-
-      if (upstream.ok && upstream.body) {
-        return new Response(upstream.body, {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-        });
-      }
-
-      // Capture error text for diagnostics before trying next key
-      lastStatus = upstream.status || 500;
-      try { lastErrText = await upstream.text(); } catch { /* ignore */ }
-    }
-
-    // 2) Try direct OPENAI_API_KEY from Supabase secrets
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (OPENAI_API_KEY) {
-      const openai = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          stream: true,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: message }
-          ]
-        }),
-      });
-
-      if (openai.ok && openai.body) {
-        return new Response(openai.body, {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-        });
-      }
-    }
-
-    // 3) Final fallback to Lovable AI gateway streaming
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      const detail = lastErrText || "No API keys found. Add OPENAI_API_KEY to Supabase secrets or save encrypted key in Settings.";
-      return new Response(JSON.stringify({ error: detail }), {
-        status: lastStatus || 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const gateway = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        stream: true,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: message }
-        ]
-      }),
+    const systemPrompt = "You are Rocker, a proactive AI copilot for Y'all's. Be concise and actionable.";
+    const stream = ai.streamChat({
+      role: 'user',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: message }
+      ],
+      temperature: 0.7
     });
 
-    if (!gateway.ok || !gateway.body) {
-      if (gateway.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again shortly." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (gateway.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits required. Please top up to continue." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await gateway.text().catch(() => "");
-      return new Response(JSON.stringify({ error: t || "AI gateway error" }), {
-        status: gateway.status || 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(gateway.body, {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    return new Response(sseFromGenerator(stream), {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
     });
   } catch (e: any) {
     console.error("[rocker-chat] error:", e);

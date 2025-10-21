@@ -1,8 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { ai } from '../_shared/ai.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const openaiKey = Deno.env.get('OPENAI_API_KEY');
 
 Deno.serve(async (req) => {
   try {
@@ -65,50 +65,23 @@ Write the consolidated note:`;
       let noteText = '';
       let embedding: number[] = [];
       
-      if (openaiKey) {
-        try {
-          // Generate summary
-          const summaryResp = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${openaiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'gpt-4o-mini',
-              messages: [{ role: 'user', content: summaryPrompt }],
-              temperature: 0.3,
-              max_tokens: 3000,
-            }),
-          });
-          
-          if (summaryResp.ok) {
-            const summaryData = await summaryResp.json();
-            noteText = summaryData.choices?.[0]?.message?.content || '';
-          }
-          
-          // Generate embedding for the note
-          if (noteText) {
-            const embResp = await fetch('https://api.openai.com/v1/embeddings', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${openaiKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                model: 'text-embedding-3-small',
-                input: noteText.slice(0, 8000),
-              }),
-            });
-            
-            if (embResp.ok) {
-              const embData = await embResp.json();
-              embedding = embData.data?.[0]?.embedding || [];
-            }
-          }
-        } catch (err) {
-          console.error('[Consolidate] AI error:', err);
+      try {
+        // Generate summary
+        const { text } = await ai.chat({
+          role: 'knower',
+          messages: [{ role: 'user', content: summaryPrompt }],
+          temperature: 0.3,
+          maxTokens: 3000
+        });
+        noteText = text;
+        
+        // Generate embedding for the note
+        if (noteText) {
+          const vectors = await ai.embed('knower', [noteText.slice(0, 8000)]);
+          embedding = vectors[0] || [];
         }
+      } catch (err) {
+        console.error('[Consolidate] AI error:', err);
       }
       
       if (!noteText) {

@@ -309,20 +309,9 @@ async function auditLogInternal(
 
 async function generateEmbeddingVector(text: string, supabase: any, authHeader: string): Promise<number[] | null> {
   try {
-    const { data, error } = await supabase.functions.invoke('proxy-openai', {
-      headers: { Authorization: authHeader },
-      body: {
-        path: '/v1/embeddings',
-        keyName: 'openai',
-        body: {
-          model: 'text-embedding-3-small',
-          input: text,
-        }
-      }
-    });
-
-    if (error) return null;
-    return (data as any)?.data?.[0]?.embedding || null;
+    const { ai } = await import("../_shared/ai.ts");
+    const vectors = await ai.embed('admin', [text]);
+    return vectors[0] || null;
   } catch {
     return null;
   }

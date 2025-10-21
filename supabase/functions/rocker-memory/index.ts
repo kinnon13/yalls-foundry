@@ -3,8 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { withRateLimit, getTenantFromJWT, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 import { createLogger } from "../_shared/logger.ts";
-
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+import { ai } from "../_shared/ai.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -168,7 +167,7 @@ async function writeMemory(supabase: any, userId: string, tenantId: string, entr
       value: entry.value,
       confidence: entry.confidence || 0.8,
       source: entry.source || 'chat',
-      scope: 'user', // Set scope based on who is writing
+      scope: 'user',
       tags: entry.tags || [],
       expires_at: entry.expires_at || null,
     };
@@ -241,7 +240,6 @@ async function deleteMemory(supabase: any, userId: string, memoryId: string) {
 async function searchEntities(supabase: any, params: any) {
   const { query, type, limit = 20 } = params;
 
-  // Search across entity_profiles
   let queryBuilder = supabase
     .from('entity_profiles')
     .select('*')
@@ -278,30 +276,11 @@ async function generateEmbedding(text: string) {
 }
 
 async function generateEmbeddingVector(text: string): Promise<number[] | null> {
-  if (!OPENAI_API_KEY) {
-    return null;
-  }
-
   try {
-    const response = await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'text-embedding-3-small',
-        input: text,
-      }),
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    return data.data[0].embedding;
+    const vectors = await ai.embed('knower', [text]);
+    return vectors[0] || null;
   } catch (error) {
+    console.error('Embedding generation failed:', error);
     return null;
   }
 }

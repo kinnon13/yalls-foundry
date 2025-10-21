@@ -9,6 +9,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { ai } from "../_shared/ai.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,7 +43,7 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     );
 
-    // Call OpenAI via proxy-openai for moderation
+    // Use AI gateway for moderation
     const moderationPrompt = `Analyze this user-generated memory/statement for safety and appropriateness.
 Check for: hate speech, harassment, threats, sexual content, self-harm, violence, illegal activity.
 
@@ -56,44 +57,36 @@ Respond with:
 5. softened_content: if decision is "soften", provide a neutralized version that preserves meaning but removes harsh language
 6. reason: brief explanation of the decision`;
 
-    const { data: aiData, error: aiError } = await supabase.functions.invoke('proxy-openai', {
-      headers: { Authorization: req.headers.get('Authorization')! },
-      body: {
-        path: '/v1/chat/completions',
-        keyName: 'openai',
-        body: {
-          model: 'gpt-5-mini-2025-08-07',
-          messages: [
-            { role: 'system', content: 'You are a content moderation assistant. Analyze content objectively and provide structured safety assessments.' },
-            { role: 'user', content: moderationPrompt }
-          ],
-          tools: [{
-            type: 'function',
-            function: {
-              name: 'moderate_content',
-              description: 'Return moderation analysis',
-              parameters: {
-                type: 'object',
-                properties: {
-                  decision: { type: 'string', enum: ['ok', 'soften', 'block'] },
-                  toxicity_score: { type: 'number', minimum: 0, maximum: 1 },
-                  safety_category: { type: 'string' },
-                  tone: { type: 'string', enum: ['positive', 'neutral', 'negative', 'hostile'] },
-                  softened_content: { type: 'string' },
-                  reason: { type: 'string' }
-                },
-                required: ['decision', 'toxicity_score', 'safety_category', 'tone', 'reason']
-              }
-            }
-          }],
-          tool_choice: { type: 'function', function: { name: 'moderate_content' } }
-        }
-      }
-    });
-
-    if (aiError) {
-      const errorText = aiError.message || 'proxy-openai error';
-      log.error('OpenAI moderation error', null, { error: errorText });
+    let result: any;
+    try {
+      const { text } = await ai.chat({
+        role: 'admin',
+        messages: [
+          { role: 'system', content: 'You are a content moderation assistant. Analyze content objectively and provide structured safety assessments.' },
+          { role: 'user', content: moderationPrompt }
+        ],
+        tools: [{
+          name: 'moderate_content',
+          description: 'Return moderation analysis',
+          parameters: {
+            type: 'object',
+            properties: {
+              decision: { type: 'string', enum: ['ok', 'soften', 'block'] },
+              toxicity_score: { type: 'number', minimum: 0, maximum: 1 },
+              safety_category: { type: 'string' },
+              tone: { type: 'string', enum: ['positive', 'neutral', 'negative', 'hostile'] },
+              softened_content: { type: 'string' },
+              reason: { type: 'string' }
+            },
+            required: ['decision', 'toxicity_score', 'safety_category', 'tone', 'reason']
+          }
+        }],
+        temperature: 0.3,
+        maxTokens: 500
+      });
+      result = JSON.parse(text);
+    } catch (aiError) {
+      log.error('AI moderation error', aiError);
       // Fallback basic keyword check
       const lowerContent = content.toLowerCase();
       const hasBlockedWords = [ 'kill', 'die', 'hate', 'fuck', 'bitch', 'attack' ].some(word => lowerContent.includes(word));
@@ -109,15 +102,6 @@ Respond with:
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const data = aiData as any;
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    
-    if (!toolCall) {
-      throw new Error('No moderation result from AI');
-    }
-
-    const result = JSON.parse(toolCall.function.arguments);
 
     return new Response(
       JSON.stringify({

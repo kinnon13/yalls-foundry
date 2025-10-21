@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { ai } from "../_shared/ai.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,11 +15,6 @@ serve(async (req) => {
 
   try {
     const { userId, contextType, contextId } = await req.json();
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY not configured');
-    }
 
     // Get user context from Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -55,38 +51,22 @@ Return a JSON array of actions with this structure:
   }
 ]`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: 'Generate next best actions for this user.' }
-        ],
-        temperature: 0.7,
-      }),
+    const { text } = await ai.chat({
+      role: 'user',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: 'Generate next best actions for this user.' }
+      ],
+      temperature: 0.7,
+      maxTokens: 1200
     });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('OpenAI API error:', error);
-      throw new Error('Failed to generate suggestions');
-    }
-
-    const data = await response.json();
-    const content = data.choices[0].message.content;
     
     // Parse JSON from response
     let actions = [];
     try {
-      actions = JSON.parse(content);
+      actions = JSON.parse(text);
     } catch {
-      // If not valid JSON, return empty array
-      console.error('Failed to parse OpenAI response as JSON');
+      console.error('Failed to parse AI response as JSON');
       actions = [];
     }
 

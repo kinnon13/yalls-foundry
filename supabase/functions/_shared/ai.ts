@@ -18,7 +18,7 @@ const env = (k: string) =>
   (typeof process !== 'undefined' ? (process as any).env?.[k] : undefined) ??
   (globalThis as any)?.__env?.[k] ?? '';
 
-const PROVIDER = (env('AI_PROVIDER') as Provider) || 'openai';
+const PROVIDER = (env('AI_PROVIDER') as Provider) || 'lovable';
 
 const MODELS = {
   openai: {
@@ -172,7 +172,15 @@ export const ai = {
       const j = await r.json();
       return j.data.map((d: any) => d.embedding as number[]);
     }
-    throw new Error('Lovable embeddings not implemented');
+    // lovable uses OpenAI-compatible API
+    const r = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${env('LOVABLE_API_KEY')}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: m[role].embed, input: inputs })
+    });
+    if (!r.ok) throw new Error(`Lovable ${r.status}: ${await r.text()}`);
+    const j = await r.json();
+    return j.data.map((d: any) => d.embedding as number[]);
   },
 
   // ---------- MODERATION ----------

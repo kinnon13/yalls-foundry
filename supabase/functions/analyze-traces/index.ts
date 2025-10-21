@@ -9,6 +9,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createLogger } from "../_shared/logger.ts";
 import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
+import { ai } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,27 +105,15 @@ serve(async (req) => {
 
     log.info('User interests computed', { interestText });
 
-    // Generate embedding using OpenAI
-    const openAIKey = Deno.env.get("OPENAI_API_KEY");
+    // Generate embedding using AI gateway
     let embedding = null;
 
-    if (openAIKey && interestText) {
-      const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openAIKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "text-embedding-3-small",
-          input: interestText,
-          dimensions: 1536,
-        }),
-      });
-
-      if (embeddingResponse.ok) {
-        const embeddingData = await embeddingResponse.json();
-        embedding = embeddingData.data[0].embedding;
+    if (interestText) {
+      try {
+        const vectors = await ai.embed('knower', [interestText]);
+        embedding = vectors[0] || null;
+      } catch (err) {
+        log.error('Embedding generation failed', err);
       }
     }
 
