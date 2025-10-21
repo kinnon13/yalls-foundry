@@ -612,10 +612,51 @@ export function RockerProvider({ children }: { children: ReactNode }) {
         if (response.status === 402) {
           throw new Error('AI usage limit reached. Please add credits to continue.');
         }
-        throw new Error(`Request failed: ${response.statusText}`);
+        const errText = await response.text();
+        throw new Error(errText || `Request failed: ${response.statusText}`);
       }
 
-      const result = await response.json();
+      // Handle streaming SSE response
+      if (!response.body) throw new Error('No response body');
+      
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let assistantContent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim() || line.startsWith(':')) continue;
+          if (!line.startsWith('data: ')) continue;
+          
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+          
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              assistantContent += delta;
+              setMessages(prev => {
+                const last = prev[prev.length - 1];
+                if (last?.role === 'assistant') {
+                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
+                }
+                return [...prev, { role: 'assistant', content: assistantContent, timestamp: new Date() }];
+              });
+            }
+          } catch {}
+        }
+      }
+
+      const result = { content: assistantContent, tool_calls: [], error: null, sessionId: sessionId };
       
       if (result.error) {
         throw new Error(result.error);
