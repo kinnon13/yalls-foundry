@@ -27,34 +27,41 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization') || '' } } }
     );
 
-    // 1) Try user's OpenAI key via proxy-openai
+    // 1) Try user's OpenAI key via proxy-openai (try both key names)
     let reply = '';
-    try {
-      const { data, error } = await supabase.functions.invoke('proxy-openai', {
-        body: {
-          path: '/chat/completions',
-          keyName: 'default',
+    const tryProxy = async (keyName: string) => {
+      try {
+        const { data, error } = await supabase.functions.invoke('proxy-openai', {
           body: {
-            model: 'gpt-4o-mini',
-            messages: [
-              { role: 'system', content: 'You are Rocker. Keep answers concise and actionable.' },
-              { role: 'user', content: message }
-            ],
-            max_tokens: 500,
-          }
-        },
-        headers: { Authorization: req.headers.get('Authorization') || '' }
-      });
+            path: '/chat/completions',
+            keyName,
+            body: {
+              model: 'gpt-4o-mini',
+              messages: [
+                { role: 'system', content: 'You are Rocker. Keep answers concise and actionable.' },
+                { role: 'user', content: message }
+              ],
+              max_tokens: 500,
+            }
+          },
+          headers: { Authorization: req.headers.get('Authorization') || '' }
+        });
 
-      if (!error) {
-        const json = typeof data === 'string' ? JSON.parse(data as string) : (data as any);
-        reply = json?.choices?.[0]?.message?.content ?? '';
-      } else {
-        console.error('[rocker-chat-simple] proxy-openai error:', error.message);
+        if (!error) {
+          const json = typeof data === 'string' ? JSON.parse(data as string) : (data as any);
+          return json?.choices?.[0]?.message?.content ?? '';
+        } else {
+          console.error('[rocker-chat-simple] proxy-openai error:', error.message, `(keyName=${keyName})`);
+          return '';
+        }
+      } catch (e) {
+        console.error('[rocker-chat-simple] proxy-openai threw:', e, `(keyName=${keyName})`);
+        return '';
       }
-    } catch (e) {
-      console.error('[rocker-chat-simple] proxy-openai threw:', e);
-    }
+    };
+
+    reply = await tryProxy('default');
+    if (!reply) reply = await tryProxy('openai');
 
     // 2) Fallback to Lovable AI gateway if no reply
     if (!reply) {
