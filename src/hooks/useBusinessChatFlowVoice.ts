@@ -64,8 +64,7 @@ export function useBusinessChatFlowVoice() {
         undefined,
         true // shouldSpeak flag
       );
-      // Move to ask_name after greeting
-      setTimeout(() => setStep('ask_name'), 1000);
+      setStep('ask_name');
     }
   }, []);
 
