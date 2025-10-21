@@ -27,9 +27,9 @@ const MODELS = {
     knower: { chat: 'gpt-4.1',     embed: 'text-embedding-3-large',  tts: 'tts-1',     stt: 'whisper-1', image: 'gpt-image-1' },
   },
   lovable: {
-    user:   { chat: 'google/gemini-2.5-flash',      embed: 'google/text-embed',  tts: 'default', stt: 'default', image: 'default' },
-    admin:  { chat: 'google/gemini-2.5-flash',      embed: 'google/text-embed',  tts: 'default', stt: 'default', image: 'default' },
-    knower: { chat: 'google/gemini-2.5-flash',      embed: 'google/text-embed',  tts: 'default', stt: 'default', image: 'default' },
+    user:   { chat: 'google/gemini-2.5-flash',      embed: 'openai/text-embedding-3-small',  tts: 'default', stt: 'default', image: 'default' },
+    admin:  { chat: 'google/gemini-2.5-flash',      embed: 'openai/text-embedding-3-small',  tts: 'default', stt: 'default', image: 'default' },
+    knower: { chat: 'google/gemini-2.5-flash',      embed: 'openai/text-embedding-3-small',  tts: 'default', stt: 'default', image: 'default' },
   },
   stub: {
     user:   { chat: 'stub', embed: 'stub', tts: 'stub', stt: 'stub', image: 'stub' },
