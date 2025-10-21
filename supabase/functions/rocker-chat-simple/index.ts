@@ -30,19 +30,22 @@ serve(async (req) => {
         path: '/chat/completions',
         keyName: 'openai',
         body: {
-          model: 'gpt-5-mini-2025-08-07',
+          model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: 'You are Rocker. Keep answers concise and actionable.' },
             { role: 'user', content: message }
           ],
-          max_completion_tokens: 500,
+          max_tokens: 500,
         }
       },
       headers: { Authorization: req.headers.get('Authorization') || '' }
     });
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
+      let details: any = null;
+      try { details = typeof data === 'string' ? JSON.parse(data as string) : data; } catch {}
+      const errPayload = details ?? { error: error.message };
+      return new Response(JSON.stringify(errPayload), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
