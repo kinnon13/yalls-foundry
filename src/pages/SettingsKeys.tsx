@@ -90,7 +90,10 @@ export default function SettingsKeys() {
         throw new Error(errorData.error || "Delete failed");
       }
       
+      // Optimistic update to UI
+      setItems(prev => prev.filter(i => i.id !== id));
       toast.success("API key deleted");
+      // Also refresh from server to stay consistent
       await loadKeys();
     } catch (error) {
       console.error("Failed to delete key:", error);
