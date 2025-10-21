@@ -130,18 +130,17 @@ serve(async (req) => {
       console.log('[andy-chat] Loaded', tasks.length, 'tasks');
     }
 
-    // 5. Load upcoming calendar events
+    // 5. Load upcoming calendar events  
     const { data: events } = await supabase
       .from('calendar_events')
-      .select('title, description, start_time, end_time')
-      .eq('user_id', user.id)
-      .gte('start_time', new Date().toISOString())
-      .order('start_time', { ascending: true })
+      .select('title, description, starts_at, ends_at, location')
+      .gte('starts_at', new Date().toISOString())
+      .order('starts_at', { ascending: true })
       .limit(10);
 
     if (events?.length) {
-      context += '\n\n## Upcoming Events:\n' + events.map(e => `${e.title} (${e.start_time} - ${e.end_time})`).join('\n');
-      console.log('[andy-chat] Loaded', events.length, 'events');
+      context += '\n\n## Upcoming Calendar Events:\n' + events.map(e => `${e.title} (${new Date(e.starts_at).toLocaleString()}${e.location ? ` @ ${e.location}` : ''})`).join('\n');
+      console.log('[andy-chat] Loaded', events.length, 'calendar events');
     }
 
     const systemPrompt = `You are Andy, the ultimate everything AI with FULL access to the user's complete data.
@@ -149,14 +148,26 @@ serve(async (req) => {
 You have INSTANT access to:
 - User memories, facts, preferences, and goals
 - All uploaded files and knowledge base
-- Tasks and calendar events
-- Web search (just ask and I'll search)
+- Tasks with status and due dates
+- Full calendar with events, locations, and times
+- The ability to ADD, UPDATE, and DELETE calendar events
+- The ability to CREATE and MANAGE tasks
 - The ability to learn and remember from every conversation
 
 Current Data:
 ${context || '(No data loaded yet - but you can still help!)'}
 
-Be conversational, fast, and proactive. Always reference the user's actual data. When you learn something important (like someone's name, a preference, a goal), acknowledge it explicitly so I can save it.`;
+When the user asks you to schedule something or create an event:
+1. Extract the title, date/time, location (if mentioned)
+2. Tell me clearly: "I'll create [EVENT NAME] on [DATE/TIME] at [LOCATION]"
+3. I will handle the database insert
+
+When the user asks about their schedule:
+- Reference the actual events from the Calendar Events section above
+- Be specific about dates, times, and locations
+- Suggest gaps or conflicts if you notice them
+
+Be conversational, fast, and proactive. Always reference the user's actual data.`;
     
     const finalMessages = [
       { role: 'system', content: systemPrompt },

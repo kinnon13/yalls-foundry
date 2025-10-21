@@ -25,18 +25,25 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } }
     );
 
-    // Require admin user
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '') ?? '';
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    // Require super admin user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
+      log.warn('Unauthorized access attempt');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Verify admin using RPC is_admin(user_id)
-    const { data: isAdmin, error: adminErr } = await supabase.rpc('is_admin', { _user_id: user.id });
-    if (adminErr || !isAdmin) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // Verify super admin using RPC is_super_admin(user_id)
+    const { data: isSuperAdmin, error: adminErr } = await supabase.rpc('is_super_admin', { _user_id: user.id });
+    if (adminErr) {
+      log.error('Super admin check failed', { error: adminErr });
+      return new Response(JSON.stringify({ error: 'Admin verification failed' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+    if (!isSuperAdmin) {
+      log.warn('Non-super-admin access attempt', { userId: user.id });
+      return new Response(JSON.stringify({ error: 'Forbidden: Super admin required' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    log.info('Super admin authenticated', { userId: user.id });
 
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
