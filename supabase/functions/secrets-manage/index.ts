@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
 };
 
 // Encryption helpers
@@ -75,9 +76,20 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const authHeader = req.headers.get("Authorization")!;
     
+    // Auth client (for verifying user)
     const supabase = createClient(supabaseUrl, supabaseKey, {
       global: { headers: { Authorization: authHeader } },
     });
+
+    // Service client (bypass RLS for managed operations, scoped by owner_user_id)
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!serviceKey) {
+      return new Response(JSON.stringify({ error: "server misconfigured: missing service key" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const serviceClient = createClient(supabaseUrl, serviceKey);
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
@@ -89,7 +101,7 @@ serve(async (req) => {
 
     // GET - list secrets
     if (req.method === "GET") {
-      const { data, error } = await supabase
+      const { data, error } = await serviceClient
         .from("app_provider_secrets")
         .select("id, provider, name, created_at, updated_at, last_used_at")
         .eq("owner_user_id", user.id)
@@ -116,7 +128,7 @@ serve(async (req) => {
 
       const encrypted = await encryptSecret(apiKey.trim());
       
-      const { error } = await supabase
+      const { error } = await serviceClient
         .from("app_provider_secrets")
         .upsert({
           owner_user_id: user.id,
@@ -141,7 +153,7 @@ serve(async (req) => {
     if (req.method === "DELETE") {
       const { provider, name = "default" } = await req.json();
       
-      const { error } = await supabase
+      const { error } = await serviceClient
         .from("app_provider_secrets")
         .delete()
         .eq("owner_user_id", user.id)
