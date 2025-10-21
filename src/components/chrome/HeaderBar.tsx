@@ -2,9 +2,11 @@
  * Global Header - Mac-style top bar
  */
 
-import { Users } from 'lucide-react';
+import { Users, LogOut } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logout as canonicalLogout } from '@/lib/auth/logout';
+import { Button } from '@/components/ui/button';
 
 export default function HeaderBar() {
   // Fetch current user profile
@@ -26,6 +28,14 @@ export default function HeaderBar() {
 
   const handleProfileClick = () => {
     window.dispatchEvent(new CustomEvent('navigate-profile'));
+  };
+
+  const handleLogout = async () => {
+    try {
+      await canonicalLogout('user');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
@@ -56,6 +66,18 @@ export default function HeaderBar() {
         placeholder="Search people, businesses, apps…" 
         type="search"
       />
+
+      {/* Logout Button */}
+      <Button
+        onClick={handleLogout}
+        variant="ghost"
+        size="sm"
+        className="gap-2 ml-auto"
+        title="Logout"
+      >
+        <LogOut className="h-4 w-4" />
+        <span className="hidden md:inline">Logout</span>
+      </Button>
     </header>
   );
 }
