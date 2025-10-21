@@ -68,8 +68,19 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
     }
   };
 
+  const parseHandle = (value: string): string | null => {
+    if (!value) return null;
+    const trimmed = value.trim();
+    // Extract from full referral link ?ref=handle
+    const refMatch = trimmed.match(/[?&]ref=([^&#]+)/i);
+    if (refMatch) return refMatch[1].replace(/^@/, '').trim();
+    // Strip leading @ if present
+    return trimmed.replace(/^@/, '').trim() || null;
+  };
+
   const validateUsername = async (username: string) => {
-    if (!username.trim()) {
+    const handle = parseHandle(username);
+    if (!handle) {
       setReferrerId(null);
       return;
     }
@@ -82,13 +93,13 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('user_id, handle')
-        .eq('handle', username.trim())
-        .single();
+        .eq('handle', handle)
+        .maybeSingle();
 
       if (!profile) {
         toast({
           title: 'Username not found',
-          description: `No user with handle @${username} exists`,
+          description: `No user with handle @${handle} exists`,
           variant: 'destructive'
         });
         setReferrerId(null);
@@ -108,7 +119,7 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
       setReferrerId(profile.user_id);
       toast({
         title: '✓ Valid username',
-        description: `Referrer: @${username}`
+        description: `Referrer: @${profile.handle}`
       });
     } catch (err) {
       console.error('Username validation error:', err);
@@ -166,11 +177,12 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
 
       // Update profile with referrer to create tier hierarchy
       if (referrerId) {
+        const normalized = parseHandle(referralUsername) || referralUsername.trim();
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
             invited_by: referrerId,
-            invite_source: `@${referralUsername}` 
+            invite_source: normalized ? `@${normalized}` : null
           })
           .eq('user_id', user.id);
 
@@ -188,7 +200,7 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
       toast({
         title: '✓ Thanks for sharing!',
         description: referrerId 
-          ? `You've been connected to @${referralUsername}'s network`
+          ? `You've been connected to @${parseHandle(referralUsername) || referralUsername.trim()}'s network`
           : 'Let\'s complete your profile'
       });
 
@@ -253,12 +265,7 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
               id="referral-username"
               placeholder="Enter their @username or paste referral link"
               value={referralUsername}
-              onChange={(e) => {
-                const value = e.target.value;
-                // Extract username from referral link or @ prefix
-                const username = value.replace(/^@/, '').replace(/.*[?&]ref=([^&]+).*/, '$1').trim();
-                setReferralUsername(username);
-              }}
+              onChange={(e) => setReferralUsername(e.target.value)}
               onBlur={() => validateUsername(referralUsername)}
               disabled={validatingUsername}
             />
