@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { 
   Star, 
   Archive, 
@@ -15,7 +17,9 @@ import {
   FolderPlus,
   FileText,
   Copy,
-  Check
+  Check,
+  Upload,
+  Loader2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -24,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useSession } from '@/lib/auth/context';
 
 interface InboxFile {
   id: string;
@@ -42,9 +47,16 @@ const CATEGORIES = [
 
 export function SuperRockerInbox() {
   const { toast } = useToast();
+  const { session } = useSession();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<InboxFile[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isPasting, setIsPasting] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+  const [pasteSubject, setPasteSubject] = useState('');
+  const [showPasteDialog, setShowPasteDialog] = useState(false);
 
   const loadInbox = useCallback(async () => {
     setIsLoading(true);
@@ -151,8 +163,77 @@ export function SuperRockerInbox() {
     setSelected(newSelected);
   };
 
+  const handleFileUpload = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    if (!session?.userId) {
+      toast({ title: 'Please log in to upload files', variant: 'destructive' });
+      return;
+    }
+
+    setIsUploading(true);
+    const file = fileList[0];
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', session.userId);
+
+      const { data, error } = await supabase.functions.invoke('rocker-process-file', {
+        body: formData,
+      });
+
+      if (error) throw error;
+
+      toast({ title: `${file.name} uploaded! ${data?.knowledge_chunks || 0} chunks indexed.` });
+      await loadInbox();
+    } catch (error: any) {
+      console.error('File upload error:', error);
+      toast({ title: 'Failed to upload file', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleBulkPaste = async () => {
+    if (!pasteText.trim()) {
+      toast({ title: 'Please paste some text', variant: 'destructive' });
+      return;
+    }
+
+    setIsPasting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('rocker-ingest', {
+        body: {
+          text: pasteText.trim(),
+          subject: pasteSubject || 'Bulk Paste',
+        }
+      });
+
+      if (error || (data && (data as any).error)) {
+        throw new Error((data as any)?.error || (error as any)?.message || 'Failed to ingest paste');
+      }
+
+      toast({ 
+        title: `Filed to ${data.category}!`, 
+        description: `${data.stored} chunks • Tags: ${data.tags?.slice(0, 3).join(', ') || 'none'}` 
+      });
+      setPasteText('');
+      setPasteSubject('');
+      setShowPasteDialog(false);
+      await loadInbox();
+    } catch (error: any) {
+      console.error('Paste ingest error:', error);
+      toast({ title: 'Failed to ingest paste', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsPasting(false);
+    }
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Inbox</h2>
@@ -161,28 +242,59 @@ export function SuperRockerInbox() {
           </p>
         </div>
         
-        {selected.size > 0 && (
-          <div className="flex gap-2">
-            <span className="text-sm text-muted-foreground">
-              {selected.size} selected
-            </span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Archive className="h-4 w-4 mr-2" />
-                  File Selected
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {CATEGORIES.map(cat => (
-                  <DropdownMenuItem key={cat} onClick={() => bulkFile(cat)}>
-                    {cat}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
+        <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={(e) => handleFileUpload(e.target.files)}
+            disabled={isUploading}
+          />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Upload className="h-4 w-4 mr-2" />
+            )}
+            Upload File
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowPasteDialog(true)}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Bulk Paste
+          </Button>
+          
+          {selected.size > 0 && (
+            <>
+              <span className="text-sm text-muted-foreground self-center">
+                {selected.size} selected
+              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Archive className="h-4 w-4 mr-2" />
+                    File Selected
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {CATEGORIES.map(cat => (
+                    <DropdownMenuItem key={cat} onClick={() => bulkFile(cat)}>
+                      {cat}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
+        </div>
       </div>
 
       <ScrollArea className="h-[600px]">
@@ -278,6 +390,52 @@ export function SuperRockerInbox() {
           )}
         </div>
       </ScrollArea>
+
+      {/* Bulk Paste Dialog */}
+      <Dialog open={showPasteDialog} onOpenChange={setShowPasteDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Bulk Paste</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder="Title (optional)"
+              value={pasteSubject}
+              onChange={(e) => setPasteSubject(e.target.value)}
+              disabled={isPasting}
+            />
+            <Textarea
+              placeholder="Paste massive text here (up to 250k characters)..."
+              value={pasteText}
+              onChange={(e) => setPasteText(e.target.value)}
+              className="min-h-[300px] font-mono text-sm"
+              disabled={isPasting}
+            />
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowPasteDialog(false)}
+                disabled={isPasting}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleBulkPaste}
+                disabled={isPasting || !pasteText.trim()}
+              >
+                {isPasting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Ingest & File'
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
