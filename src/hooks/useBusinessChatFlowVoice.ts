@@ -3,7 +3,7 @@
  * Includes: greeting, handle system, website scanning, product probing
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 type FlowStep = 
@@ -53,16 +53,20 @@ export function useBusinessChatFlowVoice() {
   const [categorySuggestions, setCategorySuggestions] = useState<any[]>([]);
   const [productProbes, setProductProbes] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const hasGreeted = useRef(false);
 
   // Voice greeting on mount
   useEffect(() => {
-    addBotMessage(
-      "Hi! I'm Rocker. I'll set up your business profile in under a minute. I'll ask for your business name, a unique ID, and your website so I can pull in the details for you. Ready?",
-      undefined,
-      true // shouldSpeak flag
-    );
-    // Move to ask_name after greeting
-    setTimeout(() => setStep('ask_name'), 1000);
+    if (!hasGreeted.current) {
+      hasGreeted.current = true;
+      addBotMessage(
+        "Hi! I'm Rocker. I'll set up your business profile in under a minute. I'll ask for your business name, a unique ID, and your website so I can pull in the details for you. Ready?",
+        undefined,
+        true // shouldSpeak flag
+      );
+      // Move to ask_name after greeting
+      setTimeout(() => setStep('ask_name'), 1000);
+    }
   }, []);
 
   const addBotMessage = useCallback((content: string, actions?: Message['actions'], shouldSpeak = false) => {
