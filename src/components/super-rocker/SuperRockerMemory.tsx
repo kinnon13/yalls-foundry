@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Pin, Trash2, Brain } from 'lucide-react';
+import { Search, Pin, Trash2, Brain, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Memory {
@@ -22,6 +22,7 @@ export function SuperRockerMemory() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isEmbedding, setIsEmbedding] = useState(false);
 
   useEffect(() => {
     loadMemories();
@@ -89,6 +90,28 @@ export function SuperRockerMemory() {
     }
   };
 
+  const generateEmbeddings = async () => {
+    setIsEmbedding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('andy-embed-knowledge');
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Embeddings Generated',
+        description: `Processed ${data.processed} chunks. Andy can now search your files!`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to generate embeddings',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsEmbedding(false);
+    }
+  };
+
   const filteredMemories = memories.filter(m => {
     if (!searchQuery) return true;
     const text = JSON.stringify(m.value).toLowerCase();
@@ -103,6 +126,16 @@ export function SuperRockerMemory() {
         <Badge variant="outline" className="ml-auto">
           {memories.length} items
         </Badge>
+        <Button
+          size="sm"
+          variant="default"
+          onClick={generateEmbeddings}
+          disabled={isEmbedding}
+          className="gap-2"
+        >
+          <Zap className="h-4 w-4" />
+          {isEmbedding ? 'Embedding...' : 'Generate Embeddings'}
+        </Button>
       </div>
 
       <div className="relative">

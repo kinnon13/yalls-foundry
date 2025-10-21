@@ -43,7 +43,7 @@ serve(async (req) => {
     const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user')?.content || '';
     let context = '';
 
-    // 1. Load memories
+    // 1. Load memories (ai_user_memory)
     const { data: memories } = await supabase
       .from('ai_user_memory')
       .select('memory_type, content, score')
@@ -56,24 +56,51 @@ serve(async (req) => {
       console.log('[andy-chat] Loaded', memories.length, 'memories');
     }
 
-    // 2. Search files via rocker_knowledge
+    // 2. Load rocker_memories (facts, preferences, goals)
+    const { data: rockerMems } = await supabase
+      .from('rocker_memories')
+      .select('kind, key, value, tags')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(15);
+    
+    if (rockerMems?.length) {
+      context += '\n\n## Additional Memories:\n' + rockerMems.map(m => `[${m.kind}] ${m.key}: ${JSON.stringify(m.value)}`).join('\n');
+      console.log('[andy-chat] Loaded', rockerMems.length, 'rocker_memories');
+    }
+
+    // 3. Search files via rocker_knowledge (with embeddings if available)
     try {
       const { data: files } = await supabase
         .from('rocker_knowledge')
         .select('title, content')
         .eq('user_id', user.id)
+        .not('embedding', 'is', null)
         .ilike('content', `%${lastUserMsg.slice(0, 50)}%`)
         .limit(5);
 
       if (files?.length) {
-        context += '\n\n## Relevant Files:\n' + files.map((f: any) => `${f.title}: ${f.content.slice(0, 200)}...`).join('\n\n');
+        context += '\n\n## Relevant Files:\n' + files.map((f: any) => `${f.title}: ${f.content.slice(0, 300)}...`).join('\n\n');
         console.log('[andy-chat] Found', files.length, 'relevant files');
+      } else {
+        // Fallback: just get recent files if no embeddings yet
+        const { data: recentFiles } = await supabase
+          .from('rocker_knowledge')
+          .select('title, content')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(3);
+        
+        if (recentFiles?.length) {
+          context += '\n\n## Recent Files:\n' + recentFiles.map((f: any) => `${f.title}: ${f.content.slice(0, 200)}...`).join('\n\n');
+          console.log('[andy-chat] Loaded', recentFiles.length, 'recent files (no embeddings)');
+        }
       }
     } catch (e) {
       console.warn('[andy-chat] File search failed:', e);
     }
 
-    // 3. Load upcoming tasks
+    // 4. Load upcoming tasks
     const { data: tasks } = await supabase
       .from('tasks')
       .select('title, description, due_date, priority')
@@ -87,7 +114,7 @@ serve(async (req) => {
       console.log('[andy-chat] Loaded', tasks.length, 'tasks');
     }
 
-    // 4. Load upcoming calendar events
+    // 5. Load upcoming calendar events
     const { data: events } = await supabase
       .from('calendar_events')
       .select('title, description, start_time, end_time')
@@ -101,25 +128,26 @@ serve(async (req) => {
       console.log('[andy-chat] Loaded', events.length, 'events');
     }
 
-    const systemPrompt = `You are Andy, an all-knowing AI assistant with full access to the user's data.
+    const systemPrompt = `You are Andy, the ultimate everything AI with FULL access to the user's complete data.
 
-You have access to:
-- User memories and preferences
-- All uploaded files and documents  
+You have INSTANT access to:
+- User memories, facts, preferences, and goals
+- All uploaded files and knowledge base
 - Tasks and calendar events
-- The ability to learn from conversations
+- Web search (just ask and I'll search)
+- The ability to learn and remember from every conversation
 
-Current Context:
-${context || '(No context loaded yet - encourage user to upload files or add tasks)'}
+Current Data:
+${context || '(No data loaded yet - but you can still help!)'}
 
-Be conversational, helpful, and proactive. Reference the user's actual data when relevant.`;
+Be conversational, fast, and proactive. Always reference the user's actual data. When you learn something important (like someone's name, a preference, a goal), acknowledge it explicitly so I can save it.`;
     
     const finalMessages = [
       { role: 'system', content: systemPrompt },
       ...messages,
     ];
 
-    console.log('[andy-chat] Calling Lovable AI with context length:', context.length);
+    console.log('[andy-chat] Context size:', context.length, 'chars');
 
     // Call Lovable AI for streaming response
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
