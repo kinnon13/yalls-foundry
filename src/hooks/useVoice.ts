@@ -1,20 +1,25 @@
 /**
  * Voice Hook for Business Onboarding
- * Provides TTS (speak) and STT (listen) using Web Speech API
+ * Provides TTS (speak) and STT (listen) with role-based voices
+ * No Web Speech fallback - errors surface to UI
  */
 
 import { useCallback, useRef } from 'react';
+import { VoiceRole, getVoiceProfile } from '@/config/voiceProfiles';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface UseVoiceOptions {
+  role: VoiceRole;
   enabled: boolean;
   onTranscript?: (text: string, isFinal: boolean) => void;
 }
 
-export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
+export function useVoice({ role, enabled, onTranscript }: UseVoiceOptions) {
+  const profile = getVoiceProfile(role);
   const recognitionRef = useRef<any>(null);
   const speakingRef = useRef(false);
 
-  // Text-to-Speech with callback - using OpenAI TTS (onyx, 1.35x, no fallback)
+  // Text-to-Speech with callback - using role-specific voice (no fallback)
   const speakAndThen = useCallback(async (
     text: string, 
     then?: () => void,
@@ -26,18 +31,27 @@ export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
     }
     
     const t0 = performance.now();
-    console.log('[Voice] TTS start:', { engine: 'server_tts', voice: 'onyx', speed: 1.35 });
+    console.log('[Voice] TTS start:', { 
+      engine: profile.engine, 
+      voice: profile.voice, 
+      rate: profile.rate,
+      role 
+    });
     
     try {
       speakingRef.current = true;
-      const { supabase } = await import('@/integrations/supabase/client');
       const { data, error } = await supabase.functions.invoke('text-to-speech', {
-        body: { text, voice: 'onyx' }
+        body: { 
+          text, 
+          voice: profile.voice,
+          rate: profile.rate,
+          pitch: profile.pitch
+        }
       });
 
       if (error) {
         const ttsError = new Error(`TTS failed: ${error.message}`);
-        console.error('[Voice] TTS API error:', error);
+        console.error('[Voice] TTS API error:', { role, voice: profile.voice, error: error.message });
         onError?.(ttsError);
         throw ttsError;
       }
@@ -46,7 +60,13 @@ export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
       
       audio.onplaying = () => {
         const t1 = performance.now();
-        console.log('[Voice] ✓ TTS playing:', { ttfa: Math.round(t1 - t0), engine: 'server_tts', voice: 'onyx', speed: '1.35x' });
+        console.log('[Voice] ✓ TTS playing:', { 
+          ttfa: Math.round(t1 - t0), 
+          engine: profile.engine, 
+          voice: profile.voice, 
+          rate: profile.rate,
+          role 
+        });
       };
       
       audio.onended = () => {
@@ -56,7 +76,7 @@ export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
       
       audio.onerror = (e) => {
         const playError = new Error('Audio playback failed');
-        console.error('[Voice] Audio playback error:', e);
+        console.error('[Voice] Audio playback error:', { role, voice: profile.voice, error: e });
         speakingRef.current = false;
         onError?.(playError);
         then?.();
@@ -70,7 +90,7 @@ export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
       onError?.(finalError);
       then?.();
     }
-  }, [enabled]);
+  }, [enabled, profile, role]);
 
   // Stop all voice activity
   const stopAll = useCallback(() => {
@@ -89,8 +109,8 @@ export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
       (window as any).webkitSpeechRecognition || 
       (window as any).SpeechRecognition;
     
-    if (!enabled || !SpeechRecognition) {
-      console.warn('[Voice] Speech recognition not supported');
+    if (!enabled || !profile.sttEnabled || !SpeechRecognition) {
+      console.warn('[Voice] Speech recognition not available:', { enabled, sttEnabled: profile.sttEnabled });
       return () => {};
     }
 
@@ -155,12 +175,13 @@ export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
         recognitionRef.current = null;
       }
     };
-  }, [enabled]);
+  }, [enabled, profile]);
 
   return {
     speakAndThen,
     listen,
     stopAll,
-    isSupported: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window
+    isSupported: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window,
+    profile
   };
 }

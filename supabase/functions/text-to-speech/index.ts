@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text, voice = 'alloy' } = await req.json();
+    const { text, voice = 'alloy', rate = 1.0, pitch = 1.02 } = await req.json();
 
     if (!text) {
       throw new Error('Text is required');
@@ -23,7 +23,9 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Generate speech using OpenAI TTS
+    console.log('[TTS] Request:', { voice, rate, textLength: text.length });
+
+    // Generate speech using OpenAI TTS with requested parameters
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
       headers: {
@@ -34,7 +36,7 @@ serve(async (req) => {
         model: 'tts-1',
         input: text,
         voice: voice,
-        speed: 1.35,
+        speed: rate,
         response_format: 'mp3',
       }),
     });

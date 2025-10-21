@@ -44,8 +44,9 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
   const [chatStarted, setChatStarted] = useState(false);
   const stopListenRef = useRef<(() => void) | null>(null);
 
-  // Voice (TTS + STT with new loop API)
-  const { speakAndThen, listen, stopAll, isSupported } = useVoice({
+  // Voice (TTS + STT with new loop API) - User Rocker voice
+  const { speakAndThen, listen, stopAll, isSupported, profile } = useVoice({
+    role: 'user',
     enabled: voiceEnabled,
     onTranscript: () => {} // Not used in new API
   });
@@ -78,6 +79,7 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
       const { playPreloadedGreeting } = await import('@/utils/voicePrime');
       
       await playPreloadedGreeting(
+        'user',
         () => {
           // After greeting ends, start listening
           if (stopListenRef.current) {
@@ -245,10 +247,10 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
   };
   
   const handleChooseBusiness = async () => {
-    // Prime voice: unlock audio + prefetch greeting
+    // Prime voice: unlock audio + prefetch greeting with user voice
     if (voiceConsent) {
       const { voicePrime } = await import('@/utils/voicePrime');
-      await voicePrime();
+      await voicePrime('user');
     }
     setShowChoice(false);
     setChatStarted(true);
@@ -385,9 +387,9 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
             <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-2">
               <VolumeX className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
               <div className="flex-1 text-sm">
-                <p className="text-destructive font-medium">{ttsError}</p>
+                <p className="text-destructive font-medium">Voice unavailable for User Rocker ({profile.voice})</p>
                 <p className="text-muted-foreground text-xs mt-1">
-                  Text will still appear - you can continue typing responses
+                  {ttsError} — Continuing in text mode. Our team has been notified.
                 </p>
               </div>
               <button
