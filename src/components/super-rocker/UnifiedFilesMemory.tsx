@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessengerRail } from './MessengerRail';
-import { ConceptMind } from './ConceptMind';
 import { AndyResearch } from './AndyResearch';
 import { ThreeMemorySystems } from './ThreeMemorySystems';
 import { PredictionGame } from './PredictionGame';
@@ -30,7 +30,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AndyResearch } from './AndyResearch';
 
 interface Category {
   id: string;

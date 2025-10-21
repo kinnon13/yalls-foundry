@@ -1,329 +1,408 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useSession } from '@/lib/auth/context';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Target, Trophy, Brain, TrendingUp, Clock } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useSession } from '@/lib/auth/context';
+import { toast } from 'sonner';
+import { Target, TrendingUp, Brain, Lock, Unlock, Award } from 'lucide-react';
 
-interface Question {
-  id: string;
-  game_session_id: string;
-  session_number: number;
-  question_number: number;
-  question_text: string;
-  question_type: string;
-  options: string[] | null;
-  andy_prediction: string;
-  andy_confidence: number;
-  based_on_analysis: string;
-  user_actual_answer: string | null;
-  answered_at: string | null;
-  is_correct: boolean | null;
-}
+type GameMode = 'calibration' | 'domination';
 
-interface Stats {
-  stat_date: string;
-  total_predictions: number;
-  correct_predictions: number;
-  accuracy_rate: number;
-  confidence_avg: number;
+interface Round {
+  round_id: string;
+  round_no: number;
+  kind: 'yn' | 'mcq' | 'scale';
+  question: string;
+  choices: string[] | null;
+  commit_hash: string;
+  salt: string;
+  prediction: {
+    choice: number;
+    probs: number[];
+  };
+  state: 'awaiting_answer' | 'awaiting_reveal' | 'scored';
+  userAnswer?: number;
+  revealed?: boolean;
+  score?: any;
 }
 
 export function PredictionGame() {
   const { session } = useSession();
-  const { toast } = useToast();
-  const [currentSession, setCurrentSession] = useState<Question[]>([]);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string>('');
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [showResults, setShowResults] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [mode, setMode] = useState<GameMode>('calibration');
+  const [rounds, setRounds] = useState<Round[]>([]);
+  const [currentRound, setCurrentRound] = useState<Round | null>(null);
+  const [stats, setStats] = useState<any>(null);
 
-  useEffect(() => {
+  const startNewGame = async (selectedMode: GameMode) => {
     if (!session?.userId) return;
-    loadCurrentSession();
-    loadStats();
-  }, [session?.userId]);
 
-  const loadCurrentSession = async () => {
-    if (!session?.userId) return;
-    
-    const today = new Date().toISOString().split('T')[0];
-    const { data, error } = await supabase
-      .from('andy_prediction_game')
-      .select('*')
-      .eq('user_id', session.userId)
-      .eq('game_date', today)
-      .is('answered_at', null)
-      .order('question_number');
-
-    if (error) {
-      console.error('Failed to load session:', error);
-      return;
-    }
-
-    if (data && data.length > 0) {
-      setCurrentSession(data);
-      setCurrentQuestion(0);
-    }
-  };
-
-  const loadStats = async () => {
-    if (!session?.userId) return;
-    
-    const today = new Date().toISOString().split('T')[0];
-    const { data } = await supabase
-      .from('andy_prediction_stats')
-      .select('*')
-      .eq('user_id', session.userId)
-      .eq('stat_date', today)
-      .eq('category', 'overall')
-      .maybeSingle();
-
-    if (data) setStats(data);
-  };
-
-  const generateNewGame = async (sessionNum: number) => {
-    if (!session?.userId) return;
-    
-    setIsGenerating(true);
+    setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('andy-prediction-game', {
-        body: { user_id: session.userId, session_number: sessionNum }
+      const { data, error } = await supabase.functions.invoke('andy-game-orchestrator', {
+        body: {
+          action: 'create_session',
+          user_id: session.userId,
+          mode: selectedMode
+        }
       });
 
       if (error) throw error;
 
-      toast({ 
-        title: '🎯 Andy prepared new questions!',
-        description: `Session ${sessionNum} ready - ${data.questions} questions to test his understanding.`
-      });
-
-      await loadCurrentSession();
-    } catch (error: any) {
-      toast({ 
-        title: 'Failed to generate game', 
-        description: error.message, 
-        variant: 'destructive' 
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const submitAnswer = async () => {
-    if (!selectedAnswer || !currentSession[currentQuestion]) return;
-
-    const question = currentSession[currentQuestion];
-    const isCorrect = selectedAnswer === question.andy_prediction;
-
-    const { error } = await supabase
-      .from('andy_prediction_game')
-      .update({
-        user_actual_answer: selectedAnswer,
-        answered_at: new Date().toISOString(),
-        is_correct: isCorrect
-      })
-      .eq('id', question.id);
-
-    if (error) {
-      toast({ title: 'Failed to save answer', variant: 'destructive' });
-      return;
-    }
-
-    // Move to next question or show results
-    if (currentQuestion < currentSession.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-      setSelectedAnswer('');
-    } else {
-      // Update stats
-      await supabase.rpc('update_prediction_accuracy', {
-        p_user_id: session?.userId,
-        p_date: new Date().toISOString().split('T')[0]
-      });
+      setSessionId(data.session_id);
+      setMode(selectedMode);
+      setRounds([]);
+      setCurrentRound(null);
       
-      await loadStats();
-      setShowResults(true);
+      await generateNextRound(data.session_id);
+      
+      toast.success(`${selectedMode === 'domination' ? 'Domination' : 'Calibration'} mode started!`);
+    } catch (error: any) {
+      console.error('Error starting game:', error);
+      toast.error('Failed to start game');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const resetGame = () => {
-    setCurrentSession([]);
-    setCurrentQuestion(0);
-    setSelectedAnswer('');
-    setShowResults(false);
+  const generateNextRound = async (sid: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('andy-game-orchestrator', {
+        body: {
+          action: 'generate_round',
+          session_id: sid
+        }
+      });
+
+      if (error) throw error;
+
+      const newRound: Round = {
+        round_id: data.round_id,
+        round_no: data.round_no,
+        kind: data.kind,
+        question: data.question,
+        choices: data.choices,
+        commit_hash: data.commit_hash,
+        salt: data.salt,
+        prediction: data.prediction,
+        state: 'awaiting_answer'
+      };
+
+      setCurrentRound(newRound);
+      setRounds(prev => [...prev, newRound]);
+    } catch (error: any) {
+      console.error('Error generating round:', error);
+      toast.error('Failed to generate question');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (!session?.userId) {
-    return <div className="p-4 text-muted-foreground">Please sign in to play</div>;
-  }
+  const submitAnswer = async (answerIndex: number) => {
+    if (!currentRound || !sessionId) return;
 
-  if (showResults) {
-    return (
-      <div className="p-6 space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="h-6 w-6 text-yellow-500" />
-              Session Complete!
-            </CardTitle>
-            <CardDescription>Andy's prediction accuracy for today</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {stats && (
-              <>
-                <div className="text-center space-y-2">
-                  <div className="text-5xl font-bold text-primary">
-                    {Math.round(stats.accuracy_rate * 100)}%
-                  </div>
-                  <p className="text-muted-foreground">
-                    {stats.correct_predictions} out of {stats.total_predictions} correct
-                  </p>
-                </div>
-                <Progress value={stats.accuracy_rate * 100} className="h-3" />
-                {stats.confidence_avg && (
-                  <div className="text-sm text-center text-muted-foreground">
-                    Average confidence when correct: {Math.round(stats.confidence_avg * 100)}%
-                  </div>
-                )}
-              </>
-            )}
-            <Button onClick={resetGame} className="w-full">
-              Start New Session
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+    setLoading(true);
+    try {
+      const { error: answerError } = await supabase.functions.invoke('andy-game-orchestrator', {
+        body: {
+          action: 'submit_answer',
+          round_id: currentRound.round_id,
+          answer_index: answerIndex
+        }
+      });
 
-  if (currentSession.length === 0) {
-    return (
-      <div className="p-6 space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-6 w-6" />
-              Andy's Prediction Game
-            </CardTitle>
-            <CardDescription>
-              Andy tests how well he understands you by predicting your answers
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {stats && (
-              <div className="p-4 bg-muted rounded-lg space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Today's Accuracy</span>
-                  <Badge variant="default">{Math.round(stats.accuracy_rate * 100)}%</Badge>
-                </div>
-                <Progress value={stats.accuracy_rate * 100} className="h-2" />
-              </div>
-            )}
+      if (answerError) throw answerError;
 
-            <div className="grid grid-cols-2 gap-2">
-              {[1, 2, 3, 4].map(num => (
-                <Button
-                  key={num}
-                  onClick={() => generateNewGame(num)}
-                  disabled={isGenerating}
-                  variant="outline"
-                >
-                  <Clock className="h-4 w-4 mr-2" />
-                  Session {num}
-                </Button>
-              ))}
-            </div>
+      const { data: scoreData, error: scoreError } = await supabase.functions.invoke('andy-game-orchestrator', {
+        body: {
+          action: 'reveal_and_score',
+          round_id: currentRound.round_id,
+          prediction_json: currentRound.prediction,
+          salt: currentRound.salt
+        }
+      });
 
-            <p className="text-xs text-muted-foreground text-center">
-              Play 4 sessions per day to help Andy learn your patterns
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+      if (scoreError) throw scoreError;
 
-  const question = currentSession[currentQuestion];
+      const updatedRound = {
+        ...currentRound,
+        userAnswer: answerIndex,
+        revealed: true,
+        score: scoreData.score,
+        state: 'scored' as const
+      };
+
+      setCurrentRound(updatedRound);
+      setRounds(prev => prev.map(r => r.round_id === updatedRound.round_id ? updatedRound : r));
+
+      await fetchSessionStats();
+
+    } catch (error: any) {
+      console.error('Error submitting answer:', error);
+      toast.error('Failed to submit answer');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSessionStats = async () => {
+    if (!sessionId) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('andy-game-orchestrator', {
+        body: {
+          action: 'get_stats',
+          session_id: sessionId
+        }
+      });
+
+      if (error) throw error;
+      setStats(data);
+    } catch (error: any) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  const getChoiceOptions = (round: Round) => {
+    if (round.kind === 'yn') {
+      return ['Yes', 'No'];
+    } else if (round.kind === 'scale') {
+      return ['1', '2', '3', '4', '5'];
+    }
+    return round.choices || [];
+  };
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <Badge variant="outline">
-          Question {question.question_number} of {currentSession.length}
-        </Badge>
-        <Badge>Session {question.session_number}</Badge>
-      </div>
-
+    <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{question.question_text}</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5" />
+            Blinded Prediction Game
+          </CardTitle>
           <CardDescription>
-            Andy thinks you'll say: <strong>{question.andy_prediction}</strong>
-            <br />
-            Confidence: {Math.round(question.andy_confidence * 100)}%
+            Andy commits to predictions before you answer—cryptographically verified, fully calibrated scoring
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {question.question_type === 'yes_no' ? (
-            <RadioGroup value={selectedAnswer} onValueChange={setSelectedAnswer}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="yes" id="yes" />
-                <Label htmlFor="yes">Yes</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="no" id="no" />
-                <Label htmlFor="no">No</Label>
-              </div>
-            </RadioGroup>
-          ) : question.question_type === 'multiple_choice' && question.options ? (
-            <RadioGroup value={selectedAnswer} onValueChange={setSelectedAnswer}>
-              {question.options.map((option, i) => (
-                <div key={i} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option} id={`option-${i}`} />
-                  <Label htmlFor={`option-${i}`}>{option}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          ) : question.question_type === 'scale_1_5' ? (
-            <RadioGroup value={selectedAnswer} onValueChange={setSelectedAnswer}>
-              {[1, 2, 3, 4, 5].map(num => (
-                <div key={num} className="flex items-center space-x-2">
-                  <RadioGroupItem value={num.toString()} id={`scale-${num}`} />
-                  <Label htmlFor={`scale-${num}`}>{num}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          ) : null}
+        <CardContent className="space-y-6">
+          {!sessionId ? (
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => startNewGame('calibration')}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Target className="h-4 w-4" />
+                      Calibration Mode
+                    </CardTitle>
+                    <CardDescription>
+                      Balanced difficulty—Andy asks questions with maximum information gain to learn about you
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full" disabled={loading}>
+                      Start Calibration
+                    </Button>
+                  </CardContent>
+                </Card>
 
-          {question.based_on_analysis && (
-            <div className="p-3 bg-muted rounded-lg text-sm">
-              <div className="flex items-start gap-2">
-                <Brain className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <div>
-                  <strong className="text-xs text-muted-foreground">Andy's reasoning:</strong>
-                  <p className="text-xs mt-1">{question.based_on_analysis}</p>
+                <Card className="cursor-pointer hover:border-primary transition-colors" onClick={() => startNewGame('domination')}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Award className="h-4 w-4" />
+                      Domination Mode
+                    </CardTitle>
+                    <CardDescription>
+                      Andy only asks when he's {'>'}95% confident—going for a perfect score
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full" disabled={loading}>
+                      Start Domination
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          ) : currentRound ? (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Round {currentRound.round_no}</span>
+                  <Badge variant="outline">{mode === 'domination' ? 'Domination' : 'Calibration'}</Badge>
                 </div>
               </div>
+
+              <Card className={currentRound.revealed ? 'border-primary' : ''}>
+                <CardHeader>
+                  <div className="flex items-center gap-2 mb-4">
+                    {currentRound.revealed ? (
+                      <Unlock className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Lock className="h-4 w-4" />
+                    )}
+                    <Badge variant={currentRound.revealed ? 'default' : 'secondary'}>
+                      {currentRound.revealed ? 'Revealed' : 'Committed'}
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-xl">{currentRound.question}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {!currentRound.revealed ? (
+                    <div className="grid gap-2">
+                      {getChoiceOptions(currentRound).map((choice, idx) => (
+                        <Button
+                          key={idx}
+                          variant="outline"
+                          className="justify-start h-auto py-3"
+                          onClick={() => submitAnswer(idx)}
+                          disabled={loading}
+                        >
+                          {choice}
+                        </Button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid gap-2">
+                        {getChoiceOptions(currentRound).map((choice, idx) => {
+                          const isUserChoice = currentRound.userAnswer === idx;
+                          const isAndyChoice = currentRound.prediction.choice === idx;
+                          const confidence = currentRound.prediction.probs[idx];
+
+                          return (
+                            <div key={idx} className="relative">
+                              <div className={`p-3 rounded-lg border ${
+                                isUserChoice && isAndyChoice
+                                  ? 'border-green-500 bg-green-500/10'
+                                  : isUserChoice
+                                  ? 'border-blue-500 bg-blue-500/10'
+                                  : isAndyChoice
+                                  ? 'border-orange-500 bg-orange-500/10'
+                                  : 'border-border'
+                              }`}>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="font-medium">{choice}</span>
+                                  <div className="flex gap-2">
+                                    {isUserChoice && <Badge variant="default">You</Badge>}
+                                    {isAndyChoice && <Badge variant="secondary">Andy</Badge>}
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <div className="flex justify-between text-xs text-muted-foreground">
+                                    <span>Andy's confidence</span>
+                                    <span>{Math.round(confidence * 100)}%</span>
+                                  </div>
+                                  <Progress value={confidence * 100} />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {currentRound.score && (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-sm">Round Score</CardTitle>
+                          </CardHeader>
+                          <CardContent className="grid grid-cols-2 gap-4">
+                            <div>
+                              <div className="text-2xl font-bold">
+                                {currentRound.score.correct ? '✓' : '✗'}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {currentRound.score.correct ? 'Correct' : 'Incorrect'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-2xl font-bold">
+                                {Math.round(Number(currentRound.score.confidence) * 100)}%
+                              </div>
+                              <div className="text-xs text-muted-foreground">Confidence</div>
+                            </div>
+                            <div>
+                              <div className="text-lg font-bold">
+                                {currentRound.score.brier.toFixed(3)}
+                              </div>
+                              <div className="text-xs text-muted-foreground">Brier Score</div>
+                            </div>
+                            <div>
+                              <div className="text-lg font-bold">
+                                {currentRound.score.log_loss.toFixed(3)}
+                              </div>
+                              <div className="text-xs text-muted-foreground">Log Loss</div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      <Button
+                        className="w-full"
+                        onClick={() => generateNextRound(sessionId)}
+                        disabled={loading}
+                      >
+                        Next Question
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div className="text-center">
+              <Button onClick={() => generateNextRound(sessionId)} disabled={loading}>
+                Start First Question
+              </Button>
             </div>
           )}
 
-          <Button 
-            onClick={submitAnswer} 
-            disabled={!selectedAnswer}
-            className="w-full"
-          >
-            Submit Answer
-          </Button>
+          {stats && stats.scored_rounds > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Session Statistics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <div className="text-2xl font-bold">{stats.accuracy}%</div>
+                    <div className="text-xs text-muted-foreground">Accuracy</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">{stats.avg_confidence}%</div>
+                    <div className="text-xs text-muted-foreground">Avg Confidence</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">{stats.avg_brier}</div>
+                    <div className="text-xs text-muted-foreground">Brier Score</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">{stats.avg_log_loss}</div>
+                    <div className="text-xs text-muted-foreground">Log Loss</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {sessionId && (
+            <Button variant="outline" onClick={() => {
+              setSessionId(null);
+              setCurrentRound(null);
+              setRounds([]);
+              setStats(null);
+            }}>
+              End Session
+            </Button>
+          )}
         </CardContent>
       </Card>
-
-      <Progress value={(currentQuestion / currentSession.length) * 100} className="h-2" />
     </div>
   );
 }

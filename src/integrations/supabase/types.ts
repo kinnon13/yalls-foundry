@@ -410,6 +410,74 @@ export type Database = {
           },
         ]
       }
+      ai_game_rounds: {
+        Row: {
+          choices: string[] | null
+          created_at: string | null
+          created_by: string
+          id: string
+          kind: Database["public"]["Enums"]["ai_game_kind"]
+          question_text: string
+          round_no: number
+          session_id: string
+          state: string
+        }
+        Insert: {
+          choices?: string[] | null
+          created_at?: string | null
+          created_by: string
+          id?: string
+          kind: Database["public"]["Enums"]["ai_game_kind"]
+          question_text: string
+          round_no: number
+          session_id: string
+          state?: string
+        }
+        Update: {
+          choices?: string[] | null
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["ai_game_kind"]
+          question_text?: string
+          round_no?: number
+          session_id?: string
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_game_rounds_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "ai_game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_game_sessions: {
+        Row: {
+          created_at: string | null
+          id: string
+          mode: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mode?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mode?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_global_knowledge: {
         Row: {
           confidence: number | null
@@ -743,6 +811,67 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_prediction_commits: {
+        Row: {
+          commit_hash: string
+          committed_at: string | null
+          id: string
+          round_id: string
+        }
+        Insert: {
+          commit_hash: string
+          committed_at?: string | null
+          id?: string
+          round_id: string
+        }
+        Update: {
+          commit_hash?: string
+          committed_at?: string | null
+          id?: string
+          round_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_prediction_commits_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: true
+            referencedRelation: "ai_game_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_prediction_reveals: {
+        Row: {
+          id: string
+          prediction_json: Json
+          revealed_at: string | null
+          round_id: string
+          salt: string
+        }
+        Insert: {
+          id?: string
+          prediction_json: Json
+          revealed_at?: string | null
+          round_id: string
+          salt: string
+        }
+        Update: {
+          id?: string
+          prediction_json?: Json
+          revealed_at?: string | null
+          round_id?: string
+          salt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_prediction_reveals_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: true
+            referencedRelation: "ai_game_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_preferences: {
         Row: {
           confirm_threshold: number | null
@@ -978,6 +1107,80 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_question_feedback: {
+        Row: {
+          created_at: string | null
+          id: string
+          rating: number
+          round_id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          rating: number
+          round_id: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          rating?: number
+          round_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_question_feedback_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "ai_game_rounds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_question_feedback_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "ai_game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_round_scores: {
+        Row: {
+          brier: number
+          computed_at: string | null
+          confidence: number
+          correct: boolean
+          log_loss: number
+          round_id: string
+        }
+        Insert: {
+          brier: number
+          computed_at?: string | null
+          confidence: number
+          correct: boolean
+          log_loss: number
+          round_id: string
+        }
+        Update: {
+          brier?: number
+          computed_at?: string | null
+          confidence?: number
+          correct?: boolean
+          log_loss?: number
+          round_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_round_scores_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: true
+            referencedRelation: "ai_game_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_selector_catalog: {
         Row: {
           id: string
@@ -1180,6 +1383,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ai_user_answers: {
+        Row: {
+          answer_index: number
+          answered_at: string | null
+          id: string
+          round_id: string
+        }
+        Insert: {
+          answer_index: number
+          answered_at?: string | null
+          id?: string
+          round_id: string
+        }
+        Update: {
+          answer_index?: number
+          answered_at?: string | null
+          id?: string
+          round_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_user_answers_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: true
+            referencedRelation: "ai_game_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_user_consent: {
         Row: {
@@ -14340,6 +14572,14 @@ export type Database = {
         Args: { p_text: string }
         Returns: string
       }
+      sp_reveal_prediction: {
+        Args: { p_prediction_json: Json; p_round_id: string; p_salt: string }
+        Returns: undefined
+      }
+      sp_score_round: {
+        Args: { p_round_id: string }
+        Returns: undefined
+      }
       sparsevec_out: {
         Args: { "": unknown }
         Returns: unknown
@@ -15522,6 +15762,7 @@ export type Database = {
     }
     Enums: {
       ai_channel: "snackbar" | "dm" | "email" | "push"
+      ai_game_kind: "yn" | "mcq" | "scale"
       app_role:
         | "admin"
         | "moderator"
@@ -15717,6 +15958,7 @@ export const Constants = {
   public: {
     Enums: {
       ai_channel: ["snackbar", "dm", "email", "push"],
+      ai_game_kind: ["yn", "mcq", "scale"],
       app_role: [
         "admin",
         "moderator",
