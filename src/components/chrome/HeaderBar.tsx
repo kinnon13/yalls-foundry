@@ -67,17 +67,14 @@ export default function HeaderBar() {
         type="search"
       />
 
-      {/* Logout Button */}
-      <Button
+      {/* Floating Logout Button */}
+      <button
         onClick={handleLogout}
-        variant="ghost"
-        size="sm"
-        className="gap-2 ml-auto"
+        className="w-12 h-12 rounded-2xl bg-white/90 hover:bg-white backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 hover-scale flex items-center justify-center ml-auto group"
         title="Logout"
       >
-        <LogOut className="h-4 w-4" />
-        <span className="hidden md:inline">Logout</span>
-      </Button>
+        <LogOut className="h-5 w-5 text-gray-800 group-hover:text-red-600 transition-colors" />
+      </button>
     </header>
   );
 }
