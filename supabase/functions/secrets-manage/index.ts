@@ -115,10 +115,24 @@ serve(async (req) => {
       });
     }
 
-    // POST - save/update secret
+    // POST - save/update secret OR delete (for older clients using invoke POST)
     if (req.method === "POST") {
-      const { provider, name = "default", apiKey } = await req.json();
-      
+      const { provider, name = "default", apiKey } = await req.json().catch(() => ({}));
+
+      if (provider && !apiKey) {
+        // Treat as delete fallback for clients that can only POST
+        const { error } = await serviceClient
+          .from("app_provider_secrets")
+          .delete()
+          .eq("owner_user_id", user.id)
+          .eq("provider", provider)
+          .eq("name", name);
+        if (error) throw error;
+        return new Response(JSON.stringify({ ok: true, deleted: { provider, name } }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       if (!provider || !apiKey) {
         return new Response(JSON.stringify({ error: "provider and apiKey required" }), {
           status: 400,
@@ -127,7 +141,6 @@ serve(async (req) => {
       }
 
       const encrypted = await encryptSecret(apiKey.trim());
-      
       const { error } = await serviceClient
         .from("app_provider_secrets")
         .upsert({
@@ -138,13 +151,8 @@ serve(async (req) => {
         }, {
           onConflict: "owner_user_id,provider,name"
         });
-      
       if (error) throw error;
-      
-      return new Response(JSON.stringify({
-        ok: true,
-        stored: { provider, name, mask: maskKey(apiKey) }
-      }), {
+      return new Response(JSON.stringify({ ok: true, stored: { provider, name, mask: maskKey(apiKey) } }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
