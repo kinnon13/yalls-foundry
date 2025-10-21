@@ -27,7 +27,7 @@ serve(async (req) => {
 
     const { data, error } = await supabase.functions.invoke('proxy-openai', {
       body: {
-        path: '/v1/chat/completions',
+        path: '/chat/completions',
         keyName: 'openai',
         body: {
           model: 'gpt-5-mini-2025-08-07',
