@@ -12,8 +12,8 @@ serve(async (req) => {
 
   try {
     const payload = await req.json().catch(() => ({}));
-    const { message } = payload as { message?: string };
-    console.log('[rocker-chat-simple] incoming', { hasMessage: !!message });
+    const { message, thread_id } = payload as { message?: string; thread_id?: string };
+    console.log('[rocker-chat-simple] incoming', { hasMessage: !!message, hasThread: !!thread_id });
     if (!message || typeof message !== 'string') {
       return new Response(JSON.stringify({ error: 'message is required' }), {
         status: 400,
@@ -26,6 +26,20 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: req.headers.get('Authorization') || '' } } }
     );
+
+    // Persist user message when thread provided
+    if (thread_id) {
+      try {
+        await supabase.from('rocker_messages').insert({
+          thread_id,
+          role: 'user',
+          content: message,
+          meta: null,
+        });
+      } catch (e) {
+        console.error('[rocker-chat-simple] failed to insert user message', e);
+      }
+    }
 
     // 1) Try user's OpenAI key via proxy-openai (try both key names)
     let reply = '';
@@ -99,6 +113,20 @@ serve(async (req) => {
 
       const aiJson = await aiResp.json();
       reply = aiJson?.choices?.[0]?.message?.content ?? '';
+    }
+
+    // Persist assistant reply
+    if (thread_id && reply) {
+      try {
+        await supabase.from('rocker_messages').insert({
+          thread_id,
+          role: 'assistant',
+          content: reply,
+          meta: null,
+        });
+      } catch (e) {
+        console.error('[rocker-chat-simple] failed to insert assistant message', e);
+      }
     }
 
     return new Response(JSON.stringify({ reply }), {
