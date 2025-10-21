@@ -13,7 +13,7 @@ export default function SuperRocker() {
   const { session } = useSession();
   const { isSuperAdmin, isLoading } = useSuperAdminCheck();
   const navigate = useNavigate();
-  const [activeApp, setActiveApp] = useState<AppId>('knowledge');
+  const [activeApp, setActiveApp] = useState<AppId>('files');
   const [threadId, setThreadId] = useState<string | null>(null);
 
   useEffect(() => {

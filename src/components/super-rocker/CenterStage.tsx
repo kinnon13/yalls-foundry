@@ -1,9 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { AppId } from './AppDock';
 import { SuperRockerKnowledge } from './SuperRockerKnowledge';
-import { SuperRockerMemory } from './SuperRockerMemory';
 import { SuperRockerTasks } from './SuperRockerTasks';
-import { FileBrowser } from './FileBrowser';
+import { UnifiedFilesMemory } from './UnifiedFilesMemory';
 import { SuperRockerInbox } from './SuperRockerInbox';
 import { SuperRockerAdmin } from './SuperRockerAdmin';
 import { Calendar } from './Calendar';
@@ -34,15 +33,13 @@ export function CenterStage({ activeApp, threadId }: CenterStageProps) {
     <div className="h-full w-full overflow-auto animate-fade-in">
       {activeApp === 'knowledge' && <SuperRockerKnowledge />}
       
-      {activeApp === 'memory' && <SuperRockerMemory />}
+      {activeApp === 'files' && <UnifiedFilesMemory />}
       
       {activeApp === 'tasks' && <SuperRockerTasks threadId={threadId} />}
       
       {activeApp === 'calendar' && <Calendar />}
       
       {activeApp === 'proactive' && <ProactivePanel />}
-      
-      {activeApp === 'files' && <FileBrowser />}
       
       {activeApp === 'inbox' && <SuperRockerInbox />}
       

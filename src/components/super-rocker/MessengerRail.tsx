@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Brain, Send, Mic, MicOff, Sparkles, Loader2 } from 'lucide-react';
+import { Brain, Send, Mic, MicOff, Sparkles, Loader2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -221,6 +221,39 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
     }
   };
 
+  const exportChatToFile = async () => {
+    if (!threadId || messages.length === 0) {
+      toast({ title: 'No messages to export', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const chatText = messages.map(m => 
+        `[${m.role.toUpperCase()}] ${m.content}`
+      ).join('\n\n');
+
+      const { data, error } = await supabase.functions.invoke('rocker-ingest', {
+        body: {
+          text: chatText,
+          subject: `Chat Export - ${new Date().toLocaleDateString()}`,
+        }
+      });
+
+      if (error || (data && (data as any).error)) {
+        throw new Error((data as any)?.error || (error as any)?.message || 'Failed to export chat');
+      }
+
+      toast({ 
+        title: 'Chat exported to Files!', 
+        description: `Filed to ${data.category} • ${data.stored} chunks`,
+        duration: 5000
+      });
+    } catch (error: any) {
+      console.error('Export error:', error);
+      toast({ title: 'Failed to export chat', description: error.message, variant: 'destructive' });
+    }
+  };
+
   const toggleVoice = async () => {
     if (voiceStatus === 'connected') {
       voiceRef.current?.disconnect();
@@ -281,13 +314,21 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-md shadow-primary/25">
             <Brain className="h-5 w-5 text-primary-foreground" />
           </div>
-          <div>
+          <div className="flex-1">
             <h3 className="text-sm font-semibold text-foreground">Andy</h3>
             <p className="text-[11px] text-muted-foreground">Your Everything AI</p>
           </div>
-          <div className="ml-auto">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={exportChatToFile}
+            disabled={messages.length === 0}
+            title="Export chat to Files"
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+          <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
         </div>
       </div>
 
