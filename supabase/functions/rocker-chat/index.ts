@@ -38,56 +38,36 @@ serve(async (req) => {
     const { data: authUser } = await supabase.auth.getUser();
     const resolvedUserId = userId || authUser.user?.id || null;
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "AI not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     // Basic system prompt focused on proactivity and clarifying questions
     const systemPrompt = "You are Rocker, a proactive AI copilot. Be concise, take initiative, and end with a short plan beginning with: 'Next I'm going to:'";
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: message },
-        ],
-        temperature: 0.4,
-      }),
+    // Use proxy-openai to access user's OpenAI key
+    const aiResp = await supabase.functions.invoke("proxy-openai", {
+      body: {
+        path: "/chat/completions",
+        method: "POST",
+        body: {
+          model: "gpt-5-mini-2025-08-07",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: message },
+          ],
+          temperature: 0.4,
+        },
+        keyName: "default"
+      }
     });
 
-    if (!aiResp.ok) {
-      if (aiResp.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limits exceeded, please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (aiResp.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Payment required, please add funds to your Lovable AI workspace." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const t = await aiResp.text();
-      console.error("AI gateway error:", aiResp.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
+    if (aiResp.error) {
+      console.error("OpenAI proxy error:", aiResp.error);
+      return new Response(JSON.stringify({ error: aiResp.error.message || "OpenAI API error" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const data = await aiResp.json();
-    const reply: string = data.choices?.[0]?.message?.content || "";
+    const data = aiResp.data;
+    const reply: string = data?.choices?.[0]?.message?.content || "";
 
     // Optional: log action
     try {
