@@ -65,6 +65,7 @@ const AuthPage = lazy(() => import('./routes/auth'));
 const OnboardingPage = lazy(() => import('./routes/onboarding/index'));
 const RockerHub = lazy(() => import('./routes/rocker-hub'));
 const SuperAndy = lazy(() => import('./routes/super-andy'));
+const AdminRocker = lazy(() => import('./routes/admin-rocker'));
 const SettingsKeys = lazy(() => import('./pages/SettingsKeys'));
 
 const queryClient = new QueryClient();
@@ -326,6 +327,16 @@ function AppContent() {
             element={
               <Suspense fallback={<div>Loading...</div>}>
                 <SuperAndy />
+              </Suspense>
+            } 
+          />
+          
+          {/* Admin Rocker - Admin AI Workspace */}
+          <Route 
+            path="/admin-rocker" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <AdminRocker />
               </Suspense>
             } 
           />
