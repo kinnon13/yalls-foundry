@@ -280,3 +280,10 @@ verify_jwt = true
 [functions.rocker-insights]
 verify_jwt = true
 
+# Proactive 30-min autonomous suggestions
+[functions.rocker-proactive-30min]
+verify_jwt = false
+
+[functions.rocker-proactive-30min.cron]
+schedule = "*/30 * * * *"  # Every 30 minutes
+
