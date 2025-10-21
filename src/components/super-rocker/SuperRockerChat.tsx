@@ -178,7 +178,8 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
         });
       }
 
-      // Refresh messages to get actual stored ones
+      // Refresh messages to get actual stored ones (allow brief commit + subscription setup)
+      await new Promise((r) => setTimeout(r, 250));
       await loadMessages(activeThreadId);
     } catch (error: any) {
       console.error('Chat error:', error);
