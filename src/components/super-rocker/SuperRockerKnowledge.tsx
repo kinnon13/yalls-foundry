@@ -39,6 +39,7 @@ export function SuperRockerKnowledge() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [expandedChunks, setExpandedChunks] = useState<Set<string>>(new Set());
+  const [isReembedding, setIsReembedding] = useState(false);
 
   useEffect(() => {
     loadKnowledge(true);

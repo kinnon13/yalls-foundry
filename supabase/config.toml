@@ -268,3 +268,9 @@ verify_jwt = true
 [functions.rocker-audit]
 verify_jwt = true
 
+[functions.collection_operations]
+verify_jwt = true
+
+[functions.rocker-reembed]
+verify_jwt = true
+
