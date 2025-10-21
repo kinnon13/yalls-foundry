@@ -67,6 +67,7 @@ const RockerHub = lazy(() => import('./routes/rocker-hub'));
 const SuperAndy = lazy(() => import('./routes/super-andy'));
 const AdminRocker = lazy(() => import('./routes/admin-rocker'));
 const SettingsKeys = lazy(() => import('./pages/SettingsKeys'));
+const RoleToolPage = lazy(() => import('./routes/admin/role-tool'));
 
 const queryClient = new QueryClient();
 
@@ -347,6 +348,16 @@ function AppContent() {
             element={
               <Suspense fallback={<div>Loading...</div>}>
                 <SettingsKeys />
+              </Suspense>
+            } 
+          />
+          
+          {/* Admin - Role Tool */}
+          <Route 
+            path="/admin/role-tool" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <RoleToolPage />
               </Suspense>
             } 
           />
