@@ -117,17 +117,16 @@ export function MessengerRail() {
         { role: 'user', content: content.trim() }
       ];
 
-      // Stream response from rocker-chat
+      // Stream response from andy-chat
       const SUPABASE_URL = 'https://xuxfuonzsfvrirdwzddt.supabase.co';
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/rocker-chat`, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/andy-chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
         },
         body: JSON.stringify({
-          messages: messageHistory,
-          actor_role: 'user'
+          messages: messageHistory
         }),
       });
 
