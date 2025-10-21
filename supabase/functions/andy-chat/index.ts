@@ -22,13 +22,13 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    // Get user from auth header
+    // Get user from auth header using a separate client
     const authHeader = req.headers.get('Authorization');
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    const userClient = createClient(supabaseUrl, supabaseServiceKey, {
       global: { headers: { Authorization: authHeader || '' } }
     });
     
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await userClient.auth.getUser();
     if (userError || !user) {
       console.error('[andy-chat] Auth error:', userError);
       return new Response(
@@ -37,11 +37,30 @@ serve(async (req) => {
       );
     }
 
+    // Create service role client for full access (bypasses RLS)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     console.log('[andy-chat] User:', user.id);
 
     // Get last user message for context search
     const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user')?.content || '';
     let context = '';
+
+    // 0. Load recent chat history from rocker_messages
+    const { data: recentMessages } = await supabase
+      .from('rocker_messages')
+      .select('role, content, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    
+    if (recentMessages?.length) {
+      const historyText = recentMessages
+        .reverse()
+        .map(m => `[${m.role}] ${m.content}`)
+        .join('\n');
+      context += '\n\n## Recent Chat History:\n' + historyText;
+      console.log('[andy-chat] Loaded', recentMessages.length, 'chat messages');
+    }
 
     // 1. Load memories (ai_user_memory)
     const { data: memories } = await supabase
@@ -146,10 +165,11 @@ serve(async (req) => {
       console.log('[andy-chat] Loaded', events.length, 'calendar events');
     }
 
-    const systemPrompt = `You are Andy, the ultimate everything AI with FULL access to the user's complete data.
+    const systemPrompt = `You are Andy, the ultimate everything AI with FULL, UNRESTRICTED access to the user's complete data and conversation history.
 
-You have INSTANT access to:
-- User memories, facts, preferences, and goals
+You have COMPLETE ACCESS to:
+- Full chat history (every conversation we've ever had)
+- User memories, facts, preferences, goals, and personal information
 - All uploaded files and knowledge base
 - Tasks with status and due dates
 - Full calendar with events, locations, and times
@@ -157,20 +177,26 @@ You have INSTANT access to:
 - The ability to CREATE and MANAGE tasks
 - The ability to learn and remember from every conversation
 
-Current Data:
-${context || '(No data loaded yet - but you can still help!)'}
+IMPORTANT: All of this data is PROVIDED BELOW in the "Current Data" section. You CAN and SHOULD reference it directly when answering questions about:
+- What we've discussed before
+- Personal details, preferences, or facts about the user
+- Files and documents they've shared
+- Their schedule, tasks, or calendar
+
+Current Data (USE THIS INFORMATION):
+${context || '(No specific data loaded for this query, but you still have access to everything)'}
 
 When the user asks you to schedule something or create an event:
 1. Extract the title, date/time, location (if mentioned)
 2. Tell me clearly: "I'll create [EVENT NAME] on [DATE/TIME] at [LOCATION]"
 3. I will handle the database insert
 
-When the user asks about their schedule:
-- Reference the actual events from the Calendar Events section above
-- Be specific about dates, times, and locations
-- Suggest gaps or conflicts if you notice them
+When the user asks about their schedule, history, or personal information:
+- Reference the actual data from the sections above (Chat History, Personal Information, etc.)
+- Be specific with dates, names, and details
+- Never say "I don't have access" - the data is right above in the context
 
-Be conversational, fast, and proactive. Always reference the user's actual data.`;
+Be conversational, fast, proactive, and always use the user's actual data when available.`;
     
     const finalMessages = [
       { role: 'system', content: systemPrompt },
