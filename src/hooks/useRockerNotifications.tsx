@@ -10,7 +10,7 @@ export const useRockerNotifications = (userId: string | undefined) => {
 
     console.log('[Rocker Notifications] Setting up listener for user:', userId);
 
-    // Subscribe to rocker_notifications table
+    // Phase 3: Enhanced proactive notifications - listen to multiple tables
     channelRef.current = supabase
       .channel('rocker-notifications')
       .on(
@@ -64,6 +64,46 @@ export const useRockerNotifications = (userId: string | undefined) => {
             .from('rocker_notifications')
             .update({ read_at: new Date().toISOString() })
             .eq('id', notification.id);
+        }
+      )
+      // Phase 3: Listen for gap signals to proactively suggest improvements
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'rocker_gap_signals',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          console.log('[Rocker] Gap detected:', payload.new);
+          const gap = payload.new as any;
+          if (gap.kind === 'low_conf' && gap.meta?.suggestedRefresh) {
+            toast('🧠 Learning opportunity detected', {
+              description: 'Rocker noticed a knowledge gap. Would you like me to learn more about this?',
+              duration: 10000,
+            });
+          }
+        }
+      )
+      // Phase 3: Listen for auto-created tasks
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'rocker_tasks',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const task = payload.new as any;
+          if (task.meta?.auto_created) {
+            console.log('[Rocker] Auto-created task:', task.title);
+            toast('✅ Task created', {
+              description: task.title,
+              duration: 5000,
+            });
+          }
         }
       )
       .subscribe();

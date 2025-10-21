@@ -47,6 +47,7 @@ serve(async (req) => {
 
     // Unified AI gateway call
     let reply = '';
+    let confidence = 1.0;
     try {
       reply = await aiChat({
         role: 'user',
@@ -55,12 +56,54 @@ serve(async (req) => {
           { role: 'user', content: message }
         ],
       });
+      
+      // Detect low confidence or uncertain responses
+      if (/i don't know|i'm not sure|unclear|cannot help/i.test(reply)) {
+        confidence = 0.3;
+      }
     } catch (e) {
       console.error('[rocker-chat-simple] aiChat failed:', e);
+      confidence = 0;
       return new Response(JSON.stringify({ error: 'AI call failed' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Phase 2: Gap signal detection - log when confidence is low
+    if (user?.id && confidence < 0.65) {
+      try {
+        await supabase.from('rocker_gap_signals').insert({
+          user_id: user.id,
+          kind: 'low_conf',
+          query: message,
+          score: confidence,
+          meta: { thread_id, suggestedRefresh: true }
+        });
+        console.log('[rocker-chat-simple] Gap signal logged for low confidence');
+      } catch (e) {
+        console.error('[rocker-chat-simple] Failed to log gap signal:', e);
+      }
+    }
+
+    // Phase 3: Auto-task detection - create tasks from action items
+    if (user?.id && /action needed|todo|task|remind me|schedule|follow up/i.test(reply)) {
+      try {
+        const taskMatch = reply.match(/(?:action needed|todo|task|remind me|schedule|follow up)[:\s]+([^.!?]+)/i);
+        if (taskMatch && taskMatch[1]) {
+          const taskTitle = taskMatch[1].trim().slice(0, 100);
+          await supabase.from('rocker_tasks').insert({
+            user_id: user.id,
+            title: taskTitle,
+            status: 'pending',
+            priority: 'medium',
+            meta: { auto_created: true, source_message: message }
+          });
+          console.log('[rocker-chat-simple] Auto-created task:', taskTitle);
+        }
+      } catch (e) {
+        console.error('[rocker-chat-simple] Failed to auto-create task:', e);
+      }
     }
 
     // Persist assistant reply
@@ -71,7 +114,7 @@ serve(async (req) => {
           user_id: user?.id,
           role: 'assistant',
           content: reply,
-          meta: {},
+          meta: { confidence },
         });
       } catch (e) {
         console.error('[rocker-chat-simple] failed to insert assistant message', e);
