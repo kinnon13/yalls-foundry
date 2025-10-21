@@ -270,71 +270,57 @@ export function useRocker(mode: 'user' | 'admin' | 'super_admin' = 'user') {
         throw new Error(`Request failed: ${response.statusText}`);
       }
 
-      // Handle JSON response (non-streaming with tool execution)
-      const result = await response.json();
-      
-      if (result.error) {
-        throw new Error(result.error);
+      // Handle streaming response (SSE format)
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
       }
-      
-      // Execute DOM actions if present
-      if (result.client_actions && Array.isArray(result.client_actions)) {
-        const failures: string[] = [];
-        for (const clientAction of result.client_actions) {
-          const actionRes = await executeDOMAction(clientAction);
-          if (actionRes && actionRes.success === false) {
-            const target = clientAction.element_name || clientAction.field_name || clientAction.target_name || clientAction.action;
-            failures.push(`${target}: ${actionRes.message || 'not found'}`);
-            try { lastFailuresRef.current.push(target); } catch {}
+
+      const decoder = new TextDecoder();
+      let assistantMessage = '';
+      let buffer = '';
+
+      // Add assistant message placeholder
+      setMessages(prev => [...prev, { 
+        role: 'assistant' as const, 
+        content: ''
+      }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith(':')) continue;
+          if (!trimmed.startsWith('data:')) continue;
+
+          const data = trimmed.slice(5).trim();
+          if (data === '[DONE]') continue;
+
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed?.choices?.[0]?.delta?.content || '';
+            if (delta) {
+              assistantMessage += delta;
+              // Update the last message (assistant) with accumulated content
+              setMessages(prev => {
+                const updated = [...prev];
+                updated[updated.length - 1] = {
+                  role: 'assistant' as const,
+                  content: assistantMessage
+                };
+                return updated;
+              });
+            }
+          } catch (e) {
+            // Ignore parse errors for partial chunks
           }
         }
-        if (failures.length > 0) {
-          setMessages(prev => [...prev, {
-            role: 'assistant',
-            content: `I couldn’t find some elements: ${failures.join('; ')}.\nPlease tell me the exact label or what it says on the button/field, or point me to it and I’ll learn it. I’ve logged this failure for training.`,
-            timestamp: new Date()
-          }]);
-        }
-      }
-      
-      // Add tool execution feedback if present
-      if (result.tool_calls && result.tool_calls.length > 0) {
-        const toolMessages: RockerMessage[] = result.tool_calls.map((tc: any) => ({
-          role: 'system' as const,
-          content: `🔧 ${tc.name}`,
-          timestamp: new Date(),
-          metadata: { 
-            type: 'tool_call' as const,
-            toolName: tc.name,
-            status: 'complete' as const
-          }
-        }));
-        setMessages(prev => [...prev, ...toolMessages]);
-      }
-      
-      if (result.content) {
-        const assistantMessage: RockerMessage = {
-          role: 'assistant',
-          content: result.content,
-          timestamp: new Date()
-        };
-        
-        // Handle navigation from tool calls or hints
-        if (result.navigationPath) {
-          assistantMessage.metadata = {
-            type: 'navigation',
-            navigationPath: result.navigationPath
-          };
-        } else if (result.navigation_url) {
-          assistantMessage.metadata = {
-            type: 'navigation',
-            url: result.navigation_url
-          };
-        }
-        
-        setMessages(prev => [...prev, assistantMessage]);
-      } else {
-        throw new Error('No response from assistant');
       }
 
     } catch (err: any) {
