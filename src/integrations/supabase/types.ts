@@ -10128,18 +10128,21 @@ export type Database = {
       }
       rocker_threads: {
         Row: {
+          actor_role: string
           created_at: string
           id: string
           title: string | null
           user_id: string
         }
         Insert: {
+          actor_role?: string
           created_at?: string
           id?: string
           title?: string | null
           user_id: string
         }
         Update: {
+          actor_role?: string
           created_at?: string
           id?: string
           title?: string | null
