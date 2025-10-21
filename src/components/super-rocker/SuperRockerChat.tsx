@@ -167,6 +167,15 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
 
       if (error) throw error;
 
+      // Add assistant message from response immediately (don't wait for DB)
+      const assistantMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: data.reply || '',
+        created_at: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, assistantMsg]);
+
       // Show tool results if any
       if (data?.tool_results && data.tool_results.length > 0) {
         const toolSummary = data.tool_results
