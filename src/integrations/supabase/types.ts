@@ -7809,6 +7809,53 @@ export type Database = {
         }
         Relationships: []
       }
+      rocker_categories: {
+        Row: {
+          category_type: string
+          color: string | null
+          created_at: string | null
+          icon: string | null
+          id: string
+          meta: Json | null
+          name: string
+          parent_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category_type: string
+          color?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          meta?: Json | null
+          name: string
+          parent_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category_type?: string
+          color?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          meta?: Json | null
+          name?: string
+          parent_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rocker_commands: {
         Row: {
           created_at: string
@@ -8163,13 +8210,20 @@ export type Database = {
       rocker_files: {
         Row: {
           category: string | null
+          category_id: string | null
           created_at: string | null
+          file_type: string | null
           folder_path: string | null
           id: string
+          meta: Json | null
           mime: string | null
           name: string | null
           ocr_text: string | null
+          parent_file_id: string | null
+          priority: string | null
           project: string | null
+          related_files: string[] | null
+          related_messages: string[] | null
           size: number | null
           source: string | null
           starred: boolean | null
@@ -8180,16 +8234,24 @@ export type Database = {
           text_content: string | null
           thread_id: string | null
           user_id: string
+          visibility: string | null
         }
         Insert: {
           category?: string | null
+          category_id?: string | null
           created_at?: string | null
+          file_type?: string | null
           folder_path?: string | null
           id?: string
+          meta?: Json | null
           mime?: string | null
           name?: string | null
           ocr_text?: string | null
+          parent_file_id?: string | null
+          priority?: string | null
           project?: string | null
+          related_files?: string[] | null
+          related_messages?: string[] | null
           size?: number | null
           source?: string | null
           starred?: boolean | null
@@ -8200,16 +8262,24 @@ export type Database = {
           text_content?: string | null
           thread_id?: string | null
           user_id: string
+          visibility?: string | null
         }
         Update: {
           category?: string | null
+          category_id?: string | null
           created_at?: string | null
+          file_type?: string | null
           folder_path?: string | null
           id?: string
+          meta?: Json | null
           mime?: string | null
           name?: string | null
           ocr_text?: string | null
+          parent_file_id?: string | null
+          priority?: string | null
           project?: string | null
+          related_files?: string[] | null
+          related_messages?: string[] | null
           size?: number | null
           source?: string | null
           starred?: boolean | null
@@ -8220,8 +8290,44 @@ export type Database = {
           text_content?: string | null
           thread_id?: string | null
           user_id?: string
+          visibility?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "rocker_files_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rocker_files_parent_file_id_fkey"
+            columns: ["parent_file_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rocker_files_parent_file_id_fkey"
+            columns: ["parent_file_id"]
+            isOneToOne: false
+            referencedRelation: "vw_files_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rocker_files_parent_file_id_fkey"
+            columns: ["parent_file_id"]
+            isOneToOne: false
+            referencedRelation: "vw_files_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rocker_files_parent_file_id_fkey"
+            columns: ["parent_file_id"]
+            isOneToOne: false
+            referencedRelation: "vw_starred"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "rocker_files_thread_id_fkey"
             columns: ["thread_id"]
@@ -8359,45 +8465,64 @@ export type Database = {
       }
       rocker_knowledge: {
         Row: {
+          category_id: string | null
           chunk_index: number
+          chunk_summary: string | null
           content: string
           content_tsv: unknown | null
           created_at: string
           embedding: string | null
           file_id: string | null
           id: string
+          keywords: string[] | null
           memory_id: string | null
+          message_id: number | null
           meta: Json | null
           source_id: string | null
           user_id: string
         }
         Insert: {
+          category_id?: string | null
           chunk_index?: number
+          chunk_summary?: string | null
           content: string
           content_tsv?: unknown | null
           created_at?: string
           embedding?: string | null
           file_id?: string | null
           id?: string
+          keywords?: string[] | null
           memory_id?: string | null
+          message_id?: number | null
           meta?: Json | null
           source_id?: string | null
           user_id: string
         }
         Update: {
+          category_id?: string | null
           chunk_index?: number
+          chunk_summary?: string | null
           content?: string
           content_tsv?: unknown | null
           created_at?: string
           embedding?: string | null
           file_id?: string | null
           id?: string
+          keywords?: string[] | null
           memory_id?: string | null
+          message_id?: number | null
           meta?: Json | null
           source_id?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "rocker_knowledge_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "rocker_knowledge_file_id_fkey"
             columns: ["file_id"]
@@ -8433,49 +8558,82 @@ export type Database = {
             referencedRelation: "rocker_memories"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "rocker_knowledge_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_messages"
+            referencedColumns: ["id"]
+          },
         ]
       }
       rocker_long_memory: {
         Row: {
+          category_id: string | null
           created_at: string | null
           embedding: string | null
           id: string
           key: string | null
           kind: string
+          last_accessed: string | null
+          memory_layer: string | null
           pinned: boolean | null
           priority: number
+          related_files: string[] | null
+          related_memories: string[] | null
           source: string | null
           updated_at: string | null
           user_id: string
           value: Json
+          visibility: string | null
         }
         Insert: {
+          category_id?: string | null
           created_at?: string | null
           embedding?: string | null
           id?: string
           key?: string | null
           kind: string
+          last_accessed?: string | null
+          memory_layer?: string | null
           pinned?: boolean | null
           priority?: number
+          related_files?: string[] | null
+          related_memories?: string[] | null
           source?: string | null
           updated_at?: string | null
           user_id: string
           value: Json
+          visibility?: string | null
         }
         Update: {
+          category_id?: string | null
           created_at?: string | null
           embedding?: string | null
           id?: string
           key?: string | null
           kind?: string
+          last_accessed?: string | null
+          memory_layer?: string | null
           pinned?: boolean | null
           priority?: number
+          related_files?: string[] | null
+          related_memories?: string[] | null
           source?: string | null
           updated_at?: string | null
           user_id?: string
           value?: Json
+          visibility?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "rocker_long_memory_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rocker_memories: {
         Row: {
@@ -8520,7 +8678,10 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          exported_to_file_id: string | null
           id: number
+          linked_files: string[] | null
+          linked_knowledge: string[] | null
           meta: Json
           role: string
           thread_id: string
@@ -8529,7 +8690,10 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          exported_to_file_id?: string | null
           id?: number
+          linked_files?: string[] | null
+          linked_knowledge?: string[] | null
           meta?: Json
           role: string
           thread_id: string
@@ -8538,13 +8702,44 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          exported_to_file_id?: string | null
           id?: number
+          linked_files?: string[] | null
+          linked_knowledge?: string[] | null
           meta?: Json
           role?: string
           thread_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "rocker_messages_exported_to_file_id_fkey"
+            columns: ["exported_to_file_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rocker_messages_exported_to_file_id_fkey"
+            columns: ["exported_to_file_id"]
+            isOneToOne: false
+            referencedRelation: "vw_files_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rocker_messages_exported_to_file_id_fkey"
+            columns: ["exported_to_file_id"]
+            isOneToOne: false
+            referencedRelation: "vw_files_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rocker_messages_exported_to_file_id_fkey"
+            columns: ["exported_to_file_id"]
+            isOneToOne: false
+            referencedRelation: "vw_starred"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "rocker_messages_thread_id_fkey"
             columns: ["thread_id"]
@@ -13098,6 +13293,16 @@ export type Database = {
         Args: { p_action_type: string; p_user_id: string }
         Returns: Json
       }
+      rocker_create_category: {
+        Args: {
+          p_category_type: string
+          p_color?: string
+          p_icon?: string
+          p_name: string
+          p_parent_id?: string
+        }
+        Returns: string
+      }
       rocker_dm: {
         Args: { p_channel?: string; p_text: string; p_user_id: string }
         Returns: undefined
@@ -13109,6 +13314,10 @@ export type Database = {
           name: string
           reason: string
         }[]
+      }
+      rocker_get_category_path: {
+        Args: { p_category_id: string }
+        Returns: string
       }
       rocker_log_action: {
         Args:

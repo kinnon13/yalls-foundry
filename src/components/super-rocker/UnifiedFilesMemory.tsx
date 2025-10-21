@@ -18,12 +18,25 @@ import {
   Zap,
   RefreshCw,
   Edit,
-  FileText
+  FileText,
+  Database,
+  MessageSquare,
+  Plus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+
+interface Category {
+  id: string;
+  name: string;
+  parent_id: string | null;
+  category_type: string;
+  icon: string | null;
+  color: string | null;
+  created_at: string;
+}
 
 interface FileItem {
   id: string;
@@ -36,6 +49,8 @@ interface FileItem {
   tags: string[];
   created_at: string;
   chunk_count?: number;
+  file_type?: string;
+  category_id?: string | null;
 }
 
 interface Memory {
@@ -46,23 +61,66 @@ interface Memory {
   pinned: boolean;
   priority: number;
   created_at: string;
+  memory_layer?: string | null;
+}
+
+interface KnowledgeChunk {
+  id: string;
+  content: string;
+  chunk_index: number;
+  file_id: string | null;
+  message_id: number | null;
+  keywords: string[] | null;
+  chunk_summary: string | null;
+  created_at: string;
+}
+
+interface ChatMessage {
+  id: number;
+  content: string;
+  role: string;
+  created_at: string;
+  exported_to_file_id: string | null;
 }
 
 export function UnifiedFilesMemory() {
   const { toast } = useToast();
+  const [categories, setCategories] = useState<Category[]>([]);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
+  const [knowledgeChunks, setKnowledgeChunks] = useState<KnowledgeChunk[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['project:yalls.ai']));
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['layer:Business']));
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [isEmbedding, setIsEmbedding] = useState(false);
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [showNewCategoryDialog, setShowNewCategoryDialog] = useState(false);
 
   useEffect(() => {
+    loadCategories();
     loadFiles();
     loadMemories();
+    loadKnowledge();
+    loadChatMessages();
   }, []);
+
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('rocker_categories')
+        .select('*')
+        .order('category_type', { ascending: true })
+        .order('name', { ascending: true });
+      
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error: any) {
+      console.error('Failed to load categories:', error);
+    }
+  };
 
   const loadFiles = async () => {
     try {
@@ -97,12 +155,42 @@ export function UnifiedFilesMemory() {
         .select('*')
         .order('priority', { ascending: true })
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(200);
 
       if (error) throw error;
       setMemories(data as Memory[]);
     } catch (error: any) {
       console.error('Failed to load memories:', error);
+    }
+  };
+
+  const loadKnowledge = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('rocker_knowledge')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+      if (error) throw error;
+      setKnowledgeChunks(data || []);
+    } catch (error: any) {
+      console.error('Failed to load knowledge:', error);
+    }
+  };
+
+  const loadChatMessages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('rocker_messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      setChatMessages(data || []);
+    } catch (error: any) {
+      console.error('Failed to load chat messages:', error);
     }
   };
 
@@ -191,8 +279,45 @@ export function UnifiedFilesMemory() {
   const filteredMemories = memories.filter(m => {
     if (!searchQuery) return true;
     const text = JSON.stringify(m.value).toLowerCase();
-    return text.includes(searchQuery.toLowerCase());
+    return text.includes(searchQuery.toLowerCase()) || 
+           m.memory_layer?.toLowerCase().includes(searchQuery.toLowerCase());
   });
+
+  const filteredKnowledge = knowledgeChunks.filter(k => {
+    if (!searchQuery) return true;
+    return k.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           k.keywords?.some(kw => kw.toLowerCase().includes(searchQuery.toLowerCase()));
+  });
+
+  const filteredMessages = chatMessages.filter(m => {
+    if (!searchQuery) return true;
+    return m.content?.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  const createCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    try {
+      const { data, error } = await supabase.rpc('rocker_create_category', {
+        p_name: newCategoryName,
+        p_category_type: 'custom'
+      });
+      
+      if (error) throw error;
+      toast({ title: 'Category created!', description: `"${newCategoryName}" is now available` });
+      setNewCategoryName('');
+      setShowNewCategoryDialog(false);
+      await loadCategories();
+    } catch (error: any) {
+      toast({ title: 'Failed to create category', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const groupedByMemoryLayer = filteredMemories.reduce((acc, mem) => {
+    const layer = mem.memory_layer || 'Uncategorized';
+    if (!acc[layer]) acc[layer] = [];
+    acc[layer].push(mem);
+    return acc;
+  }, {} as Record<string, Memory[]>);
 
   const groupedFiles = filteredFiles.reduce((acc, file) => {
     const proj = file.project || 'Uncategorized';
@@ -207,12 +332,16 @@ export function UnifiedFilesMemory() {
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Files & Memory</h2>
+          <h2 className="text-2xl font-semibold">Memory System</h2>
           <p className="text-sm text-muted-foreground">
-            {files.length} files • {memories.length} memories
+            {files.length} files • {memories.length} memories • {knowledgeChunks.length} knowledge chunks • {chatMessages.length} messages
           </p>
         </div>
         <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setShowNewCategoryDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Category
+          </Button>
           <Button size="sm" variant="outline" onClick={organizeAllFiles} disabled={isOrganizing}>
             {isOrganizing ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <FolderPlus className="h-4 w-4 mr-2" />}
             Organize All
@@ -234,8 +363,12 @@ export function UnifiedFilesMemory() {
         />
       </div>
 
-      <Tabs defaultValue="files" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="categories" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="categories">
+            <Folder className="h-4 w-4 mr-2" />
+            Categories ({categories.length})
+          </TabsTrigger>
           <TabsTrigger value="files">
             <FileText className="h-4 w-4 mr-2" />
             Files ({filteredFiles.length})
@@ -244,7 +377,43 @@ export function UnifiedFilesMemory() {
             <Brain className="h-4 w-4 mr-2" />
             Memories ({filteredMemories.length})
           </TabsTrigger>
+          <TabsTrigger value="knowledge">
+            <Database className="h-4 w-4 mr-2" />
+            Knowledge ({filteredKnowledge.length})
+          </TabsTrigger>
+          <TabsTrigger value="chats">
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Chats ({filteredMessages.length})
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="categories" className="mt-4">
+          <ScrollArea className="h-[500px]">
+            <div className="space-y-2 pr-4">
+              {categories.map(cat => (
+                <div key={cat.id} className="p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{cat.icon || '📁'}</span>
+                    <div className="flex-1">
+                      <h3 className="font-semibold">{cat.name}</h3>
+                      <p className="text-xs text-muted-foreground">{cat.category_type}</p>
+                    </div>
+                    {cat.color && (
+                      <div className="h-4 w-4 rounded-full" style={{ backgroundColor: cat.color }} />
+                    )}
+                  </div>
+                </div>
+              ))}
+              {categories.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Folder className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>No categories yet</p>
+                  <p className="text-sm mt-1">Create dynamic categories as needed</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
 
         <TabsContent value="files" className="mt-4">
           <ScrollArea className="h-[500px]">
@@ -327,26 +496,106 @@ export function UnifiedFilesMemory() {
         <TabsContent value="memories" className="mt-4">
           <ScrollArea className="h-[500px]">
             <div className="space-y-2 pr-4">
-              {filteredMemories.map(mem => (
-                <div key={mem.id} className="p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+              {Object.entries(groupedByMemoryLayer).map(([layer, layerMemories]) => {
+                const layerKey = `layer:${layer}`;
+                const isExpanded = expandedFolders.has(layerKey);
+                
+                return (
+                  <div key={layer}>
+                    <button
+                      onClick={() => toggleFolder(layerKey)}
+                      className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent/50 transition-colors text-left mb-1"
+                    >
+                      {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      <Brain className="h-5 w-5 text-purple-500" />
+                      <span className="font-semibold">{layer}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">{layerMemories.length}</span>
+                    </button>
+                    
+                    {isExpanded && (
+                      <div className="ml-6 space-y-2">
+                        {layerMemories.map(mem => (
+                          <div key={mem.id} className="p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+                            <div className="flex items-start gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Badge variant="secondary" className="text-xs">{mem.kind}</Badge>
+                                  {mem.pinned && <Pin className="h-3 w-3 text-primary" />}
+                                  {mem.key && <span className="text-xs text-muted-foreground truncate">{mem.key}</span>}
+                                </div>
+                                <p className="text-sm line-clamp-2">
+                                  {mem.value?.text || JSON.stringify(mem.value).slice(0, 100)}
+                                </p>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => togglePin(mem.id, mem.pinned)}>
+                                  <Pin className={`h-4 w-4 ${mem.pinned ? 'text-primary' : ''}`} />
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteMemory(mem.id)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        <TabsContent value="knowledge" className="mt-4">
+          <ScrollArea className="h-[500px]">
+            <div className="space-y-2 pr-4">
+              {filteredKnowledge.map(chunk => (
+                <div key={chunk.id} className="p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
                   <div className="flex items-start gap-2">
+                    <Database className="h-4 w-4 mt-1 text-blue-500" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="secondary" className="text-xs">{mem.kind}</Badge>
-                        {mem.pinned && <Pin className="h-3 w-3 text-primary" />}
-                        {mem.key && <span className="text-xs text-muted-foreground truncate">{mem.key}</span>}
+                        <Badge variant="outline" className="text-xs">Chunk {chunk.chunk_index}</Badge>
+                        {chunk.keywords && chunk.keywords.slice(0, 3).map(kw => (
+                          <Badge key={kw} variant="secondary" className="text-xs">{kw}</Badge>
+                        ))}
                       </div>
-                      <p className="text-sm line-clamp-2">
-                        {mem.value?.text || JSON.stringify(mem.value).slice(0, 100)}
+                      {chunk.chunk_summary && (
+                        <p className="text-xs text-muted-foreground mb-1">{chunk.chunk_summary}</p>
+                      )}
+                      <p className="text-sm line-clamp-3">{chunk.content}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {format(new Date(chunk.created_at), 'PPp')}
                       </p>
                     </div>
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => togglePin(mem.id, mem.pinned)}>
-                        <Pin className={`h-4 w-4 ${mem.pinned ? 'text-primary' : ''}`} />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteMemory(mem.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        <TabsContent value="chats" className="mt-4">
+          <ScrollArea className="h-[500px]">
+            <div className="space-y-2 pr-4">
+              {filteredMessages.map(msg => (
+                <div key={msg.id} className="p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+                  <div className="flex items-start gap-2">
+                    <MessageSquare className="h-4 w-4 mt-1 text-green-500" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant={msg.role === 'user' ? 'default' : 'secondary'} className="text-xs">
+                          {msg.role}
+                        </Badge>
+                        {msg.exported_to_file_id && (
+                          <Badge variant="outline" className="text-xs">Exported</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm line-clamp-3">{msg.content}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {format(new Date(msg.created_at), 'PPp')}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -388,6 +637,30 @@ export function UnifiedFilesMemory() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* New Category Dialog */}
+      <Dialog open={showNewCategoryDialog} onOpenChange={setShowNewCategoryDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Category</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder="Category name (e.g., 'Investments', 'Health', 'Travel')"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowNewCategoryDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={createCategory} disabled={!newCategoryName.trim()}>
+                Create Category
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
