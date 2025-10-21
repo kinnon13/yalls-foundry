@@ -32,7 +32,7 @@ export default function SecretsManagement() {
       });
 
       if (error) throw error;
-      setSecrets(data?.secrets || []);
+      setSecrets(data?.items || []);
     } catch (error: any) {
       toast.error('Failed to load secrets: ' + error.message);
     } finally {
@@ -54,7 +54,7 @@ export default function SecretsManagement() {
         body: {
           provider: 'openai',
           name: keyName,
-          key: apiKey
+          apiKey: apiKey
         }
       });
 
