@@ -1,5 +1,4 @@
-import { createClient } from "jsr:@supabase/supabase-js@2";
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -95,6 +94,68 @@ Only extract explicit facts. Return empty array [] if no facts found.`
     }
 
     console.log(`📊 Extracted ${facts.length} facts`);
+
+    // HARDWIRED: Always do deep analysis on the message content
+    console.log('🧠 Running deep analysis on message...');
+    try {
+      const deepAnalysis = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          temperature: 0.3,
+          messages: [
+            {
+              role: "system",
+              content: `Deep analyze this message for:
+1. Hidden patterns, connections to past memories
+2. Implicit goals, motivations, emotional state
+3. Project dependencies, technical requirements
+4. Relationships between entities mentioned
+5. Future implications and follow-up needs
+
+Return structured JSON:
+{
+  "patterns": ["..."],
+  "connections": ["..."],
+  "implications": ["..."],
+  "technical_insights": ["..."],
+  "entities": [{"name":"...", "type":"...", "context":"..."}]
+}`
+            },
+            { role: "user", content: content || msg.content }
+          ]
+        })
+      });
+      
+      const deepData = await deepAnalysis.json();
+      const analysis = deepData?.choices?.[0]?.message?.content || "{}";
+      let deepInsights: any = {};
+      try { deepInsights = JSON.parse(analysis); } catch {}
+      
+      // Store deep analysis as a special memory entry
+      if (Object.keys(deepInsights).length > 0) {
+        await supabase.from('rocker_long_memory').insert({
+          user_id: userId,
+          kind: 'deep_analysis',
+          key: `analysis_${Date.now()}`,
+          value: {
+            message_id,
+            analysis: deepInsights,
+            source: 'auto_deep_analysis',
+            timestamp: new Date().toISOString()
+          },
+          memory_layer: 'meta'
+        });
+        console.log('✅ Deep analysis stored');
+      }
+    } catch (e) {
+      console.error('Deep analysis failed:', e);
+      // Continue even if deep analysis fails
+    }
 
     if (facts.length === 0) {
       return new Response(JSON.stringify({ ok: true, learned: 0, confirmed: 0 }), {

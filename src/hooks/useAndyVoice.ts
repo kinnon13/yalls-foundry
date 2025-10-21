@@ -71,11 +71,12 @@ export function useAndyVoice({ threadId, enabled = true }: UseAndyVoiceOptions) 
     }
   };
 
-  // Auto-learn from messages
+  // Auto-learn from messages (with deep analysis hardwired)
   const learnFromMessage = async (messageId: number, content: string) => {
     if (!enabled || !threadId) return;
     
     try {
+      // This now automatically triggers deep analysis inside the function
       const { data } = await supabase.functions.invoke('andy-learn-from-message', {
         body: {
           thread_id: threadId,
@@ -84,7 +85,15 @@ export function useAndyVoice({ threadId, enabled = true }: UseAndyVoiceOptions) 
         }
       });
       
-      console.log('Andy learning result:', data);
+      console.log('Andy learning + deep analysis result:', data);
+      
+      // Every 10 messages, expand the entire memory system
+      if (messageId % 10 === 0 && session?.userId) {
+        console.log('🧠 Triggering memory expansion...');
+        supabase.functions.invoke('andy-expand-memory', {
+          body: { user_id: session.userId }
+        }).catch(e => console.warn('Memory expansion failed:', e));
+      }
     } catch (error) {
       console.error('Failed to learn from message:', error);
     }
