@@ -8,7 +8,7 @@ import { useBusinessChatFlow } from '@/hooks/useBusinessChatFlow';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Mic, MicOff, Volume2, VolumeX, Send } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, Send, Building2, User } from 'lucide-react';
 import { ReviewModal } from './ReviewModal';
 import { speak, stopSpeaking } from '@/utils/voice';
 import { useSpeech } from '@/hooks/useSpeech';
@@ -19,6 +19,8 @@ interface BusinessChatOnboardingProps {
 }
 
 export function BusinessChatOnboarding({ onComplete, onSkip }: BusinessChatOnboardingProps) {
+  const [showChoice, setShowChoice] = useState(true); // Start with choice screen
+  
   const {
     step,
     messages,
@@ -35,6 +37,9 @@ export function BusinessChatOnboarding({ onComplete, onSkip }: BusinessChatOnboa
   const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Don't start chat until user chooses "I run a business"
+  const [chatStarted, setChatStarted] = useState(false);
 
   // Speech recognition
   const { start: startListening, stop: stopListening, listening } = useSpeech({
@@ -111,14 +116,83 @@ export function BusinessChatOnboarding({ onComplete, onSkip }: BusinessChatOnboa
     stopSpeaking();
     onSkip();
   };
+  
+  const handleChooseBusiness = () => {
+    setShowChoice(false);
+    setChatStarted(true);
+  };
+  
+  const handleChooseUser = () => {
+    onSkip(); // Skip business setup entirely
+  };
+  
+  // Show choice screen first
+  if (showChoice) {
+    return (
+      <div className="mx-auto w-full max-w-[600px] px-4 md:px-6 py-6">
+        <header className="mb-6 text-center">
+          <h1 className="text-2xl font-bold mb-2">Business Setup</h1>
+          <p className="text-muted-foreground">
+            Do you want to set up a business profile?
+          </p>
+        </header>
+
+        <Card className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={handleChooseUser}
+              className="p-6 rounded-lg border-2 border-border hover:border-primary hover:bg-primary/5 transition-all text-left group"
+            >
+              <div className="flex items-start gap-3">
+                <User className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                <div>
+                  <div className="font-semibold text-base mb-1">I'm just a user</div>
+                  <div className="text-sm text-muted-foreground">
+                    Skip this step and continue
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={handleChooseBusiness}
+              className="p-6 rounded-lg border-2 border-border hover:border-primary hover:bg-primary/5 transition-all text-left group"
+            >
+              <div className="flex items-start gap-3">
+                <Building2 className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                <div>
+                  <div className="font-semibold text-base mb-1">I run a business</div>
+                  <div className="text-sm text-muted-foreground">
+                    Quick setup with AI in under a minute
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-[960px] px-4 md:px-6 py-6">
-      <header className="mb-4">
-        <h1 className="text-xl font-semibold">Business Quick Setup</h1>
-        <p className="text-sm text-muted-foreground">
-          I'll handle it in chat. You can review everything before saving.
-        </p>
+      <header className="mb-4 flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-semibold">Business Quick Setup</h1>
+          <p className="text-sm text-muted-foreground">
+            I'll handle it in chat. You can review everything before saving.
+          </p>
+        </div>
+        {chatStarted && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowChoice(true)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            ← Back to choices
+          </Button>
+        )}
       </header>
 
       <Card className="p-4 md:p-6 bg-card">
