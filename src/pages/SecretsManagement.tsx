@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Plus, RefreshCw } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Secret {
@@ -18,6 +20,9 @@ export default function SecretsManagement() {
   const [secrets, setSecrets] = useState<Secret[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [keyName, setKeyName] = useState('default');
+  const [apiKey, setApiKey] = useState('');
 
   const loadSecrets = async () => {
     setLoading(true);
@@ -32,6 +37,37 @@ export default function SecretsManagement() {
       toast.error('Failed to load secrets: ' + error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!apiKey.trim()) {
+      toast.error('Please enter an API key');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase.functions.invoke('secrets-manage', {
+        body: {
+          provider: 'openai',
+          name: keyName,
+          key: apiKey
+        }
+      });
+
+      if (error) throw error;
+      
+      toast.success('OpenAI API key saved successfully');
+      setApiKey('');
+      setKeyName('default');
+      await loadSecrets();
+    } catch (error: any) {
+      toast.error('Failed to save API key: ' + error.message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -112,18 +148,40 @@ export default function SecretsManagement() {
           <CardTitle>Add New OpenAI Key</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            Click below to add a new OpenAI API key. You'll be prompted to enter your key securely.
-          </p>
-          <Button onClick={() => {
-            toast.info('Please use the Settings page or contact support to add new API keys.');
-          }}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add OpenAI API Key
-          </Button>
-          <p className="text-xs text-muted-foreground mt-4">
-            Note: Keys should be saved with provider "openai" and name "default" or "openai" to work with the chat.
-          </p>
+          <form onSubmit={handleSave} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="keyName">Key Name</Label>
+              <Input
+                id="keyName"
+                value={keyName}
+                onChange={(e) => setKeyName(e.target.value)}
+                placeholder="default"
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Use "default" or "openai" to work with the chat
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="apiKey">OpenAI API Key</Label>
+              <Input
+                id="apiKey"
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="sk-..."
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Your key will be encrypted and stored securely
+              </p>
+            </div>
+
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Saving...' : 'Save API Key'}
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
