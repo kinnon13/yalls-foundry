@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Brain, Send, Mic, MicOff, Sparkles, Loader2, Download, HelpCircle } from 'lucide-react';
+import { Brain, Send, Sparkles, Loader2, Download, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -7,8 +7,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
 import { toast } from '@/hooks/use-toast';
-import { RealtimeVoice } from '@/utils/RealtimeAudio';
-import { Badge } from '@/components/ui/badge';
+import { VoiceControls } from './VoiceControls';
+import { useAndyVoice } from '@/hooks/useAndyVoice';
 
 interface Message {
   id: number;
@@ -30,12 +30,15 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
   const lastMessageCountRef = useRef(0);
   const [showQuestions, setShowQuestions] = useState(false);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
-  
-  const [voiceStatus, setVoiceStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
-  const voiceRef = useRef<RealtimeVoice | null>(null);
 
   // Use provided thread or load/create one
   const threadId = propThreadId || localThreadId;
+
+  // Andy voice and auto-learning
+  const { speakMessage, learnFromMessage, onUserActivity } = useAndyVoice({
+    threadId,
+    enabled: true
+  });
 
   useEffect(() => {
     const initThread = async () => {
@@ -170,12 +173,15 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
 
       // Save assistant message
       if (assistantMessage) {
-        await supabase.from('rocker_messages').insert([{
+        const { data: newMsg } = await supabase.from('rocker_messages').insert([{
           thread_id: threadId,
           user_id: session.userId,
           content: assistantMessage,
           role: 'assistant',
-        }]);
+        }]).select().single();
+
+        // Speak the response
+        speakMessage(assistantMessage);
 
         toast({
           title: 'Andy replied',
@@ -211,15 +217,47 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
     }
   }, [messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (input.trim() && !sendMutation.isPending) {
-      sendMutation.mutate(input);
+      const content = input.trim();
+      
+      // Trigger auto-learning before sending
+      sendMutation.mutate(content);
+      
+      // Learn from the user message after it's saved
+      setTimeout(async () => {
+        const { data: msg } = await supabase
+          .from('rocker_messages')
+          .select('id')
+          .eq('thread_id', threadId)
+          .eq('content', content)
+          .eq('role', 'user')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (msg) {
+          await learnFromMessage(msg.id, content);
+        }
+      }, 1000);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    onUserActivity(); // Trigger silence detection
+  };
+
+  const handleTranscript = (text: string, isFinal: boolean) => {
+    if (isFinal) {
+      setInput(text);
       handleSend();
     }
   };
@@ -270,90 +308,47 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
     }
   };
 
-  const toggleVoice = async () => {
-    if (voiceStatus === 'connected') {
-      voiceRef.current?.disconnect();
-      setVoiceStatus('disconnected');
-      toast({ title: 'Voice Off', description: 'Andy stopped listening' });
-      return;
-    }
-
-    try {
-      setVoiceStatus('connecting');
-      console.log('[Voice] Requesting mic access...');
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      
-      console.log('[Voice] Getting OpenAI session...');
-      const { data, error } = await supabase.functions.invoke('andy-voice-session');
-
-      if (error) {
-        console.error('[Voice] Error:', error);
-        throw error;
-      }
-      
-      const ephemeralKey = data?.clientSecret as string | undefined;
-      if (!ephemeralKey) {
-        throw new Error('No client secret received');
-      }
-
-      console.log('[Voice] Connecting to OpenAI Realtime...');
-      voiceRef.current = new RealtimeVoice(
-        (status) => setVoiceStatus(status),
-        (text, isFinal) => {
-          if (isFinal && text) {
-            toast({ title: 'Andy (voice)', description: text.slice(0, 100) });
-          }
-        }
-      );
-      await voiceRef.current.connect(ephemeralKey);
-
-      toast({
-        title: 'Voice Active',
-        description: 'Andy is listening with OpenAI Realtime',
-      });
-    } catch (error) {
-      console.error('[Voice] Failed:', error);
-      setVoiceStatus('disconnected');
-      toast({
-        title: 'Voice Error',
-        description: error instanceof Error ? error.message : 'Check that OpenAI API key is configured',
-        variant: 'destructive',
-      });
-    }
-  };
 
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] bg-background rounded-2xl shadow-lg">
       {/* Header */}
       <div className="flex-none px-4 py-3 border-b border-border/40">
-        <div className="flex items-center gap-2">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-md shadow-primary/25">
-            <Brain className="h-5 w-5 text-primary-foreground" />
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-md shadow-primary/25">
+              <Brain className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Andy</h3>
+              <p className="text-[11px] text-muted-foreground">Everything AI</p>
+            </div>
           </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-foreground">Andy</h3>
-            <p className="text-[11px] text-muted-foreground">Your Everything AI</p>
+          
+          <div className="flex items-center gap-2">
+            <VoiceControls 
+              threadId={threadId}
+              onTranscript={handleTranscript}
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={askAndyForQuestions}
+              title="Andy asks you questions"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={exportChatToFile}
+              disabled={messages.length === 0}
+              title="Export chat to Files"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={askAndyForQuestions}
-            title="Andy asks you questions"
-          >
-            <HelpCircle className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={exportChatToFile}
-            disabled={messages.length === 0}
-            title="Export chat to Files"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-          <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
         </div>
       </div>
 
@@ -447,38 +442,24 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)' }}
       >
         <div className="flex items-end gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "h-10 w-10 rounded-xl shrink-0",
-              voiceStatus === 'connected' && "bg-[#007AFF] text-white"
-            )}
-            onClick={toggleVoice}
-            disabled={voiceStatus === 'connecting'}
-          >
-            {voiceStatus === 'connecting' ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : voiceStatus === 'connected' ? (
-              <MicOff className="h-4 w-4" />
-            ) : (
-              <Mic className="h-4 w-4" />
-            )}
-          </Button>
           <Input
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder={voiceStatus === 'connected' ? "Voice active..." : "Message Andy... (⌘⏎ to send)"}
+            placeholder="Message Andy... (⌘⏎ to send)"
             className="flex-1 h-10 rounded-xl"
-            disabled={sendMutation.isPending || voiceStatus === 'connected'}
+            disabled={sendMutation.isPending}
           />
           <Button
             onClick={handleSend}
-            disabled={!input.trim() || sendMutation.isPending || voiceStatus === 'connected'}
+            disabled={!input.trim() || sendMutation.isPending}
             className="h-10 px-4 rounded-xl bg-[#007AFF] hover:bg-[#0051D5] text-white font-medium shrink-0"
           >
-            Send
+            {sendMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              'Send'
+            )}
           </Button>
         </div>
       </div>

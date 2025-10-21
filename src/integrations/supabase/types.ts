@@ -743,6 +743,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_preferences: {
+        Row: {
+          confirm_threshold: number | null
+          created_at: string | null
+          dnd_end: string | null
+          dnd_start: string | null
+          id: string
+          live_question_cadence: string | null
+          max_questions_per_thread: number | null
+          silence_ms: number | null
+          snoozed_until: string | null
+          super_mode: boolean | null
+          updated_at: string | null
+          user_id: string
+          voice_enabled: boolean | null
+        }
+        Insert: {
+          confirm_threshold?: number | null
+          created_at?: string | null
+          dnd_end?: string | null
+          dnd_start?: string | null
+          id?: string
+          live_question_cadence?: string | null
+          max_questions_per_thread?: number | null
+          silence_ms?: number | null
+          snoozed_until?: string | null
+          super_mode?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          voice_enabled?: boolean | null
+        }
+        Update: {
+          confirm_threshold?: number | null
+          created_at?: string | null
+          dnd_end?: string | null
+          dnd_start?: string | null
+          id?: string
+          live_question_cadence?: string | null
+          max_questions_per_thread?: number | null
+          silence_ms?: number | null
+          snoozed_until?: string | null
+          super_mode?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          voice_enabled?: boolean | null
+        }
+        Relationships: []
+      }
       ai_proactive_log: {
         Row: {
           channel: string
@@ -900,6 +948,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_question_events: {
+        Row: {
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          question_hash: string
+          question_text: string
+          thread_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          question_hash: string
+          question_text: string
+          thread_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          question_hash?: string
+          question_text?: string
+          thread_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_selector_catalog: {
         Row: {
           id: string
@@ -1013,6 +1091,27 @@ export type Database = {
           started_at?: string | null
           tenant_id?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      ai_thread_prefs: {
+        Row: {
+          created_at: string | null
+          snoozed_until: string | null
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          snoozed_until?: string | null
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          snoozed_until?: string | null
+          thread_id?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -12823,6 +12922,24 @@ export type Database = {
       geomfromewkt: {
         Args: { "": string }
         Returns: unknown
+      }
+      get_ai_preferences: {
+        Args: { p_user_id: string }
+        Returns: {
+          confirm_threshold: number | null
+          created_at: string | null
+          dnd_end: string | null
+          dnd_start: string | null
+          id: string
+          live_question_cadence: string | null
+          max_questions_per_thread: number | null
+          silence_ms: number | null
+          snoozed_until: string | null
+          super_mode: boolean | null
+          updated_at: string | null
+          user_id: string
+          voice_enabled: boolean | null
+        }
       }
       get_dashboard_upcoming_events: {
         Args: { p_horizon?: string; p_user_id: string }
