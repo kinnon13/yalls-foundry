@@ -363,59 +363,101 @@ export function UnifiedFilesMemory() {
         />
       </div>
 
-      <Tabs defaultValue="categories" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="categories">
-            <Folder className="h-4 w-4 mr-2" />
-            Categories ({categories.length})
-          </TabsTrigger>
-          <TabsTrigger value="files">
-            <FileText className="h-4 w-4 mr-2" />
-            Files ({filteredFiles.length})
-          </TabsTrigger>
-          <TabsTrigger value="memories">
-            <Brain className="h-4 w-4 mr-2" />
-            Memories ({filteredMemories.length})
-          </TabsTrigger>
-          <TabsTrigger value="knowledge">
-            <Database className="h-4 w-4 mr-2" />
-            Knowledge ({filteredKnowledge.length})
-          </TabsTrigger>
-          <TabsTrigger value="chats">
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Chats ({filteredMessages.length})
-          </TabsTrigger>
-        </TabsList>
+      <div className="text-xs text-muted-foreground mb-4">
+        Everything is one unified knowledge system - files, memories, chats, and embedded knowledge chunks all interconnected
+      </div>
 
-        <TabsContent value="categories" className="mt-4">
-          <ScrollArea className="h-[500px]">
-            <div className="space-y-2 pr-4">
-              {categories.map(cat => (
-                <div key={cat.id} className="p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{cat.icon || '📁'}</span>
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{cat.name}</h3>
-                      <p className="text-xs text-muted-foreground">{cat.category_type}</p>
+      <ScrollArea className="h-[600px]">
+        <div className="space-y-6 pr-4">
+          {/* Dynamic Categories */}
+          {categories.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <Folder className="h-4 w-4" />
+                Categories ({categories.length})
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {categories.map(cat => (
+                  <div key={cat.id} className="p-2 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{cat.icon || '📁'}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{cat.name}</p>
+                        <p className="text-xs text-muted-foreground">{cat.category_type}</p>
+                      </div>
                     </div>
-                    {cat.color && (
-                      <div className="h-4 w-4 rounded-full" style={{ backgroundColor: cat.color }} />
-                    )}
                   </div>
-                </div>
-              ))}
-              {categories.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Folder className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No categories yet</p>
-                  <p className="text-sm mt-1">Create dynamic categories as needed</p>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
-          </ScrollArea>
-        </TabsContent>
+          )}
 
-        <TabsContent value="files" className="mt-4">
+          {/* Memory Layers */}
+          {Object.keys(groupedByMemoryLayer).length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <Brain className="h-4 w-4" />
+                Memory by Layer ({filteredMemories.length})
+              </h3>
+              <div className="space-y-2">
+                {Object.entries(groupedByMemoryLayer).map(([layer, layerMemories]) => {
+                  const layerKey = `layer:${layer}`;
+                  const isExpanded = expandedFolders.has(layerKey);
+                  
+                  return (
+                    <div key={layer}>
+                      <button
+                        onClick={() => toggleFolder(layerKey)}
+                        className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent/50 transition-colors text-left"
+                      >
+                        {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        <Brain className="h-4 w-4 text-purple-500" />
+                        <span className="font-medium text-sm">{layer}</span>
+                        <span className="ml-auto text-xs text-muted-foreground">{layerMemories.length}</span>
+                      </button>
+                      
+                      {isExpanded && (
+                        <div className="ml-6 mt-1 space-y-1">
+                          {layerMemories.map(mem => (
+                            <div key={mem.id} className="p-2 border rounded-lg bg-card hover:bg-accent/50 transition-colors text-sm">
+                              <div className="flex items-start gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-1 mb-0.5">
+                                    <Badge variant="secondary" className="text-xs">{mem.kind}</Badge>
+                                    {mem.pinned && <Pin className="h-3 w-3 text-primary" />}
+                                  </div>
+                                  <p className="text-xs line-clamp-2">
+                                    {mem.value?.text || JSON.stringify(mem.value).slice(0, 100)}
+                                  </p>
+                                </div>
+                                <div className="flex gap-1">
+                                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => togglePin(mem.id, mem.pinned)}>
+                                    <Pin className={`h-3 w-3 ${mem.pinned ? 'text-primary' : ''}`} />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => deleteMemory(mem.id)}>
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Files by Project */}
+          {Object.keys(groupedFiles).length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Files by Project ({filteredFiles.length})
+              </h3>
+              <div className="space-y-1">{
           <ScrollArea className="h-[500px]">
             <div className="space-y-2 pr-4">
               {Object.entries(groupedFiles).map(([project, paths]) => {
@@ -579,31 +621,31 @@ export function UnifiedFilesMemory() {
         <TabsContent value="chats" className="mt-4">
           <ScrollArea className="h-[500px]">
             <div className="space-y-2 pr-4">
-              {filteredMessages.map(msg => (
-                <div key={msg.id} className="p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+              {filteredMessages.slice(0, 30).map(msg => (
+                <div key={msg.id} className="p-2 border rounded-lg bg-card hover:bg-accent/50 transition-colors text-xs">
                   <div className="flex items-start gap-2">
-                    <MessageSquare className="h-4 w-4 mt-1 text-green-500" />
+                    <MessageSquare className="h-3 w-3 mt-0.5 text-green-500 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-1 mb-0.5">
                         <Badge variant={msg.role === 'user' ? 'default' : 'secondary'} className="text-xs">
                           {msg.role}
                         </Badge>
-                        {msg.exported_to_file_id && (
-                          <Badge variant="outline" className="text-xs">Exported</Badge>
-                        )}
                       </div>
-                      <p className="text-sm line-clamp-3">{msg.content}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {format(new Date(msg.created_at), 'PPp')}
-                      </p>
+                      <p className="text-xs line-clamp-2">{msg.content}</p>
                     </div>
                   </div>
                 </div>
               ))}
+              {filteredMessages.length > 30 && (
+                <p className="text-xs text-muted-foreground text-center py-2">
+                  Showing 30 of {filteredMessages.length} messages
+                </p>
+              )}
             </div>
-          </ScrollArea>
-        </TabsContent>
-      </Tabs>
+          </div>
+          )}
+        </div>
+      </ScrollArea>
 
       {/* File Viewer Dialog */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>

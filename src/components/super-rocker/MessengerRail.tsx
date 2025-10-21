@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Brain, Send, Mic, MicOff, Sparkles, Loader2, Download } from 'lucide-react';
+import { Brain, Send, Mic, MicOff, Sparkles, Loader2, Download, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
 import { toast } from '@/hooks/use-toast';
 import { RealtimeVoice } from '@/utils/RealtimeAudio';
+import { Badge } from '@/components/ui/badge';
 
 interface Message {
   id: number;
@@ -27,6 +28,8 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const lastMessageCountRef = useRef(0);
+  const [showQuestions, setShowQuestions] = useState(false);
+  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   
   const [voiceStatus, setVoiceStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
   const voiceRef = useRef<RealtimeVoice | null>(null);
@@ -221,6 +224,19 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
     }
   };
 
+  const askAndyForQuestions = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('andy-ask-questions');
+      if (error) throw error;
+      setSuggestedQuestions(data.questions || []);
+      setShowQuestions(true);
+      toast({ title: 'Andy is curious!', description: 'He has some questions for you' });
+    } catch (error: any) {
+      console.error('Question generation error:', error);
+      toast({ title: 'Failed to generate questions', description: error.message, variant: 'destructive' });
+    }
+  };
+
   const exportChatToFile = async () => {
     if (!threadId || messages.length === 0) {
       toast({ title: 'No messages to export', variant: 'destructive' });
@@ -310,7 +326,7 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] bg-background rounded-2xl shadow-lg">
       {/* Header */}
       <div className="flex-none px-4 py-3 border-b border-border/40">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-md shadow-primary/25">
             <Brain className="h-5 w-5 text-primary-foreground" />
           </div>
@@ -318,6 +334,15 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
             <h3 className="text-sm font-semibold text-foreground">Andy</h3>
             <p className="text-[11px] text-muted-foreground">Your Everything AI</p>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={askAndyForQuestions}
+            title="Andy asks you questions"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -347,6 +372,38 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
               <p className="text-xs text-muted-foreground max-w-[200px]">
                 Your everything AI with full learning, files, tasks, and proactive capabilities
               </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-4"
+                onClick={askAndyForQuestions}
+              >
+                <HelpCircle className="h-3 w-3 mr-2" />
+                Let Andy ask you questions
+              </Button>
+            </div>
+          )}
+
+          {showQuestions && suggestedQuestions.length > 0 && (
+            <div className="p-3 border rounded-2xl bg-accent/30 mb-3">
+              <p className="text-xs font-medium mb-2 flex items-center gap-2">
+                <Brain className="h-3 w-3" />
+                Andy is curious:
+              </p>
+              <div className="space-y-1">
+                {suggestedQuestions.map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setInput(q);
+                      setShowQuestions(false);
+                    }}
+                    className="w-full text-left p-2 rounded-lg text-xs hover:bg-accent transition-colors"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           
