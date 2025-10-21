@@ -9,7 +9,15 @@ const corsHeaders = {
 // Encryption helpers
 async function getKey(): Promise<CryptoKey> {
   const raw = Deno.env.get("ENCRYPTION_KEY");
-  if (!raw) throw new Error("ENCRYPTION_KEY missing");
+  
+  // Debug logging
+  const allEnvKeys = Object.keys(Deno.env.toObject());
+  console.log("Available env keys:", allEnvKeys.filter(k => !k.includes('KEY')).join(', '));
+  console.log("ENCRYPTION_KEY exists?", allEnvKeys.includes("ENCRYPTION_KEY"));
+  
+  if (!raw) {
+    throw new Error("ENCRYPTION_KEY not found in environment. Please add it in Cloud > Secrets with name: ENCRYPTION_KEY");
+  }
   
   let keyBytes: Uint8Array;
   if (raw.startsWith("base64:")) {
@@ -23,7 +31,9 @@ async function getKey(): Promise<CryptoKey> {
     keyBytes = new TextEncoder().encode(raw);
   }
   
-  if (keyBytes.length !== 32) throw new Error("ENCRYPTION_KEY must be 32 bytes");
+  if (keyBytes.length !== 32) {
+    throw new Error(`ENCRYPTION_KEY must be 32 bytes, got ${keyBytes.length}`);
+  }
   
   return await crypto.subtle.importKey(
     "raw",
