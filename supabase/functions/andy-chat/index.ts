@@ -22,13 +22,17 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    // Get user from auth header using a separate client
+    // Get user from auth header
     const authHeader = req.headers.get('Authorization');
-    const userClient = createClient(supabaseUrl, supabaseServiceKey, {
-      global: { headers: { Authorization: authHeader || '' } }
-    });
     
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    // Service role client for full access (bypasses RLS)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Get user from JWT
+    const { data: { user }, error: userError } = await supabase.auth.getUser(
+      authHeader?.replace('Bearer ', '')
+    );
+    
     if (userError || !user) {
       console.error('[andy-chat] Auth error:', userError);
       return new Response(
@@ -37,8 +41,6 @@ serve(async (req) => {
       );
     }
 
-    // Create service role client for full access (bypasses RLS)
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     console.log('[andy-chat] User:', user.id);
 
     // Get last user message for context search
