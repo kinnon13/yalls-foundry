@@ -118,14 +118,32 @@ serve(async (req) => {
       }
     }
 
-    if (!secretData) {
-      return new Response(JSON.stringify({ error: "OpenAI API key not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Resolve API key: prefer stored user secret, fallback to OPENAI_API_KEY env
+    let apiKey: string | null = null;
+    let usedStoredSecret = false;
+
+    if (secretData) {
+      try {
+        apiKey = await decryptSecret(secretData.enc_api_key);
+        usedStoredSecret = true;
+      } catch (e) {
+        console.error("proxy-openai decrypt failed, falling back to env key:", e);
+      }
     }
 
-    const apiKey = await decryptSecret(secretData.enc_api_key);
+    if (!apiKey) {
+      const envKey = Deno.env.get("OPENAI_API_KEY");
+      if (envKey) {
+        apiKey = envKey;
+      } else {
+        // No user secret and no env key available
+        return new Response(JSON.stringify({ error: "OpenAI API key not configured" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const baseUrl = Deno.env.get("OPENAI_BASE_URL") || "https://api.openai.com/v1";
     const url = `${baseUrl}${path}`;
 
@@ -138,12 +156,14 @@ serve(async (req) => {
       body: JSON.stringify(body),
     });
 
-    // Update last_used_at
-    await supabase
-      .from("app_provider_secrets")
-      .update({ last_used_at: new Date().toISOString() })
-      .eq("provider", "openai")
-      .eq("name", ((secretData as any)?.name ?? keyName));
+    // Update last_used_at only when we used a stored secret
+    if (usedStoredSecret) {
+      await supabase
+        .from("app_provider_secrets")
+        .update({ last_used_at: new Date().toISOString() })
+        .eq("provider", "openai")
+        .eq("name", ((secretData as any)?.name ?? keyName));
+    }
 
     // Stream response directly (supports SSE when stream=true)
     return new Response(response.body, {
