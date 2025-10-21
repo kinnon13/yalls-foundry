@@ -9327,6 +9327,53 @@ export type Database = {
         }
         Relationships: []
       }
+      rocker_message_summaries: {
+        Row: {
+          created_at: string | null
+          id: string
+          interaction_type: string | null
+          key_themes: string[] | null
+          message_count: number
+          summary_date: string
+          thread_id: string
+          topics: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          interaction_type?: string | null
+          key_themes?: string[] | null
+          message_count?: number
+          summary_date: string
+          thread_id: string
+          topics?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          interaction_type?: string | null
+          key_themes?: string[] | null
+          message_count?: number
+          summary_date?: string
+          thread_id?: string
+          topics?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rocker_message_summaries_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rocker_messages: {
         Row: {
           content: string
@@ -13252,6 +13299,10 @@ export type Database = {
       gc_learning_events: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      generate_message_summary: {
+        Args: { p_date?: string; p_thread_id: string; p_user_id: string }
+        Returns: Json
       }
       geography: {
         Args: { "": string } | { "": unknown }
