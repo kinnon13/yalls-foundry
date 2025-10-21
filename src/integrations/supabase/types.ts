@@ -5665,6 +5665,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ingest_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          external_idempotency_key: string | null
+          id: string
+          kind: string
+          org_id: string
+          payload: Json
+          run_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          external_idempotency_key?: string | null
+          id?: string
+          kind: string
+          org_id: string
+          payload: Json
+          run_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          external_idempotency_key?: string | null
+          id?: string
+          kind?: string
+          org_id?: string
+          payload?: Json
+          run_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       installed_apps: {
         Row: {
           app_key: string
@@ -6387,6 +6426,30 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      market_chunks: {
+        Row: {
+          content: string
+          created_at: string
+          embedding: string | null
+          id: string
+          listing_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          listing_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          listing_id?: string | null
+        }
+        Relationships: []
       }
       marketplace_candidates: {
         Row: {
@@ -7851,6 +7914,33 @@ export type Database = {
           },
         ]
       }
+      private_chunks: {
+        Row: {
+          content: string
+          created_at: string
+          doc_id: string | null
+          embedding: string | null
+          id: string
+          org_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          doc_id?: string | null
+          embedding?: string | null
+          id?: string
+          org_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          doc_id?: string | null
+          embedding?: string | null
+          id?: string
+          org_id?: string
+        }
+        Relationships: []
+      }
       profile_badges: {
         Row: {
           badge_id: string
@@ -8231,6 +8321,24 @@ export type Database = {
           favorites_count?: number
           followers_count?: number
           likes_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rate_counters: {
+        Row: {
+          bucket: string
+          count: number
+          updated_at: string
+        }
+        Insert: {
+          bucket: string
+          count?: number
+          updated_at?: string
+        }
+        Update: {
+          bucket?: string
+          count?: number
           updated_at?: string
         }
         Relationships: []
@@ -12925,7 +13033,9 @@ export type Database = {
         Returns: number
       }
       bump_rate: {
-        Args: { p_bucket: string; p_limit: number; p_window_seconds: number }
+        Args:
+          | { bucket: string; limit_in: number }
+          | { p_bucket: string; p_limit: number; p_window_seconds: number }
         Returns: boolean
       }
       bytea: {
@@ -13038,6 +13148,21 @@ export type Database = {
         Args: { entity_id: string }
         Returns: Json
       }
+      claim_ingest_job: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          attempts: number
+          created_at: string
+          external_idempotency_key: string | null
+          id: string
+          kind: string
+          org_id: string
+          payload: Json
+          run_at: string
+          status: string
+          updated_at: string
+        }
+      }
       claim_profile: {
         Args: { p_profile_id: string }
         Returns: boolean
@@ -13059,6 +13184,10 @@ export type Database = {
         Returns: number
       }
       cleanup_expired_memories: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_rate_counters: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
@@ -14158,6 +14287,27 @@ export type Database = {
           tags: string[]
           title: string
           uri: string
+        }[]
+      }
+      match_market_chunks: {
+        Args: { match_count: number; query_embedding: string }
+        Returns: {
+          content: string
+          id: string
+          similarity: number
+        }[]
+      }
+      match_private_chunks: {
+        Args: {
+          match_count: number
+          org_id_in: string
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          doc_id: string
+          id: string
+          similarity: number
         }[]
       }
       match_rocker_memory_vec: {
