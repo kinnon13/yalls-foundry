@@ -3,10 +3,7 @@ project_id = "xuxfuonzsfvrirdwzddt"
 [functions.andy-chat]
 verify_jwt = true
 
-[functions.andy-voice-to-text]
-verify_jwt = true
-
-[functions.andy-text-to-voice]
+[functions.andy-voice-session]
 verify_jwt = true
 
 [functions.rocker-web-search]

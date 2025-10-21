@@ -118,8 +118,7 @@ export function MessengerRail() {
       ];
 
       // Stream response from andy-chat
-      const SUPABASE_URL = 'https://xuxfuonzsfvrirdwzddt.supabase.co';
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/andy-chat`, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/andy-chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -240,21 +239,31 @@ export function MessengerRail() {
       console.log('[Voice] Requesting mic access...');
       await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      console.log('[Voice] Getting signed URL...');
-      const { data, error } = await supabase.functions.invoke('elevenlabs-conversation', {
-        body: { agentId: 'TODO_REPLACE_WITH_ELEVENLABS_AGENT_ID' }
+      console.log('[Voice] Getting OpenAI session...');
+      const { data, error } = await supabase.functions.invoke('andy-voice-session');
+
+      if (error) {
+        console.error('[Voice] Error:', error);
+        throw error;
+      }
+      
+      if (!data?.clientSecret) {
+        throw new Error('No client secret received');
+      }
+
+      console.log('[Voice] OpenAI Realtime ready');
+      toast({
+        title: 'Voice Active',
+        description: 'Andy is listening with OpenAI Realtime',
       });
-
-      if (error) throw error;
-      if (!data?.signedUrl) throw new Error('No signed URL');
-
-      console.log('[Voice] Starting...');
-      await conversation.startSession({ signedUrl: data.signedUrl } as any);
+      
+      // TODO: Connect to OpenAI Realtime WebSocket with clientSecret
+      // This requires additional WebSocket implementation
     } catch (error) {
       console.error('[Voice] Failed:', error);
       toast({
-        title: 'Voice failed',
-        description: error instanceof Error ? error.message : 'Unknown error',
+        title: 'Voice Error',
+        description: error instanceof Error ? error.message : 'Check that OpenAI API key is configured',
         variant: 'destructive',
       });
     }
