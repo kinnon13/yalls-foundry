@@ -49,11 +49,30 @@ serve(async (req) => {
       });
     }
 
+    // If we have content to analyze, optionally search for additional context
+    let webContext = '';
+    if (analysisText && analysisText.length > 50) {
+      try {
+        // Extract key terms for web search
+        const keyTerms = analysisText.split(/\s+/).slice(0, 10).join(' ');
+        const { data: searchData } = await sb.functions.invoke('rocker-web-search', {
+          body: { query: keyTerms, num_results: 3 }
+        });
+        if (searchData?.results?.length) {
+          webContext = '\n\nWeb Context:\n' + searchData.results
+            .map((r: any) => `${r.title}: ${r.snippet}`)
+            .join('\n');
+        }
+      } catch (e) {
+        console.warn('[deep-analyze] Web search failed:', e);
+      }
+    }
+
     const { text, raw } = await ai.chat({
       role: 'knower',
       messages: [
         { role: 'system', content: 'You are Rocker. Perform deep analysis across many files: split into micro-sections, flag uncertainties, and propose 2-3 filing options per sentence.' },
-        { role: 'user', content: analysisText }
+        { role: 'user', content: analysisText + webContext }
       ],
       maxTokens: 1200,
       temperature: 0.2

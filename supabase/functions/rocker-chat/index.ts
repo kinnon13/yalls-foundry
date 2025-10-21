@@ -50,10 +50,10 @@ serve(async (req) => {
       const embedResp = await fetch('https://api.openai.com/v1/embeddings', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
+          Authorization: `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ model: 'google/text-embed', input: [lastUserMsg] }),
+        body: JSON.stringify({ model: 'text-embedding-3-small', input: [lastUserMsg] }),
       });
       if (embedResp.ok) {
         const ej = await embedResp.json();
