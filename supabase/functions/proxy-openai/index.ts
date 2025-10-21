@@ -119,8 +119,8 @@ serve(async (req) => {
       .eq("provider", "openai")
       .eq("name", keyName);
 
-    const responseText = await response.text();
-    return new Response(responseText, {
+    // Stream response directly (supports SSE when stream=true)
+    return new Response(response.body, {
       status: response.status,
       headers: {
         ...corsHeaders,

@@ -33,7 +33,7 @@ serve(async (req) => {
       const { data, error } = await supabase.functions.invoke('proxy-openai', {
         body: {
           path: '/chat/completions',
-          keyName: 'openai',
+          keyName: 'default',
           body: {
             model: 'gpt-4o-mini',
             messages: [
