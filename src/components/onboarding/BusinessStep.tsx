@@ -138,7 +138,7 @@ export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
   return (
     <div className="flex h-full">
       {/* Main Content - Always full width when no chat, or flex when chat is visible */}
-      <div className={`flex flex-col overflow-hidden transition-all ${wantBusiness ? 'flex-1' : 'w-full'}`}>
+      <div className={`flex flex-col overflow-hidden min-w-0 transition-all ${wantBusiness ? 'flex-1' : 'w-full'}`}>
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-3xl mx-auto space-y-6">
           <div>
@@ -153,7 +153,7 @@ export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
 
           <div className="space-y-6">
             {/* Choice Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
                 type="button"
                 onClick={() => setWantBusiness(false)}
@@ -303,7 +303,7 @@ export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
 
       {/* iPhone-style AI Chat - Fixed width sidebar */}
       {wantBusiness && (
-        <div className="w-[400px] flex-shrink-0">
+        <div className="hidden lg:block w-[400px] flex-shrink-0">
           <RockerBusinessChat 
             businessName={name}
             website={website}
