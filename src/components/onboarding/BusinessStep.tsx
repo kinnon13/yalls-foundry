@@ -10,9 +10,22 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, Sparkles } from 'lucide-react';
-import { CategoryCombobox } from './CategoryCombobox';
 import { GhostMatchList } from './GhostMatchList';
+import { MarketplaceCategoryCombobox } from './MarketplaceCategoryCombobox';
+import { RockerBusinessChat } from './RockerBusinessChat';
 import { useToast } from '@/hooks/use-toast';
+
+interface MarketplaceCategory {
+  key: string;
+  label: string;
+  status: 'active' | 'pending' | 'deprecated';
+}
+
+interface CategorySuggestion {
+  label: string;
+  parent_key: string | null;
+  synonyms: string[];
+}
 
 interface BusinessStepProps {
   onComplete: () => void;
@@ -22,7 +35,8 @@ interface BusinessStepProps {
 export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
   const [wantBusiness, setWantBusiness] = useState(false);
   const [name, setName] = useState('');
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<MarketplaceCategory[]>([]);
+  const [categorySuggestions, setCategorySuggestions] = useState<CategorySuggestion[]>([]);
   const [website, setWebsite] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
@@ -122,10 +136,11 @@ export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] h-full">
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-3xl mx-auto space-y-6">
+      <div className="flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-3xl mx-auto space-y-6">
           <div>
             <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
               <Sparkles className="h-6 w-6 text-primary" />
@@ -189,14 +204,15 @@ export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Categories *</Label>
-                  <CategoryCombobox
+                  <Label>Marketplace Categories *</Label>
+                  <MarketplaceCategoryCombobox
                     value={categories}
                     onChange={setCategories}
+                    suggestions={categorySuggestions}
                     placeholder="Search or create categories..."
                   />
                   <p className="text-xs text-muted-foreground">
-                    Select categories that describe your business
+                    Select categories for your marketplace listings
                   </p>
                 </div>
 
@@ -267,22 +283,32 @@ export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
         </div>
       </div>
 
-      {/* Fixed Bottom Actions */}
-      <div className="border-t bg-background p-4">
-        <div className="max-w-3xl mx-auto flex gap-3">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <Button 
-            onClick={wantBusiness ? handleSubmit : handleSkip}
-            disabled={loading || (wantBusiness && (!name.trim() || categories.length === 0))}
-            className="flex-1"
-          >
-            {loading ? 'Saving...' : wantBusiness ? (claimEntityId ? 'Claim & Continue' : 'Save & Continue') : 'Skip'}
-          </Button>
+        {/* Fixed Bottom Actions */}
+        <div className="border-t bg-background p-4">
+          <div className="max-w-3xl mx-auto flex gap-3">
+            <Button variant="outline" onClick={onBack}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <Button 
+              onClick={wantBusiness ? handleSubmit : handleSkip}
+              disabled={loading || (wantBusiness && (!name.trim() || categories.length === 0))}
+              className="flex-1"
+            >
+              {loading ? 'Saving...' : wantBusiness ? (claimEntityId ? 'Claim & Continue' : 'Save & Continue') : 'Skip'}
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* iPhone-style AI Chat */}
+      {wantBusiness && (
+        <RockerBusinessChat 
+          businessName={name}
+          website={website}
+          onSuggestCategories={setCategorySuggestions}
+        />
+      )}
     </div>
   );
 }
