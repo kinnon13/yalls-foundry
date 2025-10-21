@@ -136,9 +136,9 @@ export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] h-full">
-      {/* Main Content */}
-      <div className="flex flex-col overflow-hidden">
+    <div className="flex h-full">
+      {/* Main Content - Always full width when no chat, or flex when chat is visible */}
+      <div className={`flex flex-col overflow-hidden transition-all ${wantBusiness ? 'flex-1' : 'w-full'}`}>
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-3xl mx-auto space-y-6">
           <div>
@@ -301,13 +301,15 @@ export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
         </div>
       </div>
 
-      {/* iPhone-style AI Chat */}
+      {/* iPhone-style AI Chat - Fixed width sidebar */}
       {wantBusiness && (
-        <RockerBusinessChat 
-          businessName={name}
-          website={website}
-          onSuggestCategories={setCategorySuggestions}
-        />
+        <div className="w-[400px] flex-shrink-0">
+          <RockerBusinessChat 
+            businessName={name}
+            website={website}
+            onSuggestCategories={setCategorySuggestions}
+          />
+        </div>
       )}
     </div>
   );
