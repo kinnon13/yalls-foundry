@@ -34,6 +34,7 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
 
   const [input, setInput] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
+  const [ttsError, setTtsError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -76,8 +77,47 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
 
       const { playPreloadedGreeting } = await import('@/utils/voicePrime');
       
-      await playPreloadedGreeting(() => {
-        // After greeting ends, start listening
+      await playPreloadedGreeting(
+        () => {
+          // After greeting ends, start listening
+          if (stopListenRef.current) {
+            stopListenRef.current();
+          }
+          
+          const cleanup = listen(
+            (finalText) => {
+              setInput(finalText);
+              handleSend();
+            },
+            (interimText) => {
+              setInterimTranscript(interimText);
+            }
+          );
+          
+          stopListenRef.current = cleanup;
+        },
+        (error) => {
+          setTtsError(`Voice unavailable: ${error.message}`);
+          console.error('[BusinessChat] TTS error:', error);
+        }
+      );
+    };
+
+    playGreeting();
+  }, [voiceEnabled, chatStarted, listen]);
+
+  // Start voice loop for subsequent assistant messages (not the initial greeting)
+  useEffect(() => {
+    if (!voiceEnabled || !chatStarted || step === 'done' || step === 'saving') return;
+    if (messages.length <= 1) return; // Skip initial greeting message
+    
+    const lastMessage = messages[messages.length - 1];
+    if (!lastMessage || lastMessage.role !== 'assistant') return;
+
+    // Speak the message, then start listening
+    speakAndThen(
+      lastMessage.content, 
+      () => {
         if (stopListenRef.current) {
           stopListenRef.current();
         }
@@ -93,38 +133,26 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
         );
         
         stopListenRef.current = cleanup;
-      });
-    };
-
-    playGreeting();
-  }, [voiceEnabled, chatStarted, listen]);
-
-  // Start voice loop for subsequent assistant messages (not the initial greeting)
-  useEffect(() => {
-    if (!voiceEnabled || !chatStarted || step === 'done' || step === 'saving') return;
-    if (messages.length <= 1) return; // Skip initial greeting message
-    
-    const lastMessage = messages[messages.length - 1];
-    if (!lastMessage || lastMessage.role !== 'assistant') return;
-
-    // Speak the message, then start listening
-    speakAndThen(lastMessage.content, () => {
-      if (stopListenRef.current) {
-        stopListenRef.current();
-      }
-      
-      const cleanup = listen(
-        (finalText) => {
-          setInput(finalText);
-          handleSend();
-        },
-        (interimText) => {
-          setInterimTranscript(interimText);
+      },
+      (error) => {
+        setTtsError(`Voice error: ${error.message}`);
+        console.error('[BusinessChat] Subsequent TTS error:', error);
+        // Continue listening even if speech fails
+        if (stopListenRef.current) {
+          stopListenRef.current();
         }
-      );
-      
-      stopListenRef.current = cleanup;
-    });
+        const cleanup = listen(
+          (finalText) => {
+            setInput(finalText);
+            handleSend();
+          },
+          (interimText) => {
+            setInterimTranscript(interimText);
+          }
+        );
+        stopListenRef.current = cleanup;
+      }
+    );
   }, [messages, voiceEnabled, chatStarted, step, speakAndThen, listen]);
 
   // Handle visibility changes
@@ -135,21 +163,28 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
       } else if (voiceEnabled && chatStarted && step !== 'done' && step !== 'saving') {
         const lastMessage = messages[messages.length - 1];
         if (lastMessage?.role === 'assistant') {
-          speakAndThen(lastMessage.content, () => {
-            if (stopListenRef.current) {
-              stopListenRef.current();
-            }
-            const cleanup = listen(
-              (finalText) => {
-                setInput(finalText);
-                handleSend();
-              },
-              (interimText) => {
-                setInterimTranscript(interimText);
+          speakAndThen(
+            lastMessage.content, 
+            () => {
+              if (stopListenRef.current) {
+                stopListenRef.current();
               }
-            );
-            stopListenRef.current = cleanup;
-          });
+              const cleanup = listen(
+                (finalText) => {
+                  setInput(finalText);
+                  handleSend();
+                },
+                (interimText) => {
+                  setInterimTranscript(interimText);
+                }
+              );
+              stopListenRef.current = cleanup;
+            },
+            (error) => {
+              setTtsError(`Voice error: ${error.message}`);
+              console.error('[BusinessChat] Visibility TTS error:', error);
+            }
+          );
         }
       }
     };
@@ -344,6 +379,25 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
               </Button>
             )}
           </div>
+
+          {/* TTS Error Banner */}
+          {ttsError && (
+            <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-2">
+              <VolumeX className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+              <div className="flex-1 text-sm">
+                <p className="text-destructive font-medium">{ttsError}</p>
+                <p className="text-muted-foreground text-xs mt-1">
+                  Text will still appear - you can continue typing responses
+                </p>
+              </div>
+              <button
+                onClick={() => setTtsError(null)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                ×
+              </button>
+            </div>
+          )}
 
           {/* Messages */}
           <div className="min-h-[400px] max-h-[500px] overflow-y-auto space-y-3 pr-2">

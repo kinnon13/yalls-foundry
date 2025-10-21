@@ -60,16 +60,19 @@ export async function voicePrime(): Promise<void> {
 }
 
 /**
- * Play preloaded greeting or fallback to Web Speech
+ * Play preloaded greeting (no fallback)
  * Returns a promise that resolves when audio starts playing
  */
-export async function playPreloadedGreeting(onEnded: () => void): Promise<{ method: 'preloaded' | 'webspeech'; ttfa: number }> {
+export async function playPreloadedGreeting(
+  onEnded: () => void,
+  onError?: (error: Error) => void
+): Promise<{ method: 'preloaded' | 'failed'; ttfa: number }> {
   const t0 = performance.now();
   const preUrl = sessionStorage.getItem('preTtsUrl');
   const preText = sessionStorage.getItem('preTtsText');
 
   let played = false;
-  let method: 'preloaded' | 'webspeech' = 'preloaded';
+  let method: 'preloaded' | 'failed' = 'preloaded';
 
   const playPreloaded = async (): Promise<void> => {
     if (!preUrl) return;
@@ -88,70 +91,41 @@ export async function playPreloadedGreeting(onEnded: () => void): Promise<{ meth
       onEnded();
     };
 
-    audio.onerror = () => {
-      console.error('[VoicePlayback] Preloaded audio error');
+    audio.onerror = (err) => {
+      const error = new Error('Preloaded audio playback failed');
+      console.error('[VoicePlayback] Preloaded audio error:', err);
       URL.revokeObjectURL(preUrl);
       sessionStorage.removeItem('preTtsUrl');
       sessionStorage.removeItem('preTtsText');
+      method = 'failed';
+      onError?.(error);
       onEnded();
     };
 
     try {
       await audio.play();
     } catch (error) {
-      console.error('[VoicePlayback] Play error:', error);
+      const playError = new Error(`Audio play failed: ${error instanceof Error ? error.message : 'unknown'}`);
+      console.error('[VoicePlayback] Play error:', playError);
+      method = 'failed';
+      onError?.(playError);
     }
   };
 
-  const fallbackWebSpeech = (): void => {
-    method = 'webspeech';
-    const t3 = performance.now();
-    console.log('[VoicePlayback] TTFA (fallback):', Math.round(t3 - t0), 'ms');
-
-    if (!('speechSynthesis' in window)) {
-      onEnded();
-      return;
-    }
-
-    // Pick a male voice by name to match server TTS
-    const pickMaleVoice = () => {
-      const voices = window.speechSynthesis.getVoices();
-      return voices.find(v =>
-        /google.*us.*english|daniel|alex|matthew|james|aaron/i.test(v.name)
-      ) || voices.find(v => /male/i.test(v.name)) || voices[0];
-    };
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(preText || GREETING_TEXT);
-    utterance.voice = pickMaleVoice();
-    utterance.rate = 1.0;
-    utterance.pitch = 1.02;
-    utterance.lang = 'en-US';
-    utterance.onend = onEnded;
-    utterance.onerror = onEnded;
-    
-    // Ensure voices are loaded before speaking
-    if (window.speechSynthesis.getVoices().length === 0) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        utterance.voice = pickMaleVoice();
-        window.speechSynthesis.speak(utterance);
-      };
-    } else {
-      window.speechSynthesis.speak(utterance);
-    }
-  };
-
-  // Race preloaded audio vs 300ms timeout
+  // Wait up to 500ms for preloaded audio
   await Promise.race([
     playPreloaded(),
-    new Promise<void>(resolve => setTimeout(resolve, 300))
+    new Promise<void>(resolve => setTimeout(resolve, 500))
   ]);
 
   if (!played) {
-    console.log('[VoicePlayback] Preload timeout, using Web Speech fallback');
-    fallbackWebSpeech();
+    const timeoutError = new Error('TTS audio not ready - voice disabled for this session');
+    console.error('[VoicePlayback] Preload timeout:', timeoutError);
+    method = 'failed';
+    onError?.(timeoutError);
+    onEnded();
   } else {
-    console.log('[VoicePlayback] Used preloaded server TTS (onyx voice)');
+    console.log('[VoicePlayback] ✓ Server TTS (onyx, 1.35x) - TTFA:', Math.round(performance.now() - t0), 'ms');
   }
 
   const ttfa = performance.now() - t0;

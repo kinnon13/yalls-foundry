@@ -14,15 +14,19 @@ export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
   const recognitionRef = useRef<any>(null);
   const speakingRef = useRef(false);
 
-  // Text-to-Speech with callback - using OpenAI TTS
-  const speakAndThen = useCallback(async (text: string, then?: () => void) => {
+  // Text-to-Speech with callback - using OpenAI TTS (onyx, 1.35x, no fallback)
+  const speakAndThen = useCallback(async (
+    text: string, 
+    then?: () => void,
+    onError?: (error: Error) => void
+  ) => {
     if (!enabled) {
       then?.();
       return;
     }
     
     const t0 = performance.now();
-    console.log('[Voice] TTS start:', { engine: 'server_tts', voice: 'onyx', speed: 1.0 });
+    console.log('[Voice] TTS start:', { engine: 'server_tts', voice: 'onyx', speed: 1.35 });
     
     try {
       speakingRef.current = true;
@@ -31,28 +35,39 @@ export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
         body: { text, voice: 'onyx' }
       });
 
-      if (error) throw error;
+      if (error) {
+        const ttsError = new Error(`TTS failed: ${error.message}`);
+        console.error('[Voice] TTS API error:', error);
+        onError?.(ttsError);
+        throw ttsError;
+      }
 
       const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
       
       audio.onplaying = () => {
         const t1 = performance.now();
-        console.log('[Voice] TTS playing:', { ttfa: Math.round(t1 - t0), engine: 'server_tts', voice: 'onyx' });
+        console.log('[Voice] ✓ TTS playing:', { ttfa: Math.round(t1 - t0), engine: 'server_tts', voice: 'onyx', speed: '1.35x' });
       };
       
       audio.onended = () => {
         speakingRef.current = false;
         then?.();
       };
+      
       audio.onerror = (e) => {
+        const playError = new Error('Audio playback failed');
         console.error('[Voice] Audio playback error:', e);
         speakingRef.current = false;
+        onError?.(playError);
         then?.();
       };
+      
       await audio.play();
     } catch (error) {
       console.error('[Voice] TTS error:', error);
       speakingRef.current = false;
+      const finalError = error instanceof Error ? error : new Error('Unknown TTS error');
+      onError?.(finalError);
       then?.();
     }
   }, [enabled]);
