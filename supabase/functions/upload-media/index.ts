@@ -22,7 +22,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
+    const proxyFn = 'proxy-openai';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get authenticated user
@@ -124,44 +124,37 @@ serve(async (req) => {
       try {
         log.info('Starting AI analysis');
         
-        // Use Lovable AI vision model
-        const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${lovableApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [
-              {
-                role: 'system',
-                content: `You are Rocker, an AI assistant for Y'alls.ai, a horse industry platform. Analyze uploaded images and extract:
-1. Horses present (names if visible, descriptions)
-2. People present (descriptions)
-3. Locations/venues
-4. Activities/events (competitions, training, etc.)
-5. Overall context and scene description
-
-Respond in JSON format with: { "entities": [{"type": "horse"|"person"|"location"|"event", "name": "string", "confidence": 0-1}], "scene": "description", "emotion": "string", "context": "string" }`
-              },
-              {
-                role: 'user',
-                content: [
-                  {
-                    type: 'text',
-                    text: context ? `User context: ${context}. Analyze this ${fileType}.` : `Analyze this ${fileType}.`
-                  },
-                  {
-                    type: 'image_url',
-                    image_url: { url: publicUrl }
-                  }
-                ]
-              }
-            ],
-            max_tokens: 1000
-          })
+        // Use user's OpenAI key via proxy-openai for vision analysis
+        const { data: aiData, error: aiError } = await supabase.functions.invoke(proxyFn, {
+          headers: { Authorization: authHeader },
+          body: {
+            path: '/v1/chat/completions',
+            keyName: 'openai',
+            body: {
+              model: 'gpt-5-mini-2025-08-07',
+              messages: [
+                {
+                  role: 'system',
+                  content: `You are Rocker. Analyze uploaded media and extract: entities (horse/person/location/event), scene, emotion, context. Return pure JSON.`
+                },
+                {
+                  role: 'user',
+                  content: [
+                    { type: 'text', text: context ? `User context: ${context}. Analyze this ${fileType}.` : `Analyze this ${fileType}.` },
+                    { type: 'image_url', image_url: { url: publicUrl } }
+                  ]
+                }
+              ],
+              max_completion_tokens: 1000
+            }
+          }
         });
+
+        if (aiError) {
+          log.warn('AI analysis failed', { error: aiError.message });
+        } else {
+          const aiResult = aiData as any;
+          const content = aiResult.choices?.[0]?.message?.content;
 
         if (!aiResponse.ok) {
           const errorText = await aiResponse.text();

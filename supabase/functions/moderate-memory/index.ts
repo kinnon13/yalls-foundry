@@ -36,10 +36,11 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
-    }
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+    );
 
     // Call Lovable AI for moderation
     const moderationPrompt = `Analyze this user-generated memory/statement for safety and appropriateness. 
@@ -55,59 +56,61 @@ Respond with:
 5. softened_content: if decision is "soften", provide a neutralized version that preserves meaning but removes harsh language
 6. reason: brief explanation of the decision`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are a content moderation assistant. Analyze content objectively and provide structured safety assessments.' 
-          },
-          { role: 'user', content: moderationPrompt }
-        ],
-        tools: [{
-          type: 'function',
-          function: {
-            name: 'moderate_content',
-            description: 'Return moderation analysis',
-            parameters: {
-              type: 'object',
-              properties: {
-                decision: {
-                  type: 'string',
-                  enum: ['ok', 'soften', 'block']
+    const { data: aiData, error: aiError } = await supabase.functions.invoke('proxy-openai', {
+      headers: { Authorization: req.headers.get('Authorization')! },
+      body: {
+        path: '/v1/chat/completions',
+        keyName: 'openai',
+        body: {
+          model: 'gpt-5-mini-2025-08-07',
+          messages: [
+            { role: 'system', content: 'You are a content moderation assistant. Analyze content objectively and provide structured safety assessments.' },
+            { role: 'user', content: moderationPrompt }
+          ],
+          tools: [{
+            type: 'function',
+            function: {
+              name: 'moderate_content',
+              description: 'Return moderation analysis',
+              parameters: {
+                type: 'object',
+                properties: {
+                  decision: { type: 'string', enum: ['ok', 'soften', 'block'] },
+                  toxicity_score: { type: 'number', minimum: 0, maximum: 1 },
+                  safety_category: { type: 'string' },
+                  tone: { type: 'string', enum: ['positive', 'neutral', 'negative', 'hostile'] },
+                  softened_content: { type: 'string' },
+                  reason: { type: 'string' }
                 },
-                toxicity_score: {
-                  type: 'number',
-                  minimum: 0,
-                  maximum: 1
-                },
-                safety_category: {
-                  type: 'string'
-                },
-                tone: {
-                  type: 'string',
-                  enum: ['positive', 'neutral', 'negative', 'hostile']
-                },
-                softened_content: {
-                  type: 'string'
-                },
-                reason: {
-                  type: 'string'
-                }
-              },
-              required: ['decision', 'toxicity_score', 'safety_category', 'tone', 'reason']
+                required: ['decision', 'toxicity_score', 'safety_category', 'tone', 'reason']
+              }
             }
-          }
-        }],
-        tool_choice: { type: 'function', function: { name: 'moderate_content' } }
-      })
+          }],
+          tool_choice: { type: 'function', function: { name: 'moderate_content' } }
+        }
+      }
     });
+
+    if (aiError) {
+      const errorText = aiError.message || 'proxy-openai error';
+      log.error('OpenAI moderation error', null, { error: errorText });
+      // Fallback basic keyword check
+      const lowerContent = content.toLowerCase();
+      const hasBlockedWords = [ 'kill', 'die', 'hate', 'fuck', 'bitch', 'attack' ].some(word => lowerContent.includes(word));
+      return new Response(
+        JSON.stringify({
+          decision: hasBlockedWords ? 'soften' : 'ok',
+          toxicity_score: hasBlockedWords ? 0.6 : 0.2,
+          safety_category: hasBlockedWords ? 'language' : 'none',
+          tone: 'neutral',
+          reason: 'Fallback moderation',
+          original_content: content
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const data = aiData as any;
 
     if (!response.ok) {
       const errorText = await response.text();

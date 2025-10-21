@@ -1,9 +1,6 @@
-// Super Rocker Chat - Simple mode (fixed duplicates, build: 001)
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-
-console.log('[rocker-chat-simple] boot', { build: 'bump-002', ts: new Date().toISOString() });
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,15 +8,54 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+
+  try {
+    const { message } = await req.json();
+    if (!message || typeof message !== 'string') {
+      return new Response(JSON.stringify({ error: 'message is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: req.headers.get('Authorization') || '' } } }
+    );
+
+    const { data, error } = await supabase.functions.invoke('proxy-openai', {
+      body: {
+        path: '/v1/chat/completions',
+        keyName: 'openai',
+        body: {
+          model: 'gpt-5-mini-2025-08-07',
+          messages: [
+            { role: 'system', content: 'You are Rocker. Keep answers concise and actionable.' },
+            { role: 'user', content: message }
+          ],
+          max_completion_tokens: 500,
+        }
+      },
+      headers: { Authorization: req.headers.get('Authorization') || '' }
+    });
+
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const reply = (data as any)?.choices?.[0]?.message?.content ?? '';
+    return new Response(JSON.stringify({ reply }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : 'Unknown error' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
-
-  return new Response(JSON.stringify({ 
-    error: "This function has been disabled. Rocker now uses OpenAI exclusively. Use rocker-chat instead." 
-  }), {
-    status: 503,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
 });
-

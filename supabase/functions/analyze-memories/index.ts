@@ -8,7 +8,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { createLogger } from "../_shared/logger.ts";
 
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+const OPENAI_KEY_NAME = 'openai';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,9 +23,7 @@ serve(async (req) => {
   const log = createLogger('analyze-memories');
 
   try {
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
-    }
+    // Using user's OpenAI key via proxy-openai
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -99,49 +97,43 @@ serve(async (req) => {
         .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
         .join('\n\n');
 
-      // Use AI to extract memories from the whole session
-      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            {
-              role: 'system',
-              content: `Extract ALL memorable facts about the user from this conversation. 
+      // Use AI to extract memories from the whole session via proxy-openai (user-owned OpenAI key)
+      const { data: aiData, error: aiError } = await supabaseClient.functions.invoke('proxy-openai', {
+        body: {
+          path: '/v1/chat/completions',
+          keyName: OPENAI_KEY_NAME,
+          body: {
+            model: 'gpt-5-mini-2025-08-07',
+            messages: [
+              {
+                role: 'system',
+                content: `Extract ALL memorable facts about the user from this conversation.
 
 Categories to look for:
-- **family**: Names, relationships, details about family members (mom, dad, siblings, etc.)
-- **personal_info**: Name, age, location, birthday, job, occupation
-- **preference**: What they like, dislike, prefer, avoid
-- **goal**: Plans, ambitions, things they want to do
-- **interest**: Hobbies, topics they're interested in
-- **skill**: What they know, expertise, learning
-- **project**: Projects they're working on
-- **relationship**: Friends, colleagues, important people
+- family: Names, relationships, details about family members
+- personal_info: Name, age, location, birthday, job, occupation
+- preference: Likes, dislikes, preferences, aversions
+- goal: Plans, ambitions, intended actions
+- interest: Hobbies, interests, topics
+- skill: Skills, expertise, learning
+- project: Ongoing projects
+- relationship: Friends, colleagues, important people
 
-Return a JSON array of memories. Be generous - capture anything that seems important about WHO this person is. Each memory:
-{
-  "key": "descriptive_key_like_mother_occupation_or_favorite_food",
-  "type": "category_from_above",
-  "value": "the actual fact or detail",
-  "confidence": 0.6-1.0,
-  "context": "brief context from conversation"
-}
-
-If NOTHING memorable, return [].`
-            },
-            {
-              role: 'user',
-              content: conversationText
-            }
-          ],
-          temperature: 0.2,
-        }),
+Return a JSON array of memories. Each memory object must include: key, type, value, confidence (0.6-1.0), context.`
+              },
+              { role: 'user', content: conversationText }
+            ],
+            max_completion_tokens: 800
+          }
+        }
       });
+
+      if (aiError) {
+        log.error('AI extraction failed', aiError);
+        continue;
+      }
+
+      const completion = aiData as any;
 
       if (!response.ok) {
         log.error('AI extraction failed', { status: response.status });

@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+const PROXY_FN = 'proxy-openai';
 
 function detectCategory(text: string, filename: string): string {
   const lower = `${text} ${filename}`.toLowerCase();
@@ -21,56 +21,50 @@ function detectCategory(text: string, filename: string): string {
   return 'Notes';
 }
 
-async function extractTags(text: string, filename: string): Promise<string[]> {
-  if (!LOVABLE_API_KEY) return [];
-  
+async function extractTags(text: string, filename: string, supabase: any, authHeader: string): Promise<string[]> {
   try {
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [{
-          role: 'user',
-          content: `Extract 3-7 relevant tags from this document. Return ONLY a JSON array of strings, no other text.\n\nFilename: ${filename}\n\nContent: ${text.slice(0, 2000)}`
-        }],
-        max_completion_tokens: 100,
-      }),
+    const { data, error } = await supabase.functions.invoke(PROXY_FN, {
+      headers: { Authorization: authHeader },
+      body: {
+        path: '/v1/chat/completions',
+        keyName: 'openai',
+        body: {
+          model: 'gpt-5-mini-2025-08-07',
+          messages: [{
+            role: 'user',
+            content: `Extract 3-7 relevant tags from this document. Return ONLY a JSON array of strings.\n\nFilename: ${filename}\n\nContent: ${text.slice(0, 2000)}`
+          }],
+          max_completion_tokens: 100,
+        }
+      }
     });
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '[]';
+    const content = (data as any)?.choices?.[0]?.message?.content || '[]';
     return JSON.parse(content);
   } catch {
     return [];
   }
 }
 
-async function generateSummary(text: string): Promise<string> {
-  if (!LOVABLE_API_KEY) return text.slice(0, 200) + '...';
-  
+async function generateSummary(text: string, supabase: any, authHeader: string): Promise<string> {
   try {
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [{
-          role: 'user',
-          content: `Summarize this in 1-3 clear sentences:\n\n${text.slice(0, 3000)}`
-        }],
-        max_completion_tokens: 150,
-      }),
+    const { data } = await supabase.functions.invoke(PROXY_FN, {
+      headers: { Authorization: authHeader },
+      body: {
+        path: '/v1/chat/completions',
+        keyName: 'openai',
+        body: {
+          model: 'gpt-5-mini-2025-08-07',
+          messages: [{
+            role: 'user',
+            content: `Summarize this in 1-3 clear sentences:\n\n${text.slice(0, 3000)}`
+          }],
+          max_completion_tokens: 150,
+        }
+      }
     });
 
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || text.slice(0, 200);
+    return (data as any)?.choices?.[0]?.message?.content || text.slice(0, 200);
   } catch {
     return text.slice(0, 200) + '...';
   }
@@ -119,10 +113,10 @@ serve(async (req) => {
       textContent = 'Binary file - ' + file.name;
     }
 
-    // Auto-categorize and tag
+// Auto-categorize and tag
     const category = detectCategory(textContent, file.name);
-    const tags = await extractTags(textContent, file.name);
-    const summary = await generateSummary(textContent);
+    const tags = await extractTags(textContent, file.name, supabase, req.headers.get('Authorization')!);
+    const summary = await generateSummary(textContent, supabase, req.headers.get('Authorization')!);
 
     // Upload to storage
     const filePath = `${user.id}/${Date.now()}_${file.name}`;
