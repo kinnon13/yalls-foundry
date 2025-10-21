@@ -83,6 +83,22 @@ export function useVoice({ role, enabled, onTranscript }: UseVoiceOptions) {
       if (error) {
         const ttsError = new Error(`TTS failed: ${error.message}`);
         console.error('[Voice] TTS API error:', { role, voice: profile.voice, error: error.message });
+        
+        // Log to voice_events table
+        try {
+          const { data: session } = await supabase.auth.getSession();
+          if (session?.session?.user?.id) {
+            await supabase.from('voice_events').insert({
+              user_id: session.session.user.id,
+              actor_role: role,
+              kind: 'tts_failure',
+              payload: { voice: profile.voice, rate: profile.rate, error: error.message }
+            });
+          }
+        } catch (logError) {
+          console.warn('[Voice] Failed to log error:', logError);
+        }
+        
         onError?.(ttsError);
         throw ttsError;
       }
@@ -108,6 +124,19 @@ export function useVoice({ role, enabled, onTranscript }: UseVoiceOptions) {
       audio.onerror = (e) => {
         const playError = new Error('Audio playback failed');
         console.error('[Voice] Audio playback error:', { role, voice: profile.voice, error: e });
+        
+        // Log playback error
+        supabase.auth.getSession().then(({ data: session }) => {
+          if (session?.session?.user?.id) {
+            supabase.from('voice_events').insert({
+              user_id: session.session.user.id,
+              actor_role: role,
+              kind: 'audio_playback_error',
+              payload: { voice: profile.voice, rate: profile.rate }
+            }).then().catch(logError => console.warn('[Voice] Failed to log playback error:', logError));
+          }
+        });
+        
         speakingRef.current = false;
         onError?.(playError);
         then?.();

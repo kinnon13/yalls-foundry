@@ -39,13 +39,30 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
 
   // Determine voice role based on actor role
   const voiceRole: VoiceRole = actorRole === 'admin' ? 'admin_rocker' : actorRole === 'knower' ? 'super_andy' : 'user_rocker';
-  const [voiceEnabled] = useState(false); // Voice disabled by default in embedded chat
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+  const [isAlwaysListening, setIsAlwaysListening] = useState(false);
   
-  // Use role-specific voice
-  const { stopAll } = useVoice({
+  // Use role-specific voice with proper state management
+  const { speakAndThen, listen, stopAll, isSupported } = useVoice({
     role: voiceRole,
-    enabled: voiceEnabled,
+    enabled: isVoiceMode,
   });
+
+  const toggleVoiceMode = () => {
+    if (isVoiceMode) {
+      stopAll();
+      setIsVoiceMode(false);
+      setVoiceStatus('disconnected');
+    } else if (isSupported) {
+      setIsVoiceMode(true);
+      setVoiceStatus('connected');
+    }
+  };
+
+  const toggleAlwaysListening = () => {
+    setIsAlwaysListening(!isAlwaysListening);
+  };
 
   const [showSidebar, setShowSidebar] = useState(true);
   const [currentSessionId, setCurrentSessionId] = useState<string>();
@@ -134,11 +151,11 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
         <ChatHeader
           showSidebar={showSidebar}
           onToggleSidebar={() => setShowSidebar(!showSidebar)}
-          isVoiceMode={false}
-          isAlwaysListening={false}
-          voiceStatus="disconnected"
-          onToggleVoiceMode={() => {}}
-          onToggleAlwaysListening={() => {}}
+          isVoiceMode={isVoiceMode}
+          isAlwaysListening={isAlwaysListening}
+          voiceStatus={voiceStatus}
+          onToggleVoiceMode={toggleVoiceMode}
+          onToggleAlwaysListening={toggleAlwaysListening}
           onClearMessages={clearMessages}
           onMinimize={() => {}} // No-op for embedded
           onClose={() => {}} // No-op for embedded
@@ -165,10 +182,10 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
             <MessageList
               messages={messages}
               isLoading={isLoading}
-              isVoiceMode={false}
-              voiceStatus="disconnected"
+              isVoiceMode={isVoiceMode}
+              voiceStatus={voiceStatus}
               voiceTranscript=""
-              isAlwaysListening={false}
+              isAlwaysListening={isAlwaysListening}
               actorRole={actorRole}
             />
           )}

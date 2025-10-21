@@ -11853,6 +11853,33 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_events: {
+        Row: {
+          actor_role: string
+          created_at: string
+          id: number
+          kind: string
+          payload: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          actor_role: string
+          created_at?: string
+          id?: number
+          kind: string
+          payload?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          actor_role?: string
+          created_at?: string
+          id?: number
+          kind?: string
+          payload?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       voice_interactions: {
         Row: {
           completed_at: string | null
