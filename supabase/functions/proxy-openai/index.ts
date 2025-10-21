@@ -83,15 +83,37 @@ serve(async (req) => {
     const { path = "/chat/completions", body, keyName = "default" } = await req.json();
 
     // Fetch encrypted key
-    const { data: secretData, error: secretError } = await supabase
+    // Fetch encrypted key with robust fallbacks
+    let secretData: { enc_api_key: string } | null = null;
+
+    // 1) Exact match (provider/name)
+    const { data: exact, error: exactError } = await supabase
       .from("app_provider_secrets")
-      .select("enc_api_key")
+      .select("enc_api_key, name, provider")
       .eq("owner_user_id", user.id)
       .eq("provider", "openai")
       .eq("name", keyName)
-      .single();
+      .maybeSingle();
 
-    if (secretError || !secretData) {
+    if (exact && !exactError) {
+      secretData = exact as any;
+    } else {
+      // 2) Case-insensitive provider/name; 3) Any 'openai' key; prefer name match, then 'default'
+      const { data: candidates, error: candError } = await supabase
+        .from("app_provider_secrets")
+        .select("enc_api_key, name, provider")
+        .eq("owner_user_id", user.id)
+        .ilike("provider", "openai");
+
+      if (!candError && candidates && candidates.length) {
+        const want = (keyName || "default").toLowerCase();
+        const byName = candidates.find((r: any) => (r.name || "").toLowerCase() === want);
+        const byDefault = candidates.find((r: any) => (r.name || "").toLowerCase() === "default");
+        secretData = (byName || byDefault || candidates[0]) as any;
+      }
+    }
+
+    if (!secretData) {
       return new Response(JSON.stringify({ error: "OpenAI API key not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -115,9 +137,8 @@ serve(async (req) => {
     await supabase
       .from("app_provider_secrets")
       .update({ last_used_at: new Date().toISOString() })
-      .eq("owner_user_id", user.id)
       .eq("provider", "openai")
-      .eq("name", keyName);
+      .eq("name", ((secretData as any)?.name ?? keyName));
 
     // Stream response directly (supports SSE when stream=true)
     return new Response(response.body, {

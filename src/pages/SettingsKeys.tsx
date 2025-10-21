@@ -54,7 +54,7 @@ export default function SettingsKeys() {
     setSaving(true);
     try {
       const { error } = await supabase.functions.invoke("secrets-manage", {
-        body: { provider: provider.trim(), name: name.trim(), apiKey: apiKey.trim() },
+        body: { provider: provider.trim().toLowerCase(), name: (name.trim() || "default").toLowerCase(), apiKey: apiKey.trim() },
       });
 
       if (error) throw error;

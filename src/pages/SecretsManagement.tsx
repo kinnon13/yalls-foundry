@@ -53,7 +53,7 @@ export default function SecretsManagement() {
       const { error } = await supabase.functions.invoke('secrets-manage', {
         body: {
           provider: 'openai',
-          name: keyName,
+          name: keyName.trim().toLowerCase(),
           apiKey: apiKey
         }
       });
