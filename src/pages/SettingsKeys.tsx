@@ -76,12 +76,19 @@ export default function SettingsKeys() {
     if (!confirm(`Delete ${provider}/${name}?`)) return;
 
     try {
-      const { error } = await supabase.functions.invoke("secrets-manage", {
-        body: { provider, name },
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/secrets-manage`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+        body: JSON.stringify({ provider, name }),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Delete failed");
+      }
       
       toast.success("API key deleted");
       await loadKeys();
