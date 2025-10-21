@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
 import { toast } from 'sonner';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface Message {
   id: number;
@@ -22,6 +23,7 @@ export function MessengerRail() {
   const [threadId, setThreadId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const lastMessageCountRef = useRef(0);
 
   // Load or create thread
   useEffect(() => {
@@ -102,10 +104,52 @@ export function MessengerRail() {
     },
   });
 
+  // Set up realtime subscription for new messages
+  useEffect(() => {
+    if (!threadId) return;
+
+    const channel = supabase
+      .channel(`rocker-messages-${threadId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'rocker_messages',
+          filter: `thread_id=eq.${threadId}`
+        },
+        (payload) => {
+          console.log('New message received:', payload);
+          const newMessage = payload.new as Message;
+          
+          // Show notification if it's from assistant
+          if (newMessage.role === 'assistant') {
+            toast.success('Andy replied', {
+              description: newMessage.content.slice(0, 100) + (newMessage.content.length > 100 ? '...' : ''),
+              duration: 4000,
+            });
+          }
+          
+          // Invalidate and refetch messages
+          queryClient.invalidateQueries({ queryKey: ['rocker-messages', threadId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [threadId, queryClient]);
+
   // Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+    
+    // Track message count for notifications
+    if (messages.length > lastMessageCountRef.current) {
+      lastMessageCountRef.current = messages.length;
     }
   }, [messages]);
 
@@ -141,10 +185,10 @@ export function MessengerRail() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-hidden px-4">
-        <div ref={scrollRef} className="h-full overflow-y-auto py-4 space-y-4">
+      <div className="flex-1 overflow-hidden">
+        <div ref={scrollRef} className="h-full overflow-y-auto px-4 py-4 space-y-4">
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex flex-col items-center justify-center py-12 text-center px-4">
               <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-4">
                 <Sparkles className="h-8 w-8 text-primary" />
               </div>
@@ -159,13 +203,13 @@ export function MessengerRail() {
             <div
               key={msg.id}
               className={cn(
-                'flex',
+                'flex px-2',
                 msg.role === 'user' ? 'justify-end' : 'justify-start'
               )}
             >
               <div
                 className={cn(
-                  'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm',
+                  'max-w-[75%] rounded-2xl px-4 py-2.5 text-sm break-words',
                   msg.role === 'user'
                     ? 'bg-[#007AFF] text-white shadow-md shadow-blue-500/20'
                     : 'bg-muted text-foreground'
@@ -177,7 +221,7 @@ export function MessengerRail() {
           ))}
           
           {sendMutation.isPending && (
-            <div className="flex justify-start">
+            <div className="flex justify-start px-2">
               <div className="bg-muted rounded-2xl px-4 py-2.5">
                 <div className="flex gap-1">
                   <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '0ms' }} />
