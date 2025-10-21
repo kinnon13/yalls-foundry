@@ -15,9 +15,10 @@ import { ReviewModal } from './ReviewModal';
 interface BusinessChatOnboardingProps {
   onComplete: () => void;
   onSkip: () => void;
+  onBack: () => void;
 }
 
-export function BusinessChatOnboarding({ onComplete, onSkip }: BusinessChatOnboardingProps) {
+export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessChatOnboardingProps) {
   const [showChoice, setShowChoice] = useState(true); // Start with choice screen
   
   const {
@@ -165,6 +166,17 @@ export function BusinessChatOnboarding({ onComplete, onSkip }: BusinessChatOnboa
               </div>
             </button>
           </div>
+          
+          {/* Back button */}
+          <div className="mt-6 pt-4 border-t">
+            <Button
+              variant="ghost"
+              onClick={onBack}
+              className="w-full"
+            >
+              ← Back to previous step
+            </Button>
+          </div>
         </Card>
       </div>
     );
@@ -179,16 +191,24 @@ export function BusinessChatOnboarding({ onComplete, onSkip }: BusinessChatOnboa
             I'll handle it in chat. You can review everything before saving.
           </p>
         </div>
-        {chatStarted && (
+        <div className="flex gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setShowChoice(true)}
             className="text-muted-foreground hover:text-foreground"
           >
-            ← Back to choices
+            ← Start over
           </Button>
-        )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            ← Previous step
+          </Button>
+        </div>
       </header>
 
       <Card className="p-4 md:p-6 bg-card">

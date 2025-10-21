@@ -37,7 +37,7 @@ export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
   const useConversational = true; // Can be env var later
   
   if (useConversational) {
-    return <BusinessChatOnboarding onComplete={onComplete} onSkip={onComplete} />;
+    return <BusinessChatOnboarding onComplete={onComplete} onSkip={onComplete} onBack={onBack} />;
   }
   
   // Legacy form UI (fallback)
