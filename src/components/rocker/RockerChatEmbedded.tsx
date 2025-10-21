@@ -15,6 +15,8 @@ import { CapabilityHighlighter } from './CapabilityHighlighter';
 import { useRockerGlobal } from '@/lib/ai/rocker';
 import { useSession } from '@/lib/auth/context';
 import { AIRole, AI_PROFILES } from '@/lib/ai/rocker/config';
+import { useVoice } from '@/hooks/useVoice';
+import { VoiceRole } from '@/config/voiceProfiles';
 
 interface RockerChatEmbeddedProps {
   actorRole?: AIRole;
@@ -27,12 +29,6 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
     error,
     sendMessage,
     clearMessages,
-    isVoiceMode,
-    isAlwaysListening,
-    voiceStatus,
-    voiceTranscript,
-    toggleVoiceMode,
-    toggleAlwaysListening,
     loadConversation,
     createNewConversation,
     setActorRole,
@@ -40,6 +36,16 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
   
   const { session } = useSession();
   const aiProfile = AI_PROFILES[actorRole || 'user'];
+
+  // Determine voice role based on actor role
+  const voiceRole: VoiceRole = actorRole === 'admin' ? 'admin' : actorRole === 'knower' ? 'super' : 'user';
+  const [voiceEnabled] = useState(false); // Voice disabled by default in embedded chat
+  
+  // Use role-specific voice
+  const { stopAll } = useVoice({
+    role: voiceRole,
+    enabled: voiceEnabled,
+  });
 
   const [showSidebar, setShowSidebar] = useState(true);
   const [currentSessionId, setCurrentSessionId] = useState<string>();
@@ -50,21 +56,9 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
     if (actorRole) {
       setActorRole(actorRole);
     }
-  }, [actorRole, setActorRole]);
-
-  // Load persistent preferences
-  useEffect(() => {
-    const savedPreference = localStorage.getItem('rocker-always-listening');
-    const voiceAuthorized = localStorage.getItem('rocker-voice-authorized');
     
-    if (savedPreference === 'true' && !isAlwaysListening) {
-      toggleAlwaysListening();
-    }
-    
-    if (voiceAuthorized === 'true' && savedPreference === 'true' && !isVoiceMode) {
-      toggleVoiceMode();
-    }
-  }, []);
+    return () => stopAll();
+  }, [actorRole, setActorRole, stopAll]);
 
   // Listen for session events
   useEffect(() => {
@@ -94,14 +88,6 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
       window.removeEventListener('rocker-send-message' as any, handleSendMessage);
     };
   }, [loadConversation, sendMessage, currentSessionId]);
-
-  // Save preferences
-  useEffect(() => {
-    localStorage.setItem('rocker-always-listening', isAlwaysListening.toString());
-    if (isVoiceMode) {
-      localStorage.setItem('rocker-voice-authorized', 'true');
-    }
-  }, [isAlwaysListening, isVoiceMode]);
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -148,11 +134,11 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
         <ChatHeader
           showSidebar={showSidebar}
           onToggleSidebar={() => setShowSidebar(!showSidebar)}
-          isVoiceMode={isVoiceMode}
-          isAlwaysListening={isAlwaysListening}
-          voiceStatus={voiceStatus}
-          onToggleVoiceMode={toggleVoiceMode}
-          onToggleAlwaysListening={toggleAlwaysListening}
+          isVoiceMode={false}
+          isAlwaysListening={false}
+          voiceStatus="disconnected"
+          onToggleVoiceMode={() => {}}
+          onToggleAlwaysListening={() => {}}
           onClearMessages={clearMessages}
           onMinimize={() => {}} // No-op for embedded
           onClose={() => {}} // No-op for embedded
@@ -162,7 +148,7 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
         />
 
         <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-          {messages.length === 0 && !isVoiceMode ? (
+          {messages.length === 0 ? (
             <div className="flex flex-col h-full">
               <div className="flex flex-col items-center justify-center flex-1 text-center text-muted-foreground">
                 <img 
@@ -171,7 +157,7 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
                   className="h-20 w-20 rounded-full mb-4 object-cover"
                 />
                 <p className="text-sm font-semibold">Ready to assist you</p>
-                <p className="text-xs mt-2">Start a conversation or use voice mode!</p>
+                <p className="text-xs mt-2">Start a conversation!</p>
               </div>
               <RockerQuickActions onSelectPrompt={handleQuickAction} />
             </div>
@@ -179,10 +165,10 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
             <MessageList
               messages={messages}
               isLoading={isLoading}
-              isVoiceMode={isVoiceMode}
-              voiceStatus={voiceStatus}
-              voiceTranscript={voiceTranscript}
-              isAlwaysListening={isAlwaysListening}
+              isVoiceMode={false}
+              voiceStatus="disconnected"
+              voiceTranscript=""
+              isAlwaysListening={false}
               actorRole={actorRole}
             />
           )}

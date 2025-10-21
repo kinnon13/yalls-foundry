@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Volume2, VolumeX, Brain, Moon, Sun } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { startSTT, speak, stopSpeaking, isVoiceSupported } from '@/utils/voice';
+import { useVoice } from '@/hooks/useVoice';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
 import {
@@ -29,14 +29,15 @@ export function VoiceControls({ threadId, onTranscript, onModeChange }: VoiceCon
   const [liveTranscript, setLiveTranscript] = useState('');
   const [mode, setMode] = useState<'super' | 'normal' | 'quiet'>('super');
   const [snoozedUntil, setSnoozedUntil] = useState<string | null>(null);
-  const [voiceSupport, setVoiceSupport] = useState({ tts: false, stt: false });
+  
+  // Super Andy voice
+  const { listen, stopAll, isSupported } = useVoice({
+    role: 'super',
+    enabled: isSpeakingEnabled,
+  });
   
   const stopSTTRef = useRef<(() => void) | null>(null);
   const silenceTimerRef = useRef<any>(null);
-
-  useEffect(() => {
-    setVoiceSupport(isVoiceSupported());
-  }, []);
 
   useEffect(() => {
     // Load AI preferences
@@ -73,27 +74,18 @@ export function VoiceControls({ threadId, onTranscript, onModeChange }: VoiceCon
       setIsListening(false);
       setLiveTranscript('');
     } else {
-      const stop = startSTT(
-        (text, isFinal) => {
-          setLiveTranscript(text);
-          onTranscript?.(text, isFinal);
-          
-          if (isFinal) {
-            setLiveTranscript('');
-          }
+      const cleanup = listen(
+        (text) => {
+          onTranscript?.(text, true);
         },
-        (error) => {
-          toast({
-            title: 'Microphone error',
-            description: error.message,
-            variant: 'destructive'
-          });
-          setIsListening(false);
+        (text) => {
+          setLiveTranscript(text);
+          onTranscript?.(text, false);
         }
       );
       
-      if (stop) {
-        stopSTTRef.current = stop;
+      if (cleanup) {
+        stopSTTRef.current = cleanup;
         setIsListening(true);
       } else {
         toast({
@@ -110,7 +102,7 @@ export function VoiceControls({ threadId, onTranscript, onModeChange }: VoiceCon
     setIsSpeakingEnabled(newValue);
     
     if (!newValue) {
-      stopSpeaking();
+      stopAll();
     }
     
     if (session?.userId) {
@@ -249,7 +241,7 @@ export function VoiceControls({ threadId, onTranscript, onModeChange }: VoiceCon
       )}
 
       {/* Speaking toggle */}
-      {voiceSupport.tts && (
+      {isSupported && (
         <Button
           size="icon"
           variant={isSpeakingEnabled ? 'default' : 'outline'}
@@ -261,7 +253,7 @@ export function VoiceControls({ threadId, onTranscript, onModeChange }: VoiceCon
       )}
 
       {/* Mic toggle */}
-      {voiceSupport.stt && (
+      {isSupported && (
         <div className="relative">
           <Button
             size="icon"

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
-import { speak } from '@/utils/voice';
+import { useVoice } from '@/hooks/useVoice';
 
 interface UseAndyVoiceOptions {
   threadId: string | null;
@@ -13,6 +13,12 @@ export function useAndyVoice({ threadId, enabled = true }: UseAndyVoiceOptions) 
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [silenceMs, setSilenceMs] = useState(2500);
   const silenceTimerRef = useRef<any>(null);
+
+  // Super Andy voice
+  const { speakAndThen } = useVoice({
+    role: 'super',
+    enabled: voiceEnabled && enabled,
+  });
 
   // Load preferences
   useEffect(() => {
@@ -67,7 +73,7 @@ export function useAndyVoice({ threadId, enabled = true }: UseAndyVoiceOptions) 
       .trim();
     
     if (cleanText) {
-      speak(cleanText);
+      speakAndThen(cleanText);
     }
   };
 
