@@ -16,10 +16,14 @@ interface Message {
   created_at: string;
 }
 
-export function MessengerRail() {
+interface MessengerRailProps {
+  threadId?: string | null;
+}
+
+export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
   const { session } = useSession();
   const [input, setInput] = useState('');
-  const [threadId, setThreadId] = useState<string | null>(null);
+  const [localThreadId, setLocalThreadId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const lastMessageCountRef = useRef(0);
@@ -27,10 +31,16 @@ export function MessengerRail() {
   const [voiceStatus, setVoiceStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
   const voiceRef = useRef<RealtimeVoice | null>(null);
 
-  // Load or create thread
+  // Use provided thread or load/create one
+  const threadId = propThreadId || localThreadId;
+
   useEffect(() => {
     const initThread = async () => {
       if (!session?.userId) return;
+      if (propThreadId) {
+        setLocalThreadId(propThreadId);
+        return;
+      }
       
       const { data } = await supabase
         .from('rocker_threads')
@@ -41,7 +51,7 @@ export function MessengerRail() {
         .maybeSingle();
       
       if (data) {
-        setThreadId(data.id);
+        setLocalThreadId(data.id);
       } else {
         // Create new thread
         const { data: newThread } = await supabase
@@ -50,12 +60,12 @@ export function MessengerRail() {
           .select('id')
           .single();
         
-        if (newThread) setThreadId(newThread.id);
+        if (newThread) setLocalThreadId(newThread.id);
       }
     };
     
     initThread();
-  }, [session?.userId]);
+  }, [session?.userId, propThreadId]);
 
   // Load messages
   const { data: messages = [] } = useQuery({

@@ -96,9 +96,9 @@ export default function SuperRocker() {
           <CenterStage activeApp={activeApp} threadId={threadId} />
         </main>
 
-        {/* Right: Messenger Rail */}
+      {/* Right: Messenger Rail */}
         <aside className="hidden lg:block min-h-0 h-full rounded-2xl bg-card/50 backdrop-blur-xl border border-border/40 shadow-[0_8px_30px_rgba(0,0,0,0.06)] overflow-hidden">
-          <MessengerRail />
+          <MessengerRail threadId={threadId} />
         </aside>
       </div>
 

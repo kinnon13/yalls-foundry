@@ -10,11 +10,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, User, MessageSquare, Brain, Lock, Shield, ShieldOff } from 'lucide-react';
 import { toast } from 'sonner';
-import { RockerChatEmbedded } from '@/components/rocker/RockerChatEmbedded';
+import { MessengerRail } from './MessengerRail';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
-export function SuperRockerAdmin() {
+interface SuperRockerAdminProps {
+  threadId: string | null;
+}
+
+export function SuperRockerAdmin({ threadId }: SuperRockerAdminProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   
@@ -114,7 +118,7 @@ export function SuperRockerAdmin() {
             </div>
             
             <div className="h-[600px]">
-              <RockerChatEmbedded actorRole="knower" />
+              <MessengerRail threadId={threadId} />
             </div>
           </TabsContent>
 

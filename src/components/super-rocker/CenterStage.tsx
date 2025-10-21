@@ -52,7 +52,7 @@ export function CenterStage({ activeApp, threadId }: CenterStageProps) {
         </Suspense>
       )}
       
-      {activeApp === 'admin' && <SuperRockerAdmin />}
+      {activeApp === 'admin' && <SuperRockerAdmin threadId={threadId} />}
       
       {activeApp === 'secrets' && (
         <Suspense fallback={<LoadingState icon={Key} label="API Keys" />}>
