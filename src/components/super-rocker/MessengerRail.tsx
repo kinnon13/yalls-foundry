@@ -204,9 +204,9 @@ export function MessengerRail() {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] bg-background rounded-2xl shadow-lg">
       {/* Header */}
-      <div className="flex-none px-4 py-4 border-b border-border/40">
+      <div className="flex-none px-4 py-3 border-b border-border/40">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-md shadow-primary/25">
             <Brain className="h-5 w-5 text-primary-foreground" />
@@ -221,9 +221,12 @@ export function MessengerRail() {
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-hidden">
-        <div ref={scrollRef} className="h-full overflow-y-auto px-5 sm:px-6 py-4 space-y-4 pb-28">
+      {/* Messages - scrollable area */}
+      <div 
+        ref={scrollRef} 
+        className="min-h-0 h-full overflow-y-auto px-4 py-4 space-y-3"
+        style={{ scrollbarGutter: 'stable' }}
+      >
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center px-4">
               <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-4">
@@ -240,18 +243,17 @@ export function MessengerRail() {
             <div
               key={msg.id}
               className={cn(
-                'flex px-2 sm:px-3',
+                'flex',
                 msg.role === 'user' ? 'justify-end' : 'justify-start'
               )}
             >
               <div
                 className={cn(
-                  'max-w-[60%] sm:max-w-[56%] md:max-w-[50%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words',
+                  'max-w-[75%] rounded-2xl px-4 py-2.5 text-[15px] leading-snug break-words whitespace-pre-wrap',
                   msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/25'
+                    ? 'bg-[#007AFF] text-white shadow-sm'
                     : 'bg-muted text-foreground'
                 )}
-                style={{ hyphens: 'auto' }}
               >
                 {msg.content}
               </div>
@@ -270,11 +272,13 @@ export function MessengerRail() {
             </div>
           )}
         </div>
-      </div>
 
-      {/* Composer */}
-      <div className="flex-none p-4 border-t border-border/40">
-        <div className="flex gap-2">
+      {/* Composer - pinned at bottom */}
+      <div 
+        className="flex-none border-t border-border/40 px-4 py-3"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)' }}
+      >
+        <div className="flex items-end gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -286,22 +290,18 @@ export function MessengerRail() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Message Andy..."
-            className="h-10 rounded-xl"
+            placeholder="Message Andy... (⌘⏎ to send)"
+            className="flex-1 h-10 rounded-xl"
             disabled={sendMutation.isPending}
           />
           <Button
             onClick={handleSend}
             disabled={!input.trim() || sendMutation.isPending}
-            size="icon"
-            className="h-10 w-10 rounded-xl shrink-0"
+            className="h-10 px-4 rounded-xl bg-[#007AFF] hover:bg-[#0051D5] text-white font-medium shrink-0"
           >
-            <Send className="h-4 w-4" />
+            Send
           </Button>
         </div>
-        <p className="text-[10px] text-muted-foreground mt-2 text-center">
-          ⌘ + Enter to send
-        </p>
       </div>
     </div>
   );

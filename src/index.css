@@ -60,6 +60,9 @@ All colors MUST be HSL.
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
+    
+    /* iOS Blue - for messenger and accent colors */
+    --ios-blue: #007AFF;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
