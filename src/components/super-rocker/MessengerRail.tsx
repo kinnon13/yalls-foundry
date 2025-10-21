@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 interface Message {
   id: number;
@@ -156,7 +156,8 @@ export function MessengerRail() {
           role: 'assistant',
         }]);
 
-        toast.success('Andy replied', {
+        toast({
+          title: 'Andy replied',
           description: assistantMessage.slice(0, 100) + (assistantMessage.length > 100 ? '...' : ''),
           duration: 4000,
         });
@@ -170,7 +171,11 @@ export function MessengerRail() {
     },
     onError: (error: any) => {
       console.error('Send error:', error);
-      toast.error('Failed to send message: ' + error.message);
+      toast({
+        title: 'Failed to send message',
+        description: error?.message ? String(error.message) : 'Unknown error',
+        variant: 'destructive',
+      });
     },
   });
 
@@ -218,7 +223,7 @@ export function MessengerRail() {
 
       {/* Messages */}
       <div className="flex-1 overflow-hidden">
-        <div ref={scrollRef} className="h-full overflow-y-auto px-3 sm:px-4 py-4 space-y-4 pb-24">
+        <div ref={scrollRef} className="h-full overflow-y-auto px-5 sm:px-6 py-4 space-y-4 pb-28">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center px-4">
               <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-4">
@@ -241,11 +246,12 @@ export function MessengerRail() {
             >
               <div
                 className={cn(
-                  'max-w-[70%] sm:max-w-[68%] md:max-w-[60%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap break-words',
+                  'max-w-[60%] sm:max-w-[56%] md:max-w-[50%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words',
                   msg.role === 'user'
                     ? 'bg-primary text-primary-foreground shadow-md shadow-primary/25'
                     : 'bg-muted text-foreground'
                 )}
+                style={{ hyphens: 'auto' }}
               >
                 {msg.content}
               </div>
