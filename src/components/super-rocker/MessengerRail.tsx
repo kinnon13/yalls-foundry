@@ -2,13 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { Brain, Send, Paperclip, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
 import { toast } from 'sonner';
-import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface Message {
   id: number;
@@ -73,26 +71,98 @@ export function MessengerRail() {
     enabled: !!threadId,
   });
 
-  // Send message mutation
+  // Send message mutation with streaming
   const sendMutation = useMutation({
     mutationFn: async (content: string) => {
       if (!threadId || !content.trim() || !session?.userId) return;
 
-      // Add user message
-      await supabase.from('rocker_messages').insert([{
+      // Add user message to DB
+      const { error: insertError } = await supabase.from('rocker_messages').insert([{
         thread_id: threadId,
         user_id: session.userId,
         content: content.trim(),
         role: 'user',
       }]);
 
-      // Call Rocker edge function
-      const { data, error } = await supabase.functions.invoke('rocker-chat', {
-        body: { thread_id: threadId, message: content.trim() },
+      if (insertError) throw insertError;
+
+      // Invalidate to show user message immediately
+      queryClient.invalidateQueries({ queryKey: ['rocker-messages', threadId] });
+
+      // Build message history for AI
+      const messageHistory = [
+        ...messages.map(m => ({ role: m.role, content: m.content })),
+        { role: 'user', content: content.trim() }
+      ];
+
+      // Stream response from rocker-chat
+      const SUPABASE_URL = 'https://xuxfuonzsfvrirdwzddt.supabase.co';
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/rocker-chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+        body: JSON.stringify({
+          messages: messageHistory,
+          actor_role: 'user'
+        }),
       });
 
-      if (error) throw error;
-      return data;
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('rocker-chat error:', errorText);
+        throw new Error(`Failed to get AI response: ${response.status}`);
+      }
+
+      // Parse SSE stream
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantMessage = '';
+
+      if (!reader) throw new Error('No response stream');
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                assistantMessage += content;
+              }
+            } catch (e) {
+              console.log('Parse error (partial data):', e);
+            }
+          }
+        }
+      }
+
+      // Save assistant message
+      if (assistantMessage) {
+        await supabase.from('rocker_messages').insert([{
+          thread_id: threadId,
+          user_id: session.userId,
+          content: assistantMessage,
+          role: 'assistant',
+        }]);
+
+        toast.success('Andy replied', {
+          description: assistantMessage.slice(0, 100) + (assistantMessage.length > 100 ? '...' : ''),
+          duration: 4000,
+        });
+      }
+
+      return assistantMessage;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rocker-messages', threadId] });
@@ -100,46 +170,9 @@ export function MessengerRail() {
     },
     onError: (error: any) => {
       console.error('Send error:', error);
-      toast.error('Failed to send message');
+      toast.error('Failed to send message: ' + error.message);
     },
   });
-
-  // Set up realtime subscription for new messages
-  useEffect(() => {
-    if (!threadId) return;
-
-    const channel = supabase
-      .channel(`rocker-messages-${threadId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'rocker_messages',
-          filter: `thread_id=eq.${threadId}`
-        },
-        (payload) => {
-          console.log('New message received:', payload);
-          const newMessage = payload.new as Message;
-          
-          // Show notification if it's from assistant
-          if (newMessage.role === 'assistant') {
-            toast.success('Andy replied', {
-              description: newMessage.content.slice(0, 100) + (newMessage.content.length > 100 ? '...' : ''),
-              duration: 4000,
-            });
-          }
-          
-          // Invalidate and refetch messages
-          queryClient.invalidateQueries({ queryKey: ['rocker-messages', threadId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [threadId, queryClient]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -147,7 +180,6 @@ export function MessengerRail() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
     
-    // Track message count for notifications
     if (messages.length > lastMessageCountRef.current) {
       lastMessageCountRef.current = messages.length;
     }

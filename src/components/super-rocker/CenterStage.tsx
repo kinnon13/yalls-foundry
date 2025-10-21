@@ -6,7 +6,8 @@ import { SuperRockerTasks } from './SuperRockerTasks';
 import { FileBrowser } from './FileBrowser';
 import { SuperRockerInbox } from './SuperRockerInbox';
 import { SuperRockerAdmin } from './SuperRockerAdmin';
-import { Database, Brain, CheckSquare, FolderOpen, Inbox, Shield, Key } from 'lucide-react';
+import { Calendar } from './Calendar';
+import { Database, Brain, CheckSquare, FolderOpen, Inbox, Shield, Key, Calendar as CalendarIcon } from 'lucide-react';
 
 const SuperAdminCapabilities = lazy(() => 
   import('@/components/admin/SuperAdminControls').then(m => ({ default: m.SuperAdminControls }))
@@ -35,6 +36,8 @@ export function CenterStage({ activeApp, threadId }: CenterStageProps) {
       {activeApp === 'memory' && <SuperRockerMemory />}
       
       {activeApp === 'tasks' && <SuperRockerTasks threadId={threadId} />}
+      
+      {activeApp === 'calendar' && <Calendar />}
       
       {activeApp === 'files' && <FileBrowser />}
       
