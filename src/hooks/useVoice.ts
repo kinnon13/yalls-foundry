@@ -21,6 +21,9 @@ export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
       return;
     }
     
+    const t0 = performance.now();
+    console.log('[Voice] TTS start:', { engine: 'server_tts', voice: 'onyx', speed: 1.0 });
+    
     try {
       speakingRef.current = true;
       const { supabase } = await import('@/integrations/supabase/client');
@@ -31,11 +34,18 @@ export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
       if (error) throw error;
 
       const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+      
+      audio.onplaying = () => {
+        const t1 = performance.now();
+        console.log('[Voice] TTS playing:', { ttfa: Math.round(t1 - t0), engine: 'server_tts', voice: 'onyx' });
+      };
+      
       audio.onended = () => {
         speakingRef.current = false;
         then?.();
       };
-      audio.onerror = () => {
+      audio.onerror = (e) => {
+        console.error('[Voice] Audio playback error:', e);
         speakingRef.current = false;
         then?.();
       };

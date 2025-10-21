@@ -113,14 +113,32 @@ export async function playPreloadedGreeting(onEnded: () => void): Promise<{ meth
       return;
     }
 
+    // Pick a male voice by name to match server TTS
+    const pickMaleVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      return voices.find(v =>
+        /google.*us.*english|daniel|alex|matthew|james|aaron/i.test(v.name)
+      ) || voices.find(v => /male/i.test(v.name)) || voices[0];
+    };
+
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(preText || GREETING_TEXT);
+    utterance.voice = pickMaleVoice();
     utterance.rate = 1.0;
     utterance.pitch = 1.02;
     utterance.lang = 'en-US';
     utterance.onend = onEnded;
     utterance.onerror = onEnded;
-    window.speechSynthesis.speak(utterance);
+    
+    // Ensure voices are loaded before speaking
+    if (window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        utterance.voice = pickMaleVoice();
+        window.speechSynthesis.speak(utterance);
+      };
+    } else {
+      window.speechSynthesis.speak(utterance);
+    }
   };
 
   // Race preloaded audio vs 300ms timeout
@@ -130,7 +148,10 @@ export async function playPreloadedGreeting(onEnded: () => void): Promise<{ meth
   ]);
 
   if (!played) {
+    console.log('[VoicePlayback] Preload timeout, using Web Speech fallback');
     fallbackWebSpeech();
+  } else {
+    console.log('[VoicePlayback] Used preloaded server TTS (onyx voice)');
   }
 
   const ttfa = performance.now() - t0;
