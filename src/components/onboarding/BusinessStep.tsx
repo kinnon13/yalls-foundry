@@ -121,10 +121,10 @@ export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
         <p className="text-muted-foreground">Set up your business in under a minute. AI will help you along the way.</p>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:grid-cols-12 items-start">
         {/* LEFT: form */}
-        <section className="lg:col-span-5 min-w-0">
-          <div className="rounded-xl border bg-card p-4 md:p-6 flex flex-col">
+        <section className="lg:col-span-5 min-w-0 lg:min-w-[420px]">
+          <div className="rounded-xl border bg-card p-4 md:p-6 flex flex-col relative z-10">
             {/* Choice Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
@@ -204,7 +204,7 @@ export function BusinessStep({ onComplete, onBack }: BusinessStepProps) {
 
         {/* RIGHT: chat rail */}
         <aside className="lg:col-span-7 min-w-0">
-          <div className="h-full min-h-[70vh] rounded-xl border bg-background lg:border-l lg:rounded-l-none overflow-hidden">
+          <div className="h-full min-h-[70vh] rounded-xl border bg-background overflow-hidden">
             <div className="max-h-[calc(100vh-220px)] overflow-auto px-4 py-3">
               <RockerBusinessChat businessName={name} website={website} onSuggestCategories={setCategorySuggestions} />
             </div>

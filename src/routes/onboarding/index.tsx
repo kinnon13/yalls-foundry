@@ -214,7 +214,7 @@ export default function OnboardingPage() {
         </div>
 
         {/* Step content */}
-        <div className="max-w-2xl mx-auto">
+        <div className={currentStep === 4 ? "mx-auto w-full max-w-[1200px]" : "max-w-2xl mx-auto"}>
           <Card className="p-8 bg-background/80 backdrop-blur-xl border-border/50">
             {currentStep === 0 && <InviteSourceStep onComplete={handleNext} />}
             {currentStep === 1 && <HandleStep onComplete={handleNext} onBack={handleBack} />}
