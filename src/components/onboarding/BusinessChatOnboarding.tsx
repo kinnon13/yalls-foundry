@@ -9,7 +9,7 @@ import { useVoice } from '@/hooks/useVoice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Mic, MicOff, Volume2, VolumeX, Send, Building2, User, ArrowLeft } from 'lucide-react';
+import { Volume2, VolumeX, Send, Building2, User, ArrowLeft } from 'lucide-react';
 import { ReviewModal } from './ReviewModal';
 
 interface BusinessChatOnboardingProps {
@@ -33,24 +33,20 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
   } = useBusinessChatFlowVoice();
 
   const [input, setInput] = useState('');
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [isListening, setIsListening] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Don't start chat until user chooses "I run a business"
+  // Voice consent from localStorage
+  const voiceConsent = localStorage.getItem('voiceConsent') === '1';
+  const [voiceEnabled, setVoiceEnabled] = useState(voiceConsent);
   const [chatStarted, setChatStarted] = useState(false);
+  const stopListenRef = useRef<(() => void) | null>(null);
 
-  // Voice (TTS + STT)
-  const { speak, stopSpeaking, listen, isSupported } = useVoice({
+  // Voice (TTS + STT with new loop API)
+  const { speakAndThen, listen, stopAll, isSupported } = useVoice({
     enabled: voiceEnabled,
-    onTranscript: (text, isFinal) => {
-      setInput(text);
-      if (isFinal) {
-        setIsListening(false);
-        handleSend();
-      }
-    }
+    onTranscript: () => {} // Not used in new API
   });
 
   // Auto-scroll to bottom
@@ -58,28 +54,95 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Auto-speak bot messages when voice is enabled
+  // Cleanup on unmount
   useEffect(() => {
-    if (voiceEnabled && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === 'assistant') {
-        speak(lastMessage.content);
+    const onBeforeUnload = () => stopAll();
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      stopAll();
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    };
+  }, [stopAll]);
+
+  // Start voice loop when assistant messages arrive
+  useEffect(() => {
+    if (!voiceEnabled || !chatStarted || step === 'done' || step === 'saving') return;
+    
+    const lastMessage = messages[messages.length - 1];
+    if (!lastMessage || lastMessage.role !== 'assistant') return;
+
+    // Speak the message, then start listening
+    speakAndThen(lastMessage.content, () => {
+      if (stopListenRef.current) {
+        stopListenRef.current();
       }
-    }
-  }, [messages, voiceEnabled]);
+      
+      const cleanup = listen(
+        (finalText) => {
+          setInput(finalText);
+          handleSend();
+        },
+        (interimText) => {
+          setInterimTranscript(interimText);
+        }
+      );
+      
+      stopListenRef.current = cleanup;
+    });
+  }, [messages, voiceEnabled, chatStarted, step, speakAndThen, listen]);
+
+  // Handle visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        stopAll();
+      } else if (voiceEnabled && chatStarted && step !== 'done' && step !== 'saving') {
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage?.role === 'assistant') {
+          speakAndThen(lastMessage.content, () => {
+            if (stopListenRef.current) {
+              stopListenRef.current();
+            }
+            const cleanup = listen(
+              (finalText) => {
+                setInput(finalText);
+                handleSend();
+              },
+              (interimText) => {
+                setInterimTranscript(interimText);
+              }
+            );
+            stopListenRef.current = cleanup;
+          });
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [messages, voiceEnabled, chatStarted, step, speakAndThen, listen, stopAll]);
 
   // Handle completion
   useEffect(() => {
     if (step === 'done') {
+      stopAll();
       setTimeout(onComplete, 2000);
     }
-  }, [step, onComplete]);
+  }, [step, onComplete, stopAll]);
 
   const handleSend = async () => {
     if (!input.trim() || isProcessing) return;
     
+    // Barge-in: stop all voice activity
+    stopAll();
+    if (stopListenRef.current) {
+      stopListenRef.current();
+      stopListenRef.current = null;
+    }
+    
     const text = input.trim();
     setInput('');
+    setInterimTranscript('');
     await handleUserMessage(text);
     
     // Focus back on input
@@ -93,24 +156,20 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
     }
   };
 
+  const enableVoice = () => {
+    localStorage.setItem('voiceConsent', '1');
+    setVoiceEnabled(true);
+  };
+
   const toggleVoice = () => {
     if (voiceEnabled) {
-      stopSpeaking();
+      stopAll();
     }
     setVoiceEnabled(!voiceEnabled);
   };
 
-  const toggleMic = () => {
-    if (isListening) {
-      setIsListening(false);
-    } else {
-      listen();
-      setIsListening(true);
-    }
-  };
-
   const handleSkip = () => {
-    stopSpeaking();
+    stopAll();
     onSkip();
   };
   
@@ -222,15 +281,27 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
 
           {/* Voice controls */}
           <div className="flex gap-2 pb-4 border-b border-border/50">
-            <Button
-              variant={voiceEnabled ? "default" : "outline"}
-              size="sm"
-              onClick={toggleVoice}
-              className="gap-2"
-            >
-              {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-              Voice {voiceEnabled ? 'On' : 'Off'}
-            </Button>
+            {!voiceEnabled && isSupported && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={enableVoice}
+                className="gap-2"
+              >
+                🔊 Enable Voice
+              </Button>
+            )}
+            {voiceEnabled && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={toggleVoice}
+                className="gap-2"
+              >
+                <Volume2 className="h-4 w-4" />
+                Voice Active
+              </Button>
+            )}
           </div>
 
           {/* Messages */}
@@ -295,22 +366,10 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={isListening ? "Listening..." : "Type your message..."}
-                disabled={isProcessing || isListening}
+                placeholder={interimTranscript || "Type your message..."}
+                disabled={isProcessing}
                 className="flex-1"
               />
-              
-              {isSupported && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={toggleMic}
-                  disabled={isProcessing}
-                  className={isListening ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
-                >
-                  {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                </Button>
-              )}
               
               <Button
                 onClick={handleSend}

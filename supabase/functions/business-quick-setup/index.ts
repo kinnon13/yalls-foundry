@@ -54,7 +54,7 @@ serve(async (req) => {
       );
     }
 
-    let categoryKeys: { key: string; status: string }[] = [];
+    let categoryKeys: { key: string; label: string; status: string }[] = [];
 
     // AI classification if requested
     if (ai && categories?.length === 0) {
@@ -78,25 +78,35 @@ serve(async (req) => {
     // Ensure all categories exist
     if (categories?.length > 0) {
       for (const cat of categories) {
-        const ensureRes = await fetch(`${supabaseUrl}/functions/v1/categories-ensure`, {
-          method: "POST",
-          headers: {
-            "Authorization": authHeader!,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            label: cat.label,
-            parent_key: cat.parent_key || null,
-            synonyms: cat.synonyms || [],
-            evidence: { business_name: name, website }
-          })
+        // Handle both string labels and category objects
+        const label = typeof cat === 'string' ? cat : cat.label;
+        const parentKey = typeof cat === 'object' ? cat.parent_key : null;
+        const synonyms = typeof cat === 'object' ? (cat.synonyms || []) : [];
+
+        // Call RPC directly for better performance
+        const { data: ensured, error: ensureError } = await supabase.rpc('ensure_marketplace_category', {
+          p_label: label,
+          p_parent_key: parentKey,
+          p_synonyms: synonyms,
+          p_created_by: user.id,
+          p_evidence: { 
+            business_name: name, 
+            website,
+            source: 'onboarding'
+          }
         });
 
-        if (ensureRes.ok) {
-          const ensured = await ensureRes.json();
-          if (ensured.key) {
-            categoryKeys.push({ key: ensured.key, status: ensured.status });
-          }
+        if (ensureError) {
+          console.error('[Categories] Ensure error:', ensureError);
+          continue;
+        }
+
+        if (ensured && ensured.length > 0) {
+          categoryKeys.push({ 
+            key: ensured[0].key, 
+            label: label,
+            status: ensured[0].status 
+          });
         }
       }
     }

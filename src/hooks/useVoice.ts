@@ -12,84 +12,127 @@ export interface UseVoiceOptions {
 
 export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
   const recognitionRef = useRef<any>(null);
-  const synthRef = useRef<HTMLAudioElement | null>(null);
+  const speakingRef = useRef(false);
 
-  // Text-to-Speech using OpenAI
-  const speak = useCallback(async (text: string) => {
-    if (!enabled) return;
+  // Text-to-Speech with callback - using OpenAI TTS
+  const speakAndThen = useCallback(async (text: string, then?: () => void) => {
+    if (!enabled) {
+      then?.();
+      return;
+    }
     
     try {
+      speakingRef.current = true;
       const { supabase } = await import('@/integrations/supabase/client');
       const { data, error } = await supabase.functions.invoke('text-to-speech', {
-        body: { text, voice: 'onyx' } // Using 'onyx' for a deeper, more natural voice
+        body: { text, voice: 'onyx' }
       });
 
       if (error) throw error;
 
-      // Play the audio
       const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
-      synthRef.current = audio;
+      audio.onended = () => {
+        speakingRef.current = false;
+        then?.();
+      };
+      audio.onerror = () => {
+        speakingRef.current = false;
+        then?.();
+      };
       await audio.play();
     } catch (error) {
       console.error('[Voice] TTS error:', error);
+      speakingRef.current = false;
+      then?.();
     }
   }, [enabled]);
 
-  // Stop speaking
-  const stopSpeaking = useCallback(() => {
-    if (synthRef.current instanceof HTMLAudioElement) {
-      synthRef.current.pause();
-      synthRef.current.currentTime = 0;
+  // Stop all voice activity
+  const stopAll = useCallback(() => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {}
+      recognitionRef.current = null;
     }
+    speakingRef.current = false;
   }, []);
 
-  // Speech-to-Text
-  const listen = useCallback(() => {
+  // Speech-to-Text with auto-restart
+  const listen = useCallback((onFinal: (text: string) => void, onInterim?: (text: string) => void) => {
     const SpeechRecognition = 
       (window as any).webkitSpeechRecognition || 
       (window as any).SpeechRecognition;
     
-    if (!SpeechRecognition) {
+    if (!enabled || !SpeechRecognition) {
       console.warn('[Voice] Speech recognition not supported');
-      return { stop: () => {} };
+      return () => {};
+    }
+
+    // Stop existing recognition
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {}
     }
 
     const recognition: any = new SpeechRecognition();
-    recognition.continuous = false; // One phrase at a time
+    recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
 
     recognition.onresult = (event: any) => {
       const results = Array.from(event.results) as any[];
-      const transcript = results.map(r => r[0].transcript).join(' ');
-      const isFinal = event.results[event.results.length - 1].isFinal;
+      const transcript = results.map(r => r[0].transcript).join(' ').trim();
+      const isFinal = results[results.length - 1]?.isFinal;
       
-      if (onTranscript) {
-        onTranscript(transcript.trim(), isFinal);
+      if (isFinal) {
+        onFinal(transcript);
+      } else {
+        onInterim?.(transcript);
       }
     };
 
+    // Auto-restart on end if still visible
+    const restart = () => {
+      setTimeout(() => {
+        if (document.visibilityState === 'visible' && recognitionRef.current === recognition) {
+          try {
+            recognition.start();
+          } catch {}
+        }
+      }, 500);
+    };
+
+    recognition.onend = restart;
     recognition.onerror = (event: any) => {
       console.error('[Voice] Recognition error:', event.error);
-    };
-
-    recognition.start();
-    recognitionRef.current = recognition;
-
-    return {
-      stop: () => {
-        if (recognitionRef.current) {
-          recognitionRef.current.stop();
-          recognitionRef.current = null;
-        }
+      if (event.error !== 'aborted') {
+        restart();
       }
     };
-  }, [onTranscript]);
+
+    try {
+      recognition.start();
+      recognitionRef.current = recognition;
+    } catch (error) {
+      console.error('[Voice] Failed to start recognition:', error);
+    }
+
+    return () => {
+      if (recognitionRef.current === recognition) {
+        try {
+          recognition.stop();
+        } catch {}
+        recognitionRef.current = null;
+      }
+    };
+  }, [enabled]);
 
   return {
-    speak,
-    stopSpeaking,
+    speakAndThen,
     listen,
+    stopAll,
     isSupported: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window
   };
 }
