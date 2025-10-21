@@ -94,23 +94,39 @@ serve(async (req) => {
         if (recentFiles?.length) {
           context += '\n\n## Recent Files:\n' + recentFiles.map((f: any) => `${f.title}: ${f.content.slice(0, 200)}...`).join('\n\n');
           console.log('[andy-chat] Loaded', recentFiles.length, 'recent files (no embeddings)');
+        } else {
+          // Secondary fallback: list from rocker_files
+          const { data: recentRockerFiles } = await supabase
+            .from('rocker_files')
+            .select('name, summary, text_content, ocr_text')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(3);
+          
+          if (recentRockerFiles?.length) {
+            context += '\n\n## Recent Files:\n' + recentRockerFiles.map((f: any) => {
+              const snippet = (f.summary || f.text_content || f.ocr_text || '').slice(0, 200);
+              return `${f.name || 'Untitled'}: ${snippet}...`;
+            }).join('\n\n');
+            console.log('[andy-chat] Loaded', recentRockerFiles.length, 'recent rocker_files');
+          }
         }
       }
     } catch (e) {
       console.warn('[andy-chat] File search failed:', e);
     }
 
-    // 4. Load upcoming tasks
+    // 4. Load upcoming tasks (rocker_tasks)
     const { data: tasks } = await supabase
-      .from('tasks')
-      .select('title, description, due_date, priority')
+      .from('rocker_tasks')
+      .select('title, status, due_at')
       .eq('user_id', user.id)
-      .eq('completed', false)
-      .order('due_date', { ascending: true, nullsFirst: false })
-      .limit(10);
+      .in('status', ['open', 'doing'])
+      .order('due_at', { ascending: true, nullsFirst: true })
+      .limit(20);
 
     if (tasks?.length) {
-      context += '\n\n## Upcoming Tasks:\n' + tasks.map(t => `[${t.priority}] ${t.title} (due: ${t.due_date || 'no date'})`).join('\n');
+      context += '\n\n## Upcoming Tasks:\n' + tasks.map(t => `(${t.status}) ${t.title}${t.due_at ? ` — due ${t.due_at}` : ''}`).join('\n');
       console.log('[andy-chat] Loaded', tasks.length, 'tasks');
     }
 
