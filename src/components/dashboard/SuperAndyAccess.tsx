@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Brain, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
-export function SuperRockerAccess() {
+export function SuperAndyAccess() {
   const { isSuperAdmin } = useSuperAdminCheck();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
@@ -22,8 +22,8 @@ export function SuperRockerAccess() {
     // Simulate checking
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    if (password === 'super-rocker-2025') {
-      navigate('/super-rocker');
+    if (password === 'super-andy-2025') {
+      navigate('/super-andy');
     } else {
       toast.error('Incorrect password');
     }
@@ -36,10 +36,10 @@ export function SuperRockerAccess() {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Brain className="h-5 w-5 text-primary" />
-          <CardTitle>Super Rocker</CardTitle>
+          <CardTitle>Super Andy</CardTitle>
         </div>
         <CardDescription>
-          Advanced AI-powered knowledge and task management
+          Everything AI workspace with full access to knowledge, memory, tasks, files, and complete system control
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

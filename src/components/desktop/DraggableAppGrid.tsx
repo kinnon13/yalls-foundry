@@ -59,7 +59,7 @@ const APPS: Record<string, AppTile> = {
   goals: { id: 'goals', label: 'Goals', icon: Target, route: '/goals', color: 'from-indigo-500/20 to-blue-600/5' },
   awards: { id: 'awards', label: 'Awards', icon: Award, route: '/awards', color: 'from-rose-500/20 to-pink-600/5' },
   settings: { id: 'settings', label: 'Settings', icon: Settings, module: 'settings', color: 'from-slate-500/20 to-gray-600/5' },
-  super_rocker: { id: 'super_rocker', label: 'Super Rocker', icon: Brain, route: '/super-rocker', color: 'from-purple-600/30 to-pink-600/10' },
+  super_andy: { id: 'super_andy', label: 'Super Andy', icon: Brain, route: '/super-andy', color: 'from-purple-600/30 to-pink-600/10' },
 };
 
 // Default grid layout (8 cols × unlimited rows)

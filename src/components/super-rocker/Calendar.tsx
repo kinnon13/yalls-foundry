@@ -1,6 +1,6 @@
 /**
- * Super Rocker Calendar View
- * Full-featured calendar with event management for Rocker/Andy
+ * Super Andy Calendar View
+ * Full-featured calendar with event management for Super Andy/Andy
  */
 
 import { CalendarTab } from '@/components/dashboard/CalendarTab';

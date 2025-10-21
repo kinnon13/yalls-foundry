@@ -150,7 +150,7 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
         const { data: { user } } = await supabase.auth.getUser();
         const { data: newThread, error: tErr } = await supabase
           .from('rocker_threads')
-          .insert({ user_id: user?.id, title: 'Super Rocker Chat' })
+          .insert({ user_id: user?.id, title: 'Super Andy Chat' })
           .select('id')
           .single();
         if (tErr) throw tErr;
@@ -163,7 +163,7 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
         body: {
           thread_id: activeThreadId,
           message: userMessage,
-          actor_role: 'knower', // Super Rocker uses knower mode with full KB access
+          actor_role: 'knower', // Super Andy uses knower mode with full KB access
           topK: 5 // Get top 5 knowledge chunks for context
         }
       });

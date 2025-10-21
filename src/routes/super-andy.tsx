@@ -9,7 +9,7 @@ import { MessengerRail } from '@/components/super-rocker/MessengerRail';
 import { Brain, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
-export default function SuperRocker() {
+export default function SuperAndy() {
   const { session } = useSession();
   const { isSuperAdmin, isLoading } = useSuperAdminCheck();
   const navigate = useNavigate();
@@ -45,7 +45,7 @@ export default function SuperRocker() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
         <div className="text-center space-y-4">
           <Brain className="h-12 w-12 animate-pulse text-primary mx-auto" />
-          <p className="text-sm text-muted-foreground">Loading Super Rocker...</p>
+          <p className="text-sm text-muted-foreground">Loading Super Andy...</p>
         </div>
       </div>
     );
@@ -54,9 +54,9 @@ export default function SuperRocker() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-neutral-50 to-neutral-100 dark:from-neutral-950 dark:via-neutral-950 dark:to-neutral-900">
       <Helmet>
-        <title>Super Rocker — AI Workspace</title>
-        <meta name="description" content="Super admin AI workspace with knowledge, memory, tasks, files, inbox, capabilities, admin, and API keys." />
-        <link rel="canonical" href={`${window.location.origin}/super-rocker`} />
+        <title>Super Andy — Everything AI Workspace</title>
+        <meta name="description" content="Super admin everything AI workspace with full access to knowledge, memory, tasks, files, inbox, capabilities, admin controls, and API keys." />
+        <link rel="canonical" href={`${window.location.origin}/super-andy`} />
       </Helmet>
 
       {/* Top Bar */}
@@ -66,7 +66,7 @@ export default function SuperRocker() {
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-md shadow-primary/25">
               <Brain className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-foreground hidden sm:inline">Super Rocker</span>
+            <span className="font-semibold text-foreground hidden sm:inline">Super Andy</span>
           </div>
           
           <div className="relative flex-1 max-w-xl mx-4">

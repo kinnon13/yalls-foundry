@@ -64,7 +64,7 @@ const AdminDashboard = lazy(() => import('./routes/admin'));
 const AuthPage = lazy(() => import('./routes/auth'));
 const OnboardingPage = lazy(() => import('./routes/onboarding/index'));
 const RockerHub = lazy(() => import('./routes/rocker-hub'));
-const SuperRocker = lazy(() => import('./routes/super-rocker'));
+const SuperAndy = lazy(() => import('./routes/super-andy'));
 const SettingsKeys = lazy(() => import('./pages/SettingsKeys'));
 
 const queryClient = new QueryClient();
@@ -320,14 +320,20 @@ function AppContent() {
             element={<Navigate to="/rocker" replace />}
           />
           
-          {/* Super Rocker - Memory & Task Management */}
+          {/* Super Andy - Everything AI Workspace */}
           <Route 
-            path="/super-rocker" 
+            path="/super-andy" 
             element={
               <Suspense fallback={<div>Loading...</div>}>
-                <SuperRocker />
+                <SuperAndy />
               </Suspense>
             } 
+          />
+          
+          {/* Legacy route redirect */}
+          <Route 
+            path="/super-rocker" 
+            element={<Navigate to="/super-andy" replace />}
           />
           
           {/* Settings - API Keys */}
