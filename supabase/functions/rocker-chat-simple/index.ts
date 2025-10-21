@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { aiChat } from "../_shared/ai.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -41,78 +42,22 @@ serve(async (req) => {
       }
     }
 
-    // 1) Try user's OpenAI key via proxy-openai (try both key names)
+    // Unified AI gateway call
     let reply = '';
-    const tryProxy = async (keyName: string) => {
-      try {
-        const { data, error } = await supabase.functions.invoke('proxy-openai', {
-          body: {
-            path: '/chat/completions',
-            keyName,
-            body: {
-              model: 'gpt-4o-mini',
-              messages: [
-                { role: 'system', content: 'You are Rocker. Keep answers concise and actionable.' },
-                { role: 'user', content: message }
-              ],
-              max_tokens: 500,
-            }
-          },
-          headers: { Authorization: req.headers.get('Authorization') || '' }
-        });
-
-        if (!error) {
-          const json = typeof data === 'string' ? JSON.parse(data as string) : (data as any);
-          return json?.choices?.[0]?.message?.content ?? '';
-        } else {
-          console.error('[rocker-chat-simple] proxy-openai error:', error.message, `(keyName=${keyName})`);
-          return '';
-        }
-      } catch (e) {
-        console.error('[rocker-chat-simple] proxy-openai threw:', e, `(keyName=${keyName})`);
-        return '';
-      }
-    };
-
-    reply = await tryProxy('openai');
-    if (!reply) reply = await tryProxy('default');
-
-    // 2) Fallback to Lovable AI gateway if no reply
-    if (!reply) {
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      if (!LOVABLE_API_KEY) {
-        return new Response(JSON.stringify({ error: 'AI is not configured' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      const aiResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            { role: 'system', content: 'You are Rocker. Keep answers concise and actionable.' },
-            { role: 'user', content: message }
-          ],
-        }),
+    try {
+      reply = await aiChat({
+        role: 'user',
+        messages: [
+          { role: 'system', content: 'You are Rocker. Keep answers concise and actionable.' },
+          { role: 'user', content: message }
+        ],
       });
-
-      if (!aiResp.ok) {
-        const errText = await aiResp.text();
-        console.error('[rocker-chat-simple] gateway error:', aiResp.status, errText);
-        return new Response(errText || JSON.stringify({ error: 'AI gateway error' }), {
-          status: aiResp.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      const aiJson = await aiResp.json();
-      reply = aiJson?.choices?.[0]?.message?.content ?? '';
+    } catch (e) {
+      console.error('[rocker-chat-simple] aiChat failed:', e);
+      return new Response(JSON.stringify({ error: 'AI call failed' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Persist assistant reply
