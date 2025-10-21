@@ -98,13 +98,13 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
     if (data) setThreads(data);
   };
 
-  const loadMessages = async () => {
-    if (!threadId) return;
+  const loadMessages = async (tid: string | null = threadId) => {
+    if (!tid) return;
 
     const { data, error } = await supabase
       .from('rocker_messages')
       .select('*')
-      .eq('thread_id', threadId)
+      .eq('thread_id', tid)
       .order('created_at', { ascending: true });
 
     if (error) {
@@ -175,7 +175,7 @@ export function SuperRockerChat({ threadId, onThreadCreated }: { threadId: strin
       }
 
       // Refresh messages to get actual stored ones
-      await loadMessages();
+      await loadMessages(activeThreadId);
     } catch (error: any) {
       console.error('Chat error:', error);
       toast({
