@@ -1,5 +1,8 @@
 project_id = "xuxfuonzsfvrirdwzddt"
 
+[functions.andy-chat]
+verify_jwt = true
+
 [functions.rocker-web-search]
 verify_jwt = false
 
