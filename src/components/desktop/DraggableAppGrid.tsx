@@ -86,7 +86,6 @@ const DEFAULT_POSITIONS: Record<string, [number, number]> = {
   goals: [3, 3],
   awards: [4, 3],
   settings: [5, 3],
-  super_rocker: [6, 3],
 };
 
 export function DraggableAppGrid() {
@@ -420,7 +419,6 @@ export function DraggableAppGrid() {
             >
               <div className="apps-grid" ref={appsGridRef}>
                 {Object.values(APPS)
-                  .filter(app => app.id !== 'super_rocker' || isSuperAdmin)
                   .filter(app => !pins.some(p => p.app_id === app.id))
                   .map((app, idx) => (
                     <DraggableApp key={app.id} app={app} index={idx + 1} />

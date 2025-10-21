@@ -28,17 +28,22 @@ export default function AdminRocker() {
     const initThread = async () => {
       if (!session?.userId) return;
       
-      const result = await supabase
-        .from('rocker_threads')
-        .select('id')
-        .eq('user_id', session.userId)
-        .eq('actor_role', 'admin')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      if (result.data?.id) {
-        setThreadId(result.data.id as string);
+      try {
+        const query = (supabase as any)
+          .from('rocker_threads')
+          .select('id')
+          .eq('user_id', session.userId)
+          .eq('actor_role', 'admin')
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        const { data } = await query.maybeSingle();
+        
+        if (data?.id) {
+          setThreadId(String(data.id));
+        }
+      } catch (err) {
+        console.error('Error loading thread:', err);
       }
     };
     initThread();

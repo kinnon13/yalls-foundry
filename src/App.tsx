@@ -341,12 +341,6 @@ function AppContent() {
             } 
           />
           
-          {/* Legacy route redirect */}
-          <Route 
-            path="/super-rocker" 
-            element={<Navigate to="/super-andy" replace />}
-          />
-          
           {/* Settings - API Keys */}
           <Route 
             path="/settings/keys" 
