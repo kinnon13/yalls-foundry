@@ -70,10 +70,10 @@ export default function HeaderBar() {
       {/* Floating Logout Button */}
       <button
         onClick={handleLogout}
-        className="w-12 h-12 rounded-2xl bg-white/90 hover:bg-white backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 hover-scale flex items-center justify-center ml-auto group"
+        className="h-12 px-6 rounded-2xl bg-white/90 hover:bg-white backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 hover-scale flex items-center justify-center ml-auto"
         title="Logout"
       >
-        <LogOut className="h-5 w-5 text-gray-800 group-hover:text-red-600 transition-colors" />
+        <span className="text-gray-800 font-semibold text-sm">Logout</span>
       </button>
     </header>
   );
