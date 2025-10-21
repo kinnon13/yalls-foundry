@@ -155,13 +155,6 @@ serve(async (req) => {
         } else {
           const aiResult = aiData as any;
           const content = aiResult.choices?.[0]?.message?.content;
-
-        if (!aiResponse.ok) {
-          const errorText = await aiResponse.text();
-          log.warn('AI analysis failed', { status: aiResponse.status, error: errorText });
-        } else {
-          const aiResult = await aiResponse.json();
-          const content = aiResult.choices?.[0]?.message?.content;
           
           if (content) {
             try {

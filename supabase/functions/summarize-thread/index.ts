@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST,OPTIONS",
@@ -15,10 +14,6 @@ serve(async (req) => {
     const { thread_id, take = 60 } = await req.json();
     if (!thread_id) {
       return new Response(JSON.stringify({ error: "thread_id required" }), { status: 400, headers: CORS });
-    }
-
-    if (!OPENAI_API_KEY) {
-      return new Response(JSON.stringify({ error: "OPENAI_API_KEY not configured" }), { status: 500, headers: CORS });
     }
 
     const supabase = createClient(
@@ -51,20 +46,25 @@ serve(async (req) => {
       { role: "user", content: `Summarize this:\n\n${corpus}` }
     ];
 
-    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "gpt-4o-mini", temperature: 0.2, messages: prompt, max_tokens: 900 })
+    const { data: aiData, error: aiError } = await supabase.functions.invoke('proxy-openai', {
+      headers: { Authorization: req.headers.get("Authorization") || '' },
+      body: {
+        path: '/v1/chat/completions',
+        keyName: 'openai',
+        body: {
+          model: 'gpt-5-mini-2025-08-07',
+          messages: prompt,
+          max_completion_tokens: 900
+        }
+      }
     });
 
-    if (!resp.ok) {
-      const errorText = await resp.text();
-      console.error("OpenAI API error:", resp.status, errorText);
-      return new Response(JSON.stringify({ error: `OpenAI API error: ${errorText}` }), { status: 500, headers: CORS });
+    if (aiError) {
+      console.error("proxy-openai error:", aiError);
+      return new Response(JSON.stringify({ error: `OpenAI error: ${aiError.message}` }), { status: 500, headers: CORS });
     }
 
-    const json = await resp.json();
-    const summary = json.choices?.[0]?.message?.content ?? "";
+    const summary = (aiData as any)?.choices?.[0]?.message?.content ?? "";
 
     // Log for audit
     await supabase.from("ai_action_ledger").insert({

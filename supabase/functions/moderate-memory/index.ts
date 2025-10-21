@@ -1,7 +1,7 @@
 /**
  * Moderate Memory Content
  * 
- * Uses Lovable AI to check memory content for toxicity, abuse, and safety.
+ * Uses OpenAI via proxy-openai to check memory content for toxicity, abuse, and safety.
  * Returns moderation decision and optionally softened content.
  */
 
@@ -42,8 +42,8 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     );
 
-    // Call Lovable AI for moderation
-    const moderationPrompt = `Analyze this user-generated memory/statement for safety and appropriateness. 
+    // Call OpenAI via proxy-openai for moderation
+    const moderationPrompt = `Analyze this user-generated memory/statement for safety and appropriateness.
 Check for: hate speech, harassment, threats, sexual content, self-harm, violence, illegal activity.
 
 Content: "${content}"
@@ -111,31 +111,6 @@ Respond with:
     }
 
     const data = aiData as any;
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      log.error('Lovable AI error', null, { status: response.status, error: errorText });
-      
-      // Fallback to basic keyword check if AI fails
-      const lowerContent = content.toLowerCase();
-      const hasBlockedWords = [
-        'kill', 'die', 'hate', 'fuck', 'bitch', 'attack'
-      ].some(word => lowerContent.includes(word));
-
-      return new Response(
-        JSON.stringify({
-          decision: hasBlockedWords ? 'soften' : 'ok',
-          toxicity_score: hasBlockedWords ? 0.6 : 0.2,
-          safety_category: hasBlockedWords ? 'language' : 'none',
-          tone: 'neutral',
-          reason: 'Fallback moderation',
-          original_content: content
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const data = await response.json();
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     
     if (!toolCall) {

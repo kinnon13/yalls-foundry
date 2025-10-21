@@ -4,8 +4,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 import { createLogger } from "../_shared/logger.ts";
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -68,13 +66,14 @@ serve(async (req) => {
     }
 
     const { action, ...params } = await req.json();
+    const authHeader = req.headers.get('Authorization') || '';
 
     switch (action) {
       case 'search_global_knowledge':
-        return await searchGlobalKnowledge(supabaseClient, params);
+        return await searchGlobalKnowledge(supabaseClient, params, authHeader);
       
       case 'write_global_knowledge':
-        return await writeGlobalKnowledge(supabaseClient, user.id, params.entry);
+        return await writeGlobalKnowledge(supabaseClient, user.id, params.entry, authHeader);
       
       case 'delete_global_knowledge':
         return await deleteGlobalKnowledge(supabaseClient, params.id);
@@ -107,7 +106,7 @@ serve(async (req) => {
   }
 });
 
-async function searchGlobalKnowledge(supabase: any, params: any) {
+async function searchGlobalKnowledge(supabase: any, params: any, authHeader: string) {
   const { query, tenant_id, limit = 20, tags } = params;
 
   let queryBuilder = supabase
@@ -126,7 +125,7 @@ async function searchGlobalKnowledge(supabase: any, params: any) {
   }
 
   if (query) {
-    const embedding = await generateEmbeddingVector(query);
+    const embedding = await generateEmbeddingVector(query, supabase, authHeader);
     if (embedding) {
       queryBuilder = queryBuilder.order('embedding <-> ' + JSON.stringify(embedding));
     }
@@ -146,7 +145,7 @@ async function searchGlobalKnowledge(supabase: any, params: any) {
   });
 }
 
-async function writeGlobalKnowledge(supabase: any, userId: string, entry: GlobalKnowledgeEntry) {
+async function writeGlobalKnowledge(supabase: any, userId: string, entry: GlobalKnowledgeEntry, authHeader: string) {
   const knowledgeData = {
     tenant_id: entry.tenant_id,
     type: entry.type,
@@ -160,7 +159,7 @@ async function writeGlobalKnowledge(supabase: any, userId: string, entry: Global
   };
 
   const valueText = typeof entry.value === 'string' ? entry.value : JSON.stringify(entry.value);
-  const embedding = await generateEmbeddingVector(valueText);
+  const embedding = await generateEmbeddingVector(valueText, supabase, '');
   const knowledgeDataWithEmbedding: any = knowledgeData;
   if (embedding) {
     knowledgeDataWithEmbedding.embedding = embedding;
@@ -308,31 +307,23 @@ async function auditLogInternal(
   });
 }
 
-async function generateEmbeddingVector(text: string): Promise<number[] | null> {
-  if (!OPENAI_API_KEY) {
-    return null;
-  }
-
+async function generateEmbeddingVector(text: string, supabase: any, authHeader: string): Promise<number[] | null> {
   try {
-    const response = await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'text-embedding-3-small',
-        input: text,
-      }),
+    const { data, error } = await supabase.functions.invoke('proxy-openai', {
+      headers: { Authorization: authHeader },
+      body: {
+        path: '/v1/embeddings',
+        keyName: 'openai',
+        body: {
+          model: 'text-embedding-3-small',
+          input: text,
+        }
+      }
     });
 
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    return data.data[0].embedding;
-  } catch (error) {
+    if (error) return null;
+    return (data as any)?.data?.[0]?.embedding || null;
+  } catch {
     return null;
   }
 }
