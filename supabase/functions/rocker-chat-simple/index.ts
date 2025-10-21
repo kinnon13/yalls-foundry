@@ -60,8 +60,8 @@ serve(async (req) => {
       }
     };
 
-    reply = await tryProxy('default');
-    if (!reply) reply = await tryProxy('openai');
+    reply = await tryProxy('openai');
+    if (!reply) reply = await tryProxy('default');
 
     // 2) Fallback to Lovable AI gateway if no reply
     if (!reply) {
