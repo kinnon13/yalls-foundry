@@ -29,12 +29,11 @@ export function MessengerRail() {
     onDisconnect: () => console.log('[Voice] Disconnected'),
     onMessage: (message) => {
       console.log('[Voice] Message:', message);
-      if (message.message?.role === 'assistant' && message.message.content) {
-        toast({
-          title: 'Andy (voice)',
-          description: message.message.content,
-        });
-      }
+      // Toast for voice messages
+      toast({
+        title: 'Andy (voice)',
+        description: typeof message === 'string' ? message : JSON.stringify(message).slice(0, 100),
+      });
     },
     onError: (error) => {
       console.error('[Voice] Error:', error);
@@ -251,7 +250,7 @@ export function MessengerRail() {
       if (!data?.signedUrl) throw new Error('No signed URL');
 
       console.log('[Voice] Starting...');
-      await conversation.startSession({ url: data.signedUrl });
+      await conversation.startSession({ signedUrl: data.signedUrl } as any);
     } catch (error) {
       console.error('[Voice] Failed:', error);
       toast({
