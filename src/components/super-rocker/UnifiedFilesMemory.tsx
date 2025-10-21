@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Folder, 
   File, 
@@ -24,6 +25,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AndyResearch } from './AndyResearch';
 
 interface Category {
   id: string;
@@ -329,7 +331,7 @@ export function UnifiedFilesMemory() {
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Memory System</h2>
+          <h2 className="text-2xl font-semibold">Memory & Knowledge System</h2>
           <p className="text-sm text-muted-foreground">
             {files.length} files • {memories.length} memories • {knowledgeChunks.length} knowledge chunks • {chatMessages.length} messages
           </p>
@@ -350,19 +352,32 @@ export function UnifiedFilesMemory() {
         </div>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search everything..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
-        />
-      </div>
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="all">
+            <Database className="h-4 w-4 mr-2" />
+            All Memory & Files
+          </TabsTrigger>
+          <TabsTrigger value="andy">
+            <Brain className="h-4 w-4 mr-2" />
+            Andy's Brain & Research
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="text-xs text-muted-foreground mb-4">
-        Everything is one unified knowledge system - files, memories, chats, and embedded knowledge chunks all interconnected
-      </div>
+        <TabsContent value="all" className="mt-4 space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search everything..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          <div className="text-xs text-muted-foreground mb-4">
+            Everything is one unified knowledge system - files, memories, chats, and embedded knowledge chunks all interconnected
+          </div>
 
       <ScrollArea className="h-[600px]">
         <div className="space-y-6 pr-4">
@@ -597,6 +612,12 @@ export function UnifiedFilesMemory() {
           )}
         </div>
       </ScrollArea>
+        </TabsContent>
+
+        <TabsContent value="andy" className="mt-4">
+          <AndyResearch />
+        </TabsContent>
+      </Tabs>
 
       {/* File Viewer Dialog */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>

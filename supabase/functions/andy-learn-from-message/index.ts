@@ -150,7 +150,21 @@ Return structured JSON:
           },
           memory_layer: 'meta'
         });
-        console.log('✅ Deep analysis stored');
+
+        // Store in Andy's own research files
+        await supabase.from('andy_research').insert({
+          user_id: userId,
+          research_type: 'analysis',
+          topic: 'conversation_analysis',
+          content: {
+            insights: deepInsights,
+            message_id,
+            analyzed_at: new Date().toISOString()
+          },
+          metadata: { auto_generated: true, from_conversation: true }
+        });
+        
+        console.log('✅ Deep analysis stored in user memory + Andy research');
       }
     } catch (e) {
       console.error('Deep analysis failed:', e);
@@ -170,9 +184,9 @@ Return structured JSON:
     console.log(`✅ Auto-saving ${toSave.length} high-confidence facts`);
     console.log(`❓ Need confirmation for ${toConfirm.length} uncertain facts`);
 
-    // Auto-save confident facts
+  // Auto-save confident facts
     if (toSave.length > 0) {
-      await supabase.from('rocker_long_memory').insert(
+      const { data: savedMemories } = await supabase.from('rocker_long_memory').insert(
         toSave.map((f: any) => ({
           user_id: userId,
           kind: f.category || 'general',
@@ -186,7 +200,24 @@ Return structured JSON:
           },
           memory_layer: f.category || 'general'
         }))
-      );
+      ).select();
+
+      // Have Andy enhance each saved memory
+      if (savedMemories && savedMemories.length > 0) {
+        for (const mem of savedMemories) {
+          const memValue = (mem as any).value;
+          const memText = typeof memValue === 'object' ? memValue.text : memValue;
+          if (memText) {
+            supabase.functions.invoke('andy-enhance-memories', {
+              body: {
+                user_id: userId,
+                memory_id: (mem as any).id,
+                content: memText
+              }
+            }).catch(e => console.warn('Enhancement failed:', e));
+          }
+        }
+      }
     }
 
     // Ask for confirmation on uncertain facts

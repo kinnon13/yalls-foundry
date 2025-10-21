@@ -1363,6 +1363,150 @@ export type Database = {
         }
         Relationships: []
       }
+      andy_learning_log: {
+        Row: {
+          applied_count: number | null
+          confidence: number | null
+          from_content: string
+          id: string
+          learned_at: string | null
+          learning_type: string
+          metadata: Json | null
+          source_id: string | null
+          source_type: string | null
+          user_id: string
+          what_learned: string
+        }
+        Insert: {
+          applied_count?: number | null
+          confidence?: number | null
+          from_content: string
+          id?: string
+          learned_at?: string | null
+          learning_type: string
+          metadata?: Json | null
+          source_id?: string | null
+          source_type?: string | null
+          user_id: string
+          what_learned: string
+        }
+        Update: {
+          applied_count?: number | null
+          confidence?: number | null
+          from_content?: string
+          id?: string
+          learned_at?: string | null
+          learning_type?: string
+          metadata?: Json | null
+          source_id?: string | null
+          source_type?: string | null
+          user_id?: string
+          what_learned?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "andy_learning_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      andy_memory_enhancements: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          enhanced_content: Json
+          enhancement_type: string
+          id: string
+          metadata: Json | null
+          original_content: string
+          reasoning: string
+          source_knowledge_id: string | null
+          source_memory_id: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          enhanced_content: Json
+          enhancement_type: string
+          id?: string
+          metadata?: Json | null
+          original_content: string
+          reasoning: string
+          source_knowledge_id?: string | null
+          source_memory_id?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          enhanced_content?: Json
+          enhancement_type?: string
+          id?: string
+          metadata?: Json | null
+          original_content?: string
+          reasoning?: string
+          source_knowledge_id?: string | null
+          source_memory_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "andy_memory_enhancements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      andy_research: {
+        Row: {
+          content: Json
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          research_type: string
+          source_memory_ids: string[] | null
+          topic: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          research_type: string
+          source_memory_ids?: string[] | null
+          topic: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          research_type?: string
+          source_memory_ids?: string[] | null
+          topic?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "andy_research_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_catalog: {
         Row: {
           category: string | null
