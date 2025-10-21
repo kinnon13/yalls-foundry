@@ -4,7 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MessengerRail } from './MessengerRail';
+import { ConceptMind } from './ConceptMind';
+import { AndyResearch } from './AndyResearch';
+import { ThreeMemorySystems } from './ThreeMemorySystems';
+import { PredictionGame } from './PredictionGame';
 import { 
   Folder, 
   File, 
@@ -20,7 +24,8 @@ import {
   FileText,
   Database,
   MessageSquare,
-  Plus
+  Plus,
+  Target
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -353,14 +358,22 @@ export function UnifiedFilesMemory() {
       </div>
 
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="all">
             <Database className="h-4 w-4 mr-2" />
             All Memory & Files
           </TabsTrigger>
+          <TabsTrigger value="split">
+            <Brain className="h-4 w-4 mr-2" />
+            3 Memory Systems
+          </TabsTrigger>
           <TabsTrigger value="andy">
             <Brain className="h-4 w-4 mr-2" />
-            Andy's Brain & Research
+            Andy's Brain
+          </TabsTrigger>
+          <TabsTrigger value="game">
+            <Target className="h-4 w-4 mr-2" />
+            Prediction Game
           </TabsTrigger>
         </TabsList>
 
@@ -614,8 +627,16 @@ export function UnifiedFilesMemory() {
       </ScrollArea>
         </TabsContent>
 
+        <TabsContent value="split" className="mt-4">
+          <ThreeMemorySystems />
+        </TabsContent>
+
         <TabsContent value="andy" className="mt-4">
           <AndyResearch />
+        </TabsContent>
+
+        <TabsContent value="game" className="mt-4">
+          <PredictionGame />
         </TabsContent>
       </Tabs>
 

@@ -1463,6 +1463,121 @@ export type Database = {
           },
         ]
       }
+      andy_prediction_game: {
+        Row: {
+          andy_confidence: number
+          andy_prediction: string
+          answered_at: string | null
+          based_on_analysis: string | null
+          based_on_memories: string[] | null
+          created_at: string | null
+          game_date: string
+          game_session_id: string
+          id: string
+          is_correct: boolean | null
+          options: Json | null
+          question_number: number
+          question_text: string
+          question_type: string
+          session_number: number
+          user_actual_answer: string | null
+          user_id: string
+        }
+        Insert: {
+          andy_confidence: number
+          andy_prediction: string
+          answered_at?: string | null
+          based_on_analysis?: string | null
+          based_on_memories?: string[] | null
+          created_at?: string | null
+          game_date: string
+          game_session_id: string
+          id?: string
+          is_correct?: boolean | null
+          options?: Json | null
+          question_number: number
+          question_text: string
+          question_type: string
+          session_number: number
+          user_actual_answer?: string | null
+          user_id: string
+        }
+        Update: {
+          andy_confidence?: number
+          andy_prediction?: string
+          answered_at?: string | null
+          based_on_analysis?: string | null
+          based_on_memories?: string[] | null
+          created_at?: string | null
+          game_date?: string
+          game_session_id?: string
+          id?: string
+          is_correct?: boolean | null
+          options?: Json | null
+          question_number?: number
+          question_text?: string
+          question_type?: string
+          session_number?: number
+          user_actual_answer?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "andy_prediction_game_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      andy_prediction_stats: {
+        Row: {
+          accuracy_rate: number | null
+          category: string
+          confidence_avg: number | null
+          correct_predictions: number | null
+          id: string
+          learning_insights: Json | null
+          stat_date: string
+          total_predictions: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          accuracy_rate?: number | null
+          category: string
+          confidence_avg?: number | null
+          correct_predictions?: number | null
+          id?: string
+          learning_insights?: Json | null
+          stat_date: string
+          total_predictions?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          accuracy_rate?: number | null
+          category?: string
+          confidence_avg?: number | null
+          correct_predictions?: number | null
+          id?: string
+          learning_insights?: Json | null
+          stat_date?: string
+          total_predictions?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "andy_prediction_stats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       andy_research: {
         Row: {
           content: Json
@@ -2451,6 +2566,69 @@ export type Database = {
           previous_owner_id?: string | null
         }
         Relationships: []
+      }
+      combined_memory_files: {
+        Row: {
+          andy_research_ids: string[] | null
+          confidence: number | null
+          content: Json
+          created_at: string | null
+          file_name: string
+          file_path: string
+          id: string
+          merge_reasoning: string | null
+          metadata: Json | null
+          parent_file_id: string | null
+          updated_at: string | null
+          user_id: string
+          user_memory_ids: string[] | null
+        }
+        Insert: {
+          andy_research_ids?: string[] | null
+          confidence?: number | null
+          content: Json
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          id?: string
+          merge_reasoning?: string | null
+          metadata?: Json | null
+          parent_file_id?: string | null
+          updated_at?: string | null
+          user_id: string
+          user_memory_ids?: string[] | null
+        }
+        Update: {
+          andy_research_ids?: string[] | null
+          confidence?: number | null
+          content?: Json
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          id?: string
+          merge_reasoning?: string | null
+          metadata?: Json | null
+          parent_file_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+          user_memory_ids?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combined_memory_files_parent_file_id_fkey"
+            columns: ["parent_file_id"]
+            isOneToOne: false
+            referencedRelation: "combined_memory_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combined_memory_files_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       commission_ledger: {
         Row: {
@@ -15277,6 +15455,10 @@ export type Database = {
       }
       unsave_item: {
         Args: { p_listing_id: string }
+        Returns: undefined
+      }
+      update_prediction_accuracy: {
+        Args: { p_date: string; p_user_id: string }
         Returns: undefined
       }
       updategeometrysrid: {
