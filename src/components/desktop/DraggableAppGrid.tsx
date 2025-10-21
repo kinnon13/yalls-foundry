@@ -19,12 +19,13 @@ import {
   Building, Users, Sparkles, Tractor, CheckCircle,
   MessageSquare, LayoutDashboard, User, MapPin, 
   Flame, BookOpen, Home, Store, Activity, Zap,
-  Target, Award, LucideIcon, FolderIcon, Network
+  Target, Award, LucideIcon, FolderIcon, Network, Brain
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppPins, type AppFolder } from '@/hooks/useAppPins';
 import { FolderView } from './FolderView';
 import { supabase } from '@/integrations/supabase/client';
+import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
 
 interface AppTile {
   id: string;
@@ -58,6 +59,7 @@ const APPS: Record<string, AppTile> = {
   goals: { id: 'goals', label: 'Goals', icon: Target, route: '/goals', color: 'from-indigo-500/20 to-blue-600/5' },
   awards: { id: 'awards', label: 'Awards', icon: Award, route: '/awards', color: 'from-rose-500/20 to-pink-600/5' },
   settings: { id: 'settings', label: 'Settings', icon: Settings, module: 'settings', color: 'from-slate-500/20 to-gray-600/5' },
+  super_rocker: { id: 'super_rocker', label: 'Super Rocker', icon: Brain, route: '/super-rocker', color: 'from-purple-600/30 to-pink-600/10' },
 };
 
 // Default grid layout (8 cols × unlimited rows)
@@ -84,6 +86,7 @@ const DEFAULT_POSITIONS: Record<string, [number, number]> = {
   goals: [3, 3],
   awards: [4, 3],
   settings: [5, 3],
+  super_rocker: [6, 3],
 };
 
 export function DraggableAppGrid() {
@@ -91,6 +94,7 @@ export function DraggableAppGrid() {
   const [userId, setUserId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [openFolder, setOpenFolder] = useState<AppFolder | null>(null);
+  const { isSuperAdmin } = useSuperAdminCheck();
   const [tileSize, setTileSize] = useState(() => 
     Number(localStorage.getItem('apps.tileSize') || 112)
   );
@@ -415,9 +419,12 @@ export function DraggableAppGrid() {
               style={{ '--tile': `${tileSize}px` } as React.CSSProperties}
             >
               <div className="apps-grid" ref={appsGridRef}>
-                {Object.values(APPS).filter(app => !pins.some(p => p.app_id === app.id)).map((app, idx) => (
-                  <DraggableApp key={app.id} app={app} index={idx + 1} />
-                ))}
+                {Object.values(APPS)
+                  .filter(app => app.id !== 'super_rocker' || isSuperAdmin)
+                  .filter(app => !pins.some(p => p.app_id === app.id))
+                  .map((app, idx) => (
+                    <DraggableApp key={app.id} app={app} index={idx + 1} />
+                  ))}
               </div>
 
             {/* Pinned overlay layer (absolute), aligns to 8-column grid, scrollable top-to-bottom */}

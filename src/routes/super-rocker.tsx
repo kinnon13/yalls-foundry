@@ -1,36 +1,35 @@
-import { useState, useRef, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSession } from '@/lib/auth/context';
-import { Loader2, Upload, Brain, CheckSquare, FileText, FolderOpen } from 'lucide-react';
-import { SuperRockerMemory } from '@/components/super-rocker/SuperRockerMemory';
-import { SuperRockerTasks } from '@/components/super-rocker/SuperRockerTasks';
+import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
 import { SuperRockerChat } from '@/components/super-rocker/SuperRockerChat';
-import { SuperRockerInbox } from '@/components/super-rocker/SuperRockerInbox';
-import { SuperRockerLibrary } from '@/components/super-rocker/SuperRockerLibrary';
-import { SuperRockerVault } from '@/components/super-rocker/SuperRockerVault';
 import { SuperRockerKnowledge } from '@/components/super-rocker/SuperRockerKnowledge';
-import { SuperRockerNotifications } from '@/components/super-rocker/SuperRockerNotifications';
-import { SuperRockerAdmin } from '@/components/super-rocker/SuperRockerAdmin';
+import { SuperRockerTasks } from '@/components/super-rocker/SuperRockerTasks';
+import { SuperRockerMemory } from '@/components/super-rocker/SuperRockerMemory';
+import { SuperRockerInbox } from '@/components/super-rocker/SuperRockerInbox';
 import { FileBrowser } from '@/components/super-rocker/FileBrowser';
+import { SuperRockerAdmin } from '@/components/super-rocker/SuperRockerAdmin';
+import { Brain, Database, CheckSquare, FolderOpen, Inbox, MessageSquare } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+type Tab = 'chat' | 'knowledge' | 'tasks' | 'memory' | 'files' | 'inbox' | 'admin';
 
 export default function SuperRocker() {
   const { session } = useSession();
-  const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [text, setText] = useState('');
-  const [subject, setSubject] = useState('');
-  const [isIngesting, setIsIngesting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const { isSuperAdmin, isLoading } = useSuperAdminCheck();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<Tab>('chat');
   const [threadId, setThreadId] = useState<string | null>(null);
 
-  // Auto-load most recent thread on mount
+  useEffect(() => {
+    if (!isLoading && !isSuperAdmin) {
+      navigate('/');
+    }
+  }, [isSuperAdmin, isLoading, navigate]);
+
   useEffect(() => {
     const initThread = async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
       const { data } = await supabase
         .from('rocker_threads')
         .select('id')
@@ -41,179 +40,125 @@ export default function SuperRocker() {
       
       if (data) {
         setThreadId(data.id);
-      } else {
-        // Create default thread
-        const { data: newThread } = await supabase
-          .from('rocker_threads')
-          .insert({ 
-            user_id: session?.userId,
-            title: 'Super Rocker Chat'
-          })
-          .select('id')
-          .single();
-        if (newThread) setThreadId(newThread.id);
       }
     };
     if (session?.userId) initThread();
   }, [session?.userId]);
 
-  const handleIngest = async () => {
-    if (!text.trim()) {
-      toast({ title: 'Please enter some text', variant: 'destructive' });
-      return;
-    }
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <Brain className="h-12 w-12 animate-pulse text-primary mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground">Loading Super Rocker...</p>
+        </div>
+      </div>
+    );
+  }
 
-    setIsIngesting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('rocker-ingest', {
-        body: {
-          text: text.trim(),
-          subject: subject || 'Super Rocker Memory',
-          thread_id: threadId
-        }
-      });
-
-      if (error) throw error;
-
-      setThreadId(data.thread_id);
-      toast({
-        title: `Filed to ${data.category}!`,
-        description: `${data.stored} chunks • Tags: ${data.tags?.slice(0, 3).join(', ') || 'none'} • ${data.summary?.slice(0, 50) || ''}`,
-      });
-      setText('');
-      setSubject('');
-    } catch (error: any) {
-      console.error('Ingest error:', error);
-      toast({
-        title: 'Failed to add memory',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsIngesting(false);
-    }
-  };
-
-  const handlePaste = async () => {
-    try {
-      const clipText = await navigator.clipboard.readText();
-      setText(clipText);
-      toast({ title: 'Pasted from clipboard' });
-    } catch (err) {
-      toast({ title: 'Could not read clipboard', variant: 'destructive' });
-    }
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    setIsUploading(true);
-    try {
-      for (const file of Array.from(files)) {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const { error } = await supabase.functions.invoke('ingest-upload', {
-          body: formData,
-        });
-
-        if (error) throw error;
-      }
-
-      toast({
-        title: 'Files uploaded!',
-        description: `${files.length} file(s) added to Inbox for organization.`,
-      });
-      
-      // Clear input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      toast({
-        title: 'Failed to upload',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
+  const tabs = [
+    { id: 'chat' as Tab, label: 'Chat', icon: MessageSquare },
+    { id: 'knowledge' as Tab, label: 'Knowledge', icon: Database },
+    { id: 'tasks' as Tab, label: 'Tasks', icon: CheckSquare },
+    { id: 'memory' as Tab, label: 'Memory', icon: Brain },
+    { id: 'files' as Tab, label: 'Files', icon: FolderOpen },
+    { id: 'inbox' as Tab, label: 'Inbox', icon: Inbox },
+    { id: 'admin' as Tab, label: 'Admin', icon: Brain },
+  ];
 
   return (
-    <div className="min-h-screen overflow-y-auto bg-background p-6 pb-24">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Brain className="h-8 w-8 text-primary" />
-              Super Rocker
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Mass upload, organize, recall, and act on everything
-            </p>
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
+      {/* Mac-style header */}
+      <div className="flex-none border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="h-14 px-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Brain className="h-6 w-6 text-primary" />
+            <h1 className="text-lg font-semibold">Super Rocker</h1>
+          </div>
+          <div className="flex items-center gap-1">
+            {tabs.map(tab => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                    activeTab === tab.id
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-4 w-4" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
+      </div>
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Notifications & Inbox */}
-          <div className="space-y-6">
-            <Card className="p-6">
-              <SuperRockerNotifications />
-            </Card>
-            <Card className="p-6">
-              <SuperRockerInbox />
-            </Card>
-          </div>
-
-          {/* Center: Vault & Quick Add */}
-          <Card className="p-6 space-y-6">
-            <SuperRockerVault threadId={threadId} onThreadCreated={setThreadId} />
-          </Card>
-
-          {/* Right: Knowledge */}
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Brain className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Knowledge</h2>
+      {/* Content area */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full max-w-7xl mx-auto px-6 py-6">
+          {activeTab === 'chat' && (
+            <div className="h-full bg-card rounded-xl border shadow-sm">
+              <div className="p-6 h-full">
+                <SuperRockerChat threadId={threadId} onThreadCreated={setThreadId} />
+              </div>
             </div>
-            <SuperRockerKnowledge />
-          </Card>
-        </div>
+          )}
 
-        {/* Bottom Row: Chat & Tasks */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <SuperRockerChat threadId={threadId} onThreadCreated={setThreadId} />
-          </Card>
-          
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <CheckSquare className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Tasks</h2>
+          {activeTab === 'knowledge' && (
+            <div className="h-full bg-card rounded-xl border shadow-sm overflow-auto">
+              <div className="p-6">
+                <SuperRockerKnowledge />
+              </div>
             </div>
-            <SuperRockerTasks threadId={threadId} />
-          </Card>
+          )}
+
+          {activeTab === 'tasks' && (
+            <div className="h-full bg-card rounded-xl border shadow-sm overflow-auto">
+              <div className="p-6">
+                <SuperRockerTasks threadId={threadId} />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'memory' && (
+            <div className="h-full bg-card rounded-xl border shadow-sm overflow-auto">
+              <div className="p-6">
+                <SuperRockerMemory />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'files' && (
+            <div className="h-full bg-card rounded-xl border shadow-sm overflow-auto">
+              <div className="p-6">
+                <FileBrowser />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'inbox' && (
+            <div className="h-full bg-card rounded-xl border shadow-sm overflow-auto">
+              <div className="p-6">
+                <SuperRockerInbox />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'admin' && (
+            <div className="h-full bg-card rounded-xl border shadow-sm overflow-auto">
+              <div className="p-6">
+                <SuperRockerAdmin />
+              </div>
+            </div>
+          )}
         </div>
-
-        {/* File Browser */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <FolderOpen className="h-5 w-5" />
-            <h2 className="text-xl font-semibold">Files</h2>
-            <p className="text-xs text-muted-foreground ml-auto">
-              Browse, search, and reorganize everything you've filed
-            </p>
-          </div>
-          <FileBrowser />
-        </Card>
-
-        {/* Andy Admin Panel (Super Admin Only) */}
-        <SuperRockerAdmin />
       </div>
     </div>
   );

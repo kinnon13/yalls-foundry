@@ -205,29 +205,28 @@ export function SuperRockerKnowledge() {
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Brain className="h-5 w-5" />
           <h2 className="text-xl font-semibold">Knowledge Base</h2>
           {reembedProgress && (
-            <Badge variant="secondary" className="ml-2">
+            <Badge variant="secondary" className="ml-2 text-xs">
               {reembedProgress}
             </Badge>
           )}
         </div>
         <Button
-          variant="default"
+          variant="outline"
           size="sm"
           onClick={handleReembed}
           disabled={isReembedding}
         >
           {isReembedding ? (
             <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Re-embedding...
+              <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+              Processing...
             </>
           ) : (
             <>
-              <Brain className="h-4 w-4 mr-2" />
-              Re-embed Now
+              <Brain className="h-3 w-3 mr-2" />
+              Re-embed
             </>
           )}
         </Button>
