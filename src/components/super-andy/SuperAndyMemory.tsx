@@ -17,7 +17,7 @@ interface Memory {
   created_at: string;
 }
 
-export function SuperRockerMemory() {
+export function SuperAndyMemory() {
   const { toast } = useToast();
   const [memories, setMemories] = useState<Memory[]>([]);
   const [searchQuery, setSearchQuery] = useState('');

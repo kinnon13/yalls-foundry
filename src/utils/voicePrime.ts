@@ -22,7 +22,7 @@ function b64ToBlob(base64: string, mimeType: string): Blob {
  * Unlock audio context and prefetch greeting TTS
  * Call this on user gesture (button click) before navigating to chat
  */
-export async function voicePrime(role: VoiceRole = 'user'): Promise<void> {
+export async function voicePrime(role: VoiceRole = 'user_rocker'): Promise<void> {
   const t0 = performance.now();
   const profile = getVoiceProfile(role);
   

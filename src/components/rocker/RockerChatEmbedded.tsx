@@ -38,7 +38,7 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
   const aiProfile = AI_PROFILES[actorRole || 'user'];
 
   // Determine voice role based on actor role
-  const voiceRole: VoiceRole = actorRole === 'admin' ? 'admin' : actorRole === 'knower' ? 'super' : 'user';
+  const voiceRole: VoiceRole = actorRole === 'admin' ? 'admin_rocker' : actorRole === 'knower' ? 'super_andy' : 'user_rocker';
   const [voiceEnabled] = useState(false); // Voice disabled by default in embedded chat
   
   // Use role-specific voice

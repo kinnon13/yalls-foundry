@@ -3,7 +3,7 @@
  * Each role gets a distinct voice for easy identification
  */
 
-export type VoiceRole = 'user' | 'admin' | 'super';
+export type VoiceRole = 'user_rocker' | 'admin_rocker' | 'super_andy';
 
 export interface VoiceProfile {
   engine: 'server_tts';
@@ -15,7 +15,7 @@ export interface VoiceProfile {
 }
 
 export const VOICE_PROFILES: Record<VoiceRole, VoiceProfile> = {
-  user: {
+  user_rocker: {
     engine: 'server_tts',
     voice: 'onyx',
     rate: 1.35,
@@ -23,7 +23,7 @@ export const VOICE_PROFILES: Record<VoiceRole, VoiceProfile> = {
     allowFallback: false,
     sttEnabled: true,
   },
-  admin: {
+  admin_rocker: {
     engine: 'server_tts',
     voice: 'nova',
     rate: 1.20,
@@ -31,7 +31,7 @@ export const VOICE_PROFILES: Record<VoiceRole, VoiceProfile> = {
     allowFallback: false,
     sttEnabled: true,
   },
-  super: {
+  super_andy: {
     engine: 'server_tts',
     voice: 'alloy',
     rate: 1.25,

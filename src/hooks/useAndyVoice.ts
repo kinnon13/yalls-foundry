@@ -16,7 +16,7 @@ export function useAndyVoice({ threadId, enabled = true }: UseAndyVoiceOptions) 
 
   // Super Andy voice
   const { speakAndThen } = useVoice({
-    role: 'super',
+    role: 'super_andy',
     enabled: voiceEnabled && enabled,
   });
 

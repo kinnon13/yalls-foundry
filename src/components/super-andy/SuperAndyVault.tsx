@@ -13,12 +13,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSession } from "@/lib/auth/context";
 
-interface SuperRockerVaultProps {
+interface SuperAndyVaultProps {
   threadId: string | null;
   onThreadCreated: (threadId: string) => void;
 }
 
-export function SuperRockerVault({ threadId, onThreadCreated }: SuperRockerVaultProps) {
+export function SuperAndyVault({ threadId, onThreadCreated }: SuperAndyVaultProps) {
   const { session } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pasteText, setPasteText] = useState("");

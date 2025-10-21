@@ -45,7 +45,7 @@ const CATEGORIES = [
   'Marketing', 'Product', 'Personal', 'Notes'
 ];
 
-export function SuperRockerInbox() {
+export function SuperAndyInbox() {
   const { toast } = useToast();
   const { session } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);

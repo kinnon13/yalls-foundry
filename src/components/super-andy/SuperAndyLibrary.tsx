@@ -24,7 +24,7 @@ const CATEGORIES = [
   'Marketing', 'Product', 'Personal', 'Notes'
 ];
 
-export function SuperRockerLibrary() {
+export function SuperAndyLibrary() {
   const { toast } = useToast();
   const [files, setFiles] = useState<LibraryFile[]>([]);
   const [searchQuery, setSearchQuery] = useState('');

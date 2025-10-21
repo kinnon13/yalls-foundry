@@ -3,9 +3,9 @@ import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '@/lib/auth/context';
 import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
-import { AppDock, AppId } from '@/components/super-rocker/AppDock';
-import { CenterStage } from '@/components/super-rocker/CenterStage';
-import { MessengerRail } from '@/components/super-rocker/MessengerRail';
+import { AppDock, AppId } from '@/components/super-andy/AppDock';
+import { CenterStage } from '@/components/super-andy/CenterStage';
+import { MessengerRail } from '@/components/super-andy/MessengerRail';
 import { Brain, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 

@@ -32,7 +32,7 @@ export function VoiceControls({ threadId, onTranscript, onModeChange }: VoiceCon
   
   // Super Andy voice
   const { listen, stopAll, isSupported } = useVoice({
-    role: 'super',
+    role: 'super_andy',
     enabled: isSpeakingEnabled,
   });
   

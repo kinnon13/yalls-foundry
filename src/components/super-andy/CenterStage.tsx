@@ -1,10 +1,10 @@
 import { lazy, Suspense } from 'react';
 import { AppId } from './AppDock';
-import { SuperRockerKnowledge } from './SuperRockerKnowledge';
-import { SuperRockerTasks } from './SuperRockerTasks';
+import { SuperAndyKnowledge } from './SuperAndyKnowledge';
+import { SuperAndyTasks } from './SuperAndyTasks';
 import { UnifiedFilesMemory } from './UnifiedFilesMemory';
-import { SuperRockerInbox } from './SuperRockerInbox';
-import { SuperRockerAdmin } from './SuperRockerAdmin';
+import { SuperAndyInbox } from './SuperAndyInbox';
+import { SuperAndyAdmin } from './SuperAndyAdmin';
 import { Calendar } from './Calendar';
 import { ProactivePanel } from '@/components/rocker/ProactivePanel';
 import { TasksView } from './TasksView';
@@ -32,11 +32,11 @@ export function CenterStage({ activeApp, threadId }: CenterStageProps) {
 
   return (
     <div className="h-full w-full overflow-auto animate-fade-in">
-      {activeApp === 'knowledge' && <SuperRockerKnowledge />}
+      {activeApp === 'knowledge' && <SuperAndyKnowledge />}
       
       {activeApp === 'files' && <UnifiedFilesMemory />}
       
-      {activeApp === 'tasks' && <SuperRockerTasks threadId={threadId} />}
+      {activeApp === 'tasks' && <SuperAndyTasks threadId={threadId} />}
       
       {activeApp === 'task-os' && <TasksView />}
       
@@ -44,7 +44,7 @@ export function CenterStage({ activeApp, threadId }: CenterStageProps) {
       
       {activeApp === 'proactive' && <ProactivePanel />}
       
-      {activeApp === 'inbox' && <SuperRockerInbox />}
+      {activeApp === 'inbox' && <SuperAndyInbox />}
       
       {activeApp === 'capabilities' && (
         <Suspense fallback={<LoadingState icon={Shield} label="Capabilities" />}>
@@ -52,7 +52,7 @@ export function CenterStage({ activeApp, threadId }: CenterStageProps) {
         </Suspense>
       )}
       
-      {activeApp === 'admin' && <SuperRockerAdmin threadId={threadId} />}
+      {activeApp === 'admin' && <SuperAndyAdmin threadId={threadId} />}
       
       {activeApp === 'secrets' && (
         <Suspense fallback={<LoadingState icon={Key} label="API Keys" />}>

@@ -19,7 +19,7 @@ interface Notification {
   created_at: string;
 }
 
-export function SuperRockerNotifications() {
+export function SuperAndyNotifications() {
   const { toast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);

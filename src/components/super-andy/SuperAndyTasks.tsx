@@ -16,7 +16,7 @@ interface Task {
   created_at: string;
 }
 
-export function SuperRockerTasks({ threadId }: { threadId: string | null }) {
+export function SuperAndyTasks({ threadId }: { threadId: string | null }) {
   const { toast } = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');

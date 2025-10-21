@@ -1,5 +1,5 @@
 /**
- * Super Rocker Chat with Voice
+ * Super Andy Chat with Voice
  * Super Andy chat with role-specific voice (alloy @ 1.25x)
  */
 
@@ -29,7 +29,7 @@ interface Thread {
   created_at: string;
 }
 
-export function SuperRockerChatWithVoice({ 
+export function SuperAndyChatWithVoice({ 
   threadId, 
   onThreadCreated 
 }: { 
@@ -47,7 +47,7 @@ export function SuperRockerChatWithVoice({
 
   // Super Andy voice (alloy @ 1.25x)
   const { speakAndThen, listen, stopAll, isSupported } = useVoice({
-    role: 'super',
+    role: 'super_andy',
     enabled: voiceEnabled,
   });
 

@@ -14,11 +14,11 @@ import { MessengerRail } from './MessengerRail';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
-interface SuperRockerAdminProps {
+interface SuperAndyAdminProps {
   threadId: string | null;
 }
 
-export function SuperRockerAdmin({ threadId }: SuperRockerAdminProps) {
+export function SuperAndyAdmin({ threadId }: SuperAndyAdminProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   

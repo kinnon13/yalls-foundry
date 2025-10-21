@@ -27,7 +27,7 @@ interface EmbeddingStats {
 
 const PAGE_SIZE = 50;
 
-export function SuperRockerKnowledge() {
+export function SuperAndyKnowledge() {
   const { toast } = useToast();
   const [chunks, setChunks] = useState<KnowledgeChunk[]>([]);
   const [stats, setStats] = useState<EmbeddingStats>({ total: 0, embedded: 0, pending: 0 });

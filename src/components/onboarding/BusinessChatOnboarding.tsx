@@ -46,7 +46,7 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
 
   // Voice (TTS + STT with new loop API) - User Rocker voice
   const { speakAndThen, listen, stopAll, isSupported, profile } = useVoice({
-    role: 'user',
+    role: 'user_rocker',
     enabled: voiceEnabled,
     onTranscript: () => {} // Not used in new API
   });
@@ -79,7 +79,7 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
       const { playPreloadedGreeting } = await import('@/utils/voicePrime');
       
       await playPreloadedGreeting(
-        'user',
+        'user_rocker',
         () => {
           // After greeting ends, start listening
           if (stopListenRef.current) {
@@ -250,7 +250,7 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
     // Prime voice: unlock audio + prefetch greeting with user voice
     if (voiceConsent) {
       const { voicePrime } = await import('@/utils/voicePrime');
-      await voicePrime('user');
+      await voicePrime('user_rocker');
     }
     setShowChoice(false);
     setChatStarted(true);
