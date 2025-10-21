@@ -279,7 +279,7 @@ export function MessengerRail() {
           </div>
           <div>
             <h3 className="text-sm font-semibold text-foreground">Andy</h3>
-            <p className="text-[11px] text-muted-foreground">AI Assistant</p>
+            <p className="text-[11px] text-muted-foreground">Your Everything AI</p>
           </div>
           <div className="ml-auto">
             <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -300,7 +300,7 @@ export function MessengerRail() {
               </div>
               <p className="text-sm font-medium text-foreground mb-1">Chat with Andy</p>
               <p className="text-xs text-muted-foreground max-w-[200px]">
-                Your AI assistant is ready to help with tasks, knowledge, and more
+                Your everything AI with full learning, files, tasks, and proactive capabilities
               </p>
             </div>
           )}
