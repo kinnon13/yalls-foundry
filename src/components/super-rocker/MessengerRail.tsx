@@ -218,7 +218,7 @@ export function MessengerRail() {
 
       {/* Messages */}
       <div className="flex-1 overflow-hidden">
-        <div ref={scrollRef} className="h-full overflow-y-auto px-4 py-4 space-y-4">
+        <div ref={scrollRef} className="h-full overflow-y-auto px-3 sm:px-4 py-4 space-y-4 pb-24">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center px-4">
               <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-4">
@@ -235,15 +235,15 @@ export function MessengerRail() {
             <div
               key={msg.id}
               className={cn(
-                'flex px-2',
+                'flex px-2 sm:px-3',
                 msg.role === 'user' ? 'justify-end' : 'justify-start'
               )}
             >
               <div
                 className={cn(
-                  'max-w-[75%] rounded-2xl px-4 py-2.5 text-sm break-words',
+                  'max-w-[70%] sm:max-w-[68%] md:max-w-[60%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap break-words',
                   msg.role === 'user'
-                    ? 'bg-[#007AFF] text-white shadow-md shadow-blue-500/20'
+                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/25'
                     : 'bg-muted text-foreground'
                 )}
               >
