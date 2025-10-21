@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Brain, Send, Paperclip, Sparkles } from 'lucide-react';
+import { Brain, Send, Mic, MicOff, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
 import { toast } from '@/hooks/use-toast';
+import { useConversation } from '@11labs/react';
 
 interface Message {
   id: number;
@@ -22,6 +23,28 @@ export function MessengerRail() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const lastMessageCountRef = useRef(0);
+  
+  const conversation = useConversation({
+    onConnect: () => console.log('[Voice] Connected'),
+    onDisconnect: () => console.log('[Voice] Disconnected'),
+    onMessage: (message) => {
+      console.log('[Voice] Message:', message);
+      if (message.message?.role === 'assistant' && message.message.content) {
+        toast({
+          title: 'Andy (voice)',
+          description: message.message.content,
+        });
+      }
+    },
+    onError: (error) => {
+      console.error('[Voice] Error:', error);
+      toast({
+        title: 'Voice error',
+        description: String(error),
+        variant: 'destructive',
+      });
+    },
+  });
 
   // Load or create thread
   useEffect(() => {
@@ -203,6 +226,36 @@ export function MessengerRail() {
     }
   };
 
+  const toggleVoice = async () => {
+    if (conversation.status === 'connected') {
+      await conversation.endSession();
+      return;
+    }
+
+    try {
+      console.log('[Voice] Requesting mic access...');
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      console.log('[Voice] Getting signed URL...');
+      const { data, error } = await supabase.functions.invoke('elevenlabs-conversation', {
+        body: { agentId: 'TODO_REPLACE_WITH_ELEVENLABS_AGENT_ID' }
+      });
+
+      if (error) throw error;
+      if (!data?.signedUrl) throw new Error('No signed URL');
+
+      console.log('[Voice] Starting...');
+      await conversation.startSession({ url: data.signedUrl });
+    } catch (error) {
+      console.error('[Voice] Failed:', error);
+      toast({
+        title: 'Voice failed',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] bg-background rounded-2xl shadow-lg">
       {/* Header */}
@@ -282,21 +335,32 @@ export function MessengerRail() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-xl shrink-0"
+            className={cn(
+              "h-10 w-10 rounded-xl shrink-0",
+              conversation.status === 'connected' && "bg-[#007AFF] text-white"
+            )}
+            onClick={toggleVoice}
+            disabled={conversation.status === 'connecting'}
           >
-            <Paperclip className="h-4 w-4" />
+            {conversation.status === 'connecting' ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : conversation.status === 'connected' ? (
+              <MicOff className="h-4 w-4" />
+            ) : (
+              <Mic className="h-4 w-4" />
+            )}
           </Button>
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Message Andy... (⌘⏎ to send)"
+            placeholder={conversation.status === 'connected' ? "Voice active..." : "Message Andy... (⌘⏎ to send)"}
             className="flex-1 h-10 rounded-xl"
-            disabled={sendMutation.isPending}
+            disabled={sendMutation.isPending || conversation.status === 'connected'}
           />
           <Button
             onClick={handleSend}
-            disabled={!input.trim() || sendMutation.isPending}
+            disabled={!input.trim() || sendMutation.isPending || conversation.status === 'connected'}
             className="h-10 px-4 rounded-xl bg-[#007AFF] hover:bg-[#0051D5] text-white font-medium shrink-0"
           >
             Send

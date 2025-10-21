@@ -271,3 +271,6 @@ verify_jwt = true
 [functions.rocker-reembed]
 verify_jwt = true
 
+[functions.elevenlabs-conversation]
+verify_jwt = true
+
