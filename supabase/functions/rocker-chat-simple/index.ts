@@ -25,33 +25,39 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization') || '' } } }
     );
 
-    const { data, error } = await supabase.functions.invoke('proxy-openai', {
-      body: {
-        path: '/chat/completions',
-        keyName: 'openai',
-        body: {
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: 'You are Rocker. Keep answers concise and actionable.' },
-            { role: 'user', content: message }
-          ],
-          max_tokens: 500,
-        }
-      },
-      headers: { Authorization: req.headers.get('Authorization') || '' }
-    });
-
-    if (error) {
-      let details: any = null;
-      try { details = typeof data === 'string' ? JSON.parse(data as string) : data; } catch {}
-      const errPayload = details ?? { error: error.message };
-      return new Response(JSON.stringify(errPayload), {
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: 'AI is not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const reply = (data as any)?.choices?.[0]?.message?.content ?? '';
+    const aiResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: 'You are Rocker. Keep answers concise and actionable.' },
+          { role: 'user', content: message }
+        ],
+      }),
+    });
+
+    if (!aiResp.ok) {
+      const errText = await aiResp.text();
+      return new Response(errText || JSON.stringify({ error: 'AI gateway error' }), {
+        status: aiResp.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const aiJson = await aiResp.json();
+    const reply = aiJson?.choices?.[0]?.message?.content ?? '';
     return new Response(JSON.stringify({ reply }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
