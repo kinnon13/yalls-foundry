@@ -15823,6 +15823,7 @@ export type Database = {
         | "owner"
         | "guest"
         | "super_admin"
+        | "user"
       calendar_role: "owner" | "writer" | "reader"
       calendar_type: "personal" | "business" | "horse" | "event" | "custom"
       claim_method: "email" | "sms" | "manual"
@@ -16019,6 +16020,7 @@ export const Constants = {
         "owner",
         "guest",
         "super_admin",
+        "user",
       ],
       calendar_role: ["owner", "writer", "reader"],
       calendar_type: ["personal", "business", "horse", "event", "custom"],
