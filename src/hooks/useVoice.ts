@@ -121,21 +121,24 @@ export function useVoice({ role, enabled, onTranscript }: UseVoiceOptions) {
         then?.();
       };
       
-      audio.onerror = (e) => {
+      audio.onerror = async (e) => {
         const playError = new Error('Audio playback failed');
         console.error('[Voice] Audio playback error:', { role, voice: profile.voice, error: e });
         
         // Log playback error
-        supabase.auth.getSession().then(({ data: session }) => {
+        try {
+          const { data: session } = await supabase.auth.getSession();
           if (session?.session?.user?.id) {
-            supabase.from('voice_events').insert({
+            await supabase.from('voice_events').insert({
               user_id: session.session.user.id,
               actor_role: role,
               kind: 'audio_playback_error',
               payload: { voice: profile.voice, rate: profile.rate }
-            }).then().catch(logError => console.warn('[Voice] Failed to log playback error:', logError));
+            });
           }
-        });
+        } catch (logError) {
+          console.warn('[Voice] Failed to log playback error:', logError);
+        }
         
         speakingRef.current = false;
         onError?.(playError);
