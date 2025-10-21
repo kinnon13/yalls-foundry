@@ -258,3 +258,13 @@ verify_jwt = false
 [functions.rocker-capability-ranker.cron]
 schedule = "0 4 * * *"  # Daily at 4 AM (after gap scan)
 
+# --- Gemini Second Auditor + KB Functions ---
+[functions.rocker-crawl-site]
+verify_jwt = true
+
+[functions.rocker-ingest-repo]
+verify_jwt = true
+
+[functions.rocker-audit]
+verify_jwt = true
+

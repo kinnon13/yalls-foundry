@@ -1,0 +1,109 @@
+name: Gemini Second Auditor
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  gemini-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}
+      
+      - name: Generate unified diff
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD > audit.diff
+          echo "Diff size: $(wc -l < audit.diff) lines"
+      
+      - name: Run Gemini Audit
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.head_ref }}
+        run: |
+          node scripts/run-gemini-audit.cjs
+      
+      - name: Post audit results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let commentBody = '## 🤖 Gemini Second Auditor Results\n\n';
+            
+            try {
+              const results = JSON.parse(fs.readFileSync('audit-results.json', 'utf8'));
+              
+              if (results.error) {
+                commentBody += `❌ **Audit failed**: ${results.error}\n`;
+              } else if (results.findings && results.findings.length > 0) {
+                commentBody += `Found **${results.findings.length}** potential issue(s):\n\n`;
+                commentBody += '| Severity | File | Line | Issue |\n';
+                commentBody += '|----------|------|------|-------|\n';
+                
+                for (const finding of results.findings) {
+                  const emoji = {
+                    critical: '🔴',
+                    high: '🟠',
+                    medium: '🟡',
+                    low: '🔵',
+                    nit: '⚪'
+                  }[finding.severity] || '⚪';
+                  
+                  const file = finding.file || 'N/A';
+                  const line = finding.line || '';
+                  const title = finding.title || 'Unknown issue';
+                  
+                  commentBody += `| ${emoji} ${finding.severity} | \`${file}\` | ${line} | ${title} |\n`;
+                }
+                
+                commentBody += '\n<details>\n<summary>📋 Detailed Findings</summary>\n\n';
+                for (const finding of results.findings) {
+                  commentBody += `### ${finding.title}\n\n`;
+                  commentBody += `**Severity**: ${finding.severity}\n\n`;
+                  if (finding.file) commentBody += `**File**: \`${finding.file}\`${finding.line ? `:${finding.line}` : ''}\n\n`;
+                  if (finding.advice) commentBody += `**Recommendation**: ${finding.advice}\n\n`;
+                  if (finding.rationale) commentBody += `**Rationale**: ${finding.rationale}\n\n`;
+                  if (finding.code_suggestion) {
+                    commentBody += '**Suggested fix**:\n```\n' + finding.code_suggestion + '\n```\n\n';
+                  }
+                  commentBody += '---\n\n';
+                }
+                commentBody += '</details>\n';
+              } else {
+                commentBody += '✅ **No issues detected** - Great job!\n';
+              }
+              
+              commentBody += `\n*Audit completed at ${new Date().toISOString()}*\n`;
+              commentBody += `*Model: ${results.metadata?.model || 'google/gemini-2.5-flash'}*`;
+              
+            } catch (err) {
+              commentBody += `❌ Failed to read audit results: ${err.message}\n`;
+            }
+            
+            // Post comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });

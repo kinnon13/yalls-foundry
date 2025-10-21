@@ -5170,6 +5170,115 @@ export type Database = {
         }
         Relationships: []
       }
+      kb_chunks: {
+        Row: {
+          content: string
+          created_at: string
+          doc_id: string
+          embedding: string | null
+          id: string
+          idx: number
+          tokens: number
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          doc_id: string
+          embedding?: string | null
+          id?: string
+          idx: number
+          tokens?: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          doc_id?: string
+          embedding?: string | null
+          id?: string
+          idx?: number
+          tokens?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_chunks_doc_id_fkey"
+            columns: ["doc_id"]
+            isOneToOne: false
+            referencedRelation: "kb_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kb_documents: {
+        Row: {
+          id: string
+          metadata: Json | null
+          sha256: string
+          source_id: string
+          text: string
+          title: string | null
+          updated_at: string
+          uri: string
+        }
+        Insert: {
+          id?: string
+          metadata?: Json | null
+          sha256: string
+          source_id: string
+          text: string
+          title?: string | null
+          updated_at?: string
+          uri: string
+        }
+        Update: {
+          id?: string
+          metadata?: Json | null
+          sha256?: string
+          source_id?: string
+          text?: string
+          title?: string | null
+          updated_at?: string
+          uri?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_documents_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "kb_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kb_sources: {
+        Row: {
+          allow: string[] | null
+          base: string
+          created_at: string
+          deny: string[] | null
+          id: string
+          kind: string
+          updated_at: string
+        }
+        Insert: {
+          allow?: string[] | null
+          base: string
+          created_at?: string
+          deny?: string[] | null
+          id?: string
+          kind: string
+          updated_at?: string
+        }
+        Update: {
+          allow?: string[] | null
+          base?: string
+          created_at?: string
+          deny?: string[] | null
+          id?: string
+          kind?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       kernel_contexts: {
         Row: {
           context_data: Json
@@ -12475,6 +12584,22 @@ export type Database = {
           source: string
           title: string
           url: string
+        }[]
+      }
+      match_kb_chunks: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+          source_filter?: string
+        }
+        Returns: {
+          content: string
+          doc_id: string
+          id: string
+          similarity: number
+          title: string
+          uri: string
         }[]
       }
       match_knowledge_chunks: {
