@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const SUPABASE_URL  = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || '';
 const MODEL = "text-embedding-3-small";  // 1536 dims
 const CLAIM = 150;
 const MAX_ROUNDS = 6;
@@ -34,7 +34,6 @@ async function fetchEmbeddings(texts: string[]): Promise<number[][]> {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
-  if (!OPENAI_API_KEY) return new Response(JSON.stringify({ error: "OPENAI_API_KEY missing" }), { status: 500, headers: { ...CORS, "Content-Type": "application/json" } });
 
   const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
@@ -72,22 +71,30 @@ serve(async (req) => {
       if (inputs.length === 0) continue;
 
       // 3) Embed (with simple retry)
-      let vectors: number[][] = [];
-      for (let attempt = 1; attempt <= 4; attempt++) {
-        try { vectors = await fetchEmbeddings(inputs); break; }
-        catch (e) {
-          if (attempt === 4) throw e;
-          await new Promise(r => setTimeout(r, 300 * attempt));
+      let vectors: (number[] | null)[] = [];
+      if (OPENAI_API_KEY) {
+        for (let attempt = 1; attempt <= 4; attempt++) {
+          try { vectors = await fetchEmbeddings(inputs); break; }
+          catch (e) {
+            if (attempt === 4) throw e;
+            await new Promise(r => setTimeout(r, 300 * attempt));
+          }
         }
+      } else {
+        // No global key configured: gracefully skip embedding but complete jobs
+        vectors = new Array(inputs.length).fill(null);
       }
 
       // 4) Update rows
       for (let i = 0; i < orderedIds.length; i++) {
-        const { error: uerr } = await sb
-          .from("rocker_knowledge")
-          .update({ embedding: vectors[i] as any })
-          .eq("id", orderedIds[i]);
-        if (!uerr) total++;
+        const vec = vectors[i];
+        if (vec) {
+          const { error: uerr } = await sb
+            .from("rocker_knowledge")
+            .update({ embedding: vec as any })
+            .eq("id", orderedIds[i]);
+          if (!uerr) total++;
+        }
       }
 
       // 5) Mark jobs done
