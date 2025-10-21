@@ -1300,6 +1300,39 @@ export type Database = {
         }
         Relationships: []
       }
+      app_provider_secrets: {
+        Row: {
+          created_at: string
+          enc_api_key: string
+          id: string
+          last_used_at: string | null
+          name: string
+          owner_user_id: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enc_api_key: string
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          owner_user_id: string
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enc_api_key?: string
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          owner_user_id?: string
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       appearance_settings: {
         Row: {
           id: string
