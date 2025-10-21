@@ -16,7 +16,7 @@ import { useRockerGlobal } from '@/lib/ai/rocker';
 import { useSession } from '@/lib/auth/context';
 import { AIRole, AI_PROFILES } from '@/lib/ai/rocker/config';
 import { useVoice } from '@/hooks/useVoice';
-import { VoiceRole } from '@/config/voiceProfiles';
+import { aiRoleToVoiceRole } from '@/lib/roles';
 
 interface RockerChatEmbeddedProps {
   actorRole?: AIRole;
@@ -37,8 +37,8 @@ export function RockerChatEmbedded({ actorRole }: RockerChatEmbeddedProps = {}) 
   const { session } = useSession();
   const aiProfile = AI_PROFILES[actorRole || 'user'];
 
-  // Determine voice role based on actor role
-  const voiceRole: VoiceRole = actorRole === 'admin' ? 'admin_rocker' : actorRole === 'knower' ? 'super_andy' : 'user_rocker';
+  // Determine voice role based on actor role using centralized mapper
+  const voiceRole = aiRoleToVoiceRole(actorRole);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
   const [isAlwaysListening, setIsAlwaysListening] = useState(false);
