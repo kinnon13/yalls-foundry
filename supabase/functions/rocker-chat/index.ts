@@ -73,10 +73,37 @@ serve(async (req) => {
       try { lastErrText = await upstream.text(); } catch { /* ignore */ }
     }
 
-    // 2) Fallback to Lovable AI gateway streaming if user key missing/invalid
+    // 2) Try direct OPENAI_API_KEY from Supabase secrets
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (OPENAI_API_KEY) {
+      const openai = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          stream: true,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: message }
+          ]
+        }),
+      });
+
+      if (openai.ok && openai.body) {
+        return new Response(openai.body, {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+        });
+      }
+    }
+
+    // 3) Final fallback to Lovable AI gateway streaming
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      const detail = lastErrText || "OpenAI key not found. Please save your key under provider 'openai' with name 'default' or 'openai'.";
+      const detail = lastErrText || "No API keys found. Add OPENAI_API_KEY to Supabase secrets or save encrypted key in Settings.";
       return new Response(JSON.stringify({ error: detail }), {
         status: lastStatus || 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
