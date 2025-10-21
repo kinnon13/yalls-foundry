@@ -151,16 +151,27 @@ serve(async (req) => {
 
     // DELETE - remove secret
     if (req.method === "DELETE") {
-      const { provider, name = "default" } = await req.json();
+      const { id, provider, name = "default" } = await req.json();
       
-      const { error } = await serviceClient
-        .from("app_provider_secrets")
-        .delete()
-        .eq("owner_user_id", user.id)
-        .eq("provider", provider)
-        .eq("name", name);
+      let delError: any = null;
+      if (id) {
+        const { error } = await serviceClient
+          .from("app_provider_secrets")
+          .delete()
+          .eq("owner_user_id", user.id)
+          .eq("id", id);
+        delError = error;
+      } else {
+        const { error } = await serviceClient
+          .from("app_provider_secrets")
+          .delete()
+          .eq("owner_user_id", user.id)
+          .eq("provider", provider)
+          .eq("name", name);
+        delError = error;
+      }
       
-      if (error) throw error;
+      if (delError) throw delError;
       
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

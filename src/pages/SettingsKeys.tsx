@@ -72,8 +72,8 @@ export default function SettingsKeys() {
     }
   };
 
-  const handleDelete = async (provider: string, name: string) => {
-    if (!confirm(`Delete ${provider}/${name}?`)) return;
+  const handleDelete = async (id: string) => {
+    if (!confirm(`Delete this key?`)) return;
 
     try {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/secrets-manage`, {
@@ -82,7 +82,7 @@ export default function SettingsKeys() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
         },
-        body: JSON.stringify({ provider, name }),
+        body: JSON.stringify({ id }),
       });
 
       if (!response.ok) {
@@ -189,7 +189,7 @@ export default function SettingsKeys() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDelete(item.provider, item.name)}
+                    onClick={() => handleDelete(item.id)}
                     className="text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
