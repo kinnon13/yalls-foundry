@@ -116,6 +116,39 @@ serve(async (req) => {
       console.warn('[andy-chat] File search failed:', e);
     }
 
+    // 3b. If user provided URLs, fetch them and include summaries
+    try {
+      const urlRegex = /(https?:\/\/[^\s]+)/gi;
+      const urls = (lastUserMsg.match(urlRegex) || []).slice(0, 2);
+      for (const u of urls) {
+        const { data: fetched, error } = await supabase.functions.invoke('rocker-fetch-url', {
+          body: { url: u }
+        });
+        if (!error && fetched?.title) {
+          context += `\n\n## Web Source (${fetched.url}):\n${fetched.title} — ${fetched.description || ''}\n${(fetched.content || '').slice(0, 400)}...`;
+        }
+      }
+    } catch (e) {
+      console.warn('[andy-chat] URL fetch failed:', e);
+    }
+
+    // 3c. If user asks to search/research, run web search and include top results
+    try {
+      const wantsSearch = /\b(search|research|google|browse|look\s+up)\b/i.test(lastUserMsg);
+      if (wantsSearch) {
+        const { data: web, error } = await supabase.functions.invoke('rocker-web-search', {
+          body: { query: lastUserMsg, num_results: 3 }
+        });
+        if (!error && web?.results?.length) {
+          context += `\n\n## Web Search Results:\n` + web.results.map((r: any, i: number) => `${i+1}. ${r.title}\n${r.snippet}\n${r.link}`).join('\n\n');
+        } else if (error) {
+          console.warn('[andy-chat] Web search error:', error);
+        }
+      }
+    } catch (e) {
+      console.warn('[andy-chat] Web search failed:', e);
+    }
+
     // 4. Load upcoming tasks (rocker_tasks)
     const { data: tasks } = await supabase
       .from('rocker_tasks')
