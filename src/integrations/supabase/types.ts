@@ -8309,6 +8309,54 @@ export type Database = {
         }
         Relationships: []
       }
+      rocker_insights: {
+        Row: {
+          action: string | null
+          confidence: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          priority: string
+          source: string | null
+          status: string | null
+          title: string
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          action?: string | null
+          confidence?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          priority?: string
+          source?: string | null
+          status?: string | null
+          title: string
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string | null
+          confidence?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          priority?: string
+          source?: string | null
+          status?: string | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       rocker_knowledge: {
         Row: {
           chunk_index: number

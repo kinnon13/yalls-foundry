@@ -138,10 +138,11 @@ export function MessengerRail() {
         throw new Error(`Failed to get AI response: ${response.status}`);
       }
 
-      // Parse SSE stream
+      // Parse SSE stream with proper buffering
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let assistantMessage = '';
+      let buffer = '';
 
       if (!reader) throw new Error('No response stream');
 
@@ -149,13 +150,17 @@ export function MessengerRail() {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        
+        // Keep incomplete line in buffer
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            const data = line.slice(6);
+            const data = line.slice(6).trim();
             if (data === '[DONE]') continue;
+            if (!data) continue;
 
             try {
               const parsed = JSON.parse(data);
@@ -164,7 +169,8 @@ export function MessengerRail() {
                 assistantMessage += content;
               }
             } catch (e) {
-              console.log('Parse error (partial data):', e);
+              // Skip malformed JSON chunks
+              console.debug('[SSE] Skip malformed:', data.slice(0, 50));
             }
           }
         }

@@ -7,11 +7,12 @@ import {
   Shield,
   Key,
   Users,
-  Calendar
+  Calendar,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type AppId = 'knowledge' | 'memory' | 'tasks' | 'files' | 'inbox' | 'capabilities' | 'admin' | 'secrets' | 'calendar';
+export type AppId = 'knowledge' | 'memory' | 'tasks' | 'files' | 'inbox' | 'capabilities' | 'admin' | 'secrets' | 'calendar' | 'proactive';
 
 interface AppDockProps {
   activeApp: AppId;
@@ -23,6 +24,7 @@ const APPS = [
   { id: 'memory' as AppId, label: 'Memory', icon: Brain, color: 'text-purple-500' },
   { id: 'tasks' as AppId, label: 'Tasks', icon: CheckSquare, color: 'text-green-500' },
   { id: 'calendar' as AppId, label: 'Calendar', icon: Calendar, color: 'text-cyan-500' },
+  { id: 'proactive' as AppId, label: 'Proactive', icon: Sparkles, color: 'text-yellow-500' },
   { id: 'files' as AppId, label: 'Files', icon: FolderOpen, color: 'text-orange-500' },
   { id: 'inbox' as AppId, label: 'Inbox', icon: Inbox, color: 'text-pink-500' },
   { id: 'capabilities' as AppId, label: 'Capabilities', icon: Shield, color: 'text-red-500' },

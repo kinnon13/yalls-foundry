@@ -274,3 +274,9 @@ verify_jwt = true
 [functions.elevenlabs-conversation]
 verify_jwt = true
 
+[functions.rocker-audit-system]
+verify_jwt = true
+
+[functions.rocker-insights]
+verify_jwt = true
+
