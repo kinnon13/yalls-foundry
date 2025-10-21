@@ -34,7 +34,7 @@ export function UserManagementPanel() {
 
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('andy-admin', {
+      const { data, error } = await supabase.functions.invoke('rocker-admin', {
         body: { action: 'list_users' }
       });
 

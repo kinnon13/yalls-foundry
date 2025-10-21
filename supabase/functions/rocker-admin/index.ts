@@ -69,6 +69,26 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization') || '';
 
     switch (action) {
+      // Andy/Super Admin actions
+      case 'list_users':
+        return await listUsers(supabaseClient);
+      
+      case 'view_profile':
+        return await viewProfile(supabaseClient, params.user_id);
+      
+      case 'view_conversations':
+        return await viewConversations(supabaseClient, params.user_id);
+      
+      case 'view_memories':
+        return await viewMemories(supabaseClient, params.user_id);
+      
+      case 'get_analytics':
+        return await getAnalytics(supabaseClient, params.user_id);
+      
+      case 'update_privacy':
+        return await updatePrivacy(supabaseClient, params.user_id, params.privacy_settings);
+      
+      // Original rocker-admin actions
       case 'search_global_knowledge':
         return await searchGlobalKnowledge(supabaseClient, params, authHeader);
       
@@ -303,6 +323,134 @@ async function auditLogInternal(
   }
 
   return new Response(JSON.stringify({ audit_log: data }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+// Andy/Super Admin Functions
+async function listUsers(supabase: any) {
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('user_id, display_name, bio, created_at')
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  const userIds = profiles?.map(p => p.user_id) || [];
+  const { data: memoryCounts } = await supabase
+    .from('ai_user_memory')
+    .select('user_id')
+    .in('user_id', userIds);
+
+  const counts = (memoryCounts || []).reduce((acc: any, m: any) => {
+    acc[m.user_id] = (acc[m.user_id] || 0) + 1;
+    return acc;
+  }, {});
+
+  const { data: privacySettings } = await supabase
+    .from('ai_user_privacy')
+    .select('*')
+    .in('user_id', userIds);
+
+  const privacyMap = (privacySettings || []).reduce((acc: any, p: any) => {
+    acc[p.user_id] = p;
+    return acc;
+  }, {});
+
+  const enriched = profiles?.map(p => ({
+    ...p,
+    memory_count: counts[p.user_id] || 0,
+    privacy: privacyMap[p.user_id] || null,
+  }));
+
+  return new Response(JSON.stringify({ users: enriched }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+async function viewProfile(supabase: any, userId: string) {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  return new Response(JSON.stringify({ profile }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+async function viewConversations(supabase: any, userId: string) {
+  const { data: sessions } = await supabase
+    .from('ai_sessions')
+    .select('id, actor_role, started_at, ended_at, params')
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
+    .limit(50);
+
+  const sessionIds = sessions?.map(s => s.id).slice(0, 10) || [];
+  const { data: messages } = await supabase.functions.invoke('chat-store', {
+    body: { action: 'get_sessions', session_ids: sessionIds },
+  });
+
+  return new Response(JSON.stringify({ sessions, messages: messages?.data || [] }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+async function viewMemories(supabase: any, userId: string) {
+  const { data: memories } = await supabase
+    .from('ai_user_memory')
+    .select('id, type, key, value, confidence, source, created_at, use_count, pinned')
+    .eq('user_id', userId)
+    .order('pinned', { ascending: false })
+    .order('use_count', { ascending: false })
+    .limit(200);
+
+  const grouped = (memories || []).reduce((acc: any, m: any) => {
+    const type = m.type || 'other';
+    if (!acc[type]) acc[type] = [];
+    acc[type].push(m);
+    return acc;
+  }, {});
+
+  return new Response(JSON.stringify({ memories: grouped }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+async function getAnalytics(supabase: any, userId: string) {
+  const { data: analytics } = await supabase
+    .from('ai_user_analytics')
+    .select('*')
+    .eq('user_id', userId)
+    .order('calculated_at', { ascending: false })
+    .limit(50);
+
+  return new Response(JSON.stringify({ analytics }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+async function updatePrivacy(supabase: any, userId: string, settings: any) {
+  const { error } = await supabase
+    .from('ai_user_privacy')
+    .upsert({
+      user_id: userId,
+      ...settings,
+      managed_by_super_admin: true,
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'user_id'
+    });
+
+  if (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  return new Response(JSON.stringify({ success: true }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }

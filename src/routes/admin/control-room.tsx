@@ -42,7 +42,6 @@ import { Phase2VerificationPanel } from '@/routes/admin/panels/Phase2Verificatio
 import { HardeningVerificationPanel } from '@/routes/admin/panels/HardeningVerificationPanel';
 import { SuperAIPanel } from '@/routes/admin/panels/SuperAIPanel';
 import { RoleManagementPanel } from '@/routes/admin/panels/RoleManagementPanel';
-import { AndyPanel } from '@/routes/admin/panels/AndyPanel';
 import { PromotionPanel } from '@/routes/admin/panels/PromotionPanel';
 import AdminRockerPanel from '@/routes/admin/panels/AdminRockerPanel';
 import RockerLearningPanel from '@/routes/admin/panels/RockerLearningPanel';
@@ -165,10 +164,6 @@ export default function ControlRoom() {
                 </TabsTrigger>
                 {isSuperAdmin && (
                   <>
-                    <TabsTrigger value="andy" className="gap-2 data-[state=active]:bg-background">
-                      <Brain className="h-4 w-4" />
-                      <span>Andy</span>
-                    </TabsTrigger>
                     <TabsTrigger value="promotions" className="gap-2 data-[state=active]:bg-background">
                       <TrendingUp className="h-4 w-4" />
                       <span>Promotions</span>
@@ -317,12 +312,6 @@ export default function ControlRoom() {
                         <span className="text-sm">Admin Rocker</span>
                         <Badge className="bg-blue-500">Active</Badge>
                       </div>
-                      {isSuperAdmin && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Andy (Knower)</span>
-                          <Badge className="bg-purple-500">Learning</Badge>
-                        </div>
-                      )}
                     </div>
                     <Button variant="outline" className="w-full" onClick={() => setActiveTab('ai-analytics')}>
                       View AI Analytics
@@ -339,13 +328,6 @@ export default function ControlRoom() {
               <AdminRockerPanel />
               <RockerLabelsPanel />
             </TabsContent>
-
-            {/* Andy Panel - Only for Super Admins */}
-            {isSuperAdmin && (
-              <TabsContent value="andy" className="space-y-6">
-                <AndyPanel />
-              </TabsContent>
-            )}
 
             {/* Promotions Panel - Only for Super Admins */}
             {isSuperAdmin && (

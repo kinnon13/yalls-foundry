@@ -15,6 +15,7 @@ import { SuperRockerLibrary } from '@/components/super-rocker/SuperRockerLibrary
 import { SuperRockerVault } from '@/components/super-rocker/SuperRockerVault';
 import { SuperRockerKnowledge } from '@/components/super-rocker/SuperRockerKnowledge';
 import { SuperRockerNotifications } from '@/components/super-rocker/SuperRockerNotifications';
+import { SuperRockerAdmin } from '@/components/super-rocker/SuperRockerAdmin';
 import { FileBrowser } from '@/components/super-rocker/FileBrowser';
 
 export default function SuperRocker() {
@@ -210,6 +211,9 @@ export default function SuperRocker() {
           </div>
           <FileBrowser />
         </Card>
+
+        {/* Andy Admin Panel (Super Admin Only) */}
+        <SuperRockerAdmin />
       </div>
     </div>
   );
