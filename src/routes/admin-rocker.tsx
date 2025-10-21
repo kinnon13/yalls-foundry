@@ -15,7 +15,7 @@ export default function AdminRocker() {
   const { session } = useSession();
   const { isAdmin, isLoading } = useRoles();
   const navigate = useNavigate();
-  const [activeApp, setActiveApp] = useState<AppId>('knowledge');
+  const [activeApp, setActiveApp] = useState<AppId>('overview');
   const [threadId, setThreadId] = useState<string | null>(null);
 
   useEffect(() => {

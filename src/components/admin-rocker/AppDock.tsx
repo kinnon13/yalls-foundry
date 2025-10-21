@@ -1,14 +1,20 @@
-import { Database, Brain, CheckSquare, FolderOpen, Users, BarChart3, Settings, MessageSquare } from 'lucide-react';
+import { 
+  Home, BarChart3, Shield, Users, TrendingUp, 
+  ScrollText, MessageCircle, Wrench, Brain, Settings 
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export type AppId = 
-  | 'knowledge' 
-  | 'tasks' 
-  | 'files' 
-  | 'analytics'
+  | 'overview' 
+  | 'analytics' 
+  | 'moderation' 
   | 'users'
-  | 'settings'
-  | 'chat';
+  | 'promotions'
+  | 'logs'
+  | 'feedback'
+  | 'tools'
+  | 'memory'
+  | 'settings';
 
 interface AppDockProps {
   activeApp: AppId;
@@ -16,12 +22,15 @@ interface AppDockProps {
 }
 
 const APPS = [
-  { id: 'knowledge' as AppId, label: 'Knowledge', icon: Brain, color: 'text-purple-500' },
-  { id: 'tasks' as AppId, label: 'Tasks', icon: CheckSquare, color: 'text-blue-500' },
-  { id: 'files' as AppId, label: 'Files', icon: FolderOpen, color: 'text-amber-500' },
-  { id: 'users' as AppId, label: 'Users', icon: Users, color: 'text-green-500' },
+  { id: 'overview' as AppId, label: 'Overview', icon: Home, color: 'text-blue-500' },
   { id: 'analytics' as AppId, label: 'Analytics', icon: BarChart3, color: 'text-cyan-500' },
-  { id: 'chat' as AppId, label: 'AI Chat', icon: MessageSquare, color: 'text-pink-500' },
+  { id: 'moderation' as AppId, label: 'Moderation', icon: Shield, color: 'text-red-500' },
+  { id: 'users' as AppId, label: 'Users', icon: Users, color: 'text-green-500' },
+  { id: 'promotions' as AppId, label: 'Promotions', icon: TrendingUp, color: 'text-orange-500' },
+  { id: 'logs' as AppId, label: 'Logs & Audits', icon: ScrollText, color: 'text-purple-500' },
+  { id: 'feedback' as AppId, label: 'Feedback', icon: MessageCircle, color: 'text-pink-500' },
+  { id: 'tools' as AppId, label: 'Tools', icon: Wrench, color: 'text-amber-500' },
+  { id: 'memory' as AppId, label: 'Memory', icon: Brain, color: 'text-violet-500' },
   { id: 'settings' as AppId, label: 'Settings', icon: Settings, color: 'text-slate-500' },
 ];
 
