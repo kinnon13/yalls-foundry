@@ -287,3 +287,6 @@ verify_jwt = false
 [functions.rocker-proactive-30min.cron]
 schedule = "*/30 * * * *"  # Every 30 minutes
 
+[functions.rocker-reembed-all]
+verify_jwt = true
+

@@ -30,9 +30,10 @@ interface Insight {
 export function ProactivePanel() {
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
   const [insights, setInsights] = useState<Insight[]>([]);
-  const [loading, setLoading] = useState<{ audit: boolean; insights: boolean }>({
+  const [loading, setLoading] = useState<{ audit: boolean; insights: boolean; reembed: boolean }>({
     audit: false,
     insights: false,
+    reembed: false,
   });
 
   const runAudit = async () => {
@@ -82,6 +83,40 @@ export function ProactivePanel() {
       });
     } finally {
       setLoading(prev => ({ ...prev, insights: false }));
+    }
+  };
+
+  const reembedAll = async () => {
+    setLoading(prev => ({ ...prev, reembed: true }));
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('rocker-reembed-all', {
+        body: { userId: user.id }
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Re-embedding Started',
+        description: `Processing ${data.files_count} files. This will take a few minutes.`,
+        duration: 6000,
+      });
+
+      // Auto-refresh audit after 10 seconds
+      setTimeout(() => {
+        runAudit();
+      }, 10000);
+    } catch (error) {
+      console.error('[Reembed] Error:', error);
+      toast({
+        title: 'Re-embed Failed',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(prev => ({ ...prev, reembed: false }));
     }
   };
 
@@ -181,15 +216,25 @@ export function ProactivePanel() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button 
-            onClick={extractInsights}
-            disabled={loading.insights}
-            className="w-full"
-            variant="secondary"
-          >
-            {loading.insights && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Extract Insights
-          </Button>
+          <div className="grid grid-cols-1 gap-2">
+            <Button 
+              onClick={extractInsights}
+              disabled={loading.insights}
+              variant="secondary"
+            >
+              {loading.insights && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Extract Insights
+            </Button>
+
+            <Button 
+              onClick={reembedAll}
+              disabled={loading.reembed}
+              variant="outline"
+            >
+              {loading.reembed && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              🔄 Re-embed All Files & Analyze
+            </Button>
+          </div>
 
           {insights.length > 0 && (
             <div className="space-y-3">
