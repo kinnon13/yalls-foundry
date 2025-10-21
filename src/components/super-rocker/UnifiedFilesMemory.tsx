@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Folder, 
   File, 
@@ -17,7 +16,6 @@ import {
   FolderPlus,
   Zap,
   RefreshCw,
-  Edit,
   FileText,
   Database,
   MessageSquare,
@@ -26,7 +24,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 
 interface Category {
   id: string;
@@ -458,77 +455,77 @@ export function UnifiedFilesMemory() {
                 Files by Project ({filteredFiles.length})
               </h3>
               <div className="space-y-1">
-              {Object.entries(groupedFiles).map(([project, paths]) => {
-                const projectKey = `project:${project}`;
-                const isProjectExpanded = expandedFolders.has(projectKey);
-                
-                return (
-                  <div key={project} className="space-y-1">
-                    <button
-                      onClick={() => toggleFolder(projectKey)}
-                      className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent/50 transition-colors text-left"
-                    >
-                      {isProjectExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                      <Folder className="h-5 w-5 text-blue-500" />
-                      <span className="font-semibold">{project}</span>
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        {Object.values(paths).flat().length} items
-                      </span>
-                    </button>
-                    
-                    {isProjectExpanded && (
-                      <div className="ml-6 space-y-1">
-                        {Object.entries(paths).map(([folderPath, folderFiles]) => {
-                          const folderKey = `${projectKey}/${folderPath}`;
-                          const isFolderExpanded = expandedFolders.has(folderKey);
-                          
-                          return (
-                            <div key={folderPath}>
-                              <button
-                                onClick={() => toggleFolder(folderKey)}
-                                className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent/50 transition-colors text-left"
-                              >
-                                {isFolderExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                                <Folder className="h-4 w-4 text-amber-500" />
-                                <span className="text-sm">{folderPath}</span>
-                                <span className="ml-auto text-xs text-muted-foreground">{folderFiles.length}</span>
-                              </button>
-                              
-                              {isFolderExpanded && (
-                                <div className="ml-6 space-y-1">
-                                  {folderFiles.map(file => (
-                                    <button
-                                      key={file.id}
-                                      onClick={() => { setSelectedFile(file); setViewOpen(true); }}
-                                      className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent transition-colors text-left"
-                                    >
-                                      <File className="h-4 w-4 text-muted-foreground" />
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-sm truncate">{file.name}</p>
-                                        {file.summary && (
-                                          <p className="text-xs text-muted-foreground truncate">{file.summary}</p>
-                                        )}
-                                      </div>
-                                      <div className="flex gap-1">
-                                        {file.chunk_count! > 0 && (
-                                          <Badge variant="secondary" className="text-xs">{file.chunk_count}</Badge>
-                                        )}
-                                        {file.tags?.slice(0, 2).map(tag => (
-                                          <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
-                                        ))}
-                                      </div>
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                {Object.entries(groupedFiles).map(([project, paths]) => {
+                  const projectKey = `project:${project}`;
+                  const isProjectExpanded = expandedFolders.has(projectKey);
+                  
+                  return (
+                    <div key={project} className="space-y-1">
+                      <button
+                        onClick={() => toggleFolder(projectKey)}
+                        className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent/50 transition-colors text-left"
+                      >
+                        {isProjectExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        <Folder className="h-5 w-5 text-blue-500" />
+                        <span className="font-semibold">{project}</span>
+                        <span className="ml-auto text-xs text-muted-foreground">
+                          {Object.values(paths).flat().length} items
+                        </span>
+                      </button>
+                      
+                      {isProjectExpanded && (
+                        <div className="ml-6 space-y-1">
+                          {Object.entries(paths).map(([folderPath, folderFiles]) => {
+                            const folderKey = `${projectKey}/${folderPath}`;
+                            const isFolderExpanded = expandedFolders.has(folderKey);
+                            
+                            return (
+                              <div key={folderPath}>
+                                <button
+                                  onClick={() => toggleFolder(folderKey)}
+                                  className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent/50 transition-colors text-left"
+                                >
+                                  {isFolderExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                                  <Folder className="h-4 w-4 text-amber-500" />
+                                  <span className="text-sm">{folderPath}</span>
+                                  <span className="ml-auto text-xs text-muted-foreground">{folderFiles.length}</span>
+                                </button>
+                                
+                                {isFolderExpanded && (
+                                  <div className="ml-6 space-y-1">
+                                    {folderFiles.map(file => (
+                                      <button
+                                        key={file.id}
+                                        onClick={() => { setSelectedFile(file); setViewOpen(true); }}
+                                        className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent transition-colors text-left"
+                                      >
+                                        <File className="h-4 w-4 text-muted-foreground" />
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm truncate">{file.name}</p>
+                                          {file.summary && (
+                                            <p className="text-xs text-muted-foreground truncate">{file.summary}</p>
+                                          )}
+                                        </div>
+                                        <div className="flex gap-1">
+                                          {file.chunk_count! > 0 && (
+                                            <Badge variant="secondary" className="text-xs">{file.chunk_count}</Badge>
+                                          )}
+                                          {file.tags?.slice(0, 2).map(tag => (
+                                            <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                                          ))}
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -536,116 +533,70 @@ export function UnifiedFilesMemory() {
           {/* Knowledge Chunks */}
           {filteredKnowledge.length > 0 && (
             <div>
-              {Object.entries(groupedByMemoryLayer).map(([layer, layerMemories]) => {
-                const layerKey = `layer:${layer}`;
-                const isExpanded = expandedFolders.has(layerKey);
-                
-                return (
-                  <div key={layer}>
-                    <button
-                      onClick={() => toggleFolder(layerKey)}
-                      className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent/50 transition-colors text-left mb-1"
-                    >
-                      {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                      <Brain className="h-5 w-5 text-purple-500" />
-                      <span className="font-semibold">{layer}</span>
-                      <span className="ml-auto text-xs text-muted-foreground">{layerMemories.length}</span>
-                    </button>
-                    
-                    {isExpanded && (
-                      <div className="ml-6 space-y-2">
-                        {layerMemories.map(mem => (
-                          <div key={mem.id} className="p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
-                            <div className="flex items-start gap-2">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <Badge variant="secondary" className="text-xs">{mem.kind}</Badge>
-                                  {mem.pinned && <Pin className="h-3 w-3 text-primary" />}
-                                  {mem.key && <span className="text-xs text-muted-foreground truncate">{mem.key}</span>}
-                                </div>
-                                <p className="text-sm line-clamp-2">
-                                  {mem.value?.text || JSON.stringify(mem.value).slice(0, 100)}
-                                </p>
-                              </div>
-                              <div className="flex gap-1">
-                                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => togglePin(mem.id, mem.pinned)}>
-                                  <Pin className={`h-4 w-4 ${mem.pinned ? 'text-primary' : ''}`} />
-                                </Button>
-                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => deleteMemory(mem.id)}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+              <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <Database className="h-4 w-4" />
+                Knowledge Chunks ({filteredKnowledge.length})
+              </h3>
+              <div className="space-y-2">
+                {filteredKnowledge.map(chunk => (
+                  <div key={chunk.id} className="p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+                    <div className="flex items-start gap-2">
+                      <Database className="h-4 w-4 mt-1 text-blue-500" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="outline" className="text-xs">Chunk {chunk.chunk_index}</Badge>
+                          {chunk.keywords && chunk.keywords.slice(0, 3).map(kw => (
+                            <Badge key={kw} variant="secondary" className="text-xs">{kw}</Badge>
+                          ))}
+                        </div>
+                        {chunk.chunk_summary && (
+                          <p className="text-xs text-muted-foreground mb-1">{chunk.chunk_summary}</p>
+                        )}
+                        <p className="text-sm line-clamp-3">{chunk.content}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {format(new Date(chunk.created_at), 'PPp')}
+                        </p>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        </TabsContent>
-
-        <TabsContent value="knowledge" className="mt-4">
-          <ScrollArea className="h-[500px]">
-            <div className="space-y-2 pr-4">
-              {filteredKnowledge.map(chunk => (
-                <div key={chunk.id} className="p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
-                  <div className="flex items-start gap-2">
-                    <Database className="h-4 w-4 mt-1 text-blue-500" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="outline" className="text-xs">Chunk {chunk.chunk_index}</Badge>
-                        {chunk.keywords && chunk.keywords.slice(0, 3).map(kw => (
-                          <Badge key={kw} variant="secondary" className="text-xs">{kw}</Badge>
-                        ))}
-                      </div>
-                      {chunk.chunk_summary && (
-                        <p className="text-xs text-muted-foreground mb-1">{chunk.chunk_summary}</p>
-                      )}
-                      <p className="text-sm line-clamp-3">{chunk.content}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {format(new Date(chunk.created_at), 'PPp')}
-                      </p>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </ScrollArea>
-        </TabsContent>
+          )}
 
-        <TabsContent value="chats" className="mt-4">
-          <ScrollArea className="h-[500px]">
-            <div className="space-y-2 pr-4">
-              {filteredMessages.slice(0, 30).map(msg => (
-                <div key={msg.id} className="p-2 border rounded-lg bg-card hover:bg-accent/50 transition-colors text-xs">
-                  <div className="flex items-start gap-2">
-                    <MessageSquare className="h-3 w-3 mt-0.5 text-green-500 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <Badge variant={msg.role === 'user' ? 'default' : 'secondary'} className="text-xs">
-                          {msg.role}
-                        </Badge>
+          {/* Chat Messages */}
+          {filteredMessages.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Chat Messages ({filteredMessages.length})
+              </h3>
+              <div className="space-y-2">
+                {filteredMessages.slice(0, 30).map(msg => (
+                  <div key={msg.id} className="p-2 border rounded-lg bg-card hover:bg-accent/50 transition-colors text-xs">
+                    <div className="flex items-start gap-2">
+                      <MessageSquare className="h-3 w-3 mt-0.5 text-green-500 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <Badge variant={msg.role === 'user' ? 'default' : 'secondary'} className="text-xs">
+                            {msg.role}
+                          </Badge>
+                        </div>
+                        <p className="text-xs line-clamp-2">{msg.content}</p>
                       </div>
-                      <p className="text-xs line-clamp-2">{msg.content}</p>
                     </div>
                   </div>
-                </div>
-              ))}
-              {filteredMessages.length > 30 && (
-                <p className="text-xs text-muted-foreground text-center py-2">
-                  Showing 30 of {filteredMessages.length} messages
-                </p>
-              )}
+                ))}
+                {filteredMessages.length > 30 && (
+                  <p className="text-xs text-muted-foreground text-center py-2">
+                    Showing 30 of {filteredMessages.length} messages
+                  </p>
+                )}
+              </div>
             </div>
-          </ScrollArea>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
+          )}
+        </div>
+      </ScrollArea>
 
       {/* File Viewer Dialog */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
