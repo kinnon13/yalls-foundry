@@ -9286,6 +9286,9 @@ export type Database = {
           allow_email_sending: boolean
           allow_file_operations: boolean
           allow_financial_operations: boolean
+          allow_knowledge_write: boolean | null
+          allow_memory_ingest: boolean | null
+          allow_proactive_suggestions: boolean | null
           allow_secure_credentials: boolean
           allow_voice_calls: boolean
           allow_voice_messages: boolean
@@ -9304,6 +9307,9 @@ export type Database = {
           allow_email_sending?: boolean
           allow_file_operations?: boolean
           allow_financial_operations?: boolean
+          allow_knowledge_write?: boolean | null
+          allow_memory_ingest?: boolean | null
+          allow_proactive_suggestions?: boolean | null
           allow_secure_credentials?: boolean
           allow_voice_calls?: boolean
           allow_voice_messages?: boolean
@@ -9322,6 +9328,9 @@ export type Database = {
           allow_email_sending?: boolean
           allow_file_operations?: boolean
           allow_financial_operations?: boolean
+          allow_knowledge_write?: boolean | null
+          allow_memory_ingest?: boolean | null
+          allow_proactive_suggestions?: boolean | null
           allow_secure_credentials?: boolean
           allow_voice_calls?: boolean
           allow_voice_messages?: boolean
