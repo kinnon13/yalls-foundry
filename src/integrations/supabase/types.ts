@@ -4196,6 +4196,7 @@ export type Database = {
           created_by_user_id: string | null
           display_name: string
           handle: string | null
+          handle_lower: string | null
           id: string
           is_mock: boolean | null
           kind: Database["public"]["Enums"]["entity_kind"]
@@ -4213,6 +4214,7 @@ export type Database = {
           created_by_user_id?: string | null
           display_name: string
           handle?: string | null
+          handle_lower?: string | null
           id?: string
           is_mock?: boolean | null
           kind: Database["public"]["Enums"]["entity_kind"]
@@ -4230,6 +4232,7 @@ export type Database = {
           created_by_user_id?: string | null
           display_name?: string
           handle?: string | null
+          handle_lower?: string | null
           id?: string
           is_mock?: boolean | null
           kind?: Database["public"]["Enums"]["entity_kind"]
@@ -5471,6 +5474,27 @@ export type Database = {
           followee_user_id?: string
           follower_user_id?: string
           id?: string
+        }
+        Relationships: []
+      }
+      handle_reservations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          handle: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          handle: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          handle?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -12992,6 +13016,10 @@ export type Database = {
         Args: { p_event_id: string; p_payload: Json }
         Returns: string
       }
+      cleanup_expired_handle_reservations: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_expired_idempotency: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -14445,6 +14473,10 @@ export type Database = {
         Args: { p_listing_id: string; p_session_id?: string }
         Returns: undefined
       }
+      release_business_handle: {
+        Args: { p_handle: string }
+        Returns: boolean
+      }
       remove_role: {
         Args: {
           target_role: Database["public"]["Enums"]["app_role"]
@@ -14484,6 +14516,10 @@ export type Database = {
       reservations_export_csv: {
         Args: { p_event_id: string }
         Returns: string
+      }
+      reserve_business_handle: {
+        Args: { p_handle: string; p_minutes?: number }
+        Returns: boolean
       }
       reset_auth_rate_limit: {
         Args: { p_identifier: string }
@@ -15856,6 +15892,14 @@ export type Database = {
       user_interests_upsert: {
         Args: { p_items: string }
         Returns: undefined
+      }
+      validate_business_handle: {
+        Args: { p_handle: string }
+        Returns: {
+          available: boolean
+          normalized: string
+          suggestions: string[]
+        }[]
       }
       vector_avg: {
         Args: { "": number[] }

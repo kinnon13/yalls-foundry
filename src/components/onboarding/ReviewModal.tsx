@@ -20,6 +20,7 @@ interface ReviewModalProps {
   open: boolean;
   data: {
     name?: string;
+    handle?: string; // Business ID
     categories?: Array<{ label: string; status: 'active' | 'pending' }>;
     website?: string;
     phone?: string;
@@ -50,6 +51,9 @@ export function ReviewModal({ open, data, onEdit, onConfirm, onClose }: ReviewMo
               <div>
                 <p className="text-sm font-medium">Business Name</p>
                 <p className="text-base">{data.name || 'Not provided'}</p>
+                {data.handle && (
+                  <p className="text-sm text-muted-foreground mt-1">@{data.handle}</p>
+                )}
               </div>
             </div>
             <Button

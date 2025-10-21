@@ -4,14 +4,13 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { useBusinessChatFlow } from '@/hooks/useBusinessChatFlow';
+import { useBusinessChatFlowVoice } from '@/hooks/useBusinessChatFlowVoice';
+import { useVoice } from '@/hooks/useVoice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Mic, MicOff, Volume2, VolumeX, Send, Building2, User } from 'lucide-react';
 import { ReviewModal } from './ReviewModal';
-import { speak, stopSpeaking } from '@/utils/voice';
-import { useSpeech } from '@/hooks/useSpeech';
 
 interface BusinessChatOnboardingProps {
   onComplete: () => void;
@@ -30,7 +29,7 @@ export function BusinessChatOnboarding({ onComplete, onSkip }: BusinessChatOnboa
     handleAction,
     confirmSetup,
     setStep
-  } = useBusinessChatFlow();
+  } = useBusinessChatFlowVoice();
 
   const [input, setInput] = useState('');
   const [voiceEnabled, setVoiceEnabled] = useState(false);
@@ -41,17 +40,15 @@ export function BusinessChatOnboarding({ onComplete, onSkip }: BusinessChatOnboa
   // Don't start chat until user chooses "I run a business"
   const [chatStarted, setChatStarted] = useState(false);
 
-  // Speech recognition
-  const { start: startListening, stop: stopListening, listening } = useSpeech({
+  // Voice (TTS + STT)
+  const { speak, stopSpeaking, listen, isSupported } = useVoice({
+    enabled: voiceEnabled,
     onTranscript: (text, isFinal) => {
       setInput(text);
       if (isFinal) {
         setIsListening(false);
+        handleSend();
       }
-    },
-    onError: (error) => {
-      console.error('Speech error:', error);
-      setIsListening(false);
     }
   });
 
@@ -104,10 +101,9 @@ export function BusinessChatOnboarding({ onComplete, onSkip }: BusinessChatOnboa
 
   const toggleMic = () => {
     if (isListening) {
-      stopListening();
       setIsListening(false);
     } else {
-      startListening();
+      listen();
       setIsListening(true);
     }
   };
@@ -317,7 +313,8 @@ export function BusinessChatOnboarding({ onComplete, onSkip }: BusinessChatOnboa
           const stepMap: Record<string, typeof step> = {
             name: 'ask_name',
             categories: 'ask_categories',
-            contact: 'ask_contact',
+            website: 'ask_website',
+            phone: 'ask_phone',
             bio: 'ask_bio'
           };
           setStep(stepMap[field] || 'ask_name');
