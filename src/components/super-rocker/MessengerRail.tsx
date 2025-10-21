@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/lib/auth/context';
 import { toast } from '@/hooks/use-toast';
-import { useConversation } from '@11labs/react';
+import { RealtimeVoice } from '@/utils/RealtimeAudio';
 
 interface Message {
   id: number;
@@ -24,26 +24,8 @@ export function MessengerRail() {
   const queryClient = useQueryClient();
   const lastMessageCountRef = useRef(0);
   
-  const conversation = useConversation({
-    onConnect: () => console.log('[Voice] Connected'),
-    onDisconnect: () => console.log('[Voice] Disconnected'),
-    onMessage: (message) => {
-      console.log('[Voice] Message:', message);
-      // Toast for voice messages
-      toast({
-        title: 'Andy (voice)',
-        description: typeof message === 'string' ? message : JSON.stringify(message).slice(0, 100),
-      });
-    },
-    onError: (error) => {
-      console.error('[Voice] Error:', error);
-      toast({
-        title: 'Voice error',
-        description: String(error),
-        variant: 'destructive',
-      });
-    },
-  });
+  const [voiceStatus, setVoiceStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+  const voiceRef = useRef<RealtimeVoice | null>(null);
 
   // Load or create thread
   useEffect(() => {
@@ -230,12 +212,15 @@ export function MessengerRail() {
   };
 
   const toggleVoice = async () => {
-    if (conversation.status === 'connected') {
-      await conversation.endSession();
+    if (voiceStatus === 'connected') {
+      voiceRef.current?.disconnect();
+      setVoiceStatus('disconnected');
+      toast({ title: 'Voice Off', description: 'Andy stopped listening' });
       return;
     }
 
     try {
+      setVoiceStatus('connecting');
       console.log('[Voice] Requesting mic access...');
       await navigator.mediaDevices.getUserMedia({ audio: true });
       
@@ -247,20 +232,29 @@ export function MessengerRail() {
         throw error;
       }
       
-      if (!data?.clientSecret) {
+      const ephemeralKey = data?.clientSecret as string | undefined;
+      if (!ephemeralKey) {
         throw new Error('No client secret received');
       }
 
-      console.log('[Voice] OpenAI Realtime ready');
+      console.log('[Voice] Connecting to OpenAI Realtime...');
+      voiceRef.current = new RealtimeVoice(
+        (status) => setVoiceStatus(status),
+        (text, isFinal) => {
+          if (isFinal && text) {
+            toast({ title: 'Andy (voice)', description: text.slice(0, 100) });
+          }
+        }
+      );
+      await voiceRef.current.connect(ephemeralKey);
+
       toast({
         title: 'Voice Active',
         description: 'Andy is listening with OpenAI Realtime',
       });
-      
-      // TODO: Connect to OpenAI Realtime WebSocket with clientSecret
-      // This requires additional WebSocket implementation
     } catch (error) {
       console.error('[Voice] Failed:', error);
+      setVoiceStatus('disconnected');
       toast({
         title: 'Voice Error',
         description: error instanceof Error ? error.message : 'Check that OpenAI API key is configured',
@@ -350,14 +344,14 @@ export function MessengerRail() {
             size="icon"
             className={cn(
               "h-10 w-10 rounded-xl shrink-0",
-              conversation.status === 'connected' && "bg-[#007AFF] text-white"
+              voiceStatus === 'connected' && "bg-[#007AFF] text-white"
             )}
             onClick={toggleVoice}
-            disabled={conversation.status === 'connecting'}
+            disabled={voiceStatus === 'connecting'}
           >
-            {conversation.status === 'connecting' ? (
+            {voiceStatus === 'connecting' ? (
               <Loader2 className="h-4 w-4 animate-spin" />
-            ) : conversation.status === 'connected' ? (
+            ) : voiceStatus === 'connected' ? (
               <MicOff className="h-4 w-4" />
             ) : (
               <Mic className="h-4 w-4" />
@@ -367,13 +361,13 @@ export function MessengerRail() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={conversation.status === 'connected' ? "Voice active..." : "Message Andy... (⌘⏎ to send)"}
+            placeholder={voiceStatus === 'connected' ? "Voice active..." : "Message Andy... (⌘⏎ to send)"}
             className="flex-1 h-10 rounded-xl"
-            disabled={sendMutation.isPending || conversation.status === 'connected'}
+            disabled={sendMutation.isPending || voiceStatus === 'connected'}
           />
           <Button
             onClick={handleSend}
-            disabled={!input.trim() || sendMutation.isPending || conversation.status === 'connected'}
+            disabled={!input.trim() || sendMutation.isPending || voiceStatus === 'connected'}
             className="h-10 px-4 rounded-xl bg-[#007AFF] hover:bg-[#0051D5] text-white font-medium shrink-0"
           >
             Send
