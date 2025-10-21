@@ -1,7 +1,5 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
-import { createLogger } from "../_shared/logger.ts";
-import { ai } from "../_shared/ai.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,12 +11,6 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const limited = await withRateLimit(req, 'text-to-speech', RateLimits.expensive);
-  if (limited) return limited;
-
-  const log = createLogger('text-to-speech');
-  log.startTimer();
-
   try {
     const { text, voice = 'alloy' } = await req.json();
 
@@ -26,12 +18,37 @@ serve(async (req) => {
       throw new Error('Text is required');
     }
 
-    const arrayBuffer = await ai.tts('user', text, voice);
-    
-    // Convert ArrayBuffer to base64 in chunks to avoid stack overflow
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+
+    // Generate speech using OpenAI TTS
+    const response = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'tts-1',
+        input: text,
+        voice: voice,
+        response_format: 'mp3',
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('[TTS] OpenAI error:', error);
+      throw new Error(`Failed to generate speech: ${response.statusText}`);
+    }
+
+    // Convert audio to base64
+    const arrayBuffer = await response.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
     let binary = '';
-    const chunkSize = 8192; // Process in 8KB chunks
+    const chunkSize = 8192;
     
     for (let i = 0; i < bytes.length; i += chunkSize) {
       const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
@@ -47,7 +64,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    log.error('Text-to-speech error', error);
+    console.error('[TTS] Error:', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       {

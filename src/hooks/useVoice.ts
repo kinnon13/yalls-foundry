@@ -12,29 +12,34 @@ export interface UseVoiceOptions {
 
 export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
   const recognitionRef = useRef<any>(null);
-  const synthRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const synthRef = useRef<HTMLAudioElement | null>(null);
 
-  // Text-to-Speech
-  const speak = useCallback((text: string) => {
-    if (!enabled || !('speechSynthesis' in window)) return;
+  // Text-to-Speech using OpenAI
+  const speak = useCallback(async (text: string) => {
+    if (!enabled) return;
     
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
-    
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.02; // Slightly higher for "Rocker" personality
-    utterance.volume = 1.0;
-    utterance.lang = 'en-US';
-    
-    synthRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: { text, voice: 'onyx' } // Using 'onyx' for a deeper, more natural voice
+      });
+
+      if (error) throw error;
+
+      // Play the audio
+      const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+      synthRef.current = audio;
+      await audio.play();
+    } catch (error) {
+      console.error('[Voice] TTS error:', error);
+    }
   }, [enabled]);
 
   // Stop speaking
   const stopSpeaking = useCallback(() => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+    if (synthRef.current instanceof HTMLAudioElement) {
+      synthRef.current.pause();
+      synthRef.current.currentTime = 0;
     }
   }, []);
 
@@ -85,7 +90,6 @@ export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
     speak,
     stopSpeaking,
     listen,
-    isSupported: 'speechSynthesis' in window && 
-                 ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)
+    isSupported: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window
   };
 }
