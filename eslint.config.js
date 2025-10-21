@@ -24,6 +24,11 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "error",
       "@typescript-eslint/no-explicit-any": "warn",
       "no-console": ["warn", { allow: ["warn", "error"] }],
+      // Prevent Web Speech TTS usage (use useVoice server TTS only)
+      "no-restricted-globals": ["error",
+        { "name": "speechSynthesis", "message": "Use useVoice({ role }) with server TTS only. No browser TTS allowed." },
+        { "name": "SpeechSynthesisUtterance", "message": "Use useVoice({ role }) with server TTS only. No browser TTS allowed." }
+      ],
     },
   },
   // Allow console in scripts

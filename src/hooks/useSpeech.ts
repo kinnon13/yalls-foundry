@@ -1,6 +1,10 @@
 /**
  * Speech Recognition Hook
  * 
+ * @deprecated Use useVoice({ role }) for role-based voice with server TTS.
+ * This hook only provides STT via Web Speech API.
+ * Only use for non-AI features like VoicePostButton or CommandPalette.
+ * 
  * Wrapper around Web Speech API for voice capture
  */
 

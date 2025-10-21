@@ -1,5 +1,9 @@
 /**
  * Rocker Voice Hook
+ * 
+ * @deprecated Use useVoice({ role }) for role-based voice with server TTS.
+ * This hook uses RealtimeVoice with Web Speech fallback.
+ * 
  * Production-grade voice state management with mic access and VAD
  */
 
