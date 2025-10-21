@@ -106,7 +106,10 @@ export function useVoice({ enabled, onTranscript }: UseVoiceOptions) {
 
     recognition.onend = restart;
     recognition.onerror = (event: any) => {
-      console.error('[Voice] Recognition error:', event.error);
+      // Suppress benign errors (no-speech is expected when user is silent)
+      if (event.error !== 'aborted' && event.error !== 'no-speech') {
+        console.error('[Voice] Recognition error:', event.error);
+      }
       if (event.error !== 'aborted') {
         restart();
       }

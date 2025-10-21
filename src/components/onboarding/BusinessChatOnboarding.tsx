@@ -64,9 +64,45 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
     };
   }, [stopAll]);
 
-  // Start voice loop when assistant messages arrive
+  // Play preloaded greeting immediately on chat start
+  useEffect(() => {
+    if (!voiceEnabled || !chatStarted) return;
+    
+    let hasPlayedGreeting = false;
+
+    const playGreeting = async () => {
+      if (hasPlayedGreeting) return;
+      hasPlayedGreeting = true;
+
+      const { playPreloadedGreeting } = await import('@/utils/voicePrime');
+      
+      await playPreloadedGreeting(() => {
+        // After greeting ends, start listening
+        if (stopListenRef.current) {
+          stopListenRef.current();
+        }
+        
+        const cleanup = listen(
+          (finalText) => {
+            setInput(finalText);
+            handleSend();
+          },
+          (interimText) => {
+            setInterimTranscript(interimText);
+          }
+        );
+        
+        stopListenRef.current = cleanup;
+      });
+    };
+
+    playGreeting();
+  }, [voiceEnabled, chatStarted, listen]);
+
+  // Start voice loop for subsequent assistant messages (not the initial greeting)
   useEffect(() => {
     if (!voiceEnabled || !chatStarted || step === 'done' || step === 'saving') return;
+    if (messages.length <= 1) return; // Skip initial greeting message
     
     const lastMessage = messages[messages.length - 1];
     if (!lastMessage || lastMessage.role !== 'assistant') return;
@@ -173,7 +209,12 @@ export function BusinessChatOnboarding({ onComplete, onSkip, onBack }: BusinessC
     onSkip();
   };
   
-  const handleChooseBusiness = () => {
+  const handleChooseBusiness = async () => {
+    // Prime voice: unlock audio + prefetch greeting
+    if (voiceConsent) {
+      const { voicePrime } = await import('@/utils/voicePrime');
+      await voicePrime();
+    }
     setShowChoice(false);
     setChatStarted(true);
   };
