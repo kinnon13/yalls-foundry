@@ -35,41 +35,50 @@ serve(async (req) => {
     const systemPrompt = "You are Rocker, a proactive AI copilot. Be concise and actionable.";
     const authHeader = req.headers.get("Authorization") || "";
 
-    // 1) Try streaming via proxy-openai using the user's saved key
+    // 1) Try streaming via proxy-openai using the user's saved key (try multiple key names)
     const proxyUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/proxy-openai`;
-    const upstream = await fetch(proxyUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": authHeader,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        path: "/chat/completions",
-        body: {
-          model: "gpt-4o-mini",
-          stream: true,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: message },
-          ]
-        },
-        keyName: "default"
-      })
-    });
+    let lastErrText = "";
+    let lastStatus = 0;
 
-    if (upstream.ok && upstream.body) {
-      return new Response(upstream.body, {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    for (const keyName of ["default", "openai"]) {
+      const upstream = await fetch(proxyUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": authHeader,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          path: "/chat/completions",
+          body: {
+            model: "gpt-4o-mini",
+            stream: true,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: message },
+            ]
+          },
+          keyName
+        })
       });
+
+      if (upstream.ok && upstream.body) {
+        return new Response(upstream.body, {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+        });
+      }
+
+      // Capture error text for diagnostics before trying next key
+      lastStatus = upstream.status || 500;
+      try { lastErrText = await upstream.text(); } catch { /* ignore */ }
     }
 
     // 2) Fallback to Lovable AI gateway streaming if user key missing/invalid
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      const errText = await upstream.text().catch(() => "");
-      return new Response(JSON.stringify({ error: errText || "AI is not configured" }), {
-        status: upstream.status || 500,
+      const detail = lastErrText || "OpenAI key not found. Please save your key under provider 'openai' with name 'default' or 'openai'.";
+      return new Response(JSON.stringify({ error: detail }), {
+        status: lastStatus || 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
