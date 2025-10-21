@@ -28,14 +28,17 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization') || '' } } }
     );
 
+    const { data: { user } } = await supabase.auth.getUser();
+
     // Persist user message when thread provided
     if (thread_id) {
       try {
         await supabase.from('rocker_messages').insert({
           thread_id,
+          user_id: user?.id,
           role: 'user',
           content: message,
-          meta: null,
+          meta: {},
         });
       } catch (e) {
         console.error('[rocker-chat-simple] failed to insert user message', e);
@@ -65,9 +68,10 @@ serve(async (req) => {
       try {
         await supabase.from('rocker_messages').insert({
           thread_id,
+          user_id: user?.id,
           role: 'assistant',
           content: reply,
-          meta: null,
+          meta: {},
         });
       } catch (e) {
         console.error('[rocker-chat-simple] failed to insert assistant message', e);
