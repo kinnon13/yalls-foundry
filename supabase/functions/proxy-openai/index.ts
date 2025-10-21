@@ -14,15 +14,20 @@ async function getKey(): Promise<CryptoKey> {
   if (raw.startsWith("base64:")) {
     const b64 = raw.slice(7);
     const binString = atob(b64);
-    keyBytes = new Uint8Array(binString.length);
-    for (let i = 0; i < binString.length; i++) {
-      keyBytes[i] = binString.charCodeAt(i);
+    const tmp = new Uint8Array(binString.length);
+    for (let i = 0; i < binString.length; i++) tmp[i] = binString.charCodeAt(i);
+    if (tmp.length === 32) keyBytes = tmp;
+    else {
+      // Derive a 32-byte key from provided bytes if length is not 32
+      const digest = await crypto.subtle.digest("SHA-256", tmp);
+      keyBytes = new Uint8Array(digest);
     }
   } else {
-    keyBytes = new TextEncoder().encode(raw);
+    // Derive a stable 32-byte key from arbitrary string
+    const te = new TextEncoder().encode(raw);
+    const digest = await crypto.subtle.digest("SHA-256", te);
+    keyBytes = new Uint8Array(digest);
   }
-  
-  if (keyBytes.length !== 32) throw new Error("ENCRYPTION_KEY must be 32 bytes");
   
   return await crypto.subtle.importKey(
     "raw",

@@ -8,32 +8,33 @@ const corsHeaders = {
 };
 
 // Encryption helpers
+// Encryption helpers
 async function getKey(): Promise<CryptoKey> {
   const raw = Deno.env.get("ENCRYPTION_KEY");
   
-  // Debug logging
+  // Debug logging (keep minimal in prod)
   const allEnvKeys = Object.keys(Deno.env.toObject());
-  console.log("Available env keys:", allEnvKeys.filter(k => !k.includes('KEY')).join(', '));
   console.log("ENCRYPTION_KEY exists?", allEnvKeys.includes("ENCRYPTION_KEY"));
   
   if (!raw) {
-    throw new Error("ENCRYPTION_KEY not found in environment. Please add it in Cloud > Secrets with name: ENCRYPTION_KEY");
+    throw new Error("ENCRYPTION_KEY not found in environment. Add it under Secrets as ENCRYPTION_KEY");
   }
   
   let keyBytes: Uint8Array;
   if (raw.startsWith("base64:")) {
     const b64 = raw.slice(7);
     const binString = atob(b64);
-    keyBytes = new Uint8Array(binString.length);
-    for (let i = 0; i < binString.length; i++) {
-      keyBytes[i] = binString.charCodeAt(i);
+    const tmp = new Uint8Array(binString.length);
+    for (let i = 0; i < binString.length; i++) tmp[i] = binString.charCodeAt(i);
+    if (tmp.length === 32) keyBytes = tmp;
+    else {
+      const digest = await crypto.subtle.digest("SHA-256", tmp);
+      keyBytes = new Uint8Array(digest);
     }
   } else {
-    keyBytes = new TextEncoder().encode(raw);
-  }
-  
-  if (keyBytes.length !== 32) {
-    throw new Error(`ENCRYPTION_KEY must be 32 bytes, got ${keyBytes.length}`);
+    const te = new TextEncoder().encode(raw);
+    const digest = await crypto.subtle.digest("SHA-256", te);
+    keyBytes = new Uint8Array(digest);
   }
   
   return await crypto.subtle.importKey(
