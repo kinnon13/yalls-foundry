@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,13 +26,14 @@ serve(async (req) => {
     // Get user from auth header
     const authHeader = req.headers.get('Authorization');
     
-    // Service role client for full access (bypasses RLS)
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+// Use anon client bound to Authorization header to resolve user
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader || '' } }
+    });
+    const { data: { user }, error: userError } = await anonClient.auth.getUser();
     
-    // Get user from JWT
-    const { data: { user }, error: userError } = await supabase.auth.getUser(
-      authHeader?.replace('Bearer ', '')
-    );
+    // Service role client for privileged data access (bypasses RLS)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
     if (userError || !user) {
       console.error('[andy-chat] Auth error:', userError);
@@ -248,8 +250,9 @@ Be conversational, fast, proactive, and always use the user's actual data when a
     });
   } catch (error) {
     console.error('[andy-chat] Error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
