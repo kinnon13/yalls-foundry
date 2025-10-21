@@ -1,6 +1,5 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { ai } from "../_shared/ai.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,36 +18,17 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization') || '' } } }
-    );
-
-    const { data, error } = await supabase.functions.invoke('proxy-openai', {
-      headers: { Authorization: req.headers.get('Authorization') || '' },
-      body: {
-        path: '/v1/chat/completions',
-        keyName: 'openai',
-        body: {
-          model: 'gpt-5-mini-2025-08-07',
-          messages: [
-            { role: 'system', content: 'You are Rocker. Perform deep analysis: break into micro-sections, call out uncertainties, propose 2-3 filing options per sentence.' },
-            { role: 'user', content }
-          ],
-          max_completion_tokens: 1200
-        }
-      }
+    const { text, raw } = await ai.chat({
+      role: 'knower',
+      messages: [
+        { role: 'system', content: 'You are Rocker. Perform deep analysis: break into micro-sections, call out uncertainties, propose 2-3 filing options per sentence.' },
+        { role: 'user', content }
+      ],
+      maxTokens: 1200,
+      temperature: 0.2
     });
 
-    if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response(JSON.stringify({ result: (data as any) }), {
+    return new Response(JSON.stringify({ result: { choices: [{ message: { content: text } }] }, raw }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {

@@ -1,12 +1,10 @@
 // Minimal, crash-proof embedder
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { ai } from "../_shared/ai.ts";
 
 const SUPABASE_URL  = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || '';
-const MODEL = "text-embedding-3-small";  // 1536 dims
 const CLAIM = 150;
 const MAX_ROUNDS = 6;
 
@@ -19,17 +17,6 @@ const CORS = {
 function normalize(t: string, max = 8000): string {
   const s = (t ?? "").replace(/\s+/g, " ").trim();
   return s.length > max ? s.slice(0, max) : s;
-}
-
-async function fetchEmbeddings(texts: string[]): Promise<number[][]> {
-  const r = await fetch("https://api.openai.com/v1/embeddings", {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: MODEL, input: texts }),
-  });
-  if (!r.ok) throw new Error(`OpenAI ${r.status}: ${await r.text()}`);
-  const j = await r.json();
-  return j.data.map((d: any) => d.embedding as number[]);
 }
 
 serve(async (req) => {
@@ -72,17 +59,19 @@ serve(async (req) => {
 
       // 3) Embed (with simple retry)
       let vectors: (number[] | null)[] = [];
-      if (OPENAI_API_KEY) {
-        for (let attempt = 1; attempt <= 4; attempt++) {
-          try { vectors = await fetchEmbeddings(inputs); break; }
-          catch (e) {
-            if (attempt === 4) throw e;
+      for (let attempt = 1; attempt <= 4; attempt++) {
+        try { 
+          vectors = await ai.embed('knower', inputs); 
+          break; 
+        }
+        catch (e) {
+          if (attempt === 4) {
+            // Gracefully skip embedding but complete jobs
+            vectors = new Array(inputs.length).fill(null);
+          } else {
             await new Promise(r => setTimeout(r, 300 * attempt));
           }
         }
-      } else {
-        // No global key configured: gracefully skip embedding but complete jobs
-        vectors = new Array(inputs.length).fill(null);
       }
 
       // 4) Update rows

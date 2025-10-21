@@ -1,12 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { ai } from "../_shared/ai.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-const PROXY_FN = 'proxy-openai';
 
 function detectCategory(text: string, filename: string): string {
   const lower = `${text} ${filename}`.toLowerCase();
@@ -21,50 +20,35 @@ function detectCategory(text: string, filename: string): string {
   return 'Notes';
 }
 
-async function extractTags(text: string, filename: string, supabase: any, authHeader: string): Promise<string[]> {
+async function extractTags(text: string, filename: string): Promise<string[]> {
   try {
-    const { data, error } = await supabase.functions.invoke(PROXY_FN, {
-      headers: { Authorization: authHeader },
-      body: {
-        path: '/v1/chat/completions',
-        keyName: 'openai',
-        body: {
-          model: 'gpt-5-mini-2025-08-07',
-          messages: [{
-            role: 'user',
-            content: `Extract 3-7 relevant tags from this document. Return ONLY a JSON array of strings.\n\nFilename: ${filename}\n\nContent: ${text.slice(0, 2000)}`
-          }],
-          max_completion_tokens: 100,
-        }
-      }
+    const { text: response } = await ai.chat({
+      role: 'knower',
+      messages: [{
+        role: 'user',
+        content: `Extract 3-7 relevant tags from this document. Return ONLY a JSON array of strings.\n\nFilename: ${filename}\n\nContent: ${text.slice(0, 2000)}`
+      }],
+      maxTokens: 100,
+      temperature: 0.3
     });
-
-    const content = (data as any)?.choices?.[0]?.message?.content || '[]';
-    return JSON.parse(content);
+    return JSON.parse(response);
   } catch {
     return [];
   }
 }
 
-async function generateSummary(text: string, supabase: any, authHeader: string): Promise<string> {
+async function generateSummary(text: string): Promise<string> {
   try {
-    const { data } = await supabase.functions.invoke(PROXY_FN, {
-      headers: { Authorization: authHeader },
-      body: {
-        path: '/v1/chat/completions',
-        keyName: 'openai',
-        body: {
-          model: 'gpt-5-mini-2025-08-07',
-          messages: [{
-            role: 'user',
-            content: `Summarize this in 1-3 clear sentences:\n\n${text.slice(0, 3000)}`
-          }],
-          max_completion_tokens: 150,
-        }
-      }
+    const { text: summary } = await ai.chat({
+      role: 'knower',
+      messages: [{
+        role: 'user',
+        content: `Summarize this in 1-3 clear sentences:\n\n${text.slice(0, 3000)}`
+      }],
+      maxTokens: 150,
+      temperature: 0.3
     });
-
-    return (data as any)?.choices?.[0]?.message?.content || text.slice(0, 200);
+    return summary;
   } catch {
     return text.slice(0, 200) + '...';
   }
@@ -115,8 +99,8 @@ serve(async (req) => {
 
 // Auto-categorize and tag
     const category = detectCategory(textContent, file.name);
-    const tags = await extractTags(textContent, file.name, supabase, req.headers.get('Authorization')!);
-    const summary = await generateSummary(textContent, supabase, req.headers.get('Authorization')!);
+    const tags = await extractTags(textContent, file.name);
+    const summary = await generateSummary(textContent);
 
     // Upload to storage
     const filePath = `${user.id}/${Date.now()}_${file.name}`;

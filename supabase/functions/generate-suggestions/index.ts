@@ -4,11 +4,11 @@
  * Analyzes user corrections and traces to suggest platform evolution
  */
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { ai } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,11 +50,6 @@ serve(async (req) => {
       );
     }
 
-    const openAIKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openAIKey) {
-      throw new Error("OPENAI_API_KEY not configured");
-    }
-
     // Group corrections by type
     const correctionsByType: Record<string, any[]> = {};
     corrections.forEach(correction => {
@@ -74,35 +69,23 @@ serve(async (req) => {
       const summary = items.map(c => c.corrected_content).join("\n");
 
       // Ask AI to generate suggestion
-      const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openAIKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content: "You are a platform evolution AI. Analyze user requests and suggest new marketplace categories, business tools, or features. Return JSON: {title, description, suggestion_type, config}",
-            },
-            {
-              role: "user",
-              content: `Analyze these ${items.length} user requests of type "${type}":\n\n${summary}\n\nSuggest a new feature, category, or tool.`,
-            },
-          ],
-          response_format: { type: "json_object" },
-        }),
+      const { text } = await ai.chat({
+        role: 'knower',
+        messages: [
+          {
+            role: "system",
+            content: "You are a platform evolution AI. Analyze user requests and suggest new marketplace categories, business tools, or features. Return JSON: {title, description, suggestion_type, config}",
+          },
+          {
+            role: "user",
+            content: `Analyze these ${items.length} user requests of type "${type}":\n\n${summary}\n\nSuggest a new feature, category, or tool.`,
+          },
+        ],
+        temperature: 0.3,
+        maxTokens: 800
       });
 
-      if (!aiResponse.ok) {
-        log.error("OpenAI error", null, { error: await aiResponse.text() });
-        continue;
-      }
-
-      const aiData = await aiResponse.json();
-      const suggestion = JSON.parse(aiData.choices[0].message.content);
+      const suggestion = JSON.parse(text);
 
       // Insert suggestion
       const { data: newSuggestion, error: insertError } = await supabase

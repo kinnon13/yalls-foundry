@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { ai } from "../_shared/ai.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,32 +26,7 @@ serve(async (req) => {
       throw new Error('Text is required');
     }
 
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY not configured');
-    }
-
-    const response = await fetch('https://api.openai.com/v1/audio/speech', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'tts-1',
-        input: text,
-        voice: voice,
-        response_format: 'mp3',
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      log.error('OpenAI TTS error', null, { error: errorText });
-      throw new Error('Failed to generate speech');
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
+    const arrayBuffer = await ai.tts('user', text, voice);
     
     // Convert ArrayBuffer to base64 in chunks to avoid stack overflow
     const bytes = new Uint8Array(arrayBuffer);

@@ -1,9 +1,7 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withRateLimit, RateLimits } from "../_shared/rate-limit-wrapper.ts";
 import { createLogger } from "../_shared/logger.ts";
-
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+import { ai } from "../_shared/ai.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,10 +21,6 @@ serve(async (req) => {
 
   try {
     const { eventRules, formType, existingFields } = await req.json();
-
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not configured');
-    }
 
     log.info('Generating form for event', { formType });
 
@@ -63,42 +57,17 @@ Generate comprehensive fields for:
 
 Make it intuitive and complete.`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        response_format: { type: "json_object" }
-      }),
+    const { text } = await ai.chat({
+      role: 'admin',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.3,
+      maxTokens: 2000
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "OpenAI rate limits exceeded, please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "OpenAI payment required, please check your OpenAI account balance." }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      const errorText = await response.text();
-      log.error('OpenAI API error', null, { status: response.status, error: errorText });
-      throw new Error('OpenAI API error');
-    }
-
-    const data = await response.json();
-    const formSchema = JSON.parse(data.choices[0].message.content);
+    const formSchema = JSON.parse(text);
 
     return new Response(JSON.stringify({ formSchema }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
