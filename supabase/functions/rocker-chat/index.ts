@@ -40,7 +40,7 @@ serve(async (req) => {
     let lastErrText = "";
     let lastStatus = 0;
 
-    for (const keyName of ["default", "openai"]) {
+    for (const keyName of ["openai", "default"]) {
       const upstream = await fetch(proxyUrl, {
         method: "POST",
         headers: {
