@@ -1,26 +1,28 @@
-# CODEOWNERS - Mandatory reviews for risky paths
+# CODEOWNERS - Documentation for critical paths
+# SOLO MODE: No mandatory reviews required, but these paths need extra care
 # See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-# Migrations require infra + security approval
-supabase/migrations/**                  @infra-lead @security-team
+# DB migrations - test thoroughly before merging to staging
+supabase/migrations/**
 
-# Shared functions (tenant guard, rate limits, etc) require infra review
-supabase/functions/_shared/**           @infra-lead @security-team
+# Shared functions (tenant guard, rate limits) - impacts all features
+supabase/functions/_shared/**
 
-# All edge functions need backend review
-supabase/functions/**/index.ts          @backend-lead
+# Edge functions - verify RLS + tenant isolation
+supabase/functions/**/index.ts
 
-# Security audit scripts need security review
-scripts/audit/**                        @security-team
+# Security audit scripts - verify against staging DB first
+scripts/audit/**
 
-# CI config requires infra approval
-.github/workflows/**                    @infra-lead
+# CI config - changes affect all PRs
+.github/workflows/**
 
-# Documentation requires tech lead review
-docs/BRANCHING_STRATEGY.md              @tech-lead
-docs/PRODUCTION_HARDENING.md            @tech-lead @security-team
+# Key docs - keep synchronized with actual workflow
+docs/BRANCHING_STRATEGY.md
+docs/PRODUCTION_HARDENING.md
+docs/SOLO_WORKFLOW.md
 
-# Root config files require tech lead approval
-tsconfig.json                           @tech-lead
-vite.config.ts                          @tech-lead
-tailwind.config.ts                      @tech-lead
+# Root config - affects build/types for entire project
+tsconfig.json
+vite.config.ts
+tailwind.config.ts
