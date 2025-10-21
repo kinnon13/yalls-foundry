@@ -115,7 +115,7 @@ export async function playPreloadedGreeting(onEnded: () => void): Promise<{ meth
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(preText || GREETING_TEXT);
-    utterance.rate = 1.35;
+    utterance.rate = 1.0;
     utterance.pitch = 1.02;
     utterance.lang = 'en-US';
     utterance.onend = onEnded;
