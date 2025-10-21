@@ -6355,6 +6355,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "live_streams_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles_min"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       marketplace_candidates: {
@@ -7465,6 +7472,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "post_reshares_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles_min"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       post_saves: {
@@ -7505,6 +7519,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "post_saves_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles_min"
             referencedColumns: ["user_id"]
           },
         ]
@@ -7669,6 +7690,13 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles_min"
             referencedColumns: ["user_id"]
           },
           {
@@ -7892,6 +7920,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           handle: string | null
+          handle_lower: string | null
           id: string
           interests: Json | null
           invite_source: string | null
@@ -7913,6 +7942,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           handle?: string | null
+          handle_lower?: string | null
           id?: string
           interests?: Json | null
           invite_source?: string | null
@@ -7934,6 +7964,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           handle?: string | null
+          handle_lower?: string | null
           id?: string
           interests?: Json | null
           invite_source?: string | null
@@ -11579,6 +11610,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "user_shortcuts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles_min"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       user_subscriptions: {
@@ -12118,6 +12156,30 @@ export type Database = {
           seen_at: string | null
           title: string | null
           user_id: string | null
+        }
+        Relationships: []
+      }
+      public_profiles_min: {
+        Row: {
+          avatar_url: string | null
+          display_name: string | null
+          handle: string | null
+          handle_lower: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          display_name?: string | null
+          handle?: string | null
+          handle_lower?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          display_name?: string | null
+          handle?: string | null
+          handle_lower?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -14582,6 +14644,15 @@ export type Database = {
           meta: Json
           score: number
           similarity: number
+          user_id: string
+        }[]
+      }
+      search_profiles_prefix: {
+        Args: { lim?: number; q: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          handle: string
           user_id: string
         }[]
       }

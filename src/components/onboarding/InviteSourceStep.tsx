@@ -3,7 +3,7 @@
  * Required first step - captures attribution
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { emitEvent } from '@/lib/telemetry/events';
-import { z } from 'zod';
+import { ReferralCombobox } from './ReferralCombobox';
 
 interface InviteSourceStepProps {
   onComplete: () => void;
@@ -25,15 +25,18 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
   const [inviteMedium, setInviteMedium] = useState('');
   const [freeText, setFreeText] = useState('');
   const [referralUsername, setReferralUsername] = useState('');
-  const [validatingUsername, setValidatingUsername] = useState(false);
   const [referrerId, setReferrerId] = useState<string | null>(null);
-  const [usernameError, setUsernameError] = useState<string | null>(null);
-  const [showErrorOnBlur, setShowErrorOnBlur] = useState(false);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
 
   useEffect(() => {
     loadExisting();
+    loadCurrentUserId();
   }, []);
+
+  const loadCurrentUserId = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) setCurrentUserId(user.id);
+  };
 
   const loadExisting = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -56,7 +59,7 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
       .from('profiles')
       .select('invited_by, handle')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (profile?.invited_by) {
       setReferrerId(profile.invited_by);
@@ -65,117 +68,22 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
         .from('profiles')
         .select('handle')
         .eq('user_id', profile.invited_by)
-        .single();
+        .maybeSingle();
       if (referrer?.handle) {
         setReferralUsername(referrer.handle);
       }
     }
   };
 
-  // Input validation schema
-  const handleSchema = z.string()
-    .trim()
-    .min(1, 'Username cannot be empty')
-    .max(50, 'Username must be less than 50 characters')
-    .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores');
-
-  const parseHandle = (value: string): string | null => {
-    if (!value) return null;
-    const trimmed = value.trim();
-    // Extract from full referral link ?ref=handle
-    const refMatch = trimmed.match(/[?&]ref=([^&#]+)/i);
-    if (refMatch) return refMatch[1].replace(/^@/, '').trim();
-    // Strip leading @ if present
-    return trimmed.replace(/^@/, '').trim() || null;
+  const handleReferrerSelected = (referrer: { user_id: string; handle: string }) => {
+    setReferrerId(referrer.user_id);
+    setReferralUsername(referrer.handle);
   };
 
-  const validateUsername = useCallback(async (username: string, showErrors = false) => {
-    const handle = parseHandle(username);
-    
-    if (!handle) {
-      setReferrerId(null);
-      setUsernameError(null);
-      return;
-    }
-
-    // Client-side validation with zod
-    const validation = handleSchema.safeParse(handle);
-    if (!validation.success) {
-      if (showErrors) {
-        setUsernameError(validation.error.errors[0].message);
-      }
-      setReferrerId(null);
-      setValidatingUsername(false);
-      return;
-    }
-
-    setValidatingUsername(true);
-    setUsernameError(null);
-    
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('user_id, handle')
-        .eq('handle', handle)
-        .maybeSingle();
-
-      if (!profile) {
-        if (showErrors) {
-          setUsernameError(`No user with handle @${handle} exists`);
-        }
-        setReferrerId(null);
-        return;
-      }
-
-      if (profile.user_id === user.id) {
-        if (showErrors) {
-          setUsernameError('Cannot refer yourself');
-        }
-        setReferrerId(null);
-        return;
-      }
-
-      setReferrerId(profile.user_id);
-      setUsernameError(null);
-      if (showErrors) {
-        toast({
-          title: '✓ Valid username',
-          description: `Referrer: @${profile.handle}`
-        });
-      }
-    } catch (err) {
-      console.error('Username validation error:', err);
-      if (showErrors) {
-        setUsernameError('Error validating username');
-      }
-      setReferrerId(null);
-    } finally {
-      setValidatingUsername(false);
-    }
-  }, [toast]);
-
-  // Debounced validation - silent during typing
-  const debouncedValidate = useCallback((username: string) => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-    
-    debounceTimerRef.current = setTimeout(() => {
-      validateUsername(username, false); // Don't show errors while typing
-    }, 500); // 500ms debounce
-  }, [validateUsername]);
-
-  // Cleanup debounce on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
+  const handleReferrerCleared = () => {
+    setReferrerId(null);
+    setReferralUsername('');
+  };
 
   const handleSubmit = async () => {
     // Validation
@@ -184,10 +92,10 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
       return;
     }
 
-    if (inviteKind === 'user' && referralUsername && !referrerId) {
+    if (inviteKind === 'user' && !referrerId) {
       toast({ 
-        title: 'Invalid username', 
-        description: 'Please enter a valid username or clear the field',
+        title: 'Referrer required', 
+        description: 'Please select who invited you or choose a different option',
         variant: 'destructive' 
       });
       return;
@@ -225,12 +133,11 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
 
       // Update profile with referrer to create tier hierarchy
       if (referrerId) {
-        const normalized = parseHandle(referralUsername) || referralUsername.trim();
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
             invited_by: referrerId,
-            invite_source: normalized ? `@${normalized}` : null
+            invite_source: referralUsername ? `@${referralUsername}` : null
           })
           .eq('user_id', user.id);
 
@@ -248,7 +155,7 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
       toast({
         title: '✓ Thanks for sharing!',
         description: referrerId 
-          ? `You've been connected to @${parseHandle(referralUsername) || referralUsername.trim()}'s network`
+          ? `You've been connected to @${referralUsername}'s network`
           : 'Let\'s complete your profile'
       });
 
@@ -307,48 +214,12 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
 
       {inviteKind === 'user' && (
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="referral-username">Referrer Username *</Label>
-            <Input
-              id="referral-username"
-              placeholder="Enter their @username or paste referral link"
-              value={referralUsername}
-              onChange={(e) => {
-                const value = e.target.value;
-                setReferralUsername(value);
-                setUsernameError(null);
-                setShowErrorOnBlur(false);
-                
-                // Trigger debounced validation (silent)
-                if (value.trim()) {
-                  debouncedValidate(value);
-                } else {
-                  setReferrerId(null);
-                  setUsernameError(null);
-                  if (debounceTimerRef.current) {
-                    clearTimeout(debounceTimerRef.current);
-                  }
-                }
-              }}
-              onBlur={() => {
-                setShowErrorOnBlur(true);
-                validateUsername(referralUsername, true); // Show errors on blur
-              }}
-              disabled={validatingUsername}
-              className={showErrorOnBlur && usernameError ? 'border-destructive' : ''}
-            />
-            {validatingUsername && (
-              <p className="text-sm text-muted-foreground mt-1">
-                <span className="inline-block animate-pulse">●</span> Checking username...
-              </p>
-            )}
-            {!validatingUsername && referrerId && (
-              <p className="text-sm text-green-600 mt-1">✓ Valid referrer found</p>
-            )}
-            {!validatingUsername && showErrorOnBlur && usernameError && (
-              <p className="text-sm text-destructive mt-1">{usernameError}</p>
-            )}
-          </div>
+          <ReferralCombobox
+            supabase={supabase}
+            currentUserId={currentUserId}
+            onValidReferrer={handleReferrerSelected}
+            onClear={handleReferrerCleared}
+          />
           <div>
             <Label htmlFor="invite-code">Invitation Code (optional)</Label>
             <Input
@@ -398,11 +269,11 @@ export function InviteSourceStep({ onComplete }: InviteSourceStepProps) {
 
       <Button 
         onClick={handleSubmit} 
-        disabled={loading || validatingUsername || (inviteKind === 'user' && referralUsername && (!referrerId || !!usernameError))}
+        disabled={loading || (inviteKind === 'user' && !referrerId)}
         className="w-full"
         data-testid="invite-submit"
       >
-        {loading ? 'Saving...' : validatingUsername ? 'Validating...' : 'Continue'}
+        {loading ? 'Saving...' : 'Continue'}
       </Button>
     </div>
   );
