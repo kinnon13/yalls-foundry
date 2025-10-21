@@ -7,7 +7,9 @@ Ship production-ready platform in **2 weeks** by parallelizing work across 4-5 s
 
 ```
 main (protected)
+├── release/YYYY-MM-DD (canary deploy)
 ├── staging (daily integration)
+│   ├── train/db-YYYYMMDD (migration coordination)
 │   ├── feature/ui-polish (UI-only, zero DB risk)
 │   ├── feature/tenant-security (RLS + guards, expand-only)
 │   ├── feature/search-isolation (dual index + RPCs)
@@ -17,8 +19,133 @@ main (protected)
 
 ### Branch Rules
 - **main**: Production only. Requires 2 approvals + all CI green.
+- **release/YYYY-MM-DD**: Cut from staging, canary deployed, then merged to main.
 - **staging**: Integration branch. Deploys to staging Supabase project.
+- **train/db-YYYYMMDD**: Migration coordination. All DB changes merge here first.
 - **feature/***: Short-lived (3-5 days max). One clear owner.
+
+## 🛡️ Three Critical Guardrails
+
+### Guardrail 1: Migration Train (DB Conflict Prevention)
+
+**Problem**: Multiple branches changing DB schema = conflicts + data loss risk.
+
+**Solution**: All DB changes merge to temporary `train/db-YYYYMMDD` branch first.
+
+**Process**:
+1. PR touches `supabase/migrations/**` or `supabase/functions/_shared/**`
+2. Target branch: `train/db-20251022` (not staging)
+3. CI spins up scratch Supabase, applies migrations, runs tests
+4. If green → fast-forward merge `train/db-*` → `staging`
+5. Delete train branch, create new one for next day
+
+**CI for train branches**:
+```bash
+#!/bin/bash
+# scripts/audit/run-train-smoke.sh
+
+# 1. Create scratch Supabase project (or use existing)
+supabase link --project-ref yalls-train-scratch
+
+# 2. Apply all migrations
+supabase db reset
+
+# 3. Run security audits
+psql $TRAIN_DB -f scripts/audit/verify-rls.sql
+
+# 4. Run tenant isolation tests
+npm run test:integration
+
+# 5. Run smoke tests
+npm run test:smoke
+```
+
+### Guardrail 2: Release Branches (Not Cherry-Picks)
+
+**Problem**: Cherry-picking drifts history, makes rollbacks hard.
+
+**Solution**: Cut release branch from staging, deploy it, merge to main.
+
+**Process**:
+1. Staging bakes clean for 24-48h (no new commits, all tests green)
+2. Cut release: `git checkout -b release/2025-10-24 staging`
+3. Canary deploy:
+   - 10% of prod traffic → monitor 2h
+   - 50% of prod traffic → monitor 4h
+   - 100% rollout
+4. If green → merge `release/*` to `main`
+5. Tag: `git tag v1.2.3 && git push --tags`
+
+**Rollback**: 
+- Revert to previous release tag
+- OR cut `release/2025-10-24-rollback` from previous tag
+
+### Guardrail 3: CODEOWNERS + CI Gates
+
+**Problem**: Risky changes merge without security review.
+
+**Solution**: Mandatory reviews + fail-fast CI checks.
+
+**Setup `.github/CODEOWNERS`**:
+```
+# Migrations require infra + security approval
+supabase/migrations/**                  @infra-lead @security-team
+
+# Shared functions (tenant guard, etc) require infra review
+supabase/functions/_shared/**           @infra-lead @security-team
+
+# All edge functions need backend review
+supabase/functions/**/index.ts          @backend-lead
+
+# Security audit scripts need security review
+scripts/audit/**                        @security-team
+
+# CI config requires infra approval
+.github/workflows/**                    @infra-lead
+```
+
+**CI Gates** (`.github/workflows/ci.yml`):
+```yaml
+name: CI Security Gates
+
+on: [pull_request]
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      # 1. Basic checks
+      - run: npm run lint
+      - run: npm run typecheck
+      
+      # 2. Tenant guard enforcement
+      - name: Check tenant guards
+        run: ./scripts/audit/check-tenant-guards.sh
+      
+      # 3. RLS verification
+      - name: Verify RLS policies
+        run: |
+          psql "$STAGING_DB" -f scripts/audit/verify-rls.sql
+      
+      # 4. DB change smoke test
+      - name: Train smoke test
+        if: contains(github.event.pull_request.labels.*.name, 'db-change')
+        run: ./scripts/audit/run-train-smoke.sh
+      
+      # 5. Tenant isolation tests
+      - name: Integration tests
+        run: npm run test:integration
+      
+      # 6. Block if violations found
+      - name: Fail on security issues
+        run: |
+          if [ -f security-violations.log ]; then
+            cat security-violations.log
+            exit 1
+          fi
+```
 
 ## 🔑 Environment Split (Critical!)
 
@@ -273,13 +400,17 @@ npm run test:visual
 ### Deployment Flow
 
 ```
-feature/* → staging (auto-deploy after PR merge)
-           ↓
-        Staging bake (24-48 hours)
-           ↓
-      Cherry-pick to main (manual, approved)
-           ↓
-      Production deploy (canary → full rollout)
+feature/*  →  staging (many times/day, feature flags OFF)
+             ↓
+migrations →  train/db-YYYYMMDD → staging (after scratch-DB CI passes)
+             ↓
+          staging bakes 24-48h (all tests green, no new commits)
+             ↓
+          release/YYYY-MM-DD (cut from staging)
+             ↓
+          Canary deploy (10% → 50% → 100%)
+             ↓
+          release/* → main (merge + tag)
 ```
 
 ## 📅 Timeline (2-Week Sprint)
