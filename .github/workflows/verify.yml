@@ -1,0 +1,76 @@
+name: Verify (Routes, Build, E2E)
+
+on:
+  push:
+    branches: [ main, develop, feat/** ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch: {}
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: https://example.supabase.co
+      VITE_SUPABASE_ANON_KEY: test_key
+      BASE_URL: http://localhost:4173
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node & pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: corepack enable
+      - run: pnpm --version
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps
+
+      # ---- Gate 1: budget + guards ----
+      - name: Route budget (<= 10)
+        run: node scripts/check-routes.mjs
+      - name: CI Guards (no global overlays, overview role=user, legacy redirector)
+        run: node scripts/ci-guards.mjs
+
+      # ---- Gate 2: TypeScript ----
+      - name: TypeScript
+        run: pnpm tsc --noEmit
+
+      # ---- Build + Preview ----
+      - name: Build
+        run: pnpm build
+      - name: Start preview
+        run: |
+          pnpm preview --port 4173 & echo $! > preview.pid
+          npx wait-on http://localhost:4173
+
+      # ---- Gate 3: E2E smoke relevant to you ----
+      - name: Playwright (overlay scope + dynamic home)
+        run: pnpm exec playwright test tests/e2e/overlay-scope.spec.ts tests/e2e/dynamic-home.spec.ts
+        env:
+          BASE_URL: http://localhost:4173
+
+      - name: Stop preview
+        if: always()
+        run: |
+          if [ -f preview.pid ]; then
+            kill $(cat preview.pid) || true
+          fi
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

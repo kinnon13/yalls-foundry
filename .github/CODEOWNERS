@@ -2,6 +2,13 @@
 # SOLO MODE: No mandatory reviews required, but these paths need extra care
 # See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
+# Critical architecture - lock to prevent rogue changes
+/src/App.tsx
+/src/routes/**
+/src/lib/overlay/**
+/scripts/check-routes.mjs
+/scripts/ci-guards.mjs
+
 # DB migrations - test thoroughly before merging to staging
 supabase/migrations/**
 

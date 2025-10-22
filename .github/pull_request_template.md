@@ -1,37 +1,36 @@
-## Work Report
+## What changed (one-liner)
+<!-- e.g., "Step 1: overlay scoped to /dashboard, Overview role=user. No route changes." -->
 
-**Summary**: 
-<!-- What changed and why (1-3 sentences) -->
+## Files touched
+- [ ] DID NOT modify `src/App.tsx` routes count (>10 is blocked)
+- [ ] DID NOT add `<OverlayHost/>` or `<PanelHost/>` in `src/App.tsx`
 
-**Changes**:
-<!-- List each file changed with description -->
-- file: `path/to/file.ts` — description of what changed
-- file: `path/to/file.ts` — description of what changed
+## Proof (paste outputs)
 
-**Commands/Tests**:
-<!-- Commands run and their results -->
-- `pnpm test` → exit 0 (all tests passed)
-- `pnpm build` → exit 0 (build successful)
+### 1) Route budget
+```bash
+node scripts/check-routes.mjs
+```
+**Expected:** Route count: 10
 
-**Migrations/RPCs/Flags**:
-<!-- Database and configuration changes -->
-- migrations: list migration IDs
-- rpcs: list RPC names added/modified
-- flags: list feature flags changed
+### 2) CI Guards
+```bash
+node scripts/ci-guards.mjs
+```
+**Expected:** ✅ CI guards passed
 
-**Screens/Links**: 
-<!-- Screenshots or demo videos -->
-- Evidence pack: `docs/release/EVIDENCE-<id>/`
-- Screenshots: `docs/screenshots/*.png`
+### 3) E2E (paste last 10 lines)
+```bash
+pnpm exec playwright test tests/e2e/overlay-scope.spec.ts tests/e2e/dynamic-home.spec.ts
+```
 
-**Next Steps**:
-<!-- What needs to happen next -->
-- [ ] Item 1
-- [ ] Item 2
+### 4) Manual checks (1 sentence each)
+- [ ] `/` → no overlay (even with `?app=yallbrary`)
+- [ ] `/dashboard?app=yallbrary` → overlay opens
+- [ ] `/dashboard?app=overview` → no 403
 
-**Blockers**:
-<!-- Any blocking issues -->
-- None / List any blockers
+## Request to proceed
+- [ ] I certify gates passed. Requesting approval for next step.
 
 ---
 
