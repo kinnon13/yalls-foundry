@@ -1,5 +1,6 @@
 /**
- * Admin Rocker Console - Main dashboard for AI administration
+ * 🔒 PRODUCTION-LOCKED: Admin Rocker Console
+ * AI admin dashboard - DO NOT modify without approval
  */
 
 import { Link } from 'react-router-dom';

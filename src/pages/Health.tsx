@@ -1,3 +1,8 @@
+/**
+ * 🔒 PRODUCTION-LOCKED: Health Probe
+ * System health endpoint - DO NOT modify without approval
+ */
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';

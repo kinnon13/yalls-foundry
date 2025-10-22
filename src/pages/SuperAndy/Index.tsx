@@ -1,6 +1,6 @@
 /**
- * Super Andy Main Page
- * Chat interface with proactive suggestions and self-improvement rails
+ * 🔒 PRODUCTION-LOCKED: Super Andy Console
+ * Chat interface with proactive suggestions - DO NOT modify without approval
  */
 
 import { SuperAndyChat } from '@/components/super-andy/SuperAndyChat';

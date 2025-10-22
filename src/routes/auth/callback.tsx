@@ -1,5 +1,6 @@
 /**
- * Auth Callback - OAuth redirect handler
+ * 🔒 PRODUCTION-LOCKED: Auth Callback
+ * OAuth redirect handler - DO NOT modify without approval
  */
 
 import { useEffect } from 'react';

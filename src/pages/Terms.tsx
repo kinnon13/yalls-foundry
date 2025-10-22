@@ -1,5 +1,6 @@
 /**
- * Terms of Service - Static page
+ * 🔒 PRODUCTION-LOCKED: Terms of Service
+ * Static legal page - DO NOT modify without approval
  */
 
 export default function Terms() {

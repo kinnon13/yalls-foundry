@@ -1,5 +1,6 @@
 /**
- * Privacy Policy - Static page
+ * 🔒 PRODUCTION-LOCKED: Privacy Policy
+ * Static legal page - DO NOT modify without approval
  */
 
 export default function Privacy() {
