@@ -1,0 +1,173 @@
+{
+  "name": "Super Andy — Re-Master Audit",
+  "timestamp_utc": "2025-10-22T08:47:00Z",
+  "environment": "dev",
+  "git_commit": "pending",
+  "db": {
+    "best_plus_10_tables": true,
+    "tables_list": [
+      "ai_user_profiles",
+      "ai_model_budget",
+      "ai_model_routes",
+      "ai_ethics_policy",
+      "ai_proactive_suggestions",
+      "ai_subagent_runs",
+      "ai_self_improve_log",
+      "ai_world_models",
+      "ai_learnings_agg",
+      "ai_federation_flags",
+      "ai_daily_reports"
+    ],
+    "rls_enabled": true,
+    "rpcs": [
+      "aggregate_learnings_k_anon",
+      "distinct_tenants_with_active_goals"
+    ],
+    "trigger_on_auth_user_created_profile": false
+  },
+  "seeds": {
+    "control_flags": {
+      "global_pause": false,
+      "write_freeze": false,
+      "external_calls_enabled": true,
+      "burst_override": false
+    },
+    "routes_count": 3,
+    "routes": [
+      {
+        "task_class": "chat.reply",
+        "model_name": "grok-2",
+        "conditions": {
+          "temperature": 0.4,
+          "max_tokens": 8192
+        }
+      },
+      {
+        "task_class": "mdr.generate",
+        "model_name": "grok-2",
+        "conditions": {
+          "temperature": 0.3,
+          "max_tokens": 8192
+        }
+      },
+      {
+        "task_class": "vision.analyze",
+        "model_name": "grok-vision",
+        "conditions": {
+          "temperature": 0.2,
+          "max_tokens": 4096
+        }
+      }
+    ],
+    "budget_models": [
+      {
+        "model": "grok-2",
+        "monthly_limit_usd": 200.0
+      },
+      {
+        "model": "grok-mini",
+        "monthly_limit_usd": 100.0
+      }
+    ],
+    "ethics_policy": [
+      {
+        "key": "harm_check",
+        "config": {
+          "threshold": 0.8
+        }
+      },
+      {
+        "key": "pii_redaction",
+        "config": {
+          "auto": true
+        }
+      }
+    ],
+    "federation": {
+      "opt_in": false,
+      "k_anon_min": 10
+    }
+  },
+  "edge_functions": {
+    "core": [
+      "ai_health",
+      "ai_eventbus",
+      "ai_control",
+      "safety_commit_guard"
+    ],
+    "ctm": [
+      "ctm_extract",
+      "ctm_daily_report",
+      "ctm_reminder_tick"
+    ],
+    "mdr": [
+      "mdr_generate",
+      "mdr_consensus",
+      "mdr_orchestrate"
+    ],
+    "ops": [
+      "cron_tick",
+      "watchdog_tick",
+      "metrics_export",
+      "dlq_replay",
+      "circuit_breaker_tick"
+    ],
+    "best_plus_10": [
+      "self_improve_tick",
+      "perceive_tick",
+      "verify_output",
+      "model_router",
+      "federate_share",
+      "daily_digest_tick"
+    ],
+    "total_functions": 158
+  },
+  "pools_overview": {
+    "realtime": {
+      "burst_over_max_pct": ">=110%"
+    },
+    "safety": {
+      "burst_over_max_pct": ">=110%"
+    }
+  },
+  "orchestrator": {
+    "subagent_runs_table_exists": true,
+    "ledger_spawn_event_table_exists": true
+  },
+  "perception": {
+    "suggestions_table_exists": true,
+    "table_ready": true
+  },
+  "federation": {
+    "table_exists": true,
+    "opt_in_status": "opt_out",
+    "k_anon_min": 10
+  },
+  "digest": {
+    "table_exists": true,
+    "ready_for_writes": true
+  },
+  "breakers": {
+    "topic_breakers_exists": true,
+    "api_breakers_exists": true,
+    "budget_soft_clamp_ready": true
+  },
+  "personalization": {
+    "profiles_count": 1,
+    "test_profile_exists": true,
+    "chat_integration_wired": true,
+    "ui_component_exists": true
+  },
+  "result": "PASS",
+  "verification_checklist": {
+    "schema_complete": true,
+    "rls_enabled": true,
+    "rpcs_installed": true,
+    "seeds_applied": true,
+    "functions_deployed": true,
+    "personalization_ready": true,
+    "circuit_breakers_ready": true,
+    "orchestration_ready": true,
+    "federation_ready": true
+  }
+}
