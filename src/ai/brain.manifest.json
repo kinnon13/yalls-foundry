@@ -1,8 +1,17 @@
 {
-  "version": "1.0",
+  "version": "2.1",
   "roles": ["user", "admin", "super"],
-  "modules": ["shared", "meta_cortex"],
-  "workers": ["durable_queue", "ai_jobs", "backup", "retrain", "redteam"],
+  "modules": ["shared", "meta_cortex", "conversation"],
+  "workers": [
+    "durable_queue",
+    "ai_jobs",
+    "backup",
+    "retrain",
+    "redteam",
+    "ctm_summarizer",
+    "ctm_daily",
+    "ctm_reminders"
+  ],
   "governance": "PROJECT_RULES.md",
   "structure_lock": "structure.lock.json",
   "capabilities": {
@@ -43,10 +52,29 @@
     "ai_questions",
     "ai_todo",
     "audit_log",
-    "system_metrics"
+    "system_metrics",
+    "ai_events",
+    "ai_memory_core",
+    "ai_context_cache",
+    "ai_perception_log",
+    "ai_conversations",
+    "ai_messages",
+    "ai_goals",
+    "ai_goal_steps",
+    "ai_bookmarks",
+    "ai_context_snapshots",
+    "ai_daily_reports",
+    "ai_reminders"
   ],
   "edge_functions": [
     "rocker-monitor",
-    "ai_health"
+    "ai_health",
+    "ai_eventbus"
+  ],
+  "features": [
+    "memory_layer",
+    "event_bus",
+    "ctm",
+    "daily_reflection"
   ]
 }

@@ -26,7 +26,7 @@ export async function buildResumeSuggestions(
   
   try {
     // Get pending goals
-    const { data: goals } = await supabase
+    const { data: goals } = await (supabase as any)
       .from('ai_goals')
       .select('id, title, priority, created_at, description')
       .eq('tenant_id', tenantId)
@@ -50,7 +50,7 @@ export async function buildResumeSuggestions(
     }
     
     // Get unresolved bookmarks
-    const { data: bookmarks } = await supabase
+    const { data: bookmarks } = await (supabase as any)
       .from('ai_bookmarks')
       .select(`
         id,
@@ -95,7 +95,7 @@ export async function buildResumeSuggestions(
  */
 export async function markBookmarkResumed(bookmarkId: string): Promise<void> {
   try {
-    await supabase
+    await (supabase as any)
       .from('ai_bookmarks')
       .update({ resumed_at: new Date().toISOString() })
       .eq('id', bookmarkId);
@@ -109,7 +109,7 @@ export async function markBookmarkResumed(bookmarkId: string): Promise<void> {
  */
 export async function loadContextSnapshot(snapshotId: string): Promise<any> {
   try {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('ai_context_snapshots')
       .select('snapshot')
       .eq('id', snapshotId)
