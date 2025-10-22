@@ -76,7 +76,19 @@ const WorkersPage = lazy(() => import('./pages/Super/Workers'));
 const FlagsPage = lazy(() => import('./pages/Super/Flags'));
 const IncidentsPage = lazy(() => import('./pages/Super/Incidents'));
 const SuperAndyPage = lazy(() => import('./pages/SuperAndy'));
+const SuperAndyIndex = lazy(() => import('./pages/SuperAndy/Index'));
 const RequireSuperAdmin = lazy(() => import('./guards/RequireSuperAdmin'));
+
+// Admin Rocker Pages
+const AdminRockerIndex = lazy(() => import('./pages/AdminRocker/Index'));
+const AdminRockerTools = lazy(() => import('./pages/AdminRocker/Tools'));
+const AdminRockerAudits = lazy(() => import('./pages/AdminRocker/Audits'));
+const AdminRockerModeration = lazy(() => import('./pages/AdminRocker/Moderation'));
+const AdminRockerBudgets = lazy(() => import('./pages/AdminRocker/Budgets'));
+
+// User Rocker Pages
+const UserRockerIndex = lazy(() => import('./pages/UserRocker/Index'));
+const UserRockerPreferences = lazy(() => import('./pages/UserRocker/Preferences'));
 
 const queryClient = new QueryClient();
 
@@ -320,7 +332,17 @@ function AppContent() {
             path="/rocker" 
             element={
               <Suspense fallback={<div>Loading...</div>}>
-                <RockerHub />
+                <UserRockerIndex />
+              </Suspense>
+            } 
+          />
+          
+          {/* Rocker Preferences */}
+          <Route 
+            path="/rocker/preferences" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <UserRockerPreferences />
               </Suspense>
             } 
           />
@@ -336,7 +358,7 @@ function AppContent() {
             path="/super-andy" 
             element={
               <Suspense fallback={<div>Loading...</div>}>
-                <SuperAndy />
+                <SuperAndyIndex />
               </Suspense>
             } 
           />
@@ -346,7 +368,43 @@ function AppContent() {
             path="/admin-rocker" 
             element={
               <Suspense fallback={<div>Loading...</div>}>
-                <AdminRocker />
+                <AdminRockerIndex />
+              </Suspense>
+            } 
+          />
+          
+          <Route 
+            path="/admin-rocker/tools" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <AdminRockerTools />
+              </Suspense>
+            } 
+          />
+          
+          <Route 
+            path="/admin-rocker/audits" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <AdminRockerAudits />
+              </Suspense>
+            } 
+          />
+          
+          <Route 
+            path="/admin-rocker/moderation" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <AdminRockerModeration />
+              </Suspense>
+            } 
+          />
+          
+          <Route 
+            path="/admin-rocker/budgets" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <AdminRockerBudgets />
               </Suspense>
             } 
           />
@@ -407,7 +465,7 @@ function AppContent() {
             element={
               <Suspense fallback={<div>Loading...</div>}>
                 <RequireSuperAdmin>
-                  <SuperAndyPage />
+                  <SuperAndyIndex />
                 </RequireSuperAdmin>
               </Suspense>
             } 
