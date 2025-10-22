@@ -45,6 +45,15 @@ serve(async (req) => {
 
     console.log('[andy-chat] User:', user.id);
 
+    // Load user profile for personalization
+    const { data: profile } = await supabase
+      .from('ai_user_profiles' as any)
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    
+    console.log('[andy-chat] Profile:', profile ? 'loaded' : 'default');
+
     // Get last user message for context search
     const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user')?.content || '';
     let context = '';
@@ -169,12 +178,25 @@ serve(async (req) => {
       console.log('[andy-chat] Loaded', events.length, 'calendar events');
     }
 
+    // Build system prompt with profile directives
+    const profileDirectives = profile ? [
+      `Tone: ${profile.tone || 'friendly concise'}`,
+      `Verbosity: ${profile.verbosity || 'medium'}`,
+      `Format: ${profile.format_pref || 'bullets'} (strongly prefer this format unless user explicitly asks otherwise)`,
+      profile.visual_pref ? 'Visual learner: include charts/diagrams when showing numbers or data' : 'Text-first: keep responses text-based unless visuals explicitly requested',
+      profile.approval_mode === 'ask' ? 'Always ask before taking actions' : 'You can take actions automatically when appropriate',
+      profile.taboo_topics?.length ? `Avoid these topics: ${profile.taboo_topics.join(', ')}` : ''
+    ].filter(Boolean).join('\n') : 'Tone: friendly concise\nVerbosity: medium\nFormat: bullets';
+
     const systemPrompt = `You are Andy, the ultimate everything AI with FULL, UNRESTRICTED access to the user's complete data and conversation history.
 
 CRITICAL IDENTITY RULES:
 - Your name is ANDY - never call yourself "Rocker" or any other name
 - "Rocker" is just a database table prefix (rocker_messages, rocker_tasks, etc.) - it has NOTHING to do with your identity
 - Always refer to yourself as "Andy" or "I" - never as "Rocker"
+
+USER PREFERENCES (FOLLOW THESE CLOSELY):
+${profileDirectives}
 
 You have COMPLETE ACCESS to:
 - Full chat history (every conversation we've ever had)
