@@ -1,32 +1,94 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield } from "lucide-react";
+import { useState, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Shield, Send } from 'lucide-react';
+import { toast } from 'sonner';
+
+type Message = {
+  role: 'user' | 'assistant';
+  text: string;
+};
 
 export default function SuperAndyChat() {
+  const [msgs, setMsgs] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [privateMode, setPrivateMode] = useState(false);
-  
-  // Note: ai_goals and ai_bookmarks tables will be created when CTM schema is deployed
-  const goals: any[] = [];
-  const bookmarks: any[] = [];
+  const esRef = useRef<EventSource | null>(null);
+
+  const togglePrivateMode = async (checked: boolean) => {
+    setPrivateMode(checked);
+    try {
+      await supabase.functions.invoke('ai_control', {
+        body: {
+          action: 'global',
+          flags: {
+            private_mode: checked,
+            external_calls_enabled: !checked
+          }
+        }
+      });
+      toast.success(checked ? 'Private mode enabled' : 'Private mode disabled');
+    } catch (error) {
+      toast.error('Failed to update private mode');
+    }
+  };
+
+  const send = async () => {
+    if (!input.trim()) return;
+    
+    setIsLoading(true);
+    const userMsg = input;
+    setInput('');
+    setMsgs(m => [...m, { role: 'user', text: userMsg }]);
+
+    try {
+      // For now, use a simple invoke - streaming can be added later
+      const { data, error } = await supabase.functions.invoke('ai_eventbus', {
+        body: {
+          tenantId: null,
+          region: 'us',
+          topic: 'chat.message',
+          payload: {
+            message: userMsg,
+            mode: 'super',
+            private: privateMode
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      // Simulate response for now
+      setMsgs(m => [...m, {
+        role: 'assistant',
+        text: 'Message received and queued for processing. Full streaming chat coming soon!'
+      }]);
+    } catch (error) {
+      toast.error('Failed to send message');
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div className="container py-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="container py-8 h-screen flex flex-col">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold">Super Andy</h1>
         
         <div className="flex items-center gap-2">
-          <Shield className={privateMode ? 'text-primary' : 'text-muted-foreground'} />
+          <Shield className={privateMode ? 'text-primary' : 'text-muted-foreground'} size={20} />
           <Label htmlFor="private-mode">Private Mode</Label>
           <Switch
             id="private-mode"
             data-testid="private-switch"
             checked={privateMode}
-            onCheckedChange={setPrivateMode}
+            onCheckedChange={togglePrivateMode}
           />
         </div>
       </div>
@@ -39,66 +101,52 @@ export default function SuperAndyChat() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card className="p-6 min-h-[600px]">
-            <h2 className="text-xl font-semibold mb-4">Chat</h2>
-            <p className="text-muted-foreground">Chat interface coming soon...</p>
-          </Card>
+      <Card className="flex-1 flex flex-col">
+        <div className="flex-1 p-4 space-y-3 overflow-auto">
+          {msgs.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">
+              Start a conversation with Super Andy
+            </div>
+          ) : (
+            msgs.map((m, i) => (
+              <div key={i} className={m.role === 'user' ? 'text-right' : ''}>
+                <div className={`inline-block rounded-lg px-3 py-2 max-w-[80%] ${
+                  m.role === 'user' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-secondary'
+                }`}>
+                  {m.text}
+                </div>
+              </div>
+            ))
+          )}
+          {isLoading && (
+            <div className="text-left">
+              <div className="inline-block rounded-lg px-3 py-2 bg-secondary">
+                <div className="flex gap-1">
+                  <span className="animate-bounce">●</span>
+                  <span className="animate-bounce delay-100">●</span>
+                  <span className="animate-bounce delay-200">●</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-
-        <div className="space-y-4">
-          <Card className="p-6" data-testid="goals-panel">
-            <Tabs defaultValue="goals">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="goals">Goals</TabsTrigger>
-                <TabsTrigger value="bookmarks">Bookmarks</TabsTrigger>
-                <TabsTrigger value="resume">Resume</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="goals" className="space-y-2">
-                <h3 className="font-semibold mb-2">Active Goals</h3>
-                {goals.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No goals yet</p>
-                ) : (
-                  goals.map((goal: any) => (
-                    <div key={goal.id} className="p-2 border rounded text-sm">
-                      {goal.title}
-                    </div>
-                  ))
-                )}
-              </TabsContent>
-              
-              <TabsContent value="bookmarks" data-testid="bookmarks-panel" className="space-y-2">
-                <h3 className="font-semibold mb-2">Bookmarks</h3>
-                {bookmarks.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No bookmarks yet</p>
-                ) : (
-                  bookmarks.map((bookmark: any) => (
-                    <div key={bookmark.id} className="p-2 border rounded text-sm">
-                      {bookmark.note}
-                    </div>
-                  ))
-                )}
-              </TabsContent>
-              
-              <TabsContent value="resume" data-testid="resume-panel">
-                <h3 className="font-semibold mb-2">Resume Plan</h3>
-                <p className="text-sm text-muted-foreground">
-                  No plans to resume
-                </p>
-              </TabsContent>
-            </Tabs>
-          </Card>
-
-          <Card className="p-6" data-testid="why-panel">
-            <h3 className="font-semibold mb-2">Why This Action?</h3>
-            <p className="text-sm text-muted-foreground">
-              Reasoning will appear here when actions are taken
-            </p>
-          </Card>
+        
+        <div className="p-3 border-t flex gap-2">
+          <Input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
+            className="flex-1"
+            placeholder="Ask Super Andy…"
+            disabled={isLoading}
+          />
+          <Button onClick={send} disabled={isLoading || !input.trim()}>
+            <Send size={16} />
+          </Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

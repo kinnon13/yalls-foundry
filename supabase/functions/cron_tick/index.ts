@@ -11,6 +11,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper to parse cron schedule
+function parseSchedule(schedule: string): number {
+  // Support "rate(Nm|Ns|Nh)" format
+  const match = schedule?.match(/^rate\((\d+)([smh])\)$/i);
+  if (!match) return 60000; // default 1 minute
+  
+  const num = Number(match[1]);
+  const unit = match[2].toLowerCase();
+  
+  if (unit === 's') return num * 1000;
+  if (unit === 'm') return num * 60000;
+  if (unit === 'h') return num * 3600000;
+  
+  return 60000;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -47,7 +63,8 @@ serve(async (req) => {
 
       // Calculate next run with jitter
       const jitterMs = (job.jitter_sec || 0) * 1000 * Math.random();
-      const nextRun = new Date(now.getTime() + parseSchedule(job.schedule) + jitterMs);
+      const delayMs = parseSchedule(job.schedule);
+      const nextRun = new Date(now.getTime() + delayMs + jitterMs);
 
       // Update next run time
       await supabase
@@ -77,12 +94,5 @@ serve(async (req) => {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  }
-
-  // Helper to parse cron schedule (simplified)
-  function parseSchedule(schedule: string): number {
-    // For now, default to 60 seconds
-    // TODO: Implement proper cron parsing
-    return 60000;
   }
 });

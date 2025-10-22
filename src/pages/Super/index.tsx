@@ -12,16 +12,20 @@ export default function SuperOverview() {
     refetchInterval: 10000,
   });
 
-  const { data: jobs } = useQuery({
+  const { data: counts = [] } = useQuery({
     queryKey: ['jobs', 'counts'],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('ai_jobs')
-        .select('status', { count: 'exact', head: false });
-      return data;
+      const { data } = await supabase.rpc('job_status_counts');
+      return data || [];
     },
     refetchInterval: 3000,
   });
+
+  const countsByStatus = Object.fromEntries(
+    counts.map((r: any) => [r.status, Number(r.count)])
+  );
+  const queuedCount = countsByStatus.queued || 0;
+  const runningCount = countsByStatus.running || 0;
 
   const { data: dlq } = useQuery({
     queryKey: ['dlq'],
@@ -45,9 +49,6 @@ export default function SuperOverview() {
     },
     refetchInterval: 5000,
   });
-
-  const queuedCount = jobs?.filter(j => j.status === 'queued').length || 0;
-  const runningCount = jobs?.filter(j => j.status === 'running').length || 0;
 
   return (
     <div className="container py-8">

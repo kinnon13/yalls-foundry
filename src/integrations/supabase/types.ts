@@ -14790,6 +14790,13 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      job_status_counts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          count: number
+          status: string
+        }[]
+      }
       json: {
         Args: { "": unknown }
         Returns: Json

@@ -76,6 +76,7 @@ const WorkersPage = lazy(() => import('./pages/Super/Workers'));
 const FlagsPage = lazy(() => import('./pages/Super/Flags'));
 const IncidentsPage = lazy(() => import('./pages/Super/Incidents'));
 const SuperAndyPage = lazy(() => import('./pages/SuperAndy'));
+const RequireSuperAdmin = lazy(() => import('./guards/RequireSuperAdmin'));
 
 const queryClient = new QueryClient();
 
@@ -355,7 +356,9 @@ function AppContent() {
             path="/super" 
             element={
               <Suspense fallback={<div>Loading...</div>}>
-                <SuperOverview />
+                <RequireSuperAdmin>
+                  <SuperOverview />
+                </RequireSuperAdmin>
               </Suspense>
             } 
           />
@@ -363,7 +366,9 @@ function AppContent() {
             path="/super/pools" 
             element={
               <Suspense fallback={<div>Loading...</div>}>
-                <PoolsPage />
+                <RequireSuperAdmin>
+                  <PoolsPage />
+                </RequireSuperAdmin>
               </Suspense>
             } 
           />
@@ -371,7 +376,9 @@ function AppContent() {
             path="/super/workers" 
             element={
               <Suspense fallback={<div>Loading...</div>}>
-                <WorkersPage />
+                <RequireSuperAdmin>
+                  <WorkersPage />
+                </RequireSuperAdmin>
               </Suspense>
             } 
           />
@@ -379,7 +386,9 @@ function AppContent() {
             path="/super/flags" 
             element={
               <Suspense fallback={<div>Loading...</div>}>
-                <FlagsPage />
+                <RequireSuperAdmin>
+                  <FlagsPage />
+                </RequireSuperAdmin>
               </Suspense>
             } 
           />
@@ -387,7 +396,9 @@ function AppContent() {
             path="/super/incidents" 
             element={
               <Suspense fallback={<div>Loading...</div>}>
-                <IncidentsPage />
+                <RequireSuperAdmin>
+                  <IncidentsPage />
+                </RequireSuperAdmin>
               </Suspense>
             } 
           />
@@ -395,7 +406,9 @@ function AppContent() {
             path="/super-andy-v2" 
             element={
               <Suspense fallback={<div>Loading...</div>}>
-                <SuperAndyPage />
+                <RequireSuperAdmin>
+                  <SuperAndyPage />
+                </RequireSuperAdmin>
               </Suspense>
             } 
           />
