@@ -12,23 +12,26 @@ const content = fs
   .replace(/\/\*[\s\S]*?\*\//g, '')   // strip block comments
   .replace(/\/\/.*$/gm, '');          // strip line comments
 
-// Grab ALL <Routes>...</Routes> blocks
-const blocks = content.match(/<Routes[\s\S]*?<\/Routes>/g) || [];
-if (blocks.length === 0) {
-  console.error('❌ No <Routes> block found in src/App.tsx');
+// Extract only the AppContent function
+const appContentMatch = content.match(/function AppContent\(\)[\s\S]*?^}\s*$/m);
+if (!appContentMatch) {
+  console.error('❌ Could not find AppContent function in src/App.tsx');
   process.exit(1);
 }
 
-// Pick the MAIN routes block:
-// 1) block containing path="*" (catch-all) else
-// 2) block containing "/" or "/dashboard" else
-// 3) first block
-let mainBlock =
-  blocks.find(b => /path=["']\*["']/.test(b)) ||
-  blocks.find(b => /path=["']\/["']/.test(b) || /path=["']\/dashboard["']/.test(b)) ||
-  blocks[0];
+const appContentCode = appContentMatch[0];
 
-const count = (mainBlock.match(/<Route\s+path=/g) || []).length;
+// Find the <Routes> block within AppContent
+const routesMatch = appContentCode.match(/<Routes>([\s\S]*?)<\/Routes>/);
+if (!routesMatch) {
+  console.error('❌ No <Routes> block found in AppContent function');
+  process.exit(1);
+}
+
+const routesContent = routesMatch[1];
+
+// Count <Route path= occurrences
+const count = (routesContent.match(/<Route\s+path=/g) || []).length;
 
 console.log('Route count (main <Routes>):', count);
 if (count !== 10) {
