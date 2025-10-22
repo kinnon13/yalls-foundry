@@ -321,3 +321,24 @@ verify_jwt = false
 [functions.twilio_webhook]
 verify_jwt = false
 
+# P5: CTM (Conversation Task Memory) workers
+[functions.ctm_extract]
+verify_jwt = true
+
+[functions.ctm_daily_report]
+verify_jwt = true
+
+[functions.ctm_reminder_tick]
+verify_jwt = true
+
+# P6: MDR (Multi-Dimensional Reasoning) workers
+[functions.mdr_generate]
+verify_jwt = true
+
+[functions.mdr_consensus]
+verify_jwt = true
+
+# P7: Safety & Autonomy interlocks
+[functions.safety_commit_guard]
+verify_jwt = true
+

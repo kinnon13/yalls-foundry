@@ -44,7 +44,14 @@ serve(async (req) => {
     const expectedSig = btoa(String.fromCharCode(...new Uint8Array(signatureBytes)));
     
     if (signature !== expectedSig) {
-      console.warn('[TwilioWebhook] Signature mismatch - proceeding anyway (dev mode)');
+      const dev = Deno.env.get('ALLOW_DEV_WEBHOOKS') === 'true';
+      if (!dev) {
+        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      console.warn('[TwilioWebhook] DEV ONLY: signature mismatch allowed');
     }
 
     const params = new URLSearchParams(body);

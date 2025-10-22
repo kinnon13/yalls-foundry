@@ -324,6 +324,47 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_consensus: {
+        Row: {
+          alternatives: Json | null
+          chosen_plan_id: string | null
+          confidence: number | null
+          created_at: string
+          id: string
+          reasoning: string | null
+          task_id: string
+          tenant_id: string
+        }
+        Insert: {
+          alternatives?: Json | null
+          chosen_plan_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          reasoning?: string | null
+          task_id: string
+          tenant_id: string
+        }
+        Update: {
+          alternatives?: Json | null
+          chosen_plan_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          reasoning?: string | null
+          task_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_consensus_chosen_plan_id_fkey"
+            columns: ["chosen_plan_id"]
+            isOneToOne: false
+            referencedRelation: "ai_plan_candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_consent: {
         Row: {
           channels: Json
@@ -459,6 +500,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_decision_policy: {
+        Row: {
+          created_at: string
+          id: string
+          max_cost_cents: number | null
+          min_confidence: number | null
+          policy_name: string
+          require_consensus: boolean | null
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_cost_cents?: number | null
+          min_confidence?: number | null
+          policy_name: string
+          require_consensus?: boolean | null
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_cost_cents?: number | null
+          min_confidence?: number | null
+          policy_name?: string
+          require_consensus?: boolean | null
+          tenant_id?: string
+        }
+        Relationships: []
+      }
       ai_events: {
         Row: {
           created_at: string
@@ -491,6 +562,44 @@ export type Database = {
           topic?: string
         }
         Relationships: []
+      }
+      ai_evidence: {
+        Row: {
+          created_at: string
+          data: Json
+          evidence_type: string
+          hypothesis_id: string | null
+          id: string
+          tenant_id: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          evidence_type: string
+          hypothesis_id?: string | null
+          id?: string
+          tenant_id: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          evidence_type?: string
+          hypothesis_id?: string | null
+          id?: string
+          tenant_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_evidence_hypothesis_id_fkey"
+            columns: ["hypothesis_id"]
+            isOneToOne: false
+            referencedRelation: "ai_hypotheses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_feedback: {
         Row: {
@@ -742,6 +851,39 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           value?: Json
+        }
+        Relationships: []
+      }
+      ai_incidents: {
+        Row: {
+          created_at: string
+          detail: Json | null
+          id: string
+          resolved_at: string | null
+          severity: string
+          source: string
+          summary: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json | null
+          id?: string
+          resolved_at?: string | null
+          severity: string
+          source: string
+          summary: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          detail?: Json | null
+          id?: string
+          resolved_at?: string | null
+          severity?: string
+          source?: string
+          summary?: string
+          tenant_id?: string
         }
         Relationships: []
       }
@@ -1067,6 +1209,86 @@ export type Database = {
           version?: string
         }
         Relationships: []
+      }
+      ai_perspectives: {
+        Row: {
+          approach: string
+          confidence_score: number | null
+          created_at: string
+          id: string
+          perspective_name: string
+          rationale: string | null
+          task_id: string
+          tenant_id: string
+        }
+        Insert: {
+          approach: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          perspective_name: string
+          rationale?: string | null
+          task_id: string
+          tenant_id: string
+        }
+        Update: {
+          approach?: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          perspective_name?: string
+          rationale?: string | null
+          task_id?: string
+          tenant_id?: string
+        }
+        Relationships: []
+      }
+      ai_plan_candidates: {
+        Row: {
+          created_at: string
+          estimated_cost_cents: number | null
+          estimated_duration_ms: number | null
+          id: string
+          perspective_id: string | null
+          plan_description: string
+          risk_score: number | null
+          steps: Json | null
+          task_id: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          estimated_cost_cents?: number | null
+          estimated_duration_ms?: number | null
+          id?: string
+          perspective_id?: string | null
+          plan_description: string
+          risk_score?: number | null
+          steps?: Json | null
+          task_id: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          estimated_cost_cents?: number | null
+          estimated_duration_ms?: number | null
+          id?: string
+          perspective_id?: string | null
+          plan_description?: string
+          risk_score?: number | null
+          steps?: Json | null
+          task_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_plan_candidates_perspective_id_fkey"
+            columns: ["perspective_id"]
+            isOneToOne: false
+            referencedRelation: "ai_perspectives"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_policy_config: {
         Row: {

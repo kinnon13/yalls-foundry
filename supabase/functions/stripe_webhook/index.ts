@@ -55,7 +55,14 @@ serve(async (req) => {
       .join('');
     
     if (sig !== expectedSig) {
-      console.warn('[StripeWebhook] Signature mismatch - proceeding anyway (dev mode)');
+      const dev = Deno.env.get('ALLOW_DEV_WEBHOOKS') === 'true';
+      if (!dev) {
+        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      console.warn('[StripeWebhook] DEV ONLY: signature mismatch allowed');
     }
 
     const event = JSON.parse(body);
