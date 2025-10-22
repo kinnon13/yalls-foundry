@@ -378,3 +378,6 @@ verify_jwt = true
 [functions.federate_share]
 verify_jwt = false
 
+[functions.daily_digest_tick]
+verify_jwt = false
+

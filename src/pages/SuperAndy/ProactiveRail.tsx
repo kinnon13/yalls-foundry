@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export default function ProactiveRail() {
   const { data: items = [], refetch } = useQuery({
@@ -33,6 +34,19 @@ export default function ProactiveRail() {
     refetch();
   }
 
+  async function executeNow(sug: any) {
+    try {
+      const { error } = await supabase.functions.invoke('mdr_orchestrate', {
+        body: { tenantId: sug.tenant_id, taskId: `sug-${sug.id}`, context: { suggestionId: sug.id, plan: sug.plan } }
+      });
+      if (error) throw error;
+      toast.success('Execution started');
+      refetch();
+    } catch (error) {
+      toast.error('Failed to start execution');
+    }
+  }
+
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-semibold mb-2">Proactive Suggestions</h3>
@@ -43,6 +57,7 @@ export default function ProactiveRail() {
           <div className="flex gap-2 pt-1">
             <Button size="sm" onClick={() => accept(p.id)}>Accept</Button>
             <Button size="sm" variant="secondary" onClick={() => reject(p.id)}>Reject</Button>
+            <Button size="sm" variant="outline" onClick={() => executeNow(p)}>Execute Now</Button>
           </div>
         </Card>
       ))}

@@ -7,6 +7,8 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
+const MAX_AGENTS = 5;
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
 
@@ -18,41 +20,39 @@ Deno.serve(async (req) => {
     
     const { tenantId, taskId, context } = await req.json();
 
-    // Minimal "three sub-agents" plan: gap_finder → verifier → executor
+    const { data: flags } = await supabase.from('ai_control_flags' as any).select('*').single();
+    if (flags?.global_pause) {
+      return new Response(JSON.stringify({ paused: true, reason: 'global_pause' }), 
+        { status: 202, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+
     const agents = [
-      { name: 'gap_finder', topic: 'research.gap_find' },
-      { name: 'verifier', topic: 'verify.plan' },
-      { name: 'executor', topic: 'execute.plan' },
+      { name: 'gap_finder', topic: 'research.gap_find', pool: 'realtime' },
+      { name: 'verifier', topic: 'verify.plan', pool: 'realtime' },
+      { name: 'executor', topic: 'execute.plan', pool: 'realtime' },
     ];
 
-    for (const a of agents) {
-      await supabase.from('ai_jobs').insert({
-        tenant_id: tenantId,
-        pool: 'realtime',
-        topic: a.topic,
-        status: 'queued',
+    const bounded = agents.slice(0, MAX_AGENTS);
+    for (const a of bounded) {
+      await supabase.from('ai_jobs' as any).insert({
+        tenant_id: tenantId, pool: a.pool, topic: a.topic, status: 'queued', priority: 5,
         payload: { taskId, context, agent: a.name }
       });
     }
 
-    // record orchestration "seed" run
-    await supabase.from('ai_subagent_runs').insert({
-      tenant_id: tenantId,
-      task_id: taskId,
-      agent_name: 'orchestrator',
-      input: { context },
-      output: { queued_agents: agents.map(x => x.name) },
-      success: true
+    await supabase.from('ai_subagent_runs' as any).insert({
+      tenant_id: tenantId, task_id: taskId, agent_name: 'orchestrator',
+      input: { context }, output: { queued_agents: bounded.map(x => x.name) }, success: true
     });
 
-    return new Response(
-      JSON.stringify({ ok: true, agents: agents.map(a => a.name) }),
-      { headers: { ...CORS, 'Content-Type': 'application/json' } }
-    );
+    await supabase.from('ai_action_ledger' as any).insert({
+      tenant_id: tenantId, topic: 'orchestrate.spawn', payload: { taskId, agents: bounded.map(a => a.name) }
+    });
+
+    return new Response(JSON.stringify({ ok: true, agents: bounded.map(a => a.name) }),
+      { headers: { ...CORS, 'Content-Type': 'application/json' } });
   } catch (e: any) {
-    return new Response(
-      JSON.stringify({ error: String(e?.message || e) }),
-      { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: String(e?.message || e) }),
+      { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 });

@@ -7,43 +7,80 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
+const cache = new Map<string, { route: any; exp: number }>();
+const TTL = 60000;
+
+function key(tenantId: string | null, cls: string) {
+  return `${tenantId || 'global'}::${cls}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
 
   try {
+    const { tenantId, taskClass = 'generic', complexity = 'medium', requiredTokens = 1024 } = await req.json();
+    
+    const k = key(tenantId, taskClass);
+    const hit = cache.get(k);
+    if (hit && hit.exp > Date.now()) {
+      return new Response(
+        JSON.stringify(hit.route),
+        { headers: { ...CORS, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
-    
-    const { tenantId, taskClass = 'generic', complexity = 'medium' } = await req.json();
 
-    // pull route & budget
+    // Pull route & budget
     const { data: route } = await supabase
-      .from('ai_model_routes')
+      .from('ai_model_routes' as any)
       .select('*')
       .eq('tenant_id', tenantId)
       .eq('task_class', taskClass)
       .maybeSingle();
 
     const { data: budget } = await supabase
-      .from('ai_model_budget')
+      .from('ai_model_budget' as any)
       .select('*')
       .eq('tenant_id', tenantId)
       .maybeSingle();
 
-    // simple policy: if budget near cap, downgrade to fallback/economy
-    const nearCap = budget && budget.spent_cents > 0.9 * budget.limit_cents;
-    const model = nearCap
-      ? (route?.fallback_model || 'google/gemini-2.5-flash-lite')
-      : (route?.preferred_model || 'google/gemini-2.5-flash');
+    let model = route?.preferred_model || 'google/gemini-2.5-flash';
+    let downgraded = false;
+    let downgrade_reason: string | undefined;
+
+    // Check budget constraints
+    const remaining = (budget?.limit_cents ?? 20000) - (budget?.spent_cents ?? 0);
+    if (remaining < 500) {
+      model = route?.fallback_model || 'google/gemini-2.5-flash-lite';
+      downgraded = true;
+      downgrade_reason = 'low_budget';
+    }
+
+    // Check token constraints
+    if ((route?.max_tokens ?? 4096) < requiredTokens) {
+      model = route?.fallback_model || 'google/gemini-2.5-flash-lite';
+      downgraded = true;
+      downgrade_reason = downgrade_reason
+        ? `${downgrade_reason},max_tokens`
+        : 'max_tokens';
+    }
+
+    const payload = {
+      model,
+      maxTokens: route?.max_tokens ?? 4096,
+      temperature: route?.temperature ?? 0.3,
+      downgraded,
+      downgrade_reason
+    };
+
+    cache.set(k, { route: payload, exp: Date.now() + TTL });
 
     return new Response(
-      JSON.stringify({
-        model,
-        maxTokens: route?.max_tokens ?? 4096,
-        temperature: route?.temperature ?? 0.3
-      }),
+      JSON.stringify(payload),
       { headers: { ...CORS, 'Content-Type': 'application/json' } }
     );
   } catch (e: any) {

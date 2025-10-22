@@ -16,28 +16,50 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Example: find tenants with many open items and suggest consolidation
-    const { data: suggestions } = await supabase
-      .from('ai_proactive_suggestions')
-      .select('tenant_id')
-      .eq('status', 'proposed')
-      .limit(1);
+    // Check global pause flag
+    const { data: flags } = await supabase
+      .from('ai_control_flags' as any)
+      .select('*')
+      .single();
+    
+    if (flags?.global_pause) {
+      return new Response(
+        JSON.stringify({ paused: true }),
+        { status: 202, headers: { ...CORS, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Toy signal: create a suggestion if none exist yet
-    if (!suggestions || suggestions.length === 0) {
-      await supabase.from('ai_proactive_suggestions').insert({
-        tenant_id: null,
-        user_id: null,
-        category: 'ops',
-        title: 'Review system health',
-        summary: 'Periodic health check and optimization suggestions.',
-        plan: { task: 'ops.health_check', steps: ['analyze_metrics', 'suggest_improvements'] },
+    // Pull tenants with heavy goal load using RPC
+    const { data: tenants } = await supabase
+      .rpc('distinct_tenants_with_active_goals');
+
+    // Monitor queues and incidents
+    const { count: dlq } = await supabase
+      .from('ai_job_dlq' as any)
+      .select('*', { count: 'exact', head: true });
+
+    const { count: openIncidents } = await supabase
+      .from('ai_incidents' as any)
+      .select('*', { count: 'exact', head: true })
+      .is('resolved_at', null);
+
+    // Create suggestions with richer context
+    for (const t of (tenants || [])) {
+      await supabase.from('ai_proactive_suggestions' as any).insert({
+        tenant_id: t.tenant_id,
+        category: 'ops/productivity',
+        title: 'Backlog consolidation',
+        summary: `You have ${t.active_count} active goals; DLQ=${dlq || 0}, open incidents=${openIncidents || 0}. Propose consolidation & schedule.`,
+        plan: {
+          steps: ['cluster_goals', 'schedule_block', 'auto-reminders'],
+          signals: { dlq, openIncidents }
+        },
         confidence: 75
       });
     }
 
     return new Response(
-      JSON.stringify({ ok: true, suggestions: 1 }),
+      JSON.stringify({ ok: true, suggestions: (tenants || []).length }),
       { headers: { ...CORS, 'Content-Type': 'application/json' } }
     );
   } catch (e: any) {
