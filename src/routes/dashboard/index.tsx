@@ -21,6 +21,8 @@ import { X } from 'lucide-react';
 import SocialFeedPane from '../home/parts/SocialFeedPane';
 import { MobileTabBar } from '@/components/mobile/MobileTabBar';
 import { CreateModalRouter } from '@/components/modals/CreateModalRouter';
+import OverlayHost from '@/lib/overlay/OverlayHost';
+import PanelHost from '@/lib/panel/PanelHost';
 
 function ActiveAppContent({ appId, onClose }: { appId: OverlayKey; onClose: () => void }) {
   const config = OVERLAY_REGISTRY[appId];
@@ -119,9 +121,11 @@ export default function Dashboard() {
               flexDirection: 'column',
               position: 'relative'
             }}>
-              {activeApp ? (
-                <ActiveAppContent appId={activeApp} onClose={closeApp} />
-              ) : (
+              {/* Overlays render here - isolated to /dashboard only */}
+              <OverlayHost />
+              <PanelHost />
+              
+              {!activeApp && (
                 <div style={{ 
                   flex: 1,
                   display: 'flex',

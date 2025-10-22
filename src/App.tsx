@@ -130,10 +130,8 @@ function AppContent() {
         <Route path="*" element={<LegacyRedirector />} />
       </Routes>
       
-      {/* Global Overlay System - works on all routes */}
+      {/* Overlay system now scoped to /dashboard only */}
       <RouteToOverlayBridge />
-      <OverlayHost />
-      <PanelHost />
       
       <Toaster />
       <Sonner />
