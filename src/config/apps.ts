@@ -284,7 +284,7 @@ export const ALL_APPS: AppConfig[] = [
   },
   { 
     id: 'overview', 
-    label: 'Owner HQ', 
+    label: 'Overview', 
     icon: Home,
     iconName: 'Home',
     description: 'Business overview & stats', 

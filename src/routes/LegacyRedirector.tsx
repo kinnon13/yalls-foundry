@@ -43,8 +43,8 @@ export default function LegacyRedirector() {
       q.set('app', m.app);
       nav(`/dashboard?${q.toString()}`, { replace: true });
     } else {
-      // Hard 404: redirect to dashboard with overview app open
-      nav('/dashboard?app=overview', { replace: true });
+      // Hard 404: redirect to dashboard without forcing an overlay
+      nav('/dashboard', { replace: true });
     }
   }, [loc.pathname, loc.search, nav]);
 

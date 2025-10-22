@@ -2,9 +2,9 @@ import type { AppContract } from '@/apps/types';
 
 const contract: AppContract = {
   id: 'overview',
-  title: 'Owner HQ',
+  title: 'Overview',
   routes: ['/dashboard', '/owner'],
-  role: 'admin',
+  role: 'user',
   testIds: { entryRoot: 'app-overview', panelRoot: 'panel-overview' },
 };
 

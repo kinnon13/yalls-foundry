@@ -51,7 +51,7 @@ export default function AuthPage() {
   // Guard: If already authenticated, redirect to next or home (but not during password reset flow)
   useEffect(() => {
     if (session && !['update-password', 'reset'].includes(mode)) {
-      const destination = next && next !== '/' ? next : '/home?tab=for-you';
+      const destination = next && next !== '/' ? next : '/dashboard';
       navigate(destination, { replace: true });
     }
   }, [session, navigate, next, mode]);
@@ -231,7 +231,7 @@ export default function AuthPage() {
       emitEvent('auth_success', { mode: 'login' });
       toast({ title: '✓ Signed in' });
       
-      const destination = next && next !== '/' ? next : '/home?tab=for-you';
+      const destination = next && next !== '/' ? next : '/dashboard';
       navigate(destination, { replace: true });
     } catch (err) {
       emitEvent('auth_error', { 

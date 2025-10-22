@@ -28,7 +28,7 @@ export const OVERLAY_REGISTRY: Record<AppId, OverlayConfig> = {
   // 🟢 Growth & settings
   mlm:          { key: 'mlm',          title: 'Affiliate Network',role: 'user',  component: lazy(() => import('@/apps/mlm/Entry')) },
   settings:     { key: 'settings',     title: 'Settings',         role: 'user',  component: lazy(() => import('@/apps/settings/Entry')) },
-  overview:     { key: 'overview',     title: 'Owner HQ',         role: 'user',  component: lazy(() => import('@/apps/overview/Entry')) },
+  overview:     { key: 'overview',     title: 'Overview',         role: 'user',  component: lazy(() => import('@/apps/overview/Entry')) },
 
   // 🟢 AI Assistants
   andy:         { key: 'andy',         title: 'Super Andy',       role: 'user',  component: lazy(() => import('@/pages/SuperAndy/Index')) },
