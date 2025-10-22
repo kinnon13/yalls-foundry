@@ -165,19 +165,19 @@ Create 3 Supabase projects:
 
 ```bash
 # main → prod
-SUPABASE_URL=https://xuxfuonzsfvrirdwzddt.supabase.co
-SUPABASE_ANON_KEY=eyJhbGci...prod
-SUPABASE_SERVICE_ROLE_KEY=[prod-service-key]
+SUPABASE_URL=[PRODUCTION_SUPABASE_URL]
+SUPABASE_ANON_KEY=[PRODUCTION_ANON_KEY]
+SUPABASE_SERVICE_ROLE_KEY=[PRODUCTION_SERVICE_KEY]
 
 # staging + PRs → staging
-SUPABASE_URL=https://yalls-staging.supabase.co
-SUPABASE_ANON_KEY=[staging-anon]
-SUPABASE_SERVICE_ROLE_KEY=[staging-service]
+SUPABASE_URL=[STAGING_SUPABASE_URL]
+SUPABASE_ANON_KEY=[STAGING_ANON_KEY]
+SUPABASE_SERVICE_ROLE_KEY=[STAGING_SERVICE_KEY]
 
 # feature/risky-db → scratch
-SUPABASE_URL=https://yalls-scratch.supabase.co
-SUPABASE_ANON_KEY=[scratch-anon]
-SUPABASE_SERVICE_ROLE_KEY=[scratch-service]
+SUPABASE_URL=[SCRATCH_SUPABASE_URL]
+SUPABASE_ANON_KEY=[SCRATCH_ANON_KEY]
+SUPABASE_SERVICE_ROLE_KEY=[SCRATCH_SERVICE_KEY]
 ```
 
 ## 📋 Work Distribution (Parallel Streams)
@@ -541,6 +541,6 @@ Every production deploy must have a rollback:
 
 ---
 
-**Last Updated**: 2025-10-21  
+**Last Updated:** 2025-10-22
 **Status**: Ready to execute  
 **Next Review**: After Week 1 sprint

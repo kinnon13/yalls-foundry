@@ -1,5 +1,7 @@
 # 10-Section Architecture Lockdown
 
+**Last Updated:** 2025-10-22
+
 ## Overview
 This app is **locked to exactly 10 hard-wired sections** to keep it organized, AI-ready, and easy to customize.
 
@@ -108,19 +110,19 @@ RLS stays as configured (members/owner/admin). Nothing new required.
 
 ### 1. 10-Head Limit Check
 ```bash
-node scripts/validate-architecture.mjs
+node scripts/validation/validate-architecture.mjs
 ```
 Fails if `collapsedHeads` exceeds 10 sections.
 
 ### 2. Route Coverage Check
 ```bash
-node scripts/validate-main-routes.mjs
+node scripts/validation/validate-main-routes.mjs
 ```
 Verifies App.tsx routes match `collapsedHeads` from config.
 
 ### 3. Catalog Coverage
 ```bash
-node scripts/validate-catalog-coverage.mjs
+node scripts/validation/validate-catalog-coverage.mjs
 ```
 Only counts items within the 10 sections. Ignores legacy folders:
 - `src/legacy/**`
@@ -146,10 +148,10 @@ Treat `/admin`, `/farm`, `/stallions`, `/tours` as aliases → workspace (no new
 npm run validate:all
 
 # Or individually
-node scripts/validate-architecture.mjs
-node scripts/validate-main-routes.mjs
-node scripts/validate-catalog-coverage.mjs
-node scripts/security-audit.sql
+node scripts/validation/validate-architecture.mjs
+node scripts/validation/validate-main-routes.mjs
+node scripts/validation/validate-catalog-coverage.mjs
+node scripts/audit/security-audit.sql
 ```
 
 ## Common Fixes
@@ -163,7 +165,7 @@ node scripts/security-audit.sql
 ### Moving a Route
 1. Update `configs/area-discovery.json` with new alias
 2. Update `routeCategories` if visibility changes
-3. Run `node scripts/validate-architecture.mjs`
+3. Run `node scripts/validation/validate-architecture.mjs`
 
 ### Hiding a Legacy Feature
 1. Add route alias pointing to appropriate section
@@ -178,6 +180,10 @@ configs/area-discovery.json
 ```
 
 ## References
-- [Security Audit](./SECURITY_README.md)
-- [RPC Testing](./scripts/test-rpc-contracts.sql)
-- [Catalog Backfill](./scripts/catalog-backfill.mjs)
+- [Security Audit](../production/PRODUCTION_HARDENING.md)
+- [Branching Strategy](../processes/BRANCHING_STRATEGY.md)
+- [Project Rules](../../PROJECT_RULES.md)
+
+---
+
+**Last Updated:** 2025-10-22

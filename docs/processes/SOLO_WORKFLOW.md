@@ -118,7 +118,7 @@ gh pr create --base main --head release/$(date +%Y-%m-%d) --fill
 gh pr merge --merge
 ```
 
-## Panic Button (Undo Bad Merge)
+# Panic Button (Undo Bad Merge)
 
 ```bash
 git checkout staging
@@ -127,3 +127,7 @@ git log --oneline -5    # find the bad merge SHA
 git revert -m 1 <bad_merge_sha>
 git push origin staging
 ```
+
+---
+
+**Last Updated:** 2025-10-22

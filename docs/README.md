@@ -1,173 +1,107 @@
-# `/docs` - Project Documentation
+# Documentation Index
 
-This directory contains all documentation for Y'alls Foundry.
+**Last Updated:** 2025-10-22
 
-## 📁 Structure
+## Overview
+
+This directory contains all project documentation organized by purpose: architecture decisions, development processes, production deployment, and audit reports.
+
+## Directory Structure
 
 ```
 docs/
-├── README.md                    This file
-│
-├── architecture/                System design and architecture
-│   ├── 10-SECTION-LOCKDOWN.md  10-section architecture
-│   ├── ARCHITECTURE_AUDIT.md   Dynamic vs hardcoded analysis
-│   └── ...
-│
-├── processes/                   Workflows and procedures
-│   ├── BRANCHING_STRATEGY.md   Git workflow
-│   ├── SOLO_WORKFLOW.md        Solo developer workflow
-│   └── ...
-│
-├── production/                  Production hardening and deployment
-│   ├── PRODUCTION_HARDENING.md Production best practices
-│   └── ...
-│
-└── audit/                       Audit reports and findings
-    ├── main-snapshot.md        Repository snapshot
-    └── verification-report.md  Post-cleanup verification
+├── architecture/  # System design, constraints, and technical decisions
+├── processes/     # Development workflows, branching strategies, and team protocols
+├── production/    # Deployment, hardening, and operational readiness
+└── audit/         # Compliance snapshots and security reports
 ```
 
-## 📚 Key Documents
+## Quick Navigation
 
-### Architecture
-- **10-SECTION-LOCKDOWN.md**: Locked architecture with exactly 10 sections
-- **ARCHITECTURE_AUDIT.md**: Analysis of what's dynamic vs hardcoded, large files, organization
+### 📐 Architecture
+Documents defining system structure, design constraints, and technical decisions.
 
-### Processes
-- **BRANCHING_STRATEGY.md**: How we use Git branches
-- **SOLO_WORKFLOW.md**: Workflow for solo developers
+- **[10-SECTION-LOCKDOWN.md](./architecture/10-SECTION-LOCKDOWN.md)**
+  - Hard limit of 10 application sections for maintainability
+  - Route structure and aliases
+  - CI guardrails for architectural compliance
+  - Core RPCs and section definitions
 
-### Production
-- **PRODUCTION_HARDENING.md**: Billion-user scale hardening guide
-- Performance optimization
-- Security best practices
-- Monitoring and alerting
+### 🔀 Processes
+Development workflows, branching strategies, and collaboration protocols.
 
-### Audit
-- **main-snapshot.md**: Point-in-time repository snapshot
-- **verification-report.md**: Post-refactor verification results
+- **[BRANCHING_STRATEGY.md](./processes/BRANCHING_STRATEGY.md)**
+  - Multi-stream parallel development workflow
+  - Migration train coordination for DB changes
+  - Environment split (prod/staging/scratch)
+  - CI/CD gates and deployment flow
+  - 2-week sprint timeline and work distribution
 
-## 🔒 Security Note
+- **[SOLO_WORKFLOW.md](./processes/SOLO_WORKFLOW.md)**
+  - Simplified workflow for solo developer
+  - Multi-device branch assignment
+  - Device switching protocols
+  - Merge and rollback procedures
 
-**All example API keys, tokens, and secrets in docs MUST be clearly marked as examples.**
+### 🚀 Production
+Deployment procedures, hardening checklists, and operational readiness.
 
-Use this format:
-```markdown
-<!-- ⚠️ EXAMPLE ONLY - DO NOT USE REAL KEYS -->
-API_KEY=sk_test_EXAMPLE_KEY_DO_NOT_USE
-```
+- **[PRODUCTION_HARDENING.md](./production/PRODUCTION_HARDENING.md)**
+  - Tenant isolation and blast radius control
+  - Dual search architecture (private vs marketplace)
+  - Job queue patterns for heavy operations
+  - Rate limiting per-org implementation
+  - Acceptance criteria for production readiness
 
-## 📝 Documentation Standards
+### 📊 Audit
+Historical snapshots, security reports, and compliance documentation.
 
-### File Naming
-- Use kebab-case: `my-document.md`
-- Be descriptive: `authentication-flow.md` not `auth.md`
-- Use consistent naming across related docs
+- Audit reports and compliance snapshots are stored here
+- Security scan results and remediation tracking
+- Historical architecture decisions and their rationale
 
-### Structure
-Every doc should have:
-1. **Title** (H1)
-2. **Overview** - What this doc covers
-3. **Body** - Main content with clear sections
-4. **Related Docs** - Links to related documentation
-5. **Last Updated** - Date stamp
+## Document Standards
 
-### Markdown Style
-```markdown
-# Title (H1 - once per doc)
+All documentation in this directory follows these standards:
 
-## Section (H2)
+1. **Metadata**: Each document includes "Last Updated: YYYY-MM-DD" timestamp
+2. **Code Blocks**: All code examples specify language (```ts, ```sql, ```bash, etc.)
+3. **Secrets**: No live API keys or tokens (use `[EXAMPLE_KEY_HERE]` placeholders)
+4. **Links**: Relative links within docs, absolute for external references
+5. **Structure**: Clear headings, actionable sections, defined success criteria
 
-### Subsection (H3)
+## For New Engineers
 
-- Use bullet lists for items
-- Use numbered lists for steps
-- Use code blocks with language hints
-- Use tables for structured data
-```
+Start here:
+1. Read [10-SECTION-LOCKDOWN.md](./architecture/10-SECTION-LOCKDOWN.md) to understand system constraints
+2. Review [SOLO_WORKFLOW.md](./processes/SOLO_WORKFLOW.md) or [BRANCHING_STRATEGY.md](./processes/BRANCHING_STRATEGY.md) depending on team size
+3. Check [PRODUCTION_HARDENING.md](./production/PRODUCTION_HARDENING.md) for deployment readiness
 
-### Code Examples
-Always specify language:
-````markdown
-```typescript
-const example = 'with syntax highlighting';
-```
+## For AI Agents
 
-```sql
-SELECT * FROM users WHERE active = true;
-```
-````
+When answering questions about:
+- **Architecture**: Refer to `architecture/` for system design constraints
+- **Workflows**: Refer to `processes/` for branching and development protocols  
+- **Deployment**: Refer to `production/` for hardening and readiness criteria
+- **Compliance**: Refer to `audit/` for historical context and reports
 
-## 🔄 Keeping Docs Updated
+## Contributing
 
-### When to Update
-- Architecture changes → Update `architecture/`
-- Process changes → Update `processes/`
-- Production changes → Update `production/`
-- After audits → Add report to `audit/`
+When adding new documentation:
+1. Place in appropriate subdirectory based on purpose
+2. Add entry to this README under correct section
+3. Include "Last Updated: YYYY-MM-DD" at bottom
+4. Ensure all code blocks have language hints
+5. Replace any real secrets with placeholders
+6. Run `node scripts/health/generate-report.mjs` to verify doc integrity
 
-### How to Update
-1. Edit the relevant doc
-2. Update "Last Updated" date
-3. Commit with message: `docs: update [filename] - [reason]`
-4. Reference in PR description if part of larger change
+## Cross-References
 
-## 🔍 Finding Documentation
-
-### By Topic
-- **How do I...** → Check `processes/`
-- **Why is it designed...** → Check `architecture/`
-- **How do I deploy...** → Check `production/`
-- **What changed...** → Check `audit/`
-
-### Search Tips
-Use your IDE's search:
-```bash
-# Find all docs about authentication
-grep -r "authentication" docs/
-
-# Find all docs mentioning rate limiting
-grep -r "rate limit" docs/
-```
-
-## 📊 Doc Types
-
-| Type | Purpose | Examples |
-|------|---------|----------|
-| **Architecture** | System design decisions | 10-SECTION-LOCKDOWN.md |
-| **Process** | How we work | BRANCHING_STRATEGY.md |
-| **Guide** | How to do something | PRODUCTION_HARDENING.md |
-| **Reference** | Quick lookup | API-REFERENCE.md |
-| **Report** | Point-in-time findings | main-snapshot.md |
-
-## 🚫 What NOT to Put Here
-
-- ❌ Code (use `/src` or `/supabase`)
-- ❌ Tests (use `/tests`)
-- ❌ Scripts (use `/scripts`)
-- ❌ Real secrets (use Lovable Cloud secrets)
-- ❌ Build artifacts (auto-generated)
-
-## 🔗 External Resources
-
-- [PROJECT_RULES.md](../PROJECT_RULES.md) - Project-wide rules
-- [Lovable Docs](https://docs.lovable.dev/) - Lovable platform docs
-- [Supabase Docs](https://supabase.com/docs) - Supabase docs
-- [React Docs](https://react.dev/) - React documentation
-
-## ✅ Documentation Checklist
-
-When writing new docs:
-- [ ] Clear title and purpose
-- [ ] Organized with headers
-- [ ] Code examples are tested
-- [ ] All secrets are placeholders
-- [ ] Links to related docs
-- [ ] Date stamp at top or bottom
-- [ ] Proper markdown formatting
-- [ ] Spell-checked and reviewed
+- Project root [README.md](../README.md) - Project overview and quick start
+- [Scripts README](../scripts/README.md) - Automation and validation tools
+- [PROJECT_RULES.md](../PROJECT_RULES.md) - Governance and enforcement rules
+- [structure.lock.json](../structure.lock.json) - File structure constraints
 
 ---
 
-**Last Updated**: 2025-10-22  
-**Maintainer**: Architecture Team
+**Last Updated:** 2025-10-22
