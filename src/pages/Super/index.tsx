@@ -38,7 +38,7 @@ export default function SuperOverview() {
     refetchInterval: 5000,
   });
 
-  const { data: heartbeats } = useQuery({
+  const { data: heartbeats = [] } = useQuery({
     queryKey: ['heartbeats'],
     queryFn: async () => {
       const { data } = await supabase
