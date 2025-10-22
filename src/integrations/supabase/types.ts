@@ -1156,6 +1156,57 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_learnings: {
+        Row: {
+          comment: string | null
+          conversation_id: string | null
+          correlation_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          ledger_id: string | null
+          model_name: string | null
+          policy_version: string | null
+          prompt_hash: string | null
+          rating: number | null
+          source: string
+          tags: string[] | null
+          tenant_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          conversation_id?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ledger_id?: string | null
+          model_name?: string | null
+          policy_version?: string | null
+          prompt_hash?: string | null
+          rating?: number | null
+          source?: string
+          tags?: string[] | null
+          tenant_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          conversation_id?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ledger_id?: string | null
+          model_name?: string | null
+          policy_version?: string | null
+          prompt_hash?: string | null
+          rating?: number | null
+          source?: string
+          tags?: string[] | null
+          tenant_id?: string | null
+        }
+        Relationships: []
+      }
       ai_messages: {
         Row: {
           body: Json

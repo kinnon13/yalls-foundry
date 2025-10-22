@@ -355,3 +355,7 @@ verify_jwt = false
 [functions.dlq_replay]
 verify_jwt = false
 
+# Rate This feedback system
+[functions.feedback_rate]
+verify_jwt = true
+
