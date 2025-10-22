@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { PREVIEW_ITEMS, getPreviewGroups } from '@/preview/registry';
 import { Button } from '@/components/ui/button';
 import { 
@@ -25,7 +26,7 @@ export function PreviewDropdown() {
           Preview
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-72 bg-background z-50">
+      <DropdownMenuContent className="w-72 bg-background border shadow-lg z-[100]">
         <DropdownMenuLabel>Preview Screens</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {groups.map(group => (
@@ -33,19 +34,19 @@ export function PreviewDropdown() {
             <div className="px-2 py-1 text-[11px] uppercase tracking-wide text-muted-foreground">{group}</div>
             {PREVIEW_ITEMS.filter(i => i.group === group).map(i => (
               <DropdownMenuItem key={i.id} asChild>
-                <a href={i.path} className="w-full">
+                <Link to={i.path} className="w-full">
                   <div className="flex flex-col">
                     <span>{i.label}</span>
                     {i.desc && <span className="text-[11px] text-muted-foreground">{i.desc}</span>}
                   </div>
-                </a>
+                </Link>
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
           </div>
         ))}
         <DropdownMenuItem asChild>
-          <a href="/preview" className="w-full">Open Index</a>
+          <Link to="/preview" className="w-full">Open Index</Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

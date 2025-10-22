@@ -30,7 +30,16 @@ export function Nav() {
     checkRole();
   }, [session]);
 
-  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
+  const isActive = (path: string) => {
+    // Handle query param routes (overlays)
+    if (path.includes('?app=')) {
+      const appParam = new URLSearchParams(path.split('?')[1]).get('app');
+      const currentAppParam = new URLSearchParams(location.search).get('app');
+      return appParam === currentAppParam;
+    }
+    // Handle regular routes
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
 
   const linkClass = (path: string) => cn(
     "block px-3 py-2 rounded-md text-sm transition-colors",
@@ -44,13 +53,13 @@ export function Nav() {
       <div>
         <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Workspace</h3>
         <div className="space-y-1">
-          <Link to="/?app=yallbrary" className={linkClass('/?app=yallbrary')} data-testid="nav-yallbrary">
+          <Link to="/dashboard?app=yallbrary" className={linkClass('/dashboard?app=yallbrary')} data-testid="nav-yallbrary">
             Yallbrary
           </Link>
-          <Link to="/super-andy" className={linkClass('/super-andy')}>
+          <Link to="/dashboard?app=andy" className={linkClass('/dashboard?app=andy')} data-testid="nav-andy">
             Super Andy
           </Link>
-          <Link to="/rocker" className={linkClass('/rocker')}>
+          <Link to="/dashboard?app=rocker" className={linkClass('/dashboard?app=rocker')} data-testid="nav-rocker">
             User Rocker
           </Link>
         </div>
@@ -60,20 +69,8 @@ export function Nav() {
         <div>
           <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Admin Rocker</h3>
           <div className="space-y-1">
-            <Link to="/admin-rocker" className={linkClass('/admin-rocker')}>
+            <Link to="/admin-rocker" className={linkClass('/admin-rocker')} data-testid="nav-admin-rocker">
               Overview
-            </Link>
-            <Link to="/admin-rocker/tools" className={linkClass('/admin-rocker/tools')}>
-              Tools
-            </Link>
-            <Link to="/admin-rocker/audits" className={linkClass('/admin-rocker/audits')}>
-              Audits
-            </Link>
-            <Link to="/admin-rocker/moderation" className={linkClass('/admin-rocker/moderation')}>
-              Moderation
-            </Link>
-            <Link to="/admin-rocker/budgets" className={linkClass('/admin-rocker/budgets')}>
-              Budgets
             </Link>
           </div>
         </div>
@@ -83,20 +80,8 @@ export function Nav() {
         <div>
           <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Super Console</h3>
           <div className="space-y-1">
-            <Link to="/super" className={linkClass('/super')}>
+            <Link to="/super" className={linkClass('/super')} data-testid="nav-super">
               Overview
-            </Link>
-            <Link to="/super/pools" className={linkClass('/super/pools')}>
-              Pools
-            </Link>
-            <Link to="/super/workers" className={linkClass('/super/workers')}>
-              Workers
-            </Link>
-            <Link to="/super/flags" className={linkClass('/super/flags')}>
-              Flags
-            </Link>
-            <Link to="/super/incidents" className={linkClass('/super/incidents')}>
-              Incidents
             </Link>
           </div>
         </div>
