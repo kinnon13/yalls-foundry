@@ -53,7 +53,6 @@ const AuthPage = lazy(() => import('./routes/auth'));
 const AuthCallback = lazy(() => import('./routes/auth/callback'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
-const EmbedWidget = lazy(() => import('./routes/embed'));
 const LegacyRedirector = lazy(() => import('./routes/LegacyRedirector'));
 
 const queryClient = new QueryClient();
@@ -127,10 +126,7 @@ function AppContent() {
         {/* 9. Health - Probe endpoint */}
         <Route path="/healthz" element={<Health />} />
         
-        {/* 10. Embed - Optional widgets */}
-        <Route path="/embed" element={<EmbedWidget />} />
-        
-        {/* 11. Catch-all - Legacy redirector */}
+        {/* 10. Catch-all - Legacy redirector */}
         <Route path="*" element={<LegacyRedirector />} />
       </Routes>
       
