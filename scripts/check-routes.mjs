@@ -1,35 +1,38 @@
-/**
- * Route Budget Checker
- * Enforces max 10 routes in App.tsx
- * Run via: node scripts/check-routes.mjs
- */
-
+// Count ONLY routes inside the main <Routes>...</Routes> block in src/App.tsx
 import fs from 'node:fs';
 
-const MAX_ROUTES = 10;
-const appFile = 'src/App.tsx';
-
-try {
-  const content = fs.readFileSync(appFile, 'utf8');
-  
-  // Extract only the main Routes block (AppContent function)
-  // Exclude PreviewRoutes and other nested route components
-  const appContentMatch = content.match(/function AppContent\(\)[^]*?<Routes>([\s\S]*?)<\/Routes>/);
-  const mainRoutesContent = appContentMatch ? appContentMatch[1] : content;
-  
-  // Count <Route path= occurrences in main Routes only
-  const matches = mainRoutesContent.match(/<Route\s+path=/g) || [];
-  const count = matches.length;
-  
-  console.log(`Route count: ${count}`);
-  
-  if (count > MAX_ROUTES) {
-    console.error(`❌ Route budget exceeded! Found ${count} routes, maximum is ${MAX_ROUTES}.`);
-    process.exit(1);
-  }
-  
-  console.log(`✅ Route budget OK (${count}/${MAX_ROUTES})`);
-} catch (error) {
-  console.error('Error reading App.tsx:', error.message);
+const path = 'src/App.tsx';
+if (!fs.existsSync(path)) {
+  console.error(`❌ Missing ${path}`);
   process.exit(1);
 }
+
+const content = fs
+  .readFileSync(path, 'utf8')
+  .replace(/\/\*[\s\S]*?\*\//g, '')   // strip block comments
+  .replace(/\/\/.*$/gm, '');          // strip line comments
+
+// Grab ALL <Routes>...</Routes> blocks
+const blocks = content.match(/<Routes[\s\S]*?<\/Routes>/g) || [];
+if (blocks.length === 0) {
+  console.error('❌ No <Routes> block found in src/App.tsx');
+  process.exit(1);
+}
+
+// Pick the MAIN routes block:
+// 1) block containing path="*" (catch-all) else
+// 2) block containing "/" or "/dashboard" else
+// 3) first block
+let mainBlock =
+  blocks.find(b => /path=["']\*["']/.test(b)) ||
+  blocks.find(b => /path=["']\/["']/.test(b) || /path=["']\/dashboard["']/.test(b)) ||
+  blocks[0];
+
+const count = (mainBlock.match(/<Route\s+path=/g) || []).length;
+
+console.log('Route count (main <Routes>):', count);
+if (count !== 10) {
+  console.error('❌ Route budget violation in main <Routes>. Must be EXACTLY 10.');
+  process.exit(1);
+}
+console.log('✅ Route budget OK');
