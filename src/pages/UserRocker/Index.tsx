@@ -1,21 +1,26 @@
 /**
  * User Rocker - Personal Hub
- * User productivity workspace
+ * User productivity workspace with voice controls
  */
 
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { VoiceControls } from './VoiceControls';
 
 export default function UserRocker() {
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-2">User Rocker</h1>
-      <p className="text-muted-foreground mb-8">
-        Your personal productivity hub for goals, bookmarks, and preferences.
-      </p>
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">User Rocker</h1>
+        <p className="text-muted-foreground mb-4">
+          Your personal productivity hub for goals, bookmarks, and preferences.
+        </p>
+        
+        <VoiceControls />
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl">
         <Card className="p-6">
           <h3 className="text-xl font-semibold mb-2">Super Andy Chat</h3>
           <p className="text-muted-foreground mb-4">

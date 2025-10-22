@@ -44,6 +44,9 @@ export function Nav() {
       <div>
         <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Workspace</h3>
         <div className="space-y-1">
+          <Link to="/?app=yallbrary" className={linkClass('/?app=yallbrary')} data-testid="nav-yallbrary">
+            Yallbrary
+          </Link>
           <Link to="/super-andy" className={linkClass('/super-andy')}>
             Super Andy
           </Link>

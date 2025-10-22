@@ -120,15 +120,16 @@ export async function maybeRunWithApproval<T>(
 
     // Log action
     await supabase.from('ai_action_ledger').insert({
-      tenant_id: null, // Set from context
       user_id: userId,
-      topic: `action.${request.actionType}`,
-      payload: {
+      agent: 'user',
+      action: `action.${request.actionType}`,
+      input: {
         summary: request.actionSummary,
         context: request.context,
         approvalMode: mode,
-        timestamp: new Date().toISOString(),
       },
+      output: {},
+      result: 'success',
     });
 
     return { success: true, result };

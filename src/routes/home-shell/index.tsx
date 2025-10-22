@@ -73,7 +73,7 @@ function ActiveAppContent({ appId, onClose }: { appId: OverlayKey; onClose: () =
       {/* App content */}
       <div style={{ flex: 1, overflow: 'auto', background: 'rgba(0, 0, 0, 0.2)' }}>
         <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
-          <Component />
+          <Component contextType="user" contextId="" mode="overlay" />
         </Suspense>
       </div>
     </>

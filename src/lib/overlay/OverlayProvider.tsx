@@ -45,7 +45,7 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Auth guard
-    if (config.requiresAuth && !userId) {
+    if ('requiresAuth' in config && config.requiresAuth && !userId) {
       console.warn(`[Overlay] ${key} requires auth`);
       navigate('/auth?mode=login');
       return;

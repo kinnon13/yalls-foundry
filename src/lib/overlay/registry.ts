@@ -1,12 +1,14 @@
 /**
- * Overlay Registry
- * Maps overlay keys to lazy-loaded components
+ * Typed Overlay Registry
+ * Enforces all keys, prevents drift, includes Yallbrary branding
  */
 
 import { lazy } from 'react';
 import type { OverlayConfig } from './types';
 
-export const OVERLAY_REGISTRY: Record<string, OverlayConfig> = {
+export type OverlayKey = keyof typeof OVERLAY_REGISTRY;
+
+export const OVERLAY_REGISTRY = {
   messages: {
     key: 'messages',
     title: 'Messages',
@@ -20,7 +22,12 @@ export const OVERLAY_REGISTRY: Record<string, OverlayConfig> = {
   },
   'app-store': {
     key: 'app-store',
-    title: "Y'alls Library",
+    title: "Yallbrary",
+    component: lazy(() => import('@/routes/app-store/index')),
+  },
+  yallbrary: {
+    key: 'yallbrary',
+    title: "Yallbrary",
     component: lazy(() => import('@/routes/app-store/index')),
   },
   crm: {
@@ -94,7 +101,7 @@ export const OVERLAY_REGISTRY: Record<string, OverlayConfig> = {
   },
   'yall-library': {
     key: 'yall-library',
-    title: "Y'alls Library",
+    title: "Yallbrary",
     component: lazy(() => import('@/routes/app-store/index')),
   },
   cart: {

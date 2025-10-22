@@ -28,7 +28,7 @@ export default function OverlayHost() {
           <div className="animate-pulse">Loading {entry.title}...</div>
         </div>
       }>
-        <Component />
+        <Component contextType="user" contextId="" mode="overlay" />
       </Suspense>
     </div>
   );
