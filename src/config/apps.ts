@@ -7,7 +7,7 @@ import { LucideIcon } from 'lucide-react';
 import { 
   MessageSquare, ShoppingBag, Calendar, ShoppingCart, Package,
   Store, DollarSign, Bell, Heart, Sparkles, Users, BarChart3,
-  Video, User, Settings
+  Video, User, Settings, Brain, Bot
 } from 'lucide-react';
 import type { OverlayKey } from '@/lib/overlay/types';
 
@@ -41,6 +41,8 @@ export const ICON_MAP: Record<string, LucideIcon> = {
   Video,
   User,
   Settings,
+  Brain,
+  Bot,
 };
 
 // All available apps - single source of truth
@@ -187,6 +189,28 @@ export const ALL_APPS: AppConfig[] = [
   },
   
   // System
+  { 
+    id: 'andy', 
+    label: 'Super Andy', 
+    icon: Brain,
+    iconName: 'Brain',
+    description: 'AI workspace with chat & tools', 
+    category: 'System', 
+    color: 'text-white', 
+    gradient: 'from-purple-600 via-violet-600 to-fuchsia-600', 
+    installed: true 
+  },
+  { 
+    id: 'rocker', 
+    label: 'Rocker', 
+    icon: Bot,
+    iconName: 'Bot',
+    description: 'Your personal AI assistant', 
+    category: 'System', 
+    color: 'text-white', 
+    gradient: 'from-emerald-500 via-teal-500 to-cyan-500', 
+    installed: true 
+  },
   { 
     id: 'profile', 
     label: 'My Profile', 
