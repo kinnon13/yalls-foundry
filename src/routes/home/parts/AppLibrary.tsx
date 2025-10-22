@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ALL_APPS } from '@/config/apps';
 import type { OverlayKey } from '@/lib/overlay/types';
 
-const categories = ['All', 'Commerce', 'Money', 'Ops', 'Growth', 'Creator', 'System'];
+const categories = ['All', 'Commerce', 'Money', 'Ops', 'Growth', 'Discovery', 'Creator', 'Admin', 'System'];
 
 interface AppLibraryProps {
   onAppClick: (app: { key: string; label: string; icon: LucideIcon; color: string }) => void;

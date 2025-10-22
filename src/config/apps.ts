@@ -7,7 +7,8 @@ import { LucideIcon } from 'lucide-react';
 import { 
   MessageSquare, ShoppingBag, Calendar, ShoppingCart, Package,
   Store, DollarSign, Bell, Heart, Sparkles, Users, BarChart3,
-  Video, User, Settings, Brain, Bot
+  Video, User, Settings, Brain, Bot, TrendingUp, Compass, PartyPopper,
+  Gift, Tractor, Activity, Building, Briefcase, Home, Shield
 } from 'lucide-react';
 import type { OverlayKey } from '@/lib/overlay/types';
 
@@ -43,6 +44,16 @@ export const ICON_MAP: Record<string, LucideIcon> = {
   Settings,
   Brain,
   Bot,
+  TrendingUp,
+  Compass,
+  PartyPopper,
+  Gift,
+  Tractor,
+  Activity,
+  Building,
+  Briefcase,
+  Home,
+  Shield,
 };
 
 // All available apps - single source of truth
@@ -166,6 +177,28 @@ export const ALL_APPS: AppConfig[] = [
     gradient: 'from-slate-500 via-gray-600 to-zinc-500'
   },
   
+  // Discovery
+  { 
+    id: 'discover', 
+    label: 'Discover', 
+    icon: Compass,
+    iconName: 'Compass',
+    description: 'Explore & find new content', 
+    category: 'Discovery', 
+    color: 'text-white', 
+    gradient: 'from-blue-400 via-cyan-400 to-teal-400'
+  },
+  { 
+    id: 'events', 
+    label: 'Events', 
+    icon: PartyPopper,
+    iconName: 'PartyPopper',
+    description: 'Manage events & bookings', 
+    category: 'Discovery', 
+    color: 'text-white', 
+    gradient: 'from-purple-400 via-pink-400 to-rose-400'
+  },
+  
   // Creator
   { 
     id: 'yallbrary', 
@@ -176,6 +209,98 @@ export const ALL_APPS: AppConfig[] = [
     category: 'Creator', 
     color: 'text-white',
     gradient: 'from-rose-500 via-pink-500 to-fuchsia-400' 
+  },
+  
+  // Admin
+  { 
+    id: 'crm', 
+    label: 'CRM', 
+    icon: Users,
+    iconName: 'Users',
+    description: 'Customer relationship management', 
+    category: 'Admin', 
+    color: 'text-white', 
+    gradient: 'from-indigo-500 via-purple-500 to-pink-500'
+  },
+  { 
+    id: 'incentives', 
+    label: 'Incentives', 
+    icon: Gift,
+    iconName: 'Gift',
+    description: 'Rewards & promotions', 
+    category: 'Admin', 
+    color: 'text-white', 
+    gradient: 'from-yellow-400 via-orange-400 to-red-400'
+  },
+  { 
+    id: 'farm-ops', 
+    label: 'Farm Ops', 
+    icon: Tractor,
+    iconName: 'Tractor',
+    description: 'Farm operations management', 
+    category: 'Admin', 
+    color: 'text-white', 
+    gradient: 'from-green-600 via-emerald-600 to-teal-600'
+  },
+  { 
+    id: 'activity', 
+    label: 'Activity', 
+    icon: Activity,
+    iconName: 'Activity',
+    description: 'AI activity monitoring', 
+    category: 'Admin', 
+    color: 'text-white', 
+    gradient: 'from-cyan-500 via-blue-500 to-indigo-500'
+  },
+  { 
+    id: 'entities', 
+    label: 'Entities', 
+    icon: Building,
+    iconName: 'Building',
+    description: 'Manage business entities', 
+    category: 'Admin', 
+    color: 'text-white', 
+    gradient: 'from-slate-500 via-gray-500 to-zinc-500'
+  },
+  { 
+    id: 'business', 
+    label: 'Business', 
+    icon: Briefcase,
+    iconName: 'Briefcase',
+    description: 'Business management', 
+    category: 'Admin', 
+    color: 'text-white', 
+    gradient: 'from-blue-600 via-indigo-600 to-violet-600'
+  },
+  { 
+    id: 'producer', 
+    label: 'Producer', 
+    icon: Store,
+    iconName: 'Store',
+    description: 'Producer tools & resources', 
+    category: 'Admin', 
+    color: 'text-white', 
+    gradient: 'from-amber-500 via-orange-500 to-red-500'
+  },
+  { 
+    id: 'overview', 
+    label: 'Owner HQ', 
+    icon: Home,
+    iconName: 'Home',
+    description: 'Business overview & stats', 
+    category: 'Admin', 
+    color: 'text-white', 
+    gradient: 'from-purple-600 via-violet-600 to-indigo-600'
+  },
+  { 
+    id: 'admin-rocker', 
+    label: 'Admin Rocker', 
+    icon: Shield,
+    iconName: 'Shield',
+    description: 'Admin AI assistant', 
+    category: 'Admin', 
+    color: 'text-white', 
+    gradient: 'from-red-600 via-rose-600 to-pink-600'
   },
   
   // System
