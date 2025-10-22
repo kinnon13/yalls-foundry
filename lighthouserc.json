@@ -1,0 +1,20 @@
+{
+  "ci": {
+    "collect": {
+      "staticDistDir": "dist",
+      "url": ["/", "/super-andy", "/?app=yallbrary"],
+      "numberOfRuns": 1
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["error", {"minScore": 0.95}],
+        "categories:accessibility": ["error", {"minScore": 1}],
+        "categories:best-practices": ["warn", {"minScore": 0.95}],
+        "categories:seo": ["warn", {"minScore": 0.9}],
+        "total-byte-weight": ["error", {"maxNumericValue": 350000}],
+        "unused-javascript": ["warn", {"maxNumericValue": 150000}]
+      }
+    },
+    "upload": { "target": "temporary-public-storage" }
+  }
+}

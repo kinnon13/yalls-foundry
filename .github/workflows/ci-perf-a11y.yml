@@ -2,14 +2,14 @@ name: CI - Performance & Accessibility
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, staging]
   push:
-    branches: [main, chore/route-consolidation-archive]
+    branches: [main, staging]
 
 jobs:
   perf-a11y:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -29,27 +29,48 @@ jobs:
       - name: Install Playwright
         run: npx playwright install --with-deps
 
+      - name: Typecheck
+        run: pnpm tsc --noEmit
+
       - name: Build project
         run: pnpm build
 
-      - name: Start dev server
+      - name: Start preview server
         run: |
-          pnpm dev &
+          pnpm preview --port 4173 &
+          echo $! > preview.pid
           sleep 5
-        env:
-          NODE_ENV: test
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      - name: Run a11y smoke tests
-        run: pnpm exec playwright test tests/e2e/a11y-smoke.spec.ts
-        env:
-          BASE_URL: http://localhost:5173
+      - name: Accessibility tests (axe-core)
+        run: node scripts/a11y-smoke.mjs
 
-      - name: Upload test results
+      - name: Lighthouse performance budgets
+        run: pnpm exec lhci autorun --config=./lighthouserc.json --collect.settings.budgetsPath=./public/lighthouse-budgets.json
+
+      - name: E2E tests
+        run: pnpm exec playwright test
+        env:
+          BASE_URL: http://localhost:4173
+
+      - name: Stop preview server
+        if: always()
+        run: |
+          if [ -f preview.pid ]; then
+            kill $(cat preview.pid) || true
+          fi
+
+      - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: a11y-report
+          name: playwright-report
           path: playwright-report/
-          retention-days: 7
+          retention-days: 14
+
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+          retention-days: 14
