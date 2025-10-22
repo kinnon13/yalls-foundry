@@ -524,6 +524,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_daily_reports: {
+        Row: {
+          created_at: string
+          id: string
+          insights: string | null
+          metrics: Json
+          report_date: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          insights?: string | null
+          metrics?: Json
+          report_date?: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          insights?: string | null
+          metrics?: Json
+          report_date?: string
+          tenant_id?: string
+        }
+        Relationships: []
+      }
       ai_decision_policy: {
         Row: {
           created_at: string
@@ -551,6 +578,36 @@ export type Database = {
           policy_name?: string
           require_consensus?: boolean | null
           tenant_id?: string
+        }
+        Relationships: []
+      }
+      ai_ethics_policy: {
+        Row: {
+          config: Json | null
+          created_at: string
+          enabled: boolean
+          id: string
+          policy_key: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          policy_key: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          policy_key?: string
+          tenant_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -624,6 +681,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ai_federation_flags: {
+        Row: {
+          created_at: string
+          id: string
+          k_anon_min: number
+          opt_in: boolean
+          share_patterns: boolean
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          k_anon_min?: number
+          opt_in?: boolean
+          share_patterns?: boolean
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          k_anon_min?: number
+          opt_in?: boolean
+          share_patterns?: boolean
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       ai_feedback: {
         Row: {
@@ -1207,6 +1294,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_learnings_agg: {
+        Row: {
+          agg_key: string
+          avg_rating: number | null
+          count: number
+          created_at: string
+          id: string
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          agg_key: string
+          avg_rating?: number | null
+          count?: number
+          created_at?: string
+          id?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          agg_key?: string
+          avg_rating?: number | null
+          count?: number
+          created_at?: string
+          id?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_messages: {
         Row: {
           body: Json
@@ -1249,6 +1366,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_model_budget: {
+        Row: {
+          created_at: string
+          id: string
+          model_name: string
+          month: string
+          monthly_limit_usd: number
+          spent_usd: number
+          tenant_id: string
+          tokens_in: number
+          tokens_out: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model_name: string
+          month?: string
+          monthly_limit_usd?: number
+          spent_usd?: number
+          tenant_id: string
+          tokens_in?: number
+          tokens_out?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model_name?: string
+          month?: string
+          monthly_limit_usd?: number
+          spent_usd?: number
+          tenant_id?: string
+          tokens_in?: number
+          tokens_out?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_model_registry: {
         Row: {
           created_at: string | null
@@ -1282,6 +1438,39 @@ export type Database = {
           provider?: string
           traffic_pct?: number | null
           version?: string
+        }
+        Relationships: []
+      }
+      ai_model_routes: {
+        Row: {
+          conditions: Json | null
+          created_at: string
+          id: string
+          model_name: string
+          priority: number
+          task_class: string
+          tenant_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          conditions?: Json | null
+          created_at?: string
+          id?: string
+          model_name: string
+          priority?: number
+          task_class: string
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          conditions?: Json | null
+          created_at?: string
+          id?: string
+          model_name?: string
+          priority?: number
+          task_class?: string
+          tenant_id?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1568,6 +1757,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ai_proactive_suggestions: {
+        Row: {
+          confidence: number
+          created_at: string
+          description: string | null
+          dismissed: boolean
+          dismissed_at: string | null
+          executed: boolean
+          executed_at: string | null
+          id: string
+          suggestion_type: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          description?: string | null
+          dismissed?: boolean
+          dismissed_at?: string | null
+          executed?: boolean
+          executed_at?: string | null
+          id?: string
+          suggestion_type: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          description?: string | null
+          dismissed?: boolean
+          dismissed_at?: string | null
+          executed?: boolean
+          executed_at?: string | null
+          id?: string
+          suggestion_type?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       ai_promotion_audit: {
         Row: {
@@ -1908,6 +2139,36 @@ export type Database = {
           },
         ]
       }
+      ai_self_improve_log: {
+        Row: {
+          context: Json | null
+          created_at: string
+          experiment_name: string
+          id: string
+          metric_name: string
+          metric_value: number
+          variant: string
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          experiment_name: string
+          id?: string
+          metric_name: string
+          metric_value: number
+          variant: string
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          experiment_name?: string
+          id?: string
+          metric_name?: string
+          metric_value?: number
+          variant?: string
+        }
+        Relationships: []
+      }
       ai_sessions: {
         Row: {
           actor_role: string
@@ -1938,6 +2199,42 @@ export type Database = {
           started_at?: string | null
           tenant_id?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      ai_subagent_runs: {
+        Row: {
+          error: string | null
+          finished_at: string | null
+          id: string
+          input: Json | null
+          output: Json | null
+          parent_job_id: string | null
+          started_at: string
+          status: string
+          subagent: string
+        }
+        Insert: {
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          input?: Json | null
+          output?: Json | null
+          parent_job_id?: string | null
+          started_at?: string
+          status?: string
+          subagent: string
+        }
+        Update: {
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          input?: Json | null
+          output?: Json | null
+          parent_job_id?: string | null
+          started_at?: string
+          status?: string
+          subagent?: string
         }
         Relationships: []
       }
@@ -2457,6 +2754,36 @@ export type Database = {
           tenant_id?: string | null
           topic_glob?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ai_world_models: {
+        Row: {
+          confidence: number
+          created_at: string
+          id: string
+          last_updated: string
+          model_data: Json
+          model_type: string
+          tenant_id: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          last_updated?: string
+          model_data?: Json
+          model_type: string
+          tenant_id: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          last_updated?: string
+          model_data?: Json
+          model_type?: string
+          tenant_id?: string
         }
         Relationships: []
       }
@@ -13853,6 +14180,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      aggregate_learnings_k_anon: {
+        Args: { k_min?: number }
+        Returns: undefined
+      }
       aggregate_user_patterns: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -14242,6 +14573,13 @@ export type Database = {
       discovery_mark_error: {
         Args: { p_id: string; p_msg: string }
         Returns: undefined
+      }
+      distinct_tenants_with_active_goals: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          goal_count: number
+          tenant_id: string
+        }[]
       }
       dm_send: {
         Args: { p_body: string; p_metadata?: Json; p_recipient: string }
