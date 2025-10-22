@@ -33,6 +33,7 @@ import { usePageTelemetry } from '@/hooks/usePageTelemetry';
 import { DevHUD } from '@/components/dev/DevHUD';
 import { useDevHUD } from '@/hooks/useDevHUD';
 import { OverlayProvider } from '@/lib/overlay/OverlayProvider';
+import OverlayHost from '@/lib/overlay/OverlayHost';
 import { rocker } from '@/lib/rocker/event-bus';
 import { ProfileProvider } from '@/contexts/ProfileContext';
 import { BusinessComparison } from '@/components/profile/BusinessComparison';
@@ -508,6 +509,9 @@ function AppContent() {
           />
         </Route>
       </Routes>
+      
+      {/* Global Overlay System - works on all routes */}
+      <OverlayHost />
       
       <Toaster />
       <Sonner />
