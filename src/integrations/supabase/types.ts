@@ -351,6 +351,69 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_control_flags: {
+        Row: {
+          burst_override: boolean | null
+          changed_at: string | null
+          external_calls_enabled: boolean | null
+          global_pause: boolean | null
+          id: string
+          last_changed_by: string | null
+          last_reason: string | null
+          write_freeze: boolean | null
+        }
+        Insert: {
+          burst_override?: boolean | null
+          changed_at?: string | null
+          external_calls_enabled?: boolean | null
+          global_pause?: boolean | null
+          id?: string
+          last_changed_by?: string | null
+          last_reason?: string | null
+          write_freeze?: boolean | null
+        }
+        Update: {
+          burst_override?: boolean | null
+          changed_at?: string | null
+          external_calls_enabled?: boolean | null
+          global_pause?: boolean | null
+          id?: string
+          last_changed_by?: string | null
+          last_reason?: string | null
+          write_freeze?: boolean | null
+        }
+        Relationships: []
+      }
+      ai_control_scopes: {
+        Row: {
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          paused: boolean | null
+          reason: string | null
+          scope_key: string
+          scope_type: string
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          paused?: boolean | null
+          reason?: string | null
+          scope_key: string
+          scope_type: string
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          paused?: boolean | null
+          reason?: string | null
+          scope_key?: string
+          scope_type?: string
+        }
+        Relationships: []
+      }
       ai_feedback: {
         Row: {
           action: string | null
@@ -649,6 +712,36 @@ export type Database = {
           tool_called?: string | null
           user_correction?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      ai_kill_events: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          key: string | null
+          level: string
+          reason: string | null
+          requested_by: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          key?: string | null
+          level: string
+          reason?: string | null
+          requested_by?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          key?: string | null
+          level?: string
+          reason?: string | null
+          requested_by?: string | null
         }
         Relationships: []
       }
@@ -10805,6 +10898,27 @@ export type Database = {
           rocker_can_refuse_commands?: boolean
           rocker_obedience_level?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      super_admins: {
+        Row: {
+          added_at: string | null
+          added_by: string | null
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          added_by?: string | null
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          added_at?: string | null
+          added_by?: string | null
+          notes?: string | null
           user_id?: string
         }
         Relationships: []

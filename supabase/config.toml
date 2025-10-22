@@ -306,3 +306,11 @@ verify_jwt = false
 [functions.ai_eventbus]
 verify_jwt = false
 
+# AI Control Plane - admin only
+[functions.ai_control]
+verify_jwt = true
+
+# AI Admin Bind - bootstrap admin
+[functions.ai_admin_bind]
+verify_jwt = true
+
