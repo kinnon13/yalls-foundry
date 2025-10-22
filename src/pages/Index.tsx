@@ -11,24 +11,20 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Listen for auth changes first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+      setLoading(false);
+    });
+
+    // Then check current session (do NOT redirect; allow viewing landing while logged in)
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsLoggedIn(!!session);
       setLoading(false);
-      
-      // Auto-redirect to dashboard if logged in
-      if (session) {
-        navigate('/dashboard');
-      }
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsLoggedIn(!!session);
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   // Trigger greeting for non-logged-in users
   useRockerGreeting(!isLoggedIn && !loading);
