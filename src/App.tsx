@@ -43,7 +43,7 @@ import PanelHost from '@/lib/panel/PanelHost';
 import '@/kernel'; // Register app contracts
 
 // 10 Canonical Routes + Legacy Redirector
-import HomeShell from './routes/home-shell/index';
+import Index from './pages/Index';
 import Health from './pages/Health';
 
 const Dashboard = lazy(() => import('./routes/dashboard/index'));
@@ -100,8 +100,8 @@ function AppContent() {
       <VoiceNotification />
       
       <Routes>
-        {/* 1. Home - Shell with Apps + Feed */}
-        <Route path="/" element={<HomeShell />} />
+        {/* 1. Home - Welcome to Yalls AI */}
+        <Route path="/" element={<Index />} />
         
         {/* 2. Dashboard - Workspace with overlay system */}
         <Route path="/dashboard" element={<Dashboard />} />
