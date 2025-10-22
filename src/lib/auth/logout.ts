@@ -17,37 +17,48 @@ export async function logout(reason: 'user' | 'expired' | 'server' = 'user'): Pr
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
     
-    // 1. Server-side signOut
-    await supabase.auth.signOut();
+    // 1. Server-side signOut with scope: 'global' to clear all sessions
+    await supabase.auth.signOut({ scope: 'global' });
     
-    // 2. Clear all client storage (preserve theme/locale preferences)
-    const keysToPreserve = ['theme', 'locale'];
+    // 2. Force clear ALL Supabase auth tokens from storage
     const allKeys = Object.keys(localStorage);
     allKeys.forEach(key => {
-      if (!keysToPreserve.includes(key)) {
+      // Remove ALL supabase auth keys
+      if (key.includes('supabase') || key.includes('auth-token') || key.includes('sb-')) {
         localStorage.removeItem(key);
       }
     });
+    
+    // 3. Clear sessionStorage completely
     sessionStorage.clear();
     
-    // 3. Clear Sentry user context
+    // 4. Clear all cookies related to auth
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+    
+    // 5. Clear Sentry user context
     clearUser();
     
-    // 4. Emit telemetry
+    // 6. Emit telemetry (non-blocking)
     if (userId) {
-      await emitRockerEvent('user.view.profile', userId, {
+      emitRockerEvent('user.view.profile', userId, {
         action: 'logout',
         reason,
         duration_ms: Date.now() - startTime,
-      });
+      }).catch(() => {}); // Don't block logout on telemetry failure
     }
     
-    // 5. Navigate to canonical auth
-    window.location.href = '/auth?mode=login';
+    // 7. Hard redirect to landing page (not auth) to prevent auto-login loop
+    window.location.href = '/';
     
   } catch (err) {
     console.error('[Logout] Error during logout:', err);
-    // Force navigation even on error
-    window.location.href = '/auth?mode=login';
+    // Force clear storage and navigation even on error
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = '/';
   }
 }
