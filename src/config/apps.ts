@@ -56,8 +56,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'Browse & buy listings', 
     category: 'Commerce', 
     color: 'text-white', 
-    gradient: 'from-green-500 via-emerald-500 to-teal-400', 
-    installed: true 
+    gradient: 'from-green-500 via-emerald-500 to-teal-400'
   },
   { 
     id: 'orders', 
@@ -67,8 +66,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'Manage order lifecycle', 
     category: 'Commerce', 
     color: 'text-white', 
-    gradient: 'from-blue-500 via-blue-600 to-cyan-500', 
-    installed: true 
+    gradient: 'from-blue-500 via-blue-600 to-cyan-500'
   },
   { 
     id: 'cart', 
@@ -78,8 +76,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'Shopping cart & checkout', 
     category: 'Commerce', 
     color: 'text-white', 
-    gradient: 'from-cyan-400 via-teal-400 to-emerald-300', 
-    installed: true 
+    gradient: 'from-cyan-400 via-teal-400 to-emerald-300'
   },
   { 
     id: 'listings', 
@@ -89,8 +86,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'Create marketplace listings', 
     category: 'Commerce', 
     color: 'text-white', 
-    gradient: 'from-orange-400 via-orange-500 to-amber-400', 
-    installed: true 
+    gradient: 'from-orange-400 via-orange-500 to-amber-400'
   },
   
   // Money
@@ -102,8 +98,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'View sales & revenue', 
     category: 'Money', 
     color: 'text-white', 
-    gradient: 'from-emerald-400 via-green-500 to-teal-400', 
-    installed: true 
+    gradient: 'from-emerald-400 via-green-500 to-teal-400'
   },
   
   // Ops
@@ -115,7 +110,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'Unified inbox & CRM', 
     category: 'Ops', 
     color: 'text-white', 
-    gradient: 'from-violet-600 via-purple-600 to-fuchsia-500', 
+    gradient: 'from-violet-600 via-purple-600 to-fuchsia-500',
     installed: true 
   },
   { 
@@ -126,8 +121,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'Alerts & updates', 
     category: 'Ops', 
     color: 'text-white', 
-    gradient: 'from-amber-400 via-orange-400 to-red-400', 
-    installed: true 
+    gradient: 'from-amber-400 via-orange-400 to-red-400'
   },
   { 
     id: 'calendar', 
@@ -137,8 +131,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'Events & bookings', 
     category: 'Ops', 
     color: 'text-white', 
-    gradient: 'from-red-500 via-orange-500 to-amber-400', 
-    installed: true 
+    gradient: 'from-red-500 via-orange-500 to-amber-400'
   },
   { 
     id: 'favorites', 
@@ -148,8 +141,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'Saved items & likes', 
     category: 'Ops', 
     color: 'text-white', 
-    gradient: 'from-pink-500 via-rose-500 to-red-400', 
-    installed: true 
+    gradient: 'from-pink-500 via-rose-500 to-red-400'
   },
   
   // Growth
@@ -161,8 +153,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'Grow your network', 
     category: 'Growth', 
     color: 'text-white', 
-    gradient: 'from-violet-500 via-purple-500 to-fuchsia-500', 
-    installed: true 
+    gradient: 'from-violet-500 via-purple-500 to-fuchsia-500'
   },
   { 
     id: 'analytics', 
@@ -172,8 +163,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'Insights & metrics', 
     category: 'Growth', 
     color: 'text-white', 
-    gradient: 'from-slate-500 via-gray-600 to-zinc-500', 
-    installed: true 
+    gradient: 'from-slate-500 via-gray-600 to-zinc-500'
   },
   
   // Creator
@@ -197,7 +187,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'AI workspace with chat & tools', 
     category: 'System', 
     color: 'text-white', 
-    gradient: 'from-purple-600 via-violet-600 to-fuchsia-600', 
+    gradient: 'from-purple-600 via-violet-600 to-fuchsia-600',
     installed: true 
   },
   { 
@@ -208,7 +198,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'Your personal AI assistant', 
     category: 'System', 
     color: 'text-white', 
-    gradient: 'from-emerald-500 via-teal-500 to-cyan-500', 
+    gradient: 'from-emerald-500 via-teal-500 to-cyan-500',
     installed: true 
   },
   { 
@@ -219,7 +209,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'View and edit your profile', 
     category: 'System', 
     color: 'text-white', 
-    gradient: 'from-blue-500 via-indigo-500 to-purple-500', 
+    gradient: 'from-blue-500 via-indigo-500 to-purple-500',
     installed: true 
   },
   { 
@@ -230,7 +220,7 @@ export const ALL_APPS: AppConfig[] = [
     description: 'App preferences', 
     category: 'System', 
     color: 'text-white', 
-    gradient: 'from-gray-600 via-gray-700 to-slate-700', 
+    gradient: 'from-gray-600 via-gray-700 to-slate-700',
     installed: true 
   },
 ];
