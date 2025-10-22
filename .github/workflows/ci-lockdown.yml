@@ -7,6 +7,7 @@ on:
       - repro/**
       - feature/**
       - fix/**
+  workflow_dispatch:
 
 jobs:
   test:
@@ -46,7 +47,8 @@ jobs:
 
       - name: Preview (background)
         run: |
-          pnpm preview --port 4173 & echo $! > preview.pid
+          (pnpm preview --port 4173 || pnpm exec vite preview --port 4173) & echo $! > preview.pid
+
       - name: Wait for server
         run: npx wait-on http://localhost:4173
 
@@ -70,3 +72,4 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+          if-no-files-found: ignore
