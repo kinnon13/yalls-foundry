@@ -25,6 +25,8 @@ type Preferences = {
   format_pref: string;
   approval_mode: string;
   suggestion_freq: string;
+  pathway_mode: string;
+  visual_pref: string;
 };
 
 export default function Preferences() {
@@ -35,6 +37,8 @@ export default function Preferences() {
     format_pref: 'bullets',
     approval_mode: 'ask',
     suggestion_freq: 'daily',
+    pathway_mode: 'auto',
+    visual_pref: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -57,6 +61,8 @@ export default function Preferences() {
           format_pref: profile.format_pref || 'bullets',
           approval_mode: profile.approval_mode || 'ask',
           suggestion_freq: profile.suggestion_freq || 'daily',
+          pathway_mode: profile.pathway_mode || 'auto',
+          visual_pref: profile.visual_pref || '',
         });
       }
       setLoading(false);
@@ -166,6 +172,36 @@ export default function Preferences() {
                 <SelectItem value="weekly">Weekly</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="pathway">Action Pathways</Label>
+            <Select value={form.pathway_mode} onValueChange={(v) => setForm({ ...form, pathway_mode: v })}>
+              <SelectTrigger id="pathway">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Auto (org default)</SelectItem>
+                <SelectItem value="heavy">Heavy (structured)</SelectItem>
+                <SelectItem value="light">Light (free-form)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Heavy: Crisp 5-7 step plans. Light: Free-form responses.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="visual">Visual Preference</Label>
+            <Input
+              id="visual"
+              value={form.visual_pref}
+              onChange={(e) => setForm({ ...form, visual_pref: e.target.value })}
+              placeholder="Optional: visual style preferences"
+            />
+            <p className="text-xs text-muted-foreground">
+              Describe any visual formatting you prefer (e.g., diagrams, emojis, color coding)
+            </p>
           </div>
 
           <Button onClick={save} disabled={saving}>

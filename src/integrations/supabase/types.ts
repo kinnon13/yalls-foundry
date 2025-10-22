@@ -425,6 +425,7 @@ export type Database = {
           id: string
           last_changed_by: string | null
           last_reason: string | null
+          pathway_heavy_default: boolean | null
           write_freeze: boolean | null
         }
         Insert: {
@@ -435,6 +436,7 @@ export type Database = {
           id?: string
           last_changed_by?: string | null
           last_reason?: string | null
+          pathway_heavy_default?: boolean | null
           write_freeze?: boolean | null
         }
         Update: {
@@ -445,6 +447,7 @@ export type Database = {
           id?: string
           last_changed_by?: string | null
           last_reason?: string | null
+          pathway_heavy_default?: boolean | null
           write_freeze?: boolean | null
         }
         Relationships: []
@@ -2628,6 +2631,7 @@ export type Database = {
           goal_weights: Json | null
           id: string
           notes: string | null
+          pathway_mode: string | null
           private_mode_default: boolean | null
           suggestion_freq: string | null
           taboo_topics: string[] | null
@@ -2646,6 +2650,7 @@ export type Database = {
           goal_weights?: Json | null
           id?: string
           notes?: string | null
+          pathway_mode?: string | null
           private_mode_default?: boolean | null
           suggestion_freq?: string | null
           taboo_topics?: string[] | null
@@ -2664,6 +2669,7 @@ export type Database = {
           goal_weights?: Json | null
           id?: string
           notes?: string | null
+          pathway_mode?: string | null
           private_mode_default?: boolean | null
           suggestion_freq?: string | null
           taboo_topics?: string[] | null
