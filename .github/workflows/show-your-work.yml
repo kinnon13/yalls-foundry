@@ -25,6 +25,10 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      # Route budget check - fail if > 10 routes
+      - name: Route budget (<= 10)
+        run: node scripts/check-routes.mjs
+
       # Optional (keeps npm caches happy; skips if no lockfile)
       - name: Install
         run: npm install

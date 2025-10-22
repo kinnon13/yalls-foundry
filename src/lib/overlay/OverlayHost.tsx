@@ -7,7 +7,7 @@ import { getCurrentRole, rank } from '@/security/role';
 
 /**
  * OverlayHost - Modal overlay system with role-based access and deep-link sync
- * Renders based on ?app= query parameter with ESC key support and telemetry
+ * Renders based on ?app= query parameter with ESC key support, a11y, and mobile gestures
  */
 export default function OverlayHost() {
   const [sp, setSp] = useSearchParams();
@@ -17,17 +17,29 @@ export default function OverlayHost() {
   const nav = useNavigate();
   const { pathname } = useLocation();
   const syncingRef = useRef(false);
+  const titleId = useRef(`overlay-title-${key ?? 'none'}`);
+  const lastFocus = useRef<HTMLElement | null>(null);
+  const touch = useRef<{ y0: number; y: number; active: boolean }>({ y0: 0, y: 0, active: false });
 
   useEffect(() => {
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
     if (cfg) {
       window.addEventListener('keydown', onEsc);
+      // Focus management - save last focused element
+      lastFocus.current = document.activeElement as HTMLElement | null;
+      // Focus close button on open
+      setTimeout(() => {
+        const btn = document.querySelector<HTMLElement>('[data-testid="overlay-close"]');
+        btn?.focus();
+      }, 100);
       // Emit telemetry event
       window.dispatchEvent(new CustomEvent('overlay:open', { detail: { app: key } }));
     }
     return () => {
       window.removeEventListener('keydown', onEsc);
       if (cfg) {
+        // Restore focus
+        lastFocus.current?.focus?.();
         window.dispatchEvent(new CustomEvent('overlay:close', { detail: { app: key } }));
       }
     };
@@ -54,6 +66,24 @@ export default function OverlayHost() {
     setSp(next, { replace: true });
   }
 
+  function onTouchStart(e: React.TouchEvent) {
+    touch.current = { y0: e.touches[0].clientY, y: e.touches[0].clientY, active: true };
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    if (!touch.current.active) return;
+    touch.current.y = e.touches[0].clientY;
+    const dy = touch.current.y - touch.current.y0;
+    // Add visual hint for swipe
+    (e.currentTarget as HTMLElement).setAttribute('data-swipe-hint', dy > 20 ? '1' : '0');
+  }
+
+  function onTouchEnd() {
+    const dy = touch.current.y - touch.current.y0;
+    touch.current.active = false;
+    if (dy > 120) close(); // swipe down to close
+  }
+
   if (!cfg) return null;
 
   const allowed = rank(role) >= rank(cfg.role);
@@ -62,16 +92,21 @@ export default function OverlayHost() {
     <div
       data-testid="overlay-root"
       onMouseDown={(e) => e.currentTarget === e.target && close()}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
       className="fixed inset-0 bg-black/35 grid place-items-center z-[1000]"
       aria-modal="true"
       role="dialog"
+      aria-labelledby={titleId.current}
     >
       <div className="w-[92vw] max-w-3xl max-h-[88vh] bg-background rounded-lg shadow-xl overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b">
-          <h2 className="text-lg font-semibold" data-testid="overlay-title">
+          <h2 id={titleId.current} className="text-lg font-semibold" data-testid="overlay-title">
             {cfg.title}
           </h2>
           <button 
+            data-testid="overlay-close"
             aria-label="Close overlay" 
             onClick={close} 
             className="text-sm hover:opacity-70 transition-opacity"
