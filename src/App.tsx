@@ -42,56 +42,18 @@ import { RouteToOverlayBridge } from '@/lib/overlay/RouteToOverlayBridge';
 import PanelHost from '@/lib/panel/PanelHost';
 import '@/kernel'; // Register app contracts
 
-// 10 Canonical Routes
+// 10 Canonical Routes + Legacy Redirector
 import HomeShell from './routes/home-shell/index';
-import NotFound from './pages/NotFound';
 import Health from './pages/Health';
 
-const Discover = lazy(() => import('./routes/discover/search'));
-const Messages = lazy(() => import('./routes/messages/index'));
-const ProfilePageDynamic = lazy(() => import('./routes/profile/[id]'));
-const EntitiesList = lazy(() => import('./routes/entities/index'));
-const EventsIndex = lazy(() => import('./routes/events/index'));
-const EventDetail = lazy(() => import('./routes/events/[id]'));
-const MarketplaceIndex = lazy(() => import('./routes/marketplace/index'));
-const ListingDetail = lazy(() => import('./routes/listings/[id]'));
-const CartPage = lazy(() => import('./routes/cart/index'));
-const OrdersIndex = lazy(() => import('./routes/orders/index'));
-const GuardrailsControl = lazy(() => import('./routes/admin/guardrails'));
-const ApprovalsPage = lazy(() => import('./routes/admin/approvals'));
-const VoiceSettingsPage = lazy(() => import('./routes/admin/voice-settings'));
-const SuperAdminControlsPage = lazy(() => import('./routes/admin/super-admin-controls'));
-const OrderDetail = lazy(() => import('./routes/orders/[id]'));
-const MLMPage = lazy(() => import('./routes/mlm/index'));
-const AdminDashboard = lazy(() => import('./routes/admin'));
-const AuthPage = lazy(() => import('./routes/auth'));
-const OnboardingPage = lazy(() => import('./routes/onboarding/index'));
-const RockerHub = lazy(() => import('./routes/rocker-hub'));
-const SuperAndy = lazy(() => import('./routes/super-andy'));
-const AdminRocker = lazy(() => import('./routes/admin-rocker'));
-const SettingsKeys = lazy(() => import('./pages/SettingsKeys'));
-const RoleToolPage = lazy(() => import('./routes/admin/role-tool'));
-
-// Super Console
-const SuperOverview = lazy(() => import('./pages/Super/index'));
-const PoolsPage = lazy(() => import('./pages/Super/Pools'));
-const WorkersPage = lazy(() => import('./pages/Super/Workers'));
-const FlagsPage = lazy(() => import('./pages/Super/Flags'));
-const IncidentsPage = lazy(() => import('./pages/Super/Incidents'));
-const SuperAndyPage = lazy(() => import('./pages/SuperAndy'));
-const SuperAndyIndex = lazy(() => import('./pages/SuperAndy/Index'));
-const RequireSuperAdmin = lazy(() => import('./guards/RequireSuperAdmin'));
-
-// Admin Rocker Pages
-const AdminRockerIndex = lazy(() => import('./pages/AdminRocker/Index'));
-const AdminRockerTools = lazy(() => import('./pages/AdminRocker/Tools'));
-const AdminRockerAudits = lazy(() => import('./pages/AdminRocker/Audits'));
-const AdminRockerModeration = lazy(() => import('./pages/AdminRocker/Moderation'));
-const AdminRockerBudgets = lazy(() => import('./pages/AdminRocker/Budgets'));
-
-// User Rocker Pages
-const UserRockerIndex = lazy(() => import('./pages/UserRocker/Index'));
-const UserRockerPreferences = lazy(() => import('./pages/UserRocker/Preferences'));
+const Dashboard = lazy(() => import('./routes/dashboard/index'));
+const SuperConsole = lazy(() => import('./pages/Super/index'));
+const AdminRockerConsole = lazy(() => import('./pages/AdminRocker/Index'));
+const AuthCallback = lazy(() => import('./routes/auth/callback'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const Terms = lazy(() => import('./pages/Terms'));
+const EmbedWidget = lazy(() => import('./routes/embed'));
+const LegacyRedirector = lazy(() => import('./routes/LegacyRedirector'));
 
 const queryClient = new QueryClient();
 
@@ -137,309 +99,35 @@ function AppContent() {
       <VoiceNotification />
       
       <Routes>
-        {/* Auth - Public only (redirects if already logged in) */}
-        <Route element={<PublicOnlyGuard />}>
-          <Route path="/auth" element={
-            <Suspense fallback={<div>Loading...</div>}>
-              <AuthPage />
-            </Suspense>
-          } />
-        </Route>
-
-        {/* Onboarding - Authenticated users only, before main app */}
-        <Route element={<RequireAuthGuard />}>
-          <Route path="/onboarding/*" element={
-            <Suspense fallback={<div>Loading...</div>}>
-              <OnboardingPage />
-            </Suspense>
-          } />
-        </Route>
-
-        {/* All main routes require onboarding completion */}
-        <Route element={<RequireOnboardingGuard />}>
-          {/* 1. Home - Shell with Apps + Feed */}
-          <Route path="/" element={<HomeShell />} />
-          
-          {/* 2. Discover - For You / Trending / Latest */}
-          <Route 
-            path="/discover" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <Discover />
-              </Suspense>
-            } 
-          />
+        {/* 1. Home - Shell with Apps + Feed */}
+        <Route path="/" element={<HomeShell />} />
         
-        {/* 3. Dashboard - Redirect to unified shell */}
-        <Route path="/dashboard" element={<Navigate to="/?mode=manage" replace />} />
-        <Route path="/home" element={<Navigate to="/" replace />} />
+        {/* 2. Dashboard - Workspace with overlay system */}
+        <Route path="/dashboard" element={<Dashboard />} />
         
-        {/* 4. Messages - DM deep link */}
-        <Route
-          path="/messages"
-          element={
-            <Suspense fallback={<div>Loading...</div>}>
-              <Messages />
-            </Suspense>
-          }
-        />
+        {/* 3. Super Console - Admin Only */}
+        <Route path="/super" element={<SuperConsole />} />
         
-        {/* 5. Profile - Public profile deep link */}
-        <Route 
-          path="/profile/:id" 
-          element={
-            <Suspense fallback={<div>Loading...</div>}>
-              <ProfilePageDynamic />
-            </Suspense>
-          } 
-        />
+        {/* 4. Admin Rocker - Admin console for AI */}
+        <Route path="/admin-rocker" element={<AdminRockerConsole />} />
         
-        {/* 6. Entities - Browse & claim */}
-        <Route 
-          path="/entities" 
-          element={
-            <Suspense fallback={<div>Loading...</div>}>
-              <EntitiesList />
-            </Suspense>
-          } 
-        />
+        {/* 5. Auth Callback - OAuth flow */}
+        <Route path="/auth/callback" element={<AuthCallback />} />
         
-        {/* 7. Events - Index + Detail */}
-        <Route 
-          path="/events" 
-          element={
-            <Suspense fallback={<div>Loading...</div>}>
-              <EventsIndex />
-            </Suspense>
-          } 
-        />
-        <Route 
-          path="/events/:id" 
-          element={
-            <Suspense fallback={<div>Loading...</div>}>
-              <EventDetail />
-            </Suspense>
-          } 
-        />
+        {/* 6. Privacy - Static page */}
+        <Route path="/privacy" element={<Privacy />} />
         
-        {/* 8. Listings - Marketplace index + detail */}
-        <Route 
-          path="/listings" 
-          element={
-            <Suspense fallback={<div>Loading...</div>}>
-              <MarketplaceIndex />
-            </Suspense>
-          } 
-        />
-        <Route 
-          path="/listings/:id" 
-          element={
-            <Suspense fallback={<div>Loading...</div>}>
-              <ListingDetail />
-            </Suspense>
-          } 
-        />
+        {/* 7. Terms - Static page */}
+        <Route path="/terms" element={<Terms />} />
         
-        {/* Protected Routes Group - Require Authentication */}
-        <Route element={<RequireAuthGuard />}>
-          {/* 9. Cart - Checkout & Purchase */}
-          <Route 
-            path="/cart" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <CartPage />
-              </Suspense>
-            } 
-          />
-          
-          {/* 10. Orders - List + Detail */}
-          <Route 
-            path="/orders" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <OrdersIndex />
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/orders/:id" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <OrderDetail />
-              </Suspense>
-            } 
-          />
-          
-          {/* MLM Network */}
-          <Route 
-            path="/mlm" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <MLMPage />
-              </Suspense>
-            } 
-          />
-          
-          {/* Admin Dashboard */}
-          <Route 
-            path="/admin" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <AdminDashboard />
-              </Suspense>
-            } 
-          />
-          
-          {/* Super Admin Guardrails Control */}
-          <Route 
-            path="/admin/guardrails" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <GuardrailsControl />
-              </Suspense>
-            } 
-          />
-          
-          {/* Super Admin Approvals */}
-          <Route 
-            path="/admin/approvals" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <ApprovalsPage />
-              </Suspense>
-            } 
-          />
-          
-          {/* Voice Settings */}
-          <Route 
-            path="/admin/voice-settings" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <VoiceSettingsPage />
-              </Suspense>
-            } 
-          />
-          
-          {/* Super Admin Controls */}
-          <Route 
-            path="/admin/super-admin-controls" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <SuperAdminControlsPage />
-              </Suspense>
-            } 
-          />
-          
-          {/* Rocker & Admin Rocker - Now via overlay system (?app=rocker, ?app=admin-rocker) */}
-          
-          {/* Super Andy - Everything AI Workspace */}
-          <Route 
-            path="/super-andy" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <SuperAndyIndex />
-              </Suspense>
-            } 
-          />
-          
-          {/* Super Console - Admin Only */}
-          <Route 
-            path="/super" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <RequireSuperAdmin>
-                  <SuperOverview />
-                </RequireSuperAdmin>
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/super/pools" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <RequireSuperAdmin>
-                  <PoolsPage />
-                </RequireSuperAdmin>
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/super/workers" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <RequireSuperAdmin>
-                  <WorkersPage />
-                </RequireSuperAdmin>
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/super/flags" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <RequireSuperAdmin>
-                  <FlagsPage />
-                </RequireSuperAdmin>
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/super/incidents" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <RequireSuperAdmin>
-                  <IncidentsPage />
-                </RequireSuperAdmin>
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/super-andy-v2" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <RequireSuperAdmin>
-                  <SuperAndyIndex />
-                </RequireSuperAdmin>
-              </Suspense>
-            } 
-          />
-          
-          {/* Settings - API Keys */}
-          <Route 
-            path="/settings/keys" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <SettingsKeys />
-              </Suspense>
-            } 
-          />
-          
-          {/* Admin - Role Tool */}
-          <Route 
-            path="/admin/role-tool" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <RoleToolPage />
-              </Suspense>
-            } 
-          />
-        </Route>
+        {/* 8. Health - Probe endpoint */}
+        <Route path="/healthz" element={<Health />} />
         
-        {/* Health check */}
-        <Route path="/health" element={<Health />} />
+        {/* 9. Embed - Optional widgets */}
+        <Route path="/embed" element={<EmbedWidget />} />
         
-          {/* Catch-all: redirect to Discover with toast */}
-          <Route 
-            path="*" 
-            element={
-              <Navigate 
-                to="/discover" 
-                replace 
-                state={{ toast: "Route moved. Use Library or Finder." }} 
-              />
-            } 
-          />
-        </Route>
+        {/* 10. Catch-all - Legacy redirector */}
+        <Route path="*" element={<LegacyRedirector />} />
       </Routes>
       
       {/* Global Overlay System - works on all routes */}

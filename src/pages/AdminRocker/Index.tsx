@@ -1,61 +1,118 @@
 /**
- * Admin Rocker Overview
- * Admin workspace hub
+ * Admin Rocker Console - Main dashboard for AI administration
  */
 
 import { Link } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Shield, Activity, DollarSign, Wrench } from 'lucide-react';
 
-export default function AdminRocker() {
+export default function AdminRockerIndex() {
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-2">Admin Rocker</h1>
-      <p className="text-muted-foreground mb-8">
-        Admin workspace for tools, audits, moderation, and budget management.
-      </p>
+    <div className="container mx-auto py-8 px-4 max-w-6xl">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-2">Admin Rocker Console</h1>
+        <p className="text-muted-foreground">
+          AI administration, monitoring, and control center
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
-        <Card className="p-6">
-          <h3 className="text-xl font-semibold mb-2">Tools Registry</h3>
-          <p className="text-muted-foreground mb-4">
-            View and manage role-scoped AI tools and capabilities.
-          </p>
-          <Button asChild variant="outline">
-            <Link to="/admin-rocker/tools">View Tools</Link>
-          </Button>
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Audits */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Action Audits
+            </CardTitle>
+            <CardDescription>
+              View action history and audit trails
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/admin-rocker/audits">View Audit Logs</Link>
+            </Button>
+          </CardContent>
         </Card>
 
-        <Card className="p-6">
-          <h3 className="text-xl font-semibold mb-2">Action Ledger & Audits</h3>
-          <p className="text-muted-foreground mb-4">
-            Browse action history, verify outputs, and audit trails.
-          </p>
-          <Button asChild variant="outline">
-            <Link to="/admin-rocker/audits">View Audits</Link>
-          </Button>
+        {/* Budgets */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Model Budgets
+            </CardTitle>
+            <CardDescription>
+              Configure model routing and monitor usage
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/admin-rocker/budgets">Manage Budgets</Link>
+            </Button>
+          </CardContent>
         </Card>
 
-        <Card className="p-6">
-          <h3 className="text-xl font-semibold mb-2">Moderation</h3>
-          <p className="text-muted-foreground mb-4">
-            Handle incidents, content review, and escalations.
-          </p>
-          <Button asChild variant="outline">
-            <Link to="/admin-rocker/moderation">View Moderation</Link>
-          </Button>
+        {/* Tools */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wrench className="h-5 w-5" />
+              Admin Tools
+            </CardTitle>
+            <CardDescription>
+              Manual controls and testing utilities
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/admin-rocker/tools">Open Tools</Link>
+            </Button>
+          </CardContent>
         </Card>
 
-        <Card className="p-6">
-          <h3 className="text-xl font-semibold mb-2">Model Routes & Budgets</h3>
-          <p className="text-muted-foreground mb-4">
-            Configure model routing and monitor budget usage.
-          </p>
-          <Button asChild variant="outline">
-            <Link to="/admin-rocker/budgets">View Budgets</Link>
-          </Button>
+        {/* Moderation */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Content Moderation
+            </CardTitle>
+            <CardDescription>
+              Review flagged content and moderate AI outputs
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/admin-rocker/moderation">View Queue</Link>
+            </Button>
+          </CardContent>
         </Card>
       </div>
+
+      {/* Quick Stats */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>System Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold">—</div>
+              <div className="text-sm text-muted-foreground">Active Workers</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold">—</div>
+              <div className="text-sm text-muted-foreground">Pending Actions</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold">—</div>
+              <div className="text-sm text-muted-foreground">Budget Used</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
