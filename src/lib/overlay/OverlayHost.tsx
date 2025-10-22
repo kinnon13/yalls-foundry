@@ -1,11 +1,12 @@
-import { Suspense, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Suspense, useEffect, useRef } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { OVERLAY_REGISTRY } from './registry';
+import { getBaseRouteFor } from './deeplink';
 import type { AppId } from '@/apps/types';
 import { getCurrentRole, rank } from '@/security/role';
 
 /**
- * OverlayHost - Modal overlay system with role-based access control
+ * OverlayHost - Modal overlay system with role-based access and deep-link sync
  * Renders based on ?app= query parameter with ESC key support and telemetry
  */
 export default function OverlayHost() {
@@ -13,6 +14,9 @@ export default function OverlayHost() {
   const key = sp.get('app') as AppId | null;
   const cfg = key && key in OVERLAY_REGISTRY ? OVERLAY_REGISTRY[key] : null;
   const role = getCurrentRole();
+  const nav = useNavigate();
+  const { pathname } = useLocation();
+  const syncingRef = useRef(false);
 
   useEffect(() => {
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
@@ -28,6 +32,21 @@ export default function OverlayHost() {
       }
     };
   }, [cfg, key]);
+
+  // Route ↔ Overlay sync: when overlay opens, navigate to its base route
+  useEffect(() => {
+    if (syncingRef.current || !key || !cfg) return;
+    
+    const base = getBaseRouteFor(key);
+    if (!base) return;
+
+    // If overlay open but not on base route, navigate (replace) to base
+    if (!pathname.startsWith(base)) {
+      syncingRef.current = true;
+      nav(base + '?' + sp.toString(), { replace: true });
+      setTimeout(() => (syncingRef.current = false), 0);
+    }
+  }, [key, cfg, pathname, sp, nav]);
 
   function close() {
     const next = new URLSearchParams(sp);

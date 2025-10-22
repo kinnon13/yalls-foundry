@@ -38,6 +38,8 @@ import { rocker } from '@/lib/rocker/event-bus';
 import { ProfileProvider } from '@/contexts/ProfileContext';
 import { BusinessComparison } from '@/components/profile/BusinessComparison';
 import { BottomDock } from '@/components/layout/BottomDock';
+import { RouteToOverlayBridge } from '@/lib/overlay/RouteToOverlayBridge';
+import PanelHost from '@/lib/panel/PanelHost';
 import '@/kernel'; // Register app contracts
 
 // 10 Canonical Routes
@@ -511,7 +513,9 @@ function AppContent() {
       </Routes>
       
       {/* Global Overlay System - works on all routes */}
+      <RouteToOverlayBridge />
       <OverlayHost />
+      <PanelHost />
       
       <Toaster />
       <Sonner />
