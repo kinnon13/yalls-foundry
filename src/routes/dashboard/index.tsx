@@ -1,4 +1,8 @@
 /**
+ * 🔒 PRODUCTION-LOCKED DASHBOARD
+ * DO NOT MODIFY without explicit user approval
+ * Last finalized: 2025-01-22
+ * 
  * Dashboard (Authenticated User View)
  * Clone of Home Shell - Single page with three-column Mac layout
  * Left: Apps rail | Center: Window canvas (overlays) | Right: Feed

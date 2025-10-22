@@ -1,3 +1,12 @@
+/**
+ * 🔒 PRODUCTION-LOCKED LANDING PAGE
+ * DO NOT MODIFY without explicit user approval
+ * Last finalized: 2025-01-22
+ * 
+ * Landing Page - Marketing welcome page for Yalls.ai
+ * Supports domain-based routing for vertical-specific messaging
+ */
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';

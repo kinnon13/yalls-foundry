@@ -1,4 +1,8 @@
 /**
+ * 🔒 PRODUCTION-LOCKED LEGACY REDIRECTOR
+ * DO NOT MODIFY without explicit user approval
+ * Last finalized: 2025-01-22
+ * 
  * Legacy Redirector
  * Catches all unmapped routes and redirects to dashboard with ?app= parameter
  * Preserves query strings and provides graceful fallback
