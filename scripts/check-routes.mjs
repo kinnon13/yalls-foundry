@@ -22,10 +22,12 @@ const endIdx = raw.indexOf('ROUTE_BUDGET_END');
 let target = '';
 
 if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+  console.log('🔎 Using ROUTE_BUDGET markers to isolate main <Routes>');
   target = raw.slice(startIdx, endIdx);
 } else {
   // 2) Fallback: score all <Routes> blocks in App.tsx and pick the canonical one
   const blocks = raw.match(/<Routes[\s\S]*?<\/Routes>/g) || [];
+  console.log('🔎 Found <Routes> blocks:', blocks.length);
   if (blocks.length === 0) {
     console.error('❌ No <Routes> block found in src/App.tsx');
     process.exit(1);
@@ -44,9 +46,15 @@ if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
     return s;
   };
 
-  target = (blocks
-    .map((b) => ({ b, s: score(b) }))
-    .sort((a, b) => b.s - a.s)[0] || { b: blocks[0] }).b;
+  const scored = blocks.map((b, i) => ({ idx: i, s: score(b), b }));
+  scored.forEach(({ idx, s, b }) => {
+    const inBlockCount = (stripComments(b).match(/<Route\s+path=/g) || []).length;
+    console.log(`  • Block #${idx} score=${s} routeCount=${inBlockCount}`);
+  });
+  scored.sort((a, b) => b.s - a.s);
+  const picked = scored[0] || { b: blocks[0], s: 0, idx: 0 };
+  console.log(`✅ Picked block #${picked.idx} with score=${picked.s}`);
+  target = picked.b;
 }
 
 // Strip comments within target then count
