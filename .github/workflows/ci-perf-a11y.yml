@@ -1,0 +1,55 @@
+name: CI - Performance & Accessibility
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, chore/route-consolidation-archive]
+
+jobs:
+  perf-a11y:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        run: npm i -g pnpm@9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Start dev server
+        run: |
+          pnpm dev &
+          sleep 5
+        env:
+          NODE_ENV: test
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Run a11y smoke tests
+        run: pnpm exec playwright test tests/e2e/a11y-smoke.spec.ts
+        env:
+          BASE_URL: http://localhost:5173
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-report
+          path: playwright-report/
+          retention-days: 7
