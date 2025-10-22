@@ -133,7 +133,9 @@ serve(async (req) => {
     throw new Error(`Unknown action: ${action}`);
   } catch (error) {
     console.error('[Safety Commit Guard] Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
