@@ -49,6 +49,7 @@ import Health from './pages/Health';
 const Dashboard = lazy(() => import('./routes/dashboard/index'));
 const SuperAndyFull = lazy(() => import('./pages/SuperAndy/Index'));
 const AdminRockerConsole = lazy(() => import('./pages/AdminRocker/Index'));
+const AuthPage = lazy(() => import('./routes/auth'));
 const AuthCallback = lazy(() => import('./routes/auth/callback'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
@@ -111,22 +112,25 @@ function AppContent() {
         {/* 4. Admin Rocker - Admin console for AI */}
         <Route path="/admin-rocker" element={<AdminRockerConsole />} />
         
-        {/* 5. Auth Callback - OAuth flow */}
+        {/* 5. Auth - Login & Signup page */}
+        <Route path="/auth" element={<AuthPage />} />
+        
+        {/* 6. Auth Callback - OAuth flow */}
         <Route path="/auth/callback" element={<AuthCallback />} />
         
-        {/* 6. Privacy - Static page */}
+        {/* 7. Privacy - Static page */}
         <Route path="/privacy" element={<Privacy />} />
         
-        {/* 7. Terms - Static page */}
+        {/* 8. Terms - Static page */}
         <Route path="/terms" element={<Terms />} />
         
-        {/* 8. Health - Probe endpoint */}
+        {/* 9. Health - Probe endpoint */}
         <Route path="/healthz" element={<Health />} />
         
-        {/* 9. Embed - Optional widgets */}
+        {/* 10. Embed - Optional widgets */}
         <Route path="/embed" element={<EmbedWidget />} />
         
-        {/* 10. Catch-all - Legacy redirector */}
+        {/* 11. Catch-all - Legacy redirector */}
         <Route path="*" element={<LegacyRedirector />} />
       </Routes>
       
