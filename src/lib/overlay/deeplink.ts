@@ -14,7 +14,7 @@ const CONTRACT_ROUTES: Record<AppId, string[]> = {
   entities: ['/entities', '/entities/:id'],
   mlm: ['/mlm', '/mlm/downline'],
   settings: ['/settings'],
-  overview: ['/dashboard', '/owner'],
+  overview: [],
   
   // AI Assistants
   rocker: [],
