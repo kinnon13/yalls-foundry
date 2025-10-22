@@ -292,3 +292,10 @@ schedule = "*/30 * * * *"  # Every 30 minutes
 [functions.rocker-reembed-all]
 verify_jwt = true
 
+# System monitoring - runs every 15 minutes
+[functions.rocker-monitor]
+verify_jwt = false
+
+[functions.rocker-monitor.cron]
+schedule = "*/15 * * * *"  # Every 15 minutes
+
