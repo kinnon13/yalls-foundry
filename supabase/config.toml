@@ -314,3 +314,10 @@ verify_jwt = true
 [functions.ai_admin_bind]
 verify_jwt = true
 
+# Vendor webhook shims (webhook-lite pattern)
+[functions.stripe_webhook]
+verify_jwt = false
+
+[functions.twilio_webhook]
+verify_jwt = false
+

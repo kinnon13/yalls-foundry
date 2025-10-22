@@ -459,6 +459,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_events: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          payload: Json | null
+          region: string
+          status: string
+          tenant_id: string
+          topic: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          region?: string
+          status?: string
+          tenant_id: string
+          topic: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload?: Json | null
+          region?: string
+          status?: string
+          tenant_id?: string
+          topic?: string
+        }
+        Relationships: []
+      }
       ai_feedback: {
         Row: {
           action: string | null
@@ -14613,6 +14646,19 @@ export type Database = {
       list_apps: {
         Args: { p_entity_id?: string; p_q?: string }
         Returns: Json
+      }
+      lock_next_job: {
+        Args: { p_pool: string; p_topics: string[] }
+        Returns: {
+          attempts: number
+          id: string
+          max_attempts: number
+          payload: Json
+          priority: number
+          region: string
+          tenant_id: string
+          topic: string
+        }[]
       }
       log_metric: {
         Args: {
