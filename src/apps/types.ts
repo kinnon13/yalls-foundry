@@ -9,11 +9,13 @@ export type AppId =
   | 'analytics' | 'favorites' | 'cart' | 'orders' | 'notifications' | 'profile'
   | 'entities' | 'mlm' | 'business' | 'producer' | 'settings' | 'overview';
 
+export type Role = 'anonymous' | 'user' | 'admin' | 'super';
+
 export interface AppContract {
   id: AppId;
   title: string;
   routes?: string[];         // deep links this app owns (optional)
-  role?: 'user' | 'admin' | 'super';
+  role: Role;                // minimal role required to access this app
   testIds: { entryRoot: string; panelRoot: string };
 }
 

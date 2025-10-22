@@ -1,11 +1,13 @@
 /**
  * Desktop Sidebar Navigation
- * Opens overlays via ?app= query param for workspace items
+ * Opens overlays via ?app= query param with role-based gating
  */
 
 import React from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { getCurrentRole, rank } from '@/security/role';
+import { OVERLAY_REGISTRY } from '@/lib/overlay/registry';
 
 type NavItem = 
   | { type: 'link'; path: string; label: string; testId?: string }
@@ -14,6 +16,7 @@ type NavItem =
 export function Sidebar() {
   const location = useLocation();
   const [, setSp] = useSearchParams();
+  const role = getCurrentRole();
   
   const openApp = (key: string) => {
     const next = new URLSearchParams(location.search);
@@ -60,13 +63,22 @@ export function Sidebar() {
           <ul className="flex flex-col gap-1">
             {section.items.map((item) => {
               if (item.type === 'overlay') {
+                const cfg = OVERLAY_REGISTRY[item.appKey];
+                const allowed = cfg && (rank(role) >= rank(cfg.role));
+                
                 return (
                   <li key={item.appKey}>
                     <button
                       data-testid={item.testId}
                       aria-label={item.label}
-                      className="w-full text-left px-3 py-2 rounded text-sm transition-colors text-sidebar-foreground hover:bg-sidebar-accent/50"
-                      onClick={() => openApp(item.appKey)}
+                      className={cn(
+                        "w-full text-left px-3 py-2 rounded text-sm transition-colors",
+                        allowed 
+                          ? "text-sidebar-foreground hover:bg-sidebar-accent/50" 
+                          : "text-sidebar-foreground/50 cursor-not-allowed"
+                      )}
+                      onClick={() => allowed && openApp(item.appKey)}
+                      disabled={!allowed}
                       type="button"
                     >
                       {item.label}

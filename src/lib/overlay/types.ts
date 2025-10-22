@@ -12,7 +12,7 @@ export type OverlayKey = AppId;
 export interface OverlayConfig {
   key: AppId;
   title: string;
-  role?: 'user' | 'admin' | 'super';
+  role: 'anonymous' | 'user' | 'admin' | 'super';
   component: LazyExoticComponent<ComponentType<any>>;
 }
 

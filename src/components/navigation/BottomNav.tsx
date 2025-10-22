@@ -1,12 +1,14 @@
 /**
  * Bottom Navigation for Mobile
- * Opens overlays via ?app= query param
+ * Opens overlays via ?app= query param with role-based gating
  */
 
 import React from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { Home, Search, MessageCircle, User, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getCurrentRole, rank } from '@/security/role';
+import { OVERLAY_REGISTRY } from '@/lib/overlay/registry';
 
 type NavItem = 
   | { type: 'link'; path: string; label: string; icon: any; testId?: string }
@@ -15,6 +17,7 @@ type NavItem =
 export function BottomNav() {
   const location = useLocation();
   const [, setSp] = useSearchParams();
+  const role = getCurrentRole();
   
   const openApp = (key: string) => {
     const next = new URLSearchParams(location.search);
@@ -40,13 +43,20 @@ export function BottomNav() {
     >
       {navItems.map((item) => {
         if (item.type === 'overlay') {
+          const cfg = OVERLAY_REGISTRY[item.appKey];
+          const allowed = cfg && (rank(role) >= rank(cfg.role));
+          
           return (
             <button
               key={item.appKey}
               data-testid={item.testId}
               aria-label={item.label}
-              className="flex flex-col items-center px-3 py-1 text-xs transition-colors text-muted-foreground hover:text-primary"
-              onClick={() => openApp(item.appKey)}
+              className={cn(
+                "flex flex-col items-center px-3 py-1 text-xs transition-colors",
+                allowed ? "text-muted-foreground hover:text-primary" : "opacity-50 cursor-not-allowed"
+              )}
+              onClick={() => allowed && openApp(item.appKey)}
+              disabled={!allowed}
               type="button"
             >
               <item.icon size={20} />

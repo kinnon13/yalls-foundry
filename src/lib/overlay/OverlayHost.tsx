@@ -2,15 +2,17 @@ import { Suspense, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { OVERLAY_REGISTRY } from './registry';
 import type { AppId } from '@/apps/types';
+import { getCurrentRole, rank } from '@/security/role';
 
 /**
- * OverlayHost - Modal overlay system with ESC key support and telemetry
- * Renders based on ?app= query parameter
+ * OverlayHost - Modal overlay system with role-based access control
+ * Renders based on ?app= query parameter with ESC key support and telemetry
  */
 export default function OverlayHost() {
   const [sp, setSp] = useSearchParams();
   const key = sp.get('app') as AppId | null;
   const cfg = key && key in OVERLAY_REGISTRY ? OVERLAY_REGISTRY[key] : null;
+  const role = getCurrentRole();
 
   useEffect(() => {
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
@@ -34,31 +36,54 @@ export default function OverlayHost() {
   }
 
   if (!cfg) return null;
-  const Comp = cfg.component;
+
+  const allowed = rank(role) >= rank(cfg.role);
 
   return (
-    <div 
+    <div
       data-testid="overlay-root"
-      role="dialog" 
-      aria-label={cfg.title}
-      aria-modal="true"
-      onClick={(e) => e.currentTarget === e.target && close()}
+      onMouseDown={(e) => e.currentTarget === e.target && close()}
       className="fixed inset-0 bg-black/35 grid place-items-center z-[1000]"
+      aria-modal="true"
+      role="dialog"
     >
-      <div className="w-full max-w-[980px] max-h-[85vh] overflow-auto rounded-xl bg-background p-4 shadow-lg">
-        <div className="flex justify-between items-center mb-2">
-          <strong data-testid="overlay-title">{cfg.title}</strong>
+      <div className="w-[92vw] max-w-3xl max-h-[88vh] bg-background rounded-lg shadow-xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <h2 className="text-lg font-semibold" data-testid="overlay-title">
+            {cfg.title}
+          </h2>
           <button 
+            aria-label="Close overlay" 
             onClick={close} 
-            aria-label="Close overlay"
-            className="text-2xl leading-none hover:opacity-70 transition-opacity"
+            className="text-sm hover:opacity-70 transition-opacity"
           >
             ✕
           </button>
         </div>
-        <Suspense fallback={<div>Loading {cfg.title}…</div>}>
-          <Comp contextType="overlay" />
-        </Suspense>
+
+        {!allowed ? (
+          <div className="p-6" data-testid="overlay-403">
+            <p className="font-medium mb-2">Access restricted</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              This app requires <strong>{cfg.role}</strong> role. You are <strong>{role}</strong>.
+            </p>
+            <div className="flex gap-3">
+              <a href="/auth" className="px-3 py-2 rounded bg-primary text-primary-foreground text-sm hover:opacity-90">
+                Sign in
+              </a>
+              <button 
+                onClick={close} 
+                className="px-3 py-2 rounded border text-sm hover:bg-muted"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        ) : (
+          <Suspense fallback={<div className="p-6">Loading {cfg.title}…</div>}>
+            <cfg.component contextType="overlay" />
+          </Suspense>
+        )}
       </div>
     </div>
   );
