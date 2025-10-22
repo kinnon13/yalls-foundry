@@ -1,0 +1,24 @@
+{
+  "home_variants": {
+    "A": {
+      "theme": "default",
+      "cta": "primary-top",
+      "heroStyle": "split"
+    },
+    "B": {
+      "theme": "warm",
+      "cta": "primary-center",
+      "heroStyle": "stack"
+    },
+    "C": {
+      "theme": "cool",
+      "cta": "primary-top",
+      "heroStyle": "image-left"
+    },
+    "D": {
+      "theme": "contrast",
+      "cta": "primary-bottom",
+      "heroStyle": "big-headline"
+    }
+  }
+}

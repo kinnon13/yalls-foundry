@@ -2630,10 +2630,13 @@ export type Database = {
           format_pref: string | null
           goal_weights: Json | null
           id: string
+          invite_code: string | null
           notes: string | null
           pathway_mode: string | null
           private_mode_default: boolean | null
           proactivity_level: string | null
+          public_interests: string[] | null
+          share_name: boolean | null
           suggestion_freq: string | null
           taboo_topics: string[] | null
           tone: string | null
@@ -2650,10 +2653,13 @@ export type Database = {
           format_pref?: string | null
           goal_weights?: Json | null
           id?: string
+          invite_code?: string | null
           notes?: string | null
           pathway_mode?: string | null
           private_mode_default?: boolean | null
           proactivity_level?: string | null
+          public_interests?: string[] | null
+          share_name?: boolean | null
           suggestion_freq?: string | null
           taboo_topics?: string[] | null
           tone?: string | null
@@ -2670,10 +2676,13 @@ export type Database = {
           format_pref?: string | null
           goal_weights?: Json | null
           id?: string
+          invite_code?: string | null
           notes?: string | null
           pathway_mode?: string | null
           private_mode_default?: boolean | null
           proactivity_level?: string | null
+          public_interests?: string[] | null
+          share_name?: boolean | null
           suggestion_freq?: string | null
           taboo_topics?: string[] | null
           tone?: string | null
@@ -6379,6 +6388,24 @@ export type Database = {
         }
         Relationships: []
       }
+      experiments: {
+        Row: {
+          config: Json
+          key: string
+          updated_at: string | null
+        }
+        Insert: {
+          config: Json
+          key: string
+          updated_at?: string | null
+        }
+        Update: {
+          config?: Json
+          key?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       farm_horses: {
         Row: {
           created_at: string
@@ -7691,6 +7718,45 @@ export type Database = {
           embedding?: string | null
           id?: string
           listing_id?: string | null
+        }
+        Relationships: []
+      }
+      marketing_events: {
+        Row: {
+          event_type: string | null
+          extras: Json | null
+          id: number
+          invite_code: string | null
+          referrer: string | null
+          session_id: string | null
+          trace_id: string | null
+          ts: string | null
+          user_agent: string | null
+          variant: string | null
+        }
+        Insert: {
+          event_type?: string | null
+          extras?: Json | null
+          id?: number
+          invite_code?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          trace_id?: string | null
+          ts?: string | null
+          user_agent?: string | null
+          variant?: string | null
+        }
+        Update: {
+          event_type?: string | null
+          extras?: Json | null
+          id?: number
+          invite_code?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          trace_id?: string | null
+          ts?: string | null
+          user_agent?: string | null
+          variant?: string | null
         }
         Relationships: []
       }

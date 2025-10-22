@@ -24,6 +24,10 @@ export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Capture invite and variant for attribution
+  const invite = searchParams.get('invite');
+  const variant = searchParams.get('variant');
 
   useEffect(() => {
     // Check if already logged in
@@ -44,7 +48,11 @@ export default function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`
+            emailRedirectTo: `${window.location.origin}/`,
+            data: {
+              invite_code: invite || null,
+              variant: variant || null,
+            }
           }
         });
         if (error) throw error;
