@@ -359,3 +359,22 @@ verify_jwt = false
 [functions.feedback_rate]
 verify_jwt = true
 
+# Super Andy Upgrade - Orchestration & Self-Improvement
+[functions.mdr_orchestrate]
+verify_jwt = true
+
+[functions.self_improve_tick]
+verify_jwt = false
+
+[functions.perceive_tick]
+verify_jwt = false
+
+[functions.verify_output]
+verify_jwt = true
+
+[functions.model_router]
+verify_jwt = true
+
+[functions.federate_share]
+verify_jwt = false
+
