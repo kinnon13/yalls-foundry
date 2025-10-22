@@ -45,8 +45,8 @@ jobs:
       - name: Validate work report (PRs only)
         if: ${{ github.event_name == 'pull_request' }}
         run: |
-          if [ -f scripts/validate-work-report.mjs ]; then
-            node scripts/validate-work-report.mjs
+          if [ -f scripts/validation/validate-work-report.mjs ]; then
+            node scripts/validation/validate-work-report.mjs
           else
             echo "ℹ️ Work report validation skipped: script not found"
             exit 0
