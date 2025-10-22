@@ -44,112 +44,173 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 pt-20 pb-32">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary mb-4">
-            <Sparkles className="w-4 h-4" />
-            AI-Powered Equestrian Platform
+    <div className="min-h-screen">
+      {/* Navigation */}
+      <nav className="border-b border-border/40 bg-background/80 backdrop-blur-lg sticky top-0 z-50">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-primary" />
+            <span className="text-xl font-bold">Yalls.ai</span>
           </div>
-          
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-            Welcome to <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Yalls.ai</span>
-          </h1>
-          
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            The complete platform for equestrian professionals. Connect, sell, manage, and grow your business with AI assistance.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-12">
-            {isLoggedIn ? (
-              <Button onClick={() => navigate('/dashboard')} size="lg" className="text-lg px-8 py-6">
-                Go to Dashboard
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            ) : (
+          <div className="flex items-center gap-4">
+            {!isLoggedIn ? (
               <>
-                <Button onClick={() => navigate('/auth?mode=signup')} size="lg" className="text-lg px-8 py-6">
-                  Get Started Free
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-                <Button onClick={() => navigate('/auth?mode=login')} variant="outline" size="lg" className="text-lg px-8 py-6">
+                <Button onClick={() => navigate('/auth?mode=login')} variant="ghost">
                   Sign In
                 </Button>
+                <Button onClick={() => navigate('/auth?mode=signup')}>
+                  Get Started
+                </Button>
               </>
+            ) : (
+              <Button onClick={() => navigate('/dashboard')}>
+                Dashboard
+              </Button>
             )}
           </div>
         </div>
-      </div>
+      </nav>
 
-      {/* Features Grid */}
-      <div className="container mx-auto px-4 py-24">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything you need in one place</h2>
-            <p className="text-xl text-muted-foreground">Built for producers, trainers, and equestrian businesses</p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <FeatureCard 
-              icon={<MessageSquare className="w-8 h-8" />}
-              title="AI Assistant"
-              description="Get instant help with business decisions, scheduling, and customer communication"
-            />
-            <FeatureCard 
-              icon={<DollarSign className="w-8 h-8" />}
-              title="Marketplace"
-              description="Sell products and services with built-in payment processing and MLM commissions"
-            />
-            <FeatureCard 
-              icon={<Users className="w-8 h-8" />}
-              title="Network Growth"
-              description="Build your downline and earn commissions on your network's sales"
-            />
-            <FeatureCard 
-              icon={<Shield className="w-8 h-8" />}
-              title="Business Management"
-              description="CRM, calendar, approvals, and operations all in one dashboard"
-            />
-            <FeatureCard 
-              icon={<Zap className="w-8 h-8" />}
-              title="Instant Payments"
-              description="Fast, secure payouts with automatic commission calculations"
-            />
-            <FeatureCard 
-              icon={<Sparkles className="w-8 h-8" />}
-              title="Smart Analytics"
-              description="Track earnings, network growth, and business metrics in real-time"
-            />
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-background via-muted/30 to-primary/5">
+        <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(white,transparent_85%)]" />
+        <div className="container mx-auto px-4 py-24 md:py-32 relative">
+          <div className="max-w-5xl mx-auto text-center space-y-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium">
+              <Sparkles className="w-4 h-4 text-primary" />
+              The Equestrian Business Platform
+            </div>
+            
+            <h1 className="text-5xl md:text-7xl font-black tracking-tight">
+              Grow Your Equestrian
+              <br />
+              <span className="bg-gradient-to-r from-primary via-primary to-primary/60 bg-clip-text text-transparent">
+                Business with AI
+              </span>
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
+              The all-in-one platform for producers, trainers, and equestrian professionals. 
+              Marketplace, CRM, payments, and AI assistance built for your success.
+            </p>
+            
+            {!isLoggedIn && (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
+                <Button 
+                  onClick={() => navigate('/auth?mode=signup')} 
+                  size="lg" 
+                  className="text-lg px-10 py-7 shadow-lg hover:shadow-xl"
+                >
+                  Start Free Trial
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+                <Button 
+                  onClick={() => navigate('/auth?mode=login')} 
+                  variant="outline" 
+                  size="lg"
+                  className="text-lg px-10 py-7"
+                >
+                  Sign In
+                </Button>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* CTA Section */}
+      {/* Features */}
+      <section className="py-24 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16 space-y-4">
+              <h2 className="text-4xl md:text-5xl font-bold">Everything You Need</h2>
+              <p className="text-xl text-muted-foreground">Run your entire equestrian business from one platform</p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <FeatureCard 
+                icon={<DollarSign className="w-10 h-10" />}
+                title="Marketplace & Payments"
+                description="Sell products, services, and events with instant payment processing. MLM commissions built-in."
+              />
+              <FeatureCard 
+                icon={<Users className="w-10 h-10" />}
+                title="Network & Downline"
+                description="Build your team and earn commissions on your entire network's sales automatically."
+              />
+              <FeatureCard 
+                icon={<MessageSquare className="w-10 h-10" />}
+                title="AI Assistant"
+                description="Get instant help with scheduling, customer communication, and business decisions."
+              />
+              <FeatureCard 
+                icon={<Shield className="w-10 h-10" />}
+                title="Business Management"
+                description="CRM, calendar, approvals, and farm operations all in one powerful dashboard."
+              />
+              <FeatureCard 
+                icon={<Zap className="w-10 h-10" />}
+                title="Instant Analytics"
+                description="Track earnings, network growth, and performance metrics in real-time."
+              />
+              <FeatureCard 
+                icon={<Sparkles className="w-10 h-10" />}
+                title="Smart Automation"
+                description="Automate follow-ups, reminders, and routine tasks to save hours every day."
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
       {!isLoggedIn && (
-        <div className="container mx-auto px-4 py-24">
-          <div className="max-w-4xl mx-auto text-center bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-3xl p-12 border border-primary/20">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to get started?</h2>
-            <p className="text-xl text-muted-foreground mb-8">Join the platform built for equestrian success</p>
-            <Button onClick={() => navigate('/auth?mode=signup')} size="lg" className="text-lg px-8 py-6">
-              Create Your Account
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
+        <section className="py-24 bg-gradient-to-br from-primary/10 via-primary/5 to-background">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto text-center space-y-8">
+              <h2 className="text-4xl md:text-5xl font-bold">Ready to Transform Your Business?</h2>
+              <p className="text-xl text-muted-foreground">Join thousands of equestrian professionals already on Yalls.ai</p>
+              <Button 
+                onClick={() => navigate('/auth?mode=signup')} 
+                size="lg"
+                className="text-lg px-10 py-7 shadow-lg hover:shadow-xl"
+              >
+                Get Started Free
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+              <p className="text-sm text-muted-foreground">No credit card required · 14-day free trial</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Footer */}
+      <footer className="py-12 border-t border-border/40 bg-muted/20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <span className="font-semibold">Yalls.ai</span>
+            </div>
+            <div className="flex gap-8 text-sm text-muted-foreground">
+              <button onClick={() => navigate('/privacy')}>Privacy</button>
+              <button onClick={() => navigate('/terms')}>Terms</button>
+            </div>
           </div>
         </div>
-      )}
+      </footer>
     </div>
   );
 };
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
-    <div className="p-6 rounded-2xl border border-border bg-card hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
-      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+    <div className="group p-8 rounded-2xl border border-border bg-card hover:border-primary/50 hover:bg-card/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+      <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
         {icon}
       </div>
-      <h3 className="text-xl font-semibold mb-2">{title}</h3>
-      <p className="text-muted-foreground">{description}</p>
+      <h3 className="text-xl font-bold mb-3">{title}</h3>
+      <p className="text-muted-foreground leading-relaxed">{description}</p>
     </div>
   );
 };
