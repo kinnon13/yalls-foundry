@@ -176,13 +176,13 @@ export const ALL_APPS: AppConfig[] = [
   
   // Creator
   { 
-    id: 'yall-library', 
+    id: 'yallbrary', 
     label: 'Creator Studio', 
     icon: Video,
     iconName: 'Video',
     description: 'Video editing & publishing', 
     category: 'Creator', 
-    color: 'text-white', 
+    color: 'text-white',
     gradient: 'from-rose-500 via-pink-500 to-fuchsia-400' 
   },
   

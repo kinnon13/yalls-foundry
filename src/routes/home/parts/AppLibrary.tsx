@@ -124,7 +124,7 @@ export default function AppLibrary({ onAppClick }: AppLibraryProps) {
               <div key={app.id} className="group relative">
                 <button
                   onClick={() => {
-                    if (app.id === 'yall-library') { setIsOpen(true); return; }
+                    if (app.id === 'yallbrary') { setIsOpen(true); return; }
                     onAppClick({ 
                       key: app.id, 
                       label: app.label, 

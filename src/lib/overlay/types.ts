@@ -1,45 +1,23 @@
 /**
- * Overlay System Types
- * Primary navigation model: ?app=key opens apps in-place
+ * Overlay Types
+ * Type-safe overlay configuration
  */
 
-export type OverlayKey =
-  | 'messages'
-  | 'marketplace'
-  | 'app-store'
-  | 'crm'
-  | 'profile'
-  | 'entities'
-  | 'events'
-  | 'listings'
-  | 'business'
-  | 'producer'
-  | 'incentives'
-  | 'calendar'
-  | 'activity'
-  | 'analytics'
-  | 'favorites'
-  | 'yall-library'
-  | 'cart'
-  | 'orders'
-  | 'notifications'
-  | 'settings'
-  | 'overview'
-  | 'earnings'
-  | 'discover'
-  | 'farm-ops'
-  | 'mlm';
+import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
+import type { AppId } from '@/apps/types';
+
+// Export OverlayKey as alias of AppId for backwards compatibility
+export type OverlayKey = AppId;
 
 export interface OverlayConfig {
-  key: OverlayKey;
+  key: AppId;
   title: string;
-  component: React.LazyExoticComponent<React.ComponentType<any>>;
-  requiresAuth?: boolean;
-  allowedContexts?: Array<'user' | 'business' | 'farm' | 'stallion' | 'producer'>;
+  role?: 'user' | 'admin' | 'super';
+  component: LazyExoticComponent<ComponentType<any>>;
 }
 
 export interface OverlayState {
   isOpen: boolean;
-  activeKey: OverlayKey | null;
+  activeKey: AppId | null;
   params: Record<string, string>;
 }
