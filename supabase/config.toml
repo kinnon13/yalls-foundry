@@ -381,3 +381,6 @@ verify_jwt = false
 [functions.daily_digest_tick]
 verify_jwt = false
 
+[functions.circuit_breaker_tick]
+verify_jwt = false
+

@@ -2662,6 +2662,48 @@ export type Database = {
           },
         ]
       }
+      api_circuit_breakers: {
+        Row: {
+          cooloff_sec: number
+          error_count: number
+          error_threshold_pct: number
+          id: string
+          last_reset_at: string
+          opened_at: string | null
+          service: string
+          state: string
+          total_count: number
+          updated_at: string
+          window_sec: number
+        }
+        Insert: {
+          cooloff_sec?: number
+          error_count?: number
+          error_threshold_pct?: number
+          id?: string
+          last_reset_at?: string
+          opened_at?: string | null
+          service: string
+          state?: string
+          total_count?: number
+          updated_at?: string
+          window_sec?: number
+        }
+        Update: {
+          cooloff_sec?: number
+          error_count?: number
+          error_threshold_pct?: number
+          id?: string
+          last_reset_at?: string
+          opened_at?: string | null
+          service?: string
+          state?: string
+          total_count?: number
+          updated_at?: string
+          window_sec?: number
+        }
+        Relationships: []
+      }
       app_catalog: {
         Row: {
           category: string | null
@@ -11947,6 +11989,51 @@ export type Database = {
         }
         Relationships: []
       }
+      topic_circuit_breakers: {
+        Row: {
+          cooloff_sec: number
+          error_count: number
+          error_threshold_pct: number
+          id: string
+          last_reset_at: string
+          opened_at: string | null
+          pool: string | null
+          state: string
+          topic: string
+          total_count: number
+          updated_at: string
+          window_sec: number
+        }
+        Insert: {
+          cooloff_sec?: number
+          error_count?: number
+          error_threshold_pct?: number
+          id?: string
+          last_reset_at?: string
+          opened_at?: string | null
+          pool?: string | null
+          state?: string
+          topic: string
+          total_count?: number
+          updated_at?: string
+          window_sec?: number
+        }
+        Update: {
+          cooloff_sec?: number
+          error_count?: number
+          error_threshold_pct?: number
+          id?: string
+          last_reset_at?: string
+          opened_at?: string | null
+          pool?: string | null
+          state?: string
+          topic?: string
+          total_count?: number
+          updated_at?: string
+          window_sec?: number
+        }
+        Relationships: []
+      }
       tour_schedules: {
         Row: {
           created_at: string
@@ -14221,6 +14308,22 @@ export type Database = {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
       }
+      evaluate_api_breakers: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          error_pct: number
+          service: string
+          state: string
+        }[]
+      }
+      evaluate_topic_breakers: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          error_pct: number
+          state: string
+          topic: string
+        }[]
+      }
       fail_discovery_item: {
         Args: { p_error: string; p_id: string; p_token: string }
         Returns: undefined
@@ -15509,6 +15612,14 @@ export type Database = {
       recompute_profile_embedding: {
         Args: { p_user_id: string }
         Returns: Json
+      }
+      record_api_outcome: {
+        Args: { p_service: string; p_success: boolean }
+        Returns: undefined
+      }
+      record_topic_outcome: {
+        Args: { p_success: boolean; p_topic: string }
+        Returns: undefined
       }
       record_view: {
         Args: { p_listing_id: string; p_session_id?: string }
