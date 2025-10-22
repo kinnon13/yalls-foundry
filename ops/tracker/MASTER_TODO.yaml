@@ -1,0 +1,301 @@
+version: 1.0
+owner: "Super Andy Program"
+status_conventions: [TODO, DOING, DONE, BLOCKED]
+
+epics:
+  - id: P1
+    title: Foundation & Governance
+    status: DONE
+    notes: Phase 1 finished; includes folder skeleton + governance + health.
+    tasks:
+      - id: P1.1
+        title: Folder skeleton + READMEs (shared/user/admin/super/meta_cortex/workers/docs/ops)
+        status: DONE
+        deliverables:
+          - src/ai/* tree with READMEs
+          - src/workers/README.md
+          - docs/ai/README.md
+          - ops/monitoring/README.md
+        acceptance:
+          - "Build compiles without new errors"
+          - "Tree matches final structure posted by Lovable"
+      - id: P1.2
+        title: Project governance files
+        status: DONE
+        deliverables: [PROJECT_RULES.md, structure.lock.json]
+        acceptance:
+          - "structure.lock.json lists protected folders"
+      - id: P1.3
+        title: Brain manifest + bootstrap
+        status: DONE
+        deliverables: [src/ai/brain.manifest.json, scripts/init/ai_bootstrap.ts]
+        acceptance:
+          - "bootstrap prints roles/modules/workers and verifies folders"
+      - id: P1.4
+        title: AI health endpoint
+        status: DONE
+        deliverables: [supabase/functions/ai_health/index.ts]
+        acceptance:
+          - "GET ai_health returns ok|degraded|fail with component list"
+      - id: P1.5
+        title: Future-proof placeholders
+        status: DONE
+        deliverables:
+          - src/ai/shared/introspection/
+          - src/ai/shared/emotion_engine/
+          - src/ai/shared/predictive_model/
+
+  - id: P2
+    title: Event Bus + Workers + Memory (webhook replacement)
+    status: DOING
+    depends_on: [P1]
+    tasks:
+      - id: P2.1
+        title: Core tables (event bus + memory base)
+        status: DOING
+        deliverables:
+          - supabase/migrations/20251022_ai_eventbus.sql
+          - tables: ai_events, ai_memory_core, ai_context_cache, ai_perception_log
+        acceptance:
+          - "RLS enabled with tenant_id (per-farm) and optional region"
+          - "pgvector enabled for embeddings"
+      - id: P2.2
+        title: ai_eventbus edge function
+        status: TODO
+        deliverables: [supabase/functions/ai_eventbus/index.ts, config.toml entry]
+        acceptance:
+          - "POST ai_eventbus enqueues ai_events rows"
+      - id: P2.3
+        title: Worker system & handlers
+        status: TODO
+        deliverables:
+          - src/workers/ai_jobs/{queue.ts,processor.ts}
+          - src/workers/ai_jobs/handlers/{retrain.ts,backup.ts,red_team.ts,feedback.ts,report.ts}
+        acceptance:
+          - "processor polls every 5s, routes by topic, marks done"
+      - id: P2.4
+        title: Manifest + verification script
+        status: TODO
+        deliverables:
+          - src/ai/brain.manifest.json (version 2.0)
+          - scripts/verify/ai_eventbus_health.ts
+        acceptance:
+          - "verify script prints ✅ for all 4 Phase-2 tables"
+      - id: P2.5
+        title: Deprecate micro-webhooks (internal traffic)
+        status: TODO
+        deliverables:
+          - "webhooks-to-bus.md" mapping (docs)
+        acceptance:
+          - "All internal AI calls use event bus; only external integrations keep webhooks"
+
+  - id: P2.5
+    title: Conversation Task Memory (CTM)
+    status: DOING
+    depends_on: [P2]
+    tasks:
+      - id: P2.5.1
+        title: CTM tables (convos, goals, steps, bookmarks, snapshots, daily reports, reminders)
+        status: DOING
+        deliverables:
+          - supabase/migrations/20251022_conversation_task_memory.sql
+          - tables: ai_conversations, ai_messages, ai_goals, ai_goal_steps, ai_bookmarks, ai_context_snapshots, ai_daily_reports, ai_reminders
+        acceptance:
+          - "RLS per-tenant; indices for tenant_id,user_id,status"
+      - id: P2.5.2
+        title: Conversation engine stubs
+        status: TODO
+        deliverables:
+          - src/ai/shared/conversation/{state.ts,extract.ts,tangent.ts,summarize.ts,resume.ts}
+        acceptance:
+          - "On tangent, bookmark created; goal extraction returns structured goals"
+      - id: P2.5.3
+        title: CTM workers/cron
+        status: TODO
+        deliverables:
+          - src/workers/ctm/{summarizer_worker.ts,daily_report_worker.ts,reminder_worker.ts}
+        acceptance:
+          - "Daily report stored in ai_daily_reports at 07:00 America/Denver"
+      - id: P2.5.4
+        title: UI agenda rail
+        status: TODO
+        deliverables:
+          - super-andy forensics page shows Agenda/Open Tasks/Bookmarks/Resume
+        acceptance:
+          - "Resume button restores context snapshot"
+
+  - id: P3
+    title: Multi-Dimensional Reasoning (MDR)
+    status: TODO
+    depends_on: [P2]
+    tasks:
+      - id: P3.1
+        title: MDR tables
+        status: TODO
+        deliverables:
+          - tables: ai_perspectives, ai_plan_candidates, ai_consensus, ai_hypotheses, ai_evidence, ai_decision_policy
+        acceptance:
+          - "Pareto + policy weights persisted per-tenant"
+      - id: P3.2
+        title: MDR planning code
+        status: TODO
+        deliverables:
+          - src/ai/shared/planning/{perspectives.ts,generate_candidates.ts,aggregate.ts,sanity_loops.ts,multi_angle.ts}
+          - src/ai/shared/memory/diversify.ts
+          - src/ai/shared/nlp/llm.ts
+          - src/ai/shared/utils/pareto.ts
+        acceptance:
+          - "planMultiAngle returns winner + pareto + counterfactual + red-team notes"
+      - id: P3.3
+        title: Forensics UI (MDR view)
+        status: TODO
+        deliverables:
+          - src/routes/super-andy/forensics.tsx (angle list, candidates, scores, Pareto chart)
+        acceptance:
+          - "UI renders mock then live MDR results"
+
+  - id: P4
+    title: Governance, Ledgers, Audit (earlier proposal)
+    status: TODO
+    tasks:
+      - id: P4.1
+        title: AI ledgers & brain state
+        status: TODO
+        deliverables:
+          - tables: ai_action_ledger, ai_brain_state, ai_prompt_versions, audit_log
+        acceptance:
+          - "Every AI action logged; immutable audit trail"
+      - id: P4.2
+        title: Ethical governor & budget controller
+        status: TODO
+        deliverables:
+          - src/ai/shared/safety/{policy_gate.ts,spend_guard.ts}
+        acceptance:
+          - "High-risk or over-budget actions are blocked or require approval"
+
+  - id: P5
+    title: Monitoring & Observability
+    status: TODO
+    tasks:
+      - id: P5.1
+        title: Telemetry + alert packs
+        status: TODO
+        deliverables:
+          - ops/monitoring/{telemetry.ts,alerts.yaml,grafana_dashboard.json}
+        acceptance:
+          - "Metrics: ai_command_rate, latency_p95, error_rate, queue_depth, ai_cost_usd_total, shadow_win_rate"
+      - id: P5.2
+        title: Runbooks & SLOs
+        status: TODO
+        deliverables:
+          - docs/production/PRODUCTION_HARDENING.md updates
+          - docs/ai/governance_playbook.md
+        acceptance:
+          - "SLOs documented; alert thresholds match chat spec"
+
+  - id: P6
+    title: Admin & Super UI (Black Box + Approvals + Tenants)
+    status: TODO
+    tasks:
+      - id: P6.1
+        title: Pages
+        status: TODO
+        deliverables:
+          - src/routes/super-andy/forensics.tsx
+          - src/routes/admin/approvals.tsx
+          - src/routes/admin/tenants.tsx
+        acceptance:
+          - "Forensics shows full trace; Approvals gates high-risk actions; Tenants lists per-farm quotas"
+
+  - id: P7
+    title: Multi-Region & Per-Tenant "Farm" Isolation
+    status: TODO
+    tasks:
+      - id: P7.1
+        title: Region + tenant fields & policies
+        status: TODO
+        deliverables:
+          - Add tenant_id, region to all AI tables; RLS enforced
+        acceptance:
+          - "Cross-tenant reads blocked; per-tenant budgets enforced"
+      - id: P7.2
+        title: Per-tenant quotas & rate limits
+        status: TODO
+        deliverables:
+          - src/ai/shared/limits/{quotas.ts,rl.ts}
+        acceptance:
+          - "Load test proves noisy neighbor doesn't degrade others"
+      - id: P7.3
+        title: DR & replication plan
+        status: TODO
+        deliverables:
+          - docs/production/DR_PLAN.md
+          - nightly backup worker
+        acceptance:
+          - "Restore-from-backup drill documented and tested"
+
+  - id: P8
+    title: Emotion, Curiosity, Self-Improvement (frontal lobe + amygdala)
+    status: TODO
+    tasks:
+      - id: P8.1
+        title: Emotion engine
+        status: TODO
+        deliverables:
+          - src/ai/shared/emotion_engine/state.ts
+        acceptance:
+          - "Tone adapts to signals (success/error/idle/praise)"
+      - id: P8.2
+        title: Capability scanner + curiosity loop
+        status: TODO
+        deliverables:
+          - src/ai/super/meta_cortex/{capability_scanner.ts,curiosity.ts}
+        acceptance:
+          - "Missing capability tickets appear in backlog automatically"
+      - id: P8.3
+        title: Daily improvement loop
+        status: TODO
+        deliverables:
+          - tables: ai_self_model, ai_improvement_log
+          - workers: reflection + daily summary
+        acceptance:
+          - "Daily self-assessment delivered 7am with measurable gaps & proposals"
+
+  - id: P9
+    title: Refactors, Secrets, Scripts (quality)
+    status: TODO
+    tasks:
+      - id: P9.1
+        title: Split large files
+        status: TODO
+        deliverables:
+          - App.tsx, RockerChatUI.tsx, dashboard.tsx, unclaimed.tsx, lib/ai/rocker/tools.ts
+        acceptance:
+          - "Each < 200–300 LOC; no behavior change; tests pass"
+      - id: P9.2
+        title: Secret sanitization + script reorg
+        status: TODO
+        deliverables:
+          - sanitize docs/scripts; scripts grouped into health/audit/validation/fixes/database
+        acceptance:
+          - "No plaintext secrets in repo; CI scan clean"
+
+  - id: P10
+    title: Experimental Next-Gen (optional)
+    status: OPTIONAL
+    tasks:
+      - id: P10.1
+        title: Advanced modules stubs
+        status: TODO
+        deliverables:
+          - src/ai/experimental/{neuro_symbolic.ts,multimodal_ingest.ts,reinforcement_trainer.ts,hybrid_graph_memory.ts}
+          - src/ai/experimental/advanced/{meta_critic.ts,plan_cache.ts,dp_aggregator.ts,auto_patch.ts,chaos_agent.ts,predictive_incident.ts,voice_emotion.ts}
+        acceptance:
+          - "All compile; documented in docs/ai/meta_cortex.md"
+
+milestones:
+  - "M1: Phase 2 bus+workers live (P2.* DONE)"
+  - "M2: CTM live (P2.5.* DONE)"
+  - "M3: MDR live (P3.* DONE)"
+  - "M4: Farms + Multi-region protections (P7.* DONE)"
+  - "M5: Self-improvement loop (P8.3 DONE)"

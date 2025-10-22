@@ -303,3 +303,6 @@ schedule = "*/15 * * * *"  # Every 15 minutes
 [functions.ai_health]
 verify_jwt = false
 
+[functions.ai_eventbus]
+verify_jwt = false
+
