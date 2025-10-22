@@ -1,11 +1,11 @@
 name: Verify (Routes, Build, E2E)
 
 on:
-  push:
-    branches: [ main, develop, feat/** ]
   pull_request:
-    branches: [ main, develop ]
-  workflow_dispatch: {}
+    branches: ['*']     # run on all PRs
+  push:
+    branches: ['*']     # run on any branch push
+  workflow_dispatch:     # manual trigger from Actions tab
 
 concurrency:
   group: verify-${{ github.ref }}
@@ -22,11 +22,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node & pnpm
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
       - run: corepack enable
       - run: pnpm --version
 
@@ -49,9 +55,9 @@ jobs:
       # ---- Build + Preview ----
       - name: Build
         run: pnpm build
-      - name: Start preview
+      - name: Preview (background)
         run: |
-          pnpm preview --port 4173 & echo $! > preview.pid
+          (pnpm preview --port 4173 || pnpm exec vite preview --port 4173) & echo $! > preview.pid
           npx wait-on http://localhost:4173
 
       # ---- Gate 3: E2E smoke relevant to you ----
