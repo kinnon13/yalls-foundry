@@ -342,3 +342,16 @@ verify_jwt = true
 [functions.safety_commit_guard]
 verify_jwt = true
 
+# P9: Schedulers, Watchdogs, Telemetry
+[functions.cron_tick]
+verify_jwt = false
+
+[functions.watchdog_tick]
+verify_jwt = false
+
+[functions.metrics_export]
+verify_jwt = false
+
+[functions.dlq_replay]
+verify_jwt = false
+
