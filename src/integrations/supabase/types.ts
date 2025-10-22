@@ -414,6 +414,51 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_cron_jobs: {
+        Row: {
+          created_at: string | null
+          cron: string
+          enabled: boolean | null
+          id: string
+          jitter_sec: number | null
+          key: string
+          last_run_at: string | null
+          next_run_at: string | null
+          payload: Json | null
+          region: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          cron: string
+          enabled?: boolean | null
+          id?: string
+          jitter_sec?: number | null
+          key: string
+          last_run_at?: string | null
+          next_run_at?: string | null
+          payload?: Json | null
+          region?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          cron?: string
+          enabled?: boolean | null
+          id?: string
+          jitter_sec?: number | null
+          key?: string
+          last_run_at?: string | null
+          next_run_at?: string | null
+          payload?: Json | null
+          region?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ai_feedback: {
         Row: {
           action: string | null
@@ -712,6 +757,146 @@ export type Database = {
           tool_called?: string | null
           user_correction?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      ai_job_attempts: {
+        Row: {
+          created_at: string | null
+          duration_ms: number | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          job_id: string
+          ok: boolean | null
+          region: string | null
+          started_at: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          duration_ms?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          job_id: string
+          ok?: boolean | null
+          region?: string | null
+          started_at?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          duration_ms?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          job_id?: string
+          ok?: boolean | null
+          region?: string | null
+          started_at?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_job_attempts_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "ai_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_job_dlq: {
+        Row: {
+          created_at: string | null
+          from_job_id: string | null
+          id: string
+          payload: Json | null
+          quarantined_at: string | null
+          reason: string
+          region: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          from_job_id?: string | null
+          id?: string
+          payload?: Json | null
+          quarantined_at?: string | null
+          reason: string
+          region?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          from_job_id?: string | null
+          id?: string
+          payload?: Json | null
+          quarantined_at?: string | null
+          reason?: string
+          region?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ai_jobs: {
+        Row: {
+          attempts: number | null
+          correlation_id: string | null
+          created_at: string | null
+          fingerprint: string | null
+          id: string
+          max_attempts: number | null
+          not_before: string | null
+          parent_job_id: string | null
+          payload: Json | null
+          priority: number | null
+          region: string | null
+          status: string | null
+          tenant_id: string
+          topic: string
+          updated_at: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          correlation_id?: string | null
+          created_at?: string | null
+          fingerprint?: string | null
+          id?: string
+          max_attempts?: number | null
+          not_before?: string | null
+          parent_job_id?: string | null
+          payload?: Json | null
+          priority?: number | null
+          region?: string | null
+          status?: string | null
+          tenant_id: string
+          topic: string
+          updated_at?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          correlation_id?: string | null
+          created_at?: string | null
+          fingerprint?: string | null
+          id?: string
+          max_attempts?: number | null
+          not_before?: string | null
+          parent_job_id?: string | null
+          payload?: Json | null
+          priority?: number | null
+          region?: string | null
+          status?: string | null
+          tenant_id?: string
+          topic?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1239,6 +1424,42 @@ export type Database = {
           },
         ]
       }
+      ai_quota_counters: {
+        Row: {
+          api_calls: number | null
+          cost_cents: number | null
+          created_at: string | null
+          jobs_enqueued: number | null
+          region: string | null
+          tenant_id: string
+          tokens: number | null
+          updated_at: string | null
+          window_start: string
+        }
+        Insert: {
+          api_calls?: number | null
+          cost_cents?: number | null
+          created_at?: string | null
+          jobs_enqueued?: number | null
+          region?: string | null
+          tenant_id: string
+          tokens?: number | null
+          updated_at?: string | null
+          window_start: string
+        }
+        Update: {
+          api_calls?: number | null
+          cost_cents?: number | null
+          created_at?: string | null
+          jobs_enqueued?: number | null
+          region?: string | null
+          tenant_id?: string
+          tokens?: number | null
+          updated_at?: string | null
+          window_start?: string
+        }
+        Relationships: []
+      }
       ai_round_scores: {
         Row: {
           brier: number
@@ -1685,6 +1906,87 @@ export type Database = {
           managed_by_super_admin?: boolean | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      ai_worker_heartbeats: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_beat: string
+          load_pct: number | null
+          pool: string
+          region: string | null
+          tenant_id: string | null
+          updated_at: string | null
+          version: string | null
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_beat?: string
+          load_pct?: number | null
+          pool: string
+          region?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          version?: string | null
+          worker_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_beat?: string
+          load_pct?: number | null
+          pool?: string
+          region?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          version?: string | null
+          worker_id?: string
+        }
+        Relationships: []
+      }
+      ai_worker_pools: {
+        Row: {
+          burst_concurrency: number
+          created_at: string | null
+          current_concurrency: number | null
+          id: string
+          max_concurrency: number
+          min_concurrency: number
+          pool: string
+          region: string | null
+          tenant_id: string | null
+          topic_glob: string
+          updated_at: string | null
+        }
+        Insert: {
+          burst_concurrency?: number
+          created_at?: string | null
+          current_concurrency?: number | null
+          id?: string
+          max_concurrency?: number
+          min_concurrency?: number
+          pool: string
+          region?: string | null
+          tenant_id?: string | null
+          topic_glob: string
+          updated_at?: string | null
+        }
+        Update: {
+          burst_concurrency?: number
+          created_at?: string | null
+          current_concurrency?: number | null
+          id?: string
+          max_concurrency?: number
+          min_concurrency?: number
+          pool?: string
+          region?: string | null
+          tenant_id?: string | null
+          topic_glob?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -14163,6 +14465,10 @@ export type Database = {
         Args: { p_horse_id: string; p_incentive_id: string; p_metadata?: Json }
         Returns: string
       }
+      increment_job_attempt: {
+        Args: { p_job_id: string }
+        Returns: undefined
+      }
       increment_pin_use: {
         Args: { p_pin_id: string; p_unlock_threshold?: number }
         Returns: Json
@@ -14798,6 +15104,10 @@ export type Database = {
           source_body: string
           source_post_id: string
         }[]
+      }
+      requeue_failed_job: {
+        Args: { p_error: string; p_job_id: string }
+        Returns: undefined
       }
       requires_step_up: {
         Args: { action_name: string }
