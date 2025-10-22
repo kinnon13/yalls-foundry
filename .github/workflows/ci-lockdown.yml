@@ -33,13 +33,11 @@ jobs:
           version: 9
           run_install: false
 
-      # 3) (belt & suspenders) keep pnpm activated
-      - name: Enable pnpm via corepack
-        run: |
-          corepack enable
-          corepack prepare pnpm@9.12.0 --activate
+      # (debug) prove pnpm is on PATH
+      - name: pnpm version
+        run: pnpm -v
 
-      # 4) Install deps
+      # 3) Install deps
       - name: Install deps
         run: pnpm install --frozen-lockfile=false
 
@@ -53,6 +51,10 @@ jobs:
       # ---- Gate 2: Static architecture guards ----
       - name: CI guards
         run: node scripts/ci-guards.mjs
+
+      # (optional) AI guards — keep if you added scripts/ai-guards.mjs
+      # - name: AI guards
+      #   run: node scripts/ai-guards.mjs
 
       # ---- Preview server for E2E ----
       - name: Build
