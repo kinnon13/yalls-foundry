@@ -2322,6 +2322,63 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_user_profiles: {
+        Row: {
+          approval_mode: string | null
+          channel_prefs: Json | null
+          created_at: string
+          format_pref: string | null
+          goal_weights: Json | null
+          id: string
+          notes: string | null
+          private_mode_default: boolean | null
+          suggestion_freq: string | null
+          taboo_topics: string[] | null
+          tone: string | null
+          updated_at: string
+          user_id: string
+          verbosity: string | null
+          visual_pref: boolean | null
+          work_hours: Json | null
+        }
+        Insert: {
+          approval_mode?: string | null
+          channel_prefs?: Json | null
+          created_at?: string
+          format_pref?: string | null
+          goal_weights?: Json | null
+          id?: string
+          notes?: string | null
+          private_mode_default?: boolean | null
+          suggestion_freq?: string | null
+          taboo_topics?: string[] | null
+          tone?: string | null
+          updated_at?: string
+          user_id: string
+          verbosity?: string | null
+          visual_pref?: boolean | null
+          work_hours?: Json | null
+        }
+        Update: {
+          approval_mode?: string | null
+          channel_prefs?: Json | null
+          created_at?: string
+          format_pref?: string | null
+          goal_weights?: Json | null
+          id?: string
+          notes?: string | null
+          private_mode_default?: boolean | null
+          suggestion_freq?: string | null
+          taboo_topics?: string[] | null
+          tone?: string | null
+          updated_at?: string
+          user_id?: string
+          verbosity?: string | null
+          visual_pref?: boolean | null
+          work_hours?: Json | null
+        }
+        Relationships: []
+      }
       ai_worker_heartbeats: {
         Row: {
           created_at: string | null
