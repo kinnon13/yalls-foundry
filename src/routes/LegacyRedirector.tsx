@@ -41,10 +41,10 @@ export default function LegacyRedirector() {
     if (m) {
       const q = new URLSearchParams(loc.search);
       q.set('app', m.app);
-      nav(`/?${q.toString()}`, { replace: true });
+      nav(`/dashboard?${q.toString()}`, { replace: true });
     } else {
-      // Hard 404: redirect to home with overview app open
-      nav('/?app=overview', { replace: true });
+      // Hard 404: redirect to dashboard with overview app open
+      nav('/dashboard?app=overview', { replace: true });
     }
   }, [loc.pathname, loc.search, nav]);
 
