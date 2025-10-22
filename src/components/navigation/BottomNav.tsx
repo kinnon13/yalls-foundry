@@ -30,7 +30,7 @@ export function BottomNav() {
   const navItems: NavItem[] = [
     { type: 'link', path: '/', label: 'Home', icon: Home, testId: 'nav-home' },
     { type: 'overlay', appKey: 'yallbrary', label: 'Yallbrary', icon: Search, testId: 'nav-yallbrary' },
-    { type: 'link', path: '/super-andy', label: 'Andy', icon: Brain, testId: 'nav-andy' },
+    { type: 'overlay', appKey: 'andy', label: 'Andy', icon: Brain, testId: 'nav-andy' },
     { type: 'overlay', appKey: 'rocker', label: 'Rocker', icon: User, testId: 'nav-rocker' },
   ];
 

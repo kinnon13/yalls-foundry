@@ -29,13 +29,15 @@ export default function RockerEntry({ contextType }: AppUnitProps) {
   return (
     <div data-testid="app-rocker" className="p-6 space-y-4">
       <header className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Rocker <span className="opacity-60">({contextType})</span></h1>
+        <h1 className="text-xl font-semibold">User Rocker <span className="opacity-60">({contextType})</span></h1>
         <button
           onClick={toggleMic}
           className="px-3 py-1 rounded border"
           aria-pressed={listening}
         >{listening ? 'Stop' : 'Push-to-Talk'}</button>
       </header>
+
+      <p className="text-muted-foreground">Your personal hub as an app (overlay)</p>
 
       <div className="grid gap-3">
         <button

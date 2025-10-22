@@ -29,6 +29,7 @@ const RULES: Array<{ re: RegExp; app: string }> = [
   { re: /^\/calendar(\/|$)/i,               app: 'calendar' },
   { re: /^\/rocker(\/|$)/i,                 app: 'rocker' },
   { re: /^\/admin-rocker(\/|$)/i,           app: 'admin-rocker' },
+  { re: /^\/super-andy(\/|$)/i,             app: 'andy' },
 ];
 
 export default function LegacyRedirector() {

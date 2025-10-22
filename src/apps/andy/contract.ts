@@ -1,11 +1,11 @@
 import type { AppContract } from '@/apps/types';
 
 const contract: AppContract = {
-  id: 'rocker',
-  title: 'User Rocker',
+  id: 'andy',
+  title: 'Super Andy',
   routes: [],
   role: 'user',
-  testIds: { entryRoot: 'app-rocker', panelRoot: 'panel-rocker' },
+  testIds: { entryRoot: 'app-andy', panelRoot: 'panel-andy' },
 };
 
 export default contract;
