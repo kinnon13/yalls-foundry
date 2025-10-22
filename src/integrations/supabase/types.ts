@@ -241,6 +241,30 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_budget_policies: {
+        Row: {
+          alert_threshold_pct: number | null
+          daily_cents_limit: number
+          hard_block: boolean
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          alert_threshold_pct?: number | null
+          daily_cents_limit?: number
+          hard_block?: boolean
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          alert_threshold_pct?: number | null
+          daily_cents_limit?: number
+          hard_block?: boolean
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ai_change_approvals: {
         Row: {
           approver_id: string
@@ -1884,6 +1908,89 @@ export type Database = {
           snoozed_until?: string | null
           thread_id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      ai_tool_usage: {
+        Row: {
+          cost_cents: number | null
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          invoked_at: string | null
+          success: boolean | null
+          tenant_id: string | null
+          tool_id: string | null
+        }
+        Insert: {
+          cost_cents?: number | null
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          invoked_at?: string | null
+          success?: boolean | null
+          tenant_id?: string | null
+          tool_id?: string | null
+        }
+        Update: {
+          cost_cents?: number | null
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          invoked_at?: string | null
+          success?: boolean | null
+          tenant_id?: string | null
+          tool_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_tool_usage_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "ai_tools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_tools: {
+        Row: {
+          allow_domains: string[] | null
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          kind: string
+          name: string
+          rate_limit_per_min: number | null
+          role: string
+          spec: Json
+          updated_at: string | null
+          version: string
+        }
+        Insert: {
+          allow_domains?: string[] | null
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          kind: string
+          name: string
+          rate_limit_per_min?: number | null
+          role: string
+          spec: Json
+          updated_at?: string | null
+          version?: string
+        }
+        Update: {
+          allow_domains?: string[] | null
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          kind?: string
+          name?: string
+          rate_limit_per_min?: number | null
+          role?: string
+          spec?: Json
+          updated_at?: string | null
+          version?: string
         }
         Relationships: []
       }
@@ -13775,6 +13882,10 @@ export type Database = {
       check_rate_limit: {
         Args: { p_limit: number; p_scope: string; p_window_sec?: number }
         Returns: Json
+      }
+      check_tool_rate_limit: {
+        Args: { p_tenant_id: string; p_tool_id: string }
+        Returns: boolean
       }
       check_voice_post_rate_limit: {
         Args: {
