@@ -3,8 +3,6 @@ project_id = "xuxfuonzsfvrirdwzddt"
 [functions.andy-chat]
 verify_jwt = true
 
-[functions.andy-voice-session]
-verify_jwt = true
 
 [functions.andy-embed-knowledge]
 verify_jwt = false
@@ -93,8 +91,6 @@ verify_jwt = true
 [functions.rocker-tasks]
 verify_jwt = true
 
-[functions.rocker-chat]
-verify_jwt = true
 
 [functions.rocker-chat-simple]
 verify_jwt = true
@@ -138,11 +134,7 @@ verify_jwt = true
 [functions.recall-content]
 verify_jwt = true
 
-[functions.rocker-voice-session]
-verify_jwt = true
 
-[functions.text-to-speech]
-verify_jwt = false
 
 [functions.moderate-memory]
 verify_jwt = true
@@ -283,8 +275,6 @@ verify_jwt = true
 [functions.rocker-reembed]
 verify_jwt = true
 
-[functions.elevenlabs-conversation]
-verify_jwt = true
 
 [functions.rocker-audit-system]
 verify_jwt = true
