@@ -31,7 +31,7 @@ export const OVERLAY_REGISTRY: Record<AppId, OverlayConfig> = {
   overview:     { key: 'overview',     title: 'Owner HQ',         role: 'admin', component: lazy(() => import('@/apps/overview/Entry')) },
 
   // 🟢 AI Assistants
-  andy:         { key: 'andy',         title: 'Super Andy',       role: 'user',  component: lazy(() => import('@/apps/andy/Entry')) },
+  andy:         { key: 'andy',         title: 'Super Andy',       role: 'user',  component: lazy(() => import('@/pages/SuperAndy/Index')) },
   rocker:       { key: 'rocker',       title: 'Rocker',           role: 'user',  component: lazy(() => import('@/apps/rocker/Entry')) },
   'admin-rocker': { key: 'admin-rocker', title: 'Admin Rocker',   role: 'admin', component: lazy(() => import('@/apps/admin-rocker/Entry')) },
 

@@ -47,7 +47,7 @@ import HomeShell from './routes/home-shell/index';
 import Health from './pages/Health';
 
 const Dashboard = lazy(() => import('./routes/dashboard/index'));
-const SuperConsole = lazy(() => import('./pages/Super/index'));
+const SuperAndyFull = lazy(() => import('./pages/SuperAndy/Index'));
 const AdminRockerConsole = lazy(() => import('./pages/AdminRocker/Index'));
 const AuthCallback = lazy(() => import('./routes/auth/callback'));
 const Privacy = lazy(() => import('./pages/Privacy'));
@@ -105,8 +105,8 @@ function AppContent() {
         {/* 2. Dashboard - Workspace with overlay system */}
         <Route path="/dashboard" element={<Dashboard />} />
         
-        {/* 3. Super Console - Admin Only */}
-        <Route path="/super" element={<SuperConsole />} />
+        {/* 3. Super Andy - Full route (legacy compatibility) */}
+        <Route path="/super" element={<SuperAndyFull />} />
         
         {/* 4. Admin Rocker - Admin console for AI */}
         <Route path="/admin-rocker" element={<AdminRockerConsole />} />
