@@ -124,7 +124,7 @@ function AppContent() {
 
         {/* Onboarding - Authenticated users only, before main app */}
         <Route element={<RequireAuthGuard />}>
-          <Route path="/onboarding" element={
+          <Route path="/onboarding/*" element={
             <Suspense fallback={<div>Loading...</div>}>
               <OnboardingPage />
             </Suspense>
