@@ -131,10 +131,10 @@ const Index = () => {
         <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(white,transparent_85%)]" />
         <div className="container mx-auto px-4 py-24 md:py-32 relative">
           <div className="max-w-5xl mx-auto text-center space-y-8">
-            {inviterInfo?.showName && inviterInfo.displayName && (
+            {invite && inviterInfo?.showName && (
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium">
                 <Sparkles className="w-4 h-4 text-primary" />
-                Invited by {inviterInfo.displayName}
+                You've been invited to join Yalls.ai
               </div>
             )}
             
@@ -230,8 +230,8 @@ const Index = () => {
             <div className="max-w-4xl mx-auto text-center space-y-8">
               <h2 className="text-4xl md:text-5xl font-bold">Ready to Get Started?</h2>
               <p className="text-xl text-muted-foreground">
-                {inviterInfo?.showName && inviterInfo.displayName 
-                  ? `Join ${inviterInfo.displayName} and thousands of others on Yalls.ai`
+                {invite && inviterInfo?.showName 
+                  ? 'Join thousands of professionals already building with AI on Yalls.ai'
                   : 'Join thousands of professionals already on Yalls.ai'}
               </p>
               <Button 

@@ -8,7 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 export interface InviterInfo {
   interests: string[];
   showName: boolean;
-  displayName: string | null;
 }
 
 export async function fetchInviter(inviteCode: string): Promise<InviterInfo | null> {
@@ -17,7 +16,7 @@ export async function fetchInviter(inviteCode: string): Promise<InviterInfo | nu
   try {
     const { data, error } = await supabase
       .from('ai_user_profiles')
-      .select('public_interests, share_name, display_name')
+      .select('public_interests, share_name')
       .eq('invite_code', inviteCode)
       .single();
 
@@ -26,7 +25,6 @@ export async function fetchInviter(inviteCode: string): Promise<InviterInfo | nu
     return {
       interests: data.public_interests || [],
       showName: !!data.share_name,
-      displayName: data.display_name || null,
     };
   } catch {
     return null;
