@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "roles": ["user", "admin", "super"],
+  "modules": ["shared", "meta_cortex"],
+  "workers": ["durable_queue", "ai_jobs", "backup", "retrain", "redteam"],
+  "governance": "PROJECT_RULES.md",
+  "structure_lock": "structure.lock.json",
+  "capabilities": {
+    "user": {
+      "planning": true,
+      "memory": true,
+      "tools": ["calendar", "notes", "search"],
+      "admin_access": false
+    },
+    "admin": {
+      "planning": true,
+      "memory": true,
+      "tools": ["calendar", "notes", "search", "moderation", "analytics"],
+      "admin_access": true
+    },
+    "super": {
+      "planning": true,
+      "memory": true,
+      "tools": ["*"],
+      "admin_access": true,
+      "meta_cognitive": true,
+      "self_modification": true
+    }
+  },
+  "shared_modules": {
+    "planning": ["planner", "critic", "replanner"],
+    "exec": ["executor", "transaction_log", "budgets"],
+    "nlp": ["intent_router", "entity_extract", "command_parser"],
+    "tools": ["registry", "adapters"]
+  },
+  "database_tables": [
+    "ai_action_ledger",
+    "ai_brain_state",
+    "ai_prompt_versions",
+    "ai_self_model",
+    "ai_jobs",
+    "ai_tasks",
+    "ai_questions",
+    "ai_todo",
+    "audit_log",
+    "system_metrics"
+  ],
+  "edge_functions": [
+    "rocker-monitor",
+    "ai_health"
+  ]
+}

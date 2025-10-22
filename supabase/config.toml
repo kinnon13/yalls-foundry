@@ -299,3 +299,7 @@ verify_jwt = false
 [functions.rocker-monitor.cron]
 schedule = "*/15 * * * *"  # Every 15 minutes
 
+# AI system health check - public endpoint
+[functions.ai_health]
+verify_jwt = false
+

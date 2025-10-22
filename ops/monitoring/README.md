@@ -50,5 +50,49 @@ Telemetry configuration, alerting rules, and dashboard specifications for produc
 
 ## Existing Monitoring
 - `supabase/functions/rocker-monitor/index.ts` - Already deployed
+- `supabase/functions/ai_health/index.ts` - Health check endpoint
 - Records to `system_metrics` table
 - Monitors queue depth, error rate, tokens, cost, audit activity
+
+## Telemetry Baseline
+
+### Load Testing AI Health Check
+Run k6 load tests to baseline latency for each region:
+
+```bash
+k6 run tests/load/ai_healthcheck.js
+```
+
+Expected baseline metrics:
+- **p50 latency**: < 50ms (database check)
+- **p95 latency**: < 200ms (full health check)
+- **p99 latency**: < 500ms (under load)
+- **Error rate**: < 0.1%
+
+### Health Check Response Format
+```json
+{
+  "status": "ok" | "degraded" | "fail",
+  "timestamp": "2025-01-15T00:00:00Z",
+  "total_latency_ms": 150,
+  "checks": [
+    { "name": "database", "status": "ok", "latency_ms": 25 },
+    { "name": "ai_action_ledger", "status": "ok" },
+    { "name": "ai_brain_state", "status": "ok" },
+    { "name": "system_metrics", "status": "ok" },
+    { "name": "audit_log", "status": "ok" }
+  ],
+  "summary": {
+    "total": 5,
+    "ok": 5,
+    "degraded": 0,
+    "failed": 0
+  }
+}
+```
+
+### Monitoring Cadence
+- Health check: Every 1 minute (ai_health function)
+- System metrics: Every 15 minutes (rocker-monitor function)
+- Load testing: Before each deployment
+- Performance regression: Alert if p95 > 300ms
