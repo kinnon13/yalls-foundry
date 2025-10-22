@@ -13,32 +13,31 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 35
-    env:
-      CI: true
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-    - name: Setup Node
-  uses: actions/setup-node@v4
-  with:
-    node-version: 20
-    # removed: cache: 'pnpm'  (this is what was breaking)
+      # 1) Install Node (DO NOT cache pnpm here)
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-      # 👇 THIS fixes the "unable to locate executable: pnpm" error
+      # 2) Install pnpm (provides the 'pnpm' binary)
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
           run_install: false
 
-      # Belt & suspenders—keeps pnpm activated in PATH.
+      # (belt & suspenders) make sure pnpm is on PATH
       - name: Enable pnpm via corepack
         run: |
           corepack enable
           corepack prepare pnpm@9.12.0 --activate
 
+      # 3) Install project deps
       - name: Install deps
         run: pnpm install --frozen-lockfile=false
 
@@ -62,7 +61,7 @@ jobs:
           (pnpm preview --port 4173 || pnpm exec vite preview --port 4173) & echo $! > preview.pid
 
       - name: Wait for server
-        run: pnpm dlx wait-on http://localhost:4173
+        run: npx wait-on http://localhost:4173
 
       # ---- Gate 3: E2E smoke ----
       - name: Playwright (overlay scope + dynamic home)
@@ -74,7 +73,7 @@ jobs:
         if: always()
         run: |
           if [ -f preview.pid ]; then
-            kill "$(cat preview.pid)" || true
+            kill $(cat preview.pid) || true
           fi
 
       - name: Upload Playwright report
