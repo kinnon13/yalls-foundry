@@ -1,234 +1,50 @@
 {
   "version": "1.0.0",
-  "locked_at": "2025-10-22T04:47:00Z",
-  "description": "Y'alls Foundry project structure manifest - enforced by CI",
+  "locked_at": "2025-01-15T00:00:00Z",
   "structure": {
-    "src": {
-      "purpose": "Frontend application code",
-      "allowed_subdirs": [
-        "routes",
-        "components",
-        "lib",
-        "hooks",
-        "contexts",
-        "types",
-        "feature-kernel",
-        "integrations",
-        "preview"
-      ],
-      "forbidden_patterns": [
-        "*.test.ts",
-        "*.spec.ts",
-        "console.log",
-        "hardcoded-tenant-id"
-      ],
-      "max_file_lines": 300,
-      "rules": [
-        "All React components must be in /components or /routes",
-        "Shared logic must be in /lib",
-        "Type definitions must be in /types",
-        "Do not import from /supabase/functions"
-      ]
-    },
-    "supabase": {
-      "purpose": "Backend infrastructure and edge functions",
-      "allowed_subdirs": [
-        "functions",
-        "migrations"
-      ],
-      "forbidden_patterns": [
-        "import from ../../../src",
-        "console.log",
-        "execute_sql"
-      ],
-      "max_file_lines": 300,
-      "rules": [
-        "All edge functions must be in /functions/[name]/index.ts",
-        "Shared utilities must be in /functions/_shared/",
-        "All functions must use withRateLimit() wrapper",
-        "All functions must use structured logger",
-        "Never import from /src directory"
-      ]
-    },
-    "scripts": {
-      "purpose": "Automation, utilities, and maintenance scripts",
-      "allowed_subdirs": [
-        "health",
-        "audit",
-        "validation",
-        "fixes",
-        "database"
-      ],
-      "forbidden_patterns": [
-        "hardcoded-api-keys",
-        "production-credentials"
-      ],
-      "rules": [
-        "Health checks go in /health",
-        "Audit scripts go in /audit",
-        "Validation scripts go in /validation",
-        "Fix scripts go in /fixes",
-        "SQL scripts go in /database",
-        "All secrets must use placeholders"
-      ]
-    },
-    "docs": {
-      "purpose": "Project documentation",
-      "allowed_subdirs": [
-        "architecture",
-        "processes",
-        "production",
-        "audit"
-      ],
-      "forbidden_patterns": [
-        "real-api-keys",
-        "production-secrets"
-      ],
-      "rules": [
-        "Architecture docs go in /architecture",
-        "Process docs go in /processes",
-        "Production guides go in /production",
-        "Audit reports go in /audit",
-        "All example keys must be clearly marked"
-      ]
-    },
-    "tests": {
-      "purpose": "Test suites",
-      "allowed_subdirs": [
-        "a11y",
-        "e2e",
-        "unit",
-        "integration"
-      ],
-      "rules": [
-        "Accessibility tests go in /a11y",
-        "End-to-end tests go in /e2e",
-        "Unit tests go in /unit",
-        "Integration tests go in /integration"
-      ]
-    },
-    "public": {
-      "purpose": "Static assets served directly",
-      "allowed_subdirs": [
-        "images",
-        "fonts",
-        "assets"
-      ],
-      "rules": [
-        "Only static assets (images, fonts, icons)",
-        "No dynamic content",
-        "Optimize all images before committing"
-      ]
-    },
-    ".github": {
-      "purpose": "GitHub configuration and CI/CD",
-      "allowed_subdirs": [
-        "workflows"
-      ],
-      "rules": [
-        "All CI workflows go in /workflows",
-        "CODEOWNERS defines critical paths",
-        "No secrets in workflow files"
-      ]
-    },
-    "archive": {
-      "purpose": "Deprecated or experimental code for reference",
-      "allowed_subdirs": [
-        "deprecated-functions",
-        "old-scripts",
-        "experiments"
-      ],
-      "rules": [
-        "Nothing in /archive should be imported by active code",
-        "Keep for historical reference only",
-        "Clean up annually"
-      ]
-    }
-  },
-  "root_files": {
-    "required": [
-      "package.json",
-      "README.md",
-      "PROJECT_RULES.md",
-      "structure.lock.json",
-      ".gitignore",
-      "tsconfig.json",
-      "vite.config.ts",
-      "tailwind.config.ts"
-    ],
-    "optional": [
-      ".eslintrc.json",
-      "vitest.config.ts",
-      "postcss.config.js",
-      "components.json"
-    ],
-    "forbidden": [
-      ".env",
-      "*.local",
-      "node_modules"
-    ]
-  },
-  "validation": {
-    "enabled": true,
-    "run_on": [
-      "pre-commit",
-      "ci"
-    ],
-    "checks": [
-      "max-file-lines-300",
-      "no-hardcoded-tenant-ids",
-      "no-console-logs-in-functions",
-      "all-functions-have-rate-limits",
-      "no-secrets-in-code"
-    ]
-  },
-  "monitoring": {
-    "file_count_by_dir": {
-      "src": 965,
-      "supabase/functions": 176,
-      "scripts": 72,
-      "docs": 81,
-      "tests": 51,
-      "public": 5
-    },
-    "large_files_to_refactor": [
-      {
-        "file": "src/App.tsx",
-        "lines": 571,
-        "status": "scheduled",
-        "action": "split"
-      },
-      {
-        "file": "src/lib/ai/rocker/tools.ts",
-        "lines": 801,
-        "status": "scheduled",
-        "action": "split"
-      },
-      {
-        "file": "src/components/rocker/RockerChatUI.tsx",
-        "lines": 490,
-        "status": "scheduled",
-        "action": "split"
-      },
-      {
-        "file": "src/routes/dashboard.tsx",
-        "lines": 585,
-        "status": "scheduled",
-        "action": "split"
-      },
-      {
-        "file": "src/routes/entities/unclaimed.tsx",
-        "lines": 312,
-        "status": "scheduled",
-        "action": "split"
+    "src/ai/": {
+      "purpose": "AI system architecture - all AI brains, planning, execution, and tools",
+      "subfolders": {
+        "shared/": "Common utilities shared across all AI roles",
+        "user/": "User-level Rocker AI implementation",
+        "admin/": "Admin-level Rocker AI with elevated permissions",
+        "super/": "Super Andy AI with full system access",
+        "experimental/": "Cutting-edge AI modules under development"
       }
-    ]
-  },
-  "changelog": [
-    {
-      "date": "2025-10-22",
-      "version": "1.0.0",
-      "changes": "Initial structure lock after Elon-grade cleanup pass"
+    },
+    "src/ai/shared/": {
+      "purpose": "Shared AI utilities for planning, execution, NLP, and tool management",
+      "subfolders": {
+        "planning/": "Multi-step planning, criticism, and replanning logic",
+        "exec/": "Execution engine, transaction logs, budget tracking",
+        "nlp/": "Intent routing, entity extraction, command parsing",
+        "tools/": "Tool registry and adapters for external integrations"
+      }
+    },
+    "src/ai/super/meta_cortex/": {
+      "purpose": "Super Andy's self-awareness layer - capability scanning, self-modeling, curiosity",
+      "subfolders": {}
+    },
+    "src/workers/": {
+      "purpose": "Background job processors for AI tasks, backups, retrain, and red-team testing",
+      "subfolders": {}
+    },
+    "docs/ai/": {
+      "purpose": "AI system documentation, governance playbooks, architecture guides",
+      "subfolders": {}
+    },
+    "ops/monitoring/": {
+      "purpose": "Observability configs, telemetry setup, alerting rules, dashboards",
+      "subfolders": {}
+    },
+    "supabase/migrations/": {
+      "purpose": "Database schema migrations - sequential, immutable after deployment",
+      "subfolders": {}
     }
-  ]
+  },
+  "rules": {
+    "no_deletions": "Folders in this manifest cannot be deleted without updating this file",
+    "readme_required": "Every folder must have a README.md explaining its purpose",
+    "build_must_pass": "All changes must maintain a passing TypeScript build"
+  }
 }
