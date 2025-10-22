@@ -330,31 +330,7 @@ function AppContent() {
             } 
           />
           
-          {/* Rocker Hub - Super Admin Only */}
-          <Route 
-            path="/rocker" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <UserRockerIndex />
-              </Suspense>
-            } 
-          />
-          
-          {/* Rocker Preferences */}
-          <Route 
-            path="/rocker/preferences" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <UserRockerPreferences />
-              </Suspense>
-            } 
-          />
-          
-          {/* Rocker Chat - redirect to hub */}
-          <Route 
-            path="/rocker/chat" 
-            element={<Navigate to="/rocker" replace />}
-          />
+          {/* Rocker & Admin Rocker - Now via overlay system (?app=rocker, ?app=admin-rocker) */}
           
           {/* Super Andy - Everything AI Workspace */}
           <Route 
@@ -362,52 +338,6 @@ function AppContent() {
             element={
               <Suspense fallback={<div>Loading...</div>}>
                 <SuperAndyIndex />
-              </Suspense>
-            } 
-          />
-          
-          {/* Admin Rocker - Admin AI Workspace */}
-          <Route 
-            path="/admin-rocker" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <AdminRockerIndex />
-              </Suspense>
-            } 
-          />
-          
-          <Route 
-            path="/admin-rocker/tools" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <AdminRockerTools />
-              </Suspense>
-            } 
-          />
-          
-          <Route 
-            path="/admin-rocker/audits" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <AdminRockerAudits />
-              </Suspense>
-            } 
-          />
-          
-          <Route 
-            path="/admin-rocker/moderation" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <AdminRockerModeration />
-              </Suspense>
-            } 
-          />
-          
-          <Route 
-            path="/admin-rocker/budgets" 
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <AdminRockerBudgets />
               </Suspense>
             } 
           />

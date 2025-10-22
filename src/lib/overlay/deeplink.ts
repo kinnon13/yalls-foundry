@@ -16,6 +16,10 @@ const CONTRACT_ROUTES: Record<AppId, string[]> = {
   settings: ['/settings'],
   overview: ['/dashboard', '/owner'],
   
+  // AI Assistants
+  rocker: ['/rocker'],
+  'admin-rocker': ['/admin-rocker'],
+  
   // Apps without dedicated routes (overlay-only)
   yallbrary: [],
   messages: [],

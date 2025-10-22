@@ -31,7 +31,7 @@ export function BottomNav() {
     { type: 'link', path: '/', label: 'Home', icon: Home, testId: 'nav-home' },
     { type: 'overlay', appKey: 'yallbrary', label: 'Yallbrary', icon: Search, testId: 'nav-yallbrary' },
     { type: 'link', path: '/super-andy', label: 'Andy', icon: Brain, testId: 'nav-andy' },
-    { type: 'link', path: '/rocker', label: 'Rocker', icon: User, testId: 'nav-rocker' },
+    { type: 'overlay', appKey: 'rocker', label: 'Rocker', icon: User, testId: 'nav-rocker' },
   ];
 
   return (

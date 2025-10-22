@@ -42,7 +42,8 @@ export function Sidebar() {
       title: 'AI Workspace',
       items: [
         { type: 'link', path: '/super-andy', label: 'Super Andy', testId: 'nav-andy' },
-        { type: 'link', path: '/rocker', label: 'User Rocker', testId: 'nav-rocker' },
+        { type: 'overlay', appKey: 'rocker', label: 'User Rocker', testId: 'nav-rocker' },
+        { type: 'overlay', appKey: 'admin-rocker', label: 'Admin Rocker', testId: 'nav-admin-rocker' },
       ],
     },
   ];
