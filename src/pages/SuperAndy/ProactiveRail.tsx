@@ -8,7 +8,7 @@ export default function ProactiveRail() {
     queryKey: ['proactive'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('ai_proactive_suggestions')
+        .from('ai_proactive_suggestions' as any)
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
@@ -19,7 +19,7 @@ export default function ProactiveRail() {
 
   async function accept(id: string) {
     await supabase
-      .from('ai_proactive_suggestions')
+      .from('ai_proactive_suggestions' as any)
       .update({ status: 'accepted' })
       .eq('id', id);
     refetch();
@@ -27,7 +27,7 @@ export default function ProactiveRail() {
 
   async function reject(id: string) {
     await supabase
-      .from('ai_proactive_suggestions')
+      .from('ai_proactive_suggestions' as any)
       .update({ status: 'rejected' })
       .eq('id', id);
     refetch();

@@ -7,7 +7,7 @@ export default function SelfImproveLog() {
     queryKey: ['selfimprove'],
     queryFn: async () => {
       const { data } = await supabase
-        .from('ai_self_improve_log')
+        .from('ai_self_improve_log' as any)
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
