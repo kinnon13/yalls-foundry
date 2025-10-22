@@ -69,6 +69,14 @@ const AdminRocker = lazy(() => import('./routes/admin-rocker'));
 const SettingsKeys = lazy(() => import('./pages/SettingsKeys'));
 const RoleToolPage = lazy(() => import('./routes/admin/role-tool'));
 
+// Super Console
+const SuperOverview = lazy(() => import('./pages/Super/index'));
+const PoolsPage = lazy(() => import('./pages/Super/Pools'));
+const WorkersPage = lazy(() => import('./pages/Super/Workers'));
+const FlagsPage = lazy(() => import('./pages/Super/Flags'));
+const IncidentsPage = lazy(() => import('./pages/Super/Incidents'));
+const SuperAndyPage = lazy(() => import('./pages/SuperAndy'));
+
 const queryClient = new QueryClient();
 
 function AppContent() {
@@ -338,6 +346,56 @@ function AppContent() {
             element={
               <Suspense fallback={<div>Loading...</div>}>
                 <AdminRocker />
+              </Suspense>
+            } 
+          />
+          
+          {/* Super Console - Admin Only */}
+          <Route 
+            path="/super" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <SuperOverview />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/super/pools" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <PoolsPage />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/super/workers" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <WorkersPage />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/super/flags" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <FlagsPage />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/super/incidents" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <IncidentsPage />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/super-andy-v2" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <SuperAndyPage />
               </Suspense>
             } 
           />
