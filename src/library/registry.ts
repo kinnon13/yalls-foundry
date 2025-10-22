@@ -73,11 +73,11 @@ class LibraryRegistry {
 
 export const libraryRegistry = new LibraryRegistry();
 
-// Auto-register apps (would normally be auto-discovered)
-// For now, register the ones we have contracts for
-libraryRegistry.register('crm', 'Entry', 'Panel');
-libraryRegistry.register('marketplace', 'Entry');
+// Auto-register all apps
+libraryRegistry.register('yallbrary', 'Entry', 'Panel');
 libraryRegistry.register('messages', 'Entry', 'Panel');
+libraryRegistry.register('marketplace', 'Entry');
+libraryRegistry.register('crm', 'Entry', 'Panel');
 libraryRegistry.register('calendar', 'Entry');
 libraryRegistry.register('discover', 'Entry');
 libraryRegistry.register('listings', 'Entry');
@@ -86,5 +86,18 @@ libraryRegistry.register('earnings', 'Entry');
 libraryRegistry.register('incentives', 'Entry');
 libraryRegistry.register('farm-ops', 'Entry');
 libraryRegistry.register('activity', 'Entry', 'Panel');
-libraryRegistry.register('favorites', 'Entry', 'Panel');
 libraryRegistry.register('analytics', 'Entry');
+libraryRegistry.register('favorites', 'Entry', 'Panel');
+libraryRegistry.register('cart', 'Entry', 'Panel');
+libraryRegistry.register('orders', 'Entry', 'Panel');
+libraryRegistry.register('notifications', 'Entry', 'Panel');
+libraryRegistry.register('profile', 'Entry', 'Panel');
+libraryRegistry.register('entities', 'Entry', 'Panel');
+libraryRegistry.register('mlm', 'Entry', 'Panel');
+libraryRegistry.register('business', 'Entry', 'Panel');
+libraryRegistry.register('producer', 'Entry', 'Panel');
+libraryRegistry.register('settings', 'Entry', 'Panel');
+libraryRegistry.register('overview', 'Entry', 'Panel');
+libraryRegistry.register('rocker', 'Entry', 'Panel');
+libraryRegistry.register('admin-rocker', 'Entry', 'Panel');
+libraryRegistry.register('andy', 'Entry', 'Panel');
