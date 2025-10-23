@@ -1,0 +1,42 @@
+name: Full Code Audit
+
+on: [push, pull_request]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: 20 }
+
+      - run: npm ci  # or pnpm install
+
+      - name: Semgrep Security Scan
+        uses: returntocorp/semgrep-action@v1
+        with: { generateSarif: '1' }  # Scans for vulns/bugs 
+
+      - name: SonarQube Quality/Perf/Bugs
+        uses: sonarsource/sonarqube-scan-action@v2
+        env: { SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} }  # Free token from sonarcloud.io 
+
+      - name: Codacy Review/Fixes
+        uses: codacy/codacy-analysis-cli-action@v4
+        with: { codacy-api-token: ${{ secrets.CODACY_API_TOKEN }} }  # Free for open-source  
+
+      - name: ESLint Code Standards
+        run: npx eslint . --ext .js,.jsx,.ts,.tsx  # Built-in quality 
+
+      - name: Dead Code Detection
+        run: npx ts-prune  # Flags unused code 
+
+      - name: Upload SARIF (for GitHub Code Scanning)
+        uses: github/codeql-action/upload-sarif@v3
+        with: { sarif_file: semgrep.sarif }  # Integrates with GitHub Security tab
+
+      - name: Report & Notify
+        if: failure()
+        uses: actions/slack-notification@v1
+        with: { slack_webhook_url: ${{ secrets.SLACK_WEBHOOK }} }  # Optional email/Slack on fails
