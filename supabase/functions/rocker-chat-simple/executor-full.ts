@@ -2,22 +2,24 @@
  * FULL Tool Executor for Rocker AI
  * Implements ALL 60+ tools following platform patterns
  * 
- * CRITICAL RULES:
- * - Use withTenantGuard wrapper (called by parent function)
- * - Delegate to existing functions where they exist
- * - Use tenantClient for RLS-aware queries
- * - Use adminClient sparingly with audit
+ * Production-grade patterns:
+ * - Uses TenantContext for proper isolation
+ * - Delegates to existing services (calendar-ops, auto-sync-entities, rocker-memory)
+ * - RLS-aware queries via tenantClient
+ * - Audit logging via adminClient
  */
 
+import type { TenantContext } from '../_shared/tenantGuard.ts';
+import { createLogger } from '../_shared/logger.ts';
+
+const log = createLogger('executor-full');
+
 export async function executeTool(
-  tenantClient: any,
-  adminClient: any,
-  userId: string,
-  orgId: string,
+  ctx: TenantContext,
   toolName: string,
   args: any
 ): Promise<any> {
-  console.log(`[executor] ${toolName}`, args);
+  log.info('Executing tool', { tool: toolName, userId: ctx.userId, orgId: ctx.orgId });
 
   try {
     switch (toolName) {
@@ -46,7 +48,7 @@ export async function executeTool(
       // ============= MEMORY & PROFILE (4) =============
       case 'search_memory': {
         // Delegate to rocker-memory function
-        const { data, error } = await tenantClient.functions.invoke('rocker-memory', {
+        const { data, error } = await ctx.tenantClient.functions.invoke('rocker-memory', {
           body: { action: 'search_memory', query: args.query, tags: args.tags, limit: 10 }
         });
         if (error) throw error;
@@ -55,11 +57,11 @@ export async function executeTool(
 
       case 'write_memory':
       case 'update_memory': {
-        const { data, error } = await supabase.functions.invoke('rocker-memory', {
+        const { data, error } = await ctx.tenantClient.functions.invoke('rocker-memory', {
           body: {
             action: 'write_memory',
             entry: {
-              tenant_id: userId,
+              tenant_id: ctx.orgId,
               type: args.type || 'preference',
               key: args.key,
               value: args.value
@@ -71,7 +73,7 @@ export async function executeTool(
       }
 
       case 'get_user_profile': {
-        const { data, error } = await supabase.functions.invoke('rocker-memory', {
+        const { data, error } = await ctx.tenantClient.functions.invoke('rocker-memory', {
           body: { action: 'get_profile' }
         });
         if (error) throw error;
@@ -101,14 +103,18 @@ export async function executeTool(
       }
 
       case 'create_business': {
-        const { data, error } = await supabase.from('entity_profiles').insert({
-          tenant_id: userId,
-          entity_type: 'business',
-          entity_name: args.name,
-          entity_metadata: { description: args.description }
-        }).select().single();
+        // Use auto-sync-entities for proper entity creation
+        const { data, error } = await ctx.tenantClient.functions.invoke('auto-sync-entities', {
+          body: { 
+            entities: [{
+              name: args.name,
+              type: 'business',
+              metadata: { description: args.description }
+            }]
+          }
+        });
         if (error) throw error;
-        return { success: true, business: data };
+        return { success: true, business: data?.entities?.[0] };
       }
 
       case 'create_listing':
@@ -118,14 +124,18 @@ export async function executeTool(
         return { success: true, action: 'create_event', data: args };
 
       case 'create_profile': {
-        const { data, error } = await supabase.from('entity_profiles').insert({
-          tenant_id: userId,
-          entity_type: args.profile_type,
-          entity_name: args.name,
-          entity_metadata: { description: args.description }
-        }).select().single();
+        // Use auto-sync-entities for proper entity creation
+        const { data, error } = await ctx.tenantClient.functions.invoke('auto-sync-entities', {
+          body: { 
+            entities: [{
+              name: args.name,
+              type: args.profile_type,
+              metadata: { description: args.description }
+            }]
+          }
+        });
         if (error) throw error;
-        return { success: true, profile: data };
+        return { success: true, profile: data?.entities?.[0] };
       }
 
       case 'create_crm_contact':
@@ -136,7 +146,7 @@ export async function executeTool(
 
       // ============= SEARCH & DISCOVERY (3) =============
       case 'search': {
-        const { data, error } = await supabase.functions.invoke('rocker-memory', {
+        const { data, error } = await ctx.tenantClient.functions.invoke('rocker-memory', {
           body: { action: 'search_entities', query: args.query, type: args.type, limit: 20 }
         });
         if (error) throw error;
@@ -144,7 +154,7 @@ export async function executeTool(
       }
 
       case 'search_entities': {
-        const { data, error } = await supabase.functions.invoke('rocker-memory', {
+        const { data, error } = await ctx.tenantClient.functions.invoke('rocker-memory', {
           body: { action: 'search_entities', query: args.query, type: args.type, limit: 20 }
         });
         if (error) throw error;
@@ -207,9 +217,9 @@ export async function executeTool(
 
       case 'mark_notification_read': {
         if (args.notification_id === 'all') {
-          await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('user_id', userId);
+          await ctx.tenantClient.from('notifications').update({ read_at: new Date().toISOString() }).eq('user_id', ctx.userId);
         } else {
-          await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', args.notification_id);
+          await ctx.tenantClient.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', args.notification_id);
         }
         return { success: true, message: 'Notifications marked as read' };
       }
@@ -233,7 +243,7 @@ export async function executeTool(
         if (args.bio) updates.bio = args.bio;
         if (args.avatar_url) updates.avatar_url = args.avatar_url;
         
-        const { error } = await supabase.from('profiles').update(updates).eq('user_id', userId);
+        const { error } = await ctx.tenantClient.from('profiles').update(updates).eq('user_id', ctx.userId);
         if (error) throw error;
         return { success: true, message: 'Profile updated' };
       }
@@ -326,7 +336,7 @@ export async function executeTool(
         return { success: true, action: 'google_drive_auth' };
 
       case 'list_google_drive_files': {
-        const { data, error } = await supabase.functions.invoke('google-drive-list', {
+        const { data, error } = await ctx.tenantClient.functions.invoke('google-drive-list', {
           body: { query: args.query }
         });
         if (error) throw error;
@@ -334,7 +344,7 @@ export async function executeTool(
       }
 
       case 'download_google_drive_file': {
-        const { data, error } = await supabase.functions.invoke('google-drive-download', {
+        const { data, error } = await ctx.tenantClient.functions.invoke('google-drive-download', {
           body: { fileId: args.fileId, fileName: args.fileName }
         });
         if (error) throw error;
@@ -346,10 +356,10 @@ export async function executeTool(
 
       // ============= TASKS & REMINDERS (2) =============
       case 'create_task': {
-        const { data, error } = await supabase
+        const { data, error } = await ctx.tenantClient
           .from('rocker_tasks')
           .insert({
-            user_id: userId,
+            user_id: ctx.userId,
             title: args.title,
             status: 'pending',
             priority: args.priority || 'medium',
@@ -363,7 +373,7 @@ export async function executeTool(
 
       case 'set_reminder':
         // Same as create_calendar_event with reminder
-        return await executeTool(supabase, userId, 'create_calendar_event', {
+        return await executeTool(ctx, 'create_calendar_event', {
           title: args.message || 'Reminder',
           starts_at: args.time,
           event_type: 'reminder',
@@ -372,8 +382,8 @@ export async function executeTool(
 
       // ============= ADMIN TOOLS (5) =============
       case 'flag_content': {
-        const { data, error } = await supabase.from('content_flags').insert({
-          user_id: userId,
+        const { data, error } = await ctx.tenantClient.from('content_flags').insert({
+          user_id: ctx.userId,
           content_type: args.content_type,
           content_id: args.content_id,
           reason: args.reason,
@@ -384,12 +394,22 @@ export async function executeTool(
       }
 
       case 'moderate_content': {
-        const { error } = await supabase.from('content_flags').update({
+        // Admin action - use adminClient with audit
+        const { error } = await ctx.adminClient.from('content_flags').update({
           status: args.action === 'approve' ? 'approved' : args.action === 'remove' ? 'removed' : 'warned',
           moderator_notes: args.notes,
           moderated_at: new Date().toISOString()
         }).eq('id', args.flag_id);
         if (error) throw error;
+        
+        // Audit log
+        await ctx.adminClient.from('admin_audit_log').insert({
+          request_id: ctx.requestId,
+          action: 'content.moderate',
+          actor_user_id: ctx.userId,
+          metadata: { flag_id: args.flag_id, action: args.action }
+        });
+        
         return { success: true, message: `Content ${args.action}d` };
       }
 
