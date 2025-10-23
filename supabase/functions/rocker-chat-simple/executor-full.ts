@@ -1,11 +1,19 @@
 /**
  * FULL Tool Executor for Rocker AI
- * Implements ALL 60+ tools from tools.ts
+ * Implements ALL 60+ tools following platform patterns
+ * 
+ * CRITICAL RULES:
+ * - Use withTenantGuard wrapper (called by parent function)
+ * - Delegate to existing functions where they exist
+ * - Use tenantClient for RLS-aware queries
+ * - Use adminClient sparingly with audit
  */
 
 export async function executeTool(
-  supabase: any,
+  tenantClient: any,
+  adminClient: any,
   userId: string,
+  orgId: string,
   toolName: string,
   args: any
 ): Promise<any> {
@@ -37,7 +45,8 @@ export async function executeTool(
 
       // ============= MEMORY & PROFILE (4) =============
       case 'search_memory': {
-        const { data, error } = await supabase.functions.invoke('rocker-memory', {
+        // Delegate to rocker-memory function
+        const { data, error } = await tenantClient.functions.invoke('rocker-memory', {
           body: { action: 'search_memory', query: args.query, tags: args.tags, limit: 10 }
         });
         if (error) throw error;
@@ -77,14 +86,18 @@ export async function executeTool(
         return { success: true, action: 'create_post', content: args.content };
 
       case 'create_horse': {
-        const { data, error } = await supabase.from('entity_profiles').insert({
-          tenant_id: userId,
-          entity_type: 'horse',
-          entity_name: args.name,
-          entity_metadata: { breed: args.breed, color: args.color, description: args.description }
-        }).select().single();
+        // Use auto-sync-entities for proper entity creation
+        const { data, error } = await tenantClient.functions.invoke('auto-sync-entities', {
+          body: { 
+            entities: [{
+              name: args.name,
+              type: 'horse',
+              metadata: { breed: args.breed, color: args.color, description: args.description }
+            }]
+          }
+        });
         if (error) throw error;
-        return { success: true, horse: data };
+        return { success: true, horse: data?.entities?.[0] };
       }
 
       case 'create_business': {
@@ -232,98 +245,72 @@ export async function executeTool(
         return { success: true, action: 'unfollow', target_user_id: args.user_id };
 
       // ============= CALENDAR (6) =============
+      // Delegate ALL calendar operations to calendar-ops function
       case 'create_calendar': {
-        const { data, error } = await supabase.from('calendars').insert({
-          owner_profile_id: args.owner_profile_id,
-          tenant_id: userId,
-          name: args.name,
-          calendar_type: args.calendar_type || 'personal',
-          description: args.description,
-          color: args.color
-        }).select().single();
+        const { data, error } = await tenantClient.functions.invoke('calendar-ops', {
+          body: { 
+            action: 'create_calendar',
+            ...args
+          }
+        });
         if (error) throw error;
         return { success: true, calendar: data };
       }
 
       case 'create_calendar_event': {
-        // Get or create personal calendar
-        let calendarId = args.calendar_id;
-        if (!calendarId) {
-          const { data: personalCal } = await supabase
-            .from('calendars')
-            .select('id')
-            .eq('owner_profile_id', userId)
-            .eq('calendar_type', 'personal')
-            .single();
-          calendarId = personalCal?.id;
-        }
-
-        const { data, error } = await supabase.from('calendar_events').insert({
-          calendar_id: calendarId,
-          tenant_id: userId,
-          title: args.title,
-          description: args.description,
-          location: args.location,
-          starts_at: args.starts_at,
-          ends_at: args.ends_at,
-          all_day: args.all_day || false,
-          visibility: args.visibility || 'private',
-          event_type: args.event_type,
-          reminder_minutes: args.reminder_minutes
-        }).select().single();
+        const { data, error } = await tenantClient.functions.invoke('calendar-ops', {
+          body: { 
+            action: 'create_event',
+            ...args
+          }
+        });
         if (error) throw error;
         return { success: true, event: data };
       }
 
       case 'share_calendar': {
-        const { error } = await supabase.from('calendar_shares').insert({
-          calendar_id: args.calendar_id,
-          profile_id: args.profile_id,
-          role: args.role,
-          busy_only: args.busy_only || false
+        const { data, error } = await tenantClient.functions.invoke('calendar-ops', {
+          body: { 
+            action: 'share_calendar',
+            calendar_id: args.calendar_id,
+            profile_id: args.profile_id,
+            role: args.role,
+            busy_only: args.busy_only || false
+          }
         });
         if (error) throw error;
         return { success: true, message: 'Calendar shared' };
       }
 
       case 'create_calendar_collection': {
-        const { data, error } = await supabase.from('calendar_collections').insert({
-          owner_profile_id: args.owner_profile_id,
-          tenant_id: userId,
-          name: args.name,
-          description: args.description,
-          color: args.color
-        }).select().single();
+        const { data, error } = await tenantClient.functions.invoke('calendar-ops', {
+          body: { 
+            action: 'create_collection',
+            ...args
+          }
+        });
         if (error) throw error;
-
-        // Add calendars to collection
-        if (args.calendar_ids && args.calendar_ids.length > 0) {
-          await supabase.from('calendar_collection_members').insert(
-            args.calendar_ids.map((calId: string) => ({
-              collection_id: data.id,
-              calendar_id: calId
-            }))
-          );
-        }
         return { success: true, collection: data };
       }
 
       case 'list_calendars': {
-        const { data, error } = await supabase
-          .from('calendars')
-          .select('*')
-          .eq('owner_profile_id', args.profile_id);
+        const { data, error } = await tenantClient.functions.invoke('calendar-ops', {
+          body: { 
+            action: 'list_calendars',
+            profile_id: args.profile_id
+          }
+        });
         if (error) throw error;
         return { success: true, calendars: data || [] };
       }
 
       case 'get_calendar_events': {
-        let query = supabase.from('calendar_events').select('*');
-        if (args.calendar_id) query = query.eq('calendar_id', args.calendar_id);
-        if (args.starts_at) query = query.gte('starts_at', args.starts_at);
-        if (args.ends_at) query = query.lte('ends_at', args.ends_at);
-        
-        const { data, error } = await query;
+        const { data, error } = await tenantClient.functions.invoke('calendar-ops', {
+          body: { 
+            action: 'get_events',
+            ...args
+          }
+        });
         if (error) throw error;
         return { success: true, events: data || [] };
       }
