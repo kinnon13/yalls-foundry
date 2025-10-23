@@ -99,6 +99,23 @@ if (Deno.env.get("SUPABASE_URL") || Deno.env.get("VITE_SUPABASE_URL")) {
   console.log(`ℹ️  Skipping ping-functions.ts (SUPABASE_URL not set)`);
 }
 
+// LAYER 5: AI (Rocker Verification)
+console.log(`\n╔════════════════ LAYER 5: AI ═══════════════════╗`);
+try {
+  await Deno.stat("scripts/ai/verify-rocker-integrity.ts");
+  results.push(await runScript("ai", "verify-rocker-integrity.ts"));
+} catch {
+  console.log(`ℹ️  Skipping verify-rocker-integrity.ts (Rocker AI not configured)`);
+}
+
+// LAYER 6: ADMIN (Dashboard Validation)
+console.log(`\n╔════════════════ LAYER 6: ADMIN ════════════════╗`);
+results.push(await runScript("admin", "verify-admin-schema.ts"));
+
+// LAYER 7: COMPILE REPORTS (Unified Dashboard Data)
+console.log(`\n╔════════════════ LAYER 7: COMPILE ══════════════╗`);
+results.push(await runScript("audit", "compile-reports.ts"));
+
 // FINAL SUMMARY
 const successful = results.filter(r => r.success).length;
 const failed = results.filter(r => !r.success).length;

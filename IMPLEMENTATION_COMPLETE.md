@@ -1,8 +1,8 @@
-# ✅ Mission Control Stack - COMPLETE
+# ✅ Mission Control Stack v∞ - COMPLETE
 
 ## What Was Built
 
-Complete 4-layer audit system:
+Complete 7-layer self-auditing, self-healing system:
 
 ### Layer 1: GUARD 🛡️ (`scripts/guard/`)
 - verify-structure.ts
@@ -23,17 +23,36 @@ Complete 4-layer audit system:
 - ping-functions.ts ⭐ Elite #3
 - verify-platform.ts
 
+### Layer 5: AI 🧠 (`scripts/ai/`)
+- verify-rocker-integrity.ts
+
+### Layer 6: ADMIN 🧭 (`scripts/admin/`)
+- verify-admin-schema.ts
+
+### Layer 7: AUTO-FIX 🔧 (`scripts/`)
+- auto-fix.ts (self-healing system)
+- audit/compile-reports.ts (unified dashboard data)
+
 ### Command Center 🚀
-- master-elon-scan.ts (orchestrates all layers)
+- master-elon-scan.ts (orchestrates all 7 layers)
 
 ## Quick Start
 
 ```bash
-# Setup
+# Setup guards
 ./scripts/setup-guards.sh
 
-# Run full scan
+# Run full scan (all 7 layers)
 deno run -A scripts/master-elon-scan.ts
+
+# Run with auto-fix
+deno run -A scripts/master-elon-scan.ts --fix
+
+# Manual auto-fix (dry run)
+deno run -A scripts/auto-fix.ts --dry-run
+
+# Manual auto-fix (live)
+deno run -A scripts/auto-fix.ts
 
 # Quick guard check
 ./scripts/guard-quick-check.sh
