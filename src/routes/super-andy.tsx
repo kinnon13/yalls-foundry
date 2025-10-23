@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useSession } from '@/lib/auth/context';
+import { useSession } from '@/hooks/useSession';
 import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
 import { AppDock, AppId } from '@/components/super-andy/AppDock';
 import { CenterStage } from '@/components/super-andy/CenterStage';
 import { MessengerRail } from '@/components/super-andy/MessengerRail';
 import { Brain, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export default function SuperAndy() {
   const { session } = useSession();
@@ -121,6 +122,32 @@ export default function SuperAndy() {
           </div>
         </div>
       </div>
+
+      {/* Preview auth banner */}
+      {!session?.userId && (
+        <div className="px-4 py-3 bg-accent/20 border-b border-border/40 text-foreground text-sm flex items-center justify-between">
+          <span>Preview: Start an anonymous session to chat with Andy.</span>
+          <Button
+            size="sm"
+            onClick={async () => {
+              const { supabase } = await import('@/integrations/supabase/client');
+              try {
+                const auth: any = supabase.auth;
+                if (typeof auth.signInAnonymously === 'function') {
+                  await auth.signInAnonymously();
+                  window.location.reload();
+                } else {
+                  console.warn('[SuperAndy] Anonymous auth not available');
+                }
+              } catch (e) {
+                console.error('[SuperAndy] Anonymous auth failed:', e);
+              }
+            }}
+          >
+            Start Andy
+          </Button>
+        </div>
+      )}
 
       {/* 3-Panel Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_400px] gap-4 p-4 md:p-6 h-[calc(100vh-3.5rem-var(--dock-h,0px))] pb-[calc(var(--dock-h,0px)+1rem)] lg:pb-6">
