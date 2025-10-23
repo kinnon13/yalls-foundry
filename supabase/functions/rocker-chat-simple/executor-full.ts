@@ -304,7 +304,7 @@ export async function executeTool(
       }
 
       case 'list_calendars': {
-        const { data, error } = await tenantClient.functions.invoke('calendar-ops', {
+        const { data, error } = await ctx.tenantClient.functions.invoke('calendar-ops', {
           body: { 
             action: 'list_calendars',
             profile_id: args.profile_id
@@ -315,7 +315,7 @@ export async function executeTool(
       }
 
       case 'get_calendar_events': {
-        const { data, error } = await tenantClient.functions.invoke('calendar-ops', {
+        const { data, error } = await ctx.tenantClient.functions.invoke('calendar-ops', {
           body: { 
             action: 'get_events',
             ...args
@@ -420,8 +420,9 @@ export async function executeTool(
         return { success: true, action: 'create_automation', data: args };
 
       case 'submit_feedback': {
-        const { error } = await supabase.from('ai_feedback').insert({
-          user_id: userId,
+        const { error } = await ctx.tenantClient.from('ai_feedback').insert({
+          user_id: ctx.userId,
+          tenant_id: ctx.orgId,
           kind: args.type,
           content: args.content,
           payload: { submitted_via: 'rocker_tool' }

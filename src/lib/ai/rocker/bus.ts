@@ -175,13 +175,9 @@ class RockerBus {
   private async processWithRocker(event: RockerEvent): Promise<void> {
     try {
       // Call Rocker chat function with event context
-      const { data, error } = await supabase.functions.invoke('rocker-chat', {
+      const { data, error } = await supabase.functions.invoke('rocker-chat-simple', {
         body: {
-          event: {
-            type: event.type,
-            payload: event.payload,
-            userId: event.userId,
-          },
+          message: `Process event: ${event.type}. Payload: ${JSON.stringify(event.payload)}`,
           context: 'event_processing',
         },
       });

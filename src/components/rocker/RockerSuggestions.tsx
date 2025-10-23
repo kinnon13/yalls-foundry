@@ -28,7 +28,7 @@ const ACTION_LABELS = {
 };
 
 export function RockerSuggestions() {
-  const { suggestions, dismissSuggestion, dismissAllSuggestions } = useRockerActions();
+  const { actions: suggestions, dismissAction: dismissSuggestion, clearAll: dismissAllSuggestions } = useRockerActions();
 
   if (suggestions.length === 0) return null;
 
