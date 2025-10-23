@@ -1,7 +1,9 @@
 // supabase/functions/_shared/ai.ts
-// One gateway for all AI calls used by Rocker. Deno/Edge-safe.
+// ONE AI GATEWAY - GROK ONLY
+// All AI reasoning goes through Grok API
 
-type Provider = 'openai' | 'lovable' | 'stub';
+import { grokChat } from './grok.ts';
+
 type Role = 'user' | 'admin' | 'knower';
 
 export type Message = {
@@ -18,160 +20,118 @@ const env = (k: string) =>
   (typeof process !== 'undefined' ? (process as any).env?.[k] : undefined) ??
   (globalThis as any)?.__env?.[k] ?? '';
 
-const PROVIDER = (env('AI_PROVIDER') as Provider) || 'lovable';
-
-const MODELS = {
-  openai: {
-    user:   { chat: 'gpt-4o-mini', embed: 'text-embedding-3-small',  tts: 'tts-1',     stt: 'whisper-1', image: 'gpt-image-1' },
-    admin:  { chat: 'gpt-4o',      embed: 'text-embedding-3-large',  tts: 'tts-1-hd',  stt: 'whisper-1', image: 'gpt-image-1' },
-    knower: { chat: 'gpt-4.1',     embed: 'text-embedding-3-large',  tts: 'tts-1',     stt: 'whisper-1', image: 'gpt-image-1' },
-  },
-  lovable: {
-    user:   { chat: 'google/gemini-2.5-flash',      embed: 'openai/text-embedding-3-small',  tts: 'default', stt: 'default', image: 'default' },
-    admin:  { chat: 'google/gemini-2.5-flash',      embed: 'openai/text-embedding-3-small',  tts: 'default', stt: 'default', image: 'default' },
-    knower: { chat: 'google/gemini-2.5-flash',      embed: 'openai/text-embedding-3-small',  tts: 'default', stt: 'default', image: 'default' },
-  },
-  stub: {
-    user:   { chat: 'stub', embed: 'stub', tts: 'stub', stt: 'stub', image: 'stub' },
-    admin:  { chat: 'stub', embed: 'stub', tts: 'stub', stt: 'stub', image: 'stub' },
-    knower: { chat: 'stub', embed: 'stub', tts: 'stub', stt: 'stub', image: 'stub' },
-  }
+// Grok models for different roles
+const GROK_MODELS = {
+  user:   'grok-4-fast-non-reasoning',  // Fast for simple queries
+  admin:  'grok-4-fast-reasoning',      // Reasoning for admin tasks
+  knower: 'grok-4-fast-reasoning',      // Full reasoning for Andy
 } as const;
 
-const m = MODELS[PROVIDER];
-
 export const ai = {
-  // ---------- CHAT (non-stream) ----------
+  // ---------- CHAT (non-stream) - ALL GROK ----------
   async chat(opts: {
     role: Role; messages: Message[]; tools?: ToolSpec[]; temperature?: number; maxTokens?: number;
   }): Promise<{ text: string; raw?: any }> {
-    if (PROVIDER === 'stub') {
-      return { text: '[stub] ' + (opts.messages.at(-1)?.content ?? ''), raw: { provider: 'stub' } };
+    const grokApiKey = env('GROK_API_KEY');
+    if (!grokApiKey) {
+      throw new Error('GROK_API_KEY not configured');
     }
-    if (PROVIDER === 'openai') {
-      const r = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${env('OPENAI_API_KEY')}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: m[opts.role].chat,
-          messages: opts.messages,
-          tools: opts.tools?.map(t => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } })),
-          tool_choice: opts.tools?.length ? 'auto' : 'none',
-          temperature: opts.temperature ?? 0.6,
-          max_tokens: opts.maxTokens ?? 1200
-        })
-      });
-      if (!r.ok) throw new Error(`OpenAI ${r.status}: ${await r.text()}`);
-      const j = await r.json();
-      return { text: j.choices?.[0]?.message?.content ?? '', raw: j };
-    }
-    // lovable
-    const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${env('LOVABLE_API_KEY')}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: m[opts.role].chat,
-        messages: opts.messages,
-        tools: opts.tools?.map(t => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } })),
-        tool_choice: opts.tools?.length ? 'auto' : undefined,
-        temperature: opts.temperature ?? 0.6,
-        max_tokens: opts.maxTokens ?? 1200
-      })
+
+    const model = GROK_MODELS[opts.role];
+    
+    const response = await grokChat({
+      apiKey: grokApiKey,
+      model,
+      messages: opts.messages.map(m => ({
+        role: m.role === 'system' ? 'system' : m.role === 'user' ? 'user' : 'assistant',
+        content: m.content
+      })),
+      maxTokens: opts.maxTokens || 2000,
+      temperature: opts.temperature ?? 0.7
     });
-    if (!r.ok) throw new Error(`Lovable ${r.status}: ${await r.text()}`);
-    const j = await r.json();
-    return { text: j.choices?.[0]?.message?.content ?? '', raw: j };
+
+    return { 
+      text: response.choices[0].message.content, 
+      raw: response 
+    };
   },
 
-  // ---------- CHAT (stream) ----------
+  // ---------- CHAT (stream) - GROK STREAMING ----------
   async *streamChat(opts: {
     role: Role; messages: Message[]; tools?: ToolSpec[]; temperature?: number;
   }): AsyncGenerator<{ type: 'text'|'tool_call'|'done'|'error'; data?: any }> {
-    if (PROVIDER === 'stub') {
-      yield { type: 'text', data: '[stub stream] ' + (opts.messages.at(-1)?.content ?? '') };
-      yield { type: 'done' };
+    const grokApiKey = env('GROK_API_KEY');
+    if (!grokApiKey) {
+      yield { type: 'error', data: 'GROK_API_KEY not configured' };
       return;
     }
-    if (PROVIDER === 'openai') {
-      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+
+    try {
+      const model = GROK_MODELS[opts.role];
+      
+      const response = await fetch('https://api.x.ai/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${env('OPENAI_API_KEY')}`, 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${grokApiKey}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
-          model: m[opts.role].chat,
-          messages: opts.messages,
-          tools: opts.tools?.map(t => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } })),
-          tool_choice: opts.tools?.length ? 'auto' : 'none',
-          temperature: opts.temperature ?? 0.6,
+          model,
+          messages: opts.messages.map(m => ({
+            role: m.role === 'system' ? 'system' : m.role === 'user' ? 'user' : 'assistant',
+            content: m.content
+          })),
+          temperature: opts.temperature ?? 0.7,
           stream: true
         })
       });
-      if (!r.ok || !r.body) { yield { type: 'error', data: await r.text() }; return; }
-      const reader = r.body.getReader();
-      const dec = new TextDecoder();
-      let buf = '';
+
+      if (!response.ok || !response.body) {
+        yield { type: 'error', data: await response.text() };
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-        buf += dec.decode(value, { stream: true });
-        for (const line of buf.split('\n')) {
-          if (!line.startsWith('data:')) continue;
-          const payload = line.slice(5).trim();
-          if (payload === '[DONE]') { yield { type: 'done' }; continue; }
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') {
+            yield { type: 'done' };
+            continue;
+          }
+
           try {
-            const delta = JSON.parse(payload);
-            const d = delta.choices?.[0]?.delta;
-            if (d?.content) yield { type: 'text', data: d.content };
-            if (d?.tool_calls?.length) yield { type: 'tool_call', data: d.tool_calls };
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta;
+            if (delta?.content) {
+              yield { type: 'text', data: delta.content };
+            }
           } catch {}
         }
-        buf = buf.slice(buf.lastIndexOf('\n') + 1);
       }
-      return;
-    }
-    // lovable stream
-    const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${env('LOVABLE_API_KEY')}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: m[opts.role].chat,
-        messages: opts.messages,
-        temperature: opts.temperature ?? 0.6,
-        stream: true
-      })
-    });
-    if (!r.ok || !r.body) { yield { type: 'error', data: await r.text() }; return; }
-    const reader = r.body.getReader();
-    const dec = new TextDecoder();
-    let buf = '';
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      for (const line of buf.split('\n')) {
-        if (!line.startsWith('data:')) continue;
-        const payload = line.slice(5).trim();
-        if (payload === '[DONE]') { yield { type: 'done' }; continue; }
-        try {
-          const delta = JSON.parse(payload);
-          const d = delta.choices?.[0]?.delta;
-          if (d?.content) yield { type: 'text', data: d.content };
-        } catch {}
-      }
-      buf = buf.slice(buf.lastIndexOf('\n') + 1);
+    } catch (error) {
+      yield { type: 'error', data: error instanceof Error ? error.message : 'Stream failed' };
     }
   },
 
-  // ---------- EMBEDDINGS ----------
+  // ---------- EMBEDDINGS - STILL USE OPENAI ----------
   async embed(role: Role, inputs: string[]) {
-    if (PROVIDER === 'stub') return inputs.map(() => Array(8).fill(0.01));
-
-    // Always use OpenAI for embeddings (Lovable AI gateway does not expose embeddings reliably)
     const openaiKey = env('OPENAI_API_KEY');
     if (!openaiKey) {
       throw new Error('Embeddings unavailable: missing OPENAI_API_KEY.');
     }
 
-    // Use small for user/knower, large for admin
     const model = role === 'admin' ? 'text-embedding-3-large' : 'text-embedding-3-small';
 
     const r = await fetch('https://api.openai.com/v1/embeddings', {
@@ -184,36 +144,44 @@ export const ai = {
     return j.data.map((d: any) => d.embedding as number[]);
   },
 
-  // ---------- MODERATION ----------
+  // ---------- MODERATION - GROK ----------
   async moderate(input: string) {
-    if (PROVIDER === 'stub') return { allowed: true, provider: 'stub' };
-    if (PROVIDER === 'openai') {
-      const r = await fetch('https://api.openai.com/v1/moderations', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${env('OPENAI_API_KEY')}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'omni-moderation-latest', input })
-      });
-      if (!r.ok) throw new Error(`OpenAI ${r.status}: ${await r.text()}`);
-      return await r.json();
+    const grokApiKey = env('GROK_API_KEY');
+    if (!grokApiKey) {
+      return { allowed: true, reason: 'Moderation unavailable' };
     }
-    throw new Error('Lovable moderation not implemented');
+
+    try {
+      const response = await grokChat({
+        apiKey: grokApiKey,
+        model: 'grok-4-fast-non-reasoning',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a content moderator. Respond with ONLY "SAFE" or "UNSAFE" followed by a reason if unsafe.'
+          },
+          {
+            role: 'user',
+            content: `Moderate this content: ${input}`
+          }
+        ],
+        maxTokens: 100,
+        temperature: 0.1
+      });
+
+      const result = response.choices[0].message.content.toLowerCase();
+      return {
+        allowed: result.startsWith('safe'),
+        reason: result
+      };
+    } catch {
+      return { allowed: true, reason: 'Moderation check failed' };
+    }
   },
 
-  // ---------- TTS (Speech synthesis) ----------
+  // ---------- TTS (Speech synthesis) - NOT IMPLEMENTED ----------
   async tts(role: Role, text: string, voice?: string): Promise<ArrayBuffer> {
-    if (PROVIDER === 'stub') {
-      const enc = new TextEncoder(); return enc.encode('[stub audio]').buffer;
-    }
-    if (PROVIDER === 'openai') {
-      const r = await fetch('https://api.openai.com/v1/audio/speech', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${env('OPENAI_API_KEY')}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: m[role].tts, input: text, voice: voice ?? 'alloy', response_format: 'mp3' })
-      });
-      if (!r.ok) throw new Error(`OpenAI ${r.status}: ${await r.text()}`);
-      return await r.arrayBuffer();
-    }
-    throw new Error('Lovable TTS not implemented');
+    throw new Error('TTS not implemented - use ElevenLabs directly');
   },
 };
 

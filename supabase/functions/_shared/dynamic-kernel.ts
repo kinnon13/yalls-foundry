@@ -38,24 +38,24 @@ export interface KernelResponse {
 }
 
 /**
- * Model tier configuration
+ * Model tier configuration - ALL GROK
  */
 const MODEL_TIERS = {
   fast: {
     role: 'user' as const,
-    models: ['google/gemini-2.5-flash-lite', 'openai/gpt-5-nano'],
+    models: ['grok-code-fast-1'],
     cost_per_1k_tokens: 0.01,
     max_tokens: 4000,
   },
   balanced: {
     role: 'user' as const,
-    models: ['google/gemini-2.5-flash', 'openai/gpt-5-mini'],
+    models: ['grok-4-fast-non-reasoning'],
     cost_per_1k_tokens: 0.05,
     max_tokens: 8000,
   },
   powerful: {
-    role: 'admin' as const,
-    models: ['google/gemini-2.5-pro', 'openai/gpt-5'],
+    role: 'knower' as const,
+    models: ['grok-4-fast-reasoning'],
     cost_per_1k_tokens: 0.20,
     max_tokens: 32000,
   },
