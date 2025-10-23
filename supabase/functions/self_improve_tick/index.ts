@@ -32,11 +32,28 @@ Deno.serve(async (req) => {
       const before = { weights: { quality_optimized: 1 } };
       const after = { weights: { quality_optimized: 1.15, cost_optimized: 0.95 } };
 
+      // Select 10% canary cohort for safe rollout
+      const { data: allUsers } = await supabase
+        .from('ai_user_profiles')
+        .select('user_id')
+        .limit(1000);
+      
+      const canarySize = Math.ceil((allUsers?.length || 0) * 0.1);
+      const canaryUsers = (allUsers || [])
+        .sort(() => Math.random() - 0.5)
+        .slice(0, canarySize)
+        .map(u => u.user_id);
+
       await supabase.from('ai_change_proposals').insert({
         tenant_id: null,
         topic: 'policy.weight_tweak',
         dry_run: { avg_rating: avg },
-        status: 'proposed',
+        canary: { 
+          cohort_size: canarySize, 
+          user_ids: canaryUsers,
+          duration_hours: 24 
+        },
+        status: 'canary',
         risk_score: 10
       });
 
@@ -45,8 +62,10 @@ Deno.serve(async (req) => {
         change_type: 'policy_weight',
         before,
         after,
-        rationale: `Avg rating ${avg.toFixed(2)} < 4; boosting quality`
+        rationale: `Avg rating ${avg.toFixed(2)} < 4; boosting quality (canary: ${canarySize} users)`
       });
+
+      console.log(`[Self-Improve] Canary deployment to ${canarySize} users`);
     }
 
     return new Response(
