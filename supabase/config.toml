@@ -384,3 +384,22 @@ verify_jwt = false
 [functions.circuit_breaker_tick]
 verify_jwt = false
 
+# AI Safety & Learning Workers
+[functions.red_team_tick]
+verify_jwt = false
+
+[functions.red_team_tick.cron]
+schedule = "0 2 * * *"  # Daily at 2 AM - bias & drift detection
+
+[functions.user_rag_index]
+verify_jwt = false
+
+[functions.user_rag_index.cron]
+schedule = "0 */6 * * *"  # Every 6 hours - embeddings generation
+
+[functions.fine_tune_cohort]
+verify_jwt = false
+
+[functions.fine_tune_cohort.cron]
+schedule = "0 1 * * 1"  # Weekly Monday 1 AM - cohort analysis & tuning proposals
+
