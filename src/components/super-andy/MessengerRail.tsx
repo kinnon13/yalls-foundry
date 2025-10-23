@@ -251,29 +251,39 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
   }, [messages]);
 
   const handleSend = async () => {
-    if (input.trim() && !sendMutation.isPending) {
-      const content = input.trim();
-      
-      // Trigger auto-learning before sending
-      sendMutation.mutate(content);
-      
-      // Learn from the user message after it's saved
-      setTimeout(async () => {
-        const { data: msg } = await supabase
-          .from('rocker_messages')
-          .select('id')
-          .eq('thread_id', threadId)
-          .eq('content', content)
-          .eq('role', 'user')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        
-        if (msg) {
-          await learnFromMessage(msg.id, content);
-        }
-      }, 1000);
+    const trimmed = input.trim();
+    if (!trimmed) return;
+
+    if (!session?.userId) {
+      toast({ title: 'Please sign in', description: 'You need to be logged in to chat with Andy.', variant: 'destructive' });
+      return;
     }
+    if (!threadId) {
+      toast({ title: 'Preparing chat…', description: 'Setting things up, please try again in a moment.' });
+      return;
+    }
+    if (sendMutation.isPending) return;
+
+    const content = trimmed;
+
+    // Trigger auto-learning before sending
+    sendMutation.mutate(content);
+
+    // Learn from the user message after it's saved
+    setTimeout(async () => {
+      const { data: msg } = await supabase
+        .from('rocker_messages')
+        .select('id')
+        .eq('thread_id', threadId)
+        .eq('content', content)
+        .eq('role', 'user')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (msg) {
+        await learnFromMessage(msg.id, content);
+      }
+    }, 1000);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -479,13 +489,13 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="Message Andy... (⌘⏎ to send)"
+            placeholder={session?.userId ? (threadId ? "Message Andy... (⌘⏎ to send)" : "Preparing chat…") : "Sign in to chat with Andy"}
             className="flex-1 h-10 rounded-xl"
-            disabled={sendMutation.isPending}
+            disabled={sendMutation.isPending || !session?.userId || !threadId}
           />
           <Button
             onClick={handleSend}
-            disabled={!input.trim() || sendMutation.isPending}
+            disabled={!input.trim() || sendMutation.isPending || !session?.userId || !threadId}
             className="h-10 px-4 rounded-xl bg-[#007AFF] hover:bg-[#0051D5] text-white font-medium shrink-0"
           >
             {sendMutation.isPending ? (
