@@ -35,11 +35,22 @@ export function GlobalHeader({ notifCount = 0, cartCount = 0, className }: Props
     checkAdmin();
   }, []);
 
-  const onSearch = (e: React.FormEvent) => {
+  const onSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!q.trim()) return;
     setMobileSearchOpen(false);
     navigate(`/search?q=${encodeURIComponent(q.trim())}`);
+    
+    // Emit search event for Rocker AI
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { rockerEvents } = await import('@/lib/rocker-events');
+        await rockerEvents.searchPerformed(user.id, q.trim());
+      }
+    } catch (error) {
+      console.error('[GlobalHeader] Failed to emit search event:', error);
+    }
   };
 
   const logout = async () => {
