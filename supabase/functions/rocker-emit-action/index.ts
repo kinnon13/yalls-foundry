@@ -1,7 +1,7 @@
 /**
  * Rocker Emit Action Function
  * Backend endpoint for AI to emit actions to the UI via event bus
- * WITH SECURITY: Rate limiting + tenant isolation + validation
+ * WITH PROPER SECURITY: Rate limiting + tenant isolation + validation
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -27,57 +27,46 @@ serve(async (req) => {
 
   // Wrap in tenant guard for security
   return withTenantGuard(req, async (ctx: TenantContext) => {
-    try {
-      const { action_type, payload, priority, target_user_id } = await req.json();
+    // PROPER rate limiting using existing pattern
+    return withRateLimit(
+      ctx.tenantClient,
+      `emit_action:${ctx.userId}`,
+      100, // limit
+      3600, // window (1 hour)
+      async () => {
+        try {
+          const { action_type, payload, priority, target_user_id } = await req.json();
 
-      // Validation
-      if (!action_type || !payload) {
-        return new Response(JSON.stringify({ error: 'Missing action_type or payload' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+          // Validation
+          if (!action_type || !payload) {
+            return new Response(JSON.stringify({ error: 'Missing action_type or payload' }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
 
-      if (!VALID_ACTION_TYPES.includes(action_type)) {
-        return new Response(JSON.stringify({ error: `Invalid action_type: ${action_type}` }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+          if (!VALID_ACTION_TYPES.includes(action_type)) {
+            return new Response(JSON.stringify({ error: `Invalid action_type: ${action_type}` }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
 
-      if (priority && !VALID_PRIORITIES.includes(priority)) {
-        return new Response(JSON.stringify({ error: `Invalid priority: ${priority}` }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+          if (priority && !VALID_PRIORITIES.includes(priority)) {
+            return new Response(JSON.stringify({ error: `Invalid priority: ${priority}` }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
 
-      // Payload size check (max 10KB)
-      const payloadSize = JSON.stringify(payload).length;
-      if (payloadSize > 10240) {
-        return new Response(JSON.stringify({ error: 'Payload too large (max 10KB)' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Rate limit check (100 actions per hour per user)
-      const rateLimitKey = `emit_action:${ctx.userId}`;
-      const rateLimitResult = await withRateLimit({
-        key: rateLimitKey,
-        limit: 100,
-        windowMs: 60 * 60 * 1000, // 1 hour
-      });
-
-      if (!rateLimitResult.allowed) {
-        return new Response(JSON.stringify({ 
-          error: 'Rate limit exceeded',
-          retry_after: rateLimitResult.retryAfter 
-        }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+          // Payload size check (max 10KB)
+          const payloadSize = JSON.stringify(payload).length;
+          if (payloadSize > 10240) {
+            return new Response(JSON.stringify({ error: 'Payload too large (max 10KB)' }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
 
       // Insert action into ai_proposals (using tenant-isolated client)
       const { error: insertError } = await ctx.tenantClient
