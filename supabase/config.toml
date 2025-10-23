@@ -409,5 +409,3 @@ schedule = "0 2 * * *"  # Daily at 2 AM
 [functions.fine_tune_cohort]
 verify_jwt = true
 
-[functions.user_rag_index]
-
