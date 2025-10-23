@@ -51,11 +51,10 @@ export function AndyBrain() {
       if (!user) return;
 
       // Load all metrics in parallel
-      const [memories, tasks, docs, predictions, suggestions] = await Promise.all([
+      const [memories, tasks, docs, suggestions] = await Promise.all([
         supabase.from('ai_user_memory').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('rocker_tasks').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'in_progress'),
         supabase.from('ai_docs').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('rocker_predictions').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('ai_proposals').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', new Date(Date.now() - 24*60*60*1000).toISOString())
       ]);
 
@@ -63,7 +62,7 @@ export function AndyBrain() {
         memories_count: memories.count || 0,
         tasks_active: tasks.count || 0,
         docs_analyzed: docs.count || 0,
-        predictions_made: predictions.count || 0,
+        predictions_made: 0, // TODO: implement predictions table
         suggestions_today: suggestions.count || 0,
         mdr_tasks_queued: 0, // TODO: query mdr_tasks table
         learning_rate: Math.min(100, (memories.count || 0) / 10)

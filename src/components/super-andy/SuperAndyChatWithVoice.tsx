@@ -216,8 +216,8 @@ export function SuperAndyChatWithVoice({
         onThreadCreated?.(activeThreadId);
       }
 
-      // Use rocker-chat-simple with full capabilities
-      const { data, error } = await supabase.functions.invoke('rocker-chat-simple', {
+      // Use super-andy-chat with full capabilities
+      const { data, error } = await supabase.functions.invoke('super-andy-chat', {
         body: {
           thread_id: activeThreadId,
           message: userMessage
