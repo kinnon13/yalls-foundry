@@ -125,27 +125,41 @@ export default function SuperAndy() {
 
       {/* Preview auth banner */}
       {!session?.userId && (
-        <div className="px-4 py-3 bg-accent/20 border-b border-border/40 text-foreground text-sm flex items-center justify-between">
-          <span>Preview: Start an anonymous session to chat with Andy.</span>
-          <Button
-            size="sm"
-            onClick={async () => {
-              const { supabase } = await import('@/integrations/supabase/client');
-              try {
-                const auth: any = supabase.auth;
-                if (typeof auth.signInAnonymously === 'function') {
-                  await auth.signInAnonymously();
-                  window.location.reload();
-                } else {
-                  console.warn('[SuperAndy] Anonymous auth not available');
+        <div className="px-4 py-3 bg-accent/20 border-b border-border/40 text-foreground text-sm flex items-center justify-between gap-3 flex-wrap">
+          <span>Preview: Start an anonymous session and enter Super Mode to access the dashboard.</span>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                const sp = new URLSearchParams(window.location.search);
+                sp.set('role', 'super');
+                const url = `${window.location.pathname}?${sp.toString()}`;
+                window.location.replace(url);
+              }}
+            >
+              Enter Super Mode
+            </Button>
+            <Button
+              size="sm"
+              onClick={async () => {
+                const { supabase } = await import('@/integrations/supabase/client');
+                try {
+                  const auth: any = supabase.auth;
+                  if (typeof auth.signInAnonymously === 'function') {
+                    await auth.signInAnonymously();
+                    window.location.reload();
+                  } else {
+                    console.warn('[SuperAndy] Anonymous auth not available');
+                  }
+                } catch (e) {
+                  console.error('[SuperAndy] Anonymous auth failed:', e);
                 }
-              } catch (e) {
-                console.error('[SuperAndy] Anonymous auth failed:', e);
-              }
-            }}
-          >
-            Start Andy
-          </Button>
+              }}
+            >
+              Start Andy
+            </Button>
+          </div>
         </div>
       )}
 
