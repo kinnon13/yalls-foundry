@@ -1,0 +1,143 @@
+I'll scan the project structure and generate both the tree and inventory directly in chat.
+
+# 📁 PROJECT TREE & INVENTORY
+
+## 🌲 Core Structure
+
+```
+root/
+├── src/
+│   ├── apps/                    # 27 overlay apps
+│   │   ├── activity/
+│   │   ├── admin-rocker/
+│   │   ├── analytics/
+│   │   ├── andy/
+│   │   ├── business/
+│   │   ├── calendar/
+│   │   ├── chat/
+│   │   ├── community/
+│   │   ├── contacts/
+│   │   ├── creative/
+│   │   ├── data/
+│   │   ├── debug/
+│   │   ├── entities/
+│   │   ├── events/
+│   │   ├── farm/
+│   │   ├── files/
+│   │   ├── help/
+│   │   ├── inventory/
+│   │   ├── listings/
+│   │   ├── messages/
+│   │   ├── payments/
+│   │   ├── preferences/
+│   │   ├── producer/
+│   │   ├── profile/
+│   │   ├── search/
+│   │   ├── settings/
+│   │   └── workflow/
+│   │
+│   ├── pages/                   # 10 standalone pages
+│   │   ├── Health.tsx
+│   │   ├── Home.tsx
+│   │   ├── Index.tsx
+│   │   ├── Privacy.tsx
+│   │   ├── Terms.tsx
+│   │   ├── SuperAndy/Index.tsx
+│   │   ├── AdminRocker/Index.tsx
+│   │   └── [8 more pages]
+│   │
+│   ├── routes/                  # Direct route handlers
+│   │   ├── dashboard/
+│   │   ├── auth/
+│   │   └── LegacyRedirector.tsx
+│   │
+│   ├── components/              # UI components
+│   ├── lib/                     # Core libraries
+│   ├── hooks/                   # React hooks
+│   └── types/                   # TypeScript types
+│
+├── docs/                        # Documentation
+│   ├── audit/                   # Audit reports
+│   │   ├── MASTER_AUDIT.md
+│   │   ├── GOLDEN_TREE.md
+│   │   ├── INVENTORY.md
+│   │   └── TREE_SNAPSHOT.md
+│   ├── SITE_STRUCTURE.md
+│   ├── QUICK_REFERENCE_MAP.md
+│   └── PROJECT_RULES.md
+│
+└── scripts/                     # Build/audit tools
+    ├── audit/
+    │   ├── tree.mjs
+    │   ├── inventory.mjs
+    │   └── check-tenant-guards.sh
+    └── health/
+        ├── generate-report.mjs
+        └── check-repo.mjs
+```
+
+## 🎯 10 CANONICAL ROUTES (App.tsx)
+
+1. **`/`** → Index (Home/Welcome)
+2. **`/dashboard`** → Dashboard (Main workspace)
+3. **`/super`** → Super Andy Full Page
+4. **`/admin-rocker`** → Admin Console
+5. **`/auth`** → Login/Signup
+6. **`/auth/callback`** → OAuth callback
+7. **`/privacy`** → Privacy Policy
+8. **`/terms`** → Terms of Service
+9. **`/healthz`** → Health Probe
+10. **`*`** → LegacyRedirector (catch-all)
+
+## 📦 OVERLAY APPS (27 apps via `?app=`)
+
+**Core User Apps:**
+- `activity` - Activity feed & AI ledger
+- `andy` - Super Andy assistant
+- `calendar` - Event scheduling
+- `chat` - Messaging interface
+- `contacts` - Contact management
+- `files` - File manager
+- `messages` - Direct messaging
+- `preferences` - User settings
+- `profile` - Profile management
+- `search` - Global search
+
+**Business Apps:**
+- `business` - Business profiles
+- `producer` - Producer management
+- `farm` - Farm operations
+- `inventory` - Stock tracking
+- `listings` - Marketplace listings
+- `events` - Event management
+- `payments` - Payment processing
+- `entities` - Entity management
+
+**Admin/Power Apps:**
+- `admin-rocker` - Admin workspace
+- `analytics` - Business intelligence
+- `data` - Data management
+- `debug` - Debug tools
+- `workflow` - Workflow automation
+
+**Content/Creative:**
+- `creative` - Content creation
+- `community` - Community features
+- `help` - Help system
+- `settings` - System settings
+
+## 📊 KEY METRICS
+
+- **Total Apps:** 27 overlay apps
+- **Total Routes:** 10 canonical routes in App.tsx
+- **Total Pages:** ~10 standalone page components
+- **Documentation Files:** 20+ docs
+- **Audit Scripts:** 5 automated scripts
+
+## 🔍 ARCHITECTURE SUMMARY
+
+**Route Strategy:** Everything flows through 10 routes + overlay system (`/?app=key`)  
+**Access Control:** Role-based (user/admin/super)  
+**Navigation:** BottomDock (5 icons) + OverlayHost + PanelHost  
+**AI Systems:** User AI, Admin AI, Super Andy  
+**State:** Zustand + TanStack Query + Supabase realtime
