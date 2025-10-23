@@ -23,6 +23,11 @@ const expected = {
     "verify-supabase-config.ts",
     "verify-modules.ts",
     "verify-mission-integrity.ts",
+    "validate-architecture.mjs",
+    "validate-catalog-coverage.mjs",
+    "validate-main-routes.mjs",
+    "validate-rocker-footprint.mjs",
+    "validate-security.mjs",
   ],
   scan: [
     "deep-duplicate-scan.ts",
@@ -36,8 +41,14 @@ const expected = {
     "sync-supabase-config.ts",
     "compile-reports.ts",
   ],
-  health: ["verify-platform.ts", "ping-functions.ts"],
-  ai: ["verify-rocker-integrity.ts", "auto-fix.ts"],
+  health: [
+    "verify-platform.ts",
+    "ping-functions.ts",
+  ],
+  ai: [
+    "verify-rocker-integrity.ts",
+    "auto-fix.ts",
+  ],
   admin: ["verify-admin-schema.ts"],
   lib: ["logger.ts", "utils.ts", "file-hash.ts", "colors.ts"],
 };
