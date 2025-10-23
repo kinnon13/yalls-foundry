@@ -236,182 +236,60 @@ Be conversational, fast, proactive, and always use the user's actual data when a
 
     console.log('[andy-chat] Context size:', context.length, 'chars');
 
-    // Define web search tool for Andy
-    const tools = [
+    // Always use Lovable AI gateway for OpenAI-compatible streaming
+    const response = await fetch(
+      'https://ai.gateway.lovable.dev/v1/chat/completions',
       {
-        type: 'function',
-        function: {
-          name: 'web_search',
-          description: 'Search the web for current information, facts, news, or research topics. Use this when you need up-to-date information or to learn about topics not in your training data.',
-          parameters: {
-            type: 'object',
-            properties: {
-              query: {
-                type: 'string',
-                description: 'The search query to look up on the web'
-              }
-            },
-            required: ['query']
-          }
-        }
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: finalMessages,
+          stream: true,
+        }),
       }
-    ];
+    );
 
-    // Tool execution loop
-    let conversationMessages = [...finalMessages];
-    let toolCallsMade = 0;
-    const maxToolCalls = 5;
+    console.log('[andy-chat] Using Gemini via Lovable AI for response');
 
-    while (toolCallsMade < maxToolCalls) {
-      console.log('[andy-chat] Sending request to AI (iteration', toolCallsMade + 1, ')');
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[andy-chat] AI gateway error:', response.status, errorText);
       
-      const response = await fetch(
-        'https://ai.gateway.lovable.dev/v1/chat/completions',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${lovableApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: conversationMessages,
-            tools: tools,
-            stream: false, // Non-streaming for tool calls
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[andy-chat] AI gateway error:', response.status, errorText);
-        
-        if (response.status === 429) {
-          return new Response(
-            JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        
-        if (response.status === 402) {
-          return new Response(
-            JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }),
-            { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        
-        throw new Error(`AI gateway error: ${response.status}`);
-      }
-
-      const aiResponse = await response.json();
-      const choice = aiResponse.choices?.[0];
-      
-      if (!choice) {
-        throw new Error('No response from AI');
-      }
-
-      const message = choice.message;
-      conversationMessages.push(message);
-
-      // Check if AI wants to call tools
-      if (message.tool_calls && message.tool_calls.length > 0) {
-        console.log('[andy-chat] AI requested', message.tool_calls.length, 'tool calls');
-        
-        // Execute each tool call
-        for (const toolCall of message.tool_calls) {
-          toolCallsMade++;
-          const toolName = toolCall.function.name;
-          const toolArgs = JSON.parse(toolCall.function.arguments);
-          
-          console.log('[andy-chat] Executing tool:', toolName, 'with args:', toolArgs);
-          
-          let toolResult = '';
-          
-          if (toolName === 'web_search') {
-            try {
-              // Use Lovable AI to search the web
-              const searchResponse = await fetch(
-                'https://ai.gateway.lovable.dev/v1/chat/completions',
-                {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${lovableApiKey}`,
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    model: 'google/gemini-2.5-flash',
-                    messages: [
-                      {
-                        role: 'system',
-                        content: 'You are a web search assistant. Provide accurate, current information about the query. Include specific facts, dates, and sources when possible.'
-                      },
-                      {
-                        role: 'user',
-                        content: `Search for: ${toolArgs.query}\n\nProvide comprehensive, current information about this topic.`
-                      }
-                    ],
-                    stream: false,
-                  }),
-                }
-              );
-              
-              if (searchResponse.ok) {
-                const searchData = await searchResponse.json();
-                toolResult = searchData.choices?.[0]?.message?.content || 'No results found';
-                console.log('[andy-chat] Web search returned:', toolResult.slice(0, 200) + '...');
-              } else {
-                toolResult = 'Web search temporarily unavailable';
-              }
-            } catch (e) {
-              console.error('[andy-chat] Web search error:', e);
-              toolResult = 'Web search failed: ' + (e instanceof Error ? e.message : 'Unknown error');
-            }
-          }
-          
-          // Add tool result to conversation
-          conversationMessages.push({
-            role: 'tool',
-            tool_call_id: toolCall.id,
-            content: toolResult
-          });
-        }
-        
-        // Continue loop to get AI's response with tool results
-        continue;
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
       
-      // No more tool calls - return final response as stream
-      console.log('[andy-chat] Final response ready, converting to stream');
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       
-      const finalContent = message.content || '';
+      // Fallback streaming: emit a short message so the UI doesn't hang
       const enc = new TextEncoder();
       const stream = new ReadableStream({
         start(controller) {
-          // Send the complete message as a stream
-          const evt = { choices: [{ delta: { content: finalContent } }] };
+          const evt = { choices: [{ delta: { content: "I'm temporarily unavailable. Try again in a moment." } }] };
           controller.enqueue(enc.encode(`data: ${JSON.stringify(evt)}\n\n`));
           controller.enqueue(enc.encode('data: [DONE]\n\n'));
           controller.close();
         }
       });
-      
-      return new Response(stream, {
-        headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' }
-      });
+      return new Response(stream, { headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' } });
     }
 
-    // Max tool calls reached
-    console.log('[andy-chat] Max tool calls reached');
-    const enc = new TextEncoder();
-    const stream = new ReadableStream({
-      start(controller) {
-        const evt = { choices: [{ delta: { content: 'I apologize, but I had to stop processing to avoid too many operations. Please try again.' } }] };
-        controller.enqueue(enc.encode(`data: ${JSON.stringify(evt)}\n\n`));
-        controller.enqueue(enc.encode('data: [DONE]\n\n'));
-        controller.close();
-      }
+    // Return the stream directly
+    return new Response(response.body, {
+      headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
     });
-    return new Response(stream, { headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' } });
 
   } catch (error) {
     console.error('[andy-chat] Error:', error);
