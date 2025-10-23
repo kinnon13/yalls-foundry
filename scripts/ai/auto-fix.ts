@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno run -A
 // Auto-Fix System - self-healing script for common issues
 import { exists } from "https://deno.land/std@0.223.0/fs/mod.ts";
-import { header, line } from "../modules/logger.ts";
+import { header, line } from "../lib/logger.ts";
 
 const AUDIT_DIR = "scripts/audit";
 const DRY_RUN = Deno.args.includes("--dry-run");

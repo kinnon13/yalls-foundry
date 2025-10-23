@@ -2,7 +2,7 @@
 // Supabase Config Guard - ensures function registration integrity
 import { parse } from "https://deno.land/std@0.223.0/toml/mod.ts";
 import { exists } from "https://deno.land/std@0.223.0/fs/mod.ts";
-import { header, line } from "../modules/logger.ts";
+import { header, line } from "../lib/logger.ts";
 
 const CONFIG_PATH = "supabase/config.toml";
 const FUNCS_DIR = "supabase/functions";

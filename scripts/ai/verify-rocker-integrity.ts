@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno run -A
 // Rocker AI Integrity Verifier - ensures all AI brain kernels are properly loaded
 import { exists } from "https://deno.land/std@0.223.0/fs/mod.ts";
-import { header, line } from "../modules/logger.ts";
+import { header, line } from "../lib/logger.ts";
 import { ensureDir } from "https://deno.land/std@0.223.0/fs/mod.ts";
 
 const AUDIT_DIR = "scripts/audit";

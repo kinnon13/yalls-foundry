@@ -12,7 +12,7 @@
 
 import { exists } from "https://deno.land/std@0.223.0/fs/mod.ts";
 import { walk } from "https://deno.land/std@0.223.0/fs/walk.ts";
-import { green, red, yellow } from "../modules/colors.ts";
+import { green, red, yellow } from "../lib/colors.ts";
 
 const HISTORY_PATH = "scripts/audit/integrity-history.json";
 
@@ -39,7 +39,7 @@ const expected = {
   health: ["verify-platform.ts", "ping-functions.ts"],
   ai: ["verify-rocker-integrity.ts", "auto-fix.ts"],
   admin: ["verify-admin-schema.ts"],
-  modules: ["logger.ts", "utils.ts", "file-hash.ts", "colors.ts"],
+  lib: ["logger.ts", "utils.ts", "file-hash.ts", "colors.ts"],
 };
 
 async function verifyExpected() {

@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno run -A
 // Structure Guard - ensures all critical audit files are present
 import { exists } from "https://deno.land/std@0.223.0/fs/mod.ts";
-import { header, line } from "../modules/logger.ts";
+import { header, line } from "../lib/logger.ts";
 
 header("VERIFY STRUCTURE");
 
@@ -12,7 +12,7 @@ const required = [
   "scripts/audit",
   "scripts/health",
   "scripts/guard",
-  "scripts/modules",
+  "scripts/lib",
   "scripts/master-elon-scan.ts",
 ];
 

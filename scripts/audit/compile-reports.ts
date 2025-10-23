@@ -2,7 +2,7 @@
 // Report Compiler - combines all scan JSONs into unified dashboard data source
 import { walk } from "https://deno.land/std@0.223.0/fs/walk.ts";
 import { exists } from "https://deno.land/std@0.223.0/fs/mod.ts";
-import { header, line } from "../modules/logger.ts";
+import { header, line } from "../lib/logger.ts";
 
 const AUDIT_DIR = "scripts/audit";
 

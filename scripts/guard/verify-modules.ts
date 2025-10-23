@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno run -A
 // Module Integrity Guard - ensures no broken imports or risky relative paths
-import { listFiles } from "../modules/utils.ts";
-import { header, line } from "../modules/logger.ts";
+import { listFiles } from "../lib/utils.ts";
+import { header, line } from "../lib/logger.ts";
 
 header("VERIFY MODULE IMPORTS");
 
