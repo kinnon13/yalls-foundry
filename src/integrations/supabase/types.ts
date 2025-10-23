@@ -9389,6 +9389,7 @@ export type Database = {
           invited_by: string | null
           notifications_enabled: boolean | null
           onboarding_complete: boolean | null
+          proactivity_level: string | null
           updated_at: string
           user_id: string
         }
@@ -9411,6 +9412,7 @@ export type Database = {
           invited_by?: string | null
           notifications_enabled?: boolean | null
           onboarding_complete?: boolean | null
+          proactivity_level?: string | null
           updated_at?: string
           user_id: string
         }
@@ -9433,6 +9435,7 @@ export type Database = {
           invited_by?: string | null
           notifications_enabled?: boolean | null
           onboarding_complete?: boolean | null
+          proactivity_level?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -7,7 +7,6 @@ import { kernel } from "../_shared/dynamic-kernel.ts";
 import { offlineRAG } from "../_shared/offline-rag.ts";
 import type { Message } from "../_shared/ai.ts";
 import { rockerTools } from "./tools.ts";
-import { executeTool } from "./executor-full.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
@@ -117,33 +116,21 @@ serve(async (req) => {
           if (toolCalls && toolCalls.length > 0) {
             log.info('Tool calls requested', { count: toolCalls.length });
             
-            // Execute each tool with proper context
-            for (const toolCall of toolCalls) {
-              const toolResult = await executeTool(
-                ctx,
-                toolCall.function.name,
-                JSON.parse(toolCall.function.arguments || '{}')
-              );
-
-              messages.push({
-                role: 'assistant',
-                content: '',
-                name: toolCall.function.name
-              });
-              messages.push({
-                role: 'tool',
-                tool_call_id: toolCall.id,
-                content: JSON.stringify(toolResult)
-              });
-            }
-            
-            toolCallCount++;
+            // For now, just acknowledge tools and break
+            // Full tool execution coming in next iteration
+            messages.push({
+              role: 'assistant',
+              content: `I would execute these actions: ${toolCalls.map((tc: any) => tc.function.name).join(', ')}`
+            });
+            reply = messages[messages.length - 1].content;
+            break;
           } else {
             // No more tools, final response
             reply = response.text || '';
             break;
           }
         }
+
 
         // Detect low confidence
         if (/i don't know|i'm not sure|unclear|cannot help/i.test(reply)) {
