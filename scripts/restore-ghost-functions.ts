@@ -1,50 +1,49 @@
-// deno run -A scripts/restore-ghost-functions.ts
-// Restore ALL ghost functions as working stubs
+#!/usr/bin/env -S deno run -A
+// 👻 Restore ghost functions (stubs missing locally but listed in config)
 
-import { parse as parseToml } from "https://deno.land/std@0.224.0/toml/mod.ts";
-import { ensureDir } from "https://deno.land/std@0.224.0/fs/ensure_dir.ts";
+import { parse } from "https://deno.land/std@0.223.0/toml/mod.ts";
+import { exists, ensureDir } from "https://deno.land/std@0.223.0/fs/mod.ts";
 
 const CONFIG_PATH = "supabase/config.toml";
 const FUNCS_DIR = "supabase/functions";
 
-console.log("🔧 RESTORING ALL GHOST FUNCTIONS AS STUBS\n");
+console.log("👻 Restoring ghost functions (in config but missing folders)...\n");
 
-// Read config
-const configRaw = await Deno.readTextFile(CONFIG_PATH);
-const config = parseToml(configRaw) as any;
+if (!(await exists(CONFIG_PATH))) {
+  console.error("❌ config.toml not found");
+  Deno.exit(1);
+}
 
-// Extract all function entries
-const configFunctions = new Set<string>();
-for (const key of Object.keys(config)) {
-  if (key.startsWith("functions.") && !key.endsWith(".cron")) {
-    configFunctions.add(key.replace("functions.", ""));
+const configText = await Deno.readTextFile(CONFIG_PATH);
+const config = parse(configText) as Record<string, any>;
+
+const configFuncNames = Object.keys(config)
+  .filter(k => k.startsWith("functions.") && !k.endsWith(".cron"))
+  .map(k => k.replace("functions.", ""));
+
+const ghosts: string[] = [];
+for (const name of configFuncNames) {
+  const funcPath = `${FUNCS_DIR}/${name}`;
+  if (!(await exists(funcPath))) {
+    ghosts.push(name);
   }
 }
 
-// List actual folders
-const actualFolders = new Set<string>();
-for await (const entry of Deno.readDir(FUNCS_DIR)) {
-  if (entry.isDirectory && !entry.name.startsWith(".") && entry.name !== "_shared") {
-    actualFolders.add(entry.name);
-  }
+if (ghosts.length === 0) {
+  console.log("✅ No ghost functions found - all configs have folders");
+  Deno.exit(0);
 }
 
-// Find ghosts
-const ghosts = Array.from(configFunctions).filter(name => !actualFolders.has(name));
-ghosts.sort();
-
-console.log(`Found ${ghosts.length} ghost functions to restore:\n`);
+console.log(`Found ${ghosts.length} ghost function(s) to restore:\n`);
 
 let restored = 0;
 for (const name of ghosts) {
-  const funcPath = `${FUNCS_DIR}/${name}`;
-  const indexPath = `${funcPath}/index.ts`;
+  const dir = `${FUNCS_DIR}/${name}`;
+  const indexPath = `${dir}/index.ts`;
   
-  try {
-    await ensureDir(funcPath);
-    
-    // Create stub function
-    const stubCode = `// Stub function for ${name}
+  await ensureDir(dir);
+  
+  const stubCode = `// Stub function for ${name}
 // TODO: Implement actual logic
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -93,14 +92,11 @@ Deno.serve(async (req) => {
   }
 });
 `;
-    
-    await Deno.writeTextFile(indexPath, stubCode);
-    console.log(`  ✅ ${name}`);
-    restored++;
-  } catch (error) {
-    console.log(`  ❌ ${name} - Error: ${error.message}`);
-  }
+  
+  await Deno.writeTextFile(indexPath, stubCode);
+  console.log(`  ✅ ${name}`);
+  restored++;
 }
 
 console.log(`\n✅ Restored ${restored}/${ghosts.length} ghost functions as stubs`);
-console.log("\nAll functions now have folders. Run audit again to verify.\n");
+console.log("🎯 Next: Implement actual logic in each function\n");

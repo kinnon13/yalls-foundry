@@ -4,7 +4,7 @@
 set -e
 
 echo "🚀 Running full Lovable Cloud audit..."
-echo "=".repeat(80)
+echo "================================================================================"
 echo ""
 
 echo "Step 1/3: Platform health check..."
@@ -19,7 +19,7 @@ echo "Step 3/3: Auditing function integrity..."
 deno run -A scripts/audit-functions.ts
 echo ""
 
-echo "=".repeat(80)
+echo "================================================================================"
 echo "✅ Lovable audit complete. Check scripts/audit-results.json for details"
 echo ""
 echo "💡 To restore ghost functions, run:"

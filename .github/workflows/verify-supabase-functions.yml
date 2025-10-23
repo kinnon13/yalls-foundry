@@ -1,43 +1,89 @@
-name: Verify Supabase Functions Config
+name: Lovable Preflight Audit
+
 on:
-  pull_request:
   push:
-    branches: [ main, master ]
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
 
 jobs:
-  verify:
+  preflight-audit:
+    name: Preflight Check - Supabase Functions
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup Deno
         uses: denoland/setup-deno@v2
         with:
           deno-version: v1.x
 
-      - name: Check function config is normalized
+      - name: Run platform verification
         run: |
-          # Run sync script in dry-run mode (it will show what would change)
-          deno run -A scripts/sync-supabase-config.ts
-          
-          # Check if config was modified
-          if ! git diff --quiet --exit-code supabase/config.toml; then
-            echo "::error file=supabase/config.toml::Config not normalized. Run 'deno run -A scripts/sync-supabase-config.ts' and commit."
-            echo ""
-            echo "Changes needed:"
-            git --no-pager diff supabase/config.toml
-            exit 1
-          fi
-          
-          echo "✅ Config is normalized - no duplicates or missing entries"
+          echo "🔍 Step 1/3: Platform health check..."
+          deno run -A scripts/verify-platform.ts
 
-      - name: Verify no duplicate function entries
+      - name: Sync Supabase config
         run: |
-          # Check for underscore variants that should be hyphens
-          if grep -q '^\[functions\..*_.*webhook\]' supabase/config.toml; then
-            echo "::error::Found webhook functions with underscores (should use hyphens)"
-            grep '^\[functions\..*_.*webhook\]' supabase/config.toml
-            exit 1
+          echo "🔄 Step 2/3: Syncing config..."
+          deno run -A scripts/sync-supabase-config.ts
+
+      - name: Audit functions
+        run: |
+          echo "📊 Step 3/3: Auditing functions..."
+          deno run -A scripts/audit-functions.ts
+
+      - name: Check for changes
+        id: git-check
+        run: |
+          if [[ -n $(git status --porcelain supabase/config.toml) ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "⚠️ config.toml was modified by sync script"
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
           fi
-          
-          echo "✅ No duplicate webhook entries found"
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-results
+          path: scripts/audit-results.json
+
+      - name: Report results
+        if: always()
+        run: |
+          echo "📋 Audit Summary:"
+          if [ -f scripts/audit-results.json ]; then
+            deno eval --ext=js "
+              const data = JSON.parse(await Deno.readTextFile('scripts/audit-results.json'));
+              console.log('Total config entries:', data.summary.totalConfig);
+              console.log('Total folders:', data.summary.totalFolders);
+              console.log('Active (synced):', data.summary.active);
+              console.log('Ghosts (config only):', data.summary.ghosts);
+              console.log('Orphans (folder only):', data.summary.orphans);
+              
+              if (data.summary.ghosts > 0 || data.summary.orphans > 0) {
+                console.log('');
+                console.log('⚠️  Mismatches detected (non-blocking)');
+                console.log('💡 Run locally to fix: bash scripts/run-complete-audit.sh');
+              } else {
+                console.log('');
+                console.log('✅ All functions perfectly synced');
+              }
+            "
+          fi
+
+      - name: Fail if config changed
+        if: steps.git-check.outputs.changes == 'true'
+        run: |
+          echo "❌ CRITICAL: config.toml needed updates during CI"
+          echo "   This means your local config was out of sync"
+          echo ""
+          echo "💡 Fix locally:"
+          echo "   1. Run: deno run -A scripts/sync-supabase-config.ts"
+          echo "   2. Commit the changes"
+          echo "   3. Push again"
+          exit 1

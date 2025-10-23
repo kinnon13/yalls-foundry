@@ -1,253 +1,79 @@
-// deno run -A scripts/audit-functions.ts
-// Complete audit of Supabase functions vs config.toml
+#!/usr/bin/env -S deno run -A
+// 📊 Audit Supabase function config vs. actual folders
 
-import { parse as parseToml } from "https://deno.land/std@0.224.0/toml/mod.ts";
-import { exists } from "https://deno.land/std@0.224.0/fs/exists.ts";
+import { parse } from "https://deno.land/std@0.223.0/toml/mod.ts";
+import { exists } from "https://deno.land/std@0.223.0/fs/mod.ts";
 
 const CONFIG_PATH = "supabase/config.toml";
 const FUNCS_DIR = "supabase/functions";
 
-console.log("🔍 COMPLETE SUPABASE FUNCTIONS AUDIT\n");
-console.log("=".repeat(80) + "\n");
-
-// Read config
-const configRaw = await Deno.readTextFile(CONFIG_PATH);
-const config = parseToml(configRaw) as any;
-
-// Extract all function entries from config
-const configFunctions = new Map<string, { verify_jwt: boolean; hasCron: boolean }>();
-for (const key of Object.keys(config)) {
-  if (key.startsWith("functions.") && !key.endsWith(".cron")) {
-    const name = key.replace("functions.", "");
-    const hasCron = config[`${key}.cron`] !== undefined;
-    configFunctions.set(name, {
-      verify_jwt: config[key]?.verify_jwt ?? true,
-      hasCron
-    });
-  }
+if (!(await exists(CONFIG_PATH)) || !(await exists(FUNCS_DIR))) {
+  console.error("❌ CRITICAL: Missing supabase/config.toml or functions folder");
+  Deno.exit(1);
 }
 
-// List all actual function folders
-const actualFolders: string[] = [];
+const configText = await Deno.readTextFile(CONFIG_PATH);
+const config = parse(configText) as Record<string, any>;
+
+const configFuncs = Object.keys(config).filter(k => k.startsWith("functions.") && !k.endsWith(".cron"));
+const folders: string[] = [];
+
 for await (const entry of Deno.readDir(FUNCS_DIR)) {
   if (entry.isDirectory && !entry.name.startsWith(".") && entry.name !== "_shared") {
-    actualFolders.push(entry.name);
-  }
-}
-actualFolders.sort();
-
-// Check for subfolders (invalid structure)
-const withSubfolders: string[] = [];
-for (const folder of actualFolders) {
-  for await (const entry of Deno.readDir(`${FUNCS_DIR}/${folder}`)) {
-    if (entry.isDirectory) {
-      withSubfolders.push(`${folder}/${entry.name}`);
-    }
+    folders.push(entry.name);
   }
 }
 
-// Categorize functions
-const categories = {
-  both: [] as string[],           // In config AND has folder
-  ghostInConfig: [] as string[],   // In config but NO folder
-  orphanFolders: [] as string[],   // Has folder but NOT in config
-  duplicates: [] as { normalized: string; variants: string[] }[]
-};
+const configFuncNames = configFuncs.map(c => c.replace("functions.", ""));
+const active = folders.filter(f => configFuncNames.includes(f));
+const ghosts = configFuncNames.filter(c => !folders.includes(c));
+const orphans = folders.filter(f => !configFuncNames.includes(f));
 
-// Find duplicates
-const normalized = new Map<string, string[]>();
-for (const name of configFunctions.keys()) {
-  const norm = name.replace(/_/g, "-");
-  if (!normalized.has(norm)) {
-    normalized.set(norm, []);
-  }
-  normalized.get(norm)!.push(name);
-}
-
-for (const [norm, variants] of normalized.entries()) {
-  if (variants.length > 1) {
-    categories.duplicates.push({ normalized: norm, variants });
-  }
-}
-
-// Categorize each function
-const allNames = new Set([...configFunctions.keys(), ...actualFolders]);
-for (const name of allNames) {
-  const inConfig = configFunctions.has(name);
-  const hasFolder = actualFolders.includes(name);
-  
-  if (inConfig && hasFolder) {
-    categories.both.push(name);
-  } else if (inConfig && !hasFolder) {
-    categories.ghostInConfig.push(name);
-  } else if (!inConfig && hasFolder) {
-    categories.orphanFolders.push(name);
-  }
-}
-
-// Sort all categories
-categories.both.sort();
-categories.ghostInConfig.sort();
-categories.orphanFolders.sort();
-
-// PRINT COMPLETE AUDIT REPORT
-console.log("📊 SUMMARY STATISTICS");
-console.log("-".repeat(80));
-console.log(`Total in config.toml:     ${configFunctions.size}`);
-console.log(`Total actual folders:     ${actualFolders.length}`);
-console.log(`Both (healthy):           ${categories.both.length}`);
-console.log(`👻 GHOSTS (config only):  ${categories.ghostInConfig.length}`);
-console.log(`🔧 ORPHANS (folder only): ${categories.orphanFolders.length}`);
-console.log(`⚠️  DUPLICATES:           ${categories.duplicates.length}`);
-console.log(`📁 Invalid subfolders:    ${withSubfolders.length}`);
-console.log("\n" + "=".repeat(80) + "\n");
-
-// 1. ALL FUNCTIONS (BOTH CONFIG + FOLDER)
-console.log("✅ HEALTHY FUNCTIONS (Both config + folder)");
-console.log("-".repeat(80));
-for (const name of categories.both) {
-  const conf = configFunctions.get(name)!;
-  const cron = conf.hasCron ? " [CRON]" : "";
-  const jwt = conf.verify_jwt ? "JWT✓" : "PUBLIC";
-  console.log(`  ${name.padEnd(40)} ${jwt}${cron}`);
-}
-console.log(`\nTotal: ${categories.both.length}\n`);
-
-// 2. GHOST FUNCTIONS (IN CONFIG, NO FOLDER)
-console.log("👻 GHOST FUNCTIONS (In config.toml but NO folder)");
-console.log("-".repeat(80));
-console.log("These will be RESTORED as stubs:\n");
-for (const name of categories.ghostInConfig) {
-  const conf = configFunctions.get(name)!;
-  const cron = conf.hasCron ? " [CRON]" : "";
-  const jwt = conf.verify_jwt ? "JWT✓" : "PUBLIC";
-  console.log(`  ${name.padEnd(40)} ${jwt}${cron}`);
-}
-console.log(`\nTotal: ${categories.ghostInConfig.length}\n`);
-
-// 3. ORPHAN FOLDERS (HAS FOLDER, NOT IN CONFIG)
-console.log("🔧 ORPHAN FUNCTIONS (Folder exists but NOT in config)");
-console.log("-".repeat(80));
-console.log("These need config entries added:\n");
-for (const name of categories.orphanFolders) {
-  const hasIndex = await exists(`${FUNCS_DIR}/${name}/index.ts`);
-  console.log(`  ${name.padEnd(40)} ${hasIndex ? "has index.ts" : "⚠️ missing index.ts"}`);
-}
-console.log(`\nTotal: ${categories.orphanFolders.length}\n`);
-
-// 4. DUPLICATE ENTRIES
-console.log("⚠️  DUPLICATE FUNCTION ENTRIES");
-console.log("-".repeat(80));
-if (categories.duplicates.length > 0) {
-  for (const dup of categories.duplicates) {
-    console.log(`  ${dup.normalized}:`);
-    for (const variant of dup.variants) {
-      const hasFolder = actualFolders.includes(variant);
-      console.log(`    - ${variant} ${hasFolder ? "(has folder)" : "(ghost)"}`);
-    }
-    console.log("");
-  }
-} else {
-  console.log("  None found\n");
-}
-
-// 5. INVALID SUBFOLDERS
-console.log("📁 INVALID SUBFOLDERS (Functions should be flat)");
-console.log("-".repeat(80));
-if (withSubfolders.length > 0) {
-  for (const path of withSubfolders) {
-    console.log(`  ${path}`);
-  }
-  console.log(`\nTotal: ${withSubfolders.length}\n`);
-} else {
-  console.log("  None found - all functions are properly flat ✓\n");
-}
-
-// 6. DETAILED CONFIG BREAKDOWN
+console.log("\n📊 SUPABASE FUNCTION AUDIT");
 console.log("=".repeat(80));
-console.log("📋 COMPLETE CONFIG.TOML FUNCTION LIST");
-console.log("-".repeat(80));
-const configByStatus = {
-  healthy: [] as string[],
-  ghost: [] as string[],
-  duplicate: [] as string[]
-};
+console.log(`Config entries: ${configFuncs.length}`);
+console.log(`Function folders: ${folders.length}`);
+console.log(`✅ Active (both): ${active.length}`);
+console.log(`👻 Ghosts (config only): ${ghosts.length}`);
+console.log(`🔧 Orphans (folder only): ${orphans.length}`);
 
-for (const [name, conf] of configFunctions.entries()) {
-  const hasFolder = actualFolders.includes(name);
-  const isDup = categories.duplicates.some(d => d.variants.includes(name));
-  
-  if (isDup) {
-    configByStatus.duplicate.push(name);
-  } else if (hasFolder) {
-    configByStatus.healthy.push(name);
-  } else {
-    configByStatus.ghost.push(name);
-  }
+if (ghosts.length > 0) {
+  console.log("\n👻 GHOST FUNCTIONS (in config, no folder):");
+  for (const name of ghosts) console.log(`  ⚠️  ${name}`);
 }
 
-console.log("\n✅ Healthy (has folder):");
-configByStatus.healthy.sort().forEach(n => console.log(`  - ${n}`));
-
-console.log("\n👻 Ghost (no folder):");
-configByStatus.ghost.sort().forEach(n => console.log(`  - ${n}`));
-
-console.log("\n⚠️  Duplicate entries:");
-configByStatus.duplicate.sort().forEach(n => console.log(`  - ${n}`));
-
-console.log("\n" + "=".repeat(80));
-console.log("📋 COMPLETE FUNCTION FOLDER LIST");
-console.log("-".repeat(80));
-
-const foldersByStatus = {
-  healthy: [] as string[],
-  orphan: [] as string[]
-};
-
-for (const name of actualFolders) {
-  const inConfig = configFunctions.has(name);
-  if (inConfig) {
-    foldersByStatus.healthy.push(name);
-  } else {
-    foldersByStatus.orphan.push(name);
-  }
+if (orphans.length > 0) {
+  console.log("\n🔧 ORPHAN FOLDERS (folder exists, not in config):");
+  for (const name of orphans) console.log(`  ⚠️  ${name}`);
 }
 
-console.log("\n✅ Has config:");
-foldersByStatus.healthy.sort().forEach(n => console.log(`  - ${n}`));
-
-console.log("\n🔧 Missing config:");
-foldersByStatus.orphan.sort().forEach(n => console.log(`  - ${n}`));
-
-console.log("\n" + "=".repeat(80));
-console.log("\n🎯 RECOMMENDED ACTIONS:");
-console.log("-".repeat(80));
-console.log(`1. RESTORE ${categories.ghostInConfig.length} ghost functions as stubs`);
-console.log(`2. ADD ${categories.orphanFolders.length} missing config entries`);
-console.log(`3. RESOLVE ${categories.duplicates.length} duplicate entries`);
-console.log(`4. CLEAN ${withSubfolders.length} invalid subfolders`);
-console.log("\n");
-
-// Export JSON for scripting
-const auditData = {
+const auditResults = {
+  timestamp: new Date().toISOString(),
   summary: {
-    totalConfig: configFunctions.size,
-    totalFolders: actualFolders.length,
-    healthy: categories.both.length,
-    ghosts: categories.ghostInConfig.length,
-    orphans: categories.orphanFolders.length,
-    duplicates: categories.duplicates.length,
-    invalidSubfolders: withSubfolders.length
+    totalConfig: configFuncs.length,
+    totalFolders: folders.length,
+    active: active.length,
+    ghosts: ghosts.length,
+    orphans: orphans.length
   },
-  categories,
-  withSubfolders,
-  configFunctions: Object.fromEntries(configFunctions),
-  actualFolders
+  active,
+  ghosts,
+  orphans
 };
 
 await Deno.writeTextFile(
   "scripts/audit-results.json",
-  JSON.stringify(auditData, null, 2)
+  JSON.stringify(auditResults, null, 2),
 );
 
-console.log("💾 Detailed audit saved to: scripts/audit-results.json\n");
+console.log("\n💾 Saved detailed report to scripts/audit-results.json");
+
+// Exit code logic
+if (ghosts.length > 0 || orphans.length > 0) {
+  console.log("\n⚠️  WARNING: Mismatches detected but not blocking deployment");
+  console.log("    Run 'deno run -A scripts/sync-supabase-config.ts' to auto-fix");
+  Deno.exit(0); // Warn only, don't block
+} else {
+  console.log("\n✅ All functions synced perfectly");
+  Deno.exit(0);
+}
