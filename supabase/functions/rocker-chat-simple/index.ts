@@ -249,9 +249,9 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      } // end else block (simple tasks)
+    } // end else block (simple tasks)
 
-      // Phase 2: Gap signal detection - log when confidence is low
+    // Phase 2: Gap signal detection - log when confidence is low
       if (confidence < 0.65) {
         try {
           await ctx.tenantClient.from('rocker_gap_signals').insert({
