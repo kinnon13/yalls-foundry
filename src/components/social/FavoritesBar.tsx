@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Check, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSession } from '@/hooks/useSession';
+import { useSession } from '@/lib/auth/context';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useSession } from '@/hooks/useSession';
+import { useSession } from '@/lib/auth/context';
 import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
 import { AppDock, AppId } from '@/components/super-andy/AppDock';
 import { CenterStage } from '@/components/super-andy/CenterStage';
