@@ -1,0 +1,43 @@
+name: Verify Supabase Functions Config
+on:
+  pull_request:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v1.x
+
+      - name: Check function config is normalized
+        run: |
+          # Run sync script in dry-run mode (it will show what would change)
+          deno run -A scripts/sync-supabase-config.ts
+          
+          # Check if config was modified
+          if ! git diff --quiet --exit-code supabase/config.toml; then
+            echo "::error file=supabase/config.toml::Config not normalized. Run 'deno run -A scripts/sync-supabase-config.ts' and commit."
+            echo ""
+            echo "Changes needed:"
+            git --no-pager diff supabase/config.toml
+            exit 1
+          fi
+          
+          echo "✅ Config is normalized - no duplicates or missing entries"
+
+      - name: Verify no duplicate function entries
+        run: |
+          # Check for underscore variants that should be hyphens
+          if grep -q '^\[functions\..*_.*webhook\]' supabase/config.toml; then
+            echo "::error::Found webhook functions with underscores (should use hyphens)"
+            grep '^\[functions\..*_.*webhook\]' supabase/config.toml
+            exit 1
+          fi
+          
+          echo "✅ No duplicate webhook entries found"

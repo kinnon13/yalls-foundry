@@ -1,9 +1,8 @@
 // deno run -A scripts/sync-supabase-config.ts
-// Purpose: Normalize supabase/config.toml to match real function folders
-// - Preserves verify_jwt values from existing config
+// Purpose: Normalize supabase/config.toml
+// - Preserves ALL existing functions and their verify_jwt values
 // - Adds missing folders with default verify_jwt = true
-// - Removes duplicate entries (e.g., stripe_webhook vs stripe-webhook)
-// - Removes ghost entries (in config but no folder)
+// - Removes duplicate entries ONLY (e.g., stripe_webhook vs stripe-webhook)
 
 import { parse as parseToml, stringify as stringifyToml } from "https://deno.land/std@0.224.0/toml/mod.ts";
 
@@ -67,9 +66,8 @@ for await (const e of Deno.readDir(FUNCS_DIR)) {
 }
 actual.sort();
 
-// Detect ghosts (in config, not on disk) & orphans (on disk, not in config)
+// Detect orphans (on disk, not in config)
 const configNames = [...existingFnEntries.keys()].sort();
-const ghosts = configNames.filter(n => !actual.includes(n));
 const orphans = actual.filter(n => !configNames.includes(n));
 
 // Find real duplicates (multiple entries for same normalized name)
@@ -85,13 +83,13 @@ for (const [k, v] of Object.entries(config)) {
   }
 }
 
-// Rebuild function tables only for real folders
+// Rebuild function tables - KEEP ALL EXISTING + ADD NEW FOLDERS
 const kept: string[] = [];
 const added: string[] = [];
+const allFunctions = new Set([...configNames, ...actual]);
 
-for (const name of actual) {
-  const normName = normalizeName(name);
-  const prev = existingFnEntries.get(normName);
+for (const name of Array.from(allFunctions).sort()) {
+  const prev = existingFnEntries.get(name);
   
   if (prev) {
     kept.push(name);
@@ -103,27 +101,24 @@ for (const name of actual) {
   next[keyFor(name)] = { verify_jwt: verify };
 }
 
-// Keep cron schedules intact for functions that still exist
+// Keep ALL cron schedules intact (even for functions without folders)
 for (const [k, v] of Object.entries(config)) {
   if (k.startsWith("functions.") && k.endsWith(".cron")) {
     const baseName = fnNameFromKey(k.replace(/\.cron$/, ""));
     const normBase = normalizeName(baseName);
-    if (actual.includes(normBase)) {
+    // Keep cron if the function is in our preserved list
+    if (allFunctions.has(normBase)) {
       next[k] = v;
     }
   }
 }
 
 // Print report
-console.log("=== 📁 KEPT (exists in both config & folder) ===");
+console.log("=== 📁 PRESERVED (all existing functions kept) ===");
 console.log(kept.length ? kept.join("\n") : "(none)");
 console.log(`\nTotal: ${kept.length}\n`);
 
-console.log("=== ❌ REMOVED (ghosts: in config but NO folder) ===");
-console.log(ghosts.length ? ghosts.join("\n") : "(none)");
-console.log(`\nTotal: ${ghosts.length}\n`);
-
-console.log("=== ➕ ADDED (orphans: folder exists but NOT in config) ===");
+console.log("=== ➕ ADDED (new folders added to config) ===");
 console.log(added.length ? added.join("\n") : "(none)");
 console.log(`\nTotal: ${added.length}\n`);
 
