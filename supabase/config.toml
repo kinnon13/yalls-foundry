@@ -369,6 +369,9 @@ verify_jwt = false
 [functions.perceive_tick]
 verify_jwt = false
 
+[functions.perceive_tick.cron]
+schedule = "0 */6 * * *"  # Every 6 hours
+
 [functions.verify_output]
 verify_jwt = true
 
@@ -383,6 +386,9 @@ verify_jwt = false
 
 [functions.circuit_breaker_tick]
 verify_jwt = false
+
+[functions.circuit_breaker_tick.cron]
+schedule = "*/15 * * * *"  # Every 15 minutes
 
 # AI Safety & Learning Workers
 [functions.red_team_tick]

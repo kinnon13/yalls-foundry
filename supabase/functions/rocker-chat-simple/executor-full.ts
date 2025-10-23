@@ -89,7 +89,7 @@ export async function executeTool(
 
       case 'create_horse': {
         // Use auto-sync-entities for proper entity creation
-        const { data, error } = await tenantClient.functions.invoke('auto-sync-entities', {
+        const { data, error } = await ctx.tenantClient.functions.invoke('auto-sync-entities', {
           body: { 
             entities: [{
               name: args.name,
@@ -257,7 +257,7 @@ export async function executeTool(
       // ============= CALENDAR (6) =============
       // Delegate ALL calendar operations to calendar-ops function
       case 'create_calendar': {
-        const { data, error } = await tenantClient.functions.invoke('calendar-ops', {
+        const { data, error } = await ctx.tenantClient.functions.invoke('calendar-ops', {
           body: { 
             action: 'create_calendar',
             ...args
@@ -268,7 +268,7 @@ export async function executeTool(
       }
 
       case 'create_calendar_event': {
-        const { data, error } = await tenantClient.functions.invoke('calendar-ops', {
+        const { data, error } = await ctx.tenantClient.functions.invoke('calendar-ops', {
           body: { 
             action: 'create_event',
             ...args
@@ -279,7 +279,7 @@ export async function executeTool(
       }
 
       case 'share_calendar': {
-        const { data, error } = await tenantClient.functions.invoke('calendar-ops', {
+        const { data, error } = await ctx.tenantClient.functions.invoke('calendar-ops', {
           body: { 
             action: 'share_calendar',
             calendar_id: args.calendar_id,
@@ -293,7 +293,7 @@ export async function executeTool(
       }
 
       case 'create_calendar_collection': {
-        const { data, error } = await tenantClient.functions.invoke('calendar-ops', {
+        const { data, error } = await ctx.tenantClient.functions.invoke('calendar-ops', {
           body: { 
             action: 'create_collection',
             ...args
