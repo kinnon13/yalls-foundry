@@ -150,6 +150,7 @@ export type Database = {
           output: Json
           prev_hash: string | null
           result: string
+          tenant_id: string | null
           timestamp: string
           user_id: string | null
         }
@@ -163,6 +164,7 @@ export type Database = {
           output?: Json
           prev_hash?: string | null
           result: string
+          tenant_id?: string | null
           timestamp?: string
           user_id?: string | null
         }
@@ -176,6 +178,7 @@ export type Database = {
           output?: Json
           prev_hash?: string | null
           result?: string
+          tenant_id?: string | null
           timestamp?: string
           user_id?: string | null
         }
@@ -730,6 +733,7 @@ export type Database = {
           session_id: string | null
           success: boolean | null
           target: string | null
+          tenant_id: string | null
           user_id: string | null
         }
         Insert: {
@@ -746,6 +750,7 @@ export type Database = {
           session_id?: string | null
           success?: boolean | null
           target?: string | null
+          tenant_id?: string | null
           user_id?: string | null
         }
         Update: {
@@ -762,6 +767,7 @@ export type Database = {
           session_id?: string | null
           success?: boolean | null
           target?: string | null
+          tenant_id?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -2150,6 +2156,7 @@ export type Database = {
           id: string
           metric_name: string
           metric_value: number
+          tenant_id: string | null
           variant: string
         }
         Insert: {
@@ -2159,6 +2166,7 @@ export type Database = {
           id?: string
           metric_name: string
           metric_value: number
+          tenant_id?: string | null
           variant: string
         }
         Update: {
@@ -2168,6 +2176,7 @@ export type Database = {
           id?: string
           metric_name?: string
           metric_value?: number
+          tenant_id?: string | null
           variant?: string
         }
         Relationships: []
