@@ -55,6 +55,8 @@ const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
 const LegacyRedirector = lazy(() => import('./routes/LegacyRedirector'));
 
+import { bootstrapPerformance } from '@/lib/bootstrap-performance';
+
 const queryClient = new QueryClient();
 
 function AppContent() {
@@ -63,6 +65,9 @@ function AppContent() {
   const location = useLocation();
   
   useEffect(() => {
+    // Initialize performance monitoring
+    bootstrapPerformance();
+    
     // Setup global 401 interceptor
     setupAuthInterceptor();
     
