@@ -47,7 +47,7 @@ import Index from './pages/Index';
 import Health from './pages/Health';
 
 const Dashboard = lazy(() => import('./routes/dashboard/index'));
-const SuperAndyFull = lazy(() => import('./pages/SuperAndy/Index'));
+const SuperAndyFull = lazy(() => import('./routes/super-andy'));
 const AdminRockerConsole = lazy(() => import('./pages/AdminRocker/Index'));
 const AuthPage = lazy(() => import('./routes/auth'));
 const AuthCallback = lazy(() => import('./routes/auth/callback'));
