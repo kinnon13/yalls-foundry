@@ -8,11 +8,12 @@ import {
   Key,
   Users,
   Calendar,
-  Sparkles
+  Sparkles,
+  GraduationCap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type AppId = 'knowledge' | 'files' | 'tasks' | 'task-os' | 'inbox' | 'capabilities' | 'admin' | 'secrets' | 'calendar' | 'proactive';
+export type AppId = 'knowledge' | 'files' | 'tasks' | 'task-os' | 'inbox' | 'capabilities' | 'admin' | 'secrets' | 'calendar' | 'proactive' | 'training';
 
 interface AppDockProps {
   activeApp: AppId;
@@ -27,6 +28,7 @@ const APPS = [
   { id: 'calendar' as AppId, label: 'Calendar', icon: Calendar, color: 'text-cyan-500' },
   { id: 'proactive' as AppId, label: 'Proactive', icon: Sparkles, color: 'text-yellow-500' },
   { id: 'inbox' as AppId, label: 'Inbox', icon: Inbox, color: 'text-pink-500' },
+  { id: 'training' as AppId, label: 'Training', icon: GraduationCap, color: 'text-orange-500' },
   { id: 'capabilities' as AppId, label: 'Capabilities', icon: Shield, color: 'text-red-500' },
   { id: 'admin' as AppId, label: 'Andy Admin', icon: Users, color: 'text-indigo-500' },
   { id: 'secrets' as AppId, label: 'API Keys', icon: Key, color: 'text-amber-500' },

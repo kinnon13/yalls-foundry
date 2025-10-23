@@ -8,12 +8,13 @@ import { SuperAndyAdmin } from './SuperAndyAdmin';
 import { Calendar } from './Calendar';
 import { ProactivePanel } from '@/components/rocker/ProactivePanel';
 import { TasksView } from './TasksView';
-import { Database, Brain, CheckSquare, FolderOpen, Inbox, Shield, Key, Calendar as CalendarIcon, Sparkles } from 'lucide-react';
+import { Database, Brain, CheckSquare, FolderOpen, Inbox, Shield, Key, Calendar as CalendarIcon, Sparkles, GraduationCap } from 'lucide-react';
 
 const SuperAdminCapabilities = lazy(() => 
   import('@/components/admin/SuperAdminControls').then(m => ({ default: m.SuperAdminControls }))
 );
 const SettingsKeysPage = lazy(() => import('@/pages/SettingsKeys'));
+const TrainingDashboard = lazy(() => import('@/pages/Super/Training'));
 
 interface CenterStageProps {
   activeApp: AppId;
@@ -45,6 +46,12 @@ export function CenterStage({ activeApp, threadId }: CenterStageProps) {
       {activeApp === 'proactive' && <ProactivePanel />}
       
       {activeApp === 'inbox' && <SuperAndyInbox />}
+      
+      {activeApp === 'training' && (
+        <Suspense fallback={<LoadingState icon={GraduationCap} label="Training Dashboard" />}>
+          <TrainingDashboard />
+        </Suspense>
+      )}
       
       {activeApp === 'capabilities' && (
         <Suspense fallback={<LoadingState icon={Shield} label="Capabilities" />}>
