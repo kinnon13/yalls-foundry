@@ -16,6 +16,7 @@ import { useSession } from '@/lib/auth/context';
 import { toast } from 'sonner';
 import { User, Save } from 'lucide-react';
 import { AvatarUploader } from '@/components/profile/AvatarUploader';
+import { rockerEvents } from '@/lib/rocker-events';
 
 export function ProfileSettingsTab() {
   const { session } = useSession();
@@ -68,10 +69,19 @@ export function ProfileSettingsTab() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['profile', session?.userId] });
       toast.success('Profile updated successfully');
       setIsEditing(false);
+      
+      // Emit Rocker event for AI awareness
+      if (session?.userId) {
+        await rockerEvents.updateProfile(session.userId, { 
+          display_name: displayName, 
+          bio, 
+          avatar_url: avatarUrl 
+        });
+      }
     },
     onError: (error) => {
       console.error('Profile update error:', error);

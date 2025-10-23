@@ -23,6 +23,33 @@ export async function executeTool(
 
   try {
     switch (toolName) {
+      // ============= AI ACTIONS (1) =============
+      case 'emit_action': {
+        // Emit proactive AI action via Rocker bus
+        const { data, error } = await ctx.tenantClient.functions.invoke('rocker-emit-action', {
+          body: {
+            action_type: args.action_type,
+            payload: args.payload,
+            priority: args.priority || 'medium',
+            target_user_id: ctx.userId,
+          }
+        });
+        if (error) throw error;
+        
+        // Also log to audit
+        await ctx.adminClient.from('ai_action_ledger').insert({
+          tenant_id: ctx.orgId,
+          user_id: ctx.userId,
+          agent: 'rocker',
+          action: 'emit_action',
+          input: { action_type: args.action_type, payload: args.payload },
+          output: { success: true },
+          result: 'success'
+        });
+        
+        return { success: true, message: 'Action emitted to UI' };
+      }
+
       // ============= NAVIGATION & UI (7) =============
       case 'navigate':
         return { success: true, action: 'navigate', path: args.path };

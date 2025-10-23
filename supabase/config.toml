@@ -10,6 +10,9 @@ verify_jwt = false
 [functions.rocker-web-search]
 verify_jwt = false
 
+[functions.rocker-emit-action]
+verify_jwt = true
+
 # Automatic entity discovery - runs every hour
 [functions.auto-sync-entities]
 verify_jwt = false

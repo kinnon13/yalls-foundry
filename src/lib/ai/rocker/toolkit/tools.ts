@@ -145,6 +145,32 @@ export const rockerTools: ToolDefinition[] = [
     }
   },
 
+  // ============= AI ACTIONS (1) =============
+  {
+    name: 'emit_action',
+    description: 'Emit a proactive AI action/suggestion to the user (follow, listing, event, tag)',
+    parameters: {
+      type: 'object',
+      properties: {
+        action_type: { 
+          type: 'string', 
+          description: 'Type of action to suggest',
+          enum: ['suggest.follow', 'suggest.listing', 'suggest.event', 'suggest.tag', 'notify.user', 'verify.data']
+        },
+        payload: { 
+          type: 'object', 
+          description: 'Action-specific data (user_id, listing_id, message, etc.)' 
+        },
+        priority: {
+          type: 'string',
+          description: 'Urgency level',
+          enum: ['low', 'medium', 'high', 'critical']
+        }
+      },
+      required: ['action_type', 'payload', 'priority']
+    }
+  },
+
   // ============= CONTENT CREATION (8) =============
   {
     name: 'create_post',

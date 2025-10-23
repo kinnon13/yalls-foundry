@@ -10,6 +10,7 @@ import { Upload, Image, Video, FileText, Sparkles } from 'lucide-react';
 import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { EntityPreviewCard } from '@/components/EntityPreviewCard';
 import { rockerMediaUploaded } from '@/lib/ai/rocker/integrations/uploads';
+import { rockerEvents } from '@/lib/rocker-events';
 import { useSession } from '@/lib/auth/context';
 
 interface MediaUploadDialogProps {
@@ -60,6 +61,15 @@ export const MediaUploadDialog = ({ open, onOpenChange }: MediaUploadDialogProps
         mediaId: result.id,
         fileType: file.type,
         fileName: file.name,
+      });
+      
+      // Also emit generic upload event
+      await rockerEvents.uploadMedia(session.userId, {
+        media_id: result.id,
+        file_type: file.type,
+        file_name: file.name,
+        file_url: result.file_url,
+        caption
       });
     }
 
