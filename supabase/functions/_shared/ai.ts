@@ -72,6 +72,8 @@ export const ai = {
       body: JSON.stringify({
         model: m[opts.role].chat,
         messages: opts.messages,
+        tools: opts.tools?.map(t => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } })),
+        tool_choice: opts.tools?.length ? 'auto' : undefined,
         temperature: opts.temperature ?? 0.6,
         max_tokens: opts.maxTokens ?? 1200
       })
