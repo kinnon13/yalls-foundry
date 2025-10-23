@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSession } from '@/lib/auth/context';
 import { useSuperAdminCheck } from '@/hooks/useSuperAdminCheck';
 import { AppDock, AppId } from '@/components/super-andy/AppDock';
@@ -13,6 +13,7 @@ export default function SuperAndy() {
   const { session } = useSession();
   const { isSuperAdmin, isLoading } = useSuperAdminCheck();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeApp, setActiveApp] = useState<AppId>('files');
   const [threadId, setThreadId] = useState<string | null>(null);
 
@@ -21,6 +22,23 @@ export default function SuperAndy() {
       navigate('/');
     }
   }, [isSuperAdmin, isLoading, navigate]);
+
+  // Read ?app= from URL and set the active app on load
+  useEffect(() => {
+    const appParam = searchParams.get('app');
+    const validApps: AppId[] = ['knowledge','files','tasks','task-os','calendar','proactive','inbox','capabilities','admin','secrets','training'];
+    if (appParam && (validApps as string[]).includes(appParam)) {
+      setActiveApp(appParam as AppId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep URL in sync when activeApp changes
+  useEffect(() => {
+    const sp = new URLSearchParams(searchParams);
+    sp.set('app', activeApp);
+    setSearchParams(sp, { replace: true });
+  }, [activeApp, searchParams, setSearchParams]);
 
   useEffect(() => {
     const initThread = async () => {
