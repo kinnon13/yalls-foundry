@@ -238,7 +238,6 @@ Be conversational, fast, proactive, and always use the user's actual data when a
 
     // Get selected model from config
     let aiModel = 'google/gemini-2.5-flash';
-    let grokApiKey: string | undefined;
     
     try {
       const { data: modelConfig } = await supabase
@@ -247,17 +246,8 @@ Be conversational, fast, proactive, and always use the user's actual data when a
         .eq('key', 'andy_model')
         .maybeSingle();
       
-      if (modelConfig?.value) {
+      if (modelConfig?.value && modelConfig.value !== 'grok-2') {
         aiModel = modelConfig.value as string;
-      }
-      
-      // If Grok selected, get API key
-      if (aiModel === 'grok-2') {
-        grokApiKey = Deno.env.get('GROK_API_KEY');
-        if (!grokApiKey) {
-          console.warn('[andy-chat] Grok selected but no GROK_API_KEY - falling back to Gemini');
-          aiModel = 'google/gemini-2.5-flash';
-        }
       }
     } catch (e) {
       console.warn('[andy-chat] Failed to load model config:', e);
@@ -265,29 +255,7 @@ Be conversational, fast, proactive, and always use the user's actual data when a
 
     console.log('[andy-chat] Using model:', aiModel);
 
-    // Use Grok if selected and available
-    if (aiModel === 'grok-2' && grokApiKey) {
-      const { grokChatStream } = await import('../_shared/grok.ts');
-      
-      const grokMessages = finalMessages.map((m: any) => ({
-        role: m.role as 'user' | 'assistant' | 'system',
-        content: m.content
-      }));
-
-      const stream = await grokChatStream({
-        apiKey: grokApiKey,
-        messages: grokMessages,
-        model: 'grok-2',
-        maxTokens: 32000,
-        temperature: 0.7
-      });
-
-      return new Response(stream, {
-        headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' }
-      });
-    }
-
-    // Otherwise use Lovable AI gateway
+    // Use Lovable AI gateway
     const response = await fetch(
       'https://ai.gateway.lovable.dev/v1/chat/completions',
       {
