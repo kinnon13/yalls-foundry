@@ -2,19 +2,22 @@
 // Supabase Config Guard - ensures function registration integrity
 import { parse } from "https://deno.land/std@0.223.0/toml/mod.ts";
 import { exists } from "https://deno.land/std@0.223.0/fs/mod.ts";
+import { header, line } from "../modules/logger.ts";
 
 const CONFIG_PATH = "supabase/config.toml";
 const FUNCS_DIR = "supabase/functions";
 
-console.log("🔍 Guard Flow: Checking Supabase configuration...\n");
+header("VERIFY SUPABASE CONFIG");
 
 if (!(await exists(CONFIG_PATH))) {
   console.error("❌ CRITICAL: config.toml not found");
+  line();
   Deno.exit(1);
 }
 
 if (!(await exists(FUNCS_DIR))) {
   console.error("❌ CRITICAL: functions directory not found");
+  line();
   Deno.exit(1);
 }
 
@@ -49,17 +52,16 @@ if (ghosts.length > 0) {
   ghosts.forEach(f => console.log(`   - ${f}`));
 }
 
-console.log(`\n${"=".repeat(80)}`);
+line();
 
 if (orphans.length > 0 || ghosts.length > 0) {
   console.error(`\n❌ SUPABASE CONFIG GUARD FAILED`);
-  console.error(`   Run: deno run -A scripts/master-elon-scan.ts --fix`);
-  console.error(`   Or: deno run -A scripts/modules/sync-config-from-folders.ts --fix`);
-  console.log(`${"=".repeat(80)}\n`);
+  console.error(`   Run: deno run -A scripts/audit/sync-supabase-config.ts`);
+  line();
   Deno.exit(1);
 } else {
   console.log(`\n✅ SUPABASE CONFIG GUARD PASSED`);
   console.log(`   All functions properly registered`);
-  console.log(`${"=".repeat(80)}\n`);
+  line();
   Deno.exit(0);
 }

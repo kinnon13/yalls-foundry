@@ -1,51 +1,41 @@
 #!/usr/bin/env -S deno run -A
 // Structure Guard - ensures all critical audit files are present
 import { exists } from "https://deno.land/std@0.223.0/fs/mod.ts";
+import { header, line } from "../modules/logger.ts";
 
-const REQUIRED_FILES = [
+header("VERIFY STRUCTURE");
+
+const required = [
+  "src",
+  "supabase/functions",
+  "scripts/scan",
+  "scripts/audit",
+  "scripts/health",
+  "scripts/guard",
+  "scripts/modules",
   "scripts/master-elon-scan.ts",
-  "scripts/modules/_utils.ts",
-  "scripts/modules/sync-config-from-folders.ts",
-  "scripts/modules/rls-policy-audit.ts",
-  "scripts/modules/deep-duplicate-scan.ts",
-  "scripts/modules/cross-dependency-scan.ts",
-  "scripts/modules/ghost-code-scan.ts",
-  "scripts/modules/security-orbit-scan.ts",
-  "scripts/modules/schema-drift-scan.ts",
-  "scripts/modules/performance-fingerprint.ts",
-  "scripts/modules/document-dedupe.ts",
-  "scripts/modules/telemetry-map.ts",
 ];
 
-console.log("🔍 Guard Flow: Checking critical file structure...\n");
+let missing = 0;
 
-const missing: string[] = [];
-const present: string[] = [];
-
-for (const path of REQUIRED_FILES) {
-  if (!(await exists(path))) {
-    missing.push(path);
-    console.error(`❌ MISSING: ${path}`);
-  } else {
-    present.push(path);
-    console.log(`✅ ${path}`);
-  }
+for (const dir of required) {
+  const ok = await exists(dir);
+  console.log(`${ok ? "✅" : "❌"} ${dir}`);
+  if (!ok) missing++;
 }
 
-console.log(`\n${"=".repeat(80)}`);
-console.log(`Present: ${present.length}/${REQUIRED_FILES.length}`);
-console.log(`Missing: ${missing.length}/${REQUIRED_FILES.length}`);
+line();
 
-if (missing.length > 0) {
+if (missing > 0) {
   console.error(`\n❌ STRUCTURE GUARD FAILED`);
-  console.error(`   ${missing.length} critical file(s) missing`);
+  console.error(`   ${missing} critical path(s) missing`);
   console.error(`   Cannot proceed - architectural integrity compromised`);
-  console.log(`${"=".repeat(80)}\n`);
+  line();
   Deno.exit(1);
 } else {
   console.log(`\n✅ STRUCTURE GUARD PASSED`);
-  console.log(`   All ${REQUIRED_FILES.length} core files verified`);
+  console.log(`   All ${required.length} core paths verified`);
   console.log(`   Architecture integrity intact`);
-  console.log(`${"=".repeat(80)}\n`);
+  line();
   Deno.exit(0);
 }

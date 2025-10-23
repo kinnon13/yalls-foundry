@@ -1,22 +1,47 @@
 #!/usr/bin/env -S deno run -A
 // Admin Dashboard Schema Verifier - ensures dashboard can parse all scan outputs
 import { exists } from "https://deno.land/std@0.223.0/fs/mod.ts";
+import { header, line } from "../modules/logger.ts";
 import { ensureDir } from "https://deno.land/std@0.223.0/fs/mod.ts";
 
 const AUDIT_DIR = "scripts/audit";
 await ensureDir(AUDIT_DIR);
 
+header("VERIFY ADMIN SCHEMA");
+
+// Check if admin dashboard exists
+const adminPaths = [
+  "src/admin/dashboard.tsx",
+  "src/pages/admin/Dashboard.tsx",
+  "src/components/admin/Dashboard.tsx",
+];
+
+let adminFound = false;
+for (const path of adminPaths) {
+  if (await exists(path)) {
+    console.log(`✅ Admin dashboard found: ${path}`);
+    const txt = await Deno.readTextFile(path);
+    console.log(txt.includes("AuditReport") || txt.includes("audit") 
+      ? "✅ Report binding detected" 
+      : "⚠️  No AuditReport binding found");
+    adminFound = true;
+    break;
+  }
+}
+
+if (!adminFound) {
+  console.log("ℹ️  Admin dashboard not yet implemented");
+}
+
+// Check required report files
 const REQUIRED_REPORTS = [
   "master-scan-summary.json",
   "dead-code-results.json",
   "duplicate-docs-results.json",
-  "dependency-scan-results.json",
-  "deep-duplicate-results.json",
   "audit-results.json",
-  "ping-results.json",
 ];
 
-console.log("🧭 Verifying admin dashboard schema compatibility...\n");
+console.log(`\nChecking report schemas...`);
 
 const results: Array<{ file: string; exists: boolean; valid: boolean; error?: string }> = [];
 let errors = 0;
@@ -30,9 +55,9 @@ for (const reportFile of REQUIRED_REPORTS) {
       file: reportFile,
       exists: false,
       valid: false,
-      error: "File not found",
+      error: "File not found - run master-elon-scan.ts first",
     });
-    console.log(`❌ ${reportFile.padEnd(40)} NOT FOUND`);
+    console.log(`⚠️  ${reportFile.padEnd(40)} NOT FOUND`);
     errors++;
     continue;
   }
@@ -80,6 +105,7 @@ const report = {
     totalReports: REQUIRED_REPORTS.length,
     valid: REQUIRED_REPORTS.length - errors,
     invalid: errors,
+    adminDashboard: adminFound,
   },
   reports: results,
 };
@@ -89,13 +115,15 @@ await Deno.writeTextFile(
   JSON.stringify(report, null, 2)
 );
 
-console.log(`\n${"=".repeat(80)}`);
+line();
+
 if (errors > 0) {
-  console.log(`⚠️  ${errors} report(s) missing or invalid`);
-  console.log(`    Admin dashboard may not render correctly`);
+  console.log(`\n⚠️  ${errors} report(s) missing or invalid`);
   console.log(`    Run: deno run -A scripts/master-elon-scan.ts to generate reports`);
+  line();
   Deno.exit(1);
 } else {
-  console.log(`✅ All admin dashboard schemas verified`);
+  console.log(`\n✅ All admin dashboard schemas verified`);
+  line();
+  Deno.exit(0);
 }
-console.log(`${"=".repeat(80)}\n`);

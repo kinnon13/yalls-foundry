@@ -1,46 +1,41 @@
 #!/usr/bin/env -S deno run -A
 // Rocker AI Integrity Verifier - ensures all AI brain kernels are properly loaded
 import { exists } from "https://deno.land/std@0.223.0/fs/mod.ts";
+import { header, line } from "../modules/logger.ts";
 import { ensureDir } from "https://deno.land/std@0.223.0/fs/mod.ts";
 
 const AUDIT_DIR = "scripts/audit";
 await ensureDir(AUDIT_DIR);
 
-const REQUIRED_KERNELS = [
-  { name: "user", path: "src/lib/rocker/kernels/user.ts" },
-  { name: "admin", path: "src/lib/rocker/kernels/admin.ts" },
-  { name: "super-andy", path: "src/lib/rocker/kernels/super-andy.ts" },
+header("VERIFY ROCKER INTEGRITY");
+
+const brains = [
+  { name: "super-andy", path: "src/ai/super-andy.ts" },
+  { name: "rocker-user", path: "src/ai/rocker-user.ts" },
+  { name: "rocker-admin", path: "src/ai/rocker-admin.ts" },
 ];
 
-console.log("🧠 Verifying Rocker AI kernel integrity...\n");
+const results: Array<{ name: string; ok: boolean; size?: number }> = [];
 
-const results: Array<{ name: string; exists: boolean; path: string }> = [];
-let missing = 0;
-
-for (const kernel of REQUIRED_KERNELS) {
-  const kernelExists = await exists(kernel.path);
-  results.push({
-    name: kernel.name,
-    exists: kernelExists,
-    path: kernel.path,
-  });
-
-  if (kernelExists) {
-    console.log(`✅ ${kernel.name.padEnd(20)} ${kernel.path}`);
-  } else {
-    console.log(`❌ ${kernel.name.padEnd(20)} MISSING: ${kernel.path}`);
-    missing++;
+for (const b of brains) {
+  try {
+    const content = await Deno.readTextFile(b.path);
+    console.log(`✅ ${b.name.padEnd(20)} (${content.length} bytes)`);
+    results.push({ name: b.name, ok: true, size: content.length });
+  } catch {
+    console.log(`❌ Missing brain: ${b.name}`);
+    results.push({ name: b.name, ok: false });
   }
 }
 
 const report = {
   timestamp: new Date().toISOString(),
   summary: {
-    totalKernels: REQUIRED_KERNELS.length,
-    present: REQUIRED_KERNELS.length - missing,
-    missing,
+    totalBrains: brains.length,
+    present: results.filter(r => r.ok).length,
+    missing: results.filter(r => !r.ok).length,
   },
-  kernels: results,
+  brains: results,
 };
 
 await Deno.writeTextFile(
@@ -48,12 +43,15 @@ await Deno.writeTextFile(
   JSON.stringify(report, null, 2)
 );
 
-console.log(`\n${"=".repeat(80)}`);
-if (missing > 0) {
-  console.log(`⚠️  ${missing} Rocker AI kernel(s) missing or not loaded`);
-  console.log(`    AI functionality may be degraded`);
+line();
+
+if (report.summary.missing > 0) {
+  console.error(`\n⚠️  ${report.summary.missing} Rocker AI kernel(s) missing`);
+  console.error(`   AI functionality may be degraded`);
+  line();
   Deno.exit(1);
 } else {
-  console.log(`✅ All Rocker AI kernels verified and operational`);
+  console.log(`\n✅ All Rocker AI kernels verified and operational`);
+  line();
+  Deno.exit(0);
 }
-console.log(`${"=".repeat(80)}\n`);

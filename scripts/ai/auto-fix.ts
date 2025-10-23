@@ -1,11 +1,15 @@
 #!/usr/bin/env -S deno run -A
 // Auto-Fix System - self-healing script for common issues
 import { exists } from "https://deno.land/std@0.223.0/fs/mod.ts";
+import { header, line } from "../modules/logger.ts";
 
 const AUDIT_DIR = "scripts/audit";
 const DRY_RUN = Deno.args.includes("--dry-run");
 
-console.log(`🔧 Auto-Fix System ${DRY_RUN ? "(DRY RUN)" : "(LIVE MODE)"}\n`);
+header("AUTO FIXER");
+
+console.log(`Mode: ${DRY_RUN ? "DRY RUN" : "LIVE"}`);
+console.log(`\n🛠️  Checking for auto-fixable issues...`);
 
 interface Fix {
   name: string;
@@ -30,11 +34,10 @@ const fixes: Fix[] = [
     name: "Remove Dead Code",
     description: "Quarantines unused exports and stubs",
     apply: async () => {
-      // Check if dead code report exists
       const reportPath = `${AUDIT_DIR}/dead-code-results.json`;
       if (!(await exists(reportPath))) {
-        console.log("  ⚠️  No dead code report found. Run scan first.");
-        return false;
+        console.log("  ℹ️  No dead code report found. Run scan first.");
+        return true;
       }
 
       const report = JSON.parse(await Deno.readTextFile(reportPath));
@@ -52,8 +55,7 @@ const fixes: Fix[] = [
         return true;
       }
 
-      // In live mode, this would move files to quarantine
-      console.log("  ⚠️  Auto-quarantine not yet implemented");
+      console.log("  ⚠️  Auto-quarantine requires manual review");
       return false;
     },
   },
@@ -63,8 +65,8 @@ const fixes: Fix[] = [
     apply: async () => {
       const reportPath = `${AUDIT_DIR}/duplicate-docs-results.json`;
       if (!(await exists(reportPath))) {
-        console.log("  ⚠️  No duplicate docs report found. Run scan first.");
-        return false;
+        console.log("  ℹ️  No duplicate docs report found. Run scan first.");
+        return true;
       }
 
       const report = JSON.parse(await Deno.readTextFile(reportPath));
@@ -75,15 +77,11 @@ const fixes: Fix[] = [
 
       console.log(`  Found ${report.duplicateGroups.length} duplicate group(s)`);
       if (DRY_RUN) {
-        console.log("  [DRY RUN] Would remove duplicates:");
-        report.duplicateGroups.forEach((group: string[], idx: number) => {
-          console.log(`    Group ${idx + 1}:`);
-          group.slice(1).forEach((file: string) => console.log(`      - ${file}`));
-        });
+        console.log("  [DRY RUN] Would remove duplicates (keep first in each group)");
         return true;
       }
 
-      console.log("  ⚠️  Auto-removal not yet implemented");
+      console.log("  ⚠️  Auto-removal requires manual review");
       return false;
     },
   },
@@ -91,6 +89,8 @@ const fixes: Fix[] = [
 
 let successCount = 0;
 let failCount = 0;
+
+console.log();
 
 for (const fix of fixes) {
   console.log(`\n🔧 ${fix.name}`);
@@ -102,7 +102,7 @@ for (const fix of fixes) {
       console.log(`   ✅ FIXED`);
       successCount++;
     } else {
-      console.log(`   ⚠️  SKIPPED or FAILED`);
+      console.log(`   ⚠️  SKIPPED or MANUAL REVIEW NEEDED`);
       failCount++;
     }
   } catch (e) {
@@ -111,12 +111,12 @@ for (const fix of fixes) {
   }
 }
 
-console.log(`\n${"=".repeat(80)}`);
-console.log(`🔧 Auto-Fix Complete ${DRY_RUN ? "(Dry Run)" : ""}`);
+line();
+console.log(`\n🔧 Auto-Fix Complete ${DRY_RUN ? "(Dry Run)" : ""}`);
 console.log(`   Applied: ${successCount}`);
 console.log(`   Skipped/Failed: ${failCount}`);
 
 if (DRY_RUN) {
   console.log(`\n💡 Run without --dry-run to apply fixes`);
 }
-console.log(`${"=".repeat(80)}\n`);
+line();

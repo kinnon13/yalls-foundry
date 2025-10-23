@@ -2,13 +2,15 @@
 // Report Compiler - combines all scan JSONs into unified dashboard data source
 import { walk } from "https://deno.land/std@0.223.0/fs/walk.ts";
 import { exists } from "https://deno.land/std@0.223.0/fs/mod.ts";
+import { header, line } from "../modules/logger.ts";
 
 const AUDIT_DIR = "scripts/audit";
 
-console.log("📊 Compiling all audit reports into unified summary...\n");
+header("COMPILE REPORTS");
 
 if (!(await exists(AUDIT_DIR))) {
   console.error("❌ Audit directory not found. Run master-elon-scan.ts first.");
+  line();
   Deno.exit(1);
 }
 
@@ -16,10 +18,12 @@ const reports: Record<string, any> = {};
 let totalFiles = 0;
 let successFiles = 0;
 
+console.log("Loading audit reports...\n");
+
 for await (const entry of walk(AUDIT_DIR, { 
   exts: [".json"], 
   includeDirs: false,
-  skip: [/unified-report\.json$/]
+  skip: [/combined-report\.json$/, /unified-report\.json$/]
 })) {
   totalFiles++;
   const reportName = entry.name.replace(".json", "");
@@ -45,7 +49,7 @@ const unifiedReport = {
     failedToLoad: totalFiles - successFiles,
   },
   health: {
-    overall: successFiles === totalFiles ? "healthy" : "degraded",
+    overall: "healthy" as "healthy" | "warning" | "critical" | "degraded",
     criticalIssues: 0,
     warnings: 0,
   },
@@ -59,7 +63,7 @@ for (const [name, report] of Object.entries(reports)) {
   } else if (report.summary) {
     // Check for issues in each report
     const s = report.summary;
-    if (s.deadExports > 0 || s.duplicateGroups > 0 || s.ghosts > 0 || s.orphans > 0) {
+    if (s.deadExports > 0 || s.duplicateGroups > 0 || s.ghosts > 0 || s.orphans > 0 || s.orphanAssets > 0) {
       unifiedReport.health.warnings++;
     }
     if (s.failed > 0 || s.missing > 0 || s.invalid > 0) {
@@ -73,18 +77,20 @@ if (unifiedReport.health.criticalIssues > 0) {
   unifiedReport.health.overall = "critical";
 } else if (unifiedReport.health.warnings > 0) {
   unifiedReport.health.overall = "warning";
+} else if (successFiles < totalFiles) {
+  unifiedReport.health.overall = "degraded";
 }
 
-const outputPath = `${AUDIT_DIR}/unified-report.json`;
+const outputPath = `${AUDIT_DIR}/combined-report.json`;
 await Deno.writeTextFile(
   outputPath,
   JSON.stringify(unifiedReport, null, 2)
 );
 
-console.log(`\n${"=".repeat(80)}`);
-console.log(`📊 Unified Report Generated: ${outputPath}`);
+line();
+console.log(`\n✅ combined-report.json written`);
 console.log(`\nHealth Status: ${unifiedReport.health.overall.toUpperCase()}`);
 console.log(`  Critical Issues: ${unifiedReport.health.criticalIssues}`);
 console.log(`  Warnings: ${unifiedReport.health.warnings}`);
 console.log(`  Reports Compiled: ${successFiles}/${totalFiles}`);
-console.log(`${"=".repeat(80)}\n`);
+line();
