@@ -4317,6 +4317,7 @@ export type Database = {
           owner_user_id: string
           phone: string | null
           source: string | null
+          tenant_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -4328,6 +4329,7 @@ export type Database = {
           owner_user_id: string
           phone?: string | null
           source?: string | null
+          tenant_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -4339,6 +4341,7 @@ export type Database = {
           owner_user_id?: string
           phone?: string | null
           source?: string | null
+          tenant_id?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -4419,16 +4422,19 @@ export type Database = {
         Row: {
           conversation_id: string
           joined_at: string | null
+          tenant_id: string | null
           user_id: string
         }
         Insert: {
           conversation_id: string
           joined_at?: string | null
+          tenant_id?: string | null
           user_id: string
         }
         Update: {
           conversation_id?: string
           joined_at?: string | null
+          tenant_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -4477,6 +4483,7 @@ export type Database = {
           created_by: string
           id: string
           last_message_at: string | null
+          tenant_id: string | null
           type: Database["public"]["Enums"]["conversation_type"]
           updated_at: string | null
         }
@@ -4485,6 +4492,7 @@ export type Database = {
           created_by: string
           id?: string
           last_message_at?: string | null
+          tenant_id?: string | null
           type?: Database["public"]["Enums"]["conversation_type"]
           updated_at?: string | null
         }
@@ -4493,6 +4501,7 @@ export type Database = {
           created_by?: string
           id?: string
           last_message_at?: string | null
+          tenant_id?: string | null
           type?: Database["public"]["Enums"]["conversation_type"]
           updated_at?: string | null
         }
@@ -6368,6 +6377,7 @@ export type Database = {
           lease_token: string | null
           payload: Json
           status: string
+          tenant_id: string | null
           topic: string
           updated_at: string
         }
@@ -6380,6 +6390,7 @@ export type Database = {
           lease_token?: string | null
           payload?: Json
           status?: string
+          tenant_id?: string | null
           topic: string
           updated_at?: string
         }
@@ -6392,6 +6403,7 @@ export type Database = {
           lease_token?: string | null
           payload?: Json
           status?: string
+          tenant_id?: string | null
           topic?: string
           updated_at?: string
         }
@@ -6401,16 +6413,19 @@ export type Database = {
         Row: {
           config: Json
           key: string
+          tenant_id: string | null
           updated_at: string | null
         }
         Insert: {
           config: Json
           key: string
+          tenant_id?: string | null
           updated_at?: string | null
         }
         Update: {
           config?: Json
           key?: string
+          tenant_id?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -6955,6 +6970,7 @@ export type Database = {
           payload: Json
           run_at: string
           status: string
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -6967,6 +6983,7 @@ export type Database = {
           payload: Json
           run_at?: string
           status?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -6979,6 +6996,7 @@ export type Database = {
           payload?: Json
           run_at?: string
           status?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -7418,16 +7436,19 @@ export type Database = {
         Row: {
           expires_at: string | null
           k: string
+          tenant_id: string | null
           v: number
         }
         Insert: {
           expires_at?: string | null
           k: string
+          tenant_id?: string | null
           v?: number
         }
         Update: {
           expires_at?: string | null
           k?: string
+          tenant_id?: string | null
           v?: number
         }
         Relationships: []
@@ -7713,6 +7734,7 @@ export type Database = {
           embedding: string | null
           id: string
           listing_id: string | null
+          tenant_id: string | null
         }
         Insert: {
           content: string
@@ -7720,6 +7742,7 @@ export type Database = {
           embedding?: string | null
           id?: string
           listing_id?: string | null
+          tenant_id?: string | null
         }
         Update: {
           content?: string
@@ -7727,6 +7750,7 @@ export type Database = {
           embedding?: string | null
           id?: string
           listing_id?: string | null
+          tenant_id?: string | null
         }
         Relationships: []
       }
@@ -8231,16 +8255,19 @@ export type Database = {
         Row: {
           message_id: string
           read_at: string | null
+          tenant_id: string | null
           user_id: string
         }
         Insert: {
           message_id: string
           read_at?: string | null
+          tenant_id?: string | null
           user_id: string
         }
         Update: {
           message_id?: string
           read_at?: string | null
+          tenant_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -9240,6 +9267,7 @@ export type Database = {
           embedding: string | null
           id: string
           org_id: string
+          tenant_id: string | null
         }
         Insert: {
           content: string
@@ -9248,6 +9276,7 @@ export type Database = {
           embedding?: string | null
           id?: string
           org_id: string
+          tenant_id?: string | null
         }
         Update: {
           content?: string
@@ -9256,6 +9285,7 @@ export type Database = {
           embedding?: string | null
           id?: string
           org_id?: string
+          tenant_id?: string | null
         }
         Relationships: []
       }
@@ -9647,16 +9677,19 @@ export type Database = {
         Row: {
           bucket: string
           count: number
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
           bucket: string
           count?: number
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
           bucket?: string
           count?: number
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -9690,16 +9723,19 @@ export type Database = {
           bucket: string
           count: number
           expires_at: string
+          tenant_id: string | null
         }
         Insert: {
           bucket: string
           count?: number
           expires_at: string
+          tenant_id?: string | null
         }
         Update: {
           bucket?: string
           count?: number
           expires_at?: string
+          tenant_id?: string | null
         }
         Relationships: []
       }
@@ -10196,6 +10232,7 @@ export type Database = {
           meta: Json | null
           rel: string
           src: string
+          tenant_id: string | null
           weight: number | null
         }
         Insert: {
@@ -10205,6 +10242,7 @@ export type Database = {
           meta?: Json | null
           rel: string
           src: string
+          tenant_id?: string | null
           weight?: number | null
         }
         Update: {
@@ -10214,6 +10252,7 @@ export type Database = {
           meta?: Json | null
           rel?: string
           src?: string
+          tenant_id?: string | null
           weight?: number | null
         }
         Relationships: [
@@ -10240,6 +10279,7 @@ export type Database = {
           kind: string
           meta: Json | null
           name: string
+          tenant_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -10247,6 +10287,7 @@ export type Database = {
           kind: string
           meta?: Json | null
           name: string
+          tenant_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -10254,6 +10295,7 @@ export type Database = {
           kind?: string
           meta?: Json | null
           name?: string
+          tenant_id?: string | null
         }
         Relationships: []
       }
@@ -10941,6 +10983,7 @@ export type Database = {
           mrr: number | null
           retrieved_ids: string[] | null
           scores: number[] | null
+          tenant_id: string | null
           tokens_in: number | null
           tokens_out: number | null
           user_id: string | null
@@ -10955,6 +10998,7 @@ export type Database = {
           mrr?: number | null
           retrieved_ids?: string[] | null
           scores?: number[] | null
+          tenant_id?: string | null
           tokens_in?: number | null
           tokens_out?: number | null
           user_id?: string | null
@@ -10969,6 +11013,7 @@ export type Database = {
           mrr?: number | null
           retrieved_ids?: string[] | null
           scores?: number[] | null
+          tenant_id?: string | null
           tokens_in?: number | null
           tokens_out?: number | null
           user_id?: string | null
@@ -13447,16 +13492,19 @@ export type Database = {
       voice_post_rate_limits: {
         Row: {
           post_count: number
+          tenant_id: string | null
           user_id: string
           window_start: string
         }
         Insert: {
           post_count?: number
+          tenant_id?: string | null
           user_id: string
           window_start?: string
         }
         Update: {
           post_count?: number
+          tenant_id?: string | null
           user_id?: string
           window_start?: string
         }
@@ -14468,6 +14516,7 @@ export type Database = {
           payload: Json
           run_at: string
           status: string
+          tenant_id: string | null
           updated_at: string
         }
         SetofOptions: {
