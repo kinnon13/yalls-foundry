@@ -86,18 +86,48 @@ serve(async (req) => {
         knower: 'You are Super Andy - omniscient meta-cognitive AI. You have full system access, can orchestrate complex tasks, and self-improve. Think strategically.' + memoryContext
       };
 
-      // Tool-calling loop with max 5 iterations
+      // Initialize reply and confidence
       let reply = '';
       let confidence = 1.0;
-      let toolCallCount = 0;
-      const maxToolCalls = 5;
+
+      // Detect complex multi-step tasks that need MDR orchestration
+      const isComplexTask = message.length > 200 || 
+        /\b(plan|strategy|analyze|compare|evaluate|multi-step|complex|orchestrat)\b/i.test(message);
       
-      try {
-        const messages: Message[] = [
-          { role: 'system', content: systemPrompts[actorRole] || systemPrompts.user },
-          ...conversationHistory,
-          { role: 'user', content: message }
-        ];
+      // For complex tasks: Use MDR (Multi-Dimensional Reasoning)
+      if (isComplexTask && actorRole === 'knower') {
+        log.info('Complex task detected - invoking MDR orchestration');
+        
+        const taskId = `task-${Date.now()}-${ctx.userId.substring(0, 8)}`;
+        
+        // Step 1: Generate perspectives
+        const { data: mdrGenerate } = await ctx.adminClient.functions.invoke('mdr_generate', {
+          body: { taskId, tenantId: ctx.tenantId, context: { message, history: conversationHistory } }
+        });
+        
+        // Step 2: Build consensus
+        const { data: mdrConsensus } = await ctx.adminClient.functions.invoke('mdr_consensus', {
+          body: { taskId, tenantId: ctx.tenantId }
+        });
+        
+        // Step 3: Orchestrate sub-agents
+        const { data: mdrOrchestrate } = await ctx.adminClient.functions.invoke('mdr_orchestrate', {
+          body: { taskId, tenantId: ctx.tenantId, context: mdrConsensus }
+        });
+        
+        reply = `**Complex Task Analysis Complete**\n\nGenerated ${mdrGenerate?.perspectives || 3} strategic perspectives and selected optimal plan (confidence: ${mdrConsensus?.consensus?.confidence || 85}%).\n\n**Chosen Approach:** ${mdrConsensus?.chosenPlan?.approach || 'Multi-step validated execution'}\n\n**Sub-agents queued:** ${mdrOrchestrate?.agents?.join(', ') || 'gap_finder, verifier, executor'}\n\nMonitor progress in the dashboard.`;
+        confidence = (mdrConsensus?.consensus?.confidence || 85) / 100;
+      } else {
+        // Simple tasks: Standard tool-calling loop
+        let toolCallCount = 0;
+        const maxToolCalls = 5;
+        
+        try {
+          const messages: Message[] = [
+            { role: 'system', content: systemPrompts[actorRole] || systemPrompts.user },
+            ...conversationHistory,
+            { role: 'user', content: message }
+          ];
 
         while (toolCallCount < maxToolCalls) {
           // Use dynamic kernel for optimal model selection
@@ -219,6 +249,7 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+      } // end of simple tasks else block
 
       // Phase 2: Gap signal detection - log when confidence is low
       if (confidence < 0.65) {
@@ -273,8 +304,7 @@ serve(async (req) => {
 
       log.info('Request completed', { 
         reply_length: reply.length,
-        confidence,
-        tool_calls: toolCallCount 
+        confidence
       });
 
       return new Response(JSON.stringify({ reply }), {
