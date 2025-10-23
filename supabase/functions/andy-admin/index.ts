@@ -42,11 +42,62 @@ serve(async (req) => {
       });
     }
 
-    const { action, user_id, reason, privacy_settings } = await req.json();
+    const { action, user_id, reason, privacy_settings, model, job, schedule, enabled } = await req.json();
 
     // Super Admin access: skip audit logging per owner's preference
 
     switch (action) {
+      case 'set_model': {
+        // Store model selection in ai_control_flags
+        const serviceClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+
+        const { error } = await serviceClient
+          .from('ai_control_flags' as any)
+          .upsert({
+            key: 'andy_model',
+            value: model,
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) throw error;
+
+        return new Response(
+          JSON.stringify({ success: true, model }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'manage_cron': {
+        // Store cron state in ai_control_flags
+        const serviceClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+
+        const { error } = await serviceClient
+          .from('ai_control_flags' as any)
+          .upsert({
+            key: `cron_${job}`,
+            value: { schedule, enabled },
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) throw error;
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            job, 
+            enabled,
+            note: 'Cron state stored. Set up actual pg_cron via SQL in backend.' 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       case 'list_users': {
         const { data: profiles } = await supabaseClient
           .from('profiles')

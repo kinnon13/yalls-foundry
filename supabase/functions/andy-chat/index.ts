@@ -236,7 +236,58 @@ Be conversational, fast, proactive, and always use the user's actual data when a
 
     console.log('[andy-chat] Context size:', context.length, 'chars');
 
-    // Always use Lovable AI gateway for OpenAI-compatible streaming
+    // Get selected model from config
+    let aiModel = 'google/gemini-2.5-flash';
+    let grokApiKey: string | undefined;
+    
+    try {
+      const { data: modelConfig } = await supabase
+        .from('ai_control_flags' as any)
+        .select('value')
+        .eq('key', 'andy_model')
+        .maybeSingle();
+      
+      if (modelConfig?.value) {
+        aiModel = modelConfig.value as string;
+      }
+      
+      // If Grok selected, get API key
+      if (aiModel === 'grok-2') {
+        grokApiKey = Deno.env.get('GROK_API_KEY');
+        if (!grokApiKey) {
+          console.warn('[andy-chat] Grok selected but no GROK_API_KEY - falling back to Gemini');
+          aiModel = 'google/gemini-2.5-flash';
+        }
+      }
+    } catch (e) {
+      console.warn('[andy-chat] Failed to load model config:', e);
+    }
+
+    console.log('[andy-chat] Using model:', aiModel);
+
+    // Use Grok if selected and available
+    if (aiModel === 'grok-2' && grokApiKey) {
+      const { grokChatStream } = await import('../_shared/grok.ts');
+      
+      const grokMessages = finalMessages.map((m: any) => ({
+        role: m.role as 'user' | 'assistant' | 'system',
+        content: m.content
+      }));
+
+      const stream = await grokChatStream({
+        apiKey: grokApiKey,
+        messages: grokMessages,
+        model: 'grok-2',
+        maxTokens: 32000,
+        temperature: 0.7
+      });
+
+      return new Response(stream, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' }
+      });
+    }
+
+    // Otherwise use Lovable AI gateway
     const response = await fetch(
       'https://ai.gateway.lovable.dev/v1/chat/completions',
       {
@@ -246,14 +297,14 @@ Be conversational, fast, proactive, and always use the user's actual data when a
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: aiModel.startsWith('gpt') ? aiModel : 'google/gemini-2.5-flash',
           messages: finalMessages,
           stream: true,
         }),
       }
     );
 
-    console.log('[andy-chat] Using Gemini via Lovable AI for response');
+    console.log('[andy-chat] Using Lovable AI for response');
 
     if (!response.ok) {
       const errorText = await response.text();

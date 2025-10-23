@@ -8,12 +8,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, User, MessageSquare, Brain, Lock, Shield, ShieldOff, Sparkles } from 'lucide-react';
+import { Search, User, MessageSquare, Brain, Lock, Shield, ShieldOff, Sparkles, Settings, Clock, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { MessengerRail } from './MessengerRail';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { PersonaSettings } from './PersonaSettings';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface SuperAndyAdminProps {
   threadId: string | null;
@@ -22,6 +23,12 @@ interface SuperAndyAdminProps {
 export function SuperAndyAdmin({ threadId }: SuperAndyAdminProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
+  const [cronSchedules, setCronSchedules] = useState({
+    perceive: '0 * * * *', // hourly
+    improve: '0 0 * * *', // daily
+    expandMemory: '0 */6 * * *', // every 6h
+  });
   
   const queryClient = useQueryClient();
 
@@ -76,6 +83,40 @@ export function SuperAndyAdmin({ threadId }: SuperAndyAdminProps) {
     }
   });
 
+  // Update model selection
+  const updateModelMutation = useMutation({
+    mutationFn: async (model: string) => {
+      const { data, error } = await supabase.functions.invoke('andy-admin', {
+        body: { action: 'set_model', model }
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Model updated");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update model");
+    }
+  });
+
+  // Manage cron jobs
+  const manageCronMutation = useMutation({
+    mutationFn: async ({ job, schedule, enabled }: { job: string; schedule?: string; enabled?: boolean }) => {
+      const { data, error } = await supabase.functions.invoke('andy-admin', {
+        body: { action: 'manage_cron', job, schedule, enabled }
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Cron job updated");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update cron");
+    }
+  });
+
   const users = usersData?.users || [];
   const filteredUsers = users.filter((u: any) =>
     u.display_name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -94,7 +135,7 @@ export function SuperAndyAdmin({ threadId }: SuperAndyAdminProps) {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="chat" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="chat">
               <MessageSquare className="h-4 w-4 mr-2" />
               Private Chat
@@ -102,6 +143,10 @@ export function SuperAndyAdmin({ threadId }: SuperAndyAdminProps) {
             <TabsTrigger value="users">
               <User className="h-4 w-4 mr-2" />
               User Data
+            </TabsTrigger>
+            <TabsTrigger value="system">
+              <Settings className="h-4 w-4 mr-2" />
+              Model & Cron
             </TabsTrigger>
             <TabsTrigger value="settings">
               <Sparkles className="h-4 w-4 mr-2" />
@@ -248,6 +293,131 @@ export function SuperAndyAdmin({ threadId }: SuperAndyAdminProps) {
                 ))}
               </div>
               </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="system" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="h-5 w-5" />
+                    AI Model Selection
+                  </CardTitle>
+                  <CardDescription>Choose which model Andy uses (live changes)</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Active Model</Label>
+                    <Select value={selectedModel} onValueChange={(val) => {
+                      setSelectedModel(val);
+                      updateModelMutation.mutate(val);
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash (default)</SelectItem>
+                        <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro (best reasoning)</SelectItem>
+                        <SelectItem value="gpt-5">GPT-5 (powerful)</SelectItem>
+                        <SelectItem value="gpt-5-mini">GPT-5 Mini (balanced)</SelectItem>
+                        <SelectItem value="grok-2">Grok-2 (xAI)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Grok requires GROK_API_KEY secret in backend
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    Automatic Learning (Cron Jobs)
+                  </CardTitle>
+                  <CardDescription>Live control - changes take effect immediately</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b pb-3">
+                      <div>
+                        <p className="font-medium">Perceive Tick</p>
+                        <p className="text-sm text-muted-foreground">Scan for learning opportunities</p>
+                        <p className="text-xs text-muted-foreground mt-1">Schedule: {cronSchedules.perceive}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => {
+                          manageCronMutation.mutate({ job: 'perceive', enabled: true });
+                        }}>
+                          Enable
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          manageCronMutation.mutate({ job: 'perceive', enabled: false });
+                        }}>
+                          Disable
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border-b pb-3">
+                      <div>
+                        <p className="font-medium">Self-Improve Tick</p>
+                        <p className="text-sm text-muted-foreground">Auto-tweak based on feedback</p>
+                        <p className="text-xs text-muted-foreground mt-1">Schedule: {cronSchedules.improve}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => {
+                          manageCronMutation.mutate({ job: 'improve', enabled: true });
+                        }}>
+                          Enable
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          manageCronMutation.mutate({ job: 'improve', enabled: false });
+                        }}>
+                          Disable
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border-b pb-3">
+                      <div>
+                        <p className="font-medium">Expand Memory</p>
+                        <p className="text-sm text-muted-foreground">Consolidate and expand memories</p>
+                        <p className="text-xs text-muted-foreground mt-1">Schedule: {cronSchedules.expandMemory}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => {
+                          manageCronMutation.mutate({ job: 'expand_memory', enabled: true });
+                        }}>
+                          Enable
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          manageCronMutation.mutate({ job: 'expand_memory', enabled: false });
+                        }}>
+                          Disable
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 p-3 bg-muted rounded-lg">
+                    <p className="text-sm font-medium mb-2">Manual Cron Setup (Backend SQL)</p>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Open backend → SQL Editor → Run:
+                    </p>
+                    <pre className="text-xs bg-background p-2 rounded overflow-x-auto">
+{`SELECT cron.schedule(
+  'andy-perceive-hourly',
+  '0 * * * *',
+  $$SELECT net.http_post(
+    url:='https://xuxfuonzsfvrirdwzddt.supabase.co/functions/v1/super-andy-perceive',
+    headers:='{"Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb
+  ) as request_id;$$
+);`}
+                    </pre>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-4">
