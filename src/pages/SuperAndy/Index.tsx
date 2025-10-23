@@ -4,6 +4,7 @@
  */
 
 import { SuperAndyChat } from '@/components/super-andy/SuperAndyChat';
+import { DocumentUpload } from '@/components/super-andy/DocumentUpload';
 import ProactiveRail from './ProactiveRail';
 import SelfImproveLog from './SelfImproveLog';
 import { RockerActionsSidebar } from '@/components/rocker/RockerActionsSidebar';
@@ -23,6 +24,7 @@ export default function SuperAndyPage() {
         </div>
         
         <div className="space-y-6 overflow-y-auto">
+          <DocumentUpload onAnalysisComplete={(analysis) => console.log('Doc analyzed:', analysis)} />
           <ProactiveRail />
           <SelfImproveLog />
         </div>

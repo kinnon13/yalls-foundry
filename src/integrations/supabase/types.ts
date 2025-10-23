@@ -587,6 +587,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_docs: {
+        Row: {
+          analyzed_at: string | null
+          content: string | null
+          created_at: string | null
+          embedding: string | null
+          file_name: string
+          file_type: string | null
+          id: string
+          notes: string | null
+          storage_path: string | null
+          tenant_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analyzed_at?: string | null
+          content?: string | null
+          created_at?: string | null
+          embedding?: string | null
+          file_name: string
+          file_type?: string | null
+          id?: string
+          notes?: string | null
+          storage_path?: string | null
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analyzed_at?: string | null
+          content?: string | null
+          created_at?: string | null
+          embedding?: string | null
+          file_name?: string
+          file_type?: string | null
+          id?: string
+          notes?: string | null
+          storage_path?: string | null
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ai_ethics_policy: {
         Row: {
           config: Json | null
