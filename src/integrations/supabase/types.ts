@@ -8397,6 +8397,110 @@ export type Database = {
         }
         Relationships: []
       }
+      mission_logs: {
+        Row: {
+          context: Json | null
+          id: string
+          level: string
+          message: string
+          task_id: string | null
+          timestamp: string | null
+        }
+        Insert: {
+          context?: Json | null
+          id?: string
+          level: string
+          message: string
+          task_id?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          context?: Json | null
+          id?: string
+          level?: string
+          message?: string
+          task_id?: string | null
+          timestamp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "mission_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mission_memory: {
+        Row: {
+          category: string | null
+          expires_at: string | null
+          id: string
+          key: string
+          metadata: Json | null
+          updated_at: string | null
+          value: Json | null
+        }
+        Insert: {
+          category?: string | null
+          expires_at?: string | null
+          id?: string
+          key: string
+          metadata?: Json | null
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Update: {
+          category?: string | null
+          expires_at?: string | null
+          id?: string
+          key?: string
+          metadata?: Json | null
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Relationships: []
+      }
+      mission_tasks: {
+        Row: {
+          completed_at: string | null
+          context: string | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          notes: string | null
+          priority: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          context?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          priority?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          context?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          priority?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       notification_prefs: {
         Row: {
           digest_hour: number | null
@@ -14625,6 +14729,7 @@ export type Database = {
       cleanup_expired_idempotency: { Args: never; Returns: undefined }
       cleanup_expired_kernels: { Args: never; Returns: number }
       cleanup_expired_memories: { Args: never; Returns: undefined }
+      cleanup_expired_memory: { Args: never; Returns: undefined }
       cleanup_rate_counters: { Args: never; Returns: undefined }
       commission_check_release: { Args: never; Returns: number }
       commission_distribute_dual_tree: {

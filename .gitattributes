@@ -1,0 +1,22 @@
+# 🛡️ Super Andy Protection - Critical Files
+# These files are protected from auto-merge and diff operations
+
+# Andy's Brain - Never auto-merge
+scripts/ai/** -diff -merge
+
+# Guard Layer - Mission critical
+scripts/guard/** -diff -merge
+
+# Audit Layer - System integrity
+scripts/audit/** -diff -merge
+
+# Core Orchestrator - Central command
+scripts/master-elon-scan.ts -diff -merge
+
+# Shared Utilities - Foundation
+scripts/lib/** -diff -merge
+
+# Mission Control Documentation
+MISSION_CONTROL_COMPLETE.md -diff -merge
+REORGANIZATION_COMPLETE.md -diff -merge
+SUPER_ANDY_ACTIVATION.md -diff -merge

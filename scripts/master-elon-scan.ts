@@ -112,9 +112,14 @@ try {
 console.log(`\n╔════════════════ LAYER 6: ADMIN ════════════════╗`);
 results.push(await runScript("admin", "verify-admin-schema.ts"));
 
-// LAYER 7: COMPILE REPORTS (Unified Dashboard Data)
-console.log(`\n╔════════════════ LAYER 7: COMPILE ══════════════╗`);
+// LAYER 7: LIB VALIDATION (Utility Integrity)
+console.log(`\n╔════════════════ LAYER 7: LIB ══════════════════╗`);
+results.push(await runScript("lib", "verify-lib-integrity.ts"));
+
+// LAYER 8: COMPILE REPORTS (Unified Dashboard Data)
+console.log(`\n╔════════════════ LAYER 8: COMPILE ══════════════╗`);
 results.push(await runScript("audit", "compile-reports.ts"));
+results.push(await runScript("audit", "merge-reports.ts"));
 
 // FINAL SUMMARY
 const successful = results.filter(r => r.success).length;
