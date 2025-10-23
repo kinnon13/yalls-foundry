@@ -1,0 +1,275 @@
+# Super Andy AI Hierarchy Configuration
+# Three-Brain Architecture: User Rocker → Admin Rocker → Super Andy
+
+version: "1.0"
+architecture: three-tier-isolation
+
+# ==================== TIER DEFINITIONS ====================
+
+tiers:
+  tier1_user_rocker:
+    name: "User Rocker"
+    icon: "🧍‍♂️"
+    scope: "Personal assistant for individual users"
+    data_access:
+      - "own_user_messages"
+      - "own_user_posts"
+      - "own_user_analytics"
+      - "public_feed_data"
+    restrictions:
+      - "Cannot access other users' data"
+      - "Cannot modify platform configs"
+      - "Cannot bypass Admin Rocker throttling"
+    communication:
+      send_to: ["admin_rocker"]
+      receive_from: ["admin_rocker"]
+    edge_functions:
+      - "rocker-chat"
+      - "rocker-suggest-post"
+      - "rocker-memory"
+      - "rocker-voice-session"
+
+  tier2_admin_rocker:
+    name: "Admin Rocker"
+    icon: "🛡"
+    scope: "Platform governance and compliance"
+    data_access:
+      - "all_platform_telemetry"
+      - "anonymized_user_summaries"
+      - "system_metrics"
+      - "audit_logs"
+    capabilities:
+      - "Moderate content"
+      - "Suspend User Rockers"
+      - "Apply throttling rules"
+      - "Query Super Andy for policy clarification"
+    communication:
+      send_to: ["super_andy", "user_rocker"]
+      receive_from: ["super_andy", "user_rocker"]
+    edge_functions:
+      - "admin-query-super-andy"
+      - "rocker-admin"
+      - "rocker-audit-system"
+      - "rocker-auto-audit"
+
+  tier3_super_andy:
+    name: "Super Andy"
+    icon: "🚀"
+    scope: "Global intelligence and self-learning"
+    data_access:
+      - "full_unsanitized_logs"
+      - "external_web_access"
+      - "cross_platform_analytics"
+      - "raw_perception_data"
+    capabilities:
+      - "Self-training loops"
+      - "Pattern detection across all users"
+      - "Model optimization"
+      - "Push config updates to Admin Rocker"
+      - "External knowledge ingestion"
+    communication:
+      send_to: ["admin_rocker"]
+      receive_from: ["admin_rocker"]
+    edge_functions:
+      - "super-andy-deploy"
+      - "andy-chat"
+      - "andy-admin"
+      - "andy-task-os"
+    
+# ==================== COMMUNICATION CHANNELS ====================
+
+communication_flow:
+  user_to_user_rocker:
+    protocol: "direct_chat"
+    endpoint: "/functions/v1/rocker-chat"
+    auth: "user_jwt"
+
+  user_rocker_to_admin:
+    protocol: "internal_api"
+    endpoint: "/functions/v1/admin-query-super-andy"
+    auth: "service_role"
+    rate_limit: "100/minute"
+
+  admin_to_super_andy:
+    protocol: "internal_api"
+    endpoint: "/functions/v1/admin-query-super-andy"
+    auth: "admin_role"
+    rate_limit: "50/minute"
+
+  super_andy_to_admin:
+    protocol: "config_push"
+    endpoint: "/functions/v1/super-andy-deploy"
+    auth: "service_role_key"
+    rate_limit: "10/minute"
+
+# ==================== EDGE FUNCTIONS ====================
+
+edge_functions:
+  admin-query-super-andy:
+    tier: tier2_admin_rocker
+    role: admin
+    description: "Allows Admin Rocker to query Super Andy for policy/anomaly/pattern analysis"
+    verify_jwt: true
+    
+  super-andy-deploy:
+    tier: tier3_super_andy
+    role: service
+    description: "Super Andy pushes new configs down to Admin Rocker"
+    verify_jwt: false
+    auth_method: service_role_key
+
+# ==================== CRON JOBS ====================
+
+cron_jobs:
+  super_andy_selftrain:
+    schedule: "0 2 * * *" # Every day at 2am UTC
+    script: "scripts/ai/super-andy-selftrain.cron.ts"
+    description: "Super Andy's nightly self-training: web ingestion + log learning + model optimization"
+    environment:
+      - VITE_SUPABASE_URL
+      - SUPABASE_SERVICE_ROLE_KEY
+    
+  admin_rocker_audit:
+    schedule: "0 */6 * * *" # Every 6 hours
+    script: "scripts/ai/rocker-policy-engine.mjs"
+    description: "Admin Rocker validates all User Rocker policies"
+
+# ==================== DATABASE TABLES ====================
+
+database_tables:
+  # Tier 1: User Rocker
+  ai_conversations:
+    tier: tier1
+    access: "user_id = auth.uid()"
+    
+  ai_messages:
+    tier: tier1
+    access: "conversation.user_id = auth.uid()"
+
+  # Tier 2: Admin Rocker
+  admin_audit_log:
+    tier: tier2
+    access: "role = 'admin' OR role = 'moderator'"
+
+  ai_policy_rules:
+    tier: tier2
+    access: "role = 'admin'"
+
+  ai_active_configs:
+    tier: tier2
+    access: "role = 'admin'"
+
+  # Tier 3: Super Andy
+  ai_perception_log:
+    tier: tier3
+    access: "ONLY via service_role"
+
+  ai_knowledge_base:
+    tier: tier3
+    access: "ONLY via service_role"
+
+  ai_training_runs:
+    tier: tier3
+    access: "ONLY via service_role"
+
+  ai_anomalies:
+    tier: tier3
+    access: "role = 'admin' OR service_role"
+
+# ==================== SECURITY POLICIES ====================
+
+security:
+  data_isolation:
+    user_rocker: "RLS enforced - users can only see their own data"
+    admin_rocker: "RLS enforced - admins see anonymized summaries only"
+    super_andy: "No RLS - full platform access via service role"
+
+  authentication:
+    user_rocker: "JWT token from Supabase Auth"
+    admin_rocker: "JWT token + role='admin' check"
+    super_andy: "SUPABASE_SERVICE_ROLE_KEY only"
+
+  rate_limiting:
+    user_rocker: "100 requests/minute/user"
+    admin_rocker: "50 requests/minute/admin"
+    super_andy: "10 config pushes/minute"
+
+  audit_trail:
+    all_actions_logged: true
+    retention_days: 90
+    tables:
+      - ai_action_ledger
+      - admin_audit_log
+
+# ==================== DEPLOYMENT ====================
+
+deployment:
+  environment_variables:
+    required:
+      - VITE_SUPABASE_URL
+      - VITE_SUPABASE_ANON_KEY
+      - SUPABASE_SERVICE_ROLE_KEY
+    optional:
+      - LOVABLE_API_KEY
+
+  verification_scripts:
+    - scripts/ai/rocker-doctor.ts
+    - scripts/ai/rocker-memory-doctor.ts
+    - scripts/master-elon-scan.ts
+
+  health_checks:
+    - endpoint: /functions/v1/rocker-health
+      interval: "5m"
+    - endpoint: /functions/v1/ai_health
+      interval: "5m"
+
+# ==================== EXAMPLE WORKFLOW ====================
+
+example_workflow:
+  scenario: "User Rocker asks to recommend controversial content"
+  steps:
+    - step: 1
+      actor: user_rocker
+      action: "User requests content recommendation"
+      location: "rocker-chat edge function"
+      
+    - step: 2
+      actor: user_rocker
+      action: "Checks local policy cache - finds 'policy tag missing'"
+      location: "rocker-chat edge function"
+      
+    - step: 3
+      actor: user_rocker
+      action: "Escalates to Admin Rocker"
+      location: "calls admin-query-super-andy with query_type='clarify_policy'"
+      
+    - step: 4
+      actor: admin_rocker
+      action: "Queries Super Andy for global policy clarification"
+      location: "admin-query-super-andy edge function"
+      
+    - step: 5
+      actor: super_andy
+      action: "Analyzes global patterns + policy rules"
+      location: "clarifyPolicy() function"
+      result: "Allowed under adult-tag = true. Provide disclosure notice."
+      
+    - step: 6
+      actor: admin_rocker
+      action: "Updates policy cache + sends response back"
+      location: "ai_active_configs table updated"
+      
+    - step: 7
+      actor: user_rocker
+      action: "Applies new policy + returns recommendation with disclosure"
+      location: "rocker-chat returns to user"
+
+# ==================== NOTES ====================
+
+notes:
+  - "User Rocker NEVER sees other users' data - enforced by RLS"
+  - "Admin Rocker only gets anonymized summaries - no PII"
+  - "Super Andy has full access but ONLY via backend service role"
+  - "All cross-tier communication is logged in ai_action_ledger"
+  - "Super Andy runs self-training nightly - no human intervention needed"
+  - "Admin Rocker can suspend misbehaving User Rockers in real-time"

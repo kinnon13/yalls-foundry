@@ -13,6 +13,15 @@ verify_jwt = true
 [functions.user-rocker-chat]
 verify_jwt = true
 
+# ========== THREE-BRAIN HIERARCHY FUNCTIONS ==========
+# Admin Rocker → Super Andy Query API
+[functions.admin-query-super-andy]
+verify_jwt = true
+
+# Super Andy → Admin Rocker Config Push
+[functions.super-andy-deploy]
+verify_jwt = false
+
 # ========== ANDY SUBSYSTEMS ==========
 [functions.andy-chat]
 verify_jwt = true
