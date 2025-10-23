@@ -1,50 +1,54 @@
-/**
- * CI Guards - Hard architectural constraints
- * Prevents rogue changes to overlay scoping, route budget, and role configs
- */
-
+// Static guards so no one "goes rogue"
 import fs from 'node:fs';
-
 function mustContain(file, patterns) {
   const s = fs.readFileSync(file, 'utf8');
   for (const p of patterns) {
     if (!p.test(s)) {
-      console.error(`❌ Guard failed: "${file}" does not match ${p}`);
+      console.error(`❌ Guard failed in ${file}: missing ${p}`);
       process.exit(1);
     }
   }
 }
-
 function mustNotContain(file, patterns) {
   const s = fs.readFileSync(file, 'utf8');
   for (const p of patterns) {
     if (p.test(s)) {
-      console.error(`❌ Guard failed: "${file}" contains forbidden pattern ${p}`);
+      console.error(`❌ Guard failed in ${file}: found forbidden ${p}`);
       process.exit(1);
     }
   }
 }
-
-// 1) Overlay must NOT be global in App.tsx (scoped to /dashboard only)
-mustNotContain('src/App.tsx', [
-  /<OverlayHost/i,
-  /<PanelHost/i
-]);
-
-// 2) LegacyRedirector route must exist
-mustContain('src/App.tsx', [
-  /<Route\s+path="\*"\s+element={<LegacyRedirector\s*\/>}\s*\/>/
-]);
-
-// 3) Overview role must be 'user'
+const app = 'src/App.tsx';
+const dash = 'src/routes/dashboard/index.tsx';
 const reg = 'src/lib/overlay/registry.ts';
-mustContain(reg, [
-  /overview['"]?\s*:\s*{[^}]*role:\s*['"]user['"]/s
+
+// 1) Overlay system must NOT be global in App.tsx
+mustNotContain(app, [
+  /<OverlayHost\s*\/>/,
+  /from\s+['"]@\/lib\/overlay\/OverlayHost['"]/,
+  /<PanelHost\s*\/>/,
+  /from\s+['"]@\/lib\/panel\/PanelHost['"]/,
 ]);
 
-// 4) Overlay registry must be defined (sanity)
+// 2) Overlay system MUST exist inside Dashboard
+mustContain(dash, [
+  /from\s+['"]@\/lib\/overlay\/OverlayHost['"]/,
+  /<OverlayHost\s*\/>/,
+]);
+
+// 3) Ensure catch-all LegacyRedirector route still exists
+mustContain(app, [
+  /<Route\s+path=["']\*["']\s+element={<LegacyRedirector\s*\/>}\s*\/>/
+]);
+
+// 4) Ensure /dashboard route exists
+mustContain(app, [
+  /<Route\s+path=["']\/dashboard["']\s+element={<Dashboard\s*\/>}\s*\/>/
+]);
+
+// 5) Overview must be user accessible in overlay registry
 mustContain(reg, [
-  /export const OVERLAY_REGISTRY\s*:\s*Record/
+  /overview["']?\s*:\s*{[^}]*role:\s*["']user["'][^}]*}/s
 ]);
 
 console.log('✅ CI guards passed');

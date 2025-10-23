@@ -1,4 +1,4 @@
-// Count ONLY routes inside the main <Routes>...</Routes> block in src/App.tsx
+// Enforce EXACTLY 10 <Route path=...> entries in src/App.tsx (top-level only)
 import fs from 'node:fs';
 
 const path = 'src/App.tsx';
@@ -6,64 +6,14 @@ if (!fs.existsSync(path)) {
   console.error(`❌ Missing ${path}`);
   process.exit(1);
 }
+const s = fs.readFileSync(path, 'utf8');
+const match = s.match(/<Routes>([\s\S]*?)<\/Routes>/);
+const block = match ? match[1] : s;
+const count = (block.match(/<Route\s+path=/g) || []).length;
 
-// Read raw (keep markers if present)
-const raw = fs.readFileSync(path, 'utf8');
-
-// Helper: strip JS/TS/JSX comments
-const stripComments = (s) =>
-  s
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/\/\/.*$/gm, '');
-
-// 1) Prefer explicit markers if present
-const startIdx = raw.indexOf('ROUTE_BUDGET_START');
-const endIdx = raw.indexOf('ROUTE_BUDGET_END');
-let target = '';
-
-if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
-  console.log('🔎 Using ROUTE_BUDGET markers to isolate main <Routes>');
-  target = raw.slice(startIdx, endIdx);
-} else {
-  // 2) Fallback: score all <Routes> blocks in App.tsx and pick the canonical one
-  const blocks = raw.match(/<Routes[\s\S]*?<\/Routes>/g) || [];
-  console.log('🔎 Found <Routes> blocks:', blocks.length);
-  if (blocks.length === 0) {
-    console.error('❌ No <Routes> block found in src/App.tsx');
-    process.exit(1);
-  }
-
-  const score = (b) => {
-    let s = 0;
-    if (/path=["']\*["']/.test(b)) s += 5;
-    if (/path=["']\/["']/.test(b)) s += 2;
-    if (/path=["']\/dashboard["']/.test(b)) s += 3;
-    if (/path=["']\/auth["']/.test(b)) s += 2;
-    if (/path=["']\/auth\/callback["']/.test(b)) s += 2;
-    if (/path=["']\/privacy["']/.test(b)) s += 1;
-    if (/path=["']\/terms["']/.test(b)) s += 1;
-    if (/path=["']\/healthz["']/.test(b)) s += 1;
-    return s;
-  };
-
-  const scored = blocks.map((b, i) => ({ idx: i, s: score(b), b }));
-  scored.forEach(({ idx, s, b }) => {
-    const inBlockCount = (stripComments(b).match(/<Route\s+path=/g) || []).length;
-    console.log(`  • Block #${idx} score=${s} routeCount=${inBlockCount}`);
-  });
-  scored.sort((a, b) => b.s - a.s);
-  const picked = scored[0] || { b: blocks[0], s: 0, idx: 0 };
-  console.log(`✅ Picked block #${picked.idx} with score=${picked.s}`);
-  target = picked.b;
-}
-
-// Strip comments within target then count
-const content = stripComments(target);
-const count = (content.match(/<Route\s+path=/g) || []).length;
-
-console.log('Route count (main <Routes>):', count);
+console.log('Route count:', count);
 if (count !== 10) {
-  console.error('❌ Route budget violation in main <Routes>. Must be EXACTLY 10.');
+  console.error('❌ Route budget violation. Must be EXACTLY 10.');
   process.exit(1);
 }
 console.log('✅ Route budget OK');
