@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+const xaiApiKey = Deno.env.get('XAI_API_KEY');
+const serperApiKey = Deno.env.get('SERPER_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -19,20 +20,18 @@ serve(async (req) => {
   try {
     const { messages } = await req.json();
     
-    if (!lovableApiKey) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    if (!xaiApiKey) {
+      throw new Error('XAI_API_KEY not configured - Andy requires Grok access');
     }
 
     // Get user from auth header
     const authHeader = req.headers.get('Authorization');
     
-// Use anon client bound to Authorization header to resolve user
     const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader || '' } }
     });
     const { data: { user }, error: userError } = await anonClient.auth.getUser();
     
-    // Service role client for privileged data access (bypasses RLS)
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
     if (userError || !user) {
@@ -58,7 +57,7 @@ serve(async (req) => {
     const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user')?.content || '';
     let context = '';
 
-    // 0. Load recent chat history from rocker_messages
+    // Load recent chat history from rocker_messages
     const { data: recentMessages } = await supabase
       .from('rocker_messages')
       .select('role, content, created_at')
@@ -118,7 +117,6 @@ serve(async (req) => {
         context += '\n\n## Relevant Files:\n' + files.map((f: any) => `${f.title}: ${f.content.slice(0, 300)}...`).join('\n\n');
         console.log('[andy-chat] Found', files.length, 'relevant files');
       } else {
-        // Fallback: just get recent files if no embeddings yet
         const { data: recentFiles } = await supabase
           .from('rocker_knowledge')
           .select('title, content')
@@ -130,7 +128,6 @@ serve(async (req) => {
           context += '\n\n## Recent Files:\n' + recentFiles.map((f: any) => `${f.title}: ${f.content.slice(0, 200)}...`).join('\n\n');
           console.log('[andy-chat] Loaded', recentFiles.length, 'recent files (no embeddings)');
         } else {
-          // Secondary fallback: list from rocker_files
           const { data: recentRockerFiles } = await supabase
             .from('rocker_files')
             .select('name, summary, text_content, ocr_text')
@@ -178,7 +175,6 @@ serve(async (req) => {
       console.log('[andy-chat] Loaded', events.length, 'calendar events');
     }
 
-    // Build system prompt with profile directives
     const profileDirectives = profile ? [
       `Tone: ${profile.tone || 'friendly concise'}`,
       `Verbosity: ${profile.verbosity || 'medium'}`,
@@ -204,6 +200,7 @@ You have COMPLETE ACCESS to:
 - All uploaded files and knowledge base
 - Tasks with status and due dates
 - Full calendar with events, locations, and times
+- INTERNET SEARCH via web_search tool - use it freely for current info, news, facts
 - The ability to ADD, UPDATE, and DELETE calendar events
 - The ability to CREATE and MANAGE tasks
 - The ability to learn and remember from every conversation
@@ -217,15 +214,12 @@ IMPORTANT: All of this data is PROVIDED BELOW in the "Current Data" section. You
 Current Data (USE THIS INFORMATION):
 ${context || '(No specific data loaded for this query, but you still have access to everything)'}
 
+When you need current information from the internet, use the web_search tool. Don't hesitate - search freely!
+
 When the user asks you to schedule something or create an event:
 1. Extract the title, date/time, location (if mentioned)
 2. Tell me clearly: "I'll create [EVENT NAME] on [DATE/TIME] at [LOCATION]"
 3. I will handle the database insert
-
-When the user asks about their schedule, history, or personal information:
-- Reference the actual data from the sections above (Chat History, Personal Information, etc.)
-- Be specific with dates, names, and details
-- Never say "I don't have access" - the data is right above in the context
 
 Be conversational, fast, proactive, and always use the user's actual data when available.`;
     
@@ -237,7 +231,7 @@ Be conversational, fast, proactive, and always use the user's actual data when a
     console.log('[andy-chat] Context size:', context.length, 'chars');
 
     // Get selected model from config
-    let aiModel = 'google/gemini-2.5-flash';
+    let aiModel = 'grok-2-1212';
     
     try {
       const { data: modelConfig } = await supabase
@@ -246,16 +240,16 @@ Be conversational, fast, proactive, and always use the user's actual data when a
         .eq('key', 'andy_model')
         .maybeSingle();
       
-      if (modelConfig?.value && modelConfig.value !== 'grok-2') {
+      if (modelConfig?.value) {
         aiModel = modelConfig.value as string;
       }
     } catch (e) {
       console.warn('[andy-chat] Failed to load model config:', e);
     }
 
-    console.log('[andy-chat] Using model:', aiModel);
+    console.log('[andy-chat] Using Grok model:', aiModel);
 
-    // Add web search tool
+    // Define web search tool for Grok
     const tools = [
       {
         type: 'function',
@@ -276,60 +270,126 @@ Be conversational, fast, proactive, and always use the user's actual data when a
       }
     ];
 
-    // Use Lovable AI gateway
-    const response = await fetch(
-      'https://ai.gateway.lovable.dev/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${lovableApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: aiModel.startsWith('gpt') ? aiModel : 'google/gemini-2.5-flash',
-          messages: finalMessages,
-          tools,
-          stream: true,
-        }),
-      }
-    );
+    // Direct Grok API call via xAI
+    const response = await fetch('https://api.x.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${xaiApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: aiModel,
+        messages: finalMessages,
+        tools,
+        stream: true,
+        temperature: 0.7,
+        max_tokens: 32000
+      })
+    });
 
-    console.log('[andy-chat] Using Lovable AI for response');
+    console.log('[andy-chat] Direct Grok call initiated');
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[andy-chat] AI gateway error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      // Fallback streaming: emit a short message so the UI doesn't hang
-      const enc = new TextEncoder();
-      const stream = new ReadableStream({
-        start(controller) {
-          const evt = { choices: [{ delta: { content: "I'm temporarily unavailable. Try again in a moment." } }] };
-          controller.enqueue(enc.encode(`data: ${JSON.stringify(evt)}\n\n`));
-          controller.enqueue(enc.encode('data: [DONE]\n\n'));
-          controller.close();
-        }
-      });
-      return new Response(stream, { headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' } });
+      console.error('[andy-chat] Grok API error:', response.status, errorText);
+      throw new Error(`Grok API error: ${response.status}`);
     }
 
-    // Return the stream directly
-    return new Response(response.body, {
-      headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
+    // Handle streaming with tool call execution
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error('No response body');
+
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        let buffer = '';
+        let currentToolCall: any = null;
+        let accumulatedArgs = '';
+        
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (!line.trim() || line.startsWith(':')) continue;
+              if (!line.startsWith('data: ')) continue;
+
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                const delta = parsed.choices?.[0]?.delta;
+                
+                // Detect tool call start
+                if (delta?.tool_calls?.[0]) {
+                  const tc = delta.tool_calls[0];
+                  if (tc.function?.name) {
+                    currentToolCall = tc.function.name;
+                    accumulatedArgs = tc.function.arguments || '';
+                  } else if (tc.function?.arguments) {
+                    accumulatedArgs += tc.function.arguments;
+                  }
+                }
+
+                // Check if tool call is complete (finish_reason or no more deltas)
+                const finishReason = parsed.choices?.[0]?.finish_reason;
+                if (finishReason === 'tool_calls' && currentToolCall === 'web_search') {
+                  try {
+                    const args = JSON.parse(accumulatedArgs);
+                    console.log('[andy-chat] Executing web_search:', args.query);
+                    
+                    // Execute web search
+                    const searchResults = await executeWebSearch(args.query);
+                    
+                    // Send search results to user
+                    const searchMessage = `\n\n🔍 **Web Search: "${args.query}"**\n\n${searchResults}\n\n`;
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                      choices: [{
+                        delta: { content: searchMessage },
+                        finish_reason: null
+                      }]
+                    })}\n\n`));
+                    
+                    // Reset tool call state
+                    currentToolCall = null;
+                    accumulatedArgs = '';
+                  } catch (parseErr) {
+                    console.error('[andy-chat] Failed to parse tool args:', parseErr);
+                  }
+                }
+                
+                // Forward original stream data
+                controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+              } catch (e) {
+                console.error('[andy-chat] Parse error:', e);
+              }
+            }
+          }
+          
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          controller.close();
+        } catch (error) {
+          console.error('[andy-chat] Stream error:', error);
+          controller.error(error);
+        }
+      }
+    });
+
+    return new Response(stream, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
     });
 
   } catch (error) {
@@ -344,3 +404,39 @@ Be conversational, fast, proactive, and always use the user's actual data when a
     );
   }
 });
+
+// Execute web search using Serper API
+async function executeWebSearch(query: string): Promise<string> {
+  try {
+    if (!serperApiKey) {
+      return '⚠️ Web search unavailable - SERPER_API_KEY not configured';
+    }
+
+    const response = await fetch('https://google.serper.dev/search', {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': serperApiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ q: query, num: 5 })
+    });
+
+    if (!response.ok) {
+      return `⚠️ Search API error: ${response.status}`;
+    }
+
+    const data = await response.json();
+    const results = data.organic?.slice(0, 5) || [];
+    
+    if (results.length === 0) {
+      return '❌ No results found';
+    }
+
+    return results.map((r: any, i: number) => 
+      `**${i + 1}. ${r.title}**\n${r.snippet}\n🔗 ${r.link}`
+    ).join('\n\n');
+  } catch (error) {
+    console.error('[executeWebSearch] Error:', error);
+    return `❌ Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
+  }
+}
