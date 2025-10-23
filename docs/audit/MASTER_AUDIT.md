@@ -12,13 +12,10 @@ This document tracks the **actual** vs **intended** state of the project archite
 
 ```bash
 # Generate complete tree snapshot
-npm run audit:tree
+node scripts/audit/tree.mjs
 
 # Generate app/route/page inventory
-npm run audit:inventory
-
-# Run both
-npm run audit
+node scripts/audit/inventory.mjs
 ```
 
 ---
@@ -134,22 +131,27 @@ docs/
 
 To verify project state:
 
-1. **Run full audit:**
+1. **Run tree audit:**
    ```bash
-   npm run audit
+   node scripts/audit/tree.mjs
    ```
 
-2. **Check CI guards:**
+2. **Run inventory audit:**
    ```bash
-   npm run guard
+   node scripts/audit/inventory.mjs
    ```
 
-3. **Verify route budget:**
+3. **Check CI guards:**
    ```bash
-   npm run check:routes
+   node scripts/ci-guards.mjs
    ```
 
-4. **Review generated reports:**
+4. **Verify route budget:**
+   ```bash
+   node scripts/check-routes.mjs
+   ```
+
+5. **Review generated reports:**
    - `docs/audit/TREE_SNAPSHOT.md`
    - `docs/audit/INVENTORY.md`
 
