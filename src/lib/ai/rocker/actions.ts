@@ -35,6 +35,7 @@ export async function logAiAction(
 ): Promise<void> {
   try {
     await supabase.from('ai_action_ledger').insert({
+      tenant_id: userId,
       user_id: userId,
       agent: 'rocker',
       action,

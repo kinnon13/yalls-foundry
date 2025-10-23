@@ -19,9 +19,12 @@ interface TelemetryEvent {
 export async function logTelemetry(event: TelemetryEvent): Promise<void> {
   try {
     const user = await supabase.auth.getUser();
-    if (!user.data.user) return;
+    const userId = user.data.user?.id;
+    if (!userId) return;
     
     const { error } = await supabase.from('ai_feedback').insert([{
+      tenant_id: userId,
+      user_id: userId,
       kind: 'telemetry',
       route: event.route,
       target: event.target || null,
