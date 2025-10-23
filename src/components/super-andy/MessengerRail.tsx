@@ -115,22 +115,55 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
         { role: 'user', content: content.trim() }
       ];
 
+      console.log('[MessengerRail] Sending to andy-chat:', { messageCount: messageHistory.length });
+
       // Stream response from andy-chat
+      const authSession = await supabase.auth.getSession();
+      if (!authSession.data.session?.access_token) {
+        throw new Error('Not authenticated - please log in again');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/andy-chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Authorization': `Bearer ${authSession.data.session.access_token}`,
         },
         body: JSON.stringify({
           messages: messageHistory
         }),
       });
 
+      console.log('[MessengerRail] andy-chat response:', response.status);
+
       if (!response.ok) {
+        if (response.status === 429) {
+          toast({
+            title: 'Rate limit exceeded',
+            description: 'Please wait a moment and try again.',
+            variant: 'destructive',
+          });
+          throw new Error('Rate limit exceeded');
+        }
+        if (response.status === 402) {
+          toast({
+            title: 'AI credits required',
+            description: 'Please add credits to continue using Andy.',
+            variant: 'destructive',
+          });
+          throw new Error('Payment required');
+        }
+        if (response.status === 401) {
+          toast({
+            title: 'Authentication expired',
+            description: 'Please refresh the page and log in again.',
+            variant: 'destructive',
+          });
+          throw new Error('Authentication expired');
+        }
         const errorText = await response.text();
-        console.error('rocker-chat error:', errorText);
-        throw new Error(`Failed to get AI response: ${response.status}`);
+        console.error('[MessengerRail] andy-chat error:', errorText);
+        throw new Error(`Failed to get AI response: ${response.status} - ${errorText}`);
       }
 
       // Parse SSE stream with proper buffering
