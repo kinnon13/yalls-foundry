@@ -98,6 +98,9 @@ verify_jwt = true
 [functions.rocker-chat-simple]
 verify_jwt = true
 
+[functions.doc-analyzer]
+verify_jwt = true
+
 [functions.rocker-chat]
 verify_jwt = true
 
