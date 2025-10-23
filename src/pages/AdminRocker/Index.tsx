@@ -7,10 +7,12 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, Activity, DollarSign, Wrench } from 'lucide-react';
+import { ActionListener } from '@/components/rocker/ActionListener';
 
 export default function AdminRockerIndex() {
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
+      <ActionListener filter="suggest." />
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Admin Rocker Console</h1>
         <p className="text-muted-foreground">
