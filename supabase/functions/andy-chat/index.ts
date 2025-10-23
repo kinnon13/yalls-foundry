@@ -273,7 +273,17 @@ Be conversational, fast, proactive, and always use the user's actual data when a
         );
       }
       
-      throw new Error(`AI gateway error: ${response.status}`);
+      // Fallback streaming: emit a short message so the UI doesn't hang
+      const enc = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          const evt = { choices: [{ delta: { content: "I'm temporarily unavailable. Try again in a moment." } }] };
+          controller.enqueue(enc.encode(`data: ${JSON.stringify(evt)}\n\n`));
+          controller.enqueue(enc.encode('data: [DONE]\n\n'));
+          controller.close();
+        }
+      });
+      return new Response(stream, { headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' } });
     }
 
     // Return the stream directly
