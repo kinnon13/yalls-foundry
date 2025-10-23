@@ -337,10 +337,9 @@ verify_jwt = true
 verify_jwt = true
 
 # Vendor webhook shims (webhook-lite pattern)
-[functions.stripe_webhook]
-verify_jwt = false
+# Note: stripe-webhook already defined at line 46
 
-[functions.twilio_webhook]
+[functions.twilio-webhook]
 verify_jwt = false
 
 # P5: CTM (Conversation Task Memory) workers
