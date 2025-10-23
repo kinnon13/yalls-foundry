@@ -141,6 +141,18 @@ export function CreatePost({ onPostCreated, showRockerLabels = false }: CreatePo
         description: 'Your post has been created!',
       });
 
+      // EMIT EVENT: Notify Rocker of post creation
+      try {
+        const { rockerEvents } = await import('@/lib/rocker-events');
+        await rockerEvents.createPost(user.id, {
+          content: content || '',
+          media_type: mediaType,
+          has_media: !!mediaUrl,
+        });
+      } catch (emitError) {
+        console.error('[EventBus] Failed to emit event:', emitError);
+      }
+
       setContent('');
       removeMedia();
       onPostCreated?.();

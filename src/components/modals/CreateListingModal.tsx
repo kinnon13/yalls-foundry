@@ -152,6 +152,19 @@ export default function CreateListingModal({ context, onSaved, onPublished, onCl
         description: "Marketplace listing will be created once marketplace schema is ready"
       });
 
+      // EMIT EVENT: Notify Rocker of listing creation
+      try {
+        const { rockerEvents } = await import('@/lib/rocker-events');
+        await rockerEvents.createListing(session.userId, {
+          draft_id: currentDraftId,
+          title: payload.title,
+          category: payload.category,
+          price: payload.price,
+        });
+      } catch (emitError) {
+        console.error('[EventBus] Failed to emit event:', emitError);
+      }
+
       // Return draft ID as temporary entity ID
       onPublished(currentDraftId || crypto.randomUUID());
 

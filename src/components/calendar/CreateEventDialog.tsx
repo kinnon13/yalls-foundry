@@ -162,6 +162,23 @@ export default function CreateEventDialog({
       }
 
       toast({ title: 'Event created', description: 'Your event was added to the calendar.' });
+      
+      // EMIT EVENT: Notify Rocker of calendar event creation
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { rockerEvents } = await import('@/lib/rocker-events');
+          await rockerEvents.createCalendarEvent(user.id, {
+            event_id: data?.event?.id,
+            calendar_id: calendarId,
+            title: title.trim(),
+            starts_at: startsAt,
+          });
+        }
+      } catch (emitError) {
+        console.error('[EventBus] Failed to emit event:', emitError);
+      }
+      
       onOpenChange(false);
       resetForm();
       onCreated?.();

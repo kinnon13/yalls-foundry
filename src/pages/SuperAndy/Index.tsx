@@ -7,10 +7,12 @@ import { SuperAndyChat } from '@/components/super-andy/SuperAndyChat';
 import ProactiveRail from './ProactiveRail';
 import SelfImproveLog from './SelfImproveLog';
 import { RockerActionsSidebar } from '@/components/rocker/RockerActionsSidebar';
+import { ActionListener } from '@/components/rocker/ActionListener';
 
 export default function SuperAndyPage() {
   return (
     <>
+      <ActionListener filter="suggest." />
       <RockerActionsSidebar />
       <div className="grid grid-cols-[1fr_360px] gap-6 h-[calc(100vh-6rem)]">
         <div className="flex flex-col">

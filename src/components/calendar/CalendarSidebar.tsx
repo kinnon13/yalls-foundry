@@ -146,6 +146,21 @@ export function CalendarSidebar({
         description: `${newCalName} has been created`,
       });
 
+      // EMIT EVENT: Notify Rocker of calendar creation
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { rockerEvents } = await import('@/lib/rocker-events');
+          await rockerEvents.createCalendar(user.id, {
+            calendar_id: data?.calendar?.id,
+            name: newCalName,
+            type: newCalType,
+          });
+        }
+      } catch (emitError) {
+        console.error('[EventBus] Failed to emit event:', emitError);
+      }
+
       setNewCalName('');
       setNewCalType('personal');
       setNewCalColor('#3B82F6');

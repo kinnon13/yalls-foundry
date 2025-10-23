@@ -23,6 +23,7 @@ import { MobileTabBar } from '@/components/mobile/MobileTabBar';
 import { CreateModalRouter } from '@/components/modals/CreateModalRouter';
 import OverlayHost from '@/lib/overlay/OverlayHost';
 import PanelHost from '@/lib/panel/PanelHost';
+import { ActionListener } from '@/components/rocker/ActionListener';
 
 function ActiveAppContent({ appId, onClose }: { appId: OverlayKey; onClose: () => void }) {
   const config = OVERLAY_REGISTRY[appId];
@@ -103,6 +104,7 @@ export default function Dashboard() {
 
   return (
     <>
+      <ActionListener />
       {/* Desktop: Mac-style shell */}
       <div className="hidden lg:flex flex-col h-screen">
         <HeaderBar />

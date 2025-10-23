@@ -48,6 +48,9 @@ export const rockerEvents = {
   createBusiness: (userId: string, businessData: any) =>
     emitUserAction('user.create.business', userId, businessData),
     
+  createListing: (userId: string, listingData: any) =>
+    emitUserAction('user.create.listing', userId, listingData),
+    
   searchPerformed: (userId: string, query: string) =>
     emitUserAction('user.search', userId, { query }),
     
