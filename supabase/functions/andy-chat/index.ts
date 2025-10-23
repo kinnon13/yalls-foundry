@@ -236,27 +236,24 @@ Be conversational, fast, proactive, and always use the user's actual data when a
 
     console.log('[andy-chat] Context size:', context.length, 'chars');
 
-    // Call Grok AI for Andy (knower-level reasoning)
-    const grokKey = Deno.env.get('GROK_API_KEY');
-    const useGrok = !!grokKey;
-    
+    // Always use Lovable AI gateway for OpenAI-compatible streaming
     const response = await fetch(
-      useGrok ? 'https://api.x.ai/v1/chat/completions' : 'https://ai.gateway.lovable.dev/v1/chat/completions',
+      'https://ai.gateway.lovable.dev/v1/chat/completions',
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${useGrok ? grokKey : lovableApiKey}`,
+          'Authorization': `Bearer ${lovableApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: useGrok ? 'grok-2-vision' : 'google/gemini-2.5-flash',
+          model: 'google/gemini-2.5-flash',
           messages: finalMessages,
           stream: true,
         }),
       }
     );
 
-    console.log('[andy-chat] Using', useGrok ? 'Grok-2-Vision' : 'Gemini', 'for response');
+    console.log('[andy-chat] Using Gemini via Lovable AI for response');
 
     if (!response.ok) {
       const errorText = await response.text();
