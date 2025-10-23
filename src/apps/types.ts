@@ -8,7 +8,7 @@ export type AppId =
   | 'listings' | 'events' | 'earnings' | 'incentives' | 'farm-ops' | 'activity'
   | 'analytics' | 'favorites' | 'cart' | 'orders' | 'notifications' | 'profile'
   | 'entities' | 'mlm' | 'business' | 'producer' | 'settings' | 'overview'
-  | 'rocker' | 'admin-rocker' | 'andy';
+  | 'rocker' | 'admin-rocker';
 
 export type Role = 'anonymous' | 'user' | 'admin' | 'super';
 

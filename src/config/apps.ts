@@ -305,17 +305,6 @@ export const ALL_APPS: AppConfig[] = [
   
   // System
   { 
-    id: 'andy', 
-    label: 'Super Andy', 
-    icon: Brain,
-    iconName: 'Brain',
-    description: 'AI workspace with chat & tools', 
-    category: 'System', 
-    color: 'text-white', 
-    gradient: 'from-purple-600 via-violet-600 to-fuchsia-600',
-    installed: true 
-  },
-  { 
     id: 'rocker', 
     label: 'Rocker', 
     icon: Bot,

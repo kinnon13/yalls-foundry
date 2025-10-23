@@ -18,11 +18,7 @@ export default function SuperAndy() {
   const [activeApp, setActiveApp] = useState<AppId>('files');
   const [threadId, setThreadId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isLoading && !isSuperAdmin) {
-      navigate('/');
-    }
-  }, [isSuperAdmin, isLoading, navigate]);
+  // Auth check removed - Super Andy is always accessible
 
   // Read ?app= from URL and set the active app on load
   useEffect(() => {
@@ -123,45 +119,6 @@ export default function SuperAndy() {
         </div>
       </div>
 
-      {/* Preview auth banner */}
-      {!session?.userId && (
-        <div className="px-4 py-3 bg-accent/20 border-b border-border/40 text-foreground text-sm flex items-center justify-between gap-3 flex-wrap">
-          <span>Preview: Start an anonymous session and enter Super Mode to access the dashboard.</span>
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                const sp = new URLSearchParams(window.location.search);
-                sp.set('role', 'super');
-                const url = `${window.location.pathname}?${sp.toString()}`;
-                window.location.replace(url);
-              }}
-            >
-              Enter Super Mode
-            </Button>
-            <Button
-              size="sm"
-              onClick={async () => {
-                const { supabase } = await import('@/integrations/supabase/client');
-                try {
-                  const auth: any = supabase.auth;
-                  if (typeof auth.signInAnonymously === 'function') {
-                    await auth.signInAnonymously();
-                    window.location.reload();
-                  } else {
-                    console.warn('[SuperAndy] Anonymous auth not available');
-                  }
-                } catch (e) {
-                  console.error('[SuperAndy] Anonymous auth failed:', e);
-                }
-              }}
-            >
-              Start Andy
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* 3-Panel Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_400px] gap-4 p-4 md:p-6 h-[calc(100vh-3.5rem-var(--dock-h,0px))] pb-[calc(var(--dock-h,0px)+1rem)] lg:pb-6">

@@ -39,7 +39,6 @@ import settingsContractSimple from '@/apps/settings/contract';
 import overviewContractSimple from '@/apps/overview/contract';
 import rockerContractSimple from '@/apps/rocker/contract';
 import adminRockerContractSimple from '@/apps/admin-rocker/contract';
-import andyContractSimple from '@/apps/andy/contract';
 
 import { contractRegistry } from './contract-registry';
 import type { AppContract } from './types';
@@ -92,6 +91,5 @@ contractRegistry.register(toExtendedContract(settingsContractSimple));
 contractRegistry.register(toExtendedContract(overviewContractSimple));
 contractRegistry.register(toExtendedContract(rockerContractSimple));
 contractRegistry.register(toExtendedContract(adminRockerContractSimple));
-contractRegistry.register(toExtendedContract(andyContractSimple));
 
 console.log('[Kernel] Registered contracts:', contractRegistry.getAll().map(c => c.id));
