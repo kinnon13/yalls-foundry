@@ -249,7 +249,7 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      } // end of simple tasks else block
+      } // end else block (simple tasks)
 
       // Phase 2: Gap signal detection - log when confidence is low
       if (confidence < 0.65) {
