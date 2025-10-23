@@ -15,6 +15,7 @@ Complete 7-layer self-auditing, self-healing system with shared utilities:
 - verify-structure.ts
 - verify-supabase-config.ts
 - verify-modules.ts
+- verify-mission-integrity.ts ⭐ (full stack verifier with telemetry)
 - README.md
 
 ### Layer 2: SCAN 🔍 (`scripts/scan/`)
@@ -54,6 +55,9 @@ Complete 7-layer self-auditing, self-healing system with shared utilities:
 # Setup guards (one-time)
 ./scripts/setup-guards.sh
 
+# Run MISSION INTEGRITY CHECK (recommended first step)
+deno run -A scripts/guard/verify-mission-integrity.ts
+
 # Run full scan (all 7 layers + modules)
 deno run -A scripts/master-elon-scan.ts
 
@@ -82,6 +86,7 @@ Add to `package.json`:
 ```json
 {
   "scripts": {
+    "verify": "deno run -A scripts/guard/verify-mission-integrity.ts",
     "scan": "deno run -A scripts/master-elon-scan.ts",
     "scan:guard": "./scripts/guard-quick-check.sh",
     "scan:dead-code": "deno run -A scripts/scan/find-dead-code.ts",
@@ -110,6 +115,7 @@ All scan outputs write to `scripts/audit/*.json`:
 - **ping-results.json** - Edge function health
 - **rocker-integrity-results.json** - AI kernel status
 - **admin-schema-results.json** - Dashboard schema validation
+- **integrity-history.json** - Mission integrity verification history
 
 ## Documentation
 
@@ -118,6 +124,12 @@ All scan outputs write to `scripts/audit/*.json`:
 - **GUARD_FLOW_README.md** - Guard system details
 - **SETUP_INSTRUCTIONS.md** - Installation guide
 - **scripts/*/README.md** - Layer-specific documentation
+
+## CI/CD Integration
+
+- **.github/workflows/mission-integrity.yml** - Automated verification on every push/PR
+- **.github/workflows/guard-flow.yml** - Guard system checks
+- **.husky/pre-commit** - Local pre-commit guard hooks
 
 ## Architecture
 

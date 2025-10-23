@@ -1,0 +1,43 @@
+name: 🛰️ Mission Integrity Verification
+
+on:
+  push:
+    branches: [ main, dev, staging ]
+  pull_request:
+    branches: [ main, dev, staging ]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: 🚀 Mission Integrity Check
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: 🧭 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: 🔍 Run Mission Integrity Verifier
+        run: deno run -A scripts/guard/verify-mission-integrity.ts
+
+      - name: 📦 Upload integrity history (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integrity-history
+          path: scripts/audit/integrity-history.json
+
+      - name: ✅ Success confirmation
+        if: success()
+        run: echo "✅ All systems nominal — Mission GO"
+
+      - name: ❌ Failure notice
+        if: failure()
+        run: echo "🛑 NO-GO — Mission Integrity FAILED"
