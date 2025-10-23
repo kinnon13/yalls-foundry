@@ -425,3 +425,13 @@ schedule = "0 2 * * *"  # Daily at 2 AM
 [functions.fine_tune_cohort]
 verify_jwt = true
 
+# Andy Learning System - Manual triggers for admin
+[functions.andy-auto-analyze]
+verify_jwt = false
+
+[functions.andy-expand-memory]
+verify_jwt = false
+
+[functions.andy-enhance-memories]
+verify_jwt = false
+
