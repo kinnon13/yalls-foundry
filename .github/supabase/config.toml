@@ -1,0 +1,2 @@
+[functions.andy_health]
+verify_jwt = false
