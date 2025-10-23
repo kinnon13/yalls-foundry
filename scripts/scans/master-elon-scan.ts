@@ -26,7 +26,7 @@ console.log(`\n🚀 Master Elon Scan v11 ${FIX ? "(AUTO-FIX MODE)" : "(SCAN ONLY
 
 const results: Record<string, any> = {};
 for (const script of SCRIPTS) {
-  const path = join("scripts", script);
+  const path = join("scripts/scans", script);
   console.log(`\n▶ Running ${script}...`);
   const p = new Deno.Command("deno", { 
     args: ["run", "-A", path, ...(FIX ? ["--fix"] : [])] 
