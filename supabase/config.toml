@@ -1,8 +1,21 @@
 project_id = "xuxfuonzsfvrirdwzddt"
 
-[functions.andy-chat]
+# ========== THREE SEPARATE AI SYSTEMS ==========
+# Super Andy - knower level (full system access)
+[functions.super-andy-chat]
 verify_jwt = true
 
+# Admin Rocker - admin level (moderation, analytics)
+[functions.admin-rocker-chat]
+verify_jwt = true
+
+# User Rocker - user level (personal assistant)
+[functions.user-rocker-chat]
+verify_jwt = true
+
+# ========== ANDY SUBSYSTEMS ==========
+[functions.andy-chat]
+verify_jwt = true
 
 [functions.andy-embed-knowledge]
 verify_jwt = false

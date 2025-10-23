@@ -7,6 +7,7 @@ import { SuperAndyChat } from '@/components/super-andy/SuperAndyChat';
 import { DocumentUpload } from '@/components/super-andy/DocumentUpload';
 import { VoiceChat } from '@/components/super-andy/VoiceChat';
 import { AndyBrain } from '@/components/super-andy/AndyBrain';
+import { AndyMonitoring } from '@/components/super-andy/AndyMonitoring';
 import ProactiveRail from './ProactiveRail';
 import SelfImproveLog from './SelfImproveLog';
 import { RockerActionsSidebar } from '@/components/rocker/RockerActionsSidebar';
@@ -26,6 +27,7 @@ export default function SuperAndyPage() {
         </div>
         
         <div className="space-y-6 overflow-y-auto">
+          <AndyMonitoring />
           <AndyBrain />
           <VoiceChat />
           <DocumentUpload onAnalysisComplete={(analysis) => console.log('Doc analyzed:', analysis)} />
