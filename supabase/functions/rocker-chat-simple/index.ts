@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { ai, type Message } from "../_shared/ai.ts";
 import { rockerTools } from "./tools.ts";
-import { executeTool } from "./executor.ts";
+import { executeTool } from "./executor-full.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
