@@ -40,9 +40,9 @@ echo ""
 echo "🧪 Testing guard scripts..."
 echo ""
 
-deno run -A scripts/verify-structure.ts
-deno run -A scripts/verify-supabase-config.ts
-deno run -A scripts/verify-modules.ts
+deno run -A scripts/guard/verify-structure.ts
+deno run -A scripts/guard/verify-supabase-config.ts
+deno run -A scripts/guard/verify-modules.ts
 
 echo ""
 echo "═══════════════════════════════════════════════════════════════════"

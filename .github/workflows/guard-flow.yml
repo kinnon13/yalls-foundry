@@ -21,17 +21,17 @@ jobs:
       - name: 🔍 Verify File Structure
         run: |
           echo "Running structure verification..."
-          deno run -A scripts/verify-structure.ts
+          deno run -A scripts/guard/verify-structure.ts
       
       - name: 🔍 Verify Supabase Config
         run: |
           echo "Running Supabase config verification..."
-          deno run -A scripts/verify-supabase-config.ts
+          deno run -A scripts/guard/verify-supabase-config.ts
       
       - name: 🔍 Verify Module Integrity
         run: |
           echo "Running module integrity check..."
-          deno run -A scripts/verify-modules.ts
+          deno run -A scripts/guard/verify-modules.ts
       
       - name: 📊 Run Full Audit (Scan Only)
         run: |

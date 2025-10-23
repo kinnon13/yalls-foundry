@@ -1,79 +1,148 @@
 #!/usr/bin/env -S deno run -A
-// Master Elon-Class Audit Orchestrator v11.5
-// Drives all modular audits and writes full summary
+// Y'ALL MASTER SCAN - UNIFIED COMMAND CENTER
+// Orchestrates complete stack audit across all layers
 
-import { join } from "https://deno.land/std@0.223.0/path/mod.ts";
 import { ensureDir } from "https://deno.land/std@0.223.0/fs/mod.ts";
 
-const FIX = Deno.args.includes("--fix");
-const MODULE_DIR = "scripts/modules";
 const AUDIT_DIR = "scripts/audit";
 await ensureDir(AUDIT_DIR);
 
-const MODULES = [
-  "sync-config-from-folders.ts",
-  "rls-policy-audit.ts",
-  "deep-duplicate-scan.ts",
-  "cross-dependency-scan.ts",
-  "ghost-code-scan.ts",
-  "security-orbit-scan.ts",
-  "schema-drift-scan.ts",
-  "performance-fingerprint.ts",
-  "document-dedupe.ts",
-  "telemetry-map.ts",
-];
+console.log(`
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                    🚀 Y'ALL MASTER SCAN v∞                                 ║
+║                 FULL STACK AUDIT - ALL SYSTEMS                             ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+`);
 
-console.log(`\n🚀 Elon-Class Master Scan ${FIX ? "(AUTO-FIX MODE)" : "(SCAN-ONLY)"}\n`);
-console.log(`Running ${MODULES.length} independent audit modules...\n`);
+type ScanResult = {
+  layer: string;
+  script: string;
+  success: boolean;
+  output: string;
+  error?: string;
+  duration: number;
+};
 
-const summary: Record<string, any> = {};
-let failures = 0;
+const results: ScanResult[] = [];
 
-for (const mod of MODULES) {
-  const path = join(MODULE_DIR, mod);
-  console.log(`▶ ${mod}`);
+async function runScript(layer: string, script: string): Promise<ScanResult> {
+  const startTime = Date.now();
+  console.log(`\n▶ [${layer.toUpperCase()}] Running ${script}...`);
+  console.log(`${"─".repeat(80)}`);
   
-  const p = new Deno.Command("deno", {
-    args: ["run", "-A", path, ...(FIX ? ["--fix"] : [])],
-  }).spawn();
-  
-  const { code, stdout, stderr } = await p.output();
-  const out = new TextDecoder().decode(stdout);
-  const err = new TextDecoder().decode(stderr);
-  
-  summary[mod] = {
-    ok: code === 0,
-    timestamp: new Date().toISOString(),
-    out,
-    err,
-  };
-  
-  if (code === 0) {
-    console.log(`✅ ${mod} completed`);
-  } else {
-    console.log(`❌ ${mod} FAILED`);
-    failures++;
+  try {
+    const process = new Deno.Command("deno", {
+      args: ["run", "-A", `scripts/${layer}/${script}`],
+      stdout: "piped",
+      stderr: "piped"
+    });
+    
+    const { code, stdout, stderr } = await process.output();
+    const output = new TextDecoder().decode(stdout);
+    const error = new TextDecoder().decode(stderr);
+    
+    console.log(output);
+    if (error && code !== 0) console.error(error);
+    
+    const duration = Date.now() - startTime;
+    const success = code === 0;
+    
+    console.log(`${success ? "✅" : "❌"} ${script} (${duration}ms)`);
+    
+    return { layer, script, success, output, error: error || undefined, duration };
+  } catch (e) {
+    const duration = Date.now() - startTime;
+    console.error(`❌ Failed to run ${script}: ${e.message}`);
+    return { layer, script, success: false, output: "", error: e.message, duration };
   }
-  console.log(out);
-  if (err) console.error(err);
-  console.log("");
 }
 
-// Write master summary
-const summaryPath = join(AUDIT_DIR, "master-summary.json");
-await Deno.writeTextFile(summaryPath, JSON.stringify({
+// LAYER 1: GUARD (Pre-Flight Checks)
+console.log(`\n╔════════════════ LAYER 1: GUARD ════════════════╗`);
+results.push(await runScript("guard", "verify-structure.ts"));
+results.push(await runScript("guard", "verify-supabase-config.ts"));
+results.push(await runScript("guard", "verify-modules.ts"));
+
+// LAYER 2: SCAN (Analytics & Detection)
+console.log(`\n╔════════════════ LAYER 2: SCAN ═════════════════╗`);
+results.push(await runScript("scan", "find-dead-code.ts"));
+results.push(await runScript("scan", "find-duplicate-docs.ts"));
+
+// Only run if files exist
+try {
+  await Deno.stat("scripts/scan/deep-duplicate-scan.ts");
+  results.push(await runScript("scan", "deep-duplicate-scan.ts"));
+} catch {
+  console.log(`ℹ️  Skipping deep-duplicate-scan.ts (not found)`);
+}
+
+try {
+  await Deno.stat("scripts/scan/scan-cross-dependencies-v2.ts");
+  results.push(await runScript("scan", "scan-cross-dependencies-v2.ts"));
+} catch {
+  console.log(`ℹ️  Skipping scan-cross-dependencies-v2.ts (not found)`);
+}
+
+// LAYER 3: AUDIT (Integrity Checks)
+console.log(`\n╔════════════════ LAYER 3: AUDIT ════════════════╗`);
+results.push(await runScript("audit", "audit-functions.ts"));
+results.push(await runScript("audit", "sync-supabase-config.ts"));
+
+// LAYER 4: HEALTH (Live System)
+console.log(`\n╔════════════════ LAYER 4: HEALTH ═══════════════╗`);
+results.push(await runScript("health", "verify-platform.ts"));
+
+// Only run ping if SUPABASE_URL is set
+if (Deno.env.get("SUPABASE_URL") || Deno.env.get("VITE_SUPABASE_URL")) {
+  results.push(await runScript("health", "ping-functions.ts"));
+} else {
+  console.log(`ℹ️  Skipping ping-functions.ts (SUPABASE_URL not set)`);
+}
+
+// FINAL SUMMARY
+const successful = results.filter(r => r.success).length;
+const failed = results.filter(r => !r.success).length;
+const totalDuration = results.reduce((sum, r) => sum + r.duration, 0);
+
+const summary = {
   timestamp: new Date().toISOString(),
-  mode: FIX ? "fix" : "scan",
-  totalModules: MODULES.length,
-  failures,
-  modules: summary
-}, null, 2));
+  summary: {
+    total: results.length,
+    successful,
+    failed,
+    totalDuration,
+    avgDuration: Math.round(totalDuration / results.length)
+  },
+  results: results.map(({ layer, script, success, duration }) => ({
+    layer,
+    script,
+    success,
+    duration
+  }))
+};
 
-console.log(`\n${"=".repeat(80)}`);
-console.log(`💾 Full summary → ${summaryPath}`);
-console.log(`✅ ${MODULES.length - failures}/${MODULES.length} modules succeeded`);
-if (failures > 0) console.log(`❌ ${failures} module(s) failed`);
-console.log(`${FIX ? "🛠️  Auto-fixes applied" : "ℹ️  Run with --fix to apply fixes"}`);
-console.log(`${"=".repeat(80)}\n`);
+await Deno.writeTextFile(
+  `${AUDIT_DIR}/master-scan-summary.json`,
+  JSON.stringify(summary, null, 2)
+);
 
-Deno.exit(failures > 0 ? 1 : 0);
+console.log(`
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                         MASTER SCAN COMPLETE                               ║
+╠═══════════════════════════════════════════════════════════════════════════╣
+║  Total Scripts: ${results.length.toString().padEnd(60)}║
+║  ✅ Successful: ${successful.toString().padEnd(60)}║
+║  ❌ Failed:     ${failed.toString().padEnd(60)}║
+║  ⏱️  Duration:   ${totalDuration}ms (avg ${Math.round(totalDuration/results.length)}ms per script)${' '.padEnd(32)}║
+╠═══════════════════════════════════════════════════════════════════════════╣
+║  📊 Report:    scripts/audit/master-scan-summary.json                     ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+`);
+
+if (failed > 0) {
+  console.log(`\n⚠️  ${failed} scan(s) failed. Review output above for details.\n`);
+  Deno.exit(1);
+} else {
+  console.log(`\n✅ All systems operational. Architecture integrity verified.\n`);
+  Deno.exit(0);
+}

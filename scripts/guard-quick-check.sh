@@ -9,15 +9,15 @@ echo ""
 FAILED=0
 
 echo "▶ Structure..."
-deno run -A scripts/verify-structure.ts || FAILED=$((FAILED + 1))
+deno run -A scripts/guard/verify-structure.ts || FAILED=$((FAILED + 1))
 echo ""
 
 echo "▶ Supabase Config..."
-deno run -A scripts/verify-supabase-config.ts || FAILED=$((FAILED + 1))
+deno run -A scripts/guard/verify-supabase-config.ts || FAILED=$((FAILED + 1))
 echo ""
 
 echo "▶ Modules..."
-deno run -A scripts/verify-modules.ts || FAILED=$((FAILED + 1))
+deno run -A scripts/guard/verify-modules.ts || FAILED=$((FAILED + 1))
 echo ""
 
 echo "═══════════════════════════════════════════════════════════════════"

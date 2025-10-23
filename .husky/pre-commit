@@ -7,19 +7,19 @@ echo "════════════════════════�
 echo ""
 
 # Run all guard scripts
-deno run -A scripts/verify-structure.ts || {
+deno run -A scripts/guard/verify-structure.ts || {
   echo ""
   echo "❌ Pre-commit blocked: Structure verification failed"
   exit 1
 }
 
-deno run -A scripts/verify-supabase-config.ts || {
+deno run -A scripts/guard/verify-supabase-config.ts || {
   echo ""
   echo "❌ Pre-commit blocked: Supabase config verification failed"
   exit 1
 }
 
-deno run -A scripts/verify-modules.ts || {
+deno run -A scripts/guard/verify-modules.ts || {
   echo ""
   echo "❌ Pre-commit blocked: Module integrity verification failed"
   exit 1
