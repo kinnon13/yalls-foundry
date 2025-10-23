@@ -59,7 +59,7 @@ export function VoiceChat({ agentId }: VoiceChatProps) {
 
       // Get signed URL from ElevenLabs for the agent
       const response = await fetch(
-        `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agentId || 'your-agent-id'}`,
+        `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agentId || 'GhkQkxbimoIykF4iGYqh'}`,
         {
           method: 'GET',
           headers: {
