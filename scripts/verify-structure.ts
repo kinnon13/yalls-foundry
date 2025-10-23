@@ -1,5 +1,5 @@
 #!/usr/bin/env -S deno run -A
-// Structure verification - ensures all critical audit files are present
+// Structure Guard - ensures all critical audit files are present
 import { exists } from "https://deno.land/std@0.223.0/fs/mod.ts";
 
 const REQUIRED_FILES = [
@@ -17,25 +17,35 @@ const REQUIRED_FILES = [
   "scripts/modules/telemetry-map.ts",
 ];
 
-console.log("🔍 Verifying audit system structure...\n");
+console.log("🔍 Guard Flow: Checking critical file structure...\n");
 
-let missing = 0;
+const missing: string[] = [];
+const present: string[] = [];
+
 for (const path of REQUIRED_FILES) {
   if (!(await exists(path))) {
-    console.error(`❌ Missing: ${path}`);
-    missing++;
+    missing.push(path);
+    console.error(`❌ MISSING: ${path}`);
   } else {
+    present.push(path);
     console.log(`✅ ${path}`);
   }
 }
 
 console.log(`\n${"=".repeat(80)}`);
-if (missing > 0) {
-  console.error(`❌ STRUCTURE INVALID: ${missing} required file(s) missing`);
-  console.error("   Cannot run audit system safely");
+console.log(`Present: ${present.length}/${REQUIRED_FILES.length}`);
+console.log(`Missing: ${missing.length}/${REQUIRED_FILES.length}`);
+
+if (missing.length > 0) {
+  console.error(`\n❌ STRUCTURE GUARD FAILED`);
+  console.error(`   ${missing.length} critical file(s) missing`);
+  console.error(`   Cannot proceed - architectural integrity compromised`);
+  console.log(`${"=".repeat(80)}\n`);
   Deno.exit(1);
 } else {
-  console.log("✅ Structure verified. All ${REQUIRED_FILES.length} core audit files present.");
-  console.log("   Safe to run: deno run -A scripts/master-elon-scan.ts");
+  console.log(`\n✅ STRUCTURE GUARD PASSED`);
+  console.log(`   All ${REQUIRED_FILES.length} core files verified`);
+  console.log(`   Architecture integrity intact`);
+  console.log(`${"=".repeat(80)}\n`);
+  Deno.exit(0);
 }
-console.log(`${"=".repeat(80)}\n`);

@@ -1,0 +1,66 @@
+name: Guard Flow - Architecture Enforcement
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  enforce-architecture:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v1.x
+      
+      - name: 🔍 Verify File Structure
+        run: |
+          echo "Running structure verification..."
+          deno run -A scripts/verify-structure.ts
+      
+      - name: 🔍 Verify Supabase Config
+        run: |
+          echo "Running Supabase config verification..."
+          deno run -A scripts/verify-supabase-config.ts
+      
+      - name: 🔍 Verify Module Integrity
+        run: |
+          echo "Running module integrity check..."
+          deno run -A scripts/verify-modules.ts
+      
+      - name: 📊 Run Full Audit (Scan Only)
+        run: |
+          echo "Running full audit scan..."
+          deno run -A scripts/master-elon-scan.ts
+      
+      - name: 📦 Upload Audit Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-reports-${{ github.sha }}
+          path: scripts/audit/
+          retention-days: 30
+      
+      - name: ❌ Block on Guard Failure
+        if: failure()
+        run: |
+          echo "════════════════════════════════════════════════════════════════"
+          echo "❌ GUARD FLOW FAILED"
+          echo "   Architectural violation detected"
+          echo "   This PR/commit is blocked until violations are resolved"
+          echo "════════════════════════════════════════════════════════════════"
+          exit 1
+      
+      - name: ✅ Guard Success
+        if: success()
+        run: |
+          echo "════════════════════════════════════════════════════════════════"
+          echo "✅ GUARD FLOW PASSED"
+          echo "   All architectural checks passed"
+          echo "   Code is safe to merge"
+          echo "════════════════════════════════════════════════════════════════"

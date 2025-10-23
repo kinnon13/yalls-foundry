@@ -1,35 +1,17 @@
-# CODEOWNERS - Documentation for critical paths
-# SOLO MODE: No mandatory reviews required, but these paths need extra care
-# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# Code Owners - Architecture Gatekeepers
+# These paths require explicit approval before merging
 
-# Critical architecture - lock to prevent rogue changes
-/src/App.tsx
-/src/routes/**
-/src/lib/overlay/**
-/scripts/check-routes.mjs
-/scripts/ci-guards.mjs
+# Core audit system - requires owner approval
+/scripts/master-elon-scan.ts @owner
+/scripts/modules/ @owner
+/scripts/verify-*.ts @owner
 
-# DB migrations - test thoroughly before merging to staging
-supabase/migrations/**
+# Supabase function configuration - requires owner approval
+/supabase/config.toml @owner
 
-# Shared functions (tenant guard, rate limits) - impacts all features
-supabase/functions/_shared/**
+# CI/CD and guards - requires owner approval
+/.github/workflows/ @owner
+/.github/CODEOWNERS @owner
 
-# Edge functions - verify RLS + tenant isolation
-supabase/functions/**/index.ts
-
-# Security audit scripts - verify against staging DB first
-scripts/audit/**
-
-# CI config - changes affect all PRs
-.github/workflows/**
-
-# Key docs - keep synchronized with actual workflow
-docs/BRANCHING_STRATEGY.md
-docs/PRODUCTION_HARDENING.md
-docs/SOLO_WORKFLOW.md
-
-# Root config - affects build/types for entire project
-tsconfig.json
-vite.config.ts
-tailwind.config.ts
+# Note: Replace @owner with your actual GitHub username
+# Example: /scripts/modules/ @yourusername
