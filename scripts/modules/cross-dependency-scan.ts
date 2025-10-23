@@ -1,71 +1,152 @@
 #!/usr/bin/env -S deno run -A
-import { parse } from "https://deno.land/std@0.223.0/toml/mod.ts";
-import { exists, readText, writeJSON, ensureDir, FUNCS_DIR, AUDIT_DIR } from "./_utils.ts";
+// Cross-category dependency scanner with bridge generation
 import { walk } from "https://deno.land/std@0.223.0/fs/walk.ts";
+import { exists, writeJSON, ensureDir, FUNCS_DIR, AUDIT_DIR, getFix, now } from "./_utils.ts";
 
-const FIX = Deno.args.includes("--fix");
+const FIX = getFix();
+await ensureDir(AUDIT_DIR);
 
-const CATS: Record<string,RegExp> = {
-  andy:/^andy-/, rocker:/^rocker-/, admin:/^(admin-|bootstrap-)/, system:/^(health-|ai_|watchdog|cron_|metrics_|dlq_)/, other:/.*/
+const CATEGORIES: Record<string, RegExp> = {
+  andy: /^andy-/,
+  rocker: /^rocker-/,
+  admin: /^(admin-|bootstrap-)/,
+  system: /^(health-|ai_|watchdog|cron_|metrics_|dlq_)/,
+  other: /.*/
 };
-function cat(n:string){ for (const [k,r] of Object.entries(CATS)) if (r.test(n)) return k; return "other"; }
 
-const cfg = parse(await readText("supabase/config.toml")) as Record<string,any>;
-const cfgFuncs = Object.keys(cfg).filter(k=>k.startsWith("functions.") && !k.endsWith(".cron")).map(k=>k.replace("functions.",""));
+function categorize(name: string): string {
+  for (const [cat, regex] of Object.entries(CATEGORIES)) {
+    if (regex.test(name)) return cat;
+  }
+  return "other";
+}
 
 const folders: string[] = [];
-for await (const e of Deno.readDir(FUNCS_DIR)) if (e.isDirectory && !e.name.startsWith(".") && e.name!=="_shared") folders.push(e.name);
-
-type Dep = { caller:string; callerCat:string; target:string; targetCat:string; file:string; line:number; type:"import"|"fetch" };
-const deps: Dep[] = [];
-
-for (const fn of folders) {
-  const callerCat = cat(fn);
-  for await (const entry of walk(`${FUNCS_DIR}/${fn}`, { exts:[".ts",".js"], includeDirs:false })) {
-    const txt = await Deno.readTextFile(entry.path);
-    const lines = txt.split("\n");
-    lines.forEach((ln, i) => {
-      const f1 = ln.match(/functions\/v1\/([a-z0-9_-]+)/)?.[1];
-      if (f1) {
-        const targetCat = cat(f1);
-        if (targetCat!==callerCat) deps.push({ caller: fn, callerCat, target: f1, targetCat, file: entry.path, line: i+1, type:"fetch" });
-      }
-    });
+for await (const e of Deno.readDir(FUNCS_DIR)) {
+  if (e.isDirectory && !e.name.startsWith(".") && e.name !== "_shared") {
+    folders.push(e.name);
   }
 }
 
-await ensureDir(AUDIT_DIR);
-await writeJSON(`${AUDIT_DIR}/cross-deps.json`, { timestamp: Date.now(), count: deps.length, deps });
+type Dependency = {
+  caller: string;
+  callerCat: string;
+  target: string;
+  targetCat: string;
+  file: string;
+  line: number;
+};
 
-if (!FIX || deps.length===0) {
-  console.log(`ℹ️ cross deps: ${deps.length} (run with --fix to add bridges)`);
+const dependencies: Dependency[] = [];
+
+for (const fn of folders) {
+  const callerCat = categorize(fn);
+  const fnPath = `${FUNCS_DIR}/${fn}`;
+  
+  try {
+    for await (const entry of walk(fnPath, { exts: [".ts", ".js"], includeDirs: false })) {
+      const content = await Deno.readTextFile(entry.path);
+      const lines = content.split("\n");
+      
+      lines.forEach((line, idx) => {
+        const match = line.match(/functions\/v1\/([a-z0-9_-]+)/);
+        if (match) {
+          const target = match[1];
+          const targetCat = categorize(target);
+          if (targetCat !== callerCat) {
+            dependencies.push({
+              caller: fn,
+              callerCat,
+              target,
+              targetCat,
+              file: entry.path,
+              line: idx + 1
+            });
+          }
+        }
+      });
+    }
+  } catch (e) {
+    // Skip if directory can't be read
+  }
+}
+
+const pairs = new Set<string>();
+for (const dep of dependencies) {
+  pairs.add(`${dep.callerCat}->${dep.targetCat}`);
+}
+
+const report = {
+  timestamp: now(),
+  count: dependencies.length,
+  uniquePairs: pairs.size,
+  dependencies,
+  action: FIX && pairs.size > 0 ? "bridges_created" : "scan_only"
+};
+
+await writeJSON(`${AUDIT_DIR}/cross-dependencies.json`, report);
+
+console.log(`📊 ${dependencies.length} cross-category dependencies across ${pairs.size} pair(s)`);
+
+if (!FIX || pairs.size === 0) {
+  if (pairs.size > 0) {
+    console.log(`ℹ️  Run with --fix to auto-generate ${pairs.size} bridge(s)`);
+  }
   Deno.exit(0);
 }
 
-// Auto-create bridges by pair
-const pairs = new Set<string>();
-for (const d of deps) pairs.add(`${d.callerCat}->${d.targetCat}`);
+// Auto-generate bridges
 let created = 0;
-for (const p of pairs) {
-  const name = `bridge-${p.replace("->","-")}`;
-  const dir = `${FUNCS_DIR}/${name}`;
-  const index = `${dir}/index.ts`;
-  if (await exists(index)) continue;
-  await ensureDir(dir);
-  const code = `// Auto bridge ${p}
-const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type'};
-Deno.serve(async (req)=>{
-  if (req.method==='OPTIONS') return new Response(null,{headers:cors});
-  const body = await req.json().catch(()=>({}));
+for (const pair of pairs) {
+  const bridgeName = `bridge-${pair.replace("->", "-")}`;
+  const dir = `${FUNCS_DIR}/${bridgeName}`;
+  const indexPath = `${dir}/index.ts`;
+  
+  if (await exists(indexPath)) continue;
+  
+  try {
+    await ensureDir(dir);
+    
+    const code = `// Auto-generated bridge for ${pair}
+const cors = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+};
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
+  
+  const body = await req.json().catch(() => ({}));
   const target = body.target;
-  if (!target) return new Response(JSON.stringify({error:"missing target"}),{headers:{...cors,'Content-Type':'application/json'},status:400});
-  const resp = await fetch(\`\${Deno.env.get('SUPABASE_URL')}/functions/v1/\${target}\`,{
-    method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+(Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||'')}, body: JSON.stringify(body.payload ?? {})
+  
+  if (!target) {
+    return new Response(
+      JSON.stringify({ error: "missing target function name" }),
+      { headers: { ...cors, 'Content-Type': 'application/json' }, status: 400 }
+    );
+  }
+  
+  const url = \`\${Deno.env.get('SUPABASE_URL')}/functions/v1/\${target}\`;
+  const auth = 'Bearer ' + Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': auth },
+    body: JSON.stringify(body.payload ?? {})
   });
-  const txt = await resp.text();
-  return new Response(txt,{headers:{...cors,'Content-Type': resp.headers.get('Content-Type') || 'application/json'}, status: resp.status});
+  
+  const data = await resp.text();
+  return new Response(data, {
+    headers: { ...cors, 'Content-Type': resp.headers.get('Content-Type') || 'application/json' },
+    status: resp.status
+  });
 });`;
-  await Deno.writeTextFile(index, code);
-  created++;
+    
+    await Deno.writeTextFile(indexPath, code);
+    created++;
+  } catch (e) {
+    console.error(`❌ Failed to create bridge ${bridgeName}:`, e);
+  }
 }
-console.log(`✅ Bridges created: ${created}/${pairs.size}`);
+
+console.log(`✅ Created ${created}/${pairs.size} bridge(s)`);

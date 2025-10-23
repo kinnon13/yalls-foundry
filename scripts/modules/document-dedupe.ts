@@ -1,36 +1,81 @@
 #!/usr/bin/env -S deno run -A
+// Document deduplicator - finds duplicate docs by content hash
 import { walk } from "https://deno.land/std@0.223.0/fs/walk.ts";
 import { crypto } from "https://deno.land/std@0.223.0/crypto/mod.ts";
-import { ensureDir, writeJSON, AUDIT_DIR } from "./_utils.ts";
+import { exists, writeJSON, ensureDir, AUDIT_DIR, getFix, now } from "./_utils.ts";
 
-const FIX = Deno.args.includes("--fix");
-const ROOT = "docs";
-const map = new Map<string,string[]>();
-
-for await (const e of walk(ROOT,{ includeDirs:false, exts:[".md",".txt",".json"] })) {
-  const data = await Deno.readTextFile(e.path);
-  const h = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-1", new TextEncoder().encode(data)))).map(b=>b.toString(16).padStart(2,"0")).join("");
-  if (!map.has(h)) map.set(h,[]);
-  map.get(h)!.push(e.path);
-}
-
-const groups = [...map.values()].filter(v=>v.length>1);
+const FIX = getFix();
 await ensureDir(AUDIT_DIR);
-await writeJSON(`${AUDIT_DIR}/document-dupes.json`, { timestamp: Date.now(), groups });
 
-if (!FIX || groups.length===0) {
-  console.log(`ℹ️ document dup groups: ${groups.length} (run with --fix to quarantine duplicates)`);
+const DOCS_ROOT = "docs";
+const QUAR_DIR = "scripts/quarantine/docs";
+
+if (!(await exists(DOCS_ROOT))) {
+  console.log("⚠️  No docs directory; skipping.");
+  await writeJSON(`${AUDIT_DIR}/document-duplicates.json`, {
+    timestamp: now(),
+    duplicateGroups: 0,
+    totalDuplicates: 0,
+    groups: [],
+    message: "No docs directory found"
+  });
   Deno.exit(0);
 }
 
-// move all but first copy
-await ensureDir("scripts/quarantine/docs");
-let moved=0;
-for (const g of groups) {
-  for (let i=1; i<g.length; i++) {
-    const src = g[i];
-    const dest = `scripts/quarantine/docs/${src.replaceAll("/","__")}`;
-    try { await Deno.rename(src,dest); moved++; } catch {}
+const hashMap = new Map<string, string[]>();
+
+for await (const entry of walk(DOCS_ROOT, { 
+  includeDirs: false, 
+  exts: [".md", ".txt", ".json"] 
+})) {
+  const content = await Deno.readTextFile(entry.path);
+  const hash = Array.from(
+    new Uint8Array(await crypto.subtle.digest("SHA-1", new TextEncoder().encode(content)))
+  ).map(b => b.toString(16).padStart(2, "0")).join("");
+  
+  if (!hashMap.has(hash)) {
+    hashMap.set(hash, []);
+  }
+  hashMap.get(hash)!.push(entry.path);
+}
+
+const duplicateGroups = [...hashMap.values()].filter(group => group.length > 1);
+
+const report = {
+  timestamp: now(),
+  duplicateGroups: duplicateGroups.length,
+  totalDuplicates: duplicateGroups.reduce((sum, g) => sum + g.length - 1, 0),
+  groups: duplicateGroups,
+  action: FIX && duplicateGroups.length > 0 ? "quarantined" : "scan_only"
+};
+
+await writeJSON(`${AUDIT_DIR}/document-duplicates.json`, report);
+
+console.log(`📄 ${duplicateGroups.length} duplicate document group(s)`);
+
+if (!FIX || duplicateGroups.length === 0) {
+  if (duplicateGroups.length > 0) {
+    console.log(`ℹ️  Run with --fix to quarantine duplicates (keeps first copy)`);
+  }
+  Deno.exit(0);
+}
+
+await ensureDir(QUAR_DIR);
+
+let moved = 0;
+for (const group of duplicateGroups) {
+  // Keep first, move rest
+  for (let i = 1; i < group.length; i++) {
+    const src = group[i];
+    const dest = `${QUAR_DIR}/${src.replaceAll("/", "__")}`;
+    
+    try {
+      await Deno.rename(src, dest);
+      moved++;
+    } catch (e) {
+      console.error(`❌ Failed to move ${src}:`, e);
+    }
   }
 }
-console.log(`✅ Quarantined ${moved} duplicate doc(s).`);
+
+console.log(`✅ Quarantined ${moved} duplicate document(s) → ${QUAR_DIR}/`);
