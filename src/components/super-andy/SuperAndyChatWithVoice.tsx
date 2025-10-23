@@ -216,70 +216,109 @@ export function SuperAndyChatWithVoice({
         onThreadCreated?.(activeThreadId);
       }
 
-      // Use super-andy-chat with full capabilities
-      const { data, error } = await supabase.functions.invoke('super-andy-chat', {
-        body: {
-          thread_id: activeThreadId,
-          message: userMessage
-        }
+      // Stream from andy-chat (SSE) so Andy actually replies
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/andy-chat`;
+
+      // Build full message history for better context
+      const history = messages.map(m => ({ role: m.role, content: m.content }));
+      const payload = { messages: [...history, { role: 'user', content: userMessage }] };
+
+      const resp = await fetch(CHAT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
       });
-      
-      // Handle rate limiting gracefully
-      if (error?.message?.includes('429')) {
-        toast({
-          title: 'Too many requests',
-          description: 'Please wait a moment before trying again.',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      if (error?.message?.includes('402')) {
-        toast({
-          title: 'Service unavailable',
-          description: 'AI service requires payment. Please contact support.',
-          variant: 'destructive',
-        });
-        return;
+
+      if (!resp.ok || !resp.body) {
+        if (resp.status === 429) {
+          toast({ title: 'Too many requests', description: 'Please wait and try again.', variant: 'destructive' });
+          return;
+        }
+        if (resp.status === 402) {
+          toast({ title: 'AI credits required', description: 'Please add credits to continue.', variant: 'destructive' });
+          return;
+        }
+        const txt = await resp.text();
+        throw new Error(txt || 'Failed to start AI stream');
       }
 
-      if (error) throw error;
-
-      // Add assistant message from response immediately (don't wait for DB)
-      const assistantMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.reply || '',
-        created_at: new Date().toISOString()
+      // Progressive assistant rendering
+      let assistantSoFar = '';
+      const upsertAssistant = (chunk: string) => {
+        assistantSoFar += chunk;
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant') {
+            return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
+          }
+          return [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: chunk, created_at: new Date().toISOString() }];
+        });
       };
-      setMessages(prev => [...prev, assistantMsg]);
 
-      // Speak the response
-      if (voiceEnabled) {
-        speakAndThen(data.reply || '', () => {
-          // After speaking, start listening again
-          const cleanup = listen(
-            (finalText) => setInput((prev) => (prev ? `${prev} ${finalText}` : finalText))
-          );
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = '';
+      let streamDone = false;
+
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let idx: number;
+        while ((idx = textBuffer.indexOf('\n')) !== -1) {
+          let line = textBuffer.slice(0, idx);
+          textBuffer = textBuffer.slice(idx + 1);
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (line.startsWith(':') || line.trim() === '') continue;
+          if (!line.startsWith('data: ')) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') { streamDone = true; break; }
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) upsertAssistant(content);
+          } catch {
+            // Partial JSON, wait for more
+            textBuffer = line + '\n' + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Flush any remaining buffered lines
+      if (textBuffer.trim()) {
+        for (let raw of textBuffer.split('\n')) {
+          if (!raw) continue;
+          if (raw.endsWith('\r')) raw = raw.slice(0, -1);
+          if (raw.startsWith(':') || raw.trim() === '') continue;
+          if (!raw.startsWith('data: ')) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) upsertAssistant(content);
+          } catch { /* ignore */ }
+        }
+      }
+
+      // Speak after full response
+      if (voiceEnabled && assistantSoFar) {
+        speakAndThen(assistantSoFar, () => {
+          const cleanup = listen((finalText) => setInput((prev) => (prev ? `${prev} ${finalText}` : finalText)));
           stopListenRef.current = cleanup;
           setIsListening(true);
         });
       }
 
-      // Show tool results if any
-      if (data?.tool_results && data.tool_results.length > 0) {
-        const toolSummary = data.tool_results
-          .map((t: any) => `✅ ${t.tool}: ${t.result}`)
-          .join(' · ');
-        toast({
-          title: 'Actions completed',
-          description: toolSummary,
-        });
-      }
-
-      // Refresh messages to get actual stored ones (allow brief commit + subscription setup)
-      await new Promise((r) => setTimeout(r, 250));
-      await loadMessages(activeThreadId);
     } catch (error: any) {
       console.error('Chat error:', error);
       toast({
