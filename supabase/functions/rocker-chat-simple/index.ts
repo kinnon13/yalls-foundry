@@ -115,15 +115,90 @@ serve(async (req) => {
           const toolCalls = response.raw?.choices?.[0]?.message?.tool_calls;
           if (toolCalls && toolCalls.length > 0) {
             log.info('Tool calls requested', { count: toolCalls.length });
+            toolCallCount++;
             
-            // For now, just acknowledge tools and break
-            // Full tool execution coming in next iteration
-            messages.push({
-              role: 'assistant',
-              content: `I would execute these actions: ${toolCalls.map((tc: any) => tc.function.name).join(', ')}`
-            });
-            reply = messages[messages.length - 1].content;
-            break;
+            // Execute each tool
+            const toolResults = [];
+            for (const toolCall of toolCalls) {
+              const toolName = toolCall.function.name;
+              const toolArgs = JSON.parse(toolCall.function.arguments || '{}');
+              
+              log.info('Executing tool', { tool: toolName, args: toolArgs });
+              
+              try {
+                let result;
+                
+                // Execute tool based on name
+                if (toolName === 'db.create_task') {
+                  const { data, error } = await ctx.tenantClient.from('rocker_tasks').insert({
+                    user_id: ctx.userId,
+                    title: toolArgs.title,
+                    description: toolArgs.description,
+                    priority: toolArgs.priority || 'medium',
+                    status: 'pending',
+                    due_at: toolArgs.due_at || null
+                  }).select().single();
+                  result = error ? { error: error.message } : { success: true, task_id: data?.id };
+                } else if (toolName === 'db.query_tasks') {
+                  const query = ctx.tenantClient
+                    .from('rocker_tasks')
+                    .select('*')
+                    .eq('user_id', ctx.userId);
+                  
+                  if (toolArgs.status) query.eq('status', toolArgs.status);
+                  query.limit(toolArgs.limit || 10);
+                  
+                  const { data, error } = await query;
+                  result = error ? { error: error.message } : { tasks: data };
+                } else if (toolName === 'fe.navigate') {
+                  // Emit navigation action via event bus
+                  try {
+                    await ctx.tenantClient.from('ai_proposals').insert({
+                      type: 'navigate',
+                      user_id: ctx.userId,
+                      tenant_id: ctx.tenantId,
+                      payload: { path: toolArgs.path }
+                    });
+                    result = { success: true, action: 'navigate', path: toolArgs.path };
+                  } catch (e) {
+                    result = { error: 'Failed to emit navigation' };
+                  }
+                } else if (toolName === 'fe.toast') {
+                  // Emit toast action
+                  try {
+                    await ctx.tenantClient.from('ai_proposals').insert({
+                      type: 'notify.user',
+                      user_id: ctx.userId,
+                      tenant_id: ctx.tenantId,
+                      payload: {
+                        title: toolArgs.title,
+                        description: toolArgs.description,
+                        variant: toolArgs.variant || 'default'
+                      }
+                    });
+                    result = { success: true, action: 'toast' };
+                  } catch (e) {
+                    result = { error: 'Failed to emit toast' };
+                  }
+                } else {
+                  result = { error: `Unknown tool: ${toolName}` };
+                }
+                
+                toolResults.push({ tool: toolName, result });
+                
+                // Add tool result to conversation
+                messages.push({
+                  role: 'assistant',
+                  content: `Tool ${toolName} executed: ${JSON.stringify(result)}`
+                });
+              } catch (err) {
+                log.error('Tool execution failed', { tool: toolName, error: err });
+                toolResults.push({ tool: toolName, error: String(err) });
+              }
+            }
+            
+            // Continue conversation with tool results
+            continue;
           } else {
             // No more tools, final response
             reply = response.text || '';

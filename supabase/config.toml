@@ -98,6 +98,9 @@ verify_jwt = true
 [functions.rocker-chat-simple]
 verify_jwt = true
 
+[functions.rocker-chat]
+verify_jwt = true
+
 [functions.rocker-verify-feature]
 verify_jwt = true
 
@@ -397,9 +400,14 @@ schedule = "*/15 * * * *"  # Every 15 minutes
 [functions.red_team_tick]
 verify_jwt = false
 
-[functions.user_rag_index]
-verify_jwt = false
+[functions.red_team_tick.cron]
+schedule = "0 3 * * *"  # Daily at 3 AM
+
+[functions.self_improve_tick.cron]
+schedule = "0 2 * * *"  # Daily at 2 AM
 
 [functions.fine_tune_cohort]
-verify_jwt = false
+verify_jwt = true
+
+[functions.user_rag_index]
 

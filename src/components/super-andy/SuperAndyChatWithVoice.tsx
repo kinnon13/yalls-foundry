@@ -216,15 +216,32 @@ export function SuperAndyChatWithVoice({
         onThreadCreated?.(activeThreadId);
       }
 
-      // Use upgraded rocker-chat with OCR and KB support
-      const { data, error } = await supabase.functions.invoke('rocker-chat', {
+      // Use rocker-chat-simple with full capabilities
+      const { data, error } = await supabase.functions.invoke('rocker-chat-simple', {
         body: {
           thread_id: activeThreadId,
-          message: userMessage,
-          actor_role: 'knower', // Super Andy uses knower mode with full KB access
-          topK: 5 // Get top 5 knowledge chunks for context
+          message: userMessage
         }
       });
+      
+      // Handle rate limiting gracefully
+      if (error?.message?.includes('429')) {
+        toast({
+          title: 'Too many requests',
+          description: 'Please wait a moment before trying again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      if (error?.message?.includes('402')) {
+        toast({
+          title: 'Service unavailable',
+          description: 'AI service requires payment. Please contact support.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       if (error) throw error;
 
