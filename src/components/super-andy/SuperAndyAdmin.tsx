@@ -8,13 +8,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, User, MessageSquare, Brain, Lock, Shield, ShieldOff, Sparkles, Settings, Clock, Zap } from 'lucide-react';
+import { Search, User, MessageSquare, Brain, Lock, Shield, ShieldOff, Sparkles, Settings, Clock, Zap, RefreshCw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { MessengerRail } from './MessengerRail';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { PersonaSettings } from './PersonaSettings';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { callEdge } from '@/lib/edge/callEdge';
 
 interface SuperAndyAdminProps {
   threadId: string | null;
@@ -24,6 +25,7 @@ export function SuperAndyAdmin({ threadId }: SuperAndyAdminProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
+  const [loadingManual, setLoadingManual] = useState<string | null>(null);
   const [cronSchedules, setCronSchedules] = useState({
     perceive: '0 * * * *', // hourly
     improve: '0 0 * * *', // daily
@@ -31,6 +33,18 @@ export function SuperAndyAdmin({ threadId }: SuperAndyAdminProps) {
   });
   
   const queryClient = useQueryClient();
+
+  const triggerManualFunction = async (functionName: string, displayName: string) => {
+    setLoadingManual(functionName);
+    try {
+      await callEdge(functionName, {});
+      toast.success(`${displayName} triggered successfully`);
+    } catch (error) {
+      toast.error(`Failed to trigger ${displayName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setLoadingManual(null);
+    }
+  };
 
   // List users
   const { data: usersData } = useQuery({
@@ -416,6 +430,68 @@ export function SuperAndyAdmin({ threadId }: SuperAndyAdminProps) {
 );`}
                     </pre>
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="h-5 w-5" />
+                    Manual Triggers
+                  </CardTitle>
+                  <CardDescription>Run learning functions immediately</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button
+                    onClick={() => triggerManualFunction('andy-auto-analyze', 'Auto Analyze')}
+                    disabled={loadingManual !== null}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    {loadingManual === 'andy-auto-analyze' ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                    )}
+                    Run Hourly Analysis
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      Perceive & analyze recent events
+                    </span>
+                  </Button>
+
+                  <Button
+                    onClick={() => triggerManualFunction('andy-expand-memory', 'Expand Memory')}
+                    disabled={loadingManual !== null}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    {loadingManual === 'andy-expand-memory' ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Brain className="mr-2 h-4 w-4" />
+                    )}
+                    Expand Memory
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      Process and consolidate memories
+                    </span>
+                  </Button>
+
+                  <Button
+                    onClick={() => triggerManualFunction('andy-enhance-memories', 'Enhance Memories')}
+                    disabled={loadingManual !== null}
+                    className="w-full justify-start"
+                    variant="outline"
+                  >
+                    {loadingManual === 'andy-enhance-memories' ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="mr-2 h-4 w-4" />
+                    )}
+                    Enhance Memories
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      Enrich and connect memories
+                    </span>
+                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>

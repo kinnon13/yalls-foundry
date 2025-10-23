@@ -49,7 +49,6 @@ import Health from './pages/Health';
 const Dashboard = lazy(() => import('./routes/dashboard/index'));
 const SuperAndyFull = lazy(() => import('./routes/super-andy'));
 const AdminRockerConsole = lazy(() => import('./pages/AdminRocker/Index'));
-const AndyAdmin = lazy(() => import('./pages/AndyAdmin'));
 const AuthPage = lazy(() => import('./routes/auth'));
 const AuthCallback = lazy(() => import('./routes/auth/callback'));
 const Privacy = lazy(() => import('./pages/Privacy'));
@@ -116,9 +115,6 @@ function AppContent() {
         
         {/* 4. Admin Rocker - Admin console for AI */}
         <Route path="/admin-rocker" element={<AdminRockerConsole />} />
-        
-        {/* 4b. Andy Admin - Manual learning triggers */}
-        <Route path="/andy-admin" element={<AndyAdmin />} />
         
         {/* 5. Auth - Login & Signup page */}
         <Route path="/auth" element={<AuthPage />} />
