@@ -255,6 +255,27 @@ Be conversational, fast, proactive, and always use the user's actual data when a
 
     console.log('[andy-chat] Using model:', aiModel);
 
+    // Add web search tool
+    const tools = [
+      {
+        type: 'function',
+        function: {
+          name: 'web_search',
+          description: 'Search the internet for current information, news, facts, or any real-time data. Use this whenever you need up-to-date information beyond your training data.',
+          parameters: {
+            type: 'object',
+            properties: {
+              query: {
+                type: 'string',
+                description: 'The search query to look up on the internet'
+              }
+            },
+            required: ['query']
+          }
+        }
+      }
+    ];
+
     // Use Lovable AI gateway
     const response = await fetch(
       'https://ai.gateway.lovable.dev/v1/chat/completions',
@@ -267,6 +288,7 @@ Be conversational, fast, proactive, and always use the user's actual data when a
         body: JSON.stringify({
           model: aiModel.startsWith('gpt') ? aiModel : 'google/gemini-2.5-flash',
           messages: finalMessages,
+          tools,
           stream: true,
         }),
       }
