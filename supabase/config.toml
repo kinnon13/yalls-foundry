@@ -499,3 +499,7 @@ verify_jwt = true
 [functions.yallspay-process-payment]
 verify_jwt = true
 
+# Business Create Invoice - CRM invoice creation with QuickBooks sync
+[functions.business-create-invoice]
+verify_jwt = true
+
