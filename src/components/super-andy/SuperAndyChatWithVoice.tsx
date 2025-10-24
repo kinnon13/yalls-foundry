@@ -77,10 +77,11 @@ export function SuperAndyChatWithVoice({
       setIsListening(true);
       const cleanup = listen(
         (finalText) => {
-          setInput((prev) => (prev ? `${prev} ${finalText}` : finalText));
+          // Auto-send voice transcript on each final phrase
+          handleSend(finalText);
         },
         (interimText) => {
-          // Show interim transcript in placeholder or separate UI element
+          // Optionally show interim transcript in UI later
         }
       );
       stopListenRef.current = cleanup;
@@ -178,11 +179,12 @@ export function SuperAndyChatWithVoice({
     })));
   };
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleSend = async (overrideText?: string) => {
+    const raw = (overrideText ?? input).trim();
+    if (!raw) return;
 
-    const userMessage = input.trim();
-    setInput('');
+    const userMessage = raw;
+    if (!overrideText) setInput('');
     setIsLoading(true);
 
     // Stop listening while processing
@@ -474,7 +476,7 @@ export function SuperAndyChatWithVoice({
           {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
         </Button>
         <Button
-          onClick={handleSend}
+          onClick={() => handleSend()}
           disabled={isLoading || !input.trim()}
           size="icon"
           className="h-[60px] w-[60px]"
