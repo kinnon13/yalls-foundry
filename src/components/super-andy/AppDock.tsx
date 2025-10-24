@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type AppId = 'knowledge' | 'files' | 'tasks' | 'task-os' | 'inbox' | 'capabilities' | 'admin' | 'secrets' | 'calendar' | 'proactive' | 'training';
+export type AppId = 'knowledge' | 'files' | 'tasks' | 'task-os' | 'inbox' | 'capabilities' | 'admin' | 'secrets' | 'calendar' | 'proactive' | 'training' | 'learn';
 
 interface AppDockProps {
   activeApp: AppId;
@@ -23,6 +23,7 @@ interface AppDockProps {
 const APPS = [
   { id: 'knowledge' as AppId, label: 'Knowledge', icon: Database, color: 'text-blue-500' },
   { id: 'files' as AppId, label: 'Files & Memory', icon: FolderOpen, color: 'text-purple-500' },
+  { id: 'learn' as AppId, label: 'Learn', icon: Brain, color: 'text-violet-500' },
   { id: 'tasks' as AppId, label: 'Tasks (Old)', icon: CheckSquare, color: 'text-green-500' },
   { id: 'task-os' as AppId, label: 'Task OS', icon: CheckSquare, color: 'text-emerald-500' },
   { id: 'calendar' as AppId, label: 'Calendar', icon: Calendar, color: 'text-cyan-500' },

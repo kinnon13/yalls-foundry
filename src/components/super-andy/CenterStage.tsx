@@ -8,6 +8,11 @@ import { SuperAndyAdmin } from './SuperAndyAdmin';
 import { Calendar } from './Calendar';
 import { ProactivePanel } from '@/components/rocker/ProactivePanel';
 import { TasksView } from './TasksView';
+import { AndyCronSetup } from './AndyCronSetup';
+import { AndyCollections } from './AndyCollections';
+import { AndyResearchQueue } from './AndyResearchQueue';
+import { AndyMemoryViewer } from './AndyMemoryViewer';
+import { AndyRulesEditor } from './AndyRulesEditor';
 import { Database, Brain, CheckSquare, FolderOpen, Inbox, Shield, Key, Calendar as CalendarIcon, Sparkles, GraduationCap } from 'lucide-react';
 
 const SuperAdminCapabilities = lazy(() => 
@@ -36,6 +41,25 @@ export function CenterStage({ activeApp, threadId }: CenterStageProps) {
       {activeApp === 'knowledge' && <SuperAndyKnowledge />}
       
       {activeApp === 'files' && <UnifiedFilesMemory />}
+      
+      {activeApp === 'learn' && (
+        <div className="p-6 space-y-6">
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold flex items-center gap-2">
+              <Brain className="w-6 h-6" />
+              Andy's Learning Center
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Memory collections, research queue, cron setup, custom rules, and learning metrics
+            </p>
+          </div>
+          <AndyCronSetup />
+          <AndyRulesEditor />
+          <AndyCollections />
+          <AndyResearchQueue />
+          <AndyMemoryViewer />
+        </div>
+      )}
       
       {activeApp === 'tasks' && <SuperAndyTasks threadId={threadId} />}
       

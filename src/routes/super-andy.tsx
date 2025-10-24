@@ -23,7 +23,7 @@ export default function SuperAndy() {
   // Read ?app= from URL and set the active app on load
   useEffect(() => {
     const appParam = searchParams.get('app');
-    const validApps: AppId[] = ['knowledge','files','tasks','task-os','calendar','proactive','inbox','capabilities','admin','secrets','training'];
+    const validApps: AppId[] = ['knowledge','files','tasks','task-os','calendar','proactive','inbox','capabilities','admin','secrets','training','learn'];
     if (appParam && (validApps as string[]).includes(appParam)) {
       setActiveApp(appParam as AppId);
     }
