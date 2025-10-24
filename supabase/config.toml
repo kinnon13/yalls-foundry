@@ -495,3 +495,7 @@ verify_jwt = true
 [functions.yalls-ai-query]
 verify_jwt = true
 
+# Yallspay Process Payment - MLM commission splitting
+[functions.yallspay-process-payment]
+verify_jwt = true
+
