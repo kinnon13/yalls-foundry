@@ -8,19 +8,22 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Loader2, MessageSquare, Mic, MicOff, Copy, CornerUpLeft, Check } from 'lucide-react';
+import { Send, Loader2, MessageSquare, Mic, MicOff, Copy, CornerUpLeft, Check, ThumbsUp, ThumbsDown, Brain } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { useVoice } from '@/hooks/useVoice';
 import { OrganizeButton } from './OrganizeButton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format } from 'date-fns';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  sources?: Array<{ id: string; kind: string; key: string }>;
+  sources?: Array<{ id: string; kind: string; key: string; reasoning?: string }>;
   created_at: string;
+  feedback?: 'up' | 'down' | null;
+  reasoning_paths?: Array<{ source: string; why: string; conclusion: string }>;
 }
 
 interface Thread {
@@ -410,6 +413,24 @@ export function SuperAndyChatWithVoice({
     setInput(`Regarding your previous message: "${message.content.slice(0, 100)}${message.content.length > 100 ? '...' : ''}" - `);
   };
 
+  const provideFeedback = async (messageId: string, feedback: 'up' | 'down') => {
+    setMessages(prev => prev.map(m => m.id === messageId ? { ...m, feedback } : m));
+    
+    try {
+      // Store feedback in message meta field
+      const numId = parseInt(messageId);
+      if (!isNaN(numId)) {
+        await supabase.from('rocker_messages').update({ 
+          meta: { feedback } 
+        }).eq('id', numId);
+      }
+      
+      toast({ title: feedback === 'up' ? '👍 Feedback saved' : '👎 Feedback saved' });
+    } catch (error) {
+      console.error('Failed to save feedback:', error);
+    }
+  };
+
   return (
     <div className="flex flex-col h-[70vh]">
       <div className="flex items-center justify-between mb-4">
@@ -459,6 +480,11 @@ export function SuperAndyChatWithVoice({
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}
             >
               <div className="flex flex-col gap-1 max-w-[80%]">
+                {/* Timestamp */}
+                <div className="text-xs text-muted-foreground mb-1">
+                  {format(new Date(msg.created_at), 'MMM d, h:mm a')}
+                </div>
+                
                 <div
                   className={`rounded-lg p-3 ${
                     msg.role === 'user'
@@ -467,19 +493,40 @@ export function SuperAndyChatWithVoice({
                   }`}
                 >
                   <p className="whitespace-pre-wrap">{msg.content}</p>
+                  
+                  {/* Memory Attribution - Show WHERE and WHY */}
+                  {msg.reasoning_paths && msg.reasoning_paths.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-border/50">
+                      <p className="text-xs font-semibold opacity-90 mb-2 flex items-center gap-1">
+                        <Brain className="h-3 w-3" />
+                        Andy's Reasoning Process
+                      </p>
+                      <div className="space-y-2">
+                        {msg.reasoning_paths.map((path, i) => (
+                          <div key={i} className="text-xs bg-background/50 rounded p-2">
+                            <p className="font-medium text-cyan-400">📚 {path.source}</p>
+                            <p className="opacity-80 mt-1"><span className="font-semibold">Why:</span> {path.why}</p>
+                            <p className="opacity-80 mt-1"><span className="font-semibold">Conclusion:</span> {path.conclusion}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
                   {msg.sources && msg.sources.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-border/50">
                       <p className="text-xs opacity-70 mb-1">Sources:</p>
                       <div className="flex flex-wrap gap-1">
                         {msg.sources.map((src) => (
                           <Badge key={src.id} variant="outline" className="text-xs">
-                            {src.kind}
+                            {src.kind}: {src.key}
                           </Badge>
                         ))}
                       </div>
                     </div>
                   )}
                 </div>
+                
                 {msg.role === 'assistant' && (
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button
@@ -503,6 +550,22 @@ export function SuperAndyChatWithVoice({
                     >
                       <CornerUpLeft className="h-3 w-3" />
                       <span className="ml-1 text-xs">Reference</span>
+                    </Button>
+                    <Button
+                      variant={msg.feedback === 'up' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => provideFeedback(msg.id, 'up')}
+                      className="h-7"
+                    >
+                      <ThumbsUp className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant={msg.feedback === 'down' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => provideFeedback(msg.id, 'down')}
+                      className="h-7"
+                    >
+                      <ThumbsDown className="h-3 w-3" />
                     </Button>
                   </div>
                 )}

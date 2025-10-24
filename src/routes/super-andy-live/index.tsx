@@ -49,7 +49,7 @@ export default function SuperAndyLive() {
           {/* Recent Notes */}
           {userId && (
             <div className="bg-card rounded-lg border p-4">
-              <AndyNotebook userId={userId} />
+              <AndyNotebook />
             </div>
           )}
         </div>
