@@ -338,19 +338,6 @@ export function SuperAndyChatWithVoice({
             .select('id')
             .single();
 
-          // Also store in AI memory for perfect recall
-          try {
-            await supabase.from('ai_user_memory').insert({
-              user_id: user.id,
-              memory_type: 'interaction',
-              content: `User: ${userMessage}`,
-              score: 0.5,
-              metadata: { source: 'chat', thread_id: activeThreadId }
-            });
-          } catch (e) {
-            console.warn('ai_user_memory insert (user) failed:', e);
-          }
-
           // Store assistant message
           const { data: assistantMsg } = await supabase
             .from('rocker_messages')
@@ -362,19 +349,6 @@ export function SuperAndyChatWithVoice({
             })
             .select('id')
             .single();
-
-          // Also store assistant reply in AI memory
-          try {
-            await supabase.from('ai_user_memory').insert({
-              user_id: user.id,
-              memory_type: 'interaction',
-              content: `Andy: ${assistantSoFar}`,
-              score: 0.6,
-              metadata: { source: 'chat', thread_id: activeThreadId }
-            });
-          } catch (e) {
-            console.warn('ai_user_memory insert (assistant) failed:', e);
-          }
 
           // Trigger deep learning analysis (async, no await)
           if (assistantMsg) {

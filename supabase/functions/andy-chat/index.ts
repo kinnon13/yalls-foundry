@@ -19,9 +19,6 @@ serve(async (req) => {
 
   try {
     const { messages } = await req.json();
-    
-    // If Grok key is missing, fall back to Lovable AI so Andy can still reply
-    const preferLovable = !xaiApiKey;
 
     // Get user from auth header
     const authHeader = req.headers.get('Authorization');
@@ -283,12 +280,52 @@ Be conversational, fast, proactive, and always use the user's actual data when a
       }
     ];
 
-    // If Grok is unavailable, stream via Lovable AI gateway
-    if (preferLovable) {
+    // Try Grok first, fallback to Lovable AI if needed
+    let response: Response | null = null;
+    let usingFallback = false;
+
+    if (xaiApiKey) {
+      // Direct Grok API call via xAI
+      const grokResp = await fetch('https://api.x.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${xaiApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: aiModel,
+          messages: finalMessages,
+          tools,
+          stream: true,
+          temperature: 0.7,
+          max_tokens: 32000
+        })
+      });
+
+      console.log('[andy-chat] Grok call initiated');
+
+      if (grokResp.ok) {
+        response = grokResp;
+      } else {
+        console.warn('[andy-chat] Grok failed, trying Lovable AI fallback');
+        usingFallback = true;
+      }
+    } else {
+      console.log('[andy-chat] No XAI_API_KEY, using Lovable AI');
+      usingFallback = true;
+    }
+
+    // Fallback to Lovable AI if Grok unavailable or failed
+    if (usingFallback) {
+      const lovableKey = Deno.env.get('LOVABLE_API_KEY');
+      if (!lovableKey) {
+        throw new Error('No AI provider available (XAI_API_KEY and LOVABLE_API_KEY missing)');
+      }
+
       const lovableResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
+          'Authorization': `Bearer ${lovableKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -299,12 +336,9 @@ Be conversational, fast, proactive, and always use the user's actual data when a
       });
 
       if (!lovableResp.ok || !lovableResp.body) {
-        const t = await lovableResp.text();
-        console.error('[andy-chat] Lovable AI error:', lovableResp.status, t);
-        return new Response(JSON.stringify({ error: 'AI gateway error' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        const txt = await lovableResp.text();
+        console.error('[andy-chat] Lovable AI error:', lovableResp.status, txt);
+        throw new Error(`AI gateway error: ${lovableResp.status}`);
       }
 
       return new Response(lovableResp.body, {
@@ -312,49 +346,8 @@ Be conversational, fast, proactive, and always use the user's actual data when a
       });
     }
 
-    // Direct Grok API call via xAI
-    const response = await fetch('https://api.x.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${xaiApiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: aiModel,
-        messages: finalMessages,
-        tools,
-        stream: true,
-        temperature: 0.7,
-        max_tokens: 32000
-      })
-    });
-
-    console.log('[andy-chat] Direct Grok call initiated');
-
-    if (!response.ok) {
-      // Fallback: try Lovable AI if Grok fails
-      const lovableResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: finalMessages,
-          stream: true
-        })
-      });
-
-      if (!lovableResp.ok || !lovableResp.body) {
-        const errorText = await response.text();
-        console.error('[andy-chat] Grok API error and Lovable fallback failed:', response.status, errorText);
-        throw new Error(`Grok API error: ${response.status}`);
-      }
-
-      return new Response(lovableResp.body, {
-        headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
-      });
+    if (!response) {
+      throw new Error('No response from AI provider');
     }
 
     // Handle streaming with tool call execution

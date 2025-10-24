@@ -2970,6 +2970,42 @@ export type Database = {
         }
         Relationships: []
       }
+      andy_collection_items: {
+        Row: {
+          added_at: string
+          collection_id: string
+          id: string
+          memory_id: string
+        }
+        Insert: {
+          added_at?: string
+          collection_id: string
+          id?: string
+          memory_id: string
+        }
+        Update: {
+          added_at?: string
+          collection_id?: string
+          id?: string
+          memory_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "andy_collection_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "andy_memory_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "andy_collection_items_memory_id_fkey"
+            columns: ["memory_id"]
+            isOneToOne: false
+            referencedRelation: "ai_user_memory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       andy_external_knowledge: {
         Row: {
           confidence_score: number | null
@@ -3085,6 +3121,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      andy_memory_collections: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       andy_memory_enhancements: {
         Row: {
@@ -3291,6 +3357,56 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      andy_research_queue: {
+        Row: {
+          collection_id: string | null
+          completed_at: string | null
+          created_at: string
+          findings: string | null
+          id: string
+          priority: number | null
+          query: string
+          sources: Json | null
+          status: string
+          topic: string
+          user_id: string
+        }
+        Insert: {
+          collection_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          findings?: string | null
+          id?: string
+          priority?: number | null
+          query: string
+          sources?: Json | null
+          status?: string
+          topic: string
+          user_id: string
+        }
+        Update: {
+          collection_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          findings?: string | null
+          id?: string
+          priority?: number | null
+          query?: string
+          sources?: Json | null
+          status?: string
+          topic?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "andy_research_queue_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "andy_memory_collections"
             referencedColumns: ["id"]
           },
         ]
@@ -14731,6 +14847,13 @@ export type Database = {
           similarity: number
           status: string
           title: string
+        }[]
+      }
+      andy_suggest_collections: {
+        Args: { p_user_id: string }
+        Returns: {
+          memory_count: number
+          suggested_name: string
         }[]
       }
       append_rocker_message: {
