@@ -78,9 +78,17 @@ export function CenterStage({ activeApp, threadId }: CenterStageProps) {
       )}
       
       {activeApp === 'capabilities' && (
-        <Suspense fallback={<LoadingState icon={Shield} label="Capabilities" />}>
-          <SuperAdminCapabilities />
-        </Suspense>
+        <div className="p-6">
+          <div className="rounded-xl border border-border/40 bg-muted/30 p-6">
+            <h3 className="text-lg font-semibold mb-1">Capabilities are managed in the Learn tab</h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              To keep Andy’s rules and overrides centralized, this page is read‑only.
+            </p>
+            <a href="?app=learn" className="inline-flex items-center px-3 py-2 rounded-md bg-primary text-primary-foreground hover:opacity-90 transition">
+              Go to Learn
+            </a>
+          </div>
+        </div>
       )}
       
       {activeApp === 'admin' && <SuperAndyAdmin threadId={threadId} />}

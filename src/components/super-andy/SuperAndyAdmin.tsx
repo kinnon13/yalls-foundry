@@ -314,190 +314,32 @@ export function SuperAndyAdmin({ threadId }: SuperAndyAdminProps) {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Zap className="h-5 w-5" />
-                    AI Model Selection
+                    System controls moved to Learn
                   </CardTitle>
-                  <CardDescription>Choose which model Andy uses (live changes)</CardDescription>
+                  <CardDescription>
+                    To keep Andy’s capabilities and overrides centralized, system changes are managed in the Learn tab. This area is read‑only.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Active Model</Label>
-                    <Select value={selectedModel} onValueChange={(val) => {
-                      setSelectedModel(val);
-                      updateModelMutation.mutate(val);
-                    }}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash (default)</SelectItem>
-                        <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro (best reasoning)</SelectItem>
-                        <SelectItem value="gpt-5">GPT-5 (powerful)</SelectItem>
-                        <SelectItem value="gpt-5-mini">GPT-5 Mini (balanced)</SelectItem>
-                        <SelectItem value="grok-2">Grok-2 (xAI)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">
-                      Grok requires GROK_API_KEY secret in backend
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    Automatic Learning (Cron Jobs)
-                  </CardTitle>
-                  <CardDescription>Live control - changes take effect immediately</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b pb-3">
-                      <div>
-                        <p className="font-medium">Perceive Tick</p>
-                        <p className="text-sm text-muted-foreground">Scan for learning opportunities</p>
-                        <p className="text-xs text-muted-foreground mt-1">Schedule: {cronSchedules.perceive}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => {
-                          manageCronMutation.mutate({ job: 'perceive', enabled: true });
-                        }}>
-                          Enable
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => {
-                          manageCronMutation.mutate({ job: 'perceive', enabled: false });
-                        }}>
-                          Disable
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between border-b pb-3">
-                      <div>
-                        <p className="font-medium">Self-Improve Tick</p>
-                        <p className="text-sm text-muted-foreground">Auto-tweak based on feedback</p>
-                        <p className="text-xs text-muted-foreground mt-1">Schedule: {cronSchedules.improve}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => {
-                          manageCronMutation.mutate({ job: 'improve', enabled: true });
-                        }}>
-                          Enable
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => {
-                          manageCronMutation.mutate({ job: 'improve', enabled: false });
-                        }}>
-                          Disable
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between border-b pb-3">
-                      <div>
-                        <p className="font-medium">Expand Memory</p>
-                        <p className="text-sm text-muted-foreground">Consolidate and expand memories</p>
-                        <p className="text-xs text-muted-foreground mt-1">Schedule: {cronSchedules.expandMemory}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => {
-                          manageCronMutation.mutate({ job: 'expand_memory', enabled: true });
-                        }}>
-                          Enable
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => {
-                          manageCronMutation.mutate({ job: 'expand_memory', enabled: false });
-                        }}>
-                          Disable
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 p-3 bg-muted rounded-lg">
-                    <p className="text-sm font-medium mb-2">Manual Cron Setup (Backend SQL)</p>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Open backend → SQL Editor → Run:
-                    </p>
-                    <pre className="text-xs bg-background p-2 rounded overflow-x-auto">
-{`SELECT cron.schedule(
-  'andy-perceive-hourly',
-  '0 * * * *',
-  $$SELECT net.http_post(
-    url:='https://xuxfuonzsfvrirdwzddt.supabase.co/functions/v1/super-andy-perceive',
-    headers:='{"Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb
-  ) as request_id;$$
-);`}
-                    </pre>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Brain className="h-5 w-5" />
-                    Manual Triggers
-                  </CardTitle>
-                  <CardDescription>Run learning functions immediately</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button
-                    onClick={() => triggerManualFunction('andy-auto-analyze', 'Auto Analyze')}
-                    disabled={loadingManual !== null}
-                    className="w-full justify-start"
-                    variant="outline"
-                  >
-                    {loadingManual === 'andy-auto-analyze' ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                    )}
-                    Run Hourly Analysis
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      Perceive & analyze recent events
-                    </span>
-                  </Button>
-
-                  <Button
-                    onClick={() => triggerManualFunction('andy-expand-memory', 'Expand Memory')}
-                    disabled={loadingManual !== null}
-                    className="w-full justify-start"
-                    variant="outline"
-                  >
-                    {loadingManual === 'andy-expand-memory' ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Brain className="mr-2 h-4 w-4" />
-                    )}
-                    Expand Memory
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      Process and consolidate memories
-                    </span>
-                  </Button>
-
-                  <Button
-                    onClick={() => triggerManualFunction('andy-enhance-memories', 'Enhance Memories')}
-                    disabled={loadingManual !== null}
-                    className="w-full justify-start"
-                    variant="outline"
-                  >
-                    {loadingManual === 'andy-enhance-memories' ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="mr-2 h-4 w-4" />
-                    )}
-                    Enhance Memories
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      Enrich and connect memories
-                    </span>
+                <CardContent>
+                  <Button asChild>
+                    <a href="?app=learn">Open Learn</a>
                   </Button>
                 </CardContent>
               </Card>
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-4">
-              <PersonaSettings />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Settings moved to Learn</CardTitle>
+                  <CardDescription>Persona and override changes are centralized in the Learn tab to avoid conflicts.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild>
+                    <a href="?app=learn">Open Learn</a>
+                  </Button>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
       </CardContent>

@@ -287,9 +287,12 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      handleSend();
+    if (e.key === 'Enter') {
+      // Send on Enter (and still support Cmd/Ctrl+Enter)
+      if (!e.shiftKey || e.metaKey || e.ctrlKey) {
+        e.preventDefault();
+        handleSend();
+      }
     }
   };
 
@@ -489,7 +492,7 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder={session?.userId ? (threadId ? "Message Andy... (⌘⏎ to send)" : "Preparing chat…") : "Sign in to chat with Andy"}
+            placeholder={session?.userId ? (threadId ? "Message Andy... (Enter to send)" : "Preparing chat…") : "Sign in to chat with Andy"}
             className="flex-1 h-10 rounded-xl"
             disabled={sendMutation.isPending || !session?.userId || !threadId}
           />
