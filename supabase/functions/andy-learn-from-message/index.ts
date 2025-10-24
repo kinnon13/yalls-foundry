@@ -5,6 +5,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper to extract JSON from model outputs (handles ```json fences)
+function extractJson(text: string): string {
+  if (!text) return '';
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenced) return fenced[1].trim();
+  const startBracket = text.indexOf('[');
+  const startBrace = text.indexOf('{');
+  let start = -1;
+  if (startBracket !== -1 && startBrace !== -1) start = Math.min(startBracket, startBrace);
+  else start = startBracket !== -1 ? startBracket : startBrace;
+  if (start !== -1) {
+    const candidate = text.slice(start).trim();
+    try { JSON.parse(candidate); return candidate; } catch {}
+  }
+  return text.trim();
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -81,17 +98,18 @@ Only extract explicit facts. Return empty array [] if no facts found.`
       })
     });
 
-    const aiData = await aiResponse.json();
-    let facts: any[] = [];
-    
-    try {
-      const extracted = aiData?.choices?.[0]?.message?.content || "[]";
-      facts = JSON.parse(extracted);
-      if (!Array.isArray(facts)) facts = [];
-    } catch (e) {
-      console.error('Failed to parse AI response:', e);
-      facts = [];
-    }
+const aiData = await aiResponse.json();
+let facts: any[] = [];
+
+try {
+  const extracted = aiData?.choices?.[0]?.message?.content || "[]";
+  const jsonStr = extractJson(extracted);
+  facts = JSON.parse(jsonStr);
+  if (!Array.isArray(facts)) facts = [];
+} catch (e) {
+  console.error('Failed to parse AI response:', e);
+  facts = [];
+}
 
     console.log(`📊 Extracted ${facts.length} facts`);
 
@@ -150,10 +168,10 @@ Return structured JSON:
         })
       });
       
-      const deepData = await deepAnalysis.json();
-      const analysis = deepData?.choices?.[0]?.message?.content || "{}";
-      let deepInsights: any = {};
-      try { deepInsights = JSON.parse(analysis); } catch {}
+const deepData = await deepAnalysis.json();
+const analysis = deepData?.choices?.[0]?.message?.content || "{}";
+let deepInsights: any = {};
+try { deepInsights = JSON.parse(extractJson(analysis)); } catch {}
       
       // Store deep analysis as a special memory entry
       if (Object.keys(deepInsights).length > 0) {
