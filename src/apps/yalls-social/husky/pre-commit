@@ -1,0 +1,6 @@
+#!/bin/sh
+# Role: Score posts pre-commit validation
+# Path: src/apps/yalls-social/husky/pre-commit
+
+echo "Validating social posts..."
+npm run test:social-score || exit 1

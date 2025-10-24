@@ -1,0 +1,9 @@
+{
+  "name": "Yalls Social",
+  "short_name": "Social",
+  "description": "Viral social feeds with marketplace",
+  "start_url": "/?app=yalls-social",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1DA1F2"
+}
