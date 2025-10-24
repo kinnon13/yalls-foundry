@@ -1,0 +1,56 @@
+{
+  "name": "Yalls AI",
+  "short_name": "YallsAI",
+  "version": "1.0.0",
+  "description": "Tiered AI oracle with role-based capability gating",
+  "icons": [
+    {
+      "src": "/ai-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/ai-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/yalls-ai/tiered",
+  "display": "standalone",
+  "theme_color": "#6366f1",
+  "background_color": "#ffffff",
+  "tiers": {
+    "user": {
+      "name": "User Tier",
+      "capabilities": ["suggest.follow", "discover.content", "personalize.feed"],
+      "rateLimit": 10
+    },
+    "creator": {
+      "name": "Creator Tier",
+      "capabilities": [
+        "suggest.follow",
+        "discover.content",
+        "personalize.feed",
+        "monetize.ideas",
+        "audience.insights",
+        "content.optimize"
+      ],
+      "rateLimit": 5
+    },
+    "business": {
+      "name": "Business Tier",
+      "capabilities": [
+        "suggest.follow",
+        "discover.content",
+        "personalize.feed",
+        "monetize.ideas",
+        "audience.insights",
+        "content.optimize",
+        "forecast.revenue",
+        "optimize.inventory",
+        "predict.churn"
+      ],
+      "rateLimit": 3
+    }
+  }
+}

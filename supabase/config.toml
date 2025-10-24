@@ -491,3 +491,7 @@ verify_jwt = true
 [functions.yallmart-checkout]
 verify_jwt = true
 
+# Yalls AI Query - Role-gated AI oracle
+[functions.yalls-ai-query]
+verify_jwt = true
+
