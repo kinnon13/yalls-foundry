@@ -75,6 +75,18 @@ export default function SuperAndy() {
     if (session?.userId) initThread();
   }, [session?.userId]);
 
+  // Allow Andy (via chat) to open apps like Calendar by intent
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      const app = (e as any).detail?.app as AppId | undefined;
+      const validApps: AppId[] = ['knowledge','files','tasks','task-os','calendar','proactive','inbox','capabilities','admin','secrets','training','learn'];
+      if (app && (validApps as any).includes(app)) setActiveApp(app);
+    };
+    window.addEventListener('super-andy:navigate' as any, handler as any);
+    return () => window.removeEventListener('super-andy:navigate' as any, handler as any);
+  }, []);
+
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
