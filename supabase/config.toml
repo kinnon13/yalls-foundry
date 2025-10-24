@@ -22,6 +22,20 @@ verify_jwt = true
 [functions.super-andy-deploy]
 verify_jwt = false
 
+# Super Andy Continuous Learning - External Brain
+[functions.super-andy-learn-external]
+verify_jwt = false
+
+[functions.super-andy-learn-external.cron]
+schedule = "0 */4 * * *"  # Every 4 hours - web research and knowledge acquisition
+
+# Super Andy Continuous Learning - Internal Brain
+[functions.super-andy-learn-internal]
+verify_jwt = false
+
+[functions.super-andy-learn-internal.cron]
+schedule = "0 */2 * * *"  # Every 2 hours - platform analytics and optimization
+
 # ========== ANDY SUBSYSTEMS ==========
 [functions.andy-chat]
 verify_jwt = true

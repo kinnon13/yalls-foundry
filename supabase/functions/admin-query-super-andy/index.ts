@@ -2,7 +2,6 @@
 // Allows Admin Rocker to ask Super Andy for policy clarification, global insights, or anomaly detection
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { requireRole } from '../_shared/rbac.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,10 +20,21 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Require admin role
-    const authResult = await requireRole(req, 'admin');
-    if (authResult instanceof Response) return authResult;
-    const { supabase, user } = authResult;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+    }
 
     const { query_type, context, priority = 'medium' } = await req.json() as QueryRequest;
 
