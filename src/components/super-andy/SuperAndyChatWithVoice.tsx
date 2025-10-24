@@ -312,13 +312,56 @@ export function SuperAndyChatWithVoice({
         }
       }
 
-      // Speak after full response
+      // Speak after full response & trigger learning
       if (voiceEnabled && assistantSoFar) {
         speakAndThen(assistantSoFar, () => {
-          const cleanup = listen((finalText) => setInput((prev) => (prev ? `${prev} ${finalText}` : finalText)));
+          const cleanup = listen((finalText) => handleSend(finalText));
           stopListenRef.current = cleanup;
           setIsListening(true);
         });
+      }
+
+      // CRITICAL: Trigger learning from this message exchange
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && activeThreadId) {
+          // Store user message in DB first
+          const { data: userMsg } = await supabase
+            .from('rocker_messages')
+            .insert({
+              thread_id: activeThreadId,
+              user_id: user.id,
+              role: 'user',
+              content: userMessage
+            })
+            .select('id')
+            .single();
+
+          // Store assistant message
+          const { data: assistantMsg } = await supabase
+            .from('rocker_messages')
+            .insert({
+              thread_id: activeThreadId,
+              user_id: user.id,
+              role: 'assistant',
+              content: assistantSoFar
+            })
+            .select('id')
+            .single();
+
+          // Trigger deep learning analysis (async, no await)
+          if (assistantMsg) {
+            supabase.functions.invoke('andy-learn-from-message', {
+              body: {
+                thread_id: activeThreadId,
+                message_id: assistantMsg.id,
+                content: assistantSoFar
+              }
+            }).catch(e => console.warn('Learning failed:', e));
+          }
+        }
+      } catch (learnError) {
+        console.warn('Failed to trigger learning:', learnError);
       }
 
     } catch (error: any) {

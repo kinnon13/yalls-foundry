@@ -3295,6 +3295,36 @@ export type Database = {
           },
         ]
       }
+      andy_system_rules: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          priority: number
+          rule_text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          priority?: number
+          rule_text: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          priority?: number
+          rule_text?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_circuit_breakers: {
         Row: {
           cooloff_sec: number

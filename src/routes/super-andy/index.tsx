@@ -11,6 +11,9 @@ import { AndyBrain } from '@/components/super-andy/AndyBrain';
 import { AndyMonitoring } from '@/components/super-andy/AndyMonitoring';
 import { AndyBrainMonitor } from '@/components/super-andy/AndyBrainMonitor';
 import { AndyLearningAssignment } from '@/components/super-andy/AndyLearningAssignment';
+import { AndyMemoryViewer } from '@/components/super-andy/AndyMemoryViewer';
+import { AndyRulesEditor } from '@/components/super-andy/AndyRulesEditor';
+import { AndyStatusReport } from '@/components/super-andy/AndyStatusReport';
 import ProactiveRail from '@/pages/SuperAndy/ProactiveRail';
 import SelfImproveLog from '@/pages/SuperAndy/SelfImproveLog';
 import AndySystemsOverview from '@/pages/SuperAndy/AndySystemsOverview';
@@ -49,6 +52,7 @@ export default function SuperAndyFull() {
             </TabsList>
 
             <TabsContent value="systems" className="space-y-4 mt-6">
+              <AndyStatusReport />
               <AndySystemsOverview />
             </TabsContent>
 
@@ -58,6 +62,8 @@ export default function SuperAndyFull() {
             </TabsContent>
 
             <TabsContent value="learn" className="space-y-6 mt-6">
+              <AndyRulesEditor />
+              <AndyMemoryViewer />
               <AndyLearningAssignment />
               <AndyBrain />
               <SelfImproveLog />

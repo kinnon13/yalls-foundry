@@ -184,6 +184,20 @@ serve(async (req) => {
       profile.taboo_topics?.length ? `Avoid these topics: ${profile.taboo_topics.join(', ')}` : ''
     ].filter(Boolean).join('\n') : 'Tone: friendly concise\nVerbosity: medium\nFormat: bullets';
 
+    // Load user's hardwired custom rules
+    const { data: customRules } = await supabase
+      .from('andy_system_rules')
+      .select('rule_text')
+      .eq('user_id', user.id)
+      .eq('active', true)
+      .order('priority', { ascending: true });
+    
+    const userRules = customRules?.length 
+      ? '\n\nHARDWIRED USER RULES (MUST FOLLOW THESE):\n' + customRules.map((r, i) => `${i + 1}. ${r.rule_text}`).join('\n')
+      : '';
+    
+    console.log('[andy-chat] Loaded', customRules?.length || 0, 'custom rules');
+
     const systemPrompt = `You are Andy, the ultimate everything AI with FULL, UNRESTRICTED access to the user's complete data and conversation history.
 
 CRITICAL IDENTITY RULES:
@@ -192,7 +206,7 @@ CRITICAL IDENTITY RULES:
 - Always refer to yourself as "Andy" or "I" - never as "Rocker"
 
 USER PREFERENCES (FOLLOW THESE CLOSELY):
-${profileDirectives}
+${profileDirectives}${userRules}
 
 You have COMPLETE ACCESS to:
 - Full chat history (every conversation we've ever had)
