@@ -26,7 +26,11 @@ export function Composer({ onSend, isLoading, onFileUpload, onUrlAnalyze }: Comp
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Send on Enter (without Shift), or on Cmd/Ctrl + Enter
+    if (
+      e.key === 'Enter' &&
+      ((e.metaKey || e.ctrlKey) || !e.shiftKey)
+    ) {
       e.preventDefault();
       handleSend();
     }
@@ -85,7 +89,8 @@ export function Composer({ onSend, isLoading, onFileUpload, onUrlAnalyze }: Comp
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask Rocker anything..."
+            placeholder="Type a message..."
+            aria-label="Chat message input. Press Enter to send, Shift+Enter for a new line, Cmd/Ctrl+Enter to send."
             className="min-h-[60px] max-h-[120px] resize-none"
             disabled={isLoading}
           />
@@ -95,6 +100,8 @@ export function Composer({ onSend, isLoading, onFileUpload, onUrlAnalyze }: Comp
           disabled={isLoading || !inputValue.trim()}
           size="icon"
           className="flex-shrink-0"
+          aria-label="Send message"
+          title="Send (Enter). New line (Shift+Enter). Send (Cmd/Ctrl+Enter)"
         >
           <Send className="h-4 w-4" />
         </Button>
