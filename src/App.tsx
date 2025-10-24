@@ -40,6 +40,7 @@ import { BusinessComparison } from '@/components/profile/BusinessComparison';
 import { BottomDock } from '@/components/layout/BottomDock';
 import { RouteToOverlayBridge } from '@/lib/overlay/RouteToOverlayBridge';
 import PanelHost from '@/lib/panel/PanelHost';
+import { NavBar } from '@/lib/shared/ui/NavBar';
 import '@/kernel'; // Register app contracts
 
 // 10 Canonical Routes + Legacy Redirector
@@ -98,6 +99,7 @@ function AppContent() {
 
   return (
     <>
+      <NavBar />
       <CommandPalette />
       <ProfileCreationModal />
       <RedirectHandler />
