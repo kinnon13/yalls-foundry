@@ -37,8 +37,14 @@ export function AndyThoughtStream({ userId }: { userId: string }) {
         }
       );
 
+      const safeParse = (raw: any) => {
+        if (raw == null || raw === '') return null;
+        try { return JSON.parse(raw); } catch { return null; }
+      };
+
       eventSource.addEventListener('lookup', (e: MessageEvent) => {
-        const data = JSON.parse(e.data);
+        const data = safeParse((e as any).data);
+        if (!data) return;
         setEvents(prev => [...prev, {
           type: 'lookup',
           data,
@@ -47,7 +53,8 @@ export function AndyThoughtStream({ userId }: { userId: string }) {
       });
 
       eventSource.addEventListener('result', (e: MessageEvent) => {
-        const data = JSON.parse(e.data);
+        const data = safeParse((e as any).data);
+        if (!data) return;
         setEvents(prev => [...prev, {
           type: 'result',
           data,
@@ -56,7 +63,8 @@ export function AndyThoughtStream({ userId }: { userId: string }) {
       });
 
       eventSource.addEventListener('complete', (e: MessageEvent) => {
-        const data = JSON.parse(e.data);
+        const data = safeParse((e as any).data);
+        if (!data) return;
         setEvents(prev => [...prev, {
           type: 'complete',
           data,
@@ -66,7 +74,8 @@ export function AndyThoughtStream({ userId }: { userId: string }) {
       });
 
       eventSource.addEventListener('error', (e: MessageEvent) => {
-        const data = JSON.parse(e.data);
+        const parsed = safeParse((e as any).data);
+        const data = parsed ?? { message: 'Stream error' };
         setEvents(prev => [...prev, {
           type: 'error',
           data,
