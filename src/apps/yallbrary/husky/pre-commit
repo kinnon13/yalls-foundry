@@ -1,0 +1,6 @@
+#!/bin/sh
+# Role: Pin validation pre-commit hook
+# Path: src/apps/yallbrary/husky/pre-commit
+
+echo "Validating pin structure..."
+npm run test:pin-validation || exit 1

@@ -1,0 +1,9 @@
+{
+  "name": "Yallbrary",
+  "short_name": "Yallbrary",
+  "description": "App registry and pinning system",
+  "start_url": "/?app=yallbrary",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000"
+}
