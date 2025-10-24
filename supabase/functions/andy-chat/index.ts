@@ -53,13 +53,13 @@ serve(async (req) => {
     const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user')?.content || '';
     let context = '';
 
-    // Load FULL chat history from rocker_messages (no limit - indefinite memory)
+    // Load FULL chat history from rocker_messages (5M message capacity)
     const { data: recentMessages } = await supabase
       .from('rocker_messages')
       .select('role, content, created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(500); // Increased from 20 to 500 for near-indefinite context
+      .limit(5000000); // 5 million message capacity for unlimited learning
     
     if (recentMessages?.length) {
       const historyText = recentMessages

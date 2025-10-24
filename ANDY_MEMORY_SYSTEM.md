@@ -78,6 +78,10 @@ Weekly self-analysis journal with:
 **Frequency:** Weekly (Mondays 9 AM)  
 **Purpose:** Generates journal-style summary of memory changes
 
+### 6. andy-archive-messages
+**Frequency:** Every hour  
+**Purpose:** Moves messages beyond 250 count to long-term memory (rocker_long_memory)
+
 ## Setup Instructions
 
 ### 1. Configure Cron Jobs
@@ -120,6 +124,18 @@ SELECT cron.schedule(
   ) as request_id;
   $$
 );
+
+-- Every hour: Archive old messages to long-term memory
+SELECT cron.schedule(
+  'andy-archive-messages',
+  '0 * * * *',
+  $$
+  SELECT net.http_post(
+    url:='https://xuxfuonzsfvrirdwzddt.supabase.co/functions/v1/andy-archive-messages',
+    headers:='{"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1eGZ1b256c2Z2cmlyZHd6ZGR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NDYyODMsImV4cCI6MjA3NjAyMjI4M30.Wza_NmUlFgT_NFuPsPw0ER8GAXgcU8OtEhvu-o_GCBg"}'::jsonb
+  ) as request_id;
+  $$
+);
 ```
 
 ### 2. View Cron Jobs
@@ -134,6 +150,7 @@ SELECT * FROM cron.job;
 SELECT cron.unschedule('andy-scheduler');
 SELECT cron.unschedule('andy-memory-decay');
 SELECT cron.unschedule('andy-reflection');
+SELECT cron.unschedule('andy-archive-messages');
 ```
 
 ## How to Use
@@ -235,12 +252,13 @@ You can create these if needed:
 
 ## System Benefits
 
-✅ **Indefinite Chat History** - Already set to 500 messages  
+✅ **Indefinite Chat History** - 5 million message capacity  
+✅ **Auto-Archival** - Messages past 250 moved to long-term memory every hour  
 ✅ **Timer/Reminder System** - Uses `rocker_tasks` + `andy-check-reminders`  
 ✅ **Progressive Research** - Multi-iteration learning from different angles  
 ✅ **Living Memory** - Strengthens/fades based on relevance  
 ✅ **Self-Awareness** - Andy reflects on his own learning  
-✅ **Semantic Recall** - Search by meaning, not keywords  
+✅ **Semantic Recall** - Search by meaning, not keywords
 
 ## Technical Details
 
@@ -294,5 +312,7 @@ supabase functions logs andy-reflection
 ---
 
 **Status:** ✅ Fully implemented and ready to use
+
+**Message Capacity:** 5 million messages with auto-archival after 250
 
 All edge functions deploy automatically. Just set up the cron jobs and Andy's brain will start operating autonomously.
