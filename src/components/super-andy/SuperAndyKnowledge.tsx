@@ -41,6 +41,8 @@ export function SuperAndyKnowledge() {
   const [expandedChunks, setExpandedChunks] = useState<Set<string>>(new Set());
   const [isReembedding, setIsReembedding] = useState(false);
   const [reembedProgress, setReembedProgress] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadCount, setUploadCount] = useState(0);
 
   useEffect(() => {
     loadKnowledge(true);
@@ -188,6 +190,36 @@ export function SuperAndyKnowledge() {
     }
   };
 
+  const handleBulkUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setIsUploading(true);
+    setUploadCount(files.length);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ingest-upload`;
+      for (const file of Array.from(files)) {
+        const form = new FormData();
+        form.append('file', file);
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token || ''}` },
+          body: form,
+        });
+        if (!resp.ok) {
+          console.warn('Upload failed', await resp.text());
+        }
+      }
+      toast({ title: 'Bulk import complete', description: `Processed ${files.length} files` });
+      await loadKnowledge(true);
+      await loadStats();
+    } catch (e: any) {
+      toast({ title: 'Bulk import failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const getStatusIcon = (chunk: KnowledgeChunk) => {
     if (chunk.embedding) {
       return <CheckCircle2 className="h-4 w-4 text-green-500" />;
@@ -212,24 +244,40 @@ export function SuperAndyKnowledge() {
             </Badge>
           )}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleReembed}
-          disabled={isReembedding}
-        >
-          {isReembedding ? (
-            <>
-              <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <Brain className="h-3 w-3 mr-2" />
-              Re-embed
-            </>
-          )}
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleReembed}
+            disabled={isReembedding}
+          >
+            {isReembedding ? (
+              <>
+                <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Brain className="h-3 w-3 mr-2" />
+                Re-embed
+              </>
+            )}
+          </Button>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              multiple
+              onChange={(e) => handleBulkUpload(e.target.files)}
+              className="text-xs"
+            />
+            {isUploading && (
+              <Badge variant="secondary" className="text-xs">
+                Uploading {uploadCount}...
+              </Badge>
+            )}
+          </div>
+        </div>
       </div>
       
       <div className="grid grid-cols-3 gap-4">

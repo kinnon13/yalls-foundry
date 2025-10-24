@@ -21,6 +21,7 @@ export function useVoice({ role, enabled, onTranscript }: UseVoiceOptions) {
   const [profile, setProfile] = useState(() => getVoiceProfile(role));
   const recognitionRef = useRef<any>(null);
   const speakingRef = useRef(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   
   // Load effective profile (checks feature flag)
   useEffect(() => {
@@ -106,6 +107,7 @@ export function useVoice({ role, enabled, onTranscript }: UseVoiceOptions) {
       const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
       
       audio.onplaying = () => {
+        setIsSpeaking(true);
         const t1 = performance.now();
         console.log('[Voice] ✓ TTS playing:', { 
           ttfa: Math.round(t1 - t0), 
@@ -117,6 +119,7 @@ export function useVoice({ role, enabled, onTranscript }: UseVoiceOptions) {
       };
       
       audio.onended = () => {
+        setIsSpeaking(false);
         speakingRef.current = false;
         then?.();
       };
@@ -140,6 +143,7 @@ export function useVoice({ role, enabled, onTranscript }: UseVoiceOptions) {
           console.warn('[Voice] Failed to log playback error:', logError);
         }
         
+        setIsSpeaking(false);
         speakingRef.current = false;
         onError?.(playError);
         then?.();
@@ -245,6 +249,7 @@ export function useVoice({ role, enabled, onTranscript }: UseVoiceOptions) {
     listen,
     stopAll,
     isSupported: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window,
+    isSpeaking,
     profile
   };
 }
