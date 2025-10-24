@@ -37,25 +37,23 @@ export default function SuperAndy() {
     setSearchParams(sp, { replace: true });
   }, [activeApp, searchParams, setSearchParams]);
 
-  // Dev override: auto sign-in anonymously on ?role=super so chat works in preview
+  // Ensure an authenticated session (prefer anonymous if not signed in)
   useEffect(() => {
-    const role = searchParams.get('role');
-    if (!session?.userId && role === 'super') {
-      (async () => {
+    (async () => {
+      if (!session?.userId) {
         try {
           const { supabase } = await import('@/integrations/supabase/client');
           const auth = (supabase.auth as any);
           if (typeof auth.signInAnonymously === 'function') {
             await auth.signInAnonymously();
-          } else {
-            console.warn('[SuperAndy] Anonymous auth not available in this environment');
+            console.info('[SuperAndy] Anonymous session started');
           }
         } catch (e) {
-          console.error('[SuperAndy] Dev sign-in failed:', e);
+          console.warn('[SuperAndy] Anonymous auth failed (will continue without chat):', e);
         }
-      })();
-    }
-  }, [session?.userId, searchParams]);
+      }
+    })();
+  }, [session?.userId]);
 
   useEffect(() => {
     const initThread = async () => {
