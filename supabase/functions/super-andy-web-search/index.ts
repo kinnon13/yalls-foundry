@@ -1,5 +1,5 @@
-// Super Andy Web Search & Learning
-// Enables Andy to search the web and learn in real-time from conversations
+// Super Andy Web Search & Learning with Serper + XAI Grok
+// Real web search using Serper API, analyzed by XAI Grok for comprehensive insights
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -29,56 +29,85 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
-    }
-
     console.log('[Super Andy] Web search query:', query);
 
-    // Use AI to perform web research
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // Step 1: Real web search using Serper API
+    const SERPER_API_KEY = Deno.env.get('SERPER_API_KEY');
+    if (!SERPER_API_KEY) {
+      throw new Error('SERPER_API_KEY not configured');
+    }
+
+    const serperResponse = await fetch('https://google.serper.dev/search', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'X-API-KEY': SERPER_API_KEY,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        q: query,
+        num: 10,
+      }),
+    });
+
+    if (!serperResponse.ok) {
+      const errorText = await serperResponse.text();
+      console.error('[Serper] Error:', errorText);
+      throw new Error(`Serper search failed: ${serperResponse.status}`);
+    }
+
+    const serperData = await serperResponse.json();
+    const searchResults = serperData.organic || [];
+
+    console.log('[Super Andy] Found', searchResults.length, 'search results');
+
+    // Step 2: Use XAI Grok to analyze and synthesize search results
+    const XAI_API_KEY = Deno.env.get('XAI_API_KEY');
+    if (!XAI_API_KEY) {
+      throw new Error('XAI_API_KEY not configured');
+    }
+
+    const contextFromWeb = searchResults
+      .slice(0, 5)
+      .map((r: any) => `Title: ${r.title}\nSnippet: ${r.snippet}\nURL: ${r.link}`)
+      .join('\n\n');
+
+    const xaiResponse = await fetch('https://api.x.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${XAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'grok-2-latest',
         messages: [
           {
             role: 'system',
-            content: `You are Super Andy's web research assistant. Provide comprehensive, accurate information about the query. Include:
-1. Key facts and current information
-2. Recent developments or trends
-3. Practical applications
-4. Potential implications
-5. Related topics to explore
-
-Format your response as structured JSON with these fields:
+            content: `You are Super Andy's research analyst. Analyze web search results and provide comprehensive insights. Format as JSON with:
 - summary: Brief overview
 - key_points: Array of main insights
 - recent_developments: Notable recent changes
 - applications: Practical use cases
 - related_topics: Array of topics for further research
-- confidence: Number 0-1 indicating information confidence`
+- confidence: Number 0-1 indicating information confidence
+- sources: Array of URLs used`,
           },
           {
             role: 'user',
-            content: `Research: ${query}`
-          }
+            content: `Query: ${query}\n\nWeb Search Results:\n${contextFromWeb}\n\nProvide comprehensive analysis in JSON format.`,
+          },
         ],
-        max_tokens: 2000,
+        temperature: 0.7,
       }),
     });
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      throw new Error(`AI search failed: ${aiResponse.status} - ${errorText}`);
+    if (!xaiResponse.ok) {
+      const errorText = await xaiResponse.text();
+      console.error('[XAI] Error:', errorText);
+      throw new Error(`XAI analysis failed: ${xaiResponse.status}`);
     }
 
-    const aiData = await aiResponse.json();
-    const searchResult = aiData.choices[0].message.content;
+    const xaiData = await xaiResponse.json();
+    const searchResult = xaiData.choices[0].message.content;
 
     // Parse the structured response
     let parsedResult;
@@ -90,6 +119,7 @@ Format your response as structured JSON with these fields:
         summary: searchResult,
         key_points: [searchResult],
         confidence: 0.7,
+        sources: searchResults.slice(0, 3).map((r: any) => r.link),
       };
     }
 
@@ -98,13 +128,15 @@ Format your response as structured JSON with these fields:
       await supabase.from('andy_external_knowledge').insert({
         topic: query,
         content: searchResult,
-        source: 'web_search_ai',
+        source: 'serper_xai',
         learned_at: new Date().toISOString(),
         confidence_score: parsedResult.confidence || 0.85,
         metadata: {
           query,
           timestamp: new Date().toISOString(),
-          model: 'gemini-2.5-flash',
+          model: 'grok-2-latest',
+          search_engine: 'serper',
+          results_count: searchResults.length,
         },
       });
 
@@ -120,6 +152,7 @@ Format your response as structured JSON with these fields:
       output: { 
         result_summary: parsedResult.summary,
         learned: learn_from_results,
+        sources_count: searchResults.length,
       },
       result: 'success',
     });
@@ -130,6 +163,7 @@ Format your response as structured JSON with these fields:
         query,
         result: parsedResult,
         learned: learn_from_results,
+        search_results_count: searchResults.length,
         timestamp: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
