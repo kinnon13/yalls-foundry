@@ -101,30 +101,7 @@ export function SuperAndyChatWithVoice({
   };
 
   useEffect(() => {
-    const init = async () => {
-      await loadThreads();
-      
-      // If no threadId, auto-select the most recent thread with messages
-      if (!threadId) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: recentThread } = await supabase
-            .from('rocker_messages')
-            .select('thread_id')
-            .eq('user_id', user.id)
-            .not('thread_id', 'is', null)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-          
-          if (recentThread?.thread_id) {
-            onThreadCreated?.(recentThread.thread_id);
-          }
-        }
-      }
-    };
-    
-    init();
+    loadThreads();
   }, []);
 
   useEffect(() => {

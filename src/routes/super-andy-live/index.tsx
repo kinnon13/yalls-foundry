@@ -14,9 +14,29 @@ export default function SuperAndyLive() {
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUserId(data.user.id);
-    });
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+        
+        // Auto-load most recent thread with messages
+        const { data: recentThread } = await supabase
+          .from('rocker_messages')
+          .select('thread_id')
+          .eq('user_id', user.id)
+          .not('thread_id', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (recentThread?.thread_id) {
+          console.log('Auto-selected thread:', recentThread.thread_id);
+          setActiveThreadId(recentThread.thread_id);
+        }
+      }
+    };
+    
+    init();
   }, []);
 
   return (
