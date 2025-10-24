@@ -98,6 +98,20 @@ Only extract explicit facts. Return empty array [] if no facts found.`
     // HARDWIRED: Always do deep analysis on the message content
     console.log('🧠 Running deep analysis on message...');
     try {
+      // Load research queue for context
+      const { data: researchQueue } = await supabase
+        .from('andy_research_queue')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      const queueContext = researchQueue && researchQueue.length > 0
+        ? `\n\nPending Research Queue (${researchQueue.length} items):\n` + researchQueue.map((q: any) => 
+            `- ${q.query} (priority: ${q.priority || 'normal'})`
+          ).join('\n')
+        : '';
+
       const deepAnalysis = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -116,6 +130,9 @@ Only extract explicit facts. Return empty array [] if no facts found.`
 3. Project dependencies, technical requirements
 4. Relationships between entities mentioned
 5. Future implications and follow-up needs
+6. Topics that match or relate to pending research queue items
+
+${queueContext}
 
 Return structured JSON:
 {
@@ -123,7 +140,9 @@ Return structured JSON:
   "connections": ["..."],
   "implications": ["..."],
   "technical_insights": ["..."],
-  "entities": [{"name":"...", "type":"...", "context":"..."}]
+  "entities": [{"name":"...", "type":"...", "context":"..."}],
+  "research_opportunities": ["Topics from the message that could be researched"],
+  "related_queue_items": ["IDs or topics from the research queue that relate to this message"]
 }`
             },
             { role: "user", content: content || msg.content }
