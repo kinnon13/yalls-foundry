@@ -14569,6 +14569,112 @@ export type Database = {
           },
         ]
       }
+      yallmart_cart_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_id: string
+          quantity: number | null
+          source_post_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_id: string
+          quantity?: number | null
+          source_post_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_id?: string
+          quantity?: number | null
+          source_post_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "yallmart_cart_items_source_post_id_fkey"
+            columns: ["source_post_id"]
+            isOneToOne: false
+            referencedRelation: "yalls_social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      yalls_social_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "yalls_social_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "yalls_social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      yalls_social_posts: {
+        Row: {
+          comments_count: number | null
+          content: string
+          created_at: string | null
+          id: string
+          likes_count: number | null
+          media_url: string | null
+          product_id: string | null
+          updated_at: string | null
+          user_id: string
+          viral_score: number | null
+        }
+        Insert: {
+          comments_count?: number | null
+          content: string
+          created_at?: string | null
+          id?: string
+          likes_count?: number | null
+          media_url?: string | null
+          product_id?: string | null
+          updated_at?: string | null
+          user_id: string
+          viral_score?: number | null
+        }
+        Update: {
+          comments_count?: number | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          likes_count?: number | null
+          media_url?: string | null
+          product_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+          viral_score?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       ai_action_my_timeline: {
@@ -15310,6 +15416,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      boost_post_viral_score: {
+        Args: { boost_multiplier: number; post_id: string }
+        Returns: undefined
       }
       bump_counter: {
         Args: { p_key: string; p_ttl_sec?: number }
@@ -16164,6 +16274,7 @@ export type Database = {
         Args: { p_pin_id: string; p_unlock_threshold?: number }
         Returns: Json
       }
+      increment_post_likes: { Args: { post_id: string }; Returns: undefined }
       install_app: {
         Args: { p_app_key: string; p_config?: Json; p_entity_id: string }
         Returns: undefined
