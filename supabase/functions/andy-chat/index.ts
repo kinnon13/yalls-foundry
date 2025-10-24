@@ -283,6 +283,24 @@ Be conversational, fast, proactive, and always use the user's actual data when a
             required: ['query']
           }
         }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'navigate',
+          description: 'Open a specific app in the interface. Available apps: calendar, files, tasks, chat, settings. Use this when user asks to open, view, or access any of these apps.',
+          parameters: {
+            type: 'object',
+            properties: {
+              app: {
+                type: 'string',
+                enum: ['calendar', 'files', 'tasks', 'chat', 'settings'],
+                description: 'The app to navigate to'
+              }
+            },
+            required: ['app']
+          }
+        }
       }
     ];
 
