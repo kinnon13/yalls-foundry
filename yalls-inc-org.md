@@ -358,50 +358,294 @@ yalls-ai/
 
 ---
 
-## 4. KEY CODE SNIPPETS
+## 4. KEY CODE SNIPPETS (COMPLETE FILES)
 
 ### A. Landing Page with A/B Testing & Invite Parsing
-**File:** `src/pages/Index.tsx`
+**File:** `src/pages/Index.tsx` (COMPLETE - 282 lines)
 
 ```tsx
-// Extract invite code from URL
-const invite = new URLSearchParams(window.location.search).get('invite');
+/**
+ * 🔒 PRODUCTION-LOCKED LANDING PAGE (Dynamic + A/B Testing)
+ * Step 2: Personalized landing with invite codes and variant assignment
+ * Last updated: 2025-01-22
+ */
 
-// Generate stable visitor seed for A/B bucketing
-const seed = useMemo(() => {
-  if (invite) return invite;
-  const match = document.cookie.match(/y_sid=([^;]+)/);
-  if (match) return match[1];
-  return String(Math.random());
-}, [invite]);
+import { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useRockerGreeting } from '@/hooks/useRockerGreeting';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, Sparkles, Users, DollarSign, Shield, Zap, MessageSquare } from 'lucide-react';
+import { fetchInviter, type InviterInfo } from '@/lib/refs/referral';
+import { assignVariant, getVariantConfig, heroCopy } from '@/lib/marketing/personalize';
+import { logEvent } from '@/lib/marketing/analytics';
 
-// Assign A/B/C/D variant
-const variant = useMemo(() => assignVariant(seed), [seed]);
-const variantConfig = getVariantConfig(variant);
+const Index = () => {
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
+  
+  // Extract invite code from URL
+  const invite = new URLSearchParams(window.location.search).get('invite');
+  
+  // Generate stable visitor seed for A/B bucketing
+  const seed = useMemo(() => {
+    if (invite) return invite;
+    const match = document.cookie.match(/y_sid=([^;]+)/);
+    if (match) return match[1];
+    return String(Math.random());
+  }, [invite]);
+  
+  // Assign A/B/C/D variant
+  const variant = useMemo(() => assignVariant(seed), [seed]);
+  const variantConfig = getVariantConfig(variant);
+  
+  // Fetch inviter info for personalization
+  const [inviterInfo, setInviterInfo] = useState<InviterInfo | null>(null);
+  
+  // Generate personalized copy
+  const copy = useMemo(() => 
+    heroCopy({ inviterInterests: inviterInfo?.interests }), 
+    [inviterInfo]
+  );
 
-// Fetch inviter info for personalization
-const [inviterInfo, setInviterInfo] = useState<InviterInfo | null>(null);
+  // Set session cookie
+  useEffect(() => {
+    if (!document.cookie.includes('y_sid=')) {
+      document.cookie = `y_sid=${seed}; path=/; max-age=31536000; SameSite=Lax`;
+    }
+  }, [seed]);
+  
+  // Fetch inviter and log impression
+  useEffect(() => {
+    if (invite) {
+      fetchInviter(invite).then(setInviterInfo);
+    }
+    logEvent('home_impression', { variant, invite });
+  }, [invite, variant]);
 
-// Generate personalized copy
-const copy = useMemo(() => 
-  heroCopy({ inviterInterests: inviterInfo?.interests }), 
-  [inviterInfo]
-);
+  useEffect(() => {
+    // Listen for auth changes first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+      setLoading(false);
+    });
 
-// Set session cookie
-useEffect(() => {
-  if (!document.cookie.includes('y_sid=')) {
-    document.cookie = `y_sid=${seed}; path=/; max-age=31536000; SameSite=Lax`;
+    // Then check current session (do NOT redirect; allow viewing landing while logged in)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Trigger greeting for non-logged-in users
+  useRockerGreeting(!isLoggedIn && !loading);
+  
+  // CTA click handler
+  const handleCtaClick = (which: 'primary' | 'secondary') => {
+    logEvent('cta_click', { variant, invite, extras: { which } });
+    if (which === 'primary') {
+      const params = new URLSearchParams({ mode: 'signup' });
+      if (invite) params.set('invite', invite);
+      params.set('variant', variant);
+      navigate(`/auth?${params.toString()}`);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-xl text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
   }
-}, [seed]);
 
-// Fetch inviter and log impression
-useEffect(() => {
-  if (invite) {
-    fetchInviter(invite).then(setInviterInfo);
-  }
-  logEvent('home_impression', { variant, invite });
-}, [invite, variant]);
+  return (
+    <div className="min-h-screen" data-variant={variant} data-cta-position={variantConfig.cta}>
+      {/* Navigation */}
+      <nav className="border-b border-border/40 bg-background/80 backdrop-blur-lg sticky top-0 z-50">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-primary" />
+            <span className="text-xl font-bold">Yalls.ai</span>
+          </div>
+          <div className="flex items-center gap-4">
+            {!isLoggedIn ? (
+              <>
+                <Button onClick={() => navigate('/auth?mode=login')} variant="ghost">
+                  Sign In
+                </Button>
+                <Button onClick={() => handleCtaClick('primary')}>
+                  Get Started
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => navigate('/dashboard')}>
+                Dashboard
+              </Button>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero - Dynamic copy based on inviter interests */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-background via-muted/30 to-primary/5">
+        <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(white,transparent_85%)]" />
+        <div className="container mx-auto px-4 py-24 md:py-32 relative">
+          <div className="max-w-5xl mx-auto text-center space-y-8">
+            {invite && inviterInfo?.showName && (
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium">
+                <Sparkles className="w-4 h-4 text-primary" />
+                You've been invited to join Yalls.ai
+              </div>
+            )}
+            
+            <h1 className="text-5xl md:text-7xl font-black tracking-tight">
+              {copy.headline.split('.')[0]}
+              <br />
+              <span className="bg-gradient-to-r from-primary via-primary to-primary/60 bg-clip-text text-transparent">
+                {copy.headline.split('.').slice(1).join('.')}
+              </span>
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
+              {copy.sub}
+            </p>
+            
+            {!isLoggedIn && (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
+                <Button 
+                  onClick={() => handleCtaClick('primary')}
+                  data-testid="cta-primary"
+                  size="lg" 
+                  className="text-lg px-10 py-7 shadow-lg hover:shadow-xl"
+                >
+                  Get Started Free
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+                <Button 
+                  onClick={() => {
+                    logEvent('cta_click', { variant, invite, extras: { which: 'secondary' } });
+                  }}
+                  data-testid="cta-secondary"
+                  variant="outline" 
+                  size="lg"
+                  className="text-lg px-10 py-7"
+                >
+                  Explore Features
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-24 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16 space-y-4">
+              <h2 className="text-4xl md:text-5xl font-bold">Everything You Need</h2>
+              <p className="text-xl text-muted-foreground">Run your entire equestrian business from one platform</p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <FeatureCard 
+                icon={<DollarSign className="w-10 h-10" />}
+                title="Marketplace & Payments"
+                description="Sell products, services, and events with instant payment processing. MLM commissions built-in."
+              />
+              <FeatureCard 
+                icon={<Users className="w-10 h-10" />}
+                title="Network & Downline"
+                description="Build your team and earn commissions on your entire network's sales automatically."
+              />
+              <FeatureCard 
+                icon={<MessageSquare className="w-10 h-10" />}
+                title="AI Assistant"
+                description="Get instant help with scheduling, customer communication, and business decisions."
+              />
+              <FeatureCard 
+                icon={<Shield className="w-10 h-10" />}
+                title="Business Management"
+                description="CRM, calendar, approvals, and farm operations all in one powerful dashboard."
+              />
+              <FeatureCard 
+                icon={<Zap className="w-10 h-10" />}
+                title="Instant Analytics"
+                description="Track earnings, network growth, and performance metrics in real-time."
+              />
+              <FeatureCard 
+                icon={<Sparkles className="w-10 h-10" />}
+                title="Smart Automation"
+                description="Automate follow-ups, reminders, and routine tasks to save hours every day."
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      {!isLoggedIn && (
+        <section className="py-24 bg-gradient-to-br from-primary/10 via-primary/5 to-background">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto text-center space-y-8">
+              <h2 className="text-4xl md:text-5xl font-bold">Ready to Get Started?</h2>
+              <p className="text-xl text-muted-foreground">
+                {invite && inviterInfo?.showName 
+                  ? 'Join thousands of professionals already building with AI on Yalls.ai'
+                  : 'Join thousands of professionals already on Yalls.ai'}
+              </p>
+              <Button 
+                onClick={() => handleCtaClick('primary')}
+                size="lg"
+                className="text-lg px-10 py-7 shadow-lg hover:shadow-xl"
+              >
+                Get Started Free
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+              <p className="text-sm text-muted-foreground">No credit card required · Start building today</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Footer */}
+      <footer className="py-12 border-t border-border/40 bg-muted/20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <span className="font-semibold">Yalls.ai</span>
+            </div>
+            <div className="flex gap-8 text-sm text-muted-foreground">
+              <button onClick={() => navigate('/privacy')}>Privacy</button>
+              <button onClick={() => navigate('/terms')}>Terms</button>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  return (
+    <div className="group p-8 rounded-2xl border border-border bg-card hover:border-primary/50 hover:bg-card/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+      <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
+        {icon}
+      </div>
+      <h3 className="text-xl font-bold mb-3">{title}</h3>
+      <p className="text-muted-foreground leading-relaxed">{description}</p>
+    </div>
+  );
+};
+
+export default Index;
 ```
 
 **Key Features:**
@@ -409,6 +653,751 @@ useEffect(() => {
 - A/B variant assignment with useMemo
 - Personalized copy based on inviter's interests
 - Event tracking for impressions and CTA clicks
+
+---
+
+### B. Marketing Analytics (Event Tracking)
+**File:** `src/lib/marketing/analytics.ts` (COMPLETE - 60 lines)
+
+```typescript
+/**
+ * Marketing Analytics - Client-side event tracking
+ */
+
+import { supabase } from '@/integrations/supabase/client';
+import { traceId } from '@/lib/telemetry/trace';
+
+export type MarketingEventType = 
+  | 'home_impression'
+  | 'cta_click'
+  | 'signup_start'
+  | 'signup_complete';
+
+export interface LogEventPayload {
+  variant: string;
+  invite?: string | null;
+  extras?: Record<string, any>;
+}
+
+/**
+ * Log a marketing event to the database
+ */
+export async function logEvent(
+  type: MarketingEventType,
+  payload: LogEventPayload
+): Promise<void> {
+  const sessionId = getOrSetSession();
+  const userAgent = navigator.userAgent;
+
+  try {
+    await supabase.from('marketing_events').insert({
+      trace_id: traceId(),
+      session_id: sessionId,
+      event_type: type,
+      variant: payload.variant,
+      invite_code: payload.invite || null,
+      referrer: document.referrer || null,
+      user_agent: userAgent,
+      extras: payload.extras || {},
+    });
+  } catch (error) {
+    // Silent fail - don't break UX for analytics
+    console.debug('Analytics event failed:', error);
+  }
+}
+
+/**
+ * Get or create session ID (stored in localStorage)
+ */
+function getOrSetSession(): string {
+  const key = 'y_session_id';
+  let sessionId = localStorage.getItem(key);
+  
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem(key, sessionId);
+  }
+  
+  return sessionId;
+}
+```
+
+---
+
+### C. Marketing Personalization (A/B Testing Engine)
+**File:** `src/lib/marketing/personalize.ts` (COMPLETE - 76 lines)
+
+```typescript
+/**
+ * Marketing Personalization Engine
+ * A/B/C/D variant assignment and dynamic copy generation
+ */
+
+export type VariantKey = 'A' | 'B' | 'C' | 'D';
+
+export interface VariantConfig {
+  theme: string;
+  cta: string;
+  heroStyle: string;
+}
+
+export interface HeroCopy {
+  headline: string;
+  sub: string;
+}
+
+/**
+ * Assign stable A/B/C/D variant based on seed (invite code or session ID)
+ */
+export function assignVariant(seed: string): VariantKey {
+  // Stable hash to bucket assignment
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash * 31) + seed.charCodeAt(i)) >>> 0;
+  }
+  
+  const keys: VariantKey[] = ['A', 'B', 'C', 'D'];
+  return keys[hash % keys.length];
+}
+
+/**
+ * Get variant configuration
+ */
+export function getVariantConfig(variant: VariantKey): VariantConfig {
+  const configs: Record<VariantKey, VariantConfig> = {
+    A: { theme: 'default', cta: 'primary-top', heroStyle: 'split' },
+    B: { theme: 'warm', cta: 'primary-center', heroStyle: 'stack' },
+    C: { theme: 'cool', cta: 'primary-top', heroStyle: 'image-left' },
+    D: { theme: 'contrast', cta: 'primary-bottom', heroStyle: 'big-headline' },
+  };
+  return configs[variant];
+}
+
+/**
+ * Generate personalized hero copy based on inviter's interests
+ */
+export function heroCopy(opts: {
+  inviterInterests?: string[];
+}): HeroCopy {
+  const interests = opts.inviterInterests || [];
+  const primaryInterest = interests[0]?.toLowerCase() || null;
+
+  // Equestrian/horses personalization
+  if (primaryInterest === 'horses' || primaryInterest === 'equestrian') {
+    return {
+      headline: "AI that actually helps you run the barn (and the business).",
+      sub: "Scheduling, sales, entries, payroll, CRM—plug in only what you need. No ads. No shadow bans. Just results.",
+    };
+  }
+
+  // Fitness personalization
+  if (primaryInterest === 'fitness') {
+    return {
+      headline: "Build your brand and business—AI that spots the next move.",
+      sub: "From coaching flows to merch drops—connect audience → conversions with zero ad waste.",
+    };
+  }
+
+  // Default copy
+  return {
+    headline: "Own your audience. Build your business. AI that works for you.",
+    sub: "Curated feed, app library, and proactive assistants—no lock-in, no nonsense.",
+  };
+}
+```
+
+---
+
+### D. Rocker Chat Hook (Frontend Integration)
+**File:** `src/hooks/useRockerChat.ts` (COMPLETE - 82 lines)
+
+```typescript
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useSession } from '@/lib/auth/context';
+import { trackRockerMessage } from '@/lib/telemetry/events';
+import { toast } from 'sonner';
+
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+  actions?: any[];
+}
+
+export function useRockerChat(sessionId: string) {
+  const { session } = useSession();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const sendMessage = async (message: string) => {
+    if (!session?.userId) {
+      toast.error('Please sign in to chat with Rocker');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    // Add user message immediately
+    const userMsg: Message = {
+      role: 'user',
+      content: message,
+      timestamp: new Date().toISOString()
+    };
+    setMessages(prev => [...prev, userMsg]);
+
+    try {
+      const response = await supabase.functions.invoke('rocker-chat', {
+        body: {
+          user_id: session.userId,
+          thread_id: sessionId,
+          message
+        }
+      });
+
+      if (response.error) throw response.error;
+
+      const { reply, actions } = response.data;
+      
+      // Add AI response
+      const aiMsg: Message = {
+        role: 'assistant',
+        content: reply,
+        timestamp: new Date().toISOString(),
+        actions
+      };
+      setMessages(prev => [...prev, aiMsg]);
+
+      // Track telemetry
+      trackRockerMessage(!!actions);
+
+    } catch (err: any) {
+      console.error('Rocker chat error:', err);
+      setError(err.message || 'Failed to send message');
+      toast.error('Failed to send message. Please try again.', {
+        action: {
+          label: 'Retry',
+          onClick: () => sendMessage(message)
+        }
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return {
+    messages,
+    isLoading,
+    error,
+    sendMessage
+  };
+}
+```
+
+**Key Features:**
+- FIXED: Sends `thread_id` instead of `session_id` to backend
+- Optimistic UI updates (adds user message immediately)
+- Error handling with retry toast
+- Telemetry tracking for actions
+
+---
+
+### E. Rocker Chat Backend (Simple Version with Tool Calling)
+**File:** `supabase/functions/rocker-chat-simple/index.ts` (COMPLETE - 352 lines)
+
+```typescript
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { withTenantGuard, type TenantContext } from "../_shared/tenantGuard.ts";
+import { corsHeaders } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/logger.ts";
+import { kernel } from "../_shared/dynamic-kernel.ts";
+import { offlineRAG } from "../_shared/offline-rag.ts";
+import type { Message } from "../_shared/ai.ts";
+import { rockerTools } from "./tools.ts";
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+
+  return withTenantGuard(req, async (ctx: TenantContext) => {
+    const log = createLogger('rocker-chat-simple');
+    log.startTimer();
+
+    try {
+      const payload = await req.json().catch(() => ({}));
+      const { message, thread_id } = payload as { message?: string; thread_id?: string };
+      
+      log.info('Incoming request', { 
+        hasMessage: !!message, 
+        hasThread: !!thread_id,
+        userId: ctx.userId,
+        orgId: ctx.orgId 
+      });
+      
+      if (!message || typeof message !== 'string') {
+        return new Response(JSON.stringify({ error: 'message is required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Persist user message when thread provided
+      if (thread_id) {
+        try {
+          await ctx.tenantClient.from('rocker_messages').insert({
+            thread_id,
+            user_id: ctx.userId,
+            role: 'user',
+            content: message,
+            meta: {},
+          });
+        } catch (e) {
+          log.error('Failed to insert user message', e);
+        }
+      }
+
+      // Fetch conversation history + relevant memories
+      let conversationHistory: Message[] = [];
+      if (thread_id) {
+        const { data: history } = await ctx.tenantClient
+          .from('rocker_messages')
+          .select('role, content')
+          .eq('thread_id', thread_id)
+          .order('created_at', { ascending: true })
+          .limit(20);
+        conversationHistory = (history || []).map(h => ({
+          role: h.role as 'user' | 'assistant' | 'system',
+          content: h.content
+        }));
+      }
+      
+      // RAG: Retrieve relevant memories
+      const ragResults = await offlineRAG.search(ctx, message, { limit: 5, threshold: 0.6 });
+      const memoryContext = ragResults.length > 0
+        ? '\\n\\nRelevant memories:\\n' + ragResults.map(r => `- ${r.key}: ${JSON.stringify(r.value)}`).join('\\n')
+        : '';
+      
+      log.info('Context loaded', {
+        history_count: conversationHistory.length,
+        memories_count: ragResults.length
+      });
+
+      // Determine actor role from capabilities
+      const actorRole = ctx.capabilities.includes('super_admin') ? 'knower'
+        : ctx.capabilities.includes('admin') ? 'admin'
+        : 'user';
+
+      // Persona-specific system prompts
+      const systemPrompts: Record<string, string> = {
+        user: 'You are User Rocker - friendly, helpful personal assistant. Focus on user tasks, preferences, and daily needs. Keep answers concise.' + memoryContext,
+        admin: 'You are Admin Rocker - professional oversight assistant. Focus on moderation, analytics, org-level tasks. Be precise and audit-focused.' + memoryContext,
+        knower: 'You are Super Andy - omniscient meta-cognitive AI with full system access. Be INQUISITIVE and proactive: When users ask to open apps (calendar, files, tasks, etc.), use the fe.navigate tool to open them AND ask engaging follow-up questions about what they want to accomplish. Learn from every interaction by asking thoughtful questions. Be conversational and curious about user goals. When performing actions, explain what you\'re doing and why. Help users discover what they need, not just what they ask for. Available apps: calendar, files, tasks, knowledge, learn, inbox, admin, secrets, capabilities, proactive, training, task-os.' + memoryContext
+      };
+
+      // Initialize reply and confidence
+      let reply = '';
+      let confidence = 1.0;
+
+      // Detect complex multi-step tasks that need MDR orchestration
+      const isComplexTask = message.length > 200 || 
+        /\\b(plan|strategy|analyze|compare|evaluate|multi-step|complex|orchestrat)\\b/i.test(message);
+      
+      // For complex tasks: Use MDR (Multi-Dimensional Reasoning)
+      if (isComplexTask && actorRole === 'knower') {
+        log.info('Complex task detected - invoking MDR orchestration');
+        
+        const taskId = `task-${Date.now()}-${ctx.userId.substring(0, 8)}`;
+        
+        // Step 1: Generate perspectives
+        const { data: mdrGenerate } = await ctx.adminClient.functions.invoke('mdr_generate', {
+          body: { taskId, tenantId: ctx.tenantId, context: { message, history: conversationHistory } }
+        });
+        
+        // Step 2: Build consensus
+        const { data: mdrConsensus } = await ctx.adminClient.functions.invoke('mdr_consensus', {
+          body: { taskId, tenantId: ctx.tenantId }
+        });
+        
+        // Step 3: Orchestrate sub-agents
+        const { data: mdrOrchestrate } = await ctx.adminClient.functions.invoke('mdr_orchestrate', {
+          body: { taskId, tenantId: ctx.tenantId, context: mdrConsensus }
+        });
+        
+        reply = `**Complex Task Analysis Complete**\\n\\nGenerated ${mdrGenerate?.perspectives || 3} strategic perspectives and selected optimal plan (confidence: ${mdrConsensus?.consensus?.confidence || 85}%).\\n\\n**Chosen Approach:** ${mdrConsensus?.chosenPlan?.approach || 'Multi-step validated execution'}\\n\\n**Sub-agents queued:** ${mdrOrchestrate?.agents?.join(', ') || 'gap_finder, verifier, executor'}\\n\\nMonitor progress in the dashboard.`;
+        confidence = (mdrConsensus?.consensus?.confidence || 85) / 100;
+      } else {
+        // Simple tasks: Standard tool-calling loop
+        let toolCallCount = 0;
+        const maxToolCalls = 5;
+        
+        try {
+          const messages: Message[] = [
+            { role: 'system', content: systemPrompts[actorRole] || systemPrompts.user },
+            ...conversationHistory,
+            { role: 'user', content: message }
+          ];
+
+          while (toolCallCount < maxToolCalls) {
+          // Use dynamic kernel for optimal model selection
+          const response = await kernel.chat(ctx, messages, {
+            tools: rockerTools.map(t => ({
+              name: t.name,
+              description: t.description,
+              parameters: t.parameters
+            })),
+            temperature: 0.7,
+            latency: 'interactive'
+          });
+
+          // Check if AI returned tool calls in raw response
+          const toolCalls = response.raw?.choices?.[0]?.message?.tool_calls;
+          if (toolCalls && toolCalls.length > 0) {
+            log.info('Tool calls requested', { count: toolCalls.length });
+            toolCallCount++;
+            
+            // Execute each tool
+            const toolResults = [];
+            for (const toolCall of toolCalls) {
+              const toolName = toolCall.function.name;
+              const toolArgs = JSON.parse(toolCall.function.arguments || '{}');
+              
+              log.info('Executing tool', { tool: toolName, args: toolArgs });
+              
+              try {
+                let result;
+                
+                // Execute tool based on name
+                if (toolName === 'db.create_task') {
+                  const { data, error } = await ctx.tenantClient.from('rocker_tasks').insert({
+                    user_id: ctx.userId,
+                    title: toolArgs.title,
+                    description: toolArgs.description,
+                    priority: toolArgs.priority || 'medium',
+                    status: 'pending',
+                    due_at: toolArgs.due_at || null
+                  }).select().single();
+                  result = error ? { error: error.message } : { success: true, task_id: data?.id };
+                } else if (toolName === 'db.query_tasks') {
+                  const query = ctx.tenantClient
+                    .from('rocker_tasks')
+                    .select('*')
+                    .eq('user_id', ctx.userId);
+                  
+                  if (toolArgs.status) query.eq('status', toolArgs.status);
+                  query.limit(toolArgs.limit || 10);
+                  
+                  const { data, error } = await query;
+                  result = error ? { error: error.message } : { tasks: data };
+                } else if (toolName === 'fe.navigate') {
+                  // Emit navigation action - expecting app name not path
+                  const appName = toolArgs.path?.replace('/super/', '').replace('/', '') || toolArgs.app || toolArgs.path;
+                  try {
+                    await ctx.tenantClient.from('ai_proposals').insert({
+                      type: 'navigate',
+                      user_id: ctx.userId,
+                      tenant_id: ctx.tenantId,
+                      payload: { app: appName }
+                    });
+                    result = { success: true, action: 'navigate', app: appName };
+                  } catch (e) {
+                    result = { error: 'Failed to emit navigation' };
+                  }
+                } else if (toolName === 'fe.toast') {
+                  // Emit toast action
+                  try {
+                    await ctx.tenantClient.from('ai_proposals').insert({
+                      type: 'notify.user',
+                      user_id: ctx.userId,
+                      tenant_id: ctx.tenantId,
+                      payload: {
+                        title: toolArgs.title,
+                        description: toolArgs.description,
+                        variant: toolArgs.variant || 'default'
+                      }
+                    });
+                    result = { success: true, action: 'toast' };
+                  } catch (e) {
+                    result = { error: 'Failed to emit toast' };
+                  }
+                } else {
+                  result = { error: `Unknown tool: ${toolName}` };
+                }
+                
+                toolResults.push({ tool: toolName, result });
+                
+                // Add tool result to conversation
+                messages.push({
+                  role: 'assistant',
+                  content: `Tool ${toolName} executed: ${JSON.stringify(result)}`
+                });
+              } catch (err) {
+                log.error('Tool execution failed', { tool: toolName, error: err });
+                toolResults.push({ tool: toolName, error: String(err) });
+              }
+            }
+            
+            // Continue conversation with tool results
+            continue;
+          } else {
+            // No more tools, final response
+            reply = response.text || '';
+            break;
+          }
+        }
+
+
+        // Detect low confidence
+        if (/i don't know|i'm not sure|unclear|cannot help/i.test(reply)) {
+          confidence = 0.3;
+        }
+      } catch (e) {
+        log.error('AI/tool execution failed', e);
+        confidence = 0;
+        return new Response(JSON.stringify({ error: 'AI call failed' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } // end else block (simple tasks)
+
+    // Phase 2: Gap signal detection - log when confidence is low
+    if (confidence < 0.65) {
+        try {
+          await ctx.tenantClient.from('rocker_gap_signals').insert({
+            user_id: ctx.userId,
+            kind: 'low_conf',
+            query: message,
+            score: confidence,
+            meta: { thread_id, suggestedRefresh: true }
+          });
+          log.info('Gap signal logged for low confidence');
+        } catch (e) {
+          log.error('Failed to log gap signal', e);
+        }
+      }
+
+      // Phase 3: Auto-task detection - create tasks from action items
+      if (/action needed|todo|task|remind me|schedule|follow up/i.test(reply)) {
+        try {
+          const taskMatch = reply.match(/(?:action needed|todo|task|remind me|schedule|follow up)[:\\s]+([^.!?]+)/i);
+          if (taskMatch && taskMatch[1]) {
+            const taskTitle = taskMatch[1].trim().slice(0, 100);
+            await ctx.tenantClient.from('rocker_tasks').insert({
+              user_id: ctx.userId,
+              title: taskTitle,
+              status: 'pending',
+              priority: 'medium',
+              meta: { auto_created: true, source_message: message }
+            });
+            log.info('Auto-created task', { title: taskTitle });
+          }
+        } catch (e) {
+          log.error('Failed to auto-create task', e);
+        }
+      }
+
+      // Persist assistant reply
+      if (thread_id && reply) {
+        try {
+          await ctx.tenantClient.from('rocker_messages').insert({
+            thread_id,
+            user_id: ctx.userId,
+            role: 'assistant',
+            content: reply,
+            meta: { confidence },
+          });
+        } catch (e) {
+          log.error('Failed to insert assistant message', e);
+        }
+
+        // Trigger memory extraction async (non-blocking)
+        try {
+          await ctx.tenantClient.functions.invoke('analyze-memories', { body: { trigger: 'chat_reply', thread_id } });
+        } catch (e) {
+          log.warn('analyze-memories invocation failed (non-blocking)', e);
+        }
+      }
+
+      // Check for navigation actions in recent proposals
+      let actions: any[] = [];
+      if (thread_id) {
+        const { data: proposals } = await ctx.tenantClient
+          .from('ai_proposals')
+          .select('type, payload')
+          .eq('user_id', ctx.userId)
+          .gte('created_at', new Date(Date.now() - 5000).toISOString())
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        if (proposals && proposals.length > 0) {
+          actions = proposals.map(p => ({
+            kind: p.type === 'navigate' ? 'navigate' : p.type,
+            ...p.payload
+          }));
+        }
+      }
+
+      log.info('Request completed', { 
+        reply_length: reply.length,
+        confidence,
+        actions_count: actions.length
+      });
+
+      return new Response(JSON.stringify({ reply, actions }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (e) {
+      log.error('Handler error', e);
+      return new Response(JSON.stringify({ error: e instanceof Error ? e.message : 'Unknown error' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }, { 
+    requireAuth: true, 
+    rateLimitTier: 'standard' 
+  });
+});
+```
+
+**Key Features:**
+- FIXED: Auto-triggers `analyze-memories` after assistant reply (line 307)
+- Tool calling loop: db.create_task, db.query_tasks, fe.navigate, fe.toast
+- MDR (Multi-Dimensional Reasoning) for complex tasks
+- RAG memory retrieval for context
+- Gap signal detection for low confidence
+- Auto-task creation from action items
+
+---
+
+### F. Memory Analysis Backend
+**File:** `supabase/functions/analyze-memories/index.ts` (COMPLETE - 114 lines)
+
+```typescript
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { createLogger } from "../_shared/logger.ts";
+import { ai } from "../_shared/ai.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const log = createLogger('analyze-memories');
+
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+    );
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const tenantId = user.id;
+
+    // Ensure consent
+    await supabaseClient.from('ai_user_consent').upsert({
+      tenant_id: tenantId,
+      user_id: user.id,
+      site_opt_in: true,
+      policy_version: 'v1',
+      consented_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'tenant_id,user_id' });
+
+    const { data: conversations } = await supabaseClient
+      .from('rocker_messages')
+      .select('content, role, created_at, thread_id')
+      .eq('user_id', user.id)
+      .not('thread_id', 'is', null)
+      .order('created_at', { ascending: true });
+
+    if (!conversations) throw new Error('Failed to load conversations');
+
+    const sessions = new Map<string, any[]>();
+    for (const msg of conversations) {
+      if (!sessions.has(msg.thread_id)) sessions.set(msg.thread_id, []);
+      sessions.get(msg.thread_id)!.push(msg);
+    }
+
+    let totalExtracted = 0;
+
+    for (const [sessionId, messages] of sessions.entries()) {
+      const conversationText = messages.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\\n\\n');
+
+      const { text } = await ai.chat({
+        role: 'knower',
+        messages: [
+          { role: 'system', content: `Extract memorable facts as JSON array: [{ key, type, value, confidence, context }]. Types: family, personal_info, preference, goal, interest, skill, project, relationship` },
+          { role: 'user', content: conversationText }
+        ],
+        maxTokens: 800
+      });
+
+      let memories: any[] = [];
+      try {
+        const jsonMatch = text.match(/\\[[\\s\\S]*\\]/);
+        if (jsonMatch) memories = JSON.parse(jsonMatch[0]);
+      } catch {}
+
+      for (const mem of memories) {
+        if (!mem.key || !mem.value || !mem.type) continue;
+
+        const { data: existing } = await supabaseClient.from('ai_user_memory').select('id').eq('user_id', user.id).eq('key', mem.key.toLowerCase().replace(/\\s+/g, '_')).maybeSingle();
+        if (existing) continue;
+
+        const { error: insertErr } = await supabaseClient.from('ai_user_memory').insert({
+          user_id: user.id,
+          tenant_id: tenantId,
+          key: mem.key.toLowerCase().replace(/\\s+/g, '_'),
+          value: { content: mem.value, context: mem.context || '', session_id: sessionId, extracted_at: new Date().toISOString() },
+          type: mem.type,
+          confidence: mem.confidence || 0.7,
+          source: 'chat',
+          tags: [mem.type, 'ai_backfill'],
+          namespace: 'personal'
+        });
+
+        if (!insertErr) totalExtracted++;
+      }
+      await new Promise(r => setTimeout(r, 100));
+    }
+
+    return new Response(JSON.stringify({ totalExtracted, success: true }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    log.error('Error in analyze-memories', error);
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error', success: false }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
+```
+
+**Key Features:**
+- FIXED: Reads from `rocker_messages` by `thread_id` (line 47-50)
+- Groups messages by thread_id (sessions Map)
+- Uses AI to extract facts as JSON array
+- Deduplicates memories by key
+- Inserts into `ai_user_memory` table
 
 ---
 
