@@ -10,11 +10,12 @@ import {
   Calendar,
   Sparkles,
   GraduationCap,
-  FileText
+  FileText,
+  Radio
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type AppId = 'knowledge' | 'files' | 'tasks' | 'task-os' | 'notebook' | 'inbox' | 'capabilities' | 'admin' | 'secrets' | 'calendar' | 'proactive' | 'training' | 'learn';
+export type AppId = 'knowledge' | 'files' | 'tasks' | 'task-os' | 'notebook' | 'inbox' | 'capabilities' | 'admin' | 'secrets' | 'calendar' | 'proactive' | 'training' | 'learn' | 'live';
 
 interface AppDockProps {
   activeApp: AppId;
@@ -22,6 +23,7 @@ interface AppDockProps {
 }
 
 const APPS = [
+  { id: 'live' as AppId, label: '🔴 Live Brain', icon: Radio, color: 'text-red-500' },
   { id: 'knowledge' as AppId, label: 'Knowledge', icon: Database, color: 'text-blue-500' },
   { id: 'files' as AppId, label: 'Files & Memory', icon: FolderOpen, color: 'text-purple-500' },
   { id: 'notebook' as AppId, label: 'Notebook', icon: FileText, color: 'text-teal-500' },

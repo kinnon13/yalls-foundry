@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { AppId } from './AppDock';
 import { SuperAndyKnowledge } from './SuperAndyKnowledge';
 import { SuperAndyTasks } from './SuperAndyTasks';
@@ -14,7 +14,9 @@ import { AndyCollections } from './AndyCollections';
 import { AndyResearchQueue } from './AndyResearchQueue';
 import { AndyMemoryViewer } from './AndyMemoryViewer';
 import { AndyRulesEditor } from './AndyRulesEditor';
-import { Database, Brain, CheckSquare, FolderOpen, Inbox, Shield, Key, Calendar as CalendarIcon, Sparkles, GraduationCap } from 'lucide-react';
+import { AndyThoughtStream } from './AndyThoughtStream';
+import { supabase } from '@/integrations/supabase/client';
+import { Database, Brain, CheckSquare, FolderOpen, Inbox, Shield, Key, Calendar as CalendarIcon, Sparkles, GraduationCap, Radio } from 'lucide-react';
 
 const SuperAdminCapabilities = lazy(() => 
   import('@/components/admin/SuperAdminControls').then(m => ({ default: m.SuperAdminControls }))
@@ -28,6 +30,14 @@ interface CenterStageProps {
 }
 
 export function CenterStage({ activeApp, threadId }: CenterStageProps) {
+  const [userId, setUserId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id);
+    });
+  }, []);
+  
   const LoadingState = ({ icon: Icon, label }: { icon: any; label: string }) => (
     <div className="flex items-center justify-center h-full">
       <div className="text-center space-y-4">
@@ -39,6 +49,25 @@ export function CenterStage({ activeApp, threadId }: CenterStageProps) {
 
   return (
     <div className="h-full w-full overflow-auto animate-fade-in">
+      {activeApp === 'live' && (
+        <div className="p-6">
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold flex items-center gap-2">
+              <Radio className="w-6 h-6 text-red-500 animate-pulse" />
+              Live Brain Activity
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Watch Andy's real-time thought processes, memory scans, and learning activities
+            </p>
+          </div>
+          {userId && (
+            <div className="bg-card rounded-lg border p-4">
+              <AndyThoughtStream userId={userId} />
+            </div>
+          )}
+        </div>
+      )}
+      
       {activeApp === 'knowledge' && <SuperAndyKnowledge />}
       
       {activeApp === 'files' && <UnifiedFilesMemory />}

@@ -15,7 +15,7 @@ export default function SuperAndy() {
   const { isSuperAdmin, isLoading } = useSuperAdminCheck();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeApp, setActiveApp] = useState<AppId>('files');
+  const [activeApp, setActiveApp] = useState<AppId>('live');
   const [threadId, setThreadId] = useState<string | null>(null);
 
   // Auth check removed - Super Andy is always accessible
@@ -23,7 +23,7 @@ export default function SuperAndy() {
   // Read ?app= from URL and set the active app on load
   useEffect(() => {
     const appParam = searchParams.get('app');
-    const validApps: AppId[] = ['knowledge','files','tasks','task-os','calendar','proactive','inbox','capabilities','admin','secrets','training','learn'];
+    const validApps: AppId[] = ['live','knowledge','files','tasks','task-os','calendar','proactive','inbox','capabilities','admin','secrets','training','learn'];
     if (appParam && (validApps as string[]).includes(appParam)) {
       setActiveApp(appParam as AppId);
     }
@@ -79,7 +79,7 @@ export default function SuperAndy() {
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       const app = (e as any).detail?.app as AppId | undefined;
-      const validApps: AppId[] = ['knowledge','files','tasks','task-os','calendar','proactive','inbox','capabilities','admin','secrets','training','learn'];
+      const validApps: AppId[] = ['live','knowledge','files','tasks','task-os','calendar','proactive','inbox','capabilities','admin','secrets','training','learn'];
       if (app && (validApps as any).includes(app)) setActiveApp(app);
     };
     window.addEventListener('super-andy:navigate' as any, handler as any);
