@@ -301,6 +301,13 @@ serve(async (req) => {
         } catch (e) {
           log.error('Failed to insert assistant message', e);
         }
+
+        // Trigger memory extraction async (non-blocking)
+        try {
+          await ctx.tenantClient.functions.invoke('analyze-memories', { body: { trigger: 'chat_reply', thread_id } });
+        } catch (e) {
+          log.warn('analyze-memories invocation failed (non-blocking)', e);
+        }
       }
 
       // Check for navigation actions in recent proposals

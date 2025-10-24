@@ -38,7 +38,7 @@ export function useRockerChat(sessionId: string) {
       const response = await supabase.functions.invoke('rocker-chat', {
         body: {
           user_id: session.userId,
-          session_id: sessionId,
+          thread_id: sessionId,
           message
         }
       });

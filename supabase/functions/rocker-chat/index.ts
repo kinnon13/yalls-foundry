@@ -18,9 +18,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const body = await req.json();
+    let body = await req.json();
     
-    console.log('[Rocker Chat] Forwarding to rocker-chat-simple');
+    // Backward compatibility: map session_id -> thread_id
+    if (body && !body.thread_id && body.session_id) {
+      body = { ...body, thread_id: body.session_id };
+      delete body.session_id;
+    }
+    
+    console.log('[Rocker Chat] Forwarding to rocker-chat-simple', { hasThread: !!body.thread_id });
 
     // Try primary function first
     try {
