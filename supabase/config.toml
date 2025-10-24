@@ -482,3 +482,12 @@ verify_jwt = true
 [functions.andy-thought-stream]
 verify_jwt = false
 
+# ========== YALLS INC SECTIONS ==========
+# Yalls Social - AI-curated feeds with viral scoring
+[functions.yalls-social]
+verify_jwt = true
+
+# Yallmart Checkout - Stripe session creation
+[functions.yallmart-checkout]
+verify_jwt = true
+
