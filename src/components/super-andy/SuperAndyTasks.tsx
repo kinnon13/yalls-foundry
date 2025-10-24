@@ -78,8 +78,10 @@ export function SuperAndyTasks({ threadId }: { threadId: string | null }) {
         .from('rocker_tasks_v2')
         .insert({
           title: newTaskTitle.trim(),
-          status: 'open' as const,
-          thread_id: threadId,
+          owner_id: user.id,
+          status: 'open',
+          priority: 'medium',
+          kind: 'andy_task',
         });
 
       if (error) throw error;
