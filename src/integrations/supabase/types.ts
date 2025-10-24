@@ -497,7 +497,9 @@ export type Database = {
           next_run_at: string | null
           payload: Json | null
           region: string | null
-          tenant_id: string
+          schedule: string | null
+          tenant_id: string | null
+          topic: string | null
           updated_at: string | null
         }
         Insert: {
@@ -511,7 +513,9 @@ export type Database = {
           next_run_at?: string | null
           payload?: Json | null
           region?: string | null
-          tenant_id: string
+          schedule?: string | null
+          tenant_id?: string | null
+          topic?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -525,7 +529,9 @@ export type Database = {
           next_run_at?: string | null
           payload?: Json | null
           region?: string | null
-          tenant_id?: string
+          schedule?: string | null
+          tenant_id?: string | null
+          topic?: string | null
           updated_at?: string | null
         }
         Relationships: []
