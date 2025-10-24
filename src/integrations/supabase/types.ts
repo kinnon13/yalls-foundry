@@ -3844,6 +3844,178 @@ export type Database = {
           },
         ]
       }
+      brain_insights: {
+        Row: {
+          created_at: string | null
+          decay_rate: number | null
+          embedding: string | null
+          full_text: string | null
+          id: string
+          key_points: Json | null
+          last_recalled_at: string | null
+          memory_strength: number | null
+          summary: string | null
+          task_id: string | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          decay_rate?: number | null
+          embedding?: string | null
+          full_text?: string | null
+          id?: string
+          key_points?: Json | null
+          last_recalled_at?: string | null
+          memory_strength?: number | null
+          summary?: string | null
+          task_id?: string | null
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          decay_rate?: number | null
+          embedding?: string | null
+          full_text?: string | null
+          id?: string
+          key_points?: Json | null
+          last_recalled_at?: string | null
+          memory_strength?: number | null
+          summary?: string | null
+          task_id?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brain_insights_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "brain_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brain_iterations: {
+        Row: {
+          angle: string | null
+          content: Json | null
+          created_at: string | null
+          id: string
+          iteration_index: number
+          source_set: string | null
+          summary: string | null
+          task_id: string | null
+        }
+        Insert: {
+          angle?: string | null
+          content?: Json | null
+          created_at?: string | null
+          id?: string
+          iteration_index: number
+          source_set?: string | null
+          summary?: string | null
+          task_id?: string | null
+        }
+        Update: {
+          angle?: string | null
+          content?: Json | null
+          created_at?: string | null
+          id?: string
+          iteration_index?: number
+          source_set?: string | null
+          summary?: string | null
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brain_iterations_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "brain_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brain_reflections: {
+        Row: {
+          created_at: string | null
+          decayed_count: number | null
+          id: string
+          new_insights: number | null
+          reinforced_count: number | null
+          report_date: string | null
+          summary: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          decayed_count?: number | null
+          id?: string
+          new_insights?: number | null
+          reinforced_count?: number | null
+          report_date?: string | null
+          summary?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          decayed_count?: number | null
+          id?: string
+          new_insights?: number | null
+          reinforced_count?: number | null
+          report_date?: string | null
+          summary?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      brain_tasks: {
+        Row: {
+          created_at: string | null
+          current_iteration: number | null
+          goal: string | null
+          id: string
+          interval_seconds: number | null
+          next_run_at: string | null
+          status: string | null
+          task_name: string
+          total_iterations: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_iteration?: number | null
+          goal?: string | null
+          id?: string
+          interval_seconds?: number | null
+          next_run_at?: string | null
+          status?: string | null
+          task_name: string
+          total_iterations?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_iteration?: number | null
+          goal?: string | null
+          id?: string
+          interval_seconds?: number | null
+          next_run_at?: string | null
+          status?: string | null
+          task_name?: string
+          total_iterations?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       breeding_records: {
         Row: {
           breeding_date: string
@@ -15236,6 +15408,7 @@ export type Database = {
         Args: { p_business_id: string; p_name: string; p_phone?: string }
         Returns: string
       }
+      decay_brain_memory: { Args: never; Returns: undefined }
       decrement_listing_stock: {
         Args: { p_listing_id: string; p_qty: number }
         Returns: undefined
@@ -16105,6 +16278,21 @@ export type Database = {
           source: string
           title: string
           url: string
+        }[]
+      }
+      match_brain_insights: {
+        Args: {
+          filter_user_id?: string
+          match_count: number
+          match_threshold: number
+          query_embedding: string
+        }
+        Returns: {
+          id: string
+          similarity: number
+          summary: string
+          task_id: string
+          title: string
         }[]
       }
       match_kb_chunks: {
