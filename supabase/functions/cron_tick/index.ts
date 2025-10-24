@@ -58,7 +58,7 @@ serve(async (req) => {
         region: job.region || 'us',
         topic: job.topic,
         payload: job.payload || {},
-        status: 'new',
+        status: 'pending',
       });
 
       // Calculate next run with jitter

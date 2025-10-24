@@ -213,6 +213,11 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
           role: 'assistant',
         }]).select().single();
 
+        // Trigger deep learning on the new message
+        if (newMsg?.id) {
+          learnFromMessage(newMsg.id, assistantMessage);
+        }
+
         // Speak the response
         speakMessage(assistantMessage);
 
