@@ -479,6 +479,6 @@ verify_jwt = true
 [functions.ingest-codebase]
 verify_jwt = true
 
-[functions.andy-write-note]
-verify_jwt = true
+[functions.andy-thought-stream]
+verify_jwt = false
 
