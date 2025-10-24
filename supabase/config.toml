@@ -476,10 +476,9 @@ verify_jwt = false
 [functions.andy-live-question]
 verify_jwt = true
 
-# Real-time codebase monitor webhook - triggers on every change
-[functions.andy-codebase-monitor]
-verify_jwt = false
-
 [functions.ingest-codebase]
+verify_jwt = true
+
+[functions.andy-write-note]
 verify_jwt = true
 

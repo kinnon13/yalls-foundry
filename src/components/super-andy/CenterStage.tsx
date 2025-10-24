@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { AppId } from './AppDock';
 import { SuperAndyKnowledge } from './SuperAndyKnowledge';
 import { SuperAndyTasks } from './SuperAndyTasks';
+import { AndyNotebook } from './AndyNotebook';
 import { UnifiedFilesMemory } from './UnifiedFilesMemory';
 import { SuperAndyInbox } from './SuperAndyInbox';
 import { SuperAndyAdmin } from './SuperAndyAdmin';
@@ -62,6 +63,7 @@ export function CenterStage({ activeApp, threadId }: CenterStageProps) {
       )}
       
       {activeApp === 'tasks' && <SuperAndyTasks threadId={threadId} />}
+      {activeApp === 'notebook' && <AndyNotebook />}
       
       {activeApp === 'task-os' && <TasksView />}
       

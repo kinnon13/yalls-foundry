@@ -45,10 +45,18 @@ export function SuperAndyChatWithVoice({
   const [threads, setThreads] = useState<Thread[]>([]);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
 
-  // Super Andy voice (alloy @ 1.25x)
-  const { speakAndThen, listen, stopAll, isSupported } = useVoice({
+  const { speakAndThen, listen, stopAll, isSupported, isSpeaking } = useVoice({
     role: 'super_andy',
     enabled: voiceEnabled,
+    onTranscript: (text, isFinal) => {
+      if (isFinal) {
+        // Show transcript in toast
+        toast({ 
+          title: '🎙️ You said:', 
+          description: text.substring(0, 100) + (text.length > 100 ? '...' : '')
+        });
+      }
+    },
   });
 
   const [isListening, setIsListening] = useState(false);
@@ -315,11 +323,21 @@ export function SuperAndyChatWithVoice({
 
       // Speak after full response & trigger learning
       if (voiceEnabled && assistantSoFar) {
-        speakAndThen(assistantSoFar, () => {
-          const cleanup = listen((finalText) => handleSend(finalText));
-          stopListenRef.current = cleanup;
-          setIsListening(true);
-        });
+        speakAndThen(
+          assistantSoFar, 
+          () => {
+            const cleanup = listen((finalText) => handleSend(finalText));
+            stopListenRef.current = cleanup;
+            setIsListening(true);
+          },
+          (error) => {
+            toast({
+              title: '🔇 Voice Error',
+              description: error.message,
+              variant: 'destructive',
+            });
+          }
+        );
       }
 
       // CRITICAL: Trigger learning from this message exchange

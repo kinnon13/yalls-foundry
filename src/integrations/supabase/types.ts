@@ -3208,6 +3208,48 @@ export type Database = {
           },
         ]
       }
+      andy_notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          note_type: string
+          priority: string | null
+          status: string | null
+          tags: string[] | null
+          title: string
+          topic: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          note_type?: string
+          priority?: string | null
+          status?: string | null
+          tags?: string[] | null
+          title: string
+          topic: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          note_type?: string
+          priority?: string | null
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+          topic?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       andy_prediction_game: {
         Row: {
           andy_confidence: number
@@ -3446,6 +3488,51 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      andy_task_followups: {
+        Row: {
+          created_at: string
+          due_at: string | null
+          id: string
+          note_id: string | null
+          reminder_sent: boolean | null
+          task_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          note_id?: string | null
+          reminder_sent?: boolean | null
+          task_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          note_id?: string | null
+          reminder_sent?: boolean | null
+          task_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "andy_task_followups_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "andy_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "andy_task_followups_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "rocker_tasks_v2"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       api_circuit_breakers: {
         Row: {

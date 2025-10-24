@@ -25,18 +25,44 @@ export function SuperAndyTasks({ threadId }: { threadId: string | null }) {
 
   useEffect(() => {
     loadTasks();
+    
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('tasks-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'rocker_tasks_v2',
+        },
+        () => {
+          loadTasks();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadTasks = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('rocker-tasks', {
-        body: { action: 'list' }
-      });
+      const { data, error } = await supabase
+        .from('rocker_tasks_v2')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTasks(data.tasks || []);
+      setTasks((data || []) as Task[]);
     } catch (error: any) {
       console.error('Failed to load tasks:', error);
+      toast({
+        title: 'Failed to load tasks',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
   };
 
@@ -45,17 +71,19 @@ export function SuperAndyTasks({ threadId }: { threadId: string | null }) {
 
     setIsCreating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('rocker-tasks', {
-        body: {
-          action: 'create',
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('rocker_tasks_v2')
+        .insert({
           title: newTaskTitle.trim(),
-          thread_id: threadId
-        }
-      });
+          status: 'open' as const,
+          thread_id: threadId,
+        });
 
       if (error) throw error;
       setNewTaskTitle('');
-      await loadTasks();
       toast({ title: 'Task created' });
     } catch (error: any) {
       toast({
@@ -72,16 +100,13 @@ export function SuperAndyTasks({ threadId }: { threadId: string | null }) {
     const newStatus = currentStatus === 'done' ? 'open' : 'done';
 
     try {
-      const { error } = await supabase.functions.invoke('rocker-tasks', {
-        body: {
-          action: 'update',
-          task_id: taskId,
-          status: newStatus
-        }
-      });
+      const { error } = await supabase
+        .from('rocker_tasks_v2')
+        .update({ status: newStatus })
+        .eq('id', taskId);
 
       if (error) throw error;
-      await loadTasks();
+      toast({ title: `Task marked ${newStatus}` });
     } catch (error: any) {
       toast({
         title: 'Failed to update task',
@@ -94,12 +119,11 @@ export function SuperAndyTasks({ threadId }: { threadId: string | null }) {
   const deleteTask = async (taskId: string) => {
     try {
       const { error } = await supabase
-        .from('rocker_tasks')
+        .from('rocker_tasks_v2')
         .delete()
         .eq('id', taskId);
 
       if (error) throw error;
-      await loadTasks();
       toast({ title: 'Task deleted' });
     } catch (error: any) {
       toast({
@@ -115,13 +139,12 @@ export function SuperAndyTasks({ threadId }: { threadId: string | null }) {
 
     try {
       const { error } = await supabase
-        .from('rocker_tasks')
+        .from('rocker_tasks_v2')
         .delete()
         .in('id', Array.from(selectedTasks));
 
       if (error) throw error;
       setSelectedTasks(new Set());
-      await loadTasks();
       toast({ title: `Deleted ${selectedTasks.size} tasks` });
     } catch (error: any) {
       toast({
