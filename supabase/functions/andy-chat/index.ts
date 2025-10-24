@@ -53,13 +53,13 @@ serve(async (req) => {
     const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user')?.content || '';
     let context = '';
 
-    // Load recent chat history from rocker_messages
+    // Load FULL chat history from rocker_messages (no limit - indefinite memory)
     const { data: recentMessages } = await supabase
       .from('rocker_messages')
       .select('role, content, created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(500); // Increased from 20 to 500 for near-indefinite context
     
     if (recentMessages?.length) {
       const historyText = recentMessages
@@ -301,6 +301,55 @@ Be conversational, fast, proactive, and always use the user's actual data when a
             required: ['app']
           }
         }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'create_reminder',
+          description: 'Schedule a reminder for the future. Use when user says "remind me in X hours/days" or "tell me about X later". Supports relative times like "1 hour", "2 days", "tomorrow".',
+          parameters: {
+            type: 'object',
+            properties: {
+              message: {
+                type: 'string',
+                description: 'What to remind the user about'
+              },
+              when: {
+                type: 'string',
+                description: 'When to remind: "1 hour", "2 days", "tomorrow at 3pm", etc.'
+              }
+            },
+            required: ['message', 'when']
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'start_research_task',
+          description: 'Break down a complex research/analysis task into steps and execute progressively. Use when user asks to research, analyze, or investigate something in depth.',
+          parameters: {
+            type: 'object',
+            properties: {
+              task_title: {
+                type: 'string',
+                description: 'Title of the research task'
+              },
+              steps: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    action: { type: 'string', description: 'What to do in this step' },
+                    context: { type: 'string', description: 'Why this step matters' }
+                  }
+                },
+                description: 'List of 3-7 steps to execute sequentially'
+              }
+            },
+            required: ['task_title', 'steps']
+          }
+        }
       }
     ];
 
@@ -466,6 +515,128 @@ Be conversational, fast, proactive, and always use the user's actual data when a
                     accumulatedArgs = '';
                   } catch (parseErr) {
                     console.error('[andy-chat] Failed to execute navigate:', parseErr);
+                  }
+                }
+                
+                if (finishReason === 'tool_calls' && currentToolCall === 'create_reminder') {
+                  try {
+                    const args = JSON.parse(accumulatedArgs);
+                    console.log('[andy-chat] Creating reminder:', args);
+                    
+                    // Parse relative time to absolute timestamp
+                    const parseRelativeTime = (when: string): string => {
+                      const now = new Date();
+                      const lower = when.toLowerCase();
+                      
+                      if (lower.includes('hour')) {
+                        const hours = parseInt(lower.match(/(\d+)/)?.[1] || '1');
+                        now.setHours(now.getHours() + hours);
+                      } else if (lower.includes('day')) {
+                        const days = parseInt(lower.match(/(\d+)/)?.[1] || '1');
+                        now.setDate(now.getDate() + days);
+                      } else if (lower.includes('tomorrow')) {
+                        now.setDate(now.getDate() + 1);
+                        if (lower.includes('at')) {
+                          const timeMatch = lower.match(/at\s+(\d+)(?::(\d+))?\s*(am|pm)?/);
+                          if (timeMatch) {
+                            let hours = parseInt(timeMatch[1]);
+                            const minutes = parseInt(timeMatch[2] || '0');
+                            const ampm = timeMatch[3];
+                            if (ampm === 'pm' && hours < 12) hours += 12;
+                            if (ampm === 'am' && hours === 12) hours = 0;
+                            now.setHours(hours, minutes, 0, 0);
+                          }
+                        }
+                      } else if (lower.includes('minute')) {
+                        const minutes = parseInt(lower.match(/(\d+)/)?.[1] || '1');
+                        now.setMinutes(now.getMinutes() + minutes);
+                      }
+                      
+                      return now.toISOString();
+                    };
+                    
+                    const dueAt = parseRelativeTime(args.when);
+                    
+                    // Create task with reminder
+                    await supabase.from('rocker_tasks').insert({
+                      user_id: user.id,
+                      title: `Reminder: ${args.message}`,
+                      status: 'open',
+                      due_at: dueAt,
+                      meta: { type: 'reminder', original_request: args.when }
+                    });
+                    
+                    const msg = `⏰ Reminder set for ${args.when} (${new Date(dueAt).toLocaleString()})`;
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                      choices: [{
+                        delta: { content: `\n\n${msg}\n\n` },
+                        finish_reason: null
+                      }]
+                    })}\n\n`));
+                    
+                    console.log('[andy-chat] Reminder created for:', dueAt);
+                    
+                    // Reset tool call state
+                    currentToolCall = null;
+                    accumulatedArgs = '';
+                  } catch (parseErr) {
+                    console.error('[andy-chat] Failed to create reminder:', parseErr);
+                  }
+                }
+                
+                if (finishReason === 'tool_calls' && currentToolCall === 'start_research_task') {
+                  try {
+                    const args = JSON.parse(accumulatedArgs);
+                    console.log('[andy-chat] Starting research task:', args.task_title);
+                    
+                    // Create task with steps
+                    const { data: newTask } = await supabase
+                      .from('rocker_tasks')
+                      .insert({
+                        user_id: user.id,
+                        title: args.task_title,
+                        status: 'doing',
+                        meta: {
+                          type: 'research',
+                          steps: args.steps.map((s: any, i: number) => ({
+                            index: i,
+                            action: s.action,
+                            context: s.context,
+                            completed: false
+                          })),
+                          progress: 0,
+                          last_step_completed: -1
+                        }
+                      })
+                      .select()
+                      .single();
+                    
+                    if (newTask) {
+                      // Start first step
+                      await supabase.functions.invoke('andy-execute-task-step', {
+                        body: {
+                          task_id: newTask.id,
+                          user_id: user.id,
+                          step_index: 0
+                        }
+                      });
+                      
+                      const msg = `🔬 Started research: "${args.task_title}"\n\n${args.steps.length} steps planned. Executing step 1 now...`;
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                        choices: [{
+                          delta: { content: `\n\n${msg}\n\n` },
+                          finish_reason: null
+                        }]
+                      })}\n\n`));
+                      
+                      console.log('[andy-chat] Research task started, ID:', newTask.id);
+                    }
+                    
+                    // Reset tool call state
+                    currentToolCall = null;
+                    accumulatedArgs = '';
+                  } catch (parseErr) {
+                    console.error('[andy-chat] Failed to start research task:', parseErr);
                   }
                 }
                 
