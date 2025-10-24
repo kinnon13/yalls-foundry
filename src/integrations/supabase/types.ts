@@ -1294,6 +1294,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_learning_metrics: {
+        Row: {
+          agent: string
+          completed_at: string
+          created_at: string
+          cycle_type: string
+          events_analyzed: number | null
+          id: string
+          insights_captured: number | null
+          optimizations_applied: number | null
+          patterns_found: number | null
+          topics_researched: number | null
+        }
+        Insert: {
+          agent: string
+          completed_at?: string
+          created_at?: string
+          cycle_type: string
+          events_analyzed?: number | null
+          id?: string
+          insights_captured?: number | null
+          optimizations_applied?: number | null
+          patterns_found?: number | null
+          topics_researched?: number | null
+        }
+        Update: {
+          agent?: string
+          completed_at?: string
+          created_at?: string
+          cycle_type?: string
+          events_analyzed?: number | null
+          id?: string
+          insights_captured?: number | null
+          optimizations_applied?: number | null
+          patterns_found?: number | null
+          topics_researched?: number | null
+        }
+        Relationships: []
+      }
       ai_learnings: {
         Row: {
           comment: string | null
@@ -1567,6 +1606,36 @@ export type Database = {
           started_at?: string | null
           status?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      ai_optimization_queue: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          optimization_type: string
+          priority: string
+          status: string
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          optimization_type: string
+          priority: string
+          status?: string
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          optimization_type?: string
+          priority?: string
+          status?: string
         }
         Relationships: []
       }
@@ -2898,6 +2967,72 @@ export type Database = {
           model_data?: Json
           model_type?: string
           tenant_id?: string
+        }
+        Relationships: []
+      }
+      andy_external_knowledge: {
+        Row: {
+          confidence_score: number | null
+          content: string
+          created_at: string
+          id: string
+          learned_at: string
+          metadata: Json | null
+          source: string
+          topic: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          content: string
+          created_at?: string
+          id?: string
+          learned_at?: string
+          metadata?: Json | null
+          source: string
+          topic: string
+        }
+        Update: {
+          confidence_score?: number | null
+          content?: string
+          created_at?: string
+          id?: string
+          learned_at?: string
+          metadata?: Json | null
+          source?: string
+          topic?: string
+        }
+        Relationships: []
+      }
+      andy_internal_knowledge: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          id: string
+          learned_at: string
+          learning_type: string
+          optimizations: Json | null
+          patterns_detected: Json | null
+          success_metrics: Json | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          learned_at?: string
+          learning_type: string
+          optimizations?: Json | null
+          patterns_detected?: Json | null
+          success_metrics?: Json | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          learned_at?: string
+          learning_type?: string
+          optimizations?: Json | null
+          patterns_detected?: Json | null
+          success_metrics?: Json | null
         }
         Relationships: []
       }
