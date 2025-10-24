@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import { withTenantGuard } from "../_shared/withTenantGuard.ts"; // Assume you have this from earlier
-import { corsHeaders } from "../_shared/cors.ts"; // Your CORS util
+import { withTenantGuard } from "../_shared/tenantGuard.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
