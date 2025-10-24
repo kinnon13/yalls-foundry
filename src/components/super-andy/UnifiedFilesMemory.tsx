@@ -357,10 +357,14 @@ export function UnifiedFilesMemory() {
       </div>
 
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="all">
             <Database className="h-4 w-4 mr-2" />
             All Memory & Files
+          </TabsTrigger>
+          <TabsTrigger value="learning">
+            <Brain className="h-4 w-4 mr-2" />
+            Andy's Learning
           </TabsTrigger>
           <TabsTrigger value="split">
             <Brain className="h-4 w-4 mr-2" />
@@ -624,6 +628,142 @@ export function UnifiedFilesMemory() {
           )}
         </div>
       </ScrollArea>
+        </TabsContent>
+
+        <TabsContent value="learning" className="mt-4">
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-2">What Andy is Learning</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Andy continuously learns from interactions, files, and external sources
+              </p>
+              
+              <div className="grid gap-4">
+                {/* Recent Learnings from Memory */}
+                <div className="border rounded-lg p-4 bg-card">
+                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <Brain className="h-4 w-4 text-purple-500" />
+                    Recent Learning Memories ({memories.filter(m => m.kind === 'learning').length})
+                  </h4>
+                  <ScrollArea className="h-[200px]">
+                    <div className="space-y-2 pr-4">
+                      {memories
+                        .filter(m => m.kind === 'learning')
+                        .slice(0, 10)
+                        .map(mem => (
+                          <div key={mem.id} className="p-2 border rounded bg-background text-sm">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-xs">
+                                {mem.value?.text || JSON.stringify(mem.value).slice(0, 200)}
+                              </p>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                {format(new Date(mem.created_at), 'MMM d')}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      {memories.filter(m => m.kind === 'learning').length === 0 && (
+                        <p className="text-xs text-muted-foreground">No learning memories yet</p>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+
+                {/* Plans and Intentions */}
+                <div className="border rounded-lg p-4 bg-card">
+                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <Target className="h-4 w-4 text-blue-500" />
+                    Plans & Intentions ({memories.filter(m => m.kind === 'plan' || m.kind === 'goal').length})
+                  </h4>
+                  <ScrollArea className="h-[200px]">
+                    <div className="space-y-2 pr-4">
+                      {memories
+                        .filter(m => m.kind === 'plan' || m.kind === 'goal')
+                        .slice(0, 10)
+                        .map(mem => (
+                          <div key={mem.id} className="p-2 border rounded bg-background text-sm">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <Badge className="mb-1 text-xs">{mem.kind}</Badge>
+                                <p className="text-xs">
+                                  {mem.value?.text || mem.value?.description || JSON.stringify(mem.value).slice(0, 200)}
+                                </p>
+                              </div>
+                              {mem.pinned && <Pin className="h-3 w-3 text-primary shrink-0" />}
+                            </div>
+                          </div>
+                        ))}
+                      {memories.filter(m => m.kind === 'plan' || m.kind === 'goal').length === 0 && (
+                        <p className="text-xs text-muted-foreground">No plans yet</p>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+
+                {/* Knowledge Being Processed */}
+                <div className="border rounded-lg p-4 bg-card">
+                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-green-500" />
+                    Knowledge Being Processed ({files.filter(f => f.status === 'processing' || f.status === 'pending').length})
+                  </h4>
+                  <ScrollArea className="h-[150px]">
+                    <div className="space-y-2 pr-4">
+                      {files
+                        .filter(f => f.status === 'processing' || f.status === 'pending')
+                        .slice(0, 10)
+                        .map(file => (
+                          <div key={file.id} className="p-2 border rounded bg-background text-sm">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-xs font-medium">{file.name}</p>
+                                <p className="text-xs text-muted-foreground">{file.category}</p>
+                              </div>
+                              <Badge variant="outline" className="text-xs">{file.status}</Badge>
+                            </div>
+                          </div>
+                        ))}
+                      {files.filter(f => f.status === 'processing' || f.status === 'pending').length === 0 && (
+                        <p className="text-xs text-muted-foreground">No files being processed</p>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+
+                {/* Key Insights */}
+                <div className="border rounded-lg p-4 bg-card">
+                  <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-yellow-500" />
+                    Key Insights ({memories.filter(m => m.kind === 'insight' || m.pinned).length})
+                  </h4>
+                  <ScrollArea className="h-[200px]">
+                    <div className="space-y-2 pr-4">
+                      {memories
+                        .filter(m => m.kind === 'insight' || m.pinned)
+                        .slice(0, 10)
+                        .map(mem => (
+                          <div key={mem.id} className="p-3 border rounded bg-background">
+                            <div className="flex items-start gap-2">
+                              {mem.pinned && <Pin className="h-4 w-4 text-primary shrink-0 mt-0.5" />}
+                              <div className="flex-1">
+                                <p className="text-sm">
+                                  {mem.value?.text || mem.value?.insight || JSON.stringify(mem.value).slice(0, 300)}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {format(new Date(mem.created_at), 'PPp')}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      {memories.filter(m => m.kind === 'insight' || m.pinned).length === 0 && (
+                        <p className="text-xs text-muted-foreground">No key insights yet</p>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </div>
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="split" className="mt-4">
