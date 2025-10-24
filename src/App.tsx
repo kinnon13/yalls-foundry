@@ -48,6 +48,7 @@ import Health from './pages/Health';
 
 const Dashboard = lazy(() => import('./routes/dashboard/index'));
 const SuperAndyFull = lazy(() => import('./routes/super-andy'));
+const SuperAndyLive = lazy(() => import('./routes/super-andy-live'));
 const AdminRockerConsole = lazy(() => import('./pages/AdminRocker/Index'));
 const AuthPage = lazy(() => import('./routes/auth'));
 const AuthCallback = lazy(() => import('./routes/auth/callback'));
@@ -112,6 +113,9 @@ function AppContent() {
         
         {/* 3. Super Andy - Full route (legacy compatibility) */}
         <Route path="/super" element={<SuperAndyFull />} />
+        
+        {/* 3b. Super Andy Live - Real-time brain activity dashboard */}
+        <Route path="/super-andy-live" element={<SuperAndyLive />} />
         
         {/* 4. Admin Rocker - Admin console for AI */}
         <Route path="/admin-rocker" element={<AdminRockerConsole />} />
