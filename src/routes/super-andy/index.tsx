@@ -3,7 +3,7 @@
  * All-in-one interface with voice, web search (Serper+XAI), learning metrics, and full system monitoring
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SuperAndyChat } from '@/components/super-andy/SuperAndyChat';
 import { DocumentUpload } from '@/components/super-andy/DocumentUpload';
 import { VoiceChat } from '@/components/super-andy/VoiceChat';
@@ -17,6 +17,8 @@ import { AndyStatusReport } from '@/components/super-andy/AndyStatusReport';
 import { AndyCollections } from '@/components/super-andy/AndyCollections';
 import { AndyResearchQueue } from '@/components/super-andy/AndyResearchQueue';
 import { AndyCronSetup } from '@/components/super-andy/AndyCronSetup';
+import { AndyThoughtStream } from '@/components/super-andy/AndyThoughtStream';
+import { supabase } from '@/integrations/supabase/client';
 import ProactiveRail from '@/pages/SuperAndy/ProactiveRail';
 import SelfImproveLog from '@/pages/SuperAndy/SelfImproveLog';
 import AndySystemsOverview from '@/pages/SuperAndy/AndySystemsOverview';
@@ -26,6 +28,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function SuperAndyFull() {
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id);
+    });
+  }, []);
 
   return (
     <>
@@ -46,13 +55,22 @@ export default function SuperAndyFull() {
         </div>
         
         <div className="space-y-6 overflow-y-auto">
-          <Tabs defaultValue="systems" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+          <Tabs defaultValue="live" className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="live">🔴 Live</TabsTrigger>
               <TabsTrigger value="systems">Systems</TabsTrigger>
               <TabsTrigger value="monitor">Monitor</TabsTrigger>
               <TabsTrigger value="learn">Learn</TabsTrigger>
               <TabsTrigger value="tools">Tools</TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="live" className="space-y-4 mt-6">
+              {userId && (
+                <div className="bg-card rounded-lg border p-4">
+                  <AndyThoughtStream userId={userId} />
+                </div>
+              )}
+            </TabsContent>
 
             <TabsContent value="systems" className="space-y-4 mt-6">
               <AndyStatusReport />
