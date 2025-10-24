@@ -43,6 +43,7 @@ export function SuperAndyKnowledge() {
   const [reembedProgress, setReembedProgress] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadCount, setUploadCount] = useState(0);
+  const [isIngestingCodebase, setIsIngestingCodebase] = useState(false);
 
   useEffect(() => {
     loadKnowledge(true);
@@ -190,6 +191,24 @@ export function SuperAndyKnowledge() {
     }
   };
 
+  const handleIngestCodebase = async () => {
+    setIsIngestingCodebase(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ingest-codebase');
+      if (error) throw error;
+      toast({ 
+        title: 'Codebase documented', 
+        description: `Created ${data.chunks_created} documentation chunks for Andy. Embeddings processing...`
+      });
+      await loadKnowledge(true);
+      await loadStats();
+    } catch (e: any) {
+      toast({ title: 'Codebase ingest failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setIsIngestingCodebase(false);
+    }
+  };
+
   const handleBulkUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setIsUploading(true);
@@ -245,6 +264,25 @@ export function SuperAndyKnowledge() {
           )}
         </div>
         <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleIngestCodebase}
+            disabled={isIngestingCodebase}
+          >
+            {isIngestingCodebase ? (
+              <>
+                <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                Documenting...
+              </>
+            ) : (
+              <>
+                <Brain className="h-3 w-3 mr-2" />
+                Ingest Codebase
+              </>
+            )}
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
