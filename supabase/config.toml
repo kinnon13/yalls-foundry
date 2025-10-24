@@ -36,6 +36,10 @@ verify_jwt = false
 [functions.super-andy-learn-internal.cron]
 schedule = "0 */2 * * *"  # Every 2 hours - platform analytics and optimization
 
+# Super Andy Web Search - Real-time internet access
+[functions.super-andy-web-search]
+verify_jwt = true
+
 # ========== ANDY SUBSYSTEMS ==========
 [functions.andy-chat]
 verify_jwt = true

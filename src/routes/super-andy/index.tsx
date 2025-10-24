@@ -23,29 +23,29 @@ export default function SuperAndyPage() {
 
   const loadLearningMetrics = async () => {
     try {
-      const { data: external } = await supabase
+      const { data: external } = await (supabase as any)
         .from('ai_learning_metrics')
         .select('*')
         .eq('agent', 'super_andy')
         .eq('cycle_type', 'external')
         .order('completed_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      const { data: internal } = await supabase
+      const { data: internal } = await (supabase as any)
         .from('ai_learning_metrics')
         .select('*')
         .eq('agent', 'super_andy')
         .eq('cycle_type', 'internal')
         .order('completed_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      const { count: externalKnowledge } = await supabase
+      const { count: externalKnowledge } = await (supabase as any)
         .from('andy_external_knowledge')
         .select('*', { count: 'exact', head: true });
 
-      const { count: internalKnowledge } = await supabase
+      const { count: internalKnowledge } = await (supabase as any)
         .from('andy_internal_knowledge')
         .select('*', { count: 'exact', head: true });
 
@@ -67,23 +67,50 @@ export default function SuperAndyPage() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('admin-query-super-andy', {
-        body: {
-          query_type: 'analyze_pattern',
-          context: { user_input: input },
-          priority: 'high',
-        },
-      });
+      // Check if user wants web search
+      const needsWebSearch = input.toLowerCase().includes('search') || 
+                            input.toLowerCase().includes('research') ||
+                            input.toLowerCase().includes('find out') ||
+                            input.toLowerCase().includes('what is') ||
+                            input.toLowerCase().includes('tell me about');
 
-      if (error) throw error;
+      let response;
+      
+      if (needsWebSearch) {
+        // Use web search function
+        const { data, error } = await supabase.functions.invoke('super-andy-web-search', {
+          body: { query: input, learn_from_results: true },
+        });
+
+        if (error) throw error;
+
+        response = {
+          type: 'web_search',
+          query: input,
+          ...data.result,
+          learned: data.learned,
+        };
+      } else {
+        // Use pattern analysis
+        const { data, error } = await supabase.functions.invoke('admin-query-super-andy', {
+          body: {
+            query_type: 'analyze_pattern',
+            context: { user_input: input },
+            priority: 'high',
+          },
+        });
+
+        if (error) throw error;
+        response = data.response;
+      }
 
       const assistantMessage = {
         role: 'assistant',
-        content: JSON.stringify(data.response, null, 2),
+        content: typeof response === 'string' ? response : JSON.stringify(response, null, 2),
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-      toast.success('Super Andy responded');
+      toast.success('Super Andy responded' + (needsWebSearch ? ' with web search' : ''));
       loadLearningMetrics(); // Refresh metrics
     } catch (error: any) {
       toast.error(error.message || 'Failed to query Super Andy');
