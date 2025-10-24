@@ -14027,6 +14027,80 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_profiles: {
+        Row: {
+          confidence_threshold: number | null
+          created_at: string | null
+          id: string
+          speaker_name: string
+          updated_at: string | null
+          user_id: string
+          voice_features: Json | null
+          voice_sample_url: string | null
+        }
+        Insert: {
+          confidence_threshold?: number | null
+          created_at?: string | null
+          id?: string
+          speaker_name: string
+          updated_at?: string | null
+          user_id: string
+          voice_features?: Json | null
+          voice_sample_url?: string | null
+        }
+        Update: {
+          confidence_threshold?: number | null
+          created_at?: string | null
+          id?: string
+          speaker_name?: string
+          updated_at?: string | null
+          user_id?: string
+          voice_features?: Json | null
+          voice_sample_url?: string | null
+        }
+        Relationships: []
+      }
+      voice_recognition_events: {
+        Row: {
+          audio_sample_url: string | null
+          confidence: number | null
+          context: Json | null
+          created_at: string | null
+          id: string
+          recognized_speaker: string | null
+          user_id: string
+          voice_profile_id: string | null
+        }
+        Insert: {
+          audio_sample_url?: string | null
+          confidence?: number | null
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          recognized_speaker?: string | null
+          user_id: string
+          voice_profile_id?: string | null
+        }
+        Update: {
+          audio_sample_url?: string | null
+          confidence?: number | null
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          recognized_speaker?: string | null
+          user_id?: string
+          voice_profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_recognition_events_voice_profile_id_fkey"
+            columns: ["voice_profile_id"]
+            isOneToOne: false
+            referencedRelation: "voice_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       web_access_allowlist: {
         Row: {
           created_at: string | null

@@ -323,9 +323,13 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
   };
 
   const handleTranscript = (text: string, isFinal: boolean) => {
-    if (isFinal) {
+    if (isFinal && text.trim()) {
+      // Send the voice text directly instead of relying on state update
+      sendMutation.mutate(text.trim());
+      setInput(''); // Clear input after sending
+    } else if (!isFinal) {
+      // Show interim transcript in input
       setInput(text);
-      handleSend();
     }
   };
 
