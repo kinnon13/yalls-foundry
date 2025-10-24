@@ -633,12 +633,49 @@ export function UnifiedFilesMemory() {
         <TabsContent value="learning" className="mt-4">
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-2">What Andy is Learning</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Andy continuously learns from interactions, files, and external sources
-              </p>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold">What Andy is Learning</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Andy continuously learns from interactions, files, and external sources
+                  </p>
+                </div>
+                <Button 
+                  size="sm" 
+                  onClick={async () => {
+                    toast({ title: 'Processing existing data...', description: 'Andy will analyze your chat history' });
+                    try {
+                      const { data, error } = await supabase.functions.invoke('analyze-memories');
+                      if (error) throw error;
+                      toast({ title: 'Analysis started!', description: 'Check back in a few minutes' });
+                      setTimeout(() => loadMemories(), 5000);
+                    } catch (error: any) {
+                      toast({ title: 'Failed', description: error.message, variant: 'destructive' });
+                    }
+                  }}
+                >
+                  <Brain className="h-4 w-4 mr-2" />
+                  Trigger Learning
+                </Button>
+              </div>
               
               <div className="grid gap-4">
+                {/* Empty State Alert */}
+                {memories.length === 0 && (
+                  <div className="border border-yellow-500/50 rounded-lg p-4 bg-yellow-50 dark:bg-yellow-950/20">
+                    <h4 className="font-medium mb-2 flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
+                      <Brain className="h-4 w-4" />
+                      Andy Hasn't Learned Anything Yet
+                    </h4>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-2">
+                      You have <strong>{chatMessages.length} messages</strong> and <strong>{files.length} files</strong> that Andy can learn from.
+                    </p>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                      Click "Trigger Learning" above to start analyzing your data, or set up cron jobs in the Learn tab to automate this.
+                    </p>
+                  </div>
+                )}
+
                 {/* Recent Learnings from Memory */}
                 <div className="border rounded-lg p-4 bg-card">
                   <h4 className="font-medium mb-2 flex items-center gap-2">
