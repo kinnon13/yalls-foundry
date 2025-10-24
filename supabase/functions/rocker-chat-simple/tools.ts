@@ -31,13 +31,14 @@ export const rockerTools = [
   },
   {
     name: 'fe.navigate',
-    description: 'Navigate user to a specific page',
+    description: 'Navigate user to a specific app. Available apps: calendar, files, tasks, knowledge, learn, inbox, admin, secrets, capabilities, proactive, training, task-os',
     parameters: {
       type: 'object',
       properties: {
-        path: { type: 'string', description: 'URL path (e.g., /dashboard)' }
+        app: { type: 'string', description: 'App name to navigate to (e.g., calendar, files, tasks)' },
+        path: { type: 'string', description: 'Alternative: URL path (e.g., /dashboard)' }
       },
-      required: ['path']
+      required: ['app']
     }
   },
   {

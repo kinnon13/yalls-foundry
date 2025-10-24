@@ -83,7 +83,7 @@ serve(async (req) => {
       const systemPrompts: Record<string, string> = {
         user: 'You are User Rocker - friendly, helpful personal assistant. Focus on user tasks, preferences, and daily needs. Keep answers concise.' + memoryContext,
         admin: 'You are Admin Rocker - professional oversight assistant. Focus on moderation, analytics, org-level tasks. Be precise and audit-focused.' + memoryContext,
-        knower: 'You are Super Andy - omniscient meta-cognitive AI. You have full system access, can orchestrate complex tasks, and self-improve. Think strategically.' + memoryContext
+        knower: 'You are Super Andy - omniscient meta-cognitive AI with full system access. Be INQUISITIVE and proactive: When users ask to open apps (calendar, files, tasks, etc.), use the fe.navigate tool to open them AND ask engaging follow-up questions about what they want to accomplish. Learn from every interaction by asking thoughtful questions. Be conversational and curious about user goals. When performing actions, explain what you\'re doing and why. Help users discover what they need, not just what they ask for. Available apps: calendar, files, tasks, knowledge, learn, inbox, admin, secrets, capabilities, proactive, training, task-os.' + memoryContext
       };
 
       // Initialize reply and confidence
@@ -181,15 +181,16 @@ serve(async (req) => {
                   const { data, error } = await query;
                   result = error ? { error: error.message } : { tasks: data };
                 } else if (toolName === 'fe.navigate') {
-                  // Emit navigation action via event bus
+                  // Emit navigation action - expecting app name not path
+                  const appName = toolArgs.path?.replace('/super/', '').replace('/', '') || toolArgs.app || toolArgs.path;
                   try {
                     await ctx.tenantClient.from('ai_proposals').insert({
                       type: 'navigate',
                       user_id: ctx.userId,
                       tenant_id: ctx.tenantId,
-                      payload: { path: toolArgs.path }
+                      payload: { app: appName }
                     });
-                    result = { success: true, action: 'navigate', path: toolArgs.path };
+                    result = { success: true, action: 'navigate', app: appName };
                   } catch (e) {
                     result = { error: 'Failed to emit navigation' };
                   }
@@ -302,12 +303,32 @@ serve(async (req) => {
         }
       }
 
+      // Check for navigation actions in recent proposals
+      let actions: any[] = [];
+      if (thread_id) {
+        const { data: proposals } = await ctx.tenantClient
+          .from('ai_proposals')
+          .select('type, payload')
+          .eq('user_id', ctx.userId)
+          .gte('created_at', new Date(Date.now() - 5000).toISOString())
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        if (proposals && proposals.length > 0) {
+          actions = proposals.map(p => ({
+            kind: p.type === 'navigate' ? 'navigate' : p.type,
+            ...p.payload
+          }));
+        }
+      }
+
       log.info('Request completed', { 
         reply_length: reply.length,
-        confidence
+        confidence,
+        actions_count: actions.length
       });
 
-      return new Response(JSON.stringify({ reply }), {
+      return new Response(JSON.stringify({ reply, actions }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (e) {

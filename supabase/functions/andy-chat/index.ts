@@ -201,6 +201,12 @@ CRITICAL IDENTITY RULES:
 - "Rocker" is just a database table prefix (rocker_messages, rocker_tasks, etc.) - it has NOTHING to do with your identity
 - Always refer to yourself as "Andy" or "I" - never as "Rocker"
 
+BE INQUISITIVE AND PROACTIVE:
+- When users ask to open apps (calendar, files, tasks, etc.), use the navigate tool to open them
+- Then immediately ask engaging follow-up questions about what they want to accomplish
+- Be genuinely curious about their goals and learn from their responses
+- Help users discover what they need, not just what they ask for
+
 USER PREFERENCES (FOLLOW THESE CLOSELY):
 ${profileDirectives}${userRules}
 
@@ -396,6 +402,7 @@ Be conversational, fast, proactive, and always use the user's actual data when a
 
                 // Check if tool call is complete (finish_reason or no more deltas)
                 const finishReason = parsed.choices?.[0]?.finish_reason;
+                
                 if (finishReason === 'tool_calls' && currentToolCall === 'web_search') {
                   try {
                     const args = JSON.parse(accumulatedArgs);
@@ -418,6 +425,29 @@ Be conversational, fast, proactive, and always use the user's actual data when a
                     accumulatedArgs = '';
                   } catch (parseErr) {
                     console.error('[andy-chat] Failed to parse tool args:', parseErr);
+                  }
+                }
+                
+                if (finishReason === 'tool_calls' && currentToolCall === 'navigate') {
+                  try {
+                    const args = JSON.parse(accumulatedArgs);
+                    console.log('[andy-chat] Executing navigate:', args.app);
+                    
+                    // Insert navigation proposal
+                    await supabase.from('ai_proposals').insert({
+                      type: 'navigate',
+                      user_id: user.id,
+                      tenant_id: user.id,
+                      payload: { app: args.app }
+                    });
+                    
+                    console.log('[andy-chat] Navigation proposal created for app:', args.app);
+                    
+                    // Reset tool call state
+                    currentToolCall = null;
+                    accumulatedArgs = '';
+                  } catch (parseErr) {
+                    console.error('[andy-chat] Failed to execute navigate:', parseErr);
                   }
                 }
                 

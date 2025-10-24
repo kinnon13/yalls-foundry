@@ -225,9 +225,30 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
 
       return assistantMessage;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['rocker-messages', threadId] });
       setInput('');
+      
+      // Check for recent navigation actions from AI
+      if (session?.userId) {
+        const { data: proposals } = await supabase
+          .from('ai_proposals')
+          .select('type, payload')
+          .eq('user_id', session.userId)
+          .gte('created_at', new Date(Date.now() - 5000).toISOString())
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (proposals && proposals.length > 0 && proposals[0].type === 'navigate') {
+          const payload = proposals[0].payload as any;
+          const app = payload?.app;
+          if (app) {
+            window.dispatchEvent(new CustomEvent('super-andy:navigate', { 
+              detail: { app }
+            }));
+          }
+        }
+      }
     },
     onError: (error: any) => {
       console.error('Send error:', error);
@@ -265,32 +286,6 @@ export function MessengerRail({ threadId: propThreadId }: MessengerRailProps) {
     if (sendMutation.isPending) return;
 
     const content = trimmed;
-
-    // Check for navigation commands
-    const navMatch = content.toLowerCase().match(/open\s+(calendar|files|tasks|knowledge|learn|inbox|admin|secrets|capabilities|proactive|training|task-os)/i);
-    if (navMatch) {
-      const appMap: Record<string, string> = {
-        'calendar': 'calendar',
-        'files': 'files',
-        'tasks': 'tasks',
-        'knowledge': 'knowledge',
-        'learn': 'learn',
-        'inbox': 'inbox',
-        'admin': 'admin',
-        'secrets': 'secrets',
-        'capabilities': 'capabilities',
-        'proactive': 'proactive',
-        'training': 'training',
-        'task-os': 'task-os',
-      };
-      const app = appMap[navMatch[1].toLowerCase()];
-      if (app) {
-        window.dispatchEvent(new CustomEvent('super-andy:navigate', { detail: { app } }));
-        toast({ title: `Opening ${navMatch[1]}...` });
-        setInput('');
-        return;
-      }
-    }
 
     // Trigger auto-learning before sending
     sendMutation.mutate(content);
