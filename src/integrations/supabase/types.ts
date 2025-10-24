@@ -14495,6 +14495,80 @@ export type Database = {
         }
         Relationships: []
       }
+      yallbrary_apps: {
+        Row: {
+          category: string
+          created_at: string | null
+          customization: Json | null
+          description: string | null
+          icon_url: string | null
+          id: string
+          is_public: boolean | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          customization?: Json | null
+          description?: string | null
+          icon_url?: string | null
+          id: string
+          is_public?: boolean | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          customization?: Json | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_public?: boolean | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      yallbrary_pins: {
+        Row: {
+          app_id: string
+          created_at: string | null
+          customization: Json | null
+          id: string
+          position: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          app_id: string
+          created_at?: string | null
+          customization?: Json | null
+          id?: string
+          position?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          app_id?: string
+          created_at?: string | null
+          customization?: Json | null
+          id?: string
+          position?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "yallbrary_pins_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "yallbrary_apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       ai_action_my_timeline: {
