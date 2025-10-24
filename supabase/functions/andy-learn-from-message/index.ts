@@ -177,7 +177,7 @@ try { deepInsights = JSON.parse(extractJson(analysis)); } catch {}
       if (Object.keys(deepInsights).length > 0) {
         await supabase.from('rocker_long_memory').insert({
           user_id: userId,
-          kind: 'deep_analysis',
+          kind: 'note',
           key: `analysis_${Date.now()}`,
           value: {
             message_id,
@@ -224,19 +224,32 @@ try { deepInsights = JSON.parse(extractJson(analysis)); } catch {}
   // Auto-save confident facts
     if (toSave.length > 0) {
       const { data: savedMemories } = await supabase.from('rocker_long_memory').insert(
-        toSave.map((f: any) => ({
-          user_id: userId,
-          kind: f.category || 'general',
-          key: f.title,
-          value: {
-            text: f.value,
-            source: 'chat',
-            message_id: message_id,
-            confidence: f.confidence,
-            learned_at: new Date().toISOString()
-          },
-          memory_layer: f.category || 'general'
-        }))
+        toSave.map((f: any) => {
+          const c = String(f.category || '').toLowerCase();
+          const mappedKind = (
+            c === 'identity' || c === 'family' || c === 'personal' || c === 'bio' || c === 'profile' ? 'profile' :
+            c === 'preference' || c === 'like' || c === 'dislike' || c === 'settings' ? 'preference' :
+            c === 'goal' || c === 'project' || c === 'todo' || c === 'task' ? 'task' :
+            c === 'business' || c === 'company' || c === 'contact' || c === 'lead' || c === 'deal' || c === 'crm' ? 'crm' :
+            c === 'finance' || c === 'payment' || c === 'invoice' || c === 'budget' ? 'finance' :
+            c === 'doc' || c === 'document' || c === 'file' ? 'doc' :
+            c === 'paste' || c === 'snippet' || c === 'clip' ? 'paste' :
+            'note'
+          ) as 'profile' | 'preference' | 'paste' | 'file' | 'note' | 'task' | 'crm' | 'finance' | 'doc';
+          return {
+            user_id: userId,
+            kind: mappedKind,
+            key: f.title,
+            value: {
+              text: f.value,
+              source: 'chat',
+              message_id: message_id,
+              confidence: f.confidence,
+              learned_at: new Date().toISOString()
+            },
+            memory_layer: mappedKind
+          };
+        })
       ).select();
 
       // Have Andy enhance each saved memory
