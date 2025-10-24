@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
           .from('ai_action_ledger')
           .select('*')
           .eq('user_id', userId)
-          .order('created_at', { ascending: false })
+          .order('timestamp', { ascending: false })
           .limit(20);
 
         if (aError) throw aError;

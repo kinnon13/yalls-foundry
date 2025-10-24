@@ -61,7 +61,7 @@ export default function SystemHealthPage() {
       const { data: actions } = await supabase
         .from('ai_action_ledger')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('timestamp', { ascending: false })
         .limit(10);
 
       // Placeholder for coverage data (would come from ops-report.json or RPC)
@@ -254,7 +254,7 @@ export default function SystemHealthPage() {
                       <span className="font-medium text-sm">{action.action}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(action.created_at).toLocaleString()}
+                      {new Date(action.timestamp).toLocaleString()}
                     </p>
                   </div>
                   <Badge variant={action.result === 'success' ? 'default' : 'destructive'}>

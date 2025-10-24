@@ -44,17 +44,18 @@ serve(async (req) => {
     }, { onConflict: 'tenant_id,user_id' });
 
     const { data: conversations } = await supabaseClient
-      .from('rocker_conversations')
-      .select('content, role, created_at, session_id')
+      .from('rocker_messages')
+      .select('content, role, created_at, thread_id')
       .eq('user_id', user.id)
+      .not('thread_id', 'is', null)
       .order('created_at', { ascending: true });
 
     if (!conversations) throw new Error('Failed to load conversations');
 
     const sessions = new Map<string, any[]>();
     for (const msg of conversations) {
-      if (!sessions.has(msg.session_id)) sessions.set(msg.session_id, []);
-      sessions.get(msg.session_id)!.push(msg);
+      if (!sessions.has(msg.thread_id)) sessions.set(msg.thread_id, []);
+      sessions.get(msg.thread_id)!.push(msg);
     }
 
     let totalExtracted = 0;
