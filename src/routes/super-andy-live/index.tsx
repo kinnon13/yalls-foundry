@@ -25,7 +25,7 @@ export default function SuperAndyLive() {
         {/* Main Chat - 2 columns */}
         <div className="lg:col-span-2 flex flex-col space-y-4">
           <div className="flex-1">
-            <SuperAndyChatWithVoice threadId={activeThreadId} />
+            <SuperAndyChatWithVoice threadId={activeThreadId} onThreadCreated={(id) => setActiveThreadId(id)} />
           </div>
         </div>
 
