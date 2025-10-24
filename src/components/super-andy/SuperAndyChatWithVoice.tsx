@@ -183,13 +183,43 @@ export function SuperAndyChatWithVoice({
       return;
     }
 
-    setMessages(data.map(m => ({
+    if (data && data.length > 0) {
+      setMessages(data.map(m => ({
+        id: m.id.toString(),
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+        created_at: m.created_at,
+        sources: (m.meta && typeof m.meta === 'object' && 'sources' in m.meta) 
+          ? (m.meta as any).sources as Array<{ id: string; kind: string; key: string }>
+          : undefined
+      })));
+      return;
+    }
+
+    // Fallback: load across all threads for this user (last 500)
+    const { data: authData } = await supabase.auth.getUser();
+    const uid = authData.user?.id;
+    if (!uid) return;
+
+    const { data: allMsgs, error: allErr } = await supabase
+      .from('rocker_messages')
+      .select('*')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: true })
+      .limit(500);
+
+    if (allErr) {
+      console.error('Fallback load failed:', allErr);
+      return;
+    }
+
+    setMessages((allMsgs || []).map(m => ({
       id: m.id.toString(),
       role: m.role as 'user' | 'assistant',
       content: m.content,
       created_at: m.created_at,
       sources: (m.meta && typeof m.meta === 'object' && 'sources' in m.meta) 
-        ? (m.meta as any).sources as Array<{ id: string; kind: string; key: string }> 
+        ? (m.meta as any).sources as Array<{ id: string; kind: string; key: string }>
         : undefined
     })));
   };
